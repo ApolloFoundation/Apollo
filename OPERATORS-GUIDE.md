@@ -18,8 +18,3 @@
   - next run of NRS will upgrade database if necessary
   
 ----
-
-## How to manage multiple ARS-nodes? ##
-  Check [Apl-Kit's homepage](https://github.com/apl-ext/apl-kit) for more information.
-
-----
