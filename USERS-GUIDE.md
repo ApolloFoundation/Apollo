@@ -17,7 +17,7 @@
 ----
 ## How does it work? ##
 
-### NRS (Apl Reference Software) ###
+### ARS (Apl Reference Software) ###
 
   - client-server application
   - JavaFX UI on supported platforms
@@ -38,7 +38,7 @@
   - start via the browser interface
   - requires only:
     - decent amount of the base currency APL
-    - running NRS (browser or tab can be closed)
+    - running ARS (browser or tab can be closed)
     - very little CPU power
 
 ----
