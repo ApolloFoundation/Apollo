@@ -89,15 +89,6 @@
     - Create a new html modal also in index.html, the modals start around line 1750 at time of writing
     - It is fairly easy to make a modal based upon the information from other modals already created.
 
-### Translation ###
-
-#### Language Translations ####
-
-Translation of the client UI to other languages is done by the community within a crowdsourced process on the platform **Crowdin**:
-
-- https://crowdin.com/project/apl-ui-translation
-
-If you feel comfortable translating you are very welcome to join and help with translations.
 
 #### Coding ####
 
@@ -145,20 +136,3 @@ For providing new translation strings on the platform for the community to trans
 3. Make some consistency checks (lengths of old/new files, "git diff" on language files)
 4. New languages can be added to ``NRS.languages`` in ``ui/js/nrs.settings.js`` file. Review the status of the languages (40-50%+ Experimental, 70-80%+ Beta, 90-95%+ Stable), eventually add new languages
 
-### Mobile App ###
-
-The Wallet wallet UI run as a mobile app.
-
-To build the Android APK application follow these steps (Tested on Windows 7 64 bit):
-1. Install node.js (tested with Node 4.4.7 and npm 2.15.8), Apache Cordova (tested with Cordova 6.3.1) - see https://cordova.apache.org/
-2. Install Android SDK Manager (tested with version 25.2.2) - follow the guidelines regarding necessary USB device drivers and modules to install
-3. Make sure the commands: node, npm and cordova are available from the command prompt
-4. On Windows make sure the adb.exe is in your search path (c:\Users\<Username>\AppData\Local\Android\sdk\platform-tools), probably also required on Linux
-5. Special care should be taken in order to work without root privileges on Linux and Mac (the current procedure assumes Windows administrator permissions), we recommend that you work with root privileges initially.
-6. Under the <APLRoot>\mobile\app folder execute the command:
-createapp.bat
-See that the process completes without errors and that a default Cordova application is deployed to your connected mobile device or the Android emulator
-
-7. To run the app invoke runapp.bat and to update the app resources after making changes to the web wallet use the updateapp.bat
-
-8. Debug the application on the device or emulator using Chrome desktop development tools, open the options menu, more tools --> Inspect Devices choose the device and click inspect
