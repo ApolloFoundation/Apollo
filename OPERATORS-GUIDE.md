@@ -15,6 +15,6 @@
 ## How to update the ARS? ##
 
   - **if configured as described above**, just unpack a new version over the existing installation directory
-  - next run of NRS will upgrade database if necessary
+  - next run of ARS will upgrade database if necessary
   
 ----
