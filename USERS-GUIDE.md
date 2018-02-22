@@ -2,9 +2,9 @@
 # USERS GUIDE #
 
 ----
-## What is in for me with Apl? ##
+## What do I get with the Apollo Platform? ##
 
-  - a **decentralized** platform for my assets like money, company shares etc.
+  - a **decentralized** platform conataining many useful features.
   - almost all trusted third parties **removed**
   - many useful financial, economical and social features
 
