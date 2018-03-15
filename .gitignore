@@ -4,5 +4,5 @@ classes*
 classes/*.*
 .idea/
 addons/
-api_db/
+apl_db/
 classes/
