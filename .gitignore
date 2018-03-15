@@ -6,3 +6,4 @@ classes/*.*
 addons/
 apl_db/
 classes/
+.DS_Store
