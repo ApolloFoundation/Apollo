@@ -78,12 +78,12 @@ body > .header {
   z-index: 1030;
 }
 /* Define 2 column template */
-.right-side,
+/*.right-side,
 .left-side {
   min-height: 100%;
   display: block;
 }
-/*left side - contains sidebar*/
+!*left side - contains sidebar*!
 .left-side {
   position: absolute;
   width: 220px;
@@ -91,7 +91,7 @@ body > .header {
   min-height: inherit !important;
   top: 0;
   bottom: 0;
-}
+}*/
 @media screen and (min-width: 992px) {
   /*Right side strech mode*/
   .right-side.strech {
@@ -101,12 +101,12 @@ body > .header {
     margin-top: 0px;
   }
   /* Left side collapse */
-  .left-side.collapse-left {
+ /* .left-side.collapse-left {
     margin-left: -220px;
   }
   .sidebar {
     margin-top: 50px;
-  }
+  }*/
 }
 /*Give content full width on xs screens*/
 @media screen and (max-width: 992px) {
@@ -463,9 +463,6 @@ body > .header .logo .icon {
   margin: 0;
   position: relative;
 }
-.left-side {
-  display: none;
-}
 #dashboard_table thead tr th{
   text-transform: uppercase;
 }
@@ -729,10 +726,10 @@ body > .header .logo .icon {
   color: #444444;
 }*/
 
-.dropdown-menu > li > a:hover {
+/*.dropdown-menu > li > a:hover {
   background-color: #3c8dbc;
   color: #f9f9f9;
-}
+}*/
 /*
     Navbar custom dropdown menu
 ------------------------------------
@@ -1094,7 +1091,7 @@ body > .header .logo .icon {
    All form elements including input, select, textarea etc.
 -----------------------------------------------------------------
 */
-.form-control {
+/*.form-control {
   -webkit-border-radius: 0px !important;
   -moz-border-radius: 0px !important;
   border-radius: 0px !important;
@@ -1124,7 +1121,7 @@ body > .header .logo .icon {
 .form-group.has-error .form-control {
   border-color: #f56954 !important;
   box-shadow: none;
-}
+}*/
 /* Input group */
 .input-group .input-group-addon {
   border-radius: 0;
@@ -2062,7 +2059,7 @@ body > .header .logo .icon {
 .user-panel > .info, .user-panel > .info > a {
   color: #555555;
 }
-.left-side .sidebar > .sidebar-menu {
+/*.left-side .sidebar > .sidebar-menu {
 	border-bottom: 1px solid #fff;
 	border-top: 1px solid #dbdbdb;
 }
@@ -2070,7 +2067,7 @@ body > .header .logo .icon {
 .left-side .sidebar > .sidebar-menu > li > a {
   border-top: 1px solid #fff;
   border-bottom: 1px solid #dbdbdb;
-}
+}*/
 
 /* skin-blue sidebar */
 .sidebar-default {
@@ -2087,7 +2084,7 @@ body > .header .logo .icon {
 .sidebar-default > .sidebar-menu > li:first-of-type > a {
   border-top: 1px solid #fff;
 }
-.sidebar > .sidebar-menu > li > a {
+/*.sidebar > .sidebar-menu > li > a {
   margin-right: 1px;
 }
 .sidebar > .sidebar-menu > li > a:hover,
@@ -2110,7 +2107,7 @@ body > .header .logo .icon {
 }
 .sidebar a:hover {
   text-decoration: none;
-}
+}*/
 .treeview-menu > li > a {
   color: #777;
 }
@@ -2878,14 +2875,14 @@ a.list-group-item-header:hover {
     margin-bottom:1px;
 }
 
-.left-side-single .sidebar > .sidebar-menu  >li > a {
+/*.left-side-single .sidebar > .sidebar-menu  >li > a {
 	border-bottom:none !important;
 }
 
 .left-side-none .sidebar > .sidebar-menu > li > a {
 	border-top:none !important;
 	border-bottom:none !important;
-}
+}*/
 
 .navbar-right > ul > li > a {
     -webkit-transition: all 300ms linear;
@@ -2994,10 +2991,10 @@ a.list-group-item.active, a.list-group-item.active:hover, a.list-group-item.acti
 .sidebar.dropdown-menu>li>a {
 	color:#333 !important;
 }
-.left-side .user-panel .dropdown-menu>li>a { color:#333; }
+/*.left-side .user-panel .dropdown-menu>li>a { color:#333; }
 .left-side .user-panel .dropdown-menu>li>a:hover {
 	color:#fff;
-}
+}*/
 
 a.list-group-item h4 span {
 	color:blue;

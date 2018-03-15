@@ -22,20 +22,139 @@
             </a>
         </div>
         <ul class="nav navbar-top-links navbar-left">
+            <li class="dropdown">
+                <a class="dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#"> <i class="mdi mdi-gmail"></i>
+                    <div class="notify"> <span class="heartbit"></span> <span class="point"></span> </div>
+                </a>
+                <ul class="dropdown-menu mailbox animated bounceInDown">
+                    <li>
+                        <div class="drop-title">You have 4 new messages</div>
+                    </li>
+                    <li>
+                        <div class="message-center">
+                            <a href="#">
+                                <div class="user-img"> <img src="../plugins/images/users/pawandeep.jpg" alt="user" class="img-circle"> <span class="profile-status online pull-right"></span> </div>
+                                <div class="mail-contnet">
+                                    <h5>Pavan kumar</h5> <span class="mail-desc">Just see the my admin!</span> <span class="time">9:30 AM</span> </div>
+                            </a>
+                            <a href="#">
+                                <div class="user-img"> <img src="../plugins/images/users/sonu.jpg" alt="user" class="img-circle"> <span class="profile-status busy pull-right"></span> </div>
+                                <div class="mail-contnet">
+                                    <h5>Sonu Nigam</h5> <span class="mail-desc">I've sung a song! See you at</span> <span class="time">9:10 AM</span> </div>
+                            </a>
+                            <a href="#">
+                                <div class="user-img"> <img src="../plugins/images/users/arijit.jpg" alt="user" class="img-circle"> <span class="profile-status away pull-right"></span> </div>
+                                <div class="mail-contnet">
+                                    <h5>Arijit Sinh</h5> <span class="mail-desc">I am a singer!</span> <span class="time">9:08 AM</span> </div>
+                            </a>
+                            <a href="#">
+                                <div class="user-img"> <img src="../plugins/images/users/pawandeep.jpg" alt="user" class="img-circle"> <span class="profile-status offline pull-right"></span> </div>
+                                <div class="mail-contnet">
+                                    <h5>Pavan kumar</h5> <span class="mail-desc">Just see the my admin!</span> <span class="time">9:02 AM</span> </div>
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <a class="text-center" href="javascript:void(0);"> <strong>See all notifications</strong> <i class="fa fa-angle-right"></i> </a>
+                    </li>
+                    <li>
+                        <div class="u-text text-center box-margin-20">
+                            <a href="#" data-toggle="modal" data-target="#send_message_modal" data-i18n="send_message" class="btn btn-rounded btn-info btn-sm" data-whatever="@fat">SEND MESSAGE</a>
+                        </div>
+                    </li>
+                </ul>
+                <!-- /.dropdown-messages -->
+            </li>
+            <li class="dropdown">
+                <a class="dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#"> <i class="mdi mdi-check-circle"></i>
+                    <div class="notify"><span class="heartbit"></span><span class="point"></span></div>
+                </a>
+                <ul class="dropdown-menu dropdown-tasks animated bounceInDown">
+                    <ul class="feeds">
+                        <li>
+                            <div class="bg-info"><i class="fa fa-bell-o text-white"></i></div> You have 4 pending tasks. <span class="text-muted">Just Now</span></li>
+                        <li>
+                            <div class="bg-success"><i class="ti-server text-white"></i></div> Server #1 overloaded.<span class="text-muted">2 Hours ago</span></li>
+                        <li>
+                            <div class="bg-warning"><i class="ti-shopping-cart text-white"></i></div> New order received.<span class="text-muted">31 May</span></li>
+                        <li>
+                            <div class="bg-danger"><i class="ti-user text-white"></i></div> New user registered.<span class="text-muted">30 May</span></li>
+                        <li>
+                            <div class="bg-inverse"><i class="fa fa-bell-o text-white"></i></div> New Version just arrived. <span class="text-muted">27 May</span></li>
+                        <li>
+                            <div class="bg-info"><i class="fa fa-bell-o text-white"></i></div> You have 4 pending tasks. <span class="text-muted">Just Now</span></li>
+                        <li>
+                            <div class="bg-success"><i class="ti-server text-white"></i></div> Server #1 overloaded.<span class="text-muted">2 Hours ago</span></li>
+                        <li>
+                            <div class="bg-warning"><i class="ti-shopping-cart text-white"></i></div> New order received.<span class="text-muted">31 May</span></li>
+                        <li>
+                            <div class="bg-danger"><i class="ti-user text-white"></i></div> New user registered.<span class="text-muted">30 May</span></li>
+                        <li>
+                            <div class="bg-danger"><i class="ti-user text-white"></i></div> New user registered.<span class="text-muted">30 May</span></li>
+                        <li>
+                            <div class="bg-inverse"><i class="fa fa-bell-o text-white"></i></div> New Version just arrived. <span class="text-muted">27 May</span></li>
+                        <li>
+                            <div class="bg-purple"><i class="ti-settings text-white"></i></div> You have 4 pending tasks. <span class="text-muted">27 May</span></li>
+                    </ul>
+                </ul>
+            </li>
+            <li class="mega-dropdown">
+                <a class="dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#"><i class="mdi mdi-settings"></i></a>
+                <ul class="dropdown-menu mega-dropdown-menu animated bounceInDown">
+                    <li class="col-sm-3">
+                        <ul>
+                            <!--<li class="dropdown-header">Section title</li>-->
+                            <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="blocks"><i class="mdi mdi-menu"></i> <span data-i18n="blocks">Blocks</span></a></li>
+                            <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="peers"><i class="mdi mdi-weather-cloudy"></i> <span data-i18n="peers">Peers</span></a></li>
+                            <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="generators"><i class="mdi mdi-source-branch"></i> <span data-i18n="generators">Generators</span></a></li>
+                            <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="scheduled_transactions"><i class="mdi mdi-calendar-clock"></i> <span data-i18n="scheduled_transactions">Scheduled Transactions</span></a></li>
+                            <li id="funding_monitor_menu_item"><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="funding_monitors"><i class="mdi mdi-monitor-multiple"></i> <span data-i18n="monitors">Monitors</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="col-sm-3">
+                        <ul>
+                            <!--<li class="dropdown-header">Section title</li>-->
+                            <li><a href="#" data-toggle="modal" data-target="#token_modal"><i class="mdi mdi-code-tags"></i> <span data-i18n="generate_token">Generate Token</span></a></li>
+                            <li><a href="#" data-toggle="modal" data-target="#hallmark_modal"><i class="mdi mdi-hospital-building"></i> <span data-i18n="generate_hallmark">Generate Hallmark</span></a></li>
+                            <li><a href="#" data-toggle="modal" data-target="#hash_modal"><i class="mdi mdi-calculator"></i> <span data-i18n="calculate_hash">Calculate Hash</span></a></li>
+                            <li><a href="#" data-toggle="modal" data-target="#transaction_json_modal"><i class="mdi mdi-asterisk"></i> <span data-i18n="transaction_operations">Transaction Operations</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="col-sm-3">
+                        <ul>
+                            <!--<li class="dropdown-header">Section title</li>-->
+                            <li> <a href="#" id="refreshSearchIndex"><i class="mdi mdi-search-web"></i> <span data-i18n="refresh_search_index">Refresh Search Index</span></a> </li>
+                            <li id="api_console_li"><a href="/test" target="_blank"><i class="mdi mdi-flash"></i> <span data-i18n="api_console">API Console</span></a></li>
+                            <li id="database_shell_li"><a href="/dbshell" target="_blank"><i class="mdi mdi-database"></i> <span data-i18n="database_shell">Database Shell</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="col-sm-3">
+                        <ul>
+                            <!--<li class="dropdown-header">Section title</li>-->
+                            <li><a href="#" class="goto-page" data-page="plugins_overview"><i class="mdi mdi-power-plug"></i> <span data-i18n="plugins">Plugins</span></a></li>
+                        </ul>
+                        <ul>
+                            <!--<li class="dropdown-header">Section title</li>-->
+                            <li><a href="#" class="goto-page" data-page="settings"><i class="mdi mdi-settings"></i> <span data-i18n="account_settings">Account Settings</span></a></li>
+                        </ul>
+                        <ul>
+                            <!--<li class="dropdown-header">Section title</li>-->
+                            <li><a href="#" data-toggle="modal" data-target="#mobile_settings_modal"><i class="mdi mdi-cellphone"></i> <span data-i18n="device_settings">Device Settings</span></a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
             <li id="header_send_money" class="dropdown">
                 <a href="#" data-toggle="modal" data-target="#send_money_modal">
-                    <span data-i18n="send">Send</span> <span class="coin-symbol"></span>
+                    <b><span data-i18n="send">Send</span> <span class="coin-symbol"></span></b>
                 </a>
             </li>
-            <li id="header_send_message" class="dropdown">
-                <a href="#" data-toggle="modal" data-target="#send_message_modal" data-i18n="send_message">Send Message</a>
-            </li>
-            <li class="client_options dropdown">
+            <!--<li class="client_options dropdown">
                 <a href="#" data-toggle="modal" data-target="#client_status_modal" id="header_client_options_link" ></a>
-            </li>
+            </li>-->
         </ul>
-        <ul class="nav navbar-nav">
-            <li>
+        <ul class="nav navbar-top-links navbar-right">
+            <!--<li>
                 <a class="client_options" href="#" data-toggle="modal" data-target="#client_status_modal">
                         <span id="confirmation_rate_indicator" class="badge nm_inner_subtype" style="background-color: #a94442;">
                             <span style="color: #fff;">
@@ -79,70 +198,84 @@
                     <span class="badge nm_inner_subtype"></span>
                     <span class="badge nm_inner_total"></span>
                 </a>
-            </li>
-            <li id="contacts_menu_li" role="presentation" class="active show_popover" data-toggle="popover" data-delay="250" data-placement="bottom" data-content="CONTACTS" data-container="#header_right" data-i18n="[data-content]contacts">
-                <a href="#" class="goto-page" data-page="contacts">
-                    <i class="fa fa-user"></i>
-                </a>
-            </li>
-            <!-- <li id="exchange_menu_li" role="presentation" class="active show_popover" data-toggle="popover" data-delay="250" data-placement="bottom" data-content="EXCHANGE" data-container="#header_right" data-i18n="[data-content]exchange">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    <i class="fa fa-exchange"></i>
-                </a>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="exchange_shape_shift">Shape Shift</a></li>
-                    <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="exchange_changelly">Changelly</a></li>
-                </ul>
-            </li>
-            -->
-            <li class="dropdown show_popover" role="presentation" data-toggle="popover" data-delay="250" data-placement="bottom" data-content="SETTINGS" data-container="#header_right" data-i18n="[data-content]settings">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    <i class="fa fa-cog"></i>
-                </a>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="blocks"><i class="fa fa-bars"></i><span data-i18n="blocks">Blocks</span></a></li>
-                    <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="peers"><i class="fa fa-cloud"></i><span data-i18n="peers">Peers</span></a></li>
-                    <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="generators"><i class="fa fa-code-fork"></i><span data-i18n="generators">Generators</span></a></li>
-                    <li><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="scheduled_transactions"><i class="fa fa-clock-o"></i><span data-i18n="scheduled_transactions">Scheduled Transactions</span></a></li>
-                    <li id="funding_monitor_menu_item"><a role="menuitem" tabindex="-1" href="#" class="goto-page" data-page="funding_monitors"><i class="fa fa-shekel"></i><span data-i18n="monitors">Monitors</span></a></li>
-                    <li role="presentation" class="divider"></li>
-                    <li><a href="#" class="goto-page" data-page="plugins_overview"><i class="fa fa-plug"></i><span data-i18n="plugins">Plugins</span></a></li>
-                    <li role="presentation" class="divider"></li>
-                    <li><a href="#" class="goto-page" data-page="settings"><i class="fa fa-cog"></i><span data-i18n="account_settings">Account Settings</span></a></li>
-                    <li id="mobile_settings_li"><a href="#" data-toggle="modal" data-target="#mobile_settings_modal"><i class="fa fa-mobile"></i><span data-i18n="device_settings">Device Settings</span></a></li>
-                    <li role="presentation" class="divider"></li>
-                    <li><a href="#" data-toggle="modal" data-target="#token_modal"><i class="fa fa-code"></i><span data-i18n="generate_token">Generate Token</span></a></li>
-                    <li><a href="#" data-toggle="modal" data-target="#hallmark_modal"><i class="fa fa-building"></i><span data-i18n="generate_hallmark">Generate Hallmark</span></a></li>
-                    <li><a href="#" data-toggle="modal" data-target="#hash_modal"><i class="fa fa-calculator"></i><span data-i18n="calculate_hash">Calculate Hash</span></a></li>
-                    <li><a href="#" data-toggle="modal" data-target="#transaction_json_modal"><i class="fa fa-asterisk"></i><span data-i18n="transaction_operations">Transaction Operations</span></a></li>
-                    <li role="presentation" class="divider"></li>
-                    <li><a href="#" id="refreshSearchIndex"><i class="fa fa-search"></i><span data-i18n="refresh_search_index">Refresh Search Index</span></a></li>
-                    <li id="api_console_li"><a href="/test" target="_blank"><i class="fa fa-magic"></i><span data-i18n="api_console">API Console</span></a></li>
-                    <li id="database_shell_li"><a href="/dbshell" target="_blank"><i class="fa fa-database"></i><span data-i18n="database_shell">Database Shell</span></a></li>
-                </ul>
-            </li>
-            <li class="dropdown show_popover" role="presentation" data-toggle="popover" data-delay="250" data-placement="bottom" data-content="HELP" data-container="#header_right" data-i18n="[data-content]help">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    <i class="fa fa-question-circle"></i>
-                </a>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a href="#" data-toggle="modal" data-target="#about_modal"><i class="fa fa-info-circle "></i><span class="help-about"></span></a></li>
-                </ul>
-            </li>
-            <li class="dropdown show_popover" id="web_wallet_li" role="presentation" data-toggle="popover" data-delay="250" data-placement="bottom" data-content="WEB WALLET" data-container="#header_right" data-i18n="[data-content]web_wallet">
-                <a href="#" class="dropdown-toggle"  data-toggle="dropdown" id="header_open_web_wallet">
-                    <i class="fa fa-sitemap"></i>
-                </a>
-            </li>
-            <li class="dropdown" id="logout_button_container">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" id="logout_button">
-                    <i class="fa fa-power-off"></i>
-                </a>
-                <ul class="dropdown-menu" role="menu">
+            </li>-->
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false"><i class=" mdi mdi-account-circle"></i> <span class="caret"></span> </a>
+                <ul class="dropdown-menu dropdown-user animated flipInY">
+                    <li>
+                        <div class="dw-user-box">
+                            <div class="u-text">
+                                <h4>Current account</h4>
+                                <p class="text-muted">Not verified profle</p>
+                                <button type="button" class="btn btn-rounded btn-danger" data-toggle="modal" data-target="#setAccountModal" data-whatever="@fat">Set Account Info</button>
+                                <button type="button" class="btn btn-rounded btn-info" data-toggle="modal" data-target="#exampleModal" data-whatever="@fat">Switch account</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#"><i class="ti-user"></i> Account Details</a></li>
+                    <li><a href="#"><i class="ti-email"></i> Messages</a></li>
+
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#" data-page="settings"><i class="ti-settings"></i> <span data-i18n="account_settings">Account Settings</span></a></li>
+                    <li role="separator" class="divider"></li>
                     <li><a role="menuitem" tabindex="-1" href="#" onclick="NRS.logout()" data-i18n="logout">Log Out</a></li>
                     <li><a role="menuitem" tabindex="-1" href="#" onclick="NRS.logout(true)" data-i18n="logout_stop_forging">Log Out &amp; Stop Forging</a></li>
                     <li><a role="menuitem" tabindex="-1" href="#" data-toggle="modal" data-target="#logout_clear_user_data_modal" data-i18n="logout_clear_user_data">Log Out and Clear User Data</a></li>
+
                 </ul>
+
+                <!-- /.dropdown-user -->
+            </li>
+            <li class="mega-dropdown open"> <a class="dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#" aria-expanded="true"><i class="mdi mdi-help-circle"></i></a>
+                <ul class="dropdown-menu mega-dropdown-menu animated bounceInDown">
+                    <li class="col-sm-3">
+                        <ul>
+                            <li class="dropdown-header">Quick Starting Guide</li>
+                            <li><a >Account set up</a></li>
+                            <li><a >Your first transaction</a></li>
+                            <li><a >Set up Sheduled Transaction</a></li>
+                            <li><a >Send message to the connected account</a></li>
+                            <li><a >View your monitors</a></li>
+                        </ul>
+                    </li>
+                    <li class="col-sm-3">
+                        <ul>
+                            <li class="dropdown-header">Lorem Ipsum</li>
+                            <li><a >Token Generator</a></li>
+                            <li><a >Working with Hallmark Generator</a></li>
+                            <li><a >How to calculate hash</a></li>
+                            <li><a >Avalable transaction operations</a></li>
+                        </ul>
+                    </li>
+                    <li class="col-sm-3">
+                        <ul>
+                            <li class="dropdown-header">Your Tools</li>
+                            <li><a >Working with Search Index</a> </li>
+                            <li><a >API Console</a></li>
+                            <li><a >Database Shell</a></li>
+                        </ul>
+                    </li>
+                    <li class="col-sm-3">
+                        <ul>
+                            <li class="dropdown-header">FAQ</li>
+                            <li><a href="#" data-toggle="modal" data-target="#about_modal"><span class="help-about"></span></a></li>
+                            <li><a >How to set up my wallet?</a></li>
+                            <li><a >My account is not activated</a></li>
+                            <li><a >I can not verify my passphrase</a></li>
+                            <li><a >I don't see the last transaction</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <!--<li class="dropdown show_popover" id="web_wallet_li" role="presentation" data-toggle="popover" data-delay="250" data-placement="bottom" data-content="WEB WALLET" data-container="#header_right" data-i18n="[data-content]web_wallet">
+                <a href="#" class="dropdown-toggle"  data-toggle="dropdown" id="header_open_web_wallet">
+                    <i class="fa fa-sitemap"></i>
+                </a>
+            </li>-->
+            <li class="in">
+                <form role="search" class="app-search hidden-sm hidden-xs m-r-10">
+                    <input type="text" class="form-control"> <a href="" class="active"><i class="fa fa-search"></i></a> </form>
             </li>
         </ul>
     </div>
