@@ -1,0 +1,4 @@
+2018-03-15 10:20:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Таблица "VERSION" не найдена
+Table "VERSION" not found; SQL statement:
+SELECT next_update FROM version [42102-196]
