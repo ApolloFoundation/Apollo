@@ -187,41 +187,29 @@
         </div>
         <div class="row">
             <div class="col-md-12">
-                <div class="box box-primary">
-                    <div class="box-header"><h3 class="box-title" data-i18n="recent_transactions">Recent Transactions</h3></div>
-                    <div class="box-body no-padding">
-                        <div class="data-container data-loading" data-no-padding="true" data-extra="#dashboard_transactions_footer">
-                            <table class="table table-striped" id="dashboard_table">
-                                <thead>
+                <div class="white-box">
+                    <h3 class="box-title">RESENT TRANSACTIONS</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="dashboard_table">
+                            <thead>
                                 <tr>
-                                    <th data-i18n="date">Date</th>
-                                    <th style="width:60px;text-align:center;"><i class="fa fa-envelope-o"></i></th>
-                                    <th data-i18n="type">Type</th>
-                                    <th class="numeric" data-i18n="amount">Amount</th>
-                                    <th class="numeric" data-i18n="fee">Fee</th>
-                                    <th data-i18n="account">Account</th>
+                                    <th data-i18n="date">DATE</th>
+                                    <th style="width:60px;text-align:center;"><i class="ti-email"></i></th>
+                                    <th data-i18n="type">TYPE</th>
+                                    <th class="numeric" data-i18n="amount">AMOUNT</th>
+                                    <th class="numeric" data-i18n="fee">FEE</th>
+                                    <th data-i18n="account">ACCOUNT</th>
                                     <th style="text-align:center;"><i class="fa fa-gavel"></i></th>
-                                    <th style="text-align:center;" data-i18n="height">Height</th>
-                                    <th style="text-align:center;" data-i18n="confirmations">Confirmations</th>
+                                    <th style="text-align:center;" data-i18n="height">HEIGHT</th>
+                                    <th style="text-align:center;" data-i18n="confirmations">CONFIRMATIONS</th>
                                 </tr>
-                                </thead>
-                                <tbody>
-
-                                </tbody>
-                            </table>
-                            <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
-                            <div class="data-empty-container"><p data-i18n="no_transactions_yet">No transactions yet.</p></div>
-                        </div>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
-                    <div class="box-footer">
-                        <span id="dashboard_transactions_footer" style="display: none">
-                            <button class="btn btn-primary goto-page" data-page="transactions">
-                                <i class="fa fa-caret-right"></i> <span data-i18n="view_more">View More</span>
-                            </button>
-                        </span>
-                        <button class="btn btn-primary goto-page" data-page="ledger">
-                            <i class="fa fa-caret-right"></i> <span data-i18n="account_ledger">Account Ledger</span>
-                        </button>
+                    <div class="button-list">
+                        <button class="btn btn-info" type="button">View more</button>
+                        <button class="btn btn-info" type="button">Account Ledger</button>
                     </div>
                 </div>
             </div>

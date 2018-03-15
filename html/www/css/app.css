@@ -143,6 +143,7 @@ body.fixed .wrapper {
 .content {
   padding: 20px; /*wesley*/
   background: #edf1f5;
+  margin-bottom: 55px;
 }
 /* Utility */
 /* H1 - H6 font */
@@ -360,11 +361,6 @@ img {
 .table > tbody > tr >td {
 	background-color: #fff;
 }
-/* Change the color of the striped tables */
-.table-striped > tbody > tr:nth-child(odd) > td,
-.table-striped > tbody > tr:nth-child(odd) > th {
-  background-color: #f3f4f5;
-}
 /* .text-center in tables */
 table.text-center td,
 table.text-center th {
@@ -463,6 +459,12 @@ body > .header .logo .icon {
 .bg-title {
   margin: 0;
   position: relative;
+}
+.left-side {
+  display: none;
+}
+#dashboard_table thead tr th{
+  text-transform: uppercase;
 }
 
 .right-side > .page > .content-header {
@@ -1642,15 +1644,7 @@ body > .header .logo .icon {
 -------------------------
 */
 .btn {
-  font-weight: 500;
-  -webkit-border-radius: 3px;
-  -moz-border-radius: 3px;
   border-radius: 3px;
-   /* background-color:#C0C0C0; */
-  border: 1px solid transparent;
-  -webkit-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
-  -moz-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
-  box-shadow: inset 0px -1px 0px 0px rgba(0, 0, 0, 0.09);
 }
 .btn.btn-default {
   /*background-color: #C0C0C0;*/
@@ -1687,10 +1681,6 @@ body > .header .logo .icon {
 .btn.btn-success:active,
 .btn.btn-success.hover {
   background-color: #008d4c;
-}
-.btn.btn-info {
-  background-color: #00c0ef;
-  border-color: #00acd6;
 }
 .btn.btn-info:hover,
 .btn.btn-info:active,
