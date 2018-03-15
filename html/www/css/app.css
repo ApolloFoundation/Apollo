@@ -141,9 +141,12 @@ body.fixed .wrapper {
 }
 /* Content */
 .content {
-  padding: 20px; /*wesley*/
+  padding: 25px; /*wesley*/
   background: #edf1f5;
   margin-bottom: 55px;
+}
+.alert-no-icon {
+  margin-bottom: 25px !important;
 }
 /* Utility */
 /* H1 - H6 font */
