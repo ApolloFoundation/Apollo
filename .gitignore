@@ -3,3 +3,6 @@ classes
 classes*
 classes/*.*
 .idea/
+addons/
+api_db/
+classes/
