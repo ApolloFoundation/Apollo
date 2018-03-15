@@ -13,7 +13,7 @@
  * Removal or modification of this copyright notice is prohibited.            *
  *                                                                            *
  ******************************************************************************/
-
+/* 
 .col-xs-1, .col-sm-1, .col-md-1, .col-lg-1, .col-xs-2, .col-sm-2, .col-md-2, .col-lg-2, .col-xs-3, .col-sm-3, .col-md-3, .col-lg-3, .col-xs-4, .col-sm-4, .col-md-4, .col-lg-4, .col-xs-5, .col-sm-5, .col-md-5, .col-lg-5, .col-xs-6, .col-sm-6, .col-md-6, .col-lg-6, .col-xs-7, .col-sm-7, .col-md-7, .col-lg-7, .col-xs-8, .col-sm-8, .col-md-8, .col-lg-8, .col-xs-9, .col-sm-9, .col-md-9, .col-lg-9, .col-xs-10, .col-sm-10, .col-md-10, .col-lg-10, .col-xs-11, .col-sm-11, .col-md-11, .col-lg-11, .col-xs-12, .col-sm-12, .col-md-12, .col-lg-12
 {
 	padding-left: 10px !important;
@@ -23,7 +23,7 @@
 .row {
 	margin-right: -10px !important;
 	margin-left: -10px !important;
-}
+} */
 
 /*!
  *   AdminLTE v1.0
@@ -35,7 +35,7 @@
     Core: General style
 ----------------------------
 */
-html,
+/* html,
 body {
   overflow-x:hidden;
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -43,39 +43,31 @@ body {
   min-height: 100%;
   background: #f9f9f9;
   color: black !important;
-}
+} */
 /* preload images or they will flicker */
-body::after{
+/* body::after{
   position:absolute; width:0; height:0; overflow:hidden; z-index:-1;
   content:url(../img/client_background.png)
   url(../img/apl-load-progress-logo-circle.png)
   url(../img/apl-load-progress-logo-circle.png);
-}
+} */
 html.lockscreen, html.lockscreen body {
   height:100%;
   overflow-x:auto;
 }
-a {
+/* a {
   color: #3c8dbc;
-}
-a:hover,
+} */
+/* a:hover,
 a:active,
 a:focus {
   outline: none;
   text-decoration: none;
   color: #72afd2;
-}
+} */
 /* Layouts */
 .wrapper {
   min-height: 100%;
-}
-.wrapper:before,
-.wrapper:after {
-  display: table;
-  content: " ";
-}
-.wrapper:after {
-  clear: both;
 }
 /* Header */
 body > .header {
@@ -90,11 +82,6 @@ body > .header {
 .left-side {
   min-height: 100%;
   display: block;
-}
-/*right side - contins main content*/
-.right-side {
-  background-color: #f9f9f9;
-  margin-left: 220px;
 }
 /*left side - contains sidebar*/
 .left-side {
@@ -149,7 +136,8 @@ body.fixed .navbar {
   right: 0;
 }
 body.fixed .wrapper {
-  margin-top: 50px;
+  margin-top: 60px;
+  margin-left: 60px;
 }
 /* Content */
 .content {
@@ -158,7 +146,7 @@ body.fixed .wrapper {
 }
 /* Utility */
 /* H1 - H6 font */
-h1,
+/* h1,
 h2,
 h3,
 h4,
@@ -171,7 +159,7 @@ h6,
 .h5,
 .h6 {
   font-family: sans-serif;
-}
+} */
 /* Page Header */
 .page-header {
   margin: 10px 0 20px 0;
@@ -472,6 +460,11 @@ body > .header .logo {
 body > .header .logo .icon {
   margin-right: 10px;
 }*/
+.bg-title {
+  margin: 0;
+  position: relative;
+}
+
 .right-side > .page > .content-header {
   position: relative;
   padding: 15px 20px 10px 20px;

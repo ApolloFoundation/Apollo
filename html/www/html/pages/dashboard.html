@@ -15,16 +15,19 @@
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 <div id="dashboard_page" class="page" style="display:block">
-    <section class="content-header">
-        <span style="float:right; font-size:115%;">
-            <span id="nrs_version_info"></span>:
-            <a href="#" class="small-box-footer" data-toggle="modal" data-target="#nrs_modal">
-                <span id="nrs_version" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
-            </a>
-            <span class="label label-danger" id="nrs_update" style="display:none;"></span>
-        </span>
-        <h1 data-i18n="dashboard">Dashboard</h1>
-    </section>
+    <div class="bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">Dashboard</h4>
+        </div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><i class="mdi mdi-checkbox-blank-circle text-success"></i> Connected</li>
+                <li><i class="mdi mdi-checkbox-blank-circle text-danger"></i> Not Forging <button class="btn-rounded btn-danger btn-sm"> <i class="fa fa-bolt"></i> FORGE</button></li>
+                <li>Height: 13675</li>
+                <li>Apollo: 5</li>
+            </ol>
+        </div>
+    </div>
 
     <section class="content">
         <div class="alert-danger alert alert-no-icon" id="dashboard_message" style="display:none;padding:5px;margin-bottom:15px;"></div>
@@ -33,89 +36,152 @@
 
         <div class="dashboard_first_row row">
             <div class="col-lg-3 col-xs-6">
-                <div class="small-box bg-aqua">
-                    <div class="inner">
-                        <h3><span id="account_balance" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p><span data-i18n="account_balance">Account Balance</span> <span class="label" id="account_leasing" style="display:none;background-color:#1990B1"></span></p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer" data-toggle="modal" data-target="#account_details_modal">Account Balance</a>
+                    </h3>
+                    <div class="text-right">
+                        <span>AVAILABLE BALANCE</span>
+                        <h1>
+                            <i class="icon-briefcase text-info"></i>
+                            <a href="#" class="small-box-footer" data-toggle="modal" data-target="#account_details_modal">
+                                <span id="account_balance" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-briefcase"></i></div>
-                    <a href="#" class="small-box-footer" data-toggle="modal" data-target="#account_details_modal"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
             <div class="optional_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-green">
-                    <div class="inner">
-                        <h3><span id="account_assets_balance" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p style="display:inline-block" data-i18n="assets_value">Assets value</p> <p style="display:inline-block">(<span id="account_nr_assets" class="loading_dots"></span></p> <p style="display:inline-block"><span data-i18n="assets_owned">Assets Owned</span>)</p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="my_assets">Assets Value</a>
+                    </h3>
+                    <div class="text-right"> <span>ASSETS OWNED</span>
+                        <h1>
+                            <i class="icon-pie-chart text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="my_assets">
+                                <span id="account_assets_balance" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-signal"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="my_assets"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
             <div class="optional_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-yellow">
-                    <div class="inner">
-                        <h3><span id="account_currencies_balance" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p style="display:inline-block" data-i18n="currencies_value">Currencies value</p> <p style="display:inline-block">(<span id="account_nr_currencies" class="loading_dots"></span></p> <p style="display:inline-block"><span data-i18n="currencies_owned">Currencies Owned</span>)</p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="currencies">Currencies Value</a>
+                    </h3>
+                    <div class="text-right"> <span>CURRENCIES OWNED</span>
+                        <h1>
+                            <i class="ti-wallet text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="currencies">
+                                <span id="account_currencies_balance" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-bank"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="currencies"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
             <div class="optional_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-yellow">
-                    <div class="inner">
-                        <h3><span id="account_purchase_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p data-i18n="purchased_products">Purchased Products</p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="purchased_dgs">Purchased Products</a>
+                    </h3>
+                    <div class="text-right"> <span>&nbsp;</span>
+                        <h1>
+                            <i class="icon-handbag text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="purchased_dgs">
+                                <span id="account_purchase_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-shopping-cart"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="purchased_dgs"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="optional_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-yellow">
-                    <div class="inner">
-                        <h3>
-                            <span id="account_pending_sale_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
-                            <span> / </span>
-                            <span id="account_completed_sale_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
-                        </h3>
-                        <p><span data-i18n="pending">Pending</span><span> / </span><span data-i18n="completed_sales">Completed Sales</span></p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="pending_orders_dgs">SALES</a>
+                    </h3>
+                    <div class="text-right"> <span>PENDING / COMPLETED</span>
+                        <h1>
+                            <i class="icon-bag text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="pending_orders_dgs">
+                                <span id="account_pending_sale_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                                <span> / </span>
+                                <span id="account_completed_sale_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-shopping-cart"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="pending_orders_dgs"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
             <div class="optional_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-yellow">
-                    <div class="inner">
-                        <h3><span id="account_message_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p data-i18n="message_count">Messages</p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="messages">MESSAGES</a>
+                    </h3>
+                    <div class="text-right"> <span>NEW RECEIVED</span>
+                        <h1>
+                            <i class="icon-speech text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="messages">
+                                <span id="account_message_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-envelope-o"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="messages"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
             <div class="optional_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-yellow">
-                    <div class="inner">
-                        <h3><span id="account_alias_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p data-i18n="aliases">Aliases</p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 class="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="aliases">Aliases</a>
+                    </h3>
+                    <div class="text-right"> <span>&nbsp;</span>
+                        <h1>
+                            <i class=" icon-badge text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="aliases">
+                                <span id="account_alias_count" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-bookmark"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="aliases"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
             <div class="block_info_dashboard_tile col-lg-3 col-xs-6">
-                <div class="small-box bg-red">
-                    <div class="inner">
-                        <h3><span id="nrs_current_block_time" class="loading_dots"><span>.</span><span>.</span><span>.</span></span></h3>
-                        <p><span id="nrs_block" data-i18n="last_updated">Last Updated</span> (<span data-i18n="block">Block</span>: <span class="nrs_current_block loading_dots"><span>.</span><span>.</span><span>.</span></span>)</p>
+                <div class="white-box light-font whitebox-sections">
+                    <h3 classlong-data="box-title">
+                        <a href="#" class="small-box-footer goto-page" data-page="blocks">LAST UPDATED</a>
+                    </h3>
+                    <div class="text-right"> <span>BLOCK: 13526</span>
+                        <h1 class="long-data">
+                            <i class="icon-clock text-info"></i>
+                            <a href="#" class="small-box-footer goto-page" data-page="blocks">
+                                <span id="nrs_current_block_time" class="loading_dots"><span>.</span><span>.</span><span>.</span></span>
+                            </a>
+                        </h1>
                     </div>
-                    <div class="icon"><i class="fa fa-code"></i></div>
-                    <a href="#" class="small-box-footer goto-page" data-page="blocks"><span data-i18n="more_info">More info</span> <i class="fa fa-arrow-circle-right"></i></a>
+                    <div class="progress m-b-0">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:20%;"> <span class="sr-only">20% Complete</span> </div>
+                    </div>
                 </div>
             </div>
         </div>
