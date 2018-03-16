@@ -585,6 +585,7 @@ var NRS = (function(NRS, $, undefined) {
 			localStorage.setItem("logged_in", true);
 		}
 		$("#lockscreen").hide();
+		$('.navbar-default').show();
 		$("body, html").removeClass("lockscreen");
 		$("#login_error").html("").hide();
 		$(document.documentElement).scrollTop = 0;
