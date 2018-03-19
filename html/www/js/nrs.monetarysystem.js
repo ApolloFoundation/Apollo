@@ -1186,38 +1186,38 @@ var NRS = (function (NRS, $, undefined) {
         var sidebarId = 'sidebar_monetary_system';
         var options = {
             "id": sidebarId,
-            "titleHTML": '<i class="fa fa-bank"></i><span data-i18n="monetary_system">Monetary System</span>',
+            "titleHTML": '<i class="mdi mdi-bank"></i><span class="hide-menu"> Currency System <span class="fa arrow"></span></span>',
             "page": 'currencies',
             "desiredPosition": 40,
             "depends": { tags: [ NRS.constants.API_TAGS.MS ] }
         };
         NRS.addTreeviewSidebarMenuItem(options);
         options = {
-            "titleHTML": '<span data-i18n="currencies">Currencies</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="currencies">Currencies</span>',
             "type": 'PAGE',
             "page": 'currencies'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="exchange_history">Exchange History</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="exchange_history">Exchange History</span>',
             "type": 'PAGE',
             "page": 'exchange_history'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="transfer_history">Transfer History</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="transfer_history">Transfer History</span>',
             "type": 'PAGE',
             "page": 'currency_transfer_history'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="approval_requests">Approval Requests</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="approval_requests">Approval Requests</span>',
             "type": 'PAGE',
             "page": 'approval_requests_currency'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="issue_currency">Issue Currency</span></a>',
+            "titleHTML": '<span class="hide-menu" data-i18n="issue_currency">Issue Currency</span></a>',
             "type": 'MODAL',
             "modalId": 'issue_currency_modal'
         };

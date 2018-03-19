@@ -62,13 +62,13 @@ var NRS = (function(NRS, $) {
 	NRS.setup.messages = function() {
 		NRS.addTreeviewSidebarMenuItem({
 			"id": 'sidebar_messages',
-			"titleHTML": '<i class="fa fa-envelope"></i> <span data-i18n="messages">Messages</span>',
+			"titleHTML": '<i class="fa fa-envelope"></i><span class="hide-menu"> Messages <span class="fa arrow"></span></span>',
 			"page": 'my_messages',
 			"desiredPosition": 90,
 			"depends": {tags: [NRS.constants.API_TAGS.MESSAGES]}
 		});
 		NRS.appendMenuItemToTSMenuItem('sidebar_messages', {
-			"titleHTML": '<i class="fa fa-comment"></i> <span data-i18n="chat">Chat</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="chat">Chat</span>',
 			"type": 'PAGE',
 			"page": 'messages'
 		});

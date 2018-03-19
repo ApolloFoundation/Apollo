@@ -15,11 +15,12 @@
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 <script type="text/javascript">
-    $('#side-menu > li').click(function() {
-        $(this).toggleClass('active');
-        $(this).children('a').toggleClass('active');
-        $(this).children('ul').slideToggle();
-    });
+
+    // $('#side-menu > li').click(function() {
+    //     $(this).toggleClass('active');
+    //     $(this).children('a').toggleClass('active');
+    //     $(this).children('ul').slideToggle();
+    // });
     if($('#lockscreen').is(':visible')) {
         $('.navbar-default').hide();
     }
@@ -29,104 +30,8 @@
     <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 100%;"><div class="sidebar-nav slimscrollsidebar" style="overflow: scroll; width: auto; height: 100%;">
         <div class="sidebar-head">
             <h3><span class="fa-fw open-close"><i class="ti-menu hidden-xs"></i><i class="ti-close visible-xs"></i></span> <span class="hide-menu">Apollo Wallet</span></h3> </div>
-        <ul class="nav" id="side-menu">
-            <li class="user-pro active">
-                <a href="#" class="waves-effect active"><span class="hide-menu account-number"> <b>APL-Y4XB-ENRN-93VF-C3WVN</b><span class="fa arrow"></span></span>
-                </a>
-                <ul class="nav nav-second-level collapse in" aria-expanded="true">
-                    <li><a href="#" data-toggle="modal" data-target="#account_info_modal"><i class="ti-user"></i> <span class="hide-menu">Account Details</span></a></li>
-                    <li><a href="#"><i class="ti-email"></i> <span class="hide-menu">Messages</span></a></li>
-                    <li><a href="#" class="goto-page" data-page="settings"><i class="ti-settings"></i> <span class="hide-menu">Account Setting</span></a></li>
-                    <li><a href="#" onclick="NRS.logout()"><i class="fa fa-power-off"></i> <span class="hide-menu">Logout</span></a></li>
-                </ul>
-            </li>
-            <li class="devider"></li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-av-timer fa-fw" data-icon="v"></i> <span class="hide-menu"> Dashboard <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><i class="fa fa-calendar text-warning"></i> <span class="hide-menu"> Account Ledger</span></a> </li>
-                    <li> <a href="#"><i class="fa fa-archive text-warning"></i> <span class="hide-menu"> Account Properties</span></a> </li>
-                    <li> <a href="#"><i class="fa fa-clock-o text-warning"></i> <span class="hide-menu"> My Transactions</span></a> </li>
-                    <li> <a href="#"><i class="fa  fa-check text-warning"></i> <span class="hide-menu"> Approval Requests</span></a> </li>
-                </ul>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-bookmark"></i> <span class="hide-menu"> Aliaces </span></a>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-bank"></i> <span class="hide-menu"> Currency System <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Currencies</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Exchange History</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Transfer History</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Approval Requests</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu text-info">Issue Currency</span></a> </li>
-                </ul>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-signal"></i> <span class="hide-menu"> Asset System <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Asset Exchange</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Trade History</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Transfer History</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Delete History</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Assets</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Open Orders</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Approval Requests</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu text-info">Issue Asset</span></a> </li>
-                </ul>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-database"></i> <span class="hide-menu"> Data Storage <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Search</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">File Upload</span></a> </li>
-                </ul>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-checkbox-marked-circle-outline"></i> <span class="hide-menu"> Voting System <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Active Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Followed Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Votes</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Create Poll</span></a> </li>
-                </ul>
-            </li>
-
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-cart"></i> <span class="hide-menu"> Marketplace <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Active Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Followed Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Votes</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Create Poll</span></a> </li>
-                </ul>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-shuffle-variant"></i> <span class="hide-menu"> Coin Shuffling <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Active Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Followed Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Votes</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Create Poll</span></a> </li>
-                </ul>
-            </li>
-            <li> <a href="#" class="waves-effect"><i class="fa fa-envelope"></i> <span class="hide-menu"> Messages <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Active Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Followed Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Votes</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Create Poll</span></a> </li>
-                </ul>
-            </li>
-
-            <li> <a href="#" class="waves-effect"><i class="mdi mdi-power-plug"></i> <span class="hide-menu"> Plugins <span class="fa arrow"></span></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li> <a href="#"><span class="hide-menu">Active Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Followed Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Votes</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">My Polls</span></a> </li>
-                    <li> <a href="#"><span class="hide-menu">Create Poll</span></a> </li>
-                </ul>
-            </li>
-            <li class="devider"></li>
-            <li><a href="faq.html" class="waves-effect"><i class="fa fa-circle-o text-success"></i> <span class="hide-menu"> Apollo Version: <b>1.11.10</b></span></a></li>
+        <ul class="sidebar-menu nav" id="sidebar_menu">
+            
         </ul>
     </div><div class="slimScrollBar" style="background: rgba(0, 0, 0, 0.5); width: 6px; position: absolute; top: 3px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; left: 1px; height: 247.188px;"></div><div class="slimScrollRail" style="width: 6px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; left: 1px;"></div></div>
 </div>

@@ -167,9 +167,9 @@ var NRS = (function(NRS, $) {
         if (!NRS.isApiEnabled(options.depends)) {
             return;
         }
-        var menuHTML = '<li class="treeview" id="' + options["id"] + '" class="sm_treeview" data-sidebar-position="' + options["desiredPosition"] + '">';
-        menuHTML += '<a href="#" data-page="' + options["page"] + '">' + options["titleHTML"] + '<i class="fa pull-right fa-angle-right" style="padding-top:3px"></i></a>';
-        menuHTML += '<ul class="treeview-menu" style="display: none;"></ul>';
+        var menuHTML = '<li class="treeview" id="' + options["id"] + '" data-sidebar-position="' + options["desiredPosition"] + '">';
+        menuHTML += '<a class="waves-effect" href="#" data-page="' + options["page"] + '">' + options["titleHTML"] + '</a>';
+        menuHTML += '<ul class="treeview-menu nav nav-second-level collapse" style="display: none;"></ul>';
         menuHTML += '</li>';
         _appendToSidebar(menuHTML, options["id"], options["desiredPosition"]);
     };
@@ -182,7 +182,7 @@ var NRS = (function(NRS, $) {
         if (parentMenu.length == 0) {
             return;
         }
-        var menuHTML ='<li class="sm_treeview_submenu"><a href="#" ';
+        var menuHTML ='<li><a href="#" ';
         if (options["type"] == 'PAGE' && options["page"]) {
             menuHTML += 'data-page="' + options["page"] + '"';
         } else if (options["type"] == 'MODAL' && options["modalId"]) {
@@ -190,8 +190,8 @@ var NRS = (function(NRS, $) {
         } else {
             return false;
         }
-        menuHTML += '><i class="fa fa-angle-double-right"></i> ';
-        menuHTML += options["titleHTML"] + ' <span class="badge" style="display:none;"></span></a></li>';
+        menuHTML += '>';
+        menuHTML += options["titleHTML"] + ' </a></li>';
         parentMenu.append(menuHTML);
     };
 

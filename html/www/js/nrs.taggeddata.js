@@ -215,20 +215,20 @@ var NRS = (function(NRS, $) {
 		var sidebarId = 'sidebar_tagged_data';
 		var options = {
 			"id": sidebarId,
-			"titleHTML": '<i class="fa fa-database"></i><span data-i18n="data_cloud">Data Cloud</span>',
+			"titleHTML": '<i class="mdi mdi-database"></i><span class="hide-menu"> Data Storage <span class="fa arrow"></span></span>',
 			"page": 'tagged_data_search',
 			"desiredPosition": 60,
 			"depends": { tags: [ NRS.constants.API_TAGS.DATA ] }
 		};
 		NRS.addTreeviewSidebarMenuItem(options);
 		options = {
-			"titleHTML": '<span data-i18n="search">Search</span></a>',
+			"titleHTML": '<span class="hide-menu" data-i18n="search">Search</span></a>',
 			"type": 'PAGE',
 			"page": 'tagged_data_search'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="upload_file">File Upload</span></a>',
+			"titleHTML": '<span class="hide-menu" data-i18n="upload_file">File Upload</span></a>',
 			"type": 'MODAL',
 			"modalId": 'upload_data_modal'
 		};

@@ -138,23 +138,23 @@ var NRS = (function(NRS, $) {
         var sidebarId = 'sidebar_shuffling';
         NRS.addTreeviewSidebarMenuItem({
             "id": sidebarId,
-            "titleHTML": '<i class="fa fa-random"></i> <span data-i18n="shuffling">Shuffling</span>',
+            "titleHTML": '<i class="mdi mdi-shuffle-variant"></i><span class="hide-menu"> Coin Shuffling <span class="fa arrow"></span></span>',
             "page": 'active_shufflings',
             "desiredPosition": 80,
             "depends": { tags: [ NRS.constants.API_TAGS.SHUFFLING ] }
         });
         NRS.appendMenuItemToTSMenuItem(sidebarId, {
-            "titleHTML": '<span data-i18n="active_shufflings">Active Shufflings</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="active_shufflings">Active Shufflings</span>',
             "type": 'PAGE',
             "page": 'active_shufflings'
         });
         NRS.appendMenuItemToTSMenuItem(sidebarId, {
-            "titleHTML": '<span data-i18n="my_shufflings">My Shufflings</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="my_shufflings">My Shufflings</span>',
             "type": 'PAGE',
             "page": 'my_shufflings'
         });
         NRS.appendMenuItemToTSMenuItem(sidebarId, {
-            "titleHTML": '<span data-i18n="create_shuffling">Create Shuffling</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="create_shuffling">Create Shuffling</span>',
             "type": 'MODAL',
             "modalId": 'm_shuffling_create_modal'
         });

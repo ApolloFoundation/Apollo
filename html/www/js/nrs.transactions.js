@@ -1048,37 +1048,37 @@ var NRS = (function(NRS, $, undefined) {
 		var sidebarId = 'dashboard_link';
 		var options = {
 			"id": sidebarId,
-			"titleHTML": '<i class="fa fa-dashboard"></i> <span data-i18n="dashboard">Dashboard</span>',
+			"titleHTML": '<i class="mdi mdi-av-timer fa-fw" data-icon="v"></i><span class="hide-menu"> Dashboard <span class="fa arrow"></span></span>',
 			"page": 'dashboard',
 			"desiredPosition": 10
 		};
 		NRS.addTreeviewSidebarMenuItem(options);
 		options = {
-			"titleHTML": '<span data-i18n="dashboard">Dashboard</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="dashboard">Dashboard</span>',
 			"type": 'PAGE',
 			"page": 'dashboard'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="account_ledger">Account Ledger</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="account_ledger">Account Ledger</span>',
 			"type": 'PAGE',
 			"page": 'ledger'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="account_properties">Account Properties</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="account_properties">Account Properties</span>',
 			"type": 'PAGE',
 			"page": 'account_properties'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="my_transactions">My Transactions</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="my_transactions">My Transactions</span>',
 			"type": 'PAGE',
 			"page": 'transactions'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="approval_requests">Approval Requests</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="approval_requests">Approval Requests</span>',
 			"type": 'PAGE',
 			"page": 'approval_requests_account'
 		};

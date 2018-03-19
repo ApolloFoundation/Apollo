@@ -259,38 +259,38 @@ var NRS = (function(NRS, $, undefined) {
 		var sidebarId = 'sidebar_voting_system';
 		var options = {
 			"id": sidebarId,
-			"titleHTML": '<i class="fa fa-check-square-o"></i><span data-i18n="voting_system">Voting</span>',
+			"titleHTML": '<i class="mdi mdi-checkbox-marked-circle-outline"></i><span class="hide-menu"> Voting System <span class="fa arrow"></span></span>',
 			"page": 'polls',
 			"desiredPosition": 50,
 			"depends": { tags: [ NRS.constants.API_TAGS.VS ] }
 		};
 		NRS.addTreeviewSidebarMenuItem(options);
 		options = {
-			"titleHTML": '<span data-i18n="active_polls">Active Polls</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="active_polls">Active Polls</span>',
 			"type": 'PAGE',
 			"page": 'polls'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="followed_polls">Followed Polls</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="followed_polls">Followed Polls</span>',
 			"type": 'PAGE',
 			"page": 'followed_polls'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="my_votes">My Votes</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="my_votes">My Votes</span>',
 			"type": 'PAGE',
 			"page": 'voted_polls'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="my_polls">My Polls</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="my_polls">My Polls</span>',
 			"type": 'PAGE',
 			"page": 'my_polls'
 		};
 		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
 		options = {
-			"titleHTML": '<span data-i18n="create_poll">Create Poll</span>',
+			"titleHTML": '<span class="hide-menu" data-i18n="create_poll">Create Poll</span>',
 			"type": 'MODAL',
 			"modalId": 'create_poll_modal'
 		};

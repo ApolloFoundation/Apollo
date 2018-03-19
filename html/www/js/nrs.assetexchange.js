@@ -2054,56 +2054,56 @@ var NRS = (function (NRS, $, undefined) {
         var sidebarId = 'sidebar_asset_exchange';
         var options = {
             "id": sidebarId,
-            "titleHTML": '<i class="fa fa-signal"></i><span data-i18n="assets">Assets</span>',
+            "titleHTML": '<i class="mdi mdi-signal"></i><span class="hide-menu"> Asset System <span class="fa arrow"></span></span>',
             "page": 'asset_exchange',
             "desiredPosition": 30,
             "depends": { tags: [ NRS.constants.API_TAGS.AE ] }
         };
         NRS.addTreeviewSidebarMenuItem(options);
         options = {
-            "titleHTML": '<span data-i18n="asset_exchange">Asset Exchange</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="asset_exchange">Asset Exchange</span>',
             "type": 'PAGE',
             "page": 'asset_exchange'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="trade_history">Trade History</span></a>',
+            "titleHTML": '<span class="hide-menu" data-i18n="trade_history">Trade History</span></a>',
             "type": 'PAGE',
             "page": 'trade_history'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="transfer_history">Transfer History</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="transfer_history">Transfer History</span>',
             "type": 'PAGE',
             "page": 'transfer_history'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="delete_history">Delete History</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="delete_history">Delete History</span>',
             "type": 'PAGE',
             "page": 'deletes_history'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="my_assets">My Assets</span></a>',
+            "titleHTML": '<span class="hide-menu" data-i18n="my_assets">My Assets</span></a>',
             "type": 'PAGE',
             "page": 'my_assets'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="open_orders">Open Orders</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="open_orders">Open Orders</span>',
             "type": 'PAGE',
             "page": 'open_orders'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="approval_requests">Approval Requests</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="approval_requests">Approval Requests</span>',
             "type": 'PAGE',
             "page": 'approval_requests_asset'
         };
         NRS.appendMenuItemToTSMenuItem(sidebarId, options);
         options = {
-            "titleHTML": '<span data-i18n="issue_asset">Issue Asset</span>',
+            "titleHTML": '<span class="hide-menu" data-i18n="issue_asset">Issue Asset</span>',
             "type": 'MODAL',
             "modalId": 'issue_asset_modal'
         };

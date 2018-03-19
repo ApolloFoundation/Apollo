@@ -290,7 +290,7 @@ var NRS = (function(NRS, $, undefined) {
         if ($('#' + sidebarId).length == 0) {
             var options = {
                 "id": sidebarId,
-                "titleHTML": '<i class="fa fa-plug"></i> <span data-i18n="plugins">Plugins</span>',
+                "titleHTML": '<i class="mdi mdi-power-plug"></i><span class="hide-menu"> Plugins </span>',
                 "page": 'plugins',
                 "desiredPosition": 110,
                 "depends": { apis: [ NRS.constants.REQUEST_TYPES.getPlugins ] }
