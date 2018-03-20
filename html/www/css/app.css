@@ -707,6 +707,9 @@ body > .header .logo .icon {
   transform: translate(-50%, 0);
   border-radius: 15px;
 }
+.drop-menu > li > a {
+  padding: 5px 15px;
+}
 
 
 /*
