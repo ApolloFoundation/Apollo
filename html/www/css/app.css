@@ -693,8 +693,20 @@ body > .header .logo .icon {
 .user-panel > .info > a > .glyphicon {
   margin-right: 3px;
 }
+.bg-title .breadcrumb a {
+  color: #222;
+}
 
-
+#account_id_dropdown {
+  position: relative;
+  display: inline-block;
+}
+.drop-menu {
+  left: 50% !important;
+  right: auto !important;
+  transform: translate(-50%, 0);
+  border-radius: 15px;
+}
 
 
 /*
@@ -1672,9 +1684,6 @@ body > .header .logo .icon {
     Component: Buttons
 -------------------------
 */
-.btn {
-  border-radius: 3px;
-}
 .btn.btn-default {
   /*background-color: #C0C0C0;*/
     background-color: #fafafa;
@@ -1715,15 +1724,6 @@ body > .header .logo .icon {
 .btn.btn-info:active,
 .btn.btn-info.hover {
   background-color: #00acd6;
-}
-.btn.btn-danger {
-  background-color: #f56954;
-  border-color: #f4543c;
-}
-.btn.btn-danger:hover,
-.btn.btn-danger:active,
-.btn.btn-danger.hover {
-  background-color: #f4543c;
 }
 .btn.btn-warning {
   background-color: #f39c12;
@@ -2961,7 +2961,10 @@ label .popover-content {
 	cursor:pointer;
 }
 #account_id_dropdown ul.dropdown-menu>li>a {
-	padding:3px 8px;
+	background-color: transparent;
+}
+#account_id_dropdown ul.dropdown-menu>li>a:hover {
+  text-decoration: underline;
 }
 
 .dropdown-menu > li > a.zeroclipboard-is-hover {

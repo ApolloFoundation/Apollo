@@ -14,6 +14,14 @@
   ~                                                                           ~
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
+<script type="text/javascript">
+    $("#account_id_dropdown").hover(function() {
+        $(this).addClass('open');
+    }, function() {
+        $(this).removeClass('open');
+    });
+</script>
+
 <header class="navbar navbar-default navbar-static-top m-b-0" role="navigation">
     <div class="navbar-header">
         <div class="top-left-part">
@@ -208,7 +216,10 @@
                                 <h4>Current account</h4>
                                 <p class="text-muted">Not verified profle</p>
                                 <button type="button" class="btn btn-rounded btn-danger" data-target="#account_info_modal" data-toggle="modal" data-target="#setAccountModal" data-whatever="@fat">Set Account Info</button>
-                                <button type="button" class="btn btn-rounded btn-info" data-toggle="modal" data-target="#exampleModal" data-whatever="@fat">Switch account</button>
+                                <div id="account_id_dropdown">
+                                    <button type="button" class="btn btn-rounded btn-info">Switch account</button>
+                                    <ul class="dropdown-menu drop-menu" role="menu" aria-labelledby="dropdownMenu1"></ul>
+                                </div>
                             </div>
                         </div>
                     </li>
