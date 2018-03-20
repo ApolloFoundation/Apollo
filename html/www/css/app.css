@@ -467,6 +467,30 @@ body > .header .logo .icon {
 .fix-header #page {
   min-height: 100vh;
 }
+.dropdown-menu>li>a {
+  display: flex;
+  align-items: center;
+}
+.dropdown-menu > li > a > span {
+  margin-left: 10px;
+}
+.navbar-top-links .dropdown-menu li#sidebar_account_link {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  cursor: pointer;
+}
+.navbar-top-links .dropdown-menu li#sidebar_account_link a {
+  padding: 9px 0;
+  margin-left: 10px;
+  flex: 1 1 auto;
+}
+.navbar-top-links .dropdown-menu li#sidebar_account_link:hover {
+  background-color: #f7fafc;
+}
+.navbar-top-links .dropdown-menu li#sidebar_account_link a:hover {
+  background-color: transparent;
+}
 
 .right-side > .page > .content-header {
   position: relative;
@@ -2473,29 +2497,18 @@ a.list-group-item:hover {
 
 /* Message page */
 .content-splitter-inner {
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
+	position: relative;
 }
 .content-splitter-sidebar {
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
+	position: relative;
 	width: 40%;
 }
 
 .content-splitter-sidebar-inner {
-	position: absolute;
-	padding-bottom: 120px;
-	top: 0px;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	overflow: auto;
-	background: white;;
+	position: relative;
+	padding-bottom: 100px;
+  background: white;
+  min-height: calc(100vh - 100px);
 	border-right: 1px solid #ddd;
 }
 
@@ -2544,18 +2557,16 @@ a.list-group-item:hover {
 }
 .content-splitter-right-inner {
 	position: absolute;
-	top: 0px;
+	top: 50%;
 	bottom: 0;
-	left: 0;
-	right: 0;
-	padding:20px;
+  left: 50%;
+  transform: translate(-50%, 0);
 	overflow: auto;
 	overflow-x:hidden;
 	/*padding-bottom:120px;*/
 }
 
 #messages_page .content-splitter-right-inner {
-	bottom:155px;
 	padding-bottom:0;
 }
 
@@ -3056,17 +3067,17 @@ input:invalid {
 
 /* Red (not forging) */
 #forging_indicator i, #connected_indicator i {
-  color:#a94442;
+  color:#ff7676;
 }
 
 /* Red (not forging) */
 #forging_indicator.not_forging i {
-  color:#a94442;
+  color:#ff7676;
 }
 
 /* Green (forging) */
 #forging_indicator.forging i, #connected_indicator.connected i {
-  color:#3c763d;
+  color:#53e69d;
 }
 
 /* Gray (Unknown forging status) */

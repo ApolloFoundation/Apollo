@@ -207,17 +207,17 @@
                             <div class="u-text">
                                 <h4>Current account</h4>
                                 <p class="text-muted">Not verified profle</p>
-                                <button type="button" class="btn btn-rounded btn-danger" data-toggle="modal" data-target="#setAccountModal" data-whatever="@fat">Set Account Info</button>
+                                <button type="button" class="btn btn-rounded btn-danger" data-target="#account_info_modal" data-toggle="modal" data-target="#setAccountModal" data-whatever="@fat">Set Account Info</button>
                                 <button type="button" class="btn btn-rounded btn-info" data-toggle="modal" data-target="#exampleModal" data-whatever="@fat">Switch account</button>
                             </div>
                         </div>
                     </li>
                     <li role="separator" class="divider"></li>
-                    <li><a href="#"><i class="ti-user"></i> Account Details</a></li>
-                    <li><a href="#"><i class="ti-email"></i> Messages</a></li>
+                    <li id="sidebar_account_link"></li>
+                    <li><a href="#" class="goto-page" data-page="my_messages"><i class="ti-email"></i> <span data-i18n="messages">Messages</span></a></li>
 
                     <li role="separator" class="divider"></li>
-                    <li><a href="#" data-page="settings"><i class="ti-settings"></i> <span data-i18n="account_settings">Account Settings</span></a></li>
+                    <li><a href="#" class="goto-page" data-page="settings"><i class="ti-settings"></i> <span data-i18n="account_settings">Account Settings</span></a></li>
                     <li role="separator" class="divider"></li>
                     <li><a role="menuitem" tabindex="-1" href="#" onclick="NRS.logout()" data-i18n="logout">Log Out</a></li>
                     <li><a role="menuitem" tabindex="-1" href="#" onclick="NRS.logout(true)" data-i18n="logout_stop_forging">Log Out &amp; Stop Forging</a></li>
@@ -274,8 +274,11 @@
                 </a>
             </li>-->
             <li class="in">
-                <form role="search" class="app-search hidden-sm hidden-xs m-r-10">
-                    <input type="text" class="form-control"> <a href="" class="active"><i class="fa fa-search"></i></a> </form>
+                <form action="#" method="get" class="app-search hidden-sm hidden-xs m-r-10" id="id_search" autocomplete="off">
+                    <!-- <div class="input-group"> -->
+                        <input type="text" name="q" class="form-control">
+                        <a href="" class="active"><i class="fa fa-search"></i></a>
+                </form>
             </li>
         </ul>
     </div>

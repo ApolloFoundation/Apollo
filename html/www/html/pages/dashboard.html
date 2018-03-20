@@ -21,10 +21,37 @@
         </div>
         <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
             <ol class="breadcrumb">
-                <li><i class="mdi mdi-checkbox-blank-circle text-success"></i> Connected</li>
-                <li><i class="mdi mdi-checkbox-blank-circle text-danger"></i> Not Forging <button class="btn-rounded btn-danger btn-sm"> <i class="fa fa-bolt"></i> FORGE</button></li>
-                <li>Height: 13675</li>
-                <li>Apollo: 5</li>
+                <li>
+                    <!-- <i class="mdi mdi-checkbox-blank-circle text-success"></i> Connected -->
+                    <a href="#" data-page="peers" id="connected_indicator" class="goto-page connected" data-toggle="tooltip" data-placement="top" title="Server Connection Status" data-i18n="[title]server_connection_status" data-original-title="Server Connection Status">
+                        <i class="mdi mdi-checkbox-blank-circle"></i>
+                        <span data-18n="connected" data-i18n="Not connected"></span>
+                    </a>
+                </li>
+                <li>
+                    <!-- <i class="mdi mdi-checkbox-blank-circle text-danger"></i>Not Forging 
+                    <button class="btn-rounded btn-danger btn-sm">
+                        <i class="fa fa-bolt"></i> FORGE
+                    </button> -->
+                    <a href="#" id="forging_indicator" class="animated not_forging" data-toggle="tooltip" title="" data-placement="bottom" data-original-title="You cannot forge because your account has no public key. Please make an outgoing transaction first.">
+                        <i class="mdi mdi-checkbox-blank-circle"></i>
+                        <span data-18n="forging" data-i18n="not_forging"></span>
+                    </a>
+                </li>
+                <!-- <li>Height: 13675</li>
+                <li>Apollo: 5</li> -->
+                <li>
+                    <span data-i18n="height: ">Height: </span>
+                    <span class="badge-active" id="sidebar_block_link" data-toggle="tooltip" data-placement="bottom" title="Current Blockchain Height" data-i18n="[title]current_blockchain_height" data-original-title="Current Blockchain Height">
+                        <a href="#" class="show_block_modal_action"></a>
+                    </span>
+                </li>
+                <li>
+                    <a data-target="#account_details_modal" data-toggle="modal" href="#">
+                        <span class="coin-symbol">Apollo: </span>
+                        <span class="badge-active" id="account_balance_sidebar"></span>
+                    </a>
+                </li>
             </ol>
         </div>
     </div>
@@ -208,8 +235,12 @@
                         </table>
                     </div>
                     <div class="button-list">
-                        <button class="btn btn-info" type="button">View more</button>
-                        <button class="btn btn-info" type="button">Account Ledger</button>
+                        <button class="btn btn-info goto-page" data-page="transactions">
+                            <span data-i18n="view_more">View More</span>
+                        </button>
+                        <button class="btn btn-info goto-page" data-page="ledger">
+                            <span data-i18n="account_ledger">Account Ledger</span>
+                        </button>
                     </div>
                 </div>
             </div>
