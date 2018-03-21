@@ -20,78 +20,112 @@
 var NRS = (function(NRS, $, undefined) {
 
 	NRS.updateNotificationUI = function() {
-		var subTypeCount = 0;
-		var totalCount = 0;
+		let ul = document.createElement('ul');
+		let li = document.createElement('li');
+		let subTypeCount = 0;
+		let totalCount = 0;
 
-		var $menuItem = $('#notification_menu');
-		var $popoverItem = $("<div id='notification_popover'></div>");
-		
+		$(ul).addClass('feeds');
+
 		$.each(NRS.transactionTypes, function(typeIndex, typeDict) {
 			$.each(typeDict["subTypes"], function(subTypeIndex, subTypeDict) {
 				if (subTypeDict["notificationCount"] > 0) {
 					subTypeCount += 1;
 					totalCount += subTypeDict["notificationCount"];
-					var html = "";
-					html += "<a href='#' style='display:block;background-color:#f0f0f0;border:1px solid #e2e2e2;padding:4px 12px 9px 12px;margin:2px;'>";
-					html += "<div style='float:right;'><div style='display:inline-block;margin-top:2px;'>";
-					html += "<span class='badge' style='background-color:#e65;'>" + subTypeDict["notificationCount"] + "</span>";
-					html += "</div></div>";
-					html += NRS.getTransactionIconHTML(typeIndex, subTypeIndex) + "&nbsp; ";
-					html += '<span style="font-size:12px;color:#000;display:inline-block;margin-top:5px;">';
-					html += $.t(subTypeDict['i18nKeyTitle'], subTypeDict['title']);
-					html += '</span>';
-					html += "</a>";
-
-					var $subTypeItem = $(html);
-					$subTypeItem.click(function(e) {
+					
+					$(li).html(NRS.getTransactionIconHTML(typeIndex, subTypeIndex));
+					$(li).append($.t(subTypeDict['i18nKeyTitle'], subTypeDict['title']));
+					$(ul).append(li);
+					$(li).click(function(e) {
 						e.preventDefault();
 						NRS.goToPage(subTypeDict["receiverPage"]);
-						$menuItem.popover('hide');
+						$(this).hide();
 					});
-					$subTypeItem.appendTo($popoverItem);
 				}
 			});
 		});
+
 		if (totalCount > 0) {
-			$menuItem.find('.nm_inner_subtype').css('backgroundColor', '#337ab7');
-			$menuItem.find('.nm_inner_total').css('backgroundColor', '#e06054');
-
-			var $markReadDiv = $("<div style='text-align:center;padding:12px 12px 8px 12px;'></div>");
-			var $markReadLink= $("<a href='#' style='color:#3c8dbc;'>" + $.t('notifications_mark_as_read', 'Mark all as read') + "</a>");
-			$markReadLink.click(function(e) {
-				e.preventDefault();
-				NRS.resetNotificationState();
-				$menuItem.popover('hide');
-			});
-			$markReadLink.appendTo($markReadDiv);
-			$popoverItem.append($markReadDiv);
-			document.title = $.t('app_title') + ' (' + String(totalCount) + ')';
+			$('.navbar-top-links > li.tasks ul.dropdown-menu').html(ul);
+			$('.navbar-top-links > li.tasks a .notify').show();
+			$('.navbar-top-links > li.tasks .upper-layer').hide();
 		} else {
-			$menuItem.find('.nm_inner_subtype').css('backgroundColor', '#337ab7');
-			$menuItem.find('.nm_inner_total').css('backgroundColor', '');
-			var html = "";
-			html += "<div style='text-align:center;padding:12px;'>" + $.t('no_notifications', 'No current notifications') + "</div>";
-			$popoverItem.append(html);
-			document.title = $.t('app_title');
-		}
+			$('.navbar-top-links > li.tasks .upper-layer').show();
+			$('.navbar-top-links > li.tasks a .notify').hide()
+		};
 
-		$menuItem.find('.nm_inner_subtype').html(String(subTypeCount));
-		$menuItem.find('.nm_inner_total').html(String(totalCount));
-		$menuItem.show();
+		// var subTypeCount = 0;
+		// var totalCount = 0;
 
-		var template = '<div class="popover" style="min-width:320px;"><div class="arrow"></div><div class="popover-inner">';
-		template += '<h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>';
+		// var $menuItem = $('#notification_menu');
+		// var $popoverItem = $("<div id='notification_popover'></div>");
+		
+		// $.each(NRS.transactionTypes, function(typeIndex, typeDict) {
+		// 	$.each(typeDict["subTypes"], function(subTypeIndex, subTypeDict) {
+		// 		if (subTypeDict["notificationCount"] > 0) {
+		// 			subTypeCount += 1;
+		// 			totalCount += subTypeDict["notificationCount"];
+		// 			var html = "";
+		// 			html += "<a href='#' style='display:block;background-color:#f0f0f0;border:1px solid #e2e2e2;padding:4px 12px 9px 12px;margin:2px;'>";
+		// 			html += "<div style='float:right;'><div style='display:inline-block;margin-top:2px;'>";
+		// 			html += "<span class='badge' style='background-color:#e65;'>" + subTypeDict["notificationCount"] + "</span>";
+		// 			html += "</div></div>";
+		// 			html += NRS.getTransactionIconHTML(typeIndex, subTypeIndex) + "&nbsp; ";
+		// 			html += '<span style="font-size:12px;color:#000;display:inline-block;margin-top:5px;">';
+		// 			html += $.t(subTypeDict['i18nKeyTitle'], subTypeDict['title']);
+		// 			html += '</span>';
+		// 			html += "</a>";
 
-		if($menuItem.data('bs.popover')) {
-    		$menuItem.data('bs.popover').options.content = $popoverItem;
-		} else {
-			$menuItem.popover({
-				"html": true,
-				"content": $popoverItem,
-				"trigger": "click",
-				template: template
-			});
-		}
+		// 			var $subTypeItem = $(html);
+		// 			$subTypeItem.click(function(e) {
+		// 				e.preventDefault();
+		// 				NRS.goToPage(subTypeDict["receiverPage"]);
+		// 				$menuItem.popover('hide');
+		// 			});
+		// 			$subTypeItem.appendTo($popoverItem);
+		// 		}
+		// 	});
+		// });
+		// if (totalCount > 0) {
+		// 	$menuItem.find('.nm_inner_subtype').css('backgroundColor', '#337ab7');
+		// 	$menuItem.find('.nm_inner_total').css('backgroundColor', '#e06054');
+
+		// 	var $markReadDiv = $("<div style='text-align:center;padding:12px 12px 8px 12px;'></div>");
+		// 	var $markReadLink= $("<a href='#' style='color:#3c8dbc;'>" + $.t('notifications_mark_as_read', 'Mark all as read') + "</a>");
+		// 	$markReadLink.click(function(e) {
+		// 		e.preventDefault();
+		// 		NRS.resetNotificationState();
+		// 		$menuItem.popover('hide');
+		// 	});
+		// 	$markReadLink.appendTo($markReadDiv);
+		// 	$popoverItem.append($markReadDiv);
+		// 	document.title = $.t('app_title') + ' (' + String(totalCount) + ')';
+		// } else {
+		// 	$menuItem.find('.nm_inner_subtype').css('backgroundColor', '#337ab7');
+		// 	$menuItem.find('.nm_inner_total').css('backgroundColor', '');
+		// 	var html = "";
+		// 	html += "<div style='text-align:center;padding:12px;'>" + $.t('no_notifications', 'No current notifications') + "</div>";
+		// 	$popoverItem.append(html);
+		// 	document.title = $.t('app_title');
+		// }
+
+		// $menuItem.find('.nm_inner_subtype').html(String(subTypeCount));
+		// $menuItem.find('.nm_inner_total').html(String(totalCount));
+		// $menuItem.show();
+
+		// var template = '<div class="popover" style="min-width:320px;"><div class="arrow"></div><div class="popover-inner">';
+		// template += '<h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>';
+
+		// if($menuItem.data('bs.popover')) {
+    // 		$menuItem.data('bs.popover').options.content = $popoverItem;
+		// } else {
+		// 	$menuItem.popover({
+		// 		"html": true,
+		// 		"content": $popoverItem,
+		// 		"trigger": "click",
+		// 		template: template
+		// 	});
+		// }
 	};
 
 	NRS.saveNotificationTimestamps = function() {

@@ -654,7 +654,6 @@ var NRS = (function(NRS, $, undefined) {
 
 	$("button.goto-page, a.goto-page").click(function(event) {
 		event.preventDefault();
-		console.log('\n\n\n\n\n' + 'Go to page')
 		NRS.goToPage($(this).data("page"), undefined, $(this).data("subpage"));
 	});
 

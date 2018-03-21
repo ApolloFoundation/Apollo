@@ -264,9 +264,9 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.getTransactionIconHTML = function(type, subtype) {
-		var iconHTML = NRS.transactionTypes[type]['iconHTML'] + " " + NRS.transactionTypes[type]['subTypes'][subtype]['iconHTML'];
+		var iconHTML = NRS.transactionTypes[type]['iconHTML'];
 		var tooltip = $.t(NRS.transactionTypes[type].subTypes[subtype].i18nKeyTitle);
-		return '<span title="' + tooltip + '" class="label label-primary" style="font-size:12px;">' + iconHTML + '</span>';
+		return '<div class="bg-info" title="' + tooltip + '">' + iconHTML + '</div>';
 	};
 
 	NRS.addPhasedTransactionHTML = function(t) {
@@ -557,8 +557,7 @@ var NRS = (function(NRS, $, undefined) {
   		html += "</td>";
   		html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
 		html += '<td style="vertical-align:middle;">';
-		html += NRS.getTransactionIconHTML(t.type, t.subtype) + '&nbsp; ';
-		html += '<span style="font-size:11px;display:inline-block;margin-top:5px;">' + transactionType + '</span>';
+		html += '<span class="label label-danger label-rouded">' + transactionType + '</span>';
 		html += '</td>';
         html += "<td style='vertical-align:middle;text-align:right;" + amountColor + "'>" + formattedAmount + "</td>";
         html += "<td style='vertical-align:middle;text-align:right;" + feeColor + "'>" + formattedFee + "</td>";

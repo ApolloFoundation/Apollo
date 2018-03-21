@@ -24,7 +24,7 @@ var NRS = (function(NRS, $, undefined) {
         0: {
             'title': "Payment",
             'i18nKeyTitle': 'payment',
-            'iconHTML': "<i class='ion-calculator'></i>",
+            'iconHTML': "<i class='fa fa-calculator'></i>",
             'subTypes': {
                 0: {
                     'title': "Ordinary Payment",
