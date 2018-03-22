@@ -110,9 +110,6 @@ body > .header {
 }
 /*Give content full width on xs screens*/
 @media screen and (max-width: 992px) {
-  .sidebar {
-    margin-top: 50px;
-  }
   .right-side {
     margin-left: 0;
   }
@@ -2836,6 +2833,9 @@ a.list-group-item-header:hover {
   width: 100%;
   height: 100%;
 }
+.navbar-top-links .dropdown-menu li {
+  cursor: pointer;
+}
 
 .label-small {
   font-size:12px;
@@ -3534,12 +3534,6 @@ body > .header .navbar {
 
 
 @media (max-width: 800px) {
-
-  .sidebar,
-  body.fixed .wrapper {
-    margin-top: 76px;
-  }
-
   body > .header .logo {
     position: relative;
     z-index: 9999;
@@ -3931,6 +3925,37 @@ body > .header .navbar {
     #testnet_warning {
         font-size: 11px;
     }
+}
+#message_sidebar {
+  width: 250px;
+  overflow-x: hidden;
+}
+.data-container {
+  overflow-x: auto;
+}
+
+@media only screen and (max-width: 992px) {
+  .white-box .table {
+    width: 1040px;
+  }
+  h1 {
+    font-size: 32px;
+  }
+  #message_sidebar {
+    width: 200px;
+  }
+  .list-group-item-heading {
+    font-weight: 400;
+  }
+  #blocks_page .data-container {
+    overflow-x: auto;
+  }
+  #blocks_page .data-container table {
+    width: 800px;
+  }
+  .white-box {
+    padding: 15px;
+  }
 }
 
 /* @media min-width: 700px */

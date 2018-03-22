@@ -37,7 +37,7 @@ var NRS = (function(NRS, $, undefined) {
         1: {
             'title': "Messaging/Voting/Aliases",
             'i18nKeyTitle': 'messaging_voting_aliases',
-            'iconHTML': "<i class='fa fa-envelope-square'></i>",
+            'iconHTML': "<i class='fa fa-envelope'></i>",
             'subTypes': {
                 0: {
                     'title': "Arbitrary Message",
