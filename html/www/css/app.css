@@ -593,11 +593,6 @@ body > .header .logo .icon {
     Component: Sidebar
 --------------------------
 */
-.sidebar {
-  overflow-y: auto;
-  max-height: 100%;
-  margin-bottom: 5px;
-}
 .sidebar-form input:focus {
   -webkit-box-shadow: none;
   -moz-box-shadow: none;
@@ -1703,13 +1698,29 @@ body > .header .logo .icon {
   border-bottom-color: #d9dadc;
 }
 .btn.btn-primary {
-  background-color: #3c8dbc;
-  border-color: #367fa9;
+  background-color: #2cabe3;
+  border-color: #2cabe3;
 }
 .btn.btn-primary:hover,
 .btn.btn-primary:active,
-.btn.btn-primary.hover {
-  background-color: #367fa9;
+.btn.btn-primary.hover,
+.btn.btn-primary.focus,
+.btn.btn-primary:focus {
+  background-color: #2cabe3;
+  opacity: 1;
+  border: none;
+}
+.btn-group>.btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
+  border: 1px solid #2f323e;
+  border-top: none;
+  border-bottom: none;
+  margin: 5px 0;
+}
+.btn-group>.btn:last-child:not(:first-child), .btn-group>.dropdown-toggle:not(:first-child) {
+  margin: 5px 0;
+}
+.lockscreen-widget.btn:hover {
+  transform: scale(.97);
 }
 .btn.btn-success {
   background-color: #00a65a;
@@ -1937,13 +1948,16 @@ body > .header .logo .icon {
 */
 /* ADD THIS CLASS TO THE <HTML> TAG */
 .lockscreen {
-  background-color: #002e43;
-  background: url(../img/client_background.png) repeat center center fixed;
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
-  min-height:  100% !important;
+  background-color: #2f323e;
+  /* background: url(../img/client_background.png) repeat center center fixed; */
+  /* -webkit-background-size: cover; */
+  /* -moz-background-size: cover; */
+  /* -o-background-size: cover; */
+  /* background-size: cover; */
+  min-height: 100% !important;
+}
+#dummyCheckbox {
+  display: none;
 }
 /* Remove the background from the body element */
 .lockscreen > body {
@@ -3493,12 +3507,9 @@ input.masked {
     margin: 0 0 0 60px;
   }
 }
-@media (min-width: 768px) {
-  .fix-header #page {
-    margin-top: 60px;
-  }
+.fix-header #page {
+  margin-top: 60px;
 }
-
 
 
 /*
@@ -3597,15 +3608,11 @@ body > .header .navbar {
   }
 
 }/* @media min-width: 767px */
-
+.navbar .navbar-right {
+  float: right;
+}
 
 @media (max-width: 550px) {
-
-  .sidebar,
-  body.fixed .wrapper {
-    margin-top: 76px;
-  }
-
   body > .header .logo {
     padding: 0 342px 0 5px;
     width: 100%;
@@ -3618,14 +3625,6 @@ body > .header .navbar {
     position: relative;
     top: 31px;
     z-index: 9;
-  }
-
-
-  .navbar .navbar-right {
-    float: none;
-    width: 100%;
-    position: absolute;
-    height: 75px;
   }
 
     .navbar .navbar-right > .nav.sends + .nav {
@@ -3933,6 +3932,62 @@ body > .header .navbar {
 .data-container {
   overflow-x: auto;
 }
+.navbar-default.sidebar {
+  transition: width .15s ease;
+}
+
+.navbar-default.sidebar.hover {
+  width: 240px;
+  position: fixed;
+  top: 0;
+}
+.navbar-default.sidebar.hover .sidebar-head{
+  display: flex;
+  align-items: center;
+  height: 62px;
+  position: relative;
+}
+.navbar-default.sidebar.hover #sidebar_menu {
+  padding-top: 0;
+}
+.navbar-default.sidebar.hover .sidebar-head h3 {
+  display: flex;
+  align-items: center;
+}
+#sidebar_account_id {
+  z-index: 10;
+  position: relative;
+  color: transparent;
+  top: 50px;
+  width: 100%;
+  height: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .25s cubic-bezier(0.74, -0.36, 0.25, 1), height .25s ease;
+}
+.navbar-default.sidebar:hover #sidebar_account_id, .navbar-default.sidebar.hover #sidebar_account_id {
+  height: 30px;
+  color: #fff;
+  opacity: 1;
+} 
+
+#sidebar_account_id.head_account_id {
+  opacity: 1;
+  color: #fff;
+  height: 30px;
+  display: flex;
+  width: auto;
+  float: left;
+  position: absolute;
+  right: 200px;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+.tooltip.in {
+  opacity: 0;
+}
 
 @media only screen and (max-width: 992px) {
   .white-box .table {
@@ -3955,6 +4010,80 @@ body > .header .navbar {
   }
   .white-box {
     padding: 15px;
+  }
+  #sidebar_account_id.head_account_id {
+    right: 120px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .container-fluid {
+    padding: 0;
+  }
+  .bg-title {
+    margin: 0;
+    margin-bottom: 15px;
+  }
+  .white-box {
+    margin-bottom: 15px;
+  }
+  .panel .panel-body {
+    padding: 10px 15px;
+  }
+  .panel-default, .panel-white, .data-container, .content {
+    margin: 10px;
+  }
+  h1 {
+    padding: 0 15px;
+  }
+  .white-box .box-title {
+    font-size: 15px;
+  }
+  #sidebar_account_id {
+    display: flex;
+    top: -5px;
+  }
+  #sidebar_account_id.head_account_id {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .nav.navbar-top-links.navbar-right .mega-dropdown {
+    display: none;
+  }
+  .content div.row > div {
+    width: 100%;
+  }
+  #dashboard_page {
+    margin-bottom: 20px;
+  }
+  .alert {
+    padding: 3px 10px;
+    margin: 0;
+  }
+  .panel-default, .panel-white, .data-container, .content {
+    margin: 5px;
+  }
+  .content {
+    margin-bottom: 30px;
+  }
+  .content-splitter-inner {
+    flex-direction: column;
+  }
+  .content.content-stretch {
+    width: auto !important;
+  }
+  #message_sidebar {
+    width: auto;
+    margin: 0 10px;
+  }
+  .content-splitter-sidebar-inner {
+    min-height: auto;
+    padding: 0;
+  }
+  .content-splitter-right-inner {
+    padding: 10px;
   }
 }
 

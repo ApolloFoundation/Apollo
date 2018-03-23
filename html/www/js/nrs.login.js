@@ -390,7 +390,8 @@ var NRS = (function(NRS, $, undefined) {
                         $(".hide_secret_phrase").hide();
                     }
 					NRS.disablePluginsDuringSession = $("#disable_all_plugins").is(":checked");
-					$("#sidebar_account_id").html(String(NRS.accountRS).escapeHTML());
+					$("#sidebar_account_id.head_account_id").html(String(NRS.accountRS).escapeHTML());
+					$("#sidebar_account_id.sidebar_account_id").html(String(NRS.accountRS).escapeHTML());
 					$("#sidebar_account_link").html('<i class="ti-user"></i>' + NRS.getAccountLink(NRS, "account", NRS.accountRS, "details", false, ""));
 					if (NRS.lastBlockHeight == 0 && NRS.state.numberOfBlocks) {
 						NRS.checkBlockHeight(NRS.state.numberOfBlocks - 1);

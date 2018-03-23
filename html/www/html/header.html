@@ -15,10 +15,16 @@
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 <script type="text/javascript">
-    $("#account_id_dropdown").hover(function() {
+    $('#account_id_dropdown').hover(function() {
         $(this).addClass('open');
     }, function() {
         $(this).removeClass('open');
+    });
+    $('.nav.navbar-top-links .open-close').click(function() {
+        $('.navbar-default.sidebar').addClass('hover');
+    });
+    $('.fix-header #page').click(function() {
+        $('.navbar-default.sidebar').removeClass('hover');
     });
 </script>
 
@@ -30,6 +36,7 @@
             </a>
         </div>
         <ul class="nav navbar-top-links navbar-left">
+            <li><a href="#" class="open-close waves-effect waves-light visible-xs"><i class="ti-close ti-menu"></i></a></li>
             <!-- <li class="dropdown">
                 <a class="dropdown-toggle waves-effect waves-light" data-toggle="dropdown" href="#"> <i class="mdi mdi-gmail"></i>
                     <div class="notify"> <span class="heartbit"></span> <span class="point"></span> </div>
@@ -137,6 +144,7 @@
                 <a href="#" data-toggle="modal" data-target="#client_status_modal" id="header_client_options_link" ></a>
             </li>-->
         </ul>
+        <div id="sidebar_account_id" class="head_account_id"></div>
         <ul class="nav navbar-top-links navbar-right">
             <!--<li>
                 <a class="client_options" href="#" data-toggle="modal" data-target="#client_status_modal">
