@@ -218,9 +218,9 @@ var NRS = (function(NRS, $, undefined) {
         $("#nrs_version_info").text(constants.PROJECT_NAME + " " + $.t("version"));
         $(".help-about").text($.t("about") + " " + constants.PROJECT_NAME);
         $(".modal-title-info").text(constants.PROJECT_NAME + " " + $.t("info"));
-        if (constants.PROJECT_NAME != "APL") {
-            $(".branding-message").html("<p>" + constants.PROJECT_NAME + " " + $.t("branding_message") + "<p>");
-		}
+        // if (constants.PROJECT_NAME != "APL") {
+            // $(".branding-message").html("<p>" + constants.PROJECT_NAME + " " + $.t("branding_message") + "<p>");
+		// }
 	}
 
     function initImpl() {

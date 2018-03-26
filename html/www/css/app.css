@@ -3989,6 +3989,10 @@ body > .header .navbar {
   opacity: 0;
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 @media only screen and (max-width: 992px) {
   .white-box .table {
     width: 1040px;

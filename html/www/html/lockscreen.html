@@ -51,7 +51,7 @@
                     	<div class="input-group" id="login_account_container" style="display:table;height:34px;width: 100%;">
                             <div class="dropdown" style="width: 100%;">
                                 <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true" style="width: 100%;">
-                                    <span data-i18n="select_account_to_login">Select an Account to Login with</span>
+                                    <span data-i18n="select_account_to_login">Choose a Wallet to Login</span>
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" id="login_account">
@@ -110,7 +110,7 @@
                 </div>
 
                 <div id="registration_link">
-                    <a href="#" onclick="NRS.registerAccount();" data-i18n="no_account_q_create_account">Don't have an account? Click here to create one!</a>
+                    <a href="#" onclick="NRS.registerAccount();" data-i18n="no_account_q_create_account">Click here to create a new wallet!</a>
                 </div>
             </div>
 
@@ -135,7 +135,7 @@
             </div>
 
             <div class="panel panel-default" id="account_phrase_custom_panel" style="display:none;max-width:500px;">
-                <div class="panel-heading"><span class="glyphicon glyphicon-lock"></span> <span data-i18n="create_your_account">Create Your Account</span></div>
+                <div class="panel-heading"><span class="glyphicon glyphicon-lock"></span> <span data-i18n="create_your_account">Create Your Wallet</span></div>
                 <div class="panel-body">
                     <form class="form-horizontal" role="form" method="post" autocomplete="off">
                         <div class="callout callout-info" style="max-width:500px;" data-i18n="passphrase_length_warning">Your passphrase must be at least 35 characters long.</div>
@@ -143,10 +143,10 @@
                         <div class="callout callout-danger" style="word-break:inherit;">
                             <span data-i18n="attention">Attention</span>:<br><br>
                             <span data-i18n="passphrase_warning_unique">
-                                The passphrase is everything that stands between your account and the rest of the world. Do not use any meaningful sentence, especially any that appears in song or literature.
+                                    Your passphrase should be unique and hard to guess. Do not use common words as they could be discovered by using a brute force style program. 
                             </span><br><br>
                             <span data-i18n="passphrase_warning_disclose">
-                                Don't ever disclose your passphrase. If you lose it you lose access to your account!
+                                Remember: Anyone with this passphrase will have total control of your wallet.
                             </span>
                         </div>
 
@@ -160,7 +160,7 @@
                         </div>
 
                         <div style="text-align:right">
-                            <input type="submit" class="btn btn-primary btn-sm" value="Register" data-i18n="[value]register" />
+                            <input type="submit" class="btn btn-primary btn-sm" value="Create" data-i18n="[value]register" />
                             &nbsp;&nbsp;
                             <button class="btn btn-sm btn-default" onclick="NRS.showLoginOrWelcomeScreen();return false;" data-i18n="cancel">Cancel</button>
                         </div>
@@ -169,8 +169,11 @@
             </div>
 
             <div class="panel panel-default" id="account_phrase_generator_panel" style="display:none;max-width:500px">
-                <div class="panel-heading"><span class="glyphicon glyphicon-lock"></span> <span data-i18n="create_your_account">Create Your Account</span></div>
+                <div class="panel-heading"><span class="glyphicon glyphicon-lock"></span> <span data-i18n="create_your_account">Create Your Wallet</span></div>
                 <div class="panel-body">
+                    <div class="paper-wallet-link-container" style="display: none;">
+                        <a href="#" id="generator_paper_wallet_link" data-i18n="print_paper_wallet">Print Paper Wallet</a>
+                    </div>
                     <div id="account_phrase_generator_loading">
                         <p><span class="loading_text" data-i18n="loading_word_list">Loading Word List</span><span class="loading_dots"><span>.</span><span>.</span><span>.</span></span></p>
 
@@ -201,24 +204,21 @@
                             </div>
 
                             <div id="account_phrase_generator_stop" style="display:none">
-                                <p data-i18n="automatically_generated_passphrase_is">Your automatically generated passphrase is:</p>
+                                <p data-i18n="automatically_generated_passphrase_is">Your randomly generated passphrase is:</p>
                                 <textarea style="width:100%;height:50px;margin-bottom:10px;padding:3px;" rows="2" readonly></textarea>
                                 <p data-i18n="memorize_passphrase_help">Please write down or memorize these 12 words (their order and capitalization matters - always lowercase). This passphrase is needed in order to access your Apl account.</p>
-                                <p data-i18n="your_account_is">Your public account address is:</p>
+                                <p data-i18n="your_account_is">Your public wallet address is:</p>
                                 <input id="step_2_account" style="width:100%;height:50px;margin-bottom:10px;padding:3px;" readonly></input>
-                                <div class="paper-wallet-link-container" style="display: none;">
-                                    <a href="#" id="generator_paper_wallet_link" data-i18n="print_paper_wallet">Print Paper Wallet</a>
-                                </div>
                                 <p></p>
                                 <div class="callout callout-danger">
                                     <strong><span data-i18n="attention">Attention</span></strong>:
                                     <span data-i18n="passphrase_warning_disclose">
-                                        Don't ever disclose your passphrase. If you lose it you lose access to your account!
+                                        Remember: Anyone with this passphrase will have total control of your wallet.
                                     </span>
                                 </div>
                                 <div id="confirm_passphrase_warning_container">
                                     <input type="checkbox" id="confirm_passphrase_warning" value="0"/> <span></span>
-                                    <label for="confirm_passphrase_warning" data-i18n="confirm_passphrase_warning">I will not forget my passphrase and I will never disclose it</label>
+                                    <label for="confirm_passphrase_warning" data-i18n="confirm_passphrase_warning">I will not lose my passphrase</label>
                                 </div>
                                 <div style="text-align:right">
                                     <input type="submit" class="btn btn-primary btn-sm" value="Next" data-i18n="[value]next" onclick="NRS.createPassphraseToConfirmPassphrase()" />&nbsp;&nbsp;
@@ -228,7 +228,7 @@
                         </div>
 
                         <div class="step_3 account_phrase_generator_steps">
-                            <p data-i18n="passphrase_write_below">Your passphrase is very important! In order to be sure that you have saved it, please write your passphrase below:</p>
+                            <p data-i18n="passphrase_write_below">Please type the passphrase provided here to confirm it has been saved:</p>
 
                             <div class="callout callout-danger" style="display:none" data-i18n="incorrectly_typed_passphrase">You have not typed the passphrase correctly, please try again!</div>
 
@@ -245,7 +245,7 @@
             </div>
 
             <div id="custom_passphrase_link">
-                <a href="#" onclick="NRS.registerUserDefinedAccount();" data-i18n="choose_own_passphrase">Want to choose your own passphrase? Click here.</a>
+                <a href="#" onclick="NRS.registerUserDefinedAccount();" data-i18n="choose_own_passphrase">Prefer a custom passphrase? Click here.</a>
             </div>
         </td>
         </tr>
