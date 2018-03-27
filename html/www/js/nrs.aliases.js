@@ -103,7 +103,7 @@ var NRS = (function (NRS, $, undefined) {
     NRS.setup.aliases = function () {
         var options = {
             "id": 'sidebar_aliases',
-            "titleHTML": '<i class="mdi mdi-bookmark"></i><span class="hide-menu"> Aliases </span>',
+            "titleHTML": '<img class="menu-icon" src="./img/menu_icons/alias.png" alt="Alt"></img><span class="hide-menu"> Aliases </span>',
             "page": 'aliases',
             "desiredPosition": 100,
             "depends": { tags: [ NRS.constants.API_TAGS.ALIASES ] }

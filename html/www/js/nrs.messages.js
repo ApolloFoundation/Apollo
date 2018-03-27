@@ -62,7 +62,7 @@ var NRS = (function(NRS, $) {
 	NRS.setup.messages = function() {
 		NRS.addTreeviewSidebarMenuItem({
 			"id": 'sidebar_messages',
-			"titleHTML": '<i class="fa fa-envelope"></i><span class="hide-menu"> Messages <span class="fa arrow"></span></span>',
+			"titleHTML": '<img class="menu-icon" src="./img/menu_icons/mail.png" alt="Alt"></img><span class="hide-menu"> Messages <span class="fa arrow"></span></span>',
 			"page": 'my_messages',
 			"desiredPosition": 90,
 			"depends": {tags: [NRS.constants.API_TAGS.MESSAGES]}

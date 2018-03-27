@@ -215,7 +215,7 @@ var NRS = (function(NRS, $) {
 		var sidebarId = 'sidebar_tagged_data';
 		var options = {
 			"id": sidebarId,
-			"titleHTML": '<i class="mdi mdi-database"></i><span class="hide-menu"> Data Storage <span class="fa arrow"></span></span>',
+			"titleHTML": '<img class="menu-icon" src="./img/menu_icons/data_storage.png" alt="Alt"></img><span class="hide-menu"> Data Storage <span class="fa arrow"></span></span>',
 			"page": 'tagged_data_search',
 			"desiredPosition": 60,
 			"depends": { tags: [ NRS.constants.API_TAGS.DATA ] }

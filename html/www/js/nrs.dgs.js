@@ -360,7 +360,7 @@ var NRS = (function(NRS, $) {
 		var sidebarId = 'sidebar_dgs_buyer';
 		var options = {
 			"id": sidebarId,
-			"titleHTML": '<i class="mdi mdi-cart"></i><span class="hide-menu"> Marketplace <span class="fa arrow"></span></span>',
+			"titleHTML": '<img class="menu-icon" src="./img/menu_icons/marketplace.png" alt="Alt"></img><span class="hide-menu"> Marketplace <span class="fa arrow"></span></span>',
 			"page": 'dgs_search',
 			"desiredPosition": 60,
 			"depends": { tags: [ NRS.constants.API_TAGS.DGS ] }

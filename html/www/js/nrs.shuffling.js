@@ -138,7 +138,7 @@ var NRS = (function(NRS, $) {
         var sidebarId = 'sidebar_shuffling';
         NRS.addTreeviewSidebarMenuItem({
             "id": sidebarId,
-            "titleHTML": '<i class="mdi mdi-shuffle-variant"></i><span class="hide-menu"> Coin Shuffling <span class="fa arrow"></span></span>',
+            "titleHTML": '<img class="menu-icon" src="./img/menu_icons/coin_shuffling.png" alt="Alt"></img><span class="hide-menu"> Coin Shuffling <span class="fa arrow"></span></span>',
             "page": 'active_shufflings',
             "desiredPosition": 80,
             "depends": { tags: [ NRS.constants.API_TAGS.SHUFFLING ] }

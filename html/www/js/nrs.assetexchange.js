@@ -2054,7 +2054,7 @@ var NRS = (function (NRS, $, undefined) {
         var sidebarId = 'sidebar_asset_exchange';
         var options = {
             "id": sidebarId,
-            "titleHTML": '<i class="mdi mdi-signal"></i><span class="hide-menu"> Asset System <span class="fa arrow"></span></span>',
+            "titleHTML": '<img class="menu-icon" src="./img/menu_icons/asset_system.png" alt="Alt"></img><span class="hide-menu"> Asset System <span class="fa arrow"></span></span>',
             "page": 'asset_exchange',
             "desiredPosition": 30,
             "depends": { tags: [ NRS.constants.API_TAGS.AE ] }

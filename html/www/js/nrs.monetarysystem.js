@@ -1186,7 +1186,7 @@ var NRS = (function (NRS, $, undefined) {
         var sidebarId = 'sidebar_monetary_system';
         var options = {
             "id": sidebarId,
-            "titleHTML": '<i class="mdi mdi-bank"></i><span class="hide-menu"> Currency System <span class="fa arrow"></span></span>',
+            "titleHTML": '<img class="menu-icon" src="./img/menu_icons/currency_system.png" alt="Alt"></img><span class="hide-menu"> Currency System <span class="fa arrow"></span></span>',
             "page": 'currencies',
             "desiredPosition": 40,
             "depends": { tags: [ NRS.constants.API_TAGS.MS ] }
