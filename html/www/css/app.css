@@ -3983,14 +3983,13 @@ body > .header .navbar {
 #sidebar_account_id.head_account_id {
   opacity: 1;
   color: #fff;
-  height: 30px;
+  height: 62px;
   display: flex;
-  width: auto;
-  float: left;
-  position: absolute;
-  right: 200px;
-  top: 50%;
-  transform: translate(0, -50%);
+  width: 260px;
+  float: right;
+  position: relative;
+  align-items: center;
+  top: 0;
 }
 .tooltip.in {
   opacity: 0;
@@ -4026,9 +4025,6 @@ body > .header .navbar {
   }
   .white-box {
     padding: 15px;
-  }
-  #sidebar_account_id.head_account_id {
-    right: 120px;
   }
 }
 
