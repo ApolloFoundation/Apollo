@@ -43,6 +43,7 @@ var NRS = (function(NRS, $) {
 		}
         if (response.foundAndStopped || (response.stopped && response.stopped > 0)) {
             NRS.isAccountForging = false;
+            NRS.forgingStatus = NRS.constants.UNKNOWN;
             if (!response.forgersCount || response.forgersCount == 0) {
                 setForgingIndicatorStatus(NRS.constants.NOT_FORGING);
                 forgingIndicator.find("span").html($.t(NRS.constants.NOT_FORGING)).attr("data-i18n", "forging");
