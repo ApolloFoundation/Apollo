@@ -3,8 +3,8 @@ This software incorporates work previously released with the ABP v1.1
 requirements of that license, the following permission notice, applicable to
 those parts of the code only, is included below:
 
-
-   Copyright © 2017-2018 Apollo Foundation.
+   Copyright © 2013-2016 The Nxt Core Developers
+   Copyright © 2017-2018 Apollo Foundation
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
