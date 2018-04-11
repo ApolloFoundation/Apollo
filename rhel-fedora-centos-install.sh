@@ -17,3 +17,9 @@ cat conf/apl-default.properties | sed s/apl.myAddress\=/apl.myAddress\=$ipaddres
 
 ./compile.sh
 
+mkdir logs
+
+echo Installation completed successfully!
+echo Use run.sh to start desktop wallet
+echo Or start.sh to start web wallet
+echo You can access web wallet with Your browser by the URL http://localhost:7876/
