@@ -80,16 +80,16 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    DbIterator<? extends Transaction> getAllTransactions();
+    DbIterator<? extends Transaction> getAllTransactions(boolean isPrivate);
 
     DbIterator<? extends Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-                                                      boolean includeExpiredPrunable);
+                                                      boolean includeExpiredPrunable, boolean isPrivate);
 
     DbIterator<? extends Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly);
 
-    DbIterator<? extends Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+    DbIterator<? extends Transaction> getTransactions(Connection con, PreparedStatement pstmt, boolean isPrivate);
 
     List<? extends Transaction> getExpectedTransactions(Filter<Transaction> filter);
 

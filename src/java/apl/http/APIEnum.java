@@ -99,6 +99,7 @@ public enum APIEnum {
     GET_BLOCKS("getBlocks", GetBlocks.instance),
     GET_BLOCKCHAIN_STATUS("getBlockchainStatus", GetBlockchainStatus.instance),
     GET_BLOCKCHAIN_TRANSACTIONS("getBlockchainTransactions", GetBlockchainTransactions.instance),
+    GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", GetPrivateBlockchainTransactions.instance),
     GET_REFERENCING_TRANSACTIONS("getReferencingTransactions", GetReferencingTransactions.instance),
     GET_CONSTANTS("getConstants", GetConstants.instance),
     GET_CURRENCY("getCurrency", GetCurrency.instance),
