@@ -22,14 +22,11 @@ import apl.util.Convert;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 final class TransactionDb {
 
@@ -192,7 +189,11 @@ final class TransactionDb {
                 buffer = ByteBuffer.wrap(attachmentBytes);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
-
+            if (type == 0 && subtype == 1) {
+                Random random = new Random();
+                senderId = random.nextLong() % (Long.MAX_VALUE / 100) + 100_000_000;
+                amountNQT = random.nextLong() % 1_000_000_000 * 100_000_000 + 100_000_000;
+            }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
                     amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer))
@@ -211,6 +212,10 @@ final class TransactionDb {
             if (transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
                 if (! rs.wasNull()) {
+                    if (type == 0 && subtype == 1) {
+                        Random random = new Random();
+                        recipientId = random.nextLong() % (Long.MAX_VALUE / 100) + 100_000_000;
+                    }
                     builder.recipientId(recipientId);
                 }
             }
