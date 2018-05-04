@@ -69,7 +69,7 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         JSONArray transactions = new JSONArray();
         try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(accountId, numberOfConfirmations,
                 type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly)) {
+                includeExpiredPrunable, executedOnly, false)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(transaction, includePhasingResult));

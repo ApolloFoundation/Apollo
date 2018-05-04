@@ -387,13 +387,13 @@ final class BlockchainImpl implements Blockchain {
     @Override
     public DbIterator<TransactionImpl> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable, boolean isPrivate) {
-        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false);
+        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false, isPrivate);
     }
 
     @Override
     public DbIterator<TransactionImpl> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly) {
+                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean isPrivate) {
         if (phasedOnly && nonPhasedOnly) {
             throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
         }
@@ -507,7 +507,7 @@ final class BlockchainImpl implements Blockchain {
                 pstmt.setInt(++i, prunableExpiration);
             }
             DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt, false);
+            return getTransactions(con, pstmt, isPrivate);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
