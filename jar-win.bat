@@ -1,5 +1,4 @@
 @echo off
-setlocal enableextensions disabledelayedexpansion
 
 :: possible locations under HKLM\SOFTWARE of JavaSoft registry data
 set "javaNativeVersion="
@@ -7,41 +6,57 @@ set "java32ON64=Wow6432Node\"
 
 :: for variables
 ::    %%k = HKLM\SOFTWARE subkeys where to search for JavaSoft key
-::    %%j = full path of "Java Runtime Environment" key under %%k
-::    %%v = current java version
-::    %%e = path to java
+::    %%j = full path of "Java Development Kit" key under %%k
+::    %%v = current jdk version
+::    %%e = path to jdk
 
 set "javaDir="
 set "javaVersion="
-for %%k in ( "%javaNativeVersion%" "%java32ON64%") do if not defined javaDir (
-    for %%j in (
-        "HKLM\SOFTWARE\%%~kJavaSoft\Java Runtime Environment"
-    ) do for /f "tokens=3" %%v in (
-        'reg query "%%~j" /v "CurrentVersion" 2^>nul ^| find /i "CurrentVersion"'
-    ) do for /f "tokens=2,*" %%d in (
-        'reg query "%%~j\%%v" /v "JavaHome"   2^>nul ^| find /i "JavaHome"'
-    ) do ( set "javaDir=%%~e" & set "javaVersion=%%v" )
+if not exist %JAVA_HOME%\bin\jar.exe (
+    if not exist %JAVA_HOME%\bin\java.exe (
+    echo JAVA_HOME is not set to jdk. Looking for jdk in registry
+    for %%k in ( "%javaNativeVersion%" "%java32ON64%") do if not defined javaDir (
+        for %%j in (
+            "HKLM\SOFTWARE\%%~kJavaSoft\Java Development Kit"
+        ) do for /f "tokens=3" %%v in (
+            'reg query "%%~j" /v "CurrentVersion" 2^>nul ^| find /i "CurrentVersion"'
+        ) do for /f "tokens=2,*" %%d in (
+            'reg query "%%~j\%%v" /v "JavaHome"   2^>nul ^| find /i "JavaHome"'
+        ) do (
+         if exist "%%~e\bin\javac.exe" (
+         set "javaDir=%%~e") & set "javaVersion=%%v"
+         )
+        )
+    )
+) else (
+      echo Using JAVA_HOME path to jdk: %JAVA_HOME%
+      set "javaDir=%JAVA_HOME%"
 )
 
+
 if not defined javaDir (
-    echo Java not found
-    goto end
+    echo JDK not found. Assuming you have disc:\path\to\jdk\bin in your PATH variable
 ) else (
-    echo Java was found
-    echo JAVA_HOME="%javaDir%"
-    echo JAVA_VERSION="%javaVersion%"
+    echo JDK was found
+    echo JDK_HOME="%javaDir%"
+    echo JDK_VERSION="%javaVersion%"
+    set "javaDir=%javaDir%\bin\"
 )
-endlocal
 set APPLICATION=Apollo
-java -cp classes apl.tools.ManifestGenerator
-echo Removing '%APPLICATION%.jar'
-del /f /q %APPLICATION%.jar
+echo Running manifest generator
+"%javaDir%java.exe" -cp classes apl.tools.ManifestGenerator && ( echo OK )|| ( goto error )
+if exist "%APPLICATION%.jar" (
+    echo Removing '%APPLICATION%.jar'
+    del /f /q %APPLICATION%.jar
+)
 echo Building '%APPLICATION%.jar'
-jar cvfm %APPLICATION%.jar resource\apl.manifest.mf -C classes\ . > nul 2>&1 && (echo OK)|| (goto error)
-echo Removing '%APPLICATION%service.jar...'
-del /f /q %APPLICATION%service.jar
+"%javaDir%jar.exe" cvfm %APPLICATION%.jar resource\apl.manifest.mf -C classes\ . > nul 2>&1 && ( echo OK )|| ( goto error )
+if exist "%APPLICATION%service.jar" (
+    echo Removing '%APPLICATION%service.jar...'
+    del /f /q %APPLICATION%service.jar
+)
 echo Building '%APPLICATION%service.jar...'
-jar cvfm %APPLICATION%service.jar resource\aplservice.manifest.mf -C classes\ . > nul 2>&1 && (echo OK) || (goto error)
+"%javaDir%jar.exe" cvfm %APPLICATION%service.jar resource\aplservice.manifest.mf -C classes\ . > nul 2>&1 && ( echo OK ) || ( goto error )
 
 echo Jar files were generated successfully!
 goto end

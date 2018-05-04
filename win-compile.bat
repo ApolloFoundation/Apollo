@@ -1,5 +1,4 @@
 @echo off
-setlocal enableextensions disabledelayedexpansion
 
 :: possible locations under HKLM\SOFTWARE of JavaSoft registry data
 set "javaNativeVersion="
@@ -7,56 +6,73 @@ set "java32ON64=Wow6432Node\"
 
 :: for variables
 ::    %%k = HKLM\SOFTWARE subkeys where to search for JavaSoft key
-::    %%j = full path of "Java Runtime Environment" key under %%k
-::    %%v = current java version
-::    %%e = path to java
+::    %%j = full path of "Java Development Kit" key under %%k
+::    %%v = current jdk version
+::    %%e = path to jdk
 
 set "javaDir="
 set "javaVersion="
-for %%k in ( "%javaNativeVersion%" "%java32ON64%") do if not defined javaDir (
-    for %%j in (
-        "HKLM\SOFTWARE\%%~kJavaSoft\Java Runtime Environment"
-    ) do for /f "tokens=3" %%v in (
-        'reg query "%%~j" /v "CurrentVersion" 2^>nul ^| find /i "CurrentVersion"'
-    ) do for /f "tokens=2,*" %%d in (
-        'reg query "%%~j\%%v" /v "JavaHome"   2^>nul ^| find /i "JavaHome"'
-    ) do ( set "javaDir=%%~e" & set "javaVersion=%%v" )
+if not exist %JAVA_HOME%\bin\javac.exe (
+    echo JAVA_HOME is not set to jdk. Looking for jdk in registry
+    for %%k in ( "%javaNativeVersion%" "%java32ON64%") do if not defined javaDir (
+        for %%j in (
+            "HKLM\SOFTWARE\%%~kJavaSoft\Java Development Kit"
+        ) do for /f "tokens=3" %%v in (
+            'reg query "%%~j" /v "CurrentVersion" 2^>nul ^| find /i "CurrentVersion"'
+        ) do for /f "tokens=2,*" %%d in (
+            'reg query "%%~j\%%v" /v "JavaHome"   2^>nul ^| find /i "JavaHome"'
+        ) do (
+         if exist "%%~e\bin\javac.exe" (
+         set "javaDir=%%~e") & set "javaVersion=%%v"
+         )
+        )
+    ) else (
+    echo Using JAVA_HOME path to jdk: %JAVA_HOME%
+    set "javaDir=%JAVA_HOME%"
 )
 
 if not defined javaDir (
-    echo Java not found
-    goto end
+    echo JDK not found. Assuming you have disc:\path\to\jdk\bin in your PATH variable
 ) else (
-    echo Java was found
-    echo JAVA_HOME="%javaDir%"
-    echo JAVA_VERSION="%javaVersion%"
+    echo JDK was found
+    echo JDK_HOME="%javaDir%"
+    echo JDK_VERSION="%javaVersion%"
+    set "javaDir=%javaDir%\bin\"
 )
-endlocal
 
 set CP=lib\*;classes
 set SP=src\java\
 set APPLICATION=apl-clone
-
+if exist "%APPLICATION%.jar" (
 echo Removing '%APPLICATION%.jar'
-rd /s /q %APPLICATION%.jar
-echo Removing '%APPLICATION%service.jar'
-rd /s /q %APPLICATION%service.jar
+    del /Q /F %APPLICATION%.jar
+)
+if exist "%APPLICATION%service.jar" (
+    echo Removing '%APPLICATION%service.jar'
+    del /Q /F %APPLICATION%service.jar
+)
+if exist classes\ (
 echo Removing compiled classes 'classes\'
-rd /s /q classes
+    rd /s /q classes
+)
 echo Creating directory 'classes\'
-md classes\
-echo Removing directory 'addons\classes\'
-rd /s /q addons\classes
+    md classes\
+if exist addons\classes (
+    echo Removing directory 'addons\classes\'
+    rd /s /q addons\classes
+)
 echo Creating directory 'addons\classes\'
 md addons\classes\
+dir /S src\java\*.java /B > sources.tmp
 echo Compiling main sources... 'src\java\*'
-javac -encoding utf8 -sourcepath %SP% -classpath %CP% -d classes\ src\java\apl\*.java src\java\apldesktop\*.java src\java\apl\addons\*.java src\java\apl\crypto\*.java src\java\apl\db\*.java src\java\apl\env\*.java src\java\apl\env\service\*.java src\java\apl\http\*.java src\java\apl\mint\*.java src\java\apl\peer\*.java src\java\apl\tools\*.java src\java\apl\util\*.java  && ( echo Main Apl class files compiled successfully ) || ( goto error )
+"%javaDir%javac.exe" -encoding utf8 -sourcepath %SP% -classpath %CP% -d classes\ @sources.tmp && ( echo Main Apl class files compiled successfully ) || ( goto error )
+del /Q /F sources.tmp
 
-
-dir addons\*.java > nul 2>&1 && ( echo Addons are present ) || (echo Addons are not present. & goto success)
+dir /S addons\*.java /B > nul 2>&1 && ( echo Addons are present ) || (echo Addons are not present. & goto success)
+dir /S addons\src\*.java /B > sources.tmp
 echo Compiling addons sources... 'addons\src\*'
-javac -encoding utf8 -sourcepath %SP% -classpath %CP% -d addons\classes addons\src\*.java  && ( echo addon class files compiled successfully goto success ) || ( goto error)
-
+"%javaDir%javac.exe" -encoding utf8 -sourcepath %SP% -classpath %CP% -d addons\classes @sources.tmp  && ( echo addon class files compiled successfully & goto success ) || ( goto error)
+del /Q /F sources.tmp
 :error
 echo FAIL! Classes were compiled with errors!
 goto end
@@ -64,3 +80,6 @@ goto end
 echo All classes were compiled successfully!
 goto end
 :end
+if exist sources.tmp (
+    del /f /q sources.tmp
+)
