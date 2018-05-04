@@ -209,6 +209,7 @@ public enum APIEnum {
     READ_MESSAGE("readMessage", ReadMessage.instance),
     SEND_MESSAGE("sendMessage", SendMessage.instance),
     SEND_MONEY("sendMoney", SendMoney.instance),
+    SEND_MONEY_PRIVATE("sendMoneyPrivate", SendMoneyPrivate.instance),
     SET_ACCOUNT_INFO("setAccountInfo", SetAccountInfo.instance),
     SET_ACCOUNT_PROPERTY("setAccountProperty", SetAccountProperty.instance),
     DELETE_ACCOUNT_PROPERTY("deleteAccountProperty", DeleteAccountProperty.instance),

@@ -418,7 +418,7 @@ public abstract class TransactionType {
 
             @Override
             public final byte getSubtype() {
-                return TransactionType.SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
+                return TransactionType.SUBTYPE_PAYMENT_PRIVATE_PAYMENT;
             }
 
             @Override
