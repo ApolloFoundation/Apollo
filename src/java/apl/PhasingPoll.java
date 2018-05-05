@@ -247,7 +247,7 @@ public final class PhasingPoll extends AbstractPoll {
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(con, pstmt, true);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -273,7 +273,7 @@ public final class PhasingPoll extends AbstractPoll {
             pstmt.setLong(++i, voterId);
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(con, pstmt, true);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -305,7 +305,7 @@ public final class PhasingPoll extends AbstractPoll {
             }
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(con, pstmt, true);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -328,7 +328,7 @@ public final class PhasingPoll extends AbstractPoll {
             pstmt.setInt(++i, Apl.getBlockchain().getHeight());
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return BlockchainImpl.getInstance().getTransactions(con, pstmt, true);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);

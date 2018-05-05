@@ -247,7 +247,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
 
     public final DbIterator<T> getManyBy(Connection con, PreparedStatement pstmt, boolean cache) {
         final boolean doCache = cache && db.isInTransaction();
-        return new DbIterator<>(con, pstmt, (connection, rs) -> {
+        return new DbIterator<>(con, pstmt, (connection, rs, isPrivate) -> {
             T t = null;
             DbKey dbKey = null;
             if (doCache) {
@@ -261,7 +261,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 }
             }
             return t;
-        });
+        },true);
     }
 
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to) {
