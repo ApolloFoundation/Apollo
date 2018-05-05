@@ -261,7 +261,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 }
             }
             return t;
-        },false);
+        },true);
     }
 
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to) {

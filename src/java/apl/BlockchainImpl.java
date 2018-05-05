@@ -187,7 +187,7 @@ final class BlockchainImpl implements Blockchain {
     //todo fix loadPrivateBlocks
     @Override
     public DbIterator<BlockImpl> getBlocks(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, BlockDb::loadBlock,false);
+        return new DbIterator<>(con, pstmt, BlockDb::loadBlock,true);
     }
 
     @Override
@@ -513,7 +513,7 @@ final class BlockchainImpl implements Blockchain {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
+    //private referenced transactions
     @Override
     public DbIterator<TransactionImpl> getReferencingTransactions(long transactionId, int from, int to) {
         Connection con = null;
@@ -527,7 +527,7 @@ final class BlockchainImpl implements Blockchain {
             int i = 0;
             pstmt.setLong(++i, transactionId);
             DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt, false);
+            return getTransactions(con, pstmt, true);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);

@@ -48,7 +48,7 @@ final class TransactionDb {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && rs.getInt("height") <= height) {
-                    return loadTransaction(con, rs,false);
+                    return loadTransaction(con, rs,true);
                 }
                 return null;
             }
@@ -79,7 +79,7 @@ final class TransactionDb {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height) {
-                    return loadTransaction(con, rs, false);
+                    return loadTransaction(con, rs, true);
                 }
                 return null;
             }
@@ -271,7 +271,7 @@ final class TransactionDb {
             try (ResultSet rs = pstmt.executeQuery()) {
                 List<TransactionImpl> list = new ArrayList<>();
                 while (rs.next()) {
-                    list.add(loadTransaction(con, rs,false));
+                    list.add(loadTransaction(con, rs,true));
                 }
                 return list;
             }
