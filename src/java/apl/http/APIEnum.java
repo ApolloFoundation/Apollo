@@ -99,7 +99,6 @@ public enum APIEnum {
     GET_BLOCKS("getBlocks", GetBlocks.instance),
     GET_BLOCKCHAIN_STATUS("getBlockchainStatus", GetBlockchainStatus.instance),
     GET_BLOCKCHAIN_TRANSACTIONS("getBlockchainTransactions", GetBlockchainTransactions.instance),
-    GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", GetPrivateBlockchainTransactions.instance),
     GET_REFERENCING_TRANSACTIONS("getReferencingTransactions", GetReferencingTransactions.instance),
     GET_CONSTANTS("getConstants", GetConstants.instance),
     GET_CURRENCY("getCurrency", GetCurrency.instance),
@@ -155,7 +154,6 @@ public enum APIEnum {
     GET_CURRENCY_TRANSFERS("getCurrencyTransfers", GetCurrencyTransfers.instance),
     GET_EXPECTED_CURRENCY_TRANSFERS("getExpectedCurrencyTransfers", GetExpectedCurrencyTransfers.instance),
     GET_TRANSACTION("getTransaction", GetTransaction.instance),
-    GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance),
     GET_TRANSACTION_BYTES("getTransactionBytes", GetTransactionBytes.instance),
     GET_UNCONFIRMED_TRANSACTION_IDS("getUnconfirmedTransactionIds", GetUnconfirmedTransactionIds.instance),
     GET_UNCONFIRMED_TRANSACTIONS("getUnconfirmedTransactions", GetUnconfirmedTransactions.instance),
@@ -210,7 +208,6 @@ public enum APIEnum {
     READ_MESSAGE("readMessage", ReadMessage.instance),
     SEND_MESSAGE("sendMessage", SendMessage.instance),
     SEND_MONEY("sendMoney", SendMoney.instance),
-    SEND_MONEY_PRIVATE("sendMoneyPrivate", SendMoneyPrivate.instance),
     SET_ACCOUNT_INFO("setAccountInfo", SetAccountInfo.instance),
     SET_ACCOUNT_PROPERTY("setAccountProperty", SetAccountProperty.instance),
     DELETE_ACCOUNT_PROPERTY("deleteAccountProperty", DeleteAccountProperty.instance),
@@ -288,8 +285,10 @@ public enum APIEnum {
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
     GET_SCHEDULED_TRANSACTIONS("getScheduledTransactions", GetScheduledTransactions.instance),
     SCHEDULE_CURRENCY_BUY("scheduleCurrencyBuy", ScheduleCurrencyBuy.instance),
-    DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", DeleteScheduledTransaction.instance);
-
+    DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", DeleteScheduledTransaction.instance),
+    SEND_MONEY_PRIVATE("sendMoneyPrivate", SendMoneyPrivate.instance),
+    GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", GetPrivateBlockchainTransactions.instance),
+    GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance);
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
     static {
