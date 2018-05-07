@@ -155,6 +155,7 @@ public enum APIEnum {
     GET_CURRENCY_TRANSFERS("getCurrencyTransfers", GetCurrencyTransfers.instance),
     GET_EXPECTED_CURRENCY_TRANSFERS("getExpectedCurrencyTransfers", GetExpectedCurrencyTransfers.instance),
     GET_TRANSACTION("getTransaction", GetTransaction.instance),
+    GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance),
     GET_TRANSACTION_BYTES("getTransactionBytes", GetTransactionBytes.instance),
     GET_UNCONFIRMED_TRANSACTION_IDS("getUnconfirmedTransactionIds", GetUnconfirmedTransactionIds.instance),
     GET_UNCONFIRMED_TRANSACTIONS("getUnconfirmedTransactions", GetUnconfirmedTransactions.instance),
