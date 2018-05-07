@@ -48,7 +48,7 @@ public class GetAccountPhasedTransactions extends APIServlet.APIRequestHandler {
                 PhasingPoll.getAccountPhasedTransactions(accountId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction));
+                transactions.add(JSONData.transaction(false, transaction));
             }
         }
 

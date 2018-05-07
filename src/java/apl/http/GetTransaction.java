@@ -19,14 +19,13 @@ package apl.http;
 
 import apl.Apl;
 import apl.Transaction;
+import apl.TransactionType;
 import apl.util.Convert;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static apl.http.JSONResponses.INCORRECT_TRANSACTION;
-import static apl.http.JSONResponses.MISSING_TRANSACTION;
-import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
+import static apl.http.JSONResponses.*;
 
 public final class GetTransaction extends APIServlet.APIRequestHandler {
 
@@ -61,15 +60,17 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
         } catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
-
         if (transaction == null) {
             transaction = Apl.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null) {
+            if (transaction == null || transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.unconfirmedTransaction(transaction);
         } else {
-            return JSONData.transaction(transaction, includePhasingResult);
+            if (transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
+                return UNKNOWN_TRANSACTION;
+            }
+            return JSONData.transaction(transaction, includePhasingResult, false);
         }
 
     }

@@ -34,19 +34,25 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
     static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
 
     private GetPrivateBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "secretPhrase");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "secretPhrase", "height");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        int height = ParameterParser.getHeight(req);
         long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(accountId, (byte)0,(byte)1, 0,false,true)) {
+        try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(accountId, (byte) 0, (byte) 1, 0, false, true)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction, false));
+                if (height != -1) {
+                    if (transaction.getHeight() == height)
+                        transactions.add(JSONData.transaction(transaction, false, false));
+                } else {
+                    transactions.add(JSONData.transaction(transaction, false, false));
+                }
             }
         }
         JSONObject response = new JSONObject();
