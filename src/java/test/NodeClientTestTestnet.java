@@ -36,7 +36,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Block block = MAPPER.readValue(json, Block.class);
         Assert.assertNotNull(block);
         Assert.assertEquals(BLOCK_HEIGHT.longValue(), block.getHeight().longValue());
-        Assert.assertEquals("APL-NZKH-MZRE-2CTT-98NPZ", block.getGeneratorRS());
+        Assert.assertEquals(MAIN_RS, block.getGeneratorRS());
         Assert.assertEquals(3, block.getNumberOfTransactions().intValue());
         Assert.assertEquals(nqt(3).longValue(), block.getTotalFeeNQT().longValue());
         Assert.assertEquals(nqt(58_000).longValue(), block.getTotalAmountNQT().longValue());
@@ -86,11 +86,6 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Override
     public void testGetPeersCount() throws Exception {
         Assert.assertEquals(5, client.getPeersCount(url));
-        Assert.assertEquals(4, client.getPeersCount(URLS.get(3)));
-        Assert.assertEquals(4, client.getPeersCount(URLS.get(4)));
-        Assert.assertEquals(4, client.getPeersCount(URLS.get(2)));
-        Assert.assertEquals(4, client.getPeersCount(URLS.get(1)));
-        Assert.assertEquals(4, client.getPeersCount(URLS.get(0)));
     }
 
 

@@ -9,32 +9,39 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 import static test.TestData.*;
-import static test.TestUtil.nqt;
+import static test.TestUtil.*;
 
 public class TestnetIntegrationScenario {
     private static final Map<String, String> ACCOUNTS = new HashMap<>(TestUtil.loadKeys(TEST_FILE));
     private static final NodeClient CLIENT = new NodeClient();
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
-    private static final Random RANDOM  = new Random();
+    private static final Random RANDOM = new Random();
 
     @Test
     public void testSendTransaction() throws Exception {
-        Assert.assertFalse(isFork());
-        LOG.info("Fork is not detected. Current height {}", CLIENT.getBlockchainHeight(randomUrl()));
-        Assert.assertTrue(isAllPeersConnected());
-        LOG.info("All peers are connected. Total peers: {}", CLIENT.getPeersCount(randomUrl()));
+        testIsFork();
+        testIsAllPeersConnected();
         Transaction transaction = sendRandomTransaction();
-        LOG.info("{} was sent. Wait for confirmation", transaction);
+        LOG.info("Ordinary {} was sent. Wait for confirmation", transaction);
         Assert.assertTrue(waitForConfirmation(transaction, 600));
-        LOG.info("{} was successfully confirmed. Checking peers...",transaction);
-        Assert.assertTrue(isAllPeersConnected());
-        LOG.info("All peers are connected. Total peers: {}", CLIENT.getPeersCount(randomUrl()));
-        Assert.assertFalse(isFork());
-        LOG.info("Fork is not detected. Current height {}", CLIENT.getBlockchainHeight(randomUrl()));
+        LOG.info("Ordinary {} was successfully confirmed. Checking peers...", transaction);
+        testIsAllPeersConnected();
+        testIsFork();
+    }
+
+    @Test
+    public void testSendPrivateTransaction() throws Exception {
+        testIsFork();
+        testIsAllPeersConnected();
+        Transaction transaction = sendRandomPrivateTransaction();
+        LOG.info("Private {} was sent. Wait for confirmation", transaction);
+        Assert.assertTrue(waitForConfirmation(transaction, 600));
+        LOG.info("Private {} was successfully confirmed. Checking peers...", transaction);
+        testIsAllPeersConnected();
+        testIsFork();
     }
 
     private boolean waitForConfirmation(Transaction transaction, int seconds) throws InterruptedException, IOException {
@@ -49,16 +56,24 @@ public class TestnetIntegrationScenario {
         return false;
     }
 
-    private String randomUrl() {
-        return URLS.get(RANDOM.nextInt(URLS.size()));
+
+    @Test
+    public void test() throws Exception {
+        System.out.println("PeerCount=" + CLIENT.getPeersCount(URLS.get(0)));
+        System.out.println("BLOCKS=" + CLIENT.getBlocksList(URLS.get(0)));
+        System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(URLS.get(0)));
     }
 
-//    @Test
-//    public void test() throws Exception {
-//        System.out.println(CLIENT.getPeersCount(URLS.get(0)));
-//        System.out.println(CLIENT.getBlocksList(URLS.get(0)));
-//        System.out.println(CLIENT.getBlockchainHeight(URLS.get(0)));
-//    }
+    @Test
+    public void testIsFork() throws Exception {
+        Assert.assertFalse("Fork was occurred!",isFork());
+        LOG.info("Fork is not detected. Current height {}", CLIENT.getBlockchainHeight(randomUrl()));
+    }
+    @Test
+    public void testIsAllPeersConnected() throws Exception {
+        Assert.assertTrue("All peers are NOT connected!", isAllPeersConnected());
+        LOG.info("All peers are connected. Total peers: {}", CLIENT.getPeersCount(randomUrl()));
+    }
 
 
     private boolean isFork() throws Exception {
@@ -90,12 +105,20 @@ public class TestnetIntegrationScenario {
     }
 
     private Transaction sendRandomTransaction() throws Exception {
-        Random random = new Random();
-        String host = URLS.get(random.nextInt(ACCOUNTS.size()));
-        String recipient = (String) ACCOUNTS.keySet().toArray()[random.nextInt(ACCOUNTS.size())];
-        String sender = ACCOUNTS.keySet().stream().filter(adr -> !recipient.equalsIgnoreCase(adr)).collect(Collectors.toList()).get(random.nextInt(ACCOUNTS.size() - 1));
+        String host = randomUrl();
+        String sender = getRandomRS(ACCOUNTS);
+        String recipient = getRandomRecipientRS(ACCOUNTS, sender);
         String secretPhrase = ACCOUNTS.get(sender);
-        Long amount = nqt(random.nextInt(10) + 1);
+        Long amount = nqt(RANDOM.nextInt(10) + 1);
         return CLIENT.sendMoneyTransaction(host, secretPhrase, recipient, amount);
+    }
+
+    private Transaction sendRandomPrivateTransaction() throws Exception {
+        String host = randomUrl();
+        String sender = getRandomRS(ACCOUNTS);
+        String recipient = getRandomRecipientRS(ACCOUNTS, sender);
+        String secretPhrase = ACCOUNTS.get(sender);
+        Long amount = nqt(RANDOM.nextInt(10) + 1);
+        return CLIENT.sendMoneyPrivateTransaction(host, secretPhrase, recipient, amount, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
     }
 }

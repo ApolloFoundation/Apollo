@@ -13,6 +13,7 @@ import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static test.TestData.MAIN_FILE;
 import static test.TestData.MAIN_LOCALHOST;
 import static test.TestUtil.createURI;
+import static test.TestUtil.getRandomRS;
 import static test.TestUtil.nqt;
 
 /**
@@ -131,12 +132,12 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
 
     @Test
     public void testSendMoney() {
-        String senderRS = getRandomRS();
-        String recipientRS = getRandomRS();
+        String senderRS = getRandomRS(accounts);
+        String recipientRS = getRandomRS(accounts);
         while (recipientRS.equals(senderRS)) {
-            recipientRS = getRandomRS();
+            recipientRS = getRandomRS(accounts);
         }
-        String transaction = client.sendMoney(url, ACCOUNTS.get(senderRS), recipientRS);
+        String transaction = client.sendMoney(url, accounts.get(senderRS), recipientRS);
         Assert.assertNotNull(transaction);
         Assert.assertFalse(transaction.isEmpty());
         assertThatJson(transaction)

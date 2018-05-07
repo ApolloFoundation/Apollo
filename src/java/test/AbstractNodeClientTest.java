@@ -5,42 +5,33 @@ import org.json.simple.parser.JSONParser;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static test.NodeClient.DEFAULT_AMOUNT;
-import static test.TestUtil.createURI;
+import static test.TestUtil.*;
 
 public abstract class AbstractNodeClientTest {
     protected static final Pattern IP_PATTERN = Pattern.compile(
         "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
-    protected static final Map<String, String> ACCOUNTS = new HashMap<>();
+    protected final Map<String, String> accounts = new HashMap<>();
     protected final String url;
     protected NodeClient client = new NodeClient();
     protected JSONParser parser = new JSONParser();
 
     public AbstractNodeClientTest(String url, String fileName) {
         this.url = url;
-        ACCOUNTS.putAll(TestUtil.loadKeys(fileName));
-    }
-
-    protected static String getRandomRS() {
-        Random random = new Random();
-        return new ArrayList<>(ACCOUNTS.keySet()).get(random.nextInt(ACCOUNTS.size()));
-    }
-
-    protected static String getRandomRecipientRS(String senderRS) {
-        Random random = new Random();
-        return new ArrayList<>(ACCOUNTS.keySet()).stream().filter(rs -> !senderRS.equalsIgnoreCase(rs)).collect(Collectors.toList()).get(random.nextInt(ACCOUNTS.size() - 1));
+        accounts.putAll(TestUtil.loadKeys(fileName));
     }
 
     @Test
     public void testPost() throws Exception {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getAccountId");
-        String randomRS = getRandomRS();
-        parameters.put("secretPhrase", ACCOUNTS.get(randomRS));
+        String randomRS = getRandomRS(accounts);
+        parameters.put("secretPhrase", accounts.get(randomRS));
         String json = client.postJson(createURI(url),
             parameters, "");
         Assert.assertNotNull(json);
@@ -51,7 +42,7 @@ public abstract class AbstractNodeClientTest {
 
     @Test
     public void testGetAccountTransactionsList() throws Exception {
-        String randomRS = getRandomRS();
+        String randomRS = getRandomRS(accounts);
         List<Transaction> accountTransactionsList = client.getAccountTransactionsList(url, randomRS);
         Assert.assertNotNull(accountTransactionsList);
         Assert.assertFalse(accountTransactionsList.isEmpty());
@@ -62,9 +53,9 @@ public abstract class AbstractNodeClientTest {
     }
     @Test
     public void testSendMoneyTransaction() throws Exception {
-        String senderRS = getRandomRS();
-        String recipientRS = getRandomRecipientRS(senderRS);
-        Transaction transaction = client.sendMoneyTransaction(url, ACCOUNTS.get(senderRS), recipientRS, DEFAULT_AMOUNT);
+        String senderRS = getRandomRS(accounts);
+        String recipientRS = getRandomRecipientRS(accounts, senderRS);
+        Transaction transaction = client.sendMoneyTransaction(url, accounts.get(senderRS), recipientRS, DEFAULT_AMOUNT);
         Assert.assertEquals(0, transaction.getType().intValue());
         Assert.assertEquals(0, transaction.getSubtype().intValue());
         Assert.assertEquals(recipientRS, transaction.getRecipientRS());
@@ -72,6 +63,27 @@ public abstract class AbstractNodeClientTest {
         Assert.assertEquals(60L, transaction.getDeadline().longValue());
         Assert.assertEquals(100000000L, transaction.getAmountNQT().longValue());
         Assert.assertEquals(100000000L, transaction.getFeeNQT().longValue());
+    }
+
+    @Test
+    public void testGetPrivateBlockchainTransactions() throws Exception {
+        List<Transaction> transactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(getRandomRS(accounts)));
+        Assert.assertNotNull(transactions);
+        transactions.forEach(transaction -> {
+            Assert.assertEquals(0, transaction.getType().intValue());
+            Assert.assertEquals(1, transaction.getSubtype().intValue());
+        });
+    }
+
+    @Test
+    public void testSendMoneyPrivate() throws Exception {
+        String sender = getRandomRS(accounts);
+        String secretPhrase = accounts.get(sender);
+        String recipient = getRandomRecipientRS(accounts, sender);
+        Transaction privateTransaction = client.sendMoneyPrivateTransaction(url, secretPhrase, recipient, NodeClient.DEFAULT_AMOUNT, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+        Assert.assertNotNull(privateTransaction);
+        Assert.assertEquals(0, privateTransaction.getType().intValue());
+        Assert.assertEquals(1, privateTransaction.getSubtype().intValue());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package test;
 
+import static test.TestUtil.fromNqt;
+
 /**
  * Simple DTO object for {@link apl.TransactionImpl}
  */
@@ -32,12 +34,12 @@ public class Transaction {
     @Override
     public String toString() {
         return "Transaction{" +
-            "amountNQT=" + amountNQT +
-            ", feeNQT=" + feeNQT +
-            ", senderRS='" + senderRS + '\'' +
-            ", height=" + height +
-            ", recipientRS='" + recipientRS + '\'' +
-            '}';
+                "amountNQT=" + fromNqt(amountNQT) +
+                ", feeNQT=" + fromNqt(feeNQT) +
+                ", senderRS='" + senderRS + '\'' +
+                ", height=" + height +
+                ", recipientRS='" + recipientRS + '\'' +
+                '}';
     }
 
     public Long getBlockTimestamp() {
