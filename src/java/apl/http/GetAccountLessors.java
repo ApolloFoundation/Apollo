@@ -46,7 +46,7 @@ public final class GetAccountLessors extends APIServlet.APIRequestHandler {
         }
 
         JSONObject response = new JSONObject();
-        JSONData.putAccount(response, "account", account.getId());
+        JSONData.putAccount(response, "account", account.getId(), false);
         response.put("height", height);
         JSONArray lessorsJSON = new JSONArray();
 
@@ -55,7 +55,7 @@ public final class GetAccountLessors extends APIServlet.APIRequestHandler {
                 while (lessors.hasNext()) {
                     Account lessor = lessors.next();
                     JSONObject lessorJSON = new JSONObject();
-                    JSONData.putAccount(lessorJSON, "lessor", lessor.getId());
+                    JSONData.putAccount(lessorJSON, "lessor", lessor.getId(), false);
                     lessorJSON.put("guaranteedBalanceNQT", String.valueOf(lessor.getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
                     lessorsJSON.add(lessorJSON);
                 }

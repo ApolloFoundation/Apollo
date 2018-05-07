@@ -45,7 +45,7 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
         JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance);
-        JSONData.putAccount(response, "account", account.getId());
+        JSONData.putAccount(response, "account", account.getId(), false);
 
         byte[] publicKey = Account.getPublicKey(account.getId());
         if (publicKey != null) {
@@ -58,11 +58,11 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
         }
         Account.AccountLease accountLease = account.getAccountLease();
         if (accountLease != null) {
-            JSONData.putAccount(response, "currentLessee", accountLease.getCurrentLesseeId());
+            JSONData.putAccount(response, "currentLessee", accountLease.getCurrentLesseeId(), false);
             response.put("currentLeasingHeightFrom", accountLease.getCurrentLeasingHeightFrom());
             response.put("currentLeasingHeightTo", accountLease.getCurrentLeasingHeightTo());
             if (accountLease.getNextLesseeId() != 0) {
-                JSONData.putAccount(response, "nextLessee", accountLease.getNextLesseeId());
+                JSONData.putAccount(response, "nextLessee", accountLease.getNextLesseeId(), false);
                 response.put("nextLeasingHeightFrom", accountLease.getNextLeasingHeightFrom());
                 response.put("nextLeasingHeightTo", accountLease.getNextLeasingHeightTo());
             }

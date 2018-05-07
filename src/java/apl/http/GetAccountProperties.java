@@ -51,10 +51,10 @@ public final class GetAccountProperties extends APIServlet.APIRequestHandler {
         JSONArray propertiesJSON = new JSONArray();
         response.put("properties", propertiesJSON);
         if (recipientId != 0) {
-            JSONData.putAccount(response, "recipient", recipientId);
+            JSONData.putAccount(response, "recipient", recipientId, false);
         }
         if (setterId != 0) {
-            JSONData.putAccount(response, "setter", setterId);
+            JSONData.putAccount(response, "setter", setterId, false);
         }
         try (DbIterator<Account.AccountProperty> iterator = Account.getProperties(recipientId, setterId, property, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {

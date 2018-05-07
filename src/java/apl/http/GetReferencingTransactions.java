@@ -46,7 +46,7 @@ public final class GetReferencingTransactions extends APIServlet.APIRequestHandl
         try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getReferencingTransactions(transactionId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction));
+                transactions.add(JSONData.transaction(false, transaction));
             }
         }
 

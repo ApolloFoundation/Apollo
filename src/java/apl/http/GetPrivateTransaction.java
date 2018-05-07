@@ -17,9 +17,8 @@
 
 package apl.http;
 
-import apl.Apl;
-import apl.Transaction;
-import apl.TransactionType;
+import apl.*;
+import apl.crypto.Crypto;
 import apl.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -27,24 +26,23 @@ import javax.servlet.http.HttpServletRequest;
 
 import static apl.http.JSONResponses.*;
 
-public final class GetTransaction extends APIServlet.APIRequestHandler {
+public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
 
-    static final GetTransaction instance = new GetTransaction();
+    static final GetPrivateTransaction instance = new GetPrivateTransaction();
 
-    private GetTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "includePhasingResult");
+    private GetPrivateTransaction() {
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase");
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) {
-
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         String transactionIdString = Convert.emptyToNull(req.getParameter("transaction"));
         String transactionFullHash = Convert.emptyToNull(req.getParameter("fullHash"));
         if (transactionIdString == null && transactionFullHash == null) {
             return MISSING_TRANSACTION;
         }
-        boolean includePhasingResult = "true".equalsIgnoreCase(req.getParameter("includePhasingResult"));
-
         long transactionId = 0;
         Transaction transaction;
         try {
@@ -57,22 +55,24 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
                     return UNKNOWN_TRANSACTION;
                 }
             }
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
         if (transaction == null) {
             transaction = Apl.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
+            if (transaction == null || !transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.unconfirmedTransaction(transaction);
         } else {
-            if (transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
+            if (!transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
                 return UNKNOWN_TRANSACTION;
             }
-            return JSONData.transaction(transaction, includePhasingResult, false);
+            return JSONData.transaction(transaction, false, false);
         }
 
     }
 
 }
+

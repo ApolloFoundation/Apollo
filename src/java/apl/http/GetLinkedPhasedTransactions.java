@@ -40,7 +40,7 @@ public class GetLinkedPhasedTransactions extends APIServlet.APIRequestHandler {
 
         JSONArray json = new JSONArray();
         List<? extends Transaction> transactions = PhasingPoll.getLinkedPhasedTransactions(linkedFullHash);
-        transactions.forEach(transaction -> json.add(JSONData.transaction(transaction)));
+        transactions.forEach(transaction -> json.add(JSONData.transaction(false, transaction)));
         JSONObject response = new JSONObject();
         response.put("transactions", json);
 
