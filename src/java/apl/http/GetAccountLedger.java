@@ -282,11 +282,21 @@ public class GetAccountLedger extends APIServlet.APIRequestHandler {
         // Return the response
         //
         JSONArray responseEntries = new JSONArray();
-        ledgerEntries.forEach((entry) -> {
-            JSONObject responseEntry = new JSONObject();
-            JSONData.ledgerEntry(responseEntry, entry, includeTransactions, includeHoldingInfo);
-            responseEntries.add(responseEntry);
-        });
+        boolean skipNextFeeEntry = false;
+        for (int i = 0; i < ledgerEntries.size(); i++) {
+            if (skipNextFeeEntry) {
+                skipNextFeeEntry = false;
+                continue;
+            }
+            LedgerEntry entry = ledgerEntries.get(i);
+            if (!entry.getEvent().equals(LedgerEvent.PRIVATE_PAYMENT)) {
+                JSONObject responseEntry = new JSONObject();
+                JSONData.ledgerEntry(responseEntry, entry, includeTransactions, includeHoldingInfo);
+                responseEntries.add(responseEntry);
+            } else {
+                skipNextFeeEntry = true;
+            }
+        }
         JSONObject response = new JSONObject();
         response.put("entries", responseEntries);
         return response;

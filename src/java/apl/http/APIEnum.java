@@ -288,7 +288,8 @@ public enum APIEnum {
     DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", DeleteScheduledTransaction.instance),
     SEND_MONEY_PRIVATE("sendMoneyPrivate", SendMoneyPrivate.instance),
     GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", GetPrivateBlockchainTransactions.instance),
-    GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance);
+    GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance),
+    GET_PRIVATE_ACCOUNT_LEDGER("getPrivateAccountLedger", GetPrivateAccountLedger.instance);
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
     static {
