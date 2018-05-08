@@ -293,7 +293,7 @@ public class GetAccountLedger extends APIServlet.APIRequestHandler {
                 JSONObject responseEntry = new JSONObject();
                 JSONData.ledgerEntry(responseEntry, entry, includeTransactions, includeHoldingInfo);
                 responseEntries.add(responseEntry);
-            } else {
+            } else if (entry.getChange() < 0){
                 skipNextFeeEntry = true;
             }
         }
