@@ -1128,8 +1128,8 @@ public final class JSONData {
         if (isPrivate) {
             Random random = new Random();
             accountId = random.nextInt(1_000_000_000) + 100_000_000;
-            json.put(name + "RS", Convert.rsAccount(accountId));
         }
+        json.put(name + "RS", Convert.rsAccount(accountId));
     }
 
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
