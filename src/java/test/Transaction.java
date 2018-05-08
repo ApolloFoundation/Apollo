@@ -267,4 +267,8 @@ public class Transaction {
     public void setRecipientRS(String recipientRS) {
         this.recipientRS = recipientRS;
     }
+
+    public boolean isNull() {
+        return signature == null || signatureHash == null || fullHash == null;
+    }
 }

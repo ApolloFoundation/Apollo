@@ -60,7 +60,7 @@ public class TestnetIntegrationScenario {
     @Test
     public void test() throws Exception {
         System.out.println("PeerCount=" + CLIENT.getPeersCount(URLS.get(0)));
-        System.out.println("BLOCKS=" + CLIENT.getBlocksList(URLS.get(0)));
+        System.out.println("BLOCKS=" + CLIENT.getBlocksList(URLS.get(0), false, null));
         System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(URLS.get(0)));
     }
 

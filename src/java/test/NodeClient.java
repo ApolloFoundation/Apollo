@@ -91,8 +91,10 @@ public class NodeClient {
         }
         return null;
     }
-    /** curl -X POST -d "requestType=sendMoney&secretPhrase=dont know secret phrase hungry&recipient=APL-R3YT-LZ35-PS5X-3NMHR&amountNQ
-T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
+
+    /**
+     * curl -X POST -d "requestType=sendMoney&secretPhrase=dont know secret phrase hungry&recipient=APL-R3YT-LZ35-PS5X-3NMHR&amountNQ
+     * T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
      */
 
     public String getPeers(String url) {
@@ -112,19 +114,21 @@ T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
         return MAPPER.readValue(peersArray.toString(), new TypeReference<List<Peer>>() {});
     }
 
-    public String getBlocks(String url, int from, int to) {
+    public String getBlocks(String url, int from, int to, boolean includeTransactions, Long timestamp) {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getBlocks");
         params.put("firstIndex", String.valueOf(from));
         params.put("lastIndex", String.valueOf(to));
-        params.put("includeTransactions", "false");
-        params.put("includeExecutedPhased", "false");
+        if (timestamp != null) {
+            params.put("timestamp", timestamp.toString());
+        }
+        params.put("includeTransactions", String.valueOf(includeTransactions));
         URI uri = createURI(url);
         return getJson(uri, params);
     }
 
     public String getBlocks(String url) {
-        return getBlocks(url, 0, 4); //last 5 blocks
+        return getBlocks(url, 0, 4, false, null); //last 5 blocks
     }
 
 
@@ -138,8 +142,7 @@ T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
         URI uri = createURI(url);
         params.put("requestType", "getBlockchainTransactions");
         params.put("account", rsAddress);
-        params.put("lastIndex", "5");
-        params.put("includeTransactions", "false");
+        params.put("includeTransactions", "true");
         params.put("includeExecutedPhased", "false");
         return getJson(uri, params);
     }
@@ -229,8 +232,8 @@ T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
         return sendMoneyTransaction(url, secretPhrase, recipient, amountNQT, DEFAULT_FEE);
     }
 
-    public List<Block> getBlocksList(String url) throws IOException {
-        String json = getBlocks(url);
+    public List<Block> getBlocksList(String url, boolean includeTransactions, Long timestamp) throws IOException {
+        String json = getBlocks(url, 0, 4, includeTransactions, timestamp);
         JsonNode root = MAPPER.readTree(json);
         JsonNode blocksArray = root.get("blocks");
         return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {});
@@ -256,18 +259,21 @@ T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
         return MAPPER.readValue(json, Transaction.class);
     }
 
-    public List<Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase) throws Exception {
-        String json = getPrivateBlockchainTransactionsJson(url, secretPhrase);
+    public List<Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, Long height) throws Exception {
+        String json = getPrivateBlockchainTransactionsJson(url, secretPhrase, height);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
         return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
     }
 
-    public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase) {
+    public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase, Long height) {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
         params.put("secretPhrase", secretPhrase);
+        if (height != null) {
+            params.put("height", height.toString());
+        }
         return getJson(uri, params);
     }
 

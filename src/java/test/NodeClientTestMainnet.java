@@ -92,7 +92,7 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     @Test
     @Override
     public void testGetBlocksList() throws Exception {
-        List<Block> blocksList = client.getBlocksList(url);
+        List<Block> blocksList = client.getBlocksList(url,false, null);
         Assert.assertNotNull(blocksList);
         Assert.assertFalse(blocksList.isEmpty());
         Assert.assertEquals(5, blocksList.size());

@@ -67,9 +67,14 @@ public abstract class AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateBlockchainTransactions() throws Exception {
-        List<Transaction> transactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(getRandomRS(accounts)));
-        Assert.assertNotNull(transactions);
-        transactions.forEach(transaction -> {
+        String account = getRandomRS(accounts);
+        List<Transaction> allTransactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(account), null);
+        Assert.assertNotNull(allTransactions);
+        client.getAccountTransactionsList(url, account).forEach(allTransactions::remove);
+        allTransactions.forEach(transaction -> {
+            if (!transaction.getRecipientRS().equalsIgnoreCase(account) && !transaction.getSenderRS().equalsIgnoreCase(account)) {
+                Assert.fail("Not this user: " + account + " transaction " + transaction);
+            }
             Assert.assertEquals(0, transaction.getType().intValue());
             Assert.assertEquals(1, transaction.getSubtype().intValue());
         });
