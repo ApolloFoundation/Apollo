@@ -270,4 +270,41 @@ T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
         params.put("secretPhrase", secretPhrase);
         return getJson(uri, params);
     }
+
+    public List<LedgerEntry> getAccountLedger(String url, String rsAddress, boolean includeTransactions) throws Exception {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getAccountLedger");
+        parameters.put("account", rsAddress);
+        parameters.put("includeTransactions", String.valueOf(includeTransactions));
+        String json = getJson(createURI(url), parameters);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode entriesArray = root.get("entries");
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
+    }
+
+    public List<LedgerEntry> getPrivateAccountLedger(String url, String secretPhrase, boolean includeTransactions) throws Exception {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getPrivateAccountLedger");
+        parameters.put("secretPhrase", secretPhrase);
+        parameters.put("includeTransactions", String.valueOf(includeTransactions));
+        String json = getJson(createURI(url), parameters);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode entriesArray = root.get("entries");
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
+    }
+
+    public Transaction getPrivateTransaction(String url, String secretPhrase, String fullHash, String transactionId) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getPrivateTransaction");
+        parameters.put("secretPhrase", secretPhrase);
+        if (transactionId != null && !transactionId.isEmpty()) {
+            parameters.put("transaction", String.valueOf(transactionId));
+        } else if (fullHash != null && !fullHash.isEmpty()) {
+            parameters.put("fullHash", fullHash);
+        } else {
+            throw new RuntimeException("Both fullHash and transactionId are not provided");
+        }
+        String json = getJson(createURI(url), parameters);
+        return MAPPER.readValue(json, Transaction.class);
+    }
 }

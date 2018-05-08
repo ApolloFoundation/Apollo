@@ -1,6 +1,7 @@
 package test;
 
 
+import apl.AccountLedger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -17,13 +18,14 @@ import static test.TestUtil.*;
  * Test scenarios on testnet for {@link NodeClient}
  */
 public class NodeClientTestTestnet extends AbstractNodeClientTest {
+    public static final String MAIN_RS = "APL-NZKH-MZRE-2CTT-98NPZ";
+    //transaction hash from 7446 block 20_000 APL to RS4
+    public static final String TRANSACTION_HASH = "0619d7f4e0f8d2dab76f28e320c5ca819b2a08dc2294e53151bf14d318d5cefa";
+    public static final Long BLOCK_HEIGHT = 7446L;
+
     public NodeClientTestTestnet() {
-        super(TEST_LOCALHOST,TEST_FILE);
+        super(TEST_LOCALHOST, TEST_FILE);
     }
-        public static final String MAIN_RS = "APL-NZKH-MZRE-2CTT-98NPZ";
-        //transaction hash from 7446 block 20_000 APL to RS4
-        public static final String TRANSACTION_HASH = "0619d7f4e0f8d2dab76f28e320c5ca819b2a08dc2294e53151bf14d318d5cefa";
-        public static final Long BLOCK_HEIGHT = 7446L;
 
     @Test
     @Override
@@ -89,7 +91,6 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     }
 
 
-
     @Test
     @Override
     public void testGetPeersIPs() throws Exception {
@@ -98,17 +99,17 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertFalse(peersIPs.isEmpty());
         peersIPs.forEach(ip -> Assert.assertTrue(IP_PATTERN.matcher(ip).matches()));
         peersIPs.forEach(ip -> {
-                boolean found = false;
-                for (String aip : URLS) {
-                    String tmp = aip.substring(aip.indexOf("//") + 2, aip.lastIndexOf(":"));
-                    if (tmp.equals(ip)) {
-                        found = true;
+                    boolean found = false;
+                    for (String aip : URLS) {
+                        String tmp = aip.substring(aip.indexOf("//") + 2, aip.lastIndexOf(":"));
+                        if (tmp.equals(ip)) {
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        Assert.fail("Unknown ip: " + ip);
                     }
                 }
-                if (!found) {
-                    Assert.fail("Unknown ip: " + ip);
-                }
-            }
         );
     }
 
@@ -124,6 +125,63 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(0, transaction.getType().intValue());
         Assert.assertEquals(MAIN_RS, transaction.getSenderRS());
 //        Assert.assertEquals(RS4, transaction.getRecipientRS());
+    }
+
+    @Test
+    public void testGetAccountLedger() throws Exception {
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getAccountLedger(url, accountRs, true);
+        Assert.assertNotNull(accountLedger);
+        Assert.assertFalse(accountLedger.isEmpty());
+        accountLedger.forEach(entry -> {
+            Transaction transaction = entry.getTransaction();
+            if (transaction != null && !transaction.getSenderRS().equalsIgnoreCase(accountRs) && !transaction.getRecipientRS().equalsIgnoreCase(accountRs)) {
+                Assert.fail("Not this user ledger!");
+            }
+        });
+    }
+
+    @Test
+    public void testGetPrivateAccountLedger() throws Exception {
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true);
+        Assert.assertNotNull(accountLedger);
+        Assert.assertFalse(accountLedger.isEmpty());
+        accountLedger.forEach(entry -> {
+            Transaction transaction = entry.getTransaction();
+            if (transaction != null && !accountRs.equalsIgnoreCase(transaction.getSenderRS()) && !accountRs.equalsIgnoreCase(transaction.getRecipientRS())) {
+                Assert.fail("Not this user ledger!");
+            }
+        });
+        List<LedgerEntry> publicLedger = client.getAccountLedger(url, accountRs, true);
+        publicLedger.forEach(accountLedger::remove);
+        accountLedger.forEach(entry -> {
+            if (!entry.getEventType().equals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT)
+                    && !entry.getEventType().equals(AccountLedger.LedgerEvent.TRANSACTION_FEE)) {
+                Assert.fail("Not only private payment and theirs fee are present in accountLedger. Fail for entry: " + entry);
+            }
+        });
+    }
+
+    @Test
+    public void testGetPrivateTransaction() {
+
+//        client.getPrivateTransaction(url, )
+    }
+
+    @Test
+    public void testGetPrivateBlockTransactions() {
+
+    }
+
+    @Test
+    public void testGetBlockWithPrivateTransactions() {
+
+    }
+
+    @Test
+    public void testGetBlocksWithPrivateTransactions() {
+
     }
 }
 
