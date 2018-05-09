@@ -910,7 +910,7 @@ public final class JSONData {
         }
         if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
             Random random = new Random();
-            json.put("amountNQT", String.valueOf((long) 100_000_000 * random.nextInt(10_000_000) - 5_000_000));
+            json.put("amountNQT", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
         } else {
             json.put("amountNQT", String.valueOf(transaction.getAmountNQT()));
         }
@@ -1127,7 +1127,7 @@ public final class JSONData {
         json.put(name, Long.toUnsignedString(accountId));
         if (isPrivate) {
             Random random = new Random();
-            accountId = random.nextInt(1_000_000_000) + 100_000_000;
+            accountId = random.nextLong();
         }
         json.put(name + "RS", Convert.rsAccount(accountId));
     }
