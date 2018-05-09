@@ -1637,5 +1637,11 @@ var NRS = (function (NRS, $, undefined) {
         $("#transaction_info_output_bottom, #transaction_info_output_top, #transaction_info_bottom").html("").hide();
     });
 
+    var secretWor = $('#transaction_fill_secret_word_modal');
+    var openSecretWordModalButton = $('#show_private_transactions_btn');
+    $(document).on('click', '#show_private_transactions_btn', function(e){
+        secretWor.modal("show");
+    });
+
     return NRS;
 }(NRS || {}, jQuery));
