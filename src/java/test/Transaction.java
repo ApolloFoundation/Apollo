@@ -271,4 +271,8 @@ public class Transaction {
     public boolean isNull() {
         return signature == null || signatureHash == null || fullHash == null;
     }
+
+    public boolean isPrivate() {
+        return type == TransactionType.Payment.PRIVATE.getType() && subtype == TransactionType.Payment.PRIVATE.getSubtype();
+    }
 }

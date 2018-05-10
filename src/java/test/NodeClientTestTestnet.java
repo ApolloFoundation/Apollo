@@ -126,6 +126,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(TRANSACTION_HASH, transaction.getFullHash());
         Assert.assertEquals(nqt(1), transaction.getFeeNQT());
         Assert.assertEquals(nqt(20_000), transaction.getAmountNQT());
+        Assert.assertFalse(transaction.isPrivate());
         Assert.assertEquals(0, transaction.getSubtype().intValue());
         Assert.assertEquals(0, transaction.getType().intValue());
         Assert.assertEquals(MAIN_RS, transaction.getSenderRS());
@@ -143,8 +144,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
             if (transaction != null && !transaction.getSenderRS().equalsIgnoreCase(accountRs) && !transaction.getRecipientRS().equalsIgnoreCase(accountRs)) {
                 Assert.fail("Not this user ledger!");
             }
-            if (transaction.getType().intValue() == 0 && transaction.getSubtype().intValue() == 1) {
-                Assert.fail("Private transaction should not be present in public ledger");
+            if (transaction != null && transaction.isPrivate()) {
+                Assert.fail("Private transactions should not be present in public ledger");
             }
         });
     }
@@ -181,8 +182,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(privateTransaction1.getRecipientRS(), "APL-8BNS-LMPW-3KHL-3B7JM");
         Assert.assertEquals(privateTransaction1.getAmountNQT(), nqt(2));
         Assert.assertEquals(privateTransaction1.getFeeNQT(), nqt(1));
-        Assert.assertEquals(privateTransaction1.getType().intValue(), 0);
-        Assert.assertEquals(privateTransaction1.getSubtype().intValue(), 1);
+        Assert.assertTrue(privateTransaction1.isPrivate());
     }
 
     @Test
@@ -205,10 +205,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(4, publicTransactions.size());
         publicTransactions.forEach(transactionsList::remove);
         Assert.assertEquals(2, transactionsList.size());
-        transactionsList.forEach(transaction -> {
-            Assert.assertEquals(1, transaction.getSubtype().intValue());
-            Assert.assertEquals(0, transaction.getType().intValue());
-        });
+        transactionsList.forEach(transaction -> Assert.assertTrue(transaction.isPrivate()));
         Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transactionsList.get(1).getRecipientRS());
     }
 
@@ -219,12 +216,12 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertNotNull(blockTransactionsList1);
         Assert.assertEquals(4, blockTransactionsList1.size());
         blockTransactionsList2.forEach(blockTransactionsList1::remove);
-        blockTransactionsList1.forEach(transaction -> {
-            blockTransactionsList2.forEach(tr -> {
-                if (tr.getFullHash().equalsIgnoreCase(transaction.getFullHash())) {
-                    Assert.assertFalse(transaction.getSenderRS().equalsIgnoreCase(tr.getSenderRS()));
-                    Assert.assertFalse(transaction.getRecipientRS().equalsIgnoreCase(tr.getRecipientRS()));
-                    Assert.assertFalse(transaction.getAmountNQT().equals(tr.getAmountNQT()));
+        blockTransactionsList1.forEach(tr1 -> {
+            blockTransactionsList2.forEach(tr2 -> {
+                if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
+                    Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
+                    Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
+                    Assert.assertFalse(tr1.getAmountNQT().equals(tr2.getAmountNQT()));
                 }
             });
         });

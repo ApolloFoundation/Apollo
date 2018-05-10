@@ -48,7 +48,10 @@ public abstract class AbstractNodeClientTest {
         Assert.assertFalse(accountTransactionsList.isEmpty());
         accountTransactionsList.forEach(transaction -> {
             if (!randomRS.equalsIgnoreCase(transaction.getSenderRS()) && !randomRS.equalsIgnoreCase(transaction.getRecipientRS()))
-                Assert.fail("There are not this user transactions");
+                Assert.fail("There are not this user transactions!");
+            if (transaction.isPrivate()) {
+                Assert.fail("Private transactions should not appeared here!");
+            }
         });
     }
     @Test
@@ -56,6 +59,7 @@ public abstract class AbstractNodeClientTest {
         String senderRS = getRandomRS(accounts);
         String recipientRS = getRandomRecipientRS(accounts, senderRS);
         Transaction transaction = client.sendMoneyTransaction(url, accounts.get(senderRS), recipientRS, DEFAULT_AMOUNT);
+        Assert.assertFalse(transaction.isPrivate());
         Assert.assertEquals(0, transaction.getType().intValue());
         Assert.assertEquals(0, transaction.getSubtype().intValue());
         Assert.assertEquals(recipientRS, transaction.getRecipientRS());
@@ -75,8 +79,7 @@ public abstract class AbstractNodeClientTest {
             if (!transaction.getRecipientRS().equalsIgnoreCase(account) && !transaction.getSenderRS().equalsIgnoreCase(account)) {
                 Assert.fail("Not this user: " + account + " transaction " + transaction);
             }
-            Assert.assertEquals(0, transaction.getType().intValue());
-            Assert.assertEquals(1, transaction.getSubtype().intValue());
+            Assert.assertTrue(transaction.isPrivate());
         });
     }
 
@@ -87,8 +90,7 @@ public abstract class AbstractNodeClientTest {
         String recipient = getRandomRecipientRS(accounts, sender);
         Transaction privateTransaction = client.sendMoneyPrivateTransaction(url, secretPhrase, recipient, NodeClient.DEFAULT_AMOUNT, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
         Assert.assertNotNull(privateTransaction);
-        Assert.assertEquals(0, privateTransaction.getType().intValue());
-        Assert.assertEquals(1, privateTransaction.getSubtype().intValue());
+        Assert.assertTrue(privateTransaction.isPrivate());
     }
 
     @Test
