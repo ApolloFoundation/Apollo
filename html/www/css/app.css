@@ -3396,6 +3396,14 @@ table.purchase td {
   display:none;
 }
 
+#show_private_transactions_enter_secret_passphrase {
+  display: none;
+}
+
+#show_private_transactions_enter_secret_passphrase.active {
+  display: block;
+}
+
 .pas_contact_info {
   display:table-cell;
   vertical-align:middle;
