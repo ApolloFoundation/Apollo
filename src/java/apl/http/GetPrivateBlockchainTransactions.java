@@ -34,7 +34,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
     static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
 
     private GetPrivateBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "secretPhrase", "height");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "secretPhrase", "height", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -43,8 +43,12 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
         String secretPhrase = ParameterParser.getSecretPhrase(req, true);
         int height = ParameterParser.getHeight(req);
         long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+        int firstIndex = ParameterParser.getFirstIndex(req);
+        int lastIndex = ParameterParser.getLastIndex(req);
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(accountId, (byte)-1, (byte)-1, 0, false)) {
+        try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(
+                accountId, 0, (byte) -1, (byte) -1, 0, false, false,
+                false, firstIndex, lastIndex, false, false)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 if (height != -1) {
