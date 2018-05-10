@@ -600,5 +600,12 @@ var NRS = (function (NRS, $, undefined) {
         });
     });
 
+    $('#hide_advanced').change(function() {
+        $('.optional_message').toggleClass('disabled');
+        $('.advanced_info').toggleClass('disabled');
+        $('#send_money_private').toggleClass('disabled');
+        $('#send_money_public').toggleClass('disabled');
+    });
+
     return NRS;
 }(NRS || {}, jQuery));
