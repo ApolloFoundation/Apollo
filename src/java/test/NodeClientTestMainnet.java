@@ -1,6 +1,7 @@
 package test;
 
 
+import org.eclipse.jetty.util.StringUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,9 +13,7 @@ import java.util.Map;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static test.TestData.MAIN_FILE;
 import static test.TestData.MAIN_LOCALHOST;
-import static test.TestUtil.createURI;
-import static test.TestUtil.getRandomRS;
-import static test.TestUtil.nqt;
+import static test.TestUtil.*;
 
 /**
  * Test scenarios on mainnet for {@link NodeClient}
@@ -72,16 +71,14 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     @Override
     public void testGetPeersList() throws Exception {
         List<Peer> peersList = client.getPeersList(url);
-        Assert.assertNotNull(peersList);
-        Assert.assertFalse(peersList.isEmpty());
+        checkList(peersList);
         Assert.assertTrue(peersList.size() > 3);
     }
 
     @Test
     public void testGetBlocks() throws Exception {
         String json = client.getBlocks(url);
-        Assert.assertNotNull(json);
-        Assert.assertFalse(json.isEmpty());
+        Assert.assertTrue(StringUtil.isNotBlank(json));
         assertThatJson(json)
             .node("blocks")
             .isPresent()
@@ -93,8 +90,7 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     @Override
     public void testGetBlocksList() throws Exception {
         List<Block> blocksList = client.getBlocksList(url,false, null);
-        Assert.assertNotNull(blocksList);
-        Assert.assertFalse(blocksList.isEmpty());
+        checkList(blocksList);
         Assert.assertEquals(5, blocksList.size());
     }
 
@@ -102,8 +98,7 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     public void testGetBlockTransactions() throws Exception {
         long height = 106070L;
         String blockTransactions = client.getBlockTransactions(url, height);
-        Assert.assertNotNull(blockTransactions);
-        Assert.assertFalse(blockTransactions.isEmpty());
+        Assert.assertTrue(StringUtil.isNotBlank(blockTransactions));
         assertThatJson(blockTransactions)
             .isPresent()
             .isArray()
@@ -119,8 +114,7 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     public void testGetBlockTransactionsList() throws Exception {
         long height = 106070L;
         List<Transaction> blockTransactionsList = client.getBlockTransactionsList(url, height);
-        Assert.assertNotNull(blockTransactionsList);
-        Assert.assertFalse(blockTransactionsList.isEmpty());
+        checkList(blockTransactionsList);
         blockTransactionsList.forEach(transaction -> Assert.assertEquals(height, (long) transaction.getHeight()));
     }
 
@@ -133,13 +127,9 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     @Test
     public void testSendMoney() {
         String senderRS = getRandomRS(accounts);
-        String recipientRS = getRandomRS(accounts);
-        while (recipientRS.equals(senderRS)) {
-            recipientRS = getRandomRS(accounts);
-        }
+        String recipientRS = getRandomRecipientRS(accounts, senderRS);
         String transaction = client.sendMoney(url, accounts.get(senderRS), recipientRS);
-        Assert.assertNotNull(transaction);
-        Assert.assertFalse(transaction.isEmpty());
+        Assert.assertTrue(StringUtil.isNotBlank(transaction));
         assertThatJson(transaction)
             .isPresent()
             .node("signatureHash")
@@ -178,8 +168,7 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     @Override
     public void testGetPeersIPs() throws Exception {
         List<String> peersIPs = client.getPeersIPs(url);
-        Assert.assertNotNull(peersIPs);
-        Assert.assertFalse(peersIPs.isEmpty());
+        checkList(peersIPs);
         peersIPs.forEach(ip -> Assert.assertTrue(IP_PATTERN.matcher(ip).matches()));
     }
 

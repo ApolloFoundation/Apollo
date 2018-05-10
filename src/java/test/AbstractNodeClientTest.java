@@ -72,7 +72,7 @@ public abstract class AbstractNodeClientTest {
     @Test
     public void testGetPrivateBlockchainTransactions() throws Exception {
         String account = getRandomRS(accounts);
-        List<Transaction> allTransactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(account), null);
+        List<Transaction> allTransactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(account), null, null, null);
         Assert.assertNotNull(allTransactions);
         client.getAccountTransactionsList(url, account).forEach(allTransactions::remove);
         allTransactions.forEach(transaction -> {
@@ -91,6 +91,19 @@ public abstract class AbstractNodeClientTest {
         Transaction privateTransaction = client.sendMoneyPrivateTransaction(url, secretPhrase, recipient, NodeClient.DEFAULT_AMOUNT, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
         Assert.assertNotNull(privateTransaction);
         Assert.assertTrue(privateTransaction.isPrivate());
+    }
+
+    protected <T> void checkList(List<T> list) {
+        Assert.assertNotNull(list);
+        Assert.assertFalse(list.isEmpty());
+    }
+
+    protected void checkAddress(List<Transaction> transactions, String address) {
+        transactions.forEach(transaction -> {
+            if (!transaction.getSenderRS().equalsIgnoreCase(address) && !transaction.getRecipientRS().equalsIgnoreCase(address)) {
+                Assert.fail(transaction.toString() + " is not for this address \'" + address + "\'");
+            }
+        });
     }
 
     @Test

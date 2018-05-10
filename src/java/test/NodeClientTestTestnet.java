@@ -62,8 +62,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Override
     public void testGetPeersList() throws Exception {
         List<Peer> peersList = client.getPeersList(url);
-        Assert.assertNotNull(peersList);
-        Assert.assertFalse(peersList.isEmpty());
+        checkList(peersList);
         Assert.assertEquals(5, peersList.size());
     }
 
@@ -71,8 +70,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Override
     public void testGetBlocksList() throws Exception {
         List<Block> blocksList = client.getBlocksList(url, false, null);
-        Assert.assertNotNull(blocksList);
-        Assert.assertFalse(blocksList.isEmpty());
+        checkList(blocksList);
         Assert.assertEquals(5, blocksList.size());
     }
 
@@ -80,8 +78,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Override
     public void testGetBlockTransactionsList() throws Exception {
         List<Transaction> blockTransactionsList = client.getBlockTransactionsList(url, BLOCK_HEIGHT);
-        Assert.assertNotNull(blockTransactionsList);
-        Assert.assertFalse(blockTransactionsList.isEmpty());
+        checkList(blockTransactionsList);
         Assert.assertEquals(3, blockTransactionsList.size());
         blockTransactionsList.forEach(transaction -> {
             Assert.assertEquals(BLOCK_HEIGHT, transaction.getHeight());
@@ -100,8 +97,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Override
     public void testGetPeersIPs() throws Exception {
         List<String> peersIPs = client.getPeersIPs(url);
-        Assert.assertNotNull(peersIPs);
-        Assert.assertFalse(peersIPs.isEmpty());
+        checkList(peersIPs);
         peersIPs.forEach(ip -> Assert.assertTrue(IP_PATTERN.matcher(ip).matches()));
         peersIPs.forEach(ip -> {
                     boolean found = false;
@@ -137,8 +133,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     public void testGetAccountLedger() throws Exception {
         String accountRs = getRandomRS(accounts);
         List<LedgerEntry> accountLedger = client.getAccountLedger(url, accountRs, true);
-        Assert.assertNotNull(accountLedger);
-        Assert.assertFalse(accountLedger.isEmpty());
+        checkList(accountLedger);
         accountLedger.forEach(entry -> {
             Transaction transaction = entry.getTransaction();
             if (transaction != null && !transaction.getSenderRS().equalsIgnoreCase(accountRs) && !transaction.getRecipientRS().equalsIgnoreCase(accountRs)) {
@@ -154,8 +149,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     public void testGetPrivateAccountLedger() throws Exception {
         String accountRs = getRandomRS(accounts);
         List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true);
-        Assert.assertNotNull(accountLedger);
-        Assert.assertFalse(accountLedger.isEmpty());
+        checkList(accountLedger);
         accountLedger.forEach(entry -> {
             Transaction transaction = entry.getTransaction();
             if (transaction != null && !accountRs.equalsIgnoreCase(transaction.getSenderRS()) && !accountRs.equalsIgnoreCase(transaction.getRecipientRS())) {
@@ -193,9 +187,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateBlockTransactions() throws Exception {
-        List<Transaction> transactionsList = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_BLOCK_HEIGHT);
-        Assert.assertNotNull(transactionsList);
-        Assert.assertTrue(!transactionsList.isEmpty());
+        List<Transaction> transactionsList = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_BLOCK_HEIGHT, null, null);
+        checkList(transactionsList);
         Assert.assertEquals(4, transactionsList.size());
         transactionsList.forEach(transaction -> {
             Assert.assertEquals(PRIVATE_BLOCK_HEIGHT, transaction.getHeight());
@@ -210,21 +203,41 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     }
 
     @Test
+    public void testGetPrivateBlockTransactionsWithPagination() throws Exception {
+        List<Transaction> transactionsList1 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), null, 5L, 9L);
+        checkList(transactionsList1);
+        Assert.assertEquals(5, transactionsList1.size());
+        checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
+
+        List<Transaction> transactionsList2 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), null, null, 10L);
+        checkList(transactionsList2);
+        Assert.assertEquals(11, transactionsList2.size());
+        Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
+        checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
+
+        List<Transaction> transactionsList3 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), null, 5L, null);
+        checkList(transactionsList3);
+        Assert.assertTrue(transactionsList3.size() > 5);
+        Assert.assertTrue(transactionsList3.containsAll(transactionsList1));
+        checkAddress(transactionsList3, PRIVATE_TRANSACTION_SENDER);
+    }
+
+    @Test
     public void testGetBlockWithPrivateTransactions() throws Exception {
         List<Transaction> blockTransactionsList1 = client.getBlockTransactionsList(url, PRIVATE_BLOCK_HEIGHT);
         List<Transaction> blockTransactionsList2 = client.getBlockTransactionsList(url, PRIVATE_BLOCK_HEIGHT);
-        Assert.assertNotNull(blockTransactionsList1);
+        checkList(blockTransactionsList1);
+        checkList(blockTransactionsList2);
         Assert.assertEquals(4, blockTransactionsList1.size());
         blockTransactionsList2.forEach(blockTransactionsList1::remove);
-        blockTransactionsList1.forEach(tr1 -> {
+        blockTransactionsList1.forEach(tr1 ->
             blockTransactionsList2.forEach(tr2 -> {
-                if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
-                    Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
-                    Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
-                    Assert.assertFalse(tr1.getAmountNQT().equals(tr2.getAmountNQT()));
-                }
-            });
-        });
+            if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
+                Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
+                Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
+                Assert.assertFalse(tr1.getAmountNQT().equals(tr2.getAmountNQT()));
+            }
+        }));
     }
 }
 

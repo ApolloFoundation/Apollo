@@ -259,20 +259,26 @@ public class NodeClient {
         return MAPPER.readValue(json, Transaction.class);
     }
 
-    public List<Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, Long height) throws Exception {
-        String json = getPrivateBlockchainTransactionsJson(url, secretPhrase, height);
+    public List<Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) throws Exception {
+        String json = getPrivateBlockchainTransactionsJson(url, secretPhrase, height, firstIndex, lastIndex);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
         return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
     }
 
-    public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase, Long height) {
+    public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
         params.put("secretPhrase", secretPhrase);
         if (height != null) {
             params.put("height", height.toString());
+        }
+        if (firstIndex != null) {
+            params.put("firstIndex", firstIndex.toString());
+        }
+        if (lastIndex != null) {
+            params.put("lastIndex", lastIndex.toString());
         }
         return getJson(uri, params);
     }
