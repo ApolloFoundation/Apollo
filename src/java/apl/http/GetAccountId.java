@@ -38,7 +38,7 @@ public final class GetAccountId extends APIServlet.APIRequestHandler {
         byte[] publicKey = ParameterParser.getPublicKey(req);
         long accountId = Account.getId(publicKey);
         JSONObject response = new JSONObject();
-        JSONData.putAccount(response, "account", accountId, false);
+        JSONData.putAccount(response, "account", accountId);
         response.put("publicKey", Convert.toHexString(publicKey));
 
         return response;

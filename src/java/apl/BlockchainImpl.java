@@ -184,10 +184,9 @@ final class BlockchainImpl implements Blockchain {
         }
     }
 
-    //todo fix loadPrivateBlocks
     @Override
     public DbIterator<BlockImpl> getBlocks(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, BlockDb::loadBlock,true);
+        return new DbIterator<>(con, pstmt, BlockDb::loadBlock);
     }
 
     @Override
@@ -372,12 +371,12 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getAllTransactions(boolean isPrivate) {
+    public DbIterator<TransactionImpl> getAllTransactions() {
         Connection con = null;
         try {
             con = Db.db.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
-            return getTransactions(con, pstmt, isPrivate);
+            return getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -386,14 +385,14 @@ final class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<TransactionImpl> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-                                                       boolean includeExpiredPrunable, boolean isPrivate) {
-        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false, isPrivate);
+                                                       boolean includeExpiredPrunable) {
+        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false);
     }
 
     @Override
     public DbIterator<TransactionImpl> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean isPrivate) {
+                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly) {
         if (phasedOnly && nonPhasedOnly) {
             throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
         }
@@ -507,13 +506,12 @@ final class BlockchainImpl implements Blockchain {
                 pstmt.setInt(++i, prunableExpiration);
             }
             DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt, isPrivate);
+            return getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
-    //private referenced transactions
     @Override
     public DbIterator<TransactionImpl> getReferencingTransactions(long transactionId, int from, int to) {
         Connection con = null;
@@ -527,7 +525,7 @@ final class BlockchainImpl implements Blockchain {
             int i = 0;
             pstmt.setLong(++i, transactionId);
             DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt, true);
+            return getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -535,8 +533,8 @@ final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt, boolean isPrivate) {
-        return new DbIterator<>(con, pstmt, TransactionDb::loadTransaction,isPrivate);
+    public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt) {
+        return new DbIterator<>(con, pstmt, TransactionDb::loadTransaction);
     }
     //phased transactions
     @Override
