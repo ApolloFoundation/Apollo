@@ -496,7 +496,12 @@ var NRS = (function(NRS, $, undefined) {
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
 		var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
 
-		if (t.type == 1 && t.subtype == 6 && t.attachment.priceNQT == "0") {
+		if (transactionType === 'Unknown') {
+            transactionType = 'Private payment';
+		}
+        console.log(t);
+
+        if (t.type == 1 && t.subtype == 6 && t.attachment.priceNQT == "0") {
 			if (t.sender == NRS.account && t.recipient == NRS.account) {
 				transactionType = $.t("alias_sale_cancellation");
 			} else {
@@ -554,7 +559,10 @@ var NRS = (function(NRS, $, undefined) {
             html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
             html += NRS.formatTimestamp(t.timestamp) + "</a>";
 		}
-  		html += "</td>";
+
+        console.log(transactionType);
+
+        html += "</td>";
   		html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
 		html += '<td style="vertical-align:middle;">';
 		html += '<span class="label label-danger label-rouded">' + transactionType + '</span>';
