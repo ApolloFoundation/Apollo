@@ -3404,6 +3404,23 @@ table.purchase td {
   display: block;
 }
 
+.advanced_info.disabled {
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+
+#send_money_private.disabled {
+  display: none;
+}
+
+#send_money_public.disabled {
+  display: none;
+}
+
+.optional_message.disabled {
+  display: none !important;
+}
+
 .pas_contact_info {
   display:table-cell;
   vertical-align:middle;
