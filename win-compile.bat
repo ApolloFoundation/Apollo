@@ -42,7 +42,7 @@ if not defined javaDir (
 
 set CP=lib\*;classes
 set SP=src\java\
-set APPLICATION=apl-clone
+set APPLICATION=Apollo
 if exist "%APPLICATION%.jar" (
 echo Removing '%APPLICATION%.jar'
     del /Q /F %APPLICATION%.jar
