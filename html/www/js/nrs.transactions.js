@@ -1212,6 +1212,7 @@ var NRS = (function(NRS, $, undefined) {
                 console.log(data);
                 $('#transactions_table tbody').empty();
                 NRS.pages.ledger(data);
+                $('#transaction_ledger_fill_secret_word_modal').modal('hide');
             },
             error: function(data) {
                 console.log('err: ', data);
