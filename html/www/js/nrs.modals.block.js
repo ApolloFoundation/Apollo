@@ -51,7 +51,6 @@ var NRS = (function(NRS, $, undefined) {
 
     $('body').on('click', '[data-block]', function(){
         dataBlock = $(this).attr('data-block');
-        $('#show_private_transactions_enter_secret_passphrase').toggleClass('active');
     });
 
     // $("body").on("click", "#height_show_private_transactions", function(event) {
