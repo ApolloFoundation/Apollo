@@ -379,7 +379,6 @@ public final class JSONData {
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
         json.put("numberOfTransactions", block.getTransactions().size());
-        json.put("totalAmountNQT", String.valueOf(block.getTotalAmountNQT()));
         json.put("totalFeeNQT", String.valueOf(block.getTotalFeeNQT()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
@@ -396,9 +395,16 @@ public final class JSONData {
         json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
-        if (includeTransactions) {
-            block.getTransactions().forEach(transaction -> transactions.add(transaction(true, transaction)));
+        Long totalAmountNQT = 0L;
+        for (Transaction transaction: block.getTransactions()) {
+                JSONObject transactionJson = transaction(true, transaction);
+                Long amountNQT = Long.parseLong((String) transactionJson.get("amountNQT"));
+                totalAmountNQT += amountNQT;
+                if (includeTransactions) {
+                    transactions.add(transactionJson);
+                }
         }
+        json.put("totalAmountNQT", String.valueOf(totalAmountNQT));
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
