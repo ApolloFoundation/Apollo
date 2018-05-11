@@ -1638,9 +1638,13 @@ var NRS = (function (NRS, $, undefined) {
     });
 
     var secretWor = $('#transaction_fill_secret_word_modal');
-    var openSecretWordModalButton = $('#show_private_transactions_btn');
     $(document).on('click', '#show_private_transactions_btn', function(e){
         secretWor.modal("show");
+    });
+
+    var secretLedgerWor = $('#transaction_ledger_fill_secret_word_modal');
+    $(document).on('click', '#show_ledger_private_transactions_btn', function(e){
+        secretLedgerWor.modal("show");
     });
 
     return NRS;

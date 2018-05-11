@@ -744,7 +744,7 @@ var NRS = (function(NRS, $, undefined) {
 		});
 	};
 
-	NRS.displayPhasedTransactions = function() {
+	NRS.displayPhasedTransactions = function(transactions) {
 		var params = {
 			"account": NRS.account,
 			"firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
@@ -870,7 +870,7 @@ var NRS = (function(NRS, $, undefined) {
 		return decimalParams;
 	};
 
-    NRS.pages.ledger = function() {
+    NRS.pages.ledger = function(transactionds) {
 		var rows = "";
         var params = {
             "account": NRS.account,
@@ -879,25 +879,45 @@ var NRS = (function(NRS, $, undefined) {
             "lastIndex": NRS.pageNumber * NRS.itemsPerPage
         };
 
-        NRS.sendRequest("getAccountLedger+", params, function(response) {
-            if (response.entries && response.entries.length) {
-                if (response.entries.length > NRS.itemsPerPage) {
+        if (transactionds) {
+            if (transactionds.entries && transactionds.entries.length) {
+                if (transactionds.entries.length > transactionds.itemsPerPage) {
                     NRS.hasMorePages = true;
-                    response.entries.pop();
+                    transactionds.entries.pop();
                 }
-				var decimalParams = NRS.getLedgerNumberOfDecimals(response.entries);
-                for (var i = 0; i < response.entries.length; i++) {
-                    var entry = response.entries[i];
+                var decimalParams = NRS.getLedgerNumberOfDecimals(transactionds.entries);
+                for (var i = 0; i < transactionds.entries.length; i++) {
+                    var entry = transactionds.entries[i];
                     rows += NRS.getLedgerEntryRow(entry, decimalParams);
                 }
             }
             NRS.dataLoaded(rows);
-			if (NRS.ledgerTrimKeep > 0) {
-				var ledgerMessage = $("#account_ledger_message");
+            if (NRS.ledgerTrimKeep > 0) {
+                var ledgerMessage = $("#account_ledger_message");
                 ledgerMessage.text($.t("account_ledger_message", { blocks: NRS.ledgerTrimKeep }));
-				ledgerMessage.show();
-			}
-        });
+                ledgerMessage.show();
+            }
+		} else {
+            NRS.sendRequest("getAccountLedger+", params, function(response) {
+                if (response.entries && response.entries.length) {
+                    if (response.entries.length > NRS.itemsPerPage) {
+                        NRS.hasMorePages = true;
+                        response.entries.pop();
+                    }
+                    var decimalParams = NRS.getLedgerNumberOfDecimals(response.entries);
+                    for (var i = 0; i < response.entries.length; i++) {
+                        var entry = response.entries[i];
+                        rows += NRS.getLedgerEntryRow(entry, decimalParams);
+                    }
+                }
+                NRS.dataLoaded(rows);
+                if (NRS.ledgerTrimKeep > 0) {
+                    var ledgerMessage = $("#account_ledger_message");
+                    ledgerMessage.text($.t("account_ledger_message", { blocks: NRS.ledgerTrimKeep }));
+                    ledgerMessage.show();
+                }
+            });
+		}
 	};
 
 	NRS.pages.transactions = function(callback, subpage) {
@@ -1162,6 +1182,29 @@ var NRS = (function(NRS, $, undefined) {
                 data = JSON.parse(data);
                 $('#transactions_table tbody').empty();
                 NRS.pages.dashboard(data.transactions);
+            },
+            error: function(data) {
+                console.log('err: ', data);
+            }
+        });
+    });
+
+    $(document).on('submit', '#get_ledger_private_transactions', function(e) {
+        e.preventDefault();
+        var formParams = $( this ).serializeArray();
+        console.log(formParams);
+
+        var API = '/apl?requestType=getPrivateAccountLedger&secretPhrase=' + formParams[0].value;
+        console.log(API);
+        $.ajax({
+            url: API,
+            type: 'GET',
+            cache: false,
+            success: function(data) {
+                data = JSON.parse(data);
+                console.log(data);
+                $('#transactions_table tbody').empty();
+                NRS.pages.ledger(data);
             },
             error: function(data) {
                 console.log('err: ', data);
