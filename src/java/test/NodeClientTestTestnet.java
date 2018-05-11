@@ -75,6 +75,25 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     }
 
     @Test
+    public void testGetBlockWithPrivateAndPublicTransactions() throws IOException {
+        Block block1 = client.getBlock(url, PRIVATE_BLOCK_HEIGHT);
+        Block block2 = client.getBlock(url, PRIVATE_BLOCK_HEIGHT);
+        Assert.assertEquals(block1.getTransactions().size(), block2.getTransactions().size());
+        Assert.assertEquals(4, block1.getTransactions().size());
+        Assert.assertFalse(block1.getTotalAmountNQT().equals(block2.getTotalAmountNQT()));
+        Assert.assertFalse(block1.getTotalAmountNQT() <= nqt(2));
+        Assert.assertEquals(block1.getTotalAmountNQT().longValue(), block1.getTransactions().stream().mapToLong(Transaction::getAmountNQT).sum());
+        Assert.assertEquals(block2.getTotalAmountNQT().longValue(), block2.getTransactions().stream().mapToLong(Transaction::getAmountNQT).sum());
+    }
+
+    @Test
+    public void testGetBlockWithPublicTransactions() throws IOException {
+        Block block = client.getBlock(url, BLOCK_HEIGHT);
+        Assert.assertEquals(nqt(58_000), block.getTotalAmountNQT());
+        Assert.assertEquals(nqt(58_000).longValue(), block.getTransactions().stream().mapToLong(Transaction::getAmountNQT).sum());
+    }
+
+    @Test
     @Override
     public void testGetBlockTransactionsList() throws Exception {
         List<Transaction> blockTransactionsList = client.getBlockTransactionsList(url, BLOCK_HEIGHT);

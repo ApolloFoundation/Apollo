@@ -319,4 +319,14 @@ public class NodeClient {
         String json = getJson(createURI(url), parameters);
         return MAPPER.readValue(json, Transaction.class);
     }
+
+    public Block getBlock(String url, Long height) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getBlock");
+        params.put("height", height.toString());
+        params.put("includeTransactions", "true");
+        URI uri = createURI(url);
+        String json = getJson(uri, params);
+        return MAPPER.readValue(json, Block.class);
+    }
 }
