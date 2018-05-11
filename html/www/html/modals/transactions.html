@@ -29,8 +29,13 @@
             </div>
             <div class="modal-body">
                 <form class="tabbable" id="get_private_transactions">
-                    <input type="password" name="secretWord">
-                    <button type="submit" class="btn btn-primary" style="margin-left: 10px;">Enter</button>
+                    <div class="form-group">
+                        <label for="send_money_amount">Passphrase</label>
+                        <div class="input-group" id="send_money_amount">
+                            <input type="password" name="secretWord" class="form-control">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-bottom: 20px;">Enter</button>
                 </form>
             </div>
             <div class="modal-footer" style="margin-top:0;">

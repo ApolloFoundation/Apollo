@@ -1170,10 +1170,9 @@ var NRS = (function(NRS, $, undefined) {
     $(document).on('submit', '#get_private_transactions', function(e) {
         e.preventDefault();
         var formParams = $( this ).serializeArray();
-        console.log(formParams);
 
         var API = '/apl?requestType=getPrivateBlockchainTransactions&secretPhrase=' + formParams[0].value;
-        console.log(API);
+
         $.ajax({
             url: API,
             type: 'GET',
@@ -1182,6 +1181,7 @@ var NRS = (function(NRS, $, undefined) {
                 data = JSON.parse(data);
                 $('#transactions_table tbody').empty();
                 NRS.pages.dashboard(data.transactions);
+                $('#transaction_fill_secret_word_modal').modal('hide');
             },
             error: function(data) {
                 console.log('err: ', data);
@@ -1192,10 +1192,9 @@ var NRS = (function(NRS, $, undefined) {
     $(document).on('submit', '#get_ledger_private_transactions', function(e) {
         e.preventDefault();
         var formParams = $( this ).serializeArray();
-        console.log(formParams);
 
         var API = '/apl?requestType=getPrivateAccountLedger&secretPhrase=' + formParams[0].value;
-        console.log(API);
+
         $.ajax({
             url: API,
             type: 'GET',

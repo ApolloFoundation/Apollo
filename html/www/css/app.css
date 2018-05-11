@@ -3417,6 +3417,10 @@ table.purchase td {
   display: none;
 }
 
+.btn {
+  border: 0 !important;
+}
+
 .optional_message.disabled {
   display: none !important;
 }
