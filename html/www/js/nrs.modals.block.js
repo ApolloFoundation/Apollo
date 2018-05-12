@@ -94,12 +94,18 @@ var NRS = (function(NRS, $, undefined) {
         url += 'secretPhrase=' + val + '&';
         url += 'height=' + dataBlock;
 
-        $.ajax({
-            url: url,
-            context: document.body
-        }).done(function(data) {
-            NRS.showBlockModal(JSON.parse(data));
-        });
+        if (NRS.validatePassphrase(val, true)) {
+            $('#incorrect_passphrase').removeClass('active');
+
+            $.ajax({
+                url: url,
+                context: document.body
+            }).done(function(data) {
+                NRS.showBlockModal(JSON.parse(data));
+            });
+        } else {
+            $('#incorrect_passphrase').addClass('active');
+        }
 
     });
 

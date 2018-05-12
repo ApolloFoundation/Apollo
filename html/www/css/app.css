@@ -3421,6 +3421,14 @@ table.purchase td {
   display: none;
 }
 
+#incorrect_passphrase {
+  display: none;
+}
+
+#incorrect_passphrase.active {
+  display: block;
+}
+
 #incorrect_passphrase_message.active {
   display: block;
 }
