@@ -616,6 +616,9 @@ var NRS = (function (NRS, $, undefined) {
         var fee        = $('#send_money_fee').val();
         var passphrase = $('#send_money_password').val();
 
+        console.log(NRS.getAccountId(passphrase, true));
+
+        console.log(NRS.accountRS === NRS.getAccountId(passphrase, true));
         console.log([recipient, amount, fee, passphrase]);
 
         var url = API;
@@ -630,14 +633,20 @@ var NRS = (function (NRS, $, undefined) {
             secretPhrase: passphrase
         };
 
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: data,
-            success: function(res) {
-                $('#send_money_modal').modal('hide');
-            }
-        });
+        if (NRS.validatePassphrase(passphrase)) {
+            $('#incorrect_passphrase_message').removeClass('active');
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function(res) {
+                    $('#send_money_modal').modal('hide');
+                }
+            });
+        } else {
+            $('#incorrect_passphrase_message').addClass('active');
+        }
 
     });
 

@@ -27,6 +27,7 @@
             <div class="modal-body">
                 <form role="form" autocomplete="off">
                     <div class="callout callout-danger error_message" style="display:none"></div>
+                    <div class="callout callout-danger error_message" id="incorrect_passphrase_message" style="">Passphrase is incorrect.</div>
                     <div data-replace-with-modal-template="recipient_modal_template"></div>
                     <div class="row">
                         <div class="col-xs-12 col-sm-6 col-md-6">
@@ -672,14 +673,16 @@
                         <li><a href="#block_info_details_tab" data-toggle="tab" data-i18n="block_details">Block Details</a></li>
                     </ul>
 
-                    <a href="#" class="btn btn-default" id="height_show_private_transactions">Show private transactions</a>
-                    <div class="passphrase-block" id="show_private_transactions_enter_secret_passphrase" style="margin-top: 10px;">
-                        <input type="password" id="show_private_transactions_enter_secret_passphrase_value"/>
-                        <button class="btn btn-primary" id="show_private_transactions_enter_secret_passphrase_submit">Submit</button>
-                    </div>
 
                     <div class="tab-content">
+
                         <div class="tab-pane active" id="block_info_transactions_tab" style="max-height:350px;overflow:auto;">
+                            <a href="#" class="btn btn-default" id="height_show_private_transactions">Show private transactions</a>
+
+                            <div class="passphrase-block" id="show_private_transactions_enter_secret_passphrase" style="margin-top: 10px;">
+                                <input type="password" id="show_private_transactions_enter_secret_passphrase_value"/>
+                                <button class="btn btn-primary" id="show_private_transactions_enter_secret_passphrase_submit">Submit</button>
+                            </div>
                             <table class="table table-striped" id="block_info_transactions_table" style="margin-bottom:0">
                                 <thead>
                                 <tr>

@@ -373,6 +373,7 @@ var NRS = (function(NRS, $) {
 			$("#add_contact_modal").modal("show");
 		} else if (option == "send_apl") {
 			$("#send_money_recipient").val(account).trigger("blur");
+
 			$("#send_money_modal").modal("show");
 		} else if (option == "account_info") {
 			NRS.showAccountModal(account);

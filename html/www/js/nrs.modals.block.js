@@ -50,6 +50,7 @@ var NRS = (function(NRS, $, undefined) {
 	});
 
     $('body').on('click', '[data-block]', function(){
+        $('#show_private_transactions_enter_secret_passphrase').removeClass('active');
         dataBlock = $(this).attr('data-block');
     });
 
