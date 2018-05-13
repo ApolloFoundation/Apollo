@@ -644,11 +644,16 @@ var NRS = (function(NRS, $, undefined) {
 			color = "color:red;";
 			sign = "-";
         }
+
         var eventType = NRS.escapeRespStr(entry.eventType);
         if (eventType.indexOf("ASSET") == 0 || eventType.indexOf("CURRENCY") == 0) {
             eventType = eventType.substring(eventType.indexOf("_") + 1);
         }
-        eventType = $.t(eventType.toLowerCase());
+
+        if (eventType !== 'Private payment') {
+            eventType = $.t(eventType.toLowerCase());
+        }
+
         var html = "";
 		html += "<tr>";
 		html += "<td style='vertical-align:middle;'>";
@@ -658,8 +663,13 @@ var NRS = (function(NRS, $, undefined) {
   		html += "</td>";
 		html += '<td style="vertical-align:middle;">';
         html += '<span style="font-size:11px;display:inline-block;margin-top:5px;">' + eventType + '</span>';
-        html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
-        html += " <i class='fa fa-info'></i></a>";
+        if (eventType === 'Private payment') {
+            html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
+        }
+		else {
+            html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
+        }
+        html += "<i class='fa fa-info'></i></a>";
 		html += '</td>';
 		if (balanceType == "apl") {
             html += "<td style='vertical-align:middle;" + color + "' class='numeric'>" + sign + change + "</td>";
