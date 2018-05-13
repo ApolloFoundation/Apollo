@@ -311,6 +311,15 @@ img {
 .text-maroon {
   color: #85144b !important;
 }
+
+#incorrect_passphrase_ledger_my_transactions {
+  display: none;
+}
+
+#incorrect_passphrase_ledger_my_transactions.active {
+  display: block;
+}
+
 /*Hide elements by display none only*/
 .hide {
   display: none !important;

@@ -1259,7 +1259,14 @@ var NRS = (function(NRS, $, undefined) {
         });
         this.rerenderPagination = function() {
             $(target).css('display', 'block');
-            NRS.pages.dashboard(this.paginatingTransactions);
+
+            if (target === '#transactions_pgination') {
+                NRS.pages.dashboard(this.paginatingTransactions);
+            }
+			if (target === '#ledger_transactions_pgination') {
+                console.log(22);
+                NRS.pages.ledger({entries: this.paginatingTransactions});
+            }
         };
         this.rows();
         this.setActiveItem(0);
@@ -1302,23 +1309,33 @@ var NRS = (function(NRS, $, undefined) {
 
         var API = '/apl?requestType=getPrivateAccountLedger&secretPhrase=' + formParams[0].value;
 
-        $.ajax({
-            url: API,
-            type: 'GET',
-            cache: false,
-            success: function(data) {
-                data = JSON.parse(data);
-                console.log(data);
-                $('#transactions_table tbody').empty();
-                NRS.pages.ledger(data);
-                NRS.paginate(data.transactions);
+        if (NRS.validatePassphrase(formParams[0].value, true)) {
+            $.ajax({
+                url: API,
+                type: 'GET',
+                cache: false,
+                success: function(data) {
+                    data = JSON.parse(data);
+                    console.log(data);
+                    $('#transactions_table tbody').empty();
 
-                $('#transaction_ledger_fill_secret_word_modal').modal('hide');
-            },
-            error: function(data) {
-                console.log('err: ', data);
-            }
-        });
+                    var paginate_ledger = new NRS.paginate(data.entries, 0, 15, '#ledger_transactions_pgination');
+                    paginate_ledger.rerenderPagination();
+                    console.log(paginate_ledger);
+
+                    $('#incorrect_passphrase_ledger_my_transactions').hide();
+                    $('#transaction_ledger_fill_secret_word_modal').modal('hide');
+                },
+                error: function(data) {
+                    console.log('err: ', data);
+                    $('#incorrect_passphrase_ledger_my_transactions').show();
+
+                }
+            });
+        } else {
+            $('#incorrect_passphrase_my_transactions').show();
+        }
+
     });
 
 	return NRS;
