@@ -47,7 +47,7 @@ public final class GetTaggedDataExtendTransactions extends APIServlet.APIRequest
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = Apl.getBlockchain();
         Filter<Appendix> filter = (appendix) -> ! (appendix instanceof Attachment.TaggedDataExtend);
-        extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(transactionId), filter)));
+        extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(transactionId), filter, false)));
         response.put("extendTransactions", jsonArray);
         return response;
     }

@@ -20,6 +20,7 @@ package apl.http;
 import apl.Apl;
 import apl.AplException;
 import apl.Transaction;
+import apl.TransactionType;
 import apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -54,12 +55,14 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         byte subtype;
         try {
             type = Byte.parseByte(req.getParameter("type"));
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             type = -1;
         }
         try {
             subtype = Byte.parseByte(req.getParameter("subtype"));
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             subtype = -1;
         }
 
@@ -72,7 +75,9 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
                 includeExpiredPrunable, executedOnly)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction, includePhasingResult));
+                if (!transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
+                    transactions.add(JSONData.transaction(transaction, includePhasingResult, false));
+                }
             }
         }
 

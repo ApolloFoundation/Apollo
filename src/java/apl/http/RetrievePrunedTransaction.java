@@ -45,7 +45,7 @@ public class RetrievePrunedTransaction extends APIServlet.APIRequestHandler {
         if (transaction == null) {
             return PRUNED_TRANSACTION;
         }
-        return JSONData.transaction(transaction);
+        return JSONData.transaction(false, transaction);
     }
 
     @Override

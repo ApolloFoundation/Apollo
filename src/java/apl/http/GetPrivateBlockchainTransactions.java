@@ -17,9 +17,11 @@
 
 package apl.http;
 
+import apl.Account;
+import apl.Apl;
 import apl.AplException;
-import apl.PhasingPoll;
 import apl.Transaction;
+import apl.crypto.Crypto;
 import apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -27,34 +29,39 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class GetAccountPhasedTransactions extends APIServlet.APIRequestHandler {
-    static final GetAccountPhasedTransactions instance = new GetAccountPhasedTransactions();
+public final class GetPrivateBlockchainTransactions extends APIServlet.APIRequestHandler {
 
-    private GetAccountPhasedTransactions() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING},
-                "account", "firstIndex", "lastIndex");
+    static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
+
+    private GetPrivateBlockchainTransactions() {
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "secretPhrase", "height", "firstIndex", "lastIndex");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, true);
 
+        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        int height = ParameterParser.getHeight(req);
+        long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
-
         JSONArray transactions = new JSONArray();
-
-        try (DbIterator<? extends Transaction> iterator =
-                PhasingPoll.getAccountPhasedTransactions(accountId, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(
+                accountId, 0, (byte) -1, (byte) -1, 0, false, false,
+                false, firstIndex, lastIndex, false, false)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(false, transaction));
+                if (height != -1) {
+                    if (transaction.getHeight() == height)
+                        transactions.add(JSONData.transaction(transaction, false, false));
+                } else {
+                    transactions.add(JSONData.transaction(transaction, false, false));
+                }
             }
         }
-
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
-
         return response;
     }
+
 }

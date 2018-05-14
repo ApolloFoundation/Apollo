@@ -46,7 +46,7 @@ public class GetVoterPhasedTransactions extends APIServlet.APIRequestHandler {
         try (DbIterator<? extends Transaction> iterator = PhasingPoll.getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction));
+                transactions.add(JSONData.transaction(false, transaction));
             }
         }
         JSONObject response = new JSONObject();

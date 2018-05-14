@@ -100,7 +100,7 @@ final class BlockchainImpl implements Blockchain {
         }
         return BlockDb.findLastBlock(timestamp);
     }
-
+    //load transactions
     @Override
     public BlockImpl getBlock(long blockId) {
         BlockImpl block = lastBlock.get();
@@ -114,7 +114,7 @@ final class BlockchainImpl implements Blockchain {
     public boolean hasBlock(long blockId) {
         return lastBlock.get().getId() == blockId || BlockDb.hasBlock(blockId);
     }
-
+    //load transactions
     @Override
     public DbIterator<BlockImpl> getAllBlocks() {
         Connection con = null;
@@ -512,7 +512,6 @@ final class BlockchainImpl implements Blockchain {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
     @Override
     public DbIterator<TransactionImpl> getReferencingTransactions(long transactionId, int from, int to) {
         Connection con = null;
@@ -537,7 +536,7 @@ final class BlockchainImpl implements Blockchain {
     public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, TransactionDb::loadTransaction);
     }
-
+    //phased transactions
     @Override
     public List<TransactionImpl> getExpectedTransactions(Filter<Transaction> filter) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();

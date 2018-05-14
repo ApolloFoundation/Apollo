@@ -17,46 +17,8 @@
 
 package apl.http;
 
-import apl.Account;
-import apl.AccountLedger;
+import apl.*;
 import apl.AccountLedger.LedgerEntry;
-import apl.AccountRestrictions;
-import apl.Alias;
-import apl.Appendix;
-import apl.Asset;
-import apl.AssetDelete;
-import apl.AssetDividend;
-import apl.AssetTransfer;
-import apl.Attachment;
-import apl.Block;
-import apl.Constants;
-import apl.Currency;
-import apl.CurrencyExchangeOffer;
-import apl.CurrencyFounder;
-import apl.CurrencyTransfer;
-import apl.CurrencyType;
-import apl.DigitalGoodsStore;
-import apl.Exchange;
-import apl.ExchangeRequest;
-import apl.FundingMonitor;
-import apl.Generator;
-import apl.HoldingType;
-import apl.MonetarySystem;
-import apl.Apl;
-import apl.Order;
-import apl.PhasingPoll;
-import apl.PhasingVote;
-import apl.Poll;
-import apl.PrunableMessage;
-import apl.Shuffler;
-import apl.Shuffling;
-import apl.ShufflingParticipant;
-import apl.TaggedData;
-import apl.Token;
-import apl.Trade;
-import apl.Transaction;
-import apl.Vote;
-import apl.VoteWeighting;
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
 import apl.db.DbIterator;
@@ -70,8 +32,11 @@ import org.json.simple.JSONObject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public final class JSONData {
+
+    private JSONData() {} // never
 
     static JSONObject alias(Alias alias) {
         JSONObject json = new JSONObject();
@@ -274,7 +239,7 @@ public final class JSONData {
 
     private static JSONObject expectedOrder(Transaction transaction) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
+        Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement) transaction.getAttachment();
         json.put("order", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -286,7 +251,7 @@ public final class JSONData {
 
     static JSONObject expectedOrderCancellation(Transaction transaction) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsOrderCancellation attachment = (Attachment.ColoredCoinsOrderCancellation)transaction.getAttachment();
+        Attachment.ColoredCoinsOrderCancellation attachment = (Attachment.ColoredCoinsOrderCancellation) transaction.getAttachment();
         json.put("order", Long.toUnsignedString(attachment.getOrderId()));
         putAccount(json, "account", transaction.getSenderId());
         putExpectedTransaction(json, transaction);
@@ -308,7 +273,7 @@ public final class JSONData {
 
     static JSONObject expectedBuyOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
-        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
         json.put("rateNQT", String.valueOf(attachment.getBuyRateNQT()));
         json.put("limit", String.valueOf(attachment.getTotalBuyLimit()));
         json.put("supply", String.valueOf(attachment.getInitialBuySupply()));
@@ -317,7 +282,7 @@ public final class JSONData {
 
     static JSONObject expectedSellOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
-        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
         json.put("rateNQT", String.valueOf(attachment.getSellRateNQT()));
         json.put("limit", String.valueOf(attachment.getTotalSellLimit()));
         json.put("supply", String.valueOf(attachment.getInitialSellSupply()));
@@ -325,7 +290,7 @@ public final class JSONData {
     }
 
     private static JSONObject expectedOffer(Transaction transaction) {
-        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
         JSONObject json = new JSONObject();
         json.put("offer", transaction.getStringId());
         putAccount(json, "account", transaction.getSenderId());
@@ -414,7 +379,6 @@ public final class JSONData {
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
         json.put("numberOfTransactions", block.getTransactions().size());
-        json.put("totalAmountNQT", String.valueOf(block.getTotalAmountNQT()));
         json.put("totalFeeNQT", String.valueOf(block.getTotalFeeNQT()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
@@ -431,11 +395,16 @@ public final class JSONData {
         json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
-        if (includeTransactions) {
-            block.getTransactions().forEach(transaction -> transactions.add(transaction(transaction)));
-        } else {
-            block.getTransactions().forEach(transaction -> transactions.add(transaction.getStringId()));
+        Long totalAmountNQT = 0L;
+        for (Transaction transaction: block.getTransactions()) {
+                JSONObject transactionJson = transaction(true, transaction);
+                Long amountNQT = Long.parseLong((String) transactionJson.get("amountNQT"));
+                totalAmountNQT += amountNQT;
+                if (includeTransactions) {
+                    transactions.add(transactionJson);
+                }
         }
+        json.put("totalAmountNQT", String.valueOf(totalAmountNQT));
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
@@ -443,7 +412,7 @@ public final class JSONData {
                 for (PhasingPoll.PhasingPollResult phasingPollResult : phasingPollResults) {
                     long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
-                        phasedTransactions.add(transaction(Apl.getBlockchain().getTransaction(phasedTransactionId)));
+                        phasedTransactions.add(transaction(false, Apl.getBlockchain().getTransaction(phasedTransactionId)));
                     } else {
                         phasedTransactions.add(Long.toUnsignedString(phasedTransactionId));
                     }
@@ -578,7 +547,7 @@ public final class JSONData {
         json.put("poll", Long.toUnsignedString(poll.getId()));
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
             json.put("decimals", Asset.getAsset(voteWeighting.getHoldingId()).getDecimals());
-        } else if(voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
+        } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
             Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
             if (currency != null) {
                 json.put("decimals", currency.getDecimals());
@@ -610,9 +579,6 @@ public final class JSONData {
         return json;
     }
 
-    interface VoteWeighter {
-        long calcWeight(long voterId);
-    }
     static JSONObject vote(Vote vote, VoteWeighter weighter) {
         JSONObject json = new JSONObject();
         putAccount(json, "voter", vote.getVoterId());
@@ -798,7 +764,7 @@ public final class JSONData {
 
     static JSONObject expectedAssetTransfer(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
+        Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
         json.put("assetTransfer", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -827,7 +793,7 @@ public final class JSONData {
 
     static JSONObject expectedAssetDelete(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
+        Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
         json.put("assetDelete", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -869,7 +835,7 @@ public final class JSONData {
 
     static JSONObject expectedCurrencyTransfer(Transaction transaction, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
-        Attachment.MonetarySystemCurrencyTransfer attachment = (Attachment.MonetarySystemCurrencyTransfer)transaction.getAttachment();
+        Attachment.MonetarySystemCurrencyTransfer attachment = (Attachment.MonetarySystemCurrencyTransfer) transaction.getAttachment();
         json.put("transfer", transaction.getStringId());
         json.put("currency", Long.toUnsignedString(attachment.getCurrencyId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -918,7 +884,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("transaction", transaction.getStringId());
         json.put("subtype", transaction.getType().getSubtype());
-        Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange)transaction.getAttachment();
+        Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange) transaction.getAttachment();
         json.put("units", String.valueOf(attachment.getUnits()));
         json.put("rateNQT", String.valueOf(attachment.getRateNQT()));
         if (includeCurrencyInfo) {
@@ -929,10 +895,11 @@ public final class JSONData {
     }
 
     static JSONObject unconfirmedTransaction(Transaction transaction) {
-        return unconfirmedTransaction(transaction, null);
+        return unconfirmedTransaction(transaction, null, false);
     }
 
-    static JSONObject unconfirmedTransaction(Transaction transaction, Filter<Appendix> filter) {
+    static JSONObject unconfirmedTransaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {
+
         JSONObject json = new JSONObject();
         json.put("type", transaction.getType().getType());
         json.put("subtype", transaction.getType().getSubtype());
@@ -941,9 +908,18 @@ public final class JSONData {
         json.put("deadline", transaction.getDeadline());
         json.put("senderPublicKey", Convert.toHexString(transaction.getSenderPublicKey()));
         if (transaction.getRecipientId() != 0) {
-            putAccount(json, "recipient", transaction.getRecipientId());
+            if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
+                putPrivateAccount(json, "recipient", transaction.getRecipientId());
+            } else {
+                putAccount(json, "recipient", transaction.getRecipientId());
+            }
         }
-        json.put("amountNQT", String.valueOf(transaction.getAmountNQT()));
+        if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
+            Random random = new Random();
+            json.put("amountNQT", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
+        } else {
+            json.put("amountNQT", String.valueOf(transaction.getAmountNQT()));
+        }
         json.put("feeNQT", String.valueOf(transaction.getFeeNQT()));
         String referencedTransactionFullHash = transaction.getReferencedTransactionFullHash();
         if (referencedTransactionFullHash != null) {
@@ -966,7 +942,7 @@ public final class JSONData {
                 attachmentJSON.putAll(appendage.getJSONObject());
             }
         }
-        if (! attachmentJSON.isEmpty()) {
+        if (!attachmentJSON.isEmpty()) {
             for (Map.Entry entry : (Iterable<Map.Entry>) attachmentJSON.entrySet()) {
                 if (entry.getValue() instanceof Long) {
                     entry.setValue(String.valueOf(entry.getValue()));
@@ -974,7 +950,11 @@ public final class JSONData {
             }
             json.put("attachment", attachmentJSON);
         }
-        putAccount(json, "sender", transaction.getSenderId());
+        if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
+            putPrivateAccount(json, "sender", transaction.getSenderId());
+        } else {
+            putAccount(json, "sender", transaction.getSenderId());
+        }
         json.put("height", transaction.getHeight());
         json.put("version", transaction.getVersion());
         json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
@@ -983,12 +963,12 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject transaction(Transaction transaction) {
-        return transaction(transaction, false);
+    static JSONObject transaction(boolean isPrivate, Transaction transaction) {
+        return transaction(transaction, false, isPrivate);
     }
 
-    static JSONObject transaction(Transaction transaction, boolean includePhasingResult) {
-        JSONObject json = transaction(transaction, null);
+    static JSONObject transaction(Transaction transaction, boolean includePhasingResult, boolean isPrivate) {
+        JSONObject json = transaction(transaction, null, isPrivate);
         if (includePhasingResult && transaction.getPhasing() != null) {
             PhasingPoll.PhasingPollResult phasingPollResult = PhasingPoll.getResult(transaction.getId());
             if (phasingPollResult != null) {
@@ -1000,8 +980,8 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject transaction(Transaction transaction, Filter<Appendix> filter) {
-        JSONObject json = unconfirmedTransaction(transaction, filter);
+    static JSONObject transaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {
+        JSONObject json = unconfirmedTransaction(transaction, filter, isPrivate);
         json.put("block", Long.toUnsignedString(transaction.getBlockId()));
         json.put("confirmations", Apl.getBlockchain().getHeight() - transaction.getHeight());
         json.put("blockTimestamp", transaction.getBlockTimestamp());
@@ -1074,7 +1054,8 @@ public final class JSONData {
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
                 }
-            } catch (RuntimeException e) {
+            }
+            catch (RuntimeException e) {
                 putException(json, e, "Decryption failed");
             }
             json.put("isCompressed", prunableMessage.isCompressed());
@@ -1106,7 +1087,7 @@ public final class JSONData {
         json.put("transactionTimestamp", taggedData.getTransactionTimestamp());
         json.put("blockTimestamp", taggedData.getBlockTimestamp());
         return json;
-	}
+    }
 
     static JSONObject dataTag(TaggedData.Tag tag) {
         JSONObject json = new JSONObject();
@@ -1148,9 +1129,20 @@ public final class JSONData {
         json.put("errorDescription", error + e.getMessage());
     }
 
-    static void putAccount(JSONObject json, String name, long accountId) {
+    static void putAccount(JSONObject json, String name, long accountId, boolean isPrivate) {
         json.put(name, Long.toUnsignedString(accountId));
+        if (isPrivate) {
+            Random random = new Random();
+            accountId = random.nextLong();
+        }
         json.put(name + "RS", Convert.rsAccount(accountId));
+    }
+
+    static void putAccount(JSONObject json, String name, long accountId) {
+        putAccount(json, name, accountId, false);
+    }
+    static void putPrivateAccount(JSONObject json, String name, long accountId) {
+        putAccount(json, name, accountId, true);
     }
 
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
@@ -1216,10 +1208,12 @@ public final class JSONData {
         }
         if (includeTransactions && entry.getEvent().isTransaction()) {
             Transaction transaction = Apl.getBlockchain().getTransaction(entry.getEventId());
-            json.put("transaction", JSONData.transaction(transaction));
+            json.put("transaction", JSONData.transaction(false, transaction));
         }
     }
 
-    private JSONData() {} // never
+    interface VoteWeighter {
+        long calcWeight(long voterId);
+    }
 
 }

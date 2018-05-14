@@ -47,7 +47,7 @@ public class GetCurrencyPhasedTransactions extends APIServlet.APIRequestHandler 
                 accountId, withoutWhitelist, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction));
+                transactions.add(JSONData.transaction(false, transaction));
             }
         }
         JSONObject response = new JSONObject();
