@@ -47,6 +47,7 @@ public abstract class TransactionType {
     static final byte TYPE_SHUFFLING = 7;
 
     private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
+    private static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
 
     private static final byte SUBTYPE_MESSAGING_ARBITRARY_MESSAGE = 0;
     private static final byte SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT = 1;
@@ -91,6 +92,8 @@ public abstract class TransactionType {
                 switch (subtype) {
                     case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
                         return Payment.ORDINARY;
+                    case SUBTYPE_PAYMENT_PRIVATE_PAYMENT:
+                    	return Payment.PRIVATE;
                     default:
                         return null;
                 }
@@ -405,6 +408,42 @@ public abstract class TransactionType {
             void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 if (transaction.getAmountNQT() <= 0 || transaction.getAmountNQT() >= Constants.MAX_BALANCE_NQT) {
                     throw new AplException.NotValidException("Invalid ordinary payment");
+                }
+            }
+
+        };
+
+        public static final TransactionType PRIVATE = new Payment() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_PAYMENT_PRIVATE_PAYMENT;
+            }
+
+            @Override
+            public final LedgerEvent getLedgerEvent() {
+                return LedgerEvent.PRIVATE_PAYMENT;
+            }
+
+            @Override
+            public String getName() {
+                return "PrivatePayment";
+            }
+
+            @Override
+            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return Attachment.PRIVATE_PAYMENT;
+            }
+
+            @Override
+            Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return Attachment.PRIVATE_PAYMENT;
+            }
+
+            @Override
+            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+                if (transaction.getAmountNQT() <= 0 || transaction.getAmountNQT() >= Constants.MAX_BALANCE_NQT) {
+                    throw new AplException.NotValidException("Invalid private payment");
                 }
             }
 
