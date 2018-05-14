@@ -502,7 +502,6 @@ var NRS = (function(NRS, $, undefined) {
 		if (transactionType === 'Unknown') {
             transactionType = 'Private payment';
 		}
-        console.log(t);
 
         if (t.type == 1 && t.subtype == 6 && t.attachment.priceNQT == "0") {
 			if (t.sender == NRS.account && t.recipient == NRS.account) {
@@ -562,8 +561,6 @@ var NRS = (function(NRS, $, undefined) {
             html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
             html += NRS.formatTimestamp(t.timestamp) + "</a>";
 		}
-
-        console.log(transactionType);
 
         html += "</td>";
   		html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
@@ -1248,7 +1245,6 @@ var NRS = (function(NRS, $, undefined) {
         } else {
             $('#incorrect_passphrase_message').addClass('active');
         }
-
     });
 
 
@@ -1259,14 +1255,17 @@ var NRS = (function(NRS, $, undefined) {
     NRS.paginate = function(transactions, offset, limit, target) {
         limit = limit ? limit : 15;
         offset = offset ? offset : 0;
-
+        console.log(transactions);
         this.pagesAmount = Math.ceil(transactions.length / limit);
         this.paginatingTransactions = transactions.slice(offset, offset + limit);
         this.page = 1;
 
         this.getItemsPerPage = function(page) {
-            page = page ? page - 1 : 0;
+            console.log(page);
+            console.log(page);
             this.paginatingTransactions  = transactions.slice(page * limit ,page * limit + limit);
+
+            console.log(transactions.slice(page * limit ,page * limit + limit));
             return transactions.slice(page * limit ,page * limit + limit)
 		};
 		this.rows = function() {
@@ -1275,9 +1274,9 @@ var NRS = (function(NRS, $, undefined) {
 			var list = $(target).find('.current-page');
             list.attr('data-list', target);
 
-			for(var i =0; i < that.pagesAmount; i++) {
+			for(var i = 1; i <= that.pagesAmount; i++) {
                 html += '<li>';
-                html += '<a data-page="'+ parseInt(i + 1) +'">'+ parseInt(i + 1) +'</a>';
+                html += '<a data-page="'+ parseInt(i) +'">'+ parseInt(i) +'</a>';
                 html += '</li>';
 			}
 
@@ -1288,8 +1287,6 @@ var NRS = (function(NRS, $, undefined) {
 		this.setActiveItem = function(page) {
             $(target).find('.current-page li').removeClass('active');
 
-            console.log(page);
-            console.log(  $(target).find('.current-page li')[page]);
             console.log($($(target).find('.current-page li')[page]));
             $($(target).find('.current-page li')[page]).addClass('active')
 		};
@@ -1299,7 +1296,7 @@ var NRS = (function(NRS, $, undefined) {
         this.setNewActivePage = function(page) {
             this.page = page;
             this.getItemsPerPage(that.page);
-            this.setActiveItem(page);
+            this.setActiveItem(that.page);
             this.rerenderPagination();
 		};
 

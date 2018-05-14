@@ -1644,10 +1644,6 @@ var NRS = (function (NRS, $, undefined) {
      * @param val
      */
     NRS.escapeRespStr = function (val) {
-        console.log(String(val).unescapeHTML().escapeHTML());
-        console.log(String(val).unescapeHTML());
-        console.log(String(val));
-
         if (String(val) === 'PRIVATE_PAYMENT') {
             return 'Private payment';
         }
