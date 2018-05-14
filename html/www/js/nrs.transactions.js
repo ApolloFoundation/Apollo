@@ -18,6 +18,8 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $, undefined) {
+    var API = 'http://127.0.0.1:6876/apl?';
+
     NRS.allowUpdate = true;
 	NRS.lastTransactions = "";
 	NRS.unconfirmedTransactions = [];
@@ -1201,6 +1203,55 @@ var NRS = (function(NRS, $, undefined) {
 		}
 	});
 
+
+    $('#open_send_money_private').click(function() {
+        $('#send_money_modal').modal('hide');
+        $('#send_money_private_modal').modal('show');
+    });
+
+    $('body').on('click', '#send_money_private', function() {
+        console.log(222)
+        var recipient  = $('#send_money_recipient_info').val();
+        var amount     = $('#send_money_amount_info').val();
+        var fee        = $('#send_money_fee_info').val();
+        var passphrase = $('#send_money_password_info').val();
+
+        console.log(NRS.getAccountId(passphrase, true));
+
+        console.log(NRS.accountRS === NRS.getAccountId(passphrase, true));
+        console.log([recipient, amount, fee, passphrase]);
+
+        var url = API;
+        url += 'requestType=sendMoneyPrivate';
+
+
+        var data = {
+            deadline:     1440,
+            feeNQT:       fee + '00000000',
+            amountNQT:    amount + '00000000',
+            recipient :   recipient,
+            secretPhrase: passphrase
+        };
+
+        if (NRS.validatePassphrase(passphrase)) {
+            $('#incorrect_passphrase_message').removeClass('active');
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function(res) {
+                    $('#send_money_modal').modal('hide');
+                    $('#send_money_private_modal').modal('hide');
+                }
+            });
+        } else {
+            $('#incorrect_passphrase_message').addClass('active');
+        }
+
+    });
+
+
     // pagination
 
     var page = 1;
@@ -1326,18 +1377,16 @@ var NRS = (function(NRS, $, undefined) {
                 cache: false,
                 success: function(data) {
                     data = JSON.parse(data);
-                    console.log(data);
+
                     $('#transactions_table tbody').empty();
 
                     var paginate_ledger = new NRS.paginate(data.entries, 0, 15, '#ledger_transactions_pgination');
                     paginate_ledger.rerenderPagination();
-                    console.log(paginate_ledger);
 
                     $('#incorrect_passphrase_ledger_my_transactions').hide();
                     $('#transaction_ledger_fill_secret_word_modal').modal('hide');
                 },
                 error: function(data) {
-                    console.log('err: ', data);
                     $('#incorrect_passphrase_ledger_my_transactions').show();
 
                 }

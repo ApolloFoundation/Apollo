@@ -320,6 +320,10 @@ img {
   display: block;
 }
 
+#send_money_private_modal {
+  display: none;
+}
+
 /*Hide elements by display none only*/
 .hide {
   display: none !important;
