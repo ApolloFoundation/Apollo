@@ -420,6 +420,22 @@ public final class JSONResponses {
         PEER_NOT_OPEN_API = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 3);
+        response.put("errorDescription", "Cannot access to private ledger entries! Use GetPrivateAccountLedger instead.");
+        ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 3);
+        response.put("errorDescription", "Cannot access to private transactions! Use GetPrivateBlockchainTransactions instead.");
+        PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
+    }
+
     static JSONStreamAware missing(String... paramNames) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);

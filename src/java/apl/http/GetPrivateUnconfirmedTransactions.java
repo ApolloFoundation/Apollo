@@ -17,60 +17,45 @@
 
 package apl.http;
 
+import apl.Account;
 import apl.Apl;
 import apl.Transaction;
-import apl.TransactionType;
+import apl.crypto.Crypto;
 import apl.db.FilteringIterator;
-import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Set;
 
-public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandler {
+public final class GetPrivateUnconfirmedTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetUnconfirmedTransactions instance = new GetUnconfirmedTransactions();
+    static final GetPrivateUnconfirmedTransactions instance = new GetPrivateUnconfirmedTransactions();
 
-    private GetUnconfirmedTransactions() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
+    private GetPrivateUnconfirmedTransactions() {
+        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "firstIndex", "lastIndex", "secretPhrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-
-        Set<Long> accountIds = Convert.toSet(ParameterParser.getAccountIds(req, false));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
-
+        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        Long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         JSONArray transactions = new JSONArray();
-        if (accountIds.isEmpty()) {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> transaction.getType() != TransactionType.Payment.PRIVATE,
+                    transaction -> accountId.equals(transaction.getSenderId()) || accountId.equals(transaction.getRecipientId()),
                     firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();
-                    transactions.add(JSONData.unconfirmedTransaction(transaction));
+                        transactions.add(JSONData.unconfirmedTransaction(transaction));
                 }
             }
-        } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
-                    Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> transaction.getType() != TransactionType.Payment.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
-                            accountIds.contains(transaction.getRecipientId())),
-                    firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactions.add(JSONData.unconfirmedTransaction(transaction));
-                }
-            }
-        }
-
         JSONObject response = new JSONObject();
         response.put("unconfirmedTransactions", transactions);
         return response;
     }
 
 }
+

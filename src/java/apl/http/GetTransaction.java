@@ -62,12 +62,12 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
         }
         if (transaction == null) {
             transaction = Apl.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
+            if (transaction == null || transaction.getType() == TransactionType.Payment.PRIVATE) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.unconfirmedTransaction(transaction);
         } else {
-            if (transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
+            if (transaction.getType() == TransactionType.Payment.PRIVATE) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.transaction(transaction, includePhasingResult, false);
