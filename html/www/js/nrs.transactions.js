@@ -931,6 +931,7 @@ var NRS = (function(NRS, $, undefined) {
             }
 		} else {
             NRS.sendRequest("getAccountLedger+", params, function(response) {
+            	$('.pagination-body').css('display', 'none');
                 if (response.entries && response.entries.length) {
                     if (response.entries.length > NRS.itemsPerPage) {
                         NRS.hasMorePages = true;
