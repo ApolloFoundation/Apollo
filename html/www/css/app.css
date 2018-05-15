@@ -311,6 +311,19 @@ img {
 .text-maroon {
   color: #85144b !important;
 }
+
+#incorrect_passphrase_ledger_my_transactions {
+  display: none;
+}
+
+#incorrect_passphrase_ledger_my_transactions.active {
+  display: block;
+}
+
+#send_money_private_modal {
+  display: none;
+}
+
 /*Hide elements by display none only*/
 .hide {
   display: none !important;
@@ -3394,6 +3407,108 @@ table.purchase td {
 
 .advanced {
   display:none;
+}
+
+#show_private_transactions_enter_secret_passphrase {
+  display: none;
+}
+
+#show_private_transactions_enter_secret_passphrase.active {
+  display: block;
+}
+
+.advanced_info.disabled {
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+
+#send_money_private.disabled {
+  display: none;
+}
+
+#send_money_public.disabled {
+  display: none;
+}
+
+#incorrect_passphrase_message {
+  display: none;
+}
+
+#incorrect_passphrase {
+  display: none;
+}
+
+#incorrect_passphrase.active {
+  display: block;
+}
+
+#incorrect_passphrase_message.active {
+  display: block;
+}
+
+#incorrect_passphrase_my_transactions {
+  display: none;
+}
+
+#incorrect_passphrase_my_transactions.active {
+  display: block;
+}
+
+.pagination-body {
+  display: block;
+  text-align: center;
+}
+
+.pagination-body .page-back {
+  display: inline-block;
+  margin-right: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pagination-body .current-page {
+  display: inline-block;
+  padding: 0;
+  user-select: none;
+}
+
+.pagination-body .current-page li{
+  display: inline-block;
+  list-style: none;
+  filter: grayscale(100%);
+}
+
+.pagination-body .current-page li.active {
+  filter: grayscale(0%);
+}
+
+.pagination-body .current-page li.active a {
+  text-decoration: underline;
+  font-weight: bold;
+  filter: grayscale(0%);
+}
+
+.pagination-body .current-page li a{
+  display: inline-block;
+  padding: 0 7px;
+  user-select: none;
+}
+
+.pagination-body .page-forward {
+  display: inline-block;
+  margin-left: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+
+
+.btn {
+  border: 0 !important;
+}
+
+.optional_message.disabled {
+  display: none !important;
 }
 
 .pas_contact_info {
