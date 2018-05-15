@@ -155,4 +155,12 @@ public class LedgerEntry {
                 ", transaction=" + transaction +
                 '}';
     }
+
+    public boolean isPrivate() {
+        return AccountLedger.LedgerEvent.PRIVATE_PAYMENT == eventType;
+    }
+
+    public boolean isNull() {
+        return ledgerId == null && account == null && block == null && timestamp == null;
+    }
 }
