@@ -94,7 +94,7 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
         // Get the ledger entries
         //
         List<LedgerEntry> ledgerEntries = AccountLedger.getEntries(accountId, event, eventId,
-                holding, holdingId, firstIndex, lastIndex);
+                holding, holdingId, firstIndex, lastIndex, true);
         //
         // Return the response
         //

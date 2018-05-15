@@ -386,13 +386,13 @@ final class BlockchainImpl implements Blockchain {
     @Override
     public DbIterator<TransactionImpl> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
-        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false);
+        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false, true);
     }
 
     @Override
     public DbIterator<TransactionImpl> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly) {
+                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
         if (phasedOnly && nonPhasedOnly) {
             throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
         }
@@ -412,11 +412,17 @@ final class BlockchainImpl implements Blockchain {
             if (blockTimestamp > 0) {
                 buf.append("AND block_timestamp >= ? ");
             }
+            if (!includePrivate && TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
+                    throw new RuntimeException("None of private transactions should be retrieved!");
+            }
             if (type >= 0) {
                 buf.append("AND type = ? ");
                 if (subtype >= 0) {
                     buf.append("AND subtype = ? ");
                 }
+            } else if (!includePrivate) {
+                    buf.append("AND type <> ? ");
+                    buf.append("AND subtype <> ? ");
             }
             if (height < Integer.MAX_VALUE) {
                 buf.append("AND transaction.height <= ? ");
@@ -498,6 +504,9 @@ final class BlockchainImpl implements Blockchain {
                 if (subtype >= 0) {
                     pstmt.setByte(++i, subtype);
                 }
+            } else if (!includePrivate) {
+                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
+                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
             }
             if (height < Integer.MAX_VALUE) {
                 pstmt.setInt(++i, height);

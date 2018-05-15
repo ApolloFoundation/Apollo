@@ -289,7 +289,10 @@ public enum APIEnum {
     SEND_MONEY_PRIVATE("sendMoneyPrivate", SendMoneyPrivate.instance),
     GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", GetPrivateBlockchainTransactions.instance),
     GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance),
-    GET_PRIVATE_ACCOUNT_LEDGER("getPrivateAccountLedger", GetPrivateAccountLedger.instance);
+    GET_PRIVATE_ACCOUNT_LEDGER("getPrivateAccountLedger", GetPrivateAccountLedger.instance),
+    GET_PRIVATE_UNCONFIRMED_TRANSACTIONS("getPrivateUnconfirmedTransactions", GetPrivateUnconfirmedTransactions.instance),
+    GET_PRIVATE_ACCOUNT_LEDGER_ENTRY("getPrivateAccountLedgerEntry", GetPrivateAccountLedgerEntry.instance);
+
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
     static {
