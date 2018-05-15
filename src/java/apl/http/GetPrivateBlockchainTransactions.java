@@ -17,10 +17,7 @@
 
 package apl.http;
 
-import apl.Account;
-import apl.Apl;
-import apl.AplException;
-import apl.Transaction;
+import apl.*;
 import apl.crypto.Crypto;
 import apl.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -60,15 +57,23 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
             subtype = -1;
         }
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(
-                accountId, 0, type, subtype, 0, false, false,
-                false, firstIndex, lastIndex, false, false, true)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                if (height != -1 && transaction.getHeight() != height) {
-                    continue;
+        if (height != -1) {
+            Block block = Apl.getBlockchain().getBlockAtHeight(height);
+            block.getTransactions().forEach(transaction-> {
+                if (transaction.getType() == TransactionType.Payment.PRIVATE && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
+                    transactions.add(JSONData.transaction(true, transaction));
+                } else {
+                    transactions.add(JSONData.transaction(false, transaction));
                 }
-                transactions.add(JSONData.transaction(transaction, false, false));
+            });
+        } else {
+            try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(
+                    accountId, 0, type, subtype, 0, false, false,
+                    false, firstIndex, lastIndex, false, false, true)) {
+                while (iterator.hasNext()) {
+                    Transaction transaction = iterator.next();
+                    transactions.add(JSONData.transaction(transaction, false, false));
+                }
             }
         }
         JSONObject response = new JSONObject();

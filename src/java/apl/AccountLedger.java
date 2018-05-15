@@ -287,12 +287,14 @@ public class AccountLedger {
         LedgerEntry entry;
         String sql = "SELECT * FROM account_ledger WHERE db_id = ? ";
         if (!allowPrivate) {
-            sql += " AND event_id NOT IN (select event_id from account_ledger where event_type <> ? ) ";
+            sql += " AND event_id NOT IN (select event_id from account_ledger where event_type = ? ) ";
         }
         try (Connection con = Db.db.getConnection();
                 PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setLong(1, ledgerId);
-            stmt.setInt(2, LedgerEvent.PRIVATE_PAYMENT.code);
+            if (!allowPrivate) {
+                stmt.setInt(2, LedgerEvent.PRIVATE_PAYMENT.code);
+            }
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next())
                     entry = new LedgerEntry(rs);
@@ -346,9 +348,9 @@ public class AccountLedger {
             sb.append("event_id not in (select event_id from account_ledger where ");
             if (accountId != 0)
             {
-                sb.append("account_id = ? ");
+                sb.append("account_id = ? AND ");
             }
-            sb.append("event_type = ? )");
+            sb.append("event_type = ? ) ");
         }
         if (event != null) {
             if (accountId != 0 || !includePrivate) {
