@@ -39,7 +39,7 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // the current modal
         }
 
-        if ($(this).attr('data-type') === 'Private payment') {
+        if ($(this).attr('data-type') === 'Private payment' || $(this).attr('data-type') === 'Transaction fee') {
             // NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
 
             $('#get_private_transaction_type').modal('show');

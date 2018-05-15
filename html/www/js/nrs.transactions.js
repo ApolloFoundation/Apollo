@@ -663,10 +663,23 @@ var NRS = (function(NRS, $, undefined) {
 		html += '<td style="vertical-align:middle;">';
         html += '<span style="font-size:11px;display:inline-block;margin-top:5px;">' + eventType + '</span>';
         if (eventType === 'Private payment') {
-            html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
+            html += "<a class='" + linkClass + "' href='#' data-type='Private payment' data-id='" + entry.event + "' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
         }
 		else {
-            html += "<a class='" + linkClass + "' href='#' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
+            console.log(entry);
+
+            html += "<a class='" + linkClass + "' href='#'";
+            if (entry.eventType == 'TRANSACTION_FEE') {
+                html += "data-type='Private payment'";
+            }
+			if (entry.eventType == 'ORDINARY_PAYMENT') {
+                html += "data-type='Ordinary payment'";
+			}
+			if (entry.eventType == '"PRIVATE_PAYMENT"') {
+                html += "data-type='Private payment'";
+			}
+
+            html += "data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
         }
         html += "<i class='fa fa-info'></i></a>";
 		html += '</td>';
