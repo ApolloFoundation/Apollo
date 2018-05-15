@@ -371,8 +371,12 @@ var NRS = (function(NRS, $) {
 		if (option == "add_contact") {
 			$("#add_contact_account_id").val(account).trigger("blur");
 			$("#add_contact_modal").modal("show");
+            $('#send_money_public').addClass('disabled');
+            $('#send_money_private').removeClass('disabled');
 		} else if (option == "send_apl") {
 			$("#send_money_recipient").val(account).trigger("blur");
+			$('#send_money_public').addClass('disabled');
+			$('#send_money_private').removeClass('disabled');
 			$("#send_money_modal").modal("show");
 		} else if (option == "account_info") {
 			NRS.showAccountModal(account);
@@ -386,9 +390,13 @@ var NRS = (function(NRS, $) {
 		NRS.closeContextMenu();
 		if (option == "update_contact") {
 			$("#update_contact_modal").modal("show");
+            $('#send_money_public').addClass('disabled');
+            $('#send_money_private').removeClass('disabled');
 		} else if (option == "send_apl") {
 			$("#send_money_recipient").val(NRS.selectedContext.data("contact")).trigger("blur");
 			$("#send_money_modal").modal("show");
+            $('#send_money_public').addClass('disabled');
+            $('#send_money_private').removeClass('disabled');
 		}
 	});
 
