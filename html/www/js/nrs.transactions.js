@@ -557,7 +557,7 @@ var NRS = (function(NRS, $, undefined) {
 		if (isScheduled) {
             html += "<a href='#' onclick='NRS.showTransactionModal(" + JSON.stringify(t) + ");'>" + NRS.formatTimestamp(t.timestamp) + "</a>";
 		}  else {
-            html += "<a class='show_transaction_modal_action' href='#' data-timestamp='" + NRS.escapeRespStr(t.timestamp) + "' ";
+            html += "<a class='show_transaction_modal_action' href='#' data-id='" + t.transaction + "' data-hash='" + t.fullHash + "' data-type='" + transactionType + "' data-timestamp='" + NRS.escapeRespStr(t.timestamp) + "' ";
             html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
             html += NRS.formatTimestamp(t.timestamp) + "</a>";
 		}

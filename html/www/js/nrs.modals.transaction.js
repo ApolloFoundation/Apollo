@@ -19,6 +19,8 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function (NRS, $, undefined) {
+    var API = 'http://127.0.0.1:6876/apl?';
+
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
 
@@ -26,6 +28,9 @@ var NRS = (function (NRS, $, undefined) {
         var sharedKey = $(this).data("sharedkey");
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
+        var hash = $(this).data("hash");
+        var transaction = $(this).data("id");
+
         if (infoModal && infoModal.data('bs.modal')) {
             isModalVisible = infoModal.data('bs.modal').isShown;
         }
@@ -33,7 +38,57 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+
+        if ($(this).attr('data-type') === 'Private payment') {
+            // NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+
+            $('#get_private_transaction_type').modal('show');
+            $('#get_private_transaction').attr('data-hash', hash);
+            $('#get_private_transaction').attr('data-id', transaction);
+
+        } else {
+            NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+        }
+    });
+
+    $('#get_private_transaction').submit(function(e){
+        e.preventDefault();
+
+
+        var formParams = $( this ).serializeArray();
+        var passphrase = formParams[0].value;
+        var hash = $(this).data('hash');
+        var id = $(this).data('id');
+
+        var url = API;
+        url += 'requestType=getPrivateTransaction&secretPhrase=' + formParams[0].value + '&';
+        url += 'transaction=' + id + '&';
+        url += 'fullHash=' + hash;
+
+        console.log(url);
+        var infoModal = $('#transaction_info_modal');
+        var isModalVisible = false;
+        if (infoModal && infoModal.data('bs.modal')) {
+            isModalVisible = infoModal.data('bs.modal').isShown;
+        }
+
+        if (NRS.validatePassphrase(passphrase)) {
+            $('#incorrect_passphrase_message').removeClass('active');
+
+
+            $.get( url, function() {
+                console.log('made request');
+            })
+                .then(function (res) {
+                    $('#get_private_transaction_type').modal('hide');
+                    res = JSON.parse(res);
+                    console.log(res);
+                    NRS.processTransactionModalData(res, isModalVisible, res.sharedKey);
+                });
+
+        } else {
+            $('#incorrect_passphrase_message').addClass('active');
+        }
     });
 
     NRS.showTransactionModal = function (transaction, isModalVisible, sharedKey) {
@@ -222,24 +277,23 @@ var NRS = (function (NRS, $, undefined) {
             var fieldsToDecrypt = {};
             var i;
             if (transaction.type == 0) {
-                switch (transaction.subtype) {
-                    case 0:
-                        data = {
-                            "type": $.t("ordinary_payment"),
-                            "amount": transaction.amountNQT,
-                            "fee": transaction.feeNQT,
-                            "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
-                            "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
-                        };
+                data = {
+                    "amount": transaction.amountNQT,
+                    "fee": transaction.feeNQT,
+                    "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
+                    "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
+                };
 
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    default:
-                        incorrect = true;
-                        break;
+                if (transaction.attachment['version.OrdinaryPayment'] == 0) {
+                    data.type = $.t("ordinary_payment");
                 }
+                if (transaction.attachment['version.PrivatePayment'] == 0) {
+                    data.type = "Private payment";
+                }
+
+                console.log(transaction);
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
             } else if (transaction.type == 1) {
                 switch (transaction.subtype) {
                     case 0:
