@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static test.NodeClient.DEFAULT_AMOUNT;
+import static test.NodeClient.DEFAULT_DEADLINE;
 import static test.NodeClient.DEFAULT_FEE;
 import static test.TestData.*;
 import static test.TestUtil.*;
@@ -290,14 +290,16 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     public void testGetUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
             client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i));
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, DEFAULT_AMOUNT, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            TimeUnit.SECONDS.sleep(1);
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i)*2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
         List<Transaction> unconfirmedTransactions = client.getUnconfirmedTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 3);
         checkList(unconfirmedTransactions);
         Assert.assertEquals(4, unconfirmedTransactions.size());
         for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
-            Transaction transaction = unconfirmedTransactions.get(i);
+            Transaction transaction = unconfirmedTransactions.get(i-1);
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
             Assert.assertEquals(nqt(i), transaction.getAmountNQT());
@@ -308,9 +310,11 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Test
     public void testGetPrivateUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i), DEFAULT_FEE, 1L);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, DEFAULT_AMOUNT,
-                    NodeClient.DEFAULT_FEE, 1L);
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i), DEFAULT_FEE, DEFAULT_DEADLINE);
+            TimeUnit.SECONDS.sleep(1);
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i) * 2,
+                    NodeClient.DEFAULT_FEE, DEFAULT_DEADLINE);
+            TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
         List<Transaction> unconfirmedTransactions = client.getPrivateUnconfirmedTransactions(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 0, 9);
@@ -324,14 +328,14 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
                 Assert.assertEquals(nqt(i/2 +1), transaction.getAmountNQT());
                 Assert.assertFalse(transaction.isPrivate());
             } else {
-                Assert.assertEquals(DEFAULT_AMOUNT, transaction.getAmountNQT());
+                Assert.assertEquals(nqt(i), transaction.getAmountNQT());
                 Assert.assertTrue(transaction.isPrivate());
             }
         }
     }
 
     @Test
-    public void getAccountLedgerEntry() throws Exception {
+    public void testGetAccountLedgerEntry() throws Exception {
         LedgerEntry ledgerEntry = client.getAccountLedgerEntry(url, LEDGER_ENTRY_ID, true);
         Assert.assertEquals(AccountLedger.LedgerEvent.ORDINARY_PAYMENT, ledgerEntry.getEventType());
         Assert.assertEquals(PRIVATE_TRANSACTION_SENDER_ID.toString(), ledgerEntry.getAccount());
@@ -340,13 +344,13 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(MAIN_RS, ledgerEntry.getTransaction().getSenderRS());
     }
     @Test
-    public void getUnknownAccountLedgerEntry() throws Exception {
+    public void testGetUnknownAccountLedgerEntry() throws Exception {
         LedgerEntry ledgerEntry = client.getAccountLedgerEntry(url, PRIVATE_LEDGER_ENTRY_ID, true);
         Assert.assertTrue(ledgerEntry.isNull());
     }
 
     @Test
-    public void getPrivateAccountLedgerEntry() throws Exception {
+    public void testGetPrivateAccountLedgerEntry() throws Exception {
         LedgerEntry ledgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_LEDGER_ENTRY_ID, true);
         Assert.assertFalse(ledgerEntry.isNull());
         Assert.assertEquals(PRIVATE_LEDGER_ENTRY_ID, ledgerEntry.getLedgerId());
