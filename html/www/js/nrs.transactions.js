@@ -699,6 +699,24 @@ var NRS = (function(NRS, $, undefined) {
 		return html;
 	};
 
+    $('#send_money_recipient').keyup(function(){
+		$('#send_money_recipient_info').val($(this).val())
+    });
+
+    $('#send-money-amount').keyup(function() {
+        $('#send_money_amount_info').val($(this).val())
+
+    });
+    $('#send_money_fee').keyup(function() {
+        $('#send_money_fee_info').val($(this).val())
+
+	});
+
+    // $('#send_money_password').keyup(function() {
+    //     $('#send_money_password_info').val($(this).val())
+    //
+    // });
+
 	NRS.buildTransactionsTypeNavi = function() {
 		var html = '';
 		html += '<li role="presentation" class="active"><a href="#" data-transaction-type="" ';
