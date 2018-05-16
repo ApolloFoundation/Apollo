@@ -282,12 +282,15 @@ var NRS = (function(NRS, $) {
 
 		//TODO multi calculating
 		$form.find(":input").each(function() {
-			if ($(this).is(":invalid")) {
+            console.log(name);
+
+            if ($(this).is(":invalid")) {
 				var error = "";
 				var name = String($(this).attr("name")).replace("APL", "").replace("NQT", "").capitalize();
 				var value = $(this).val();
 
-				if ($(this).hasAttr("max")) {
+                console.log(name);
+                if ($(this).hasAttr("max")) {
 					if (!/^[\-\d\.]+$/.test(value)) {
 						error = $.t("error_not_a_number", {
 							"field": NRS.getTranslatedFieldName(name).toLowerCase()
@@ -672,7 +675,8 @@ var NRS = (function(NRS, $) {
 					data.encryptedMessageNonce = converters.byteArrayToHexString(encrypted.nonce);
 					delete data.encryptionKeys;
 
-					NRS.sendRequest(requestType, data, function (response) {
+                    console.log(3333);
+                    NRS.sendRequest(requestType, data, function (response) {
                         formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
 							originalRequestType, formErrorFunction, errorMessage);
 					})
@@ -707,6 +711,7 @@ var NRS = (function(NRS, $) {
 		//todo check again.. response.error
 		var formCompleteFunction;
 
+		console.log(22);
         if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
@@ -715,6 +720,7 @@ var NRS = (function(NRS, $) {
 			}
 
 			if (!$modal.hasClass("modal-no-hide")) {
+                console.log(222);
 				$modal.modal("hide");
 			}
 
@@ -784,7 +790,8 @@ var NRS = (function(NRS, $) {
 					NRS.unlockForm($modal, $btn);
 
 					if (!$modal.hasClass("modal-no-hide")) {
-						$modal.modal("hide");
+                        console.log(222);
+                        $modal.modal("hide");
 					}
 					formCompleteFunction(response, data);
 				} else {
@@ -819,6 +826,7 @@ var NRS = (function(NRS, $) {
 		}
 		$modal.modal("unlock");
 		if (hide) {
+            console.log(222);
 			$modal.modal("hide");
 		}
 	};
