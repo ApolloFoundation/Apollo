@@ -34,8 +34,10 @@ var NRS = (function(NRS, $) {
 	$(".modal button.btn-primary:not([data-dismiss=modal]):not([data-ignore=true]),button.btn-calculate-fee,button.scan-qr-code").click(function() {
 		var $btn = $(this);
 		var $modal = $(this).closest(".modal");
+        console.log('calsulate form 333');
         if ($btn.hasClass("scan-qr-code")) {
             var data = $btn.data();
+            console.log(data);
             NRS.scanQRCode(data.reader, function(text) {
                 $modal.find("#" + data.result).val(text);
             });
@@ -215,12 +217,11 @@ var NRS = (function(NRS, $) {
 		if (!$btn) {
 			$btn = $modal.find("button.btn-primary:not([data-dismiss=modal])");
 		}
-
+		console.log('Form submitting');
 		$modal = $btn.closest(".modal");
 
 		$modal.modal("lock");
 		$modal.find("button").prop("disabled", true);
-		$btn.button("loading");
 
         var $form;
 		if ($btn.data("form")) {
@@ -235,11 +236,13 @@ var NRS = (function(NRS, $) {
 		var requestType;
 		if ($btn.data("request")) {
 			requestType = $btn.data("request");
-		} else {
+
+        } else {
 			requestType = $form.find("input[name=request_type]").val();
-		}
-		var requestTypeKey = requestType.replace(/([A-Z])/g, function($1) {
-			return "_" + $1.toLowerCase();
+        }
+
+        var requestTypeKey = requestType.replace(/([A-Z])/g, function($1) {
+            return "_" + $1.toLowerCase();
 		});
 
 		var successMessage = getSuccessMessage(requestTypeKey);
@@ -253,8 +256,10 @@ var NRS = (function(NRS, $) {
 		if (typeof formErrorFunction != "function") {
 			formErrorFunction = false;
 		}
+        console.log('continue');
 
 		var originalRequestType = requestType;
+        console.log(NRS.isRequireBlockchain(requestType));
         if (NRS.isRequireBlockchain(requestType)) {
 			if (NRS.downloadingBlockchain && !NRS.state.apiProxy) {
 				$form.find(".error_message").html($.t("error_blockchain_downloading")).show();
@@ -272,10 +277,10 @@ var NRS = (function(NRS, $) {
 				return;
 			}
 		}
+        console.log('continue');
+        var invalidElement = false;
 
-		var invalidElement = false;
-
-		//TODO
+		//TODO multi calculating
 		$form.find(":input").each(function() {
 			if ($(this).is(":invalid")) {
 				var error = "";
@@ -385,6 +390,7 @@ var NRS = (function(NRS, $) {
 			data = NRS.getFormData($form);
 		}
         if ($btn.hasClass("btn-calculate-fee")) {
+            console.log('calculate form');
             data.calculateFee = true;
             data.feeAPL = "0";
             $form.find(".error_message").html("").hide();
@@ -545,7 +551,8 @@ var NRS = (function(NRS, $) {
 			return;
 		}
 
-		if (!NRS.showedFormWarning) {
+        console.log(NRS.showedFormWarning);
+        if (!NRS.showedFormWarning) {
 			if ("amountAPL" in data && NRS.settings["amount_warning"] && NRS.settings["amount_warning"] != "0") {
 				try {
 					var amountNQT = NRS.convertToNQT(data.amountAPL);
@@ -570,8 +577,8 @@ var NRS = (function(NRS, $) {
 					return;
 				}
 			}
+            if ("feeAPL" in data && NRS.settings["fee_warning"] && NRS.settings["fee_warning"] != "0") {
 
-			if ("feeAPL" in data && NRS.settings["fee_warning"] && NRS.settings["fee_warning"] != "0") {
 				try {
 					var feeNQT = NRS.convertToNQT(data.feeAPL);
 				} catch (err) {
@@ -639,6 +646,7 @@ var NRS = (function(NRS, $) {
 
 		if (data.doNotBroadcast || data.calculateFee) {
 			data.broadcast = "false";
+
             if (data.calculateFee) {
                 if (NRS.accountInfo.publicKey) {
                     data.publicKey = NRS.accountInfo.publicKey;
@@ -665,7 +673,7 @@ var NRS = (function(NRS, $) {
 					delete data.encryptionKeys;
 
 					NRS.sendRequest(requestType, data, function (response) {
-						formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+                        formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
 							originalRequestType, formErrorFunction, errorMessage);
 					})
 				});
@@ -677,10 +685,20 @@ var NRS = (function(NRS, $) {
 				NRS.unlockForm($modal, $btn);
 			}
 		} else {
-			NRS.sendRequest(requestType, data, function (response) {
-				formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
-					originalRequestType, formErrorFunction, errorMessage);
-			});
+            if (requestType === 'sendMoneyPrivate') {
+            	data.deadline = 1440;
+
+            	NRS.sendRequest(requestType, data, function (response) {
+                    formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+                        originalRequestType, formErrorFunction, errorMessage);
+                });
+			} else {
+                NRS.sendRequest(requestType, data, function (response) {
+                    formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+                        originalRequestType, formErrorFunction, errorMessage);
+                });
+			}
+
 		}
 	};
 
@@ -688,7 +706,8 @@ var NRS = (function(NRS, $) {
 						  originalRequestType, formErrorFunction, errorMessage) {
 		//todo check again.. response.error
 		var formCompleteFunction;
-		if (response.fullHash) {
+
+        if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
 				updateFee($modal, response.transactionJSON.feeNQT);
@@ -739,10 +758,20 @@ var NRS = (function(NRS, $) {
 
 			NRS.unlockForm($modal, $btn);
 		} else {
-			if (data.calculateFee) {
+
+            if (data.calculateFee) {
 				NRS.unlockForm($modal, $btn, false);
-				updateFee($modal, response.transactionJSON.feeNQT);
-				return;
+
+                if (requestType === 'sendMoneyPrivate') {
+                    var fee = $('#send_money_fee_info');
+                    fee.val(NRS.convertToAPL(response.transactionJSON.feeNQT));
+                    var recalcIndicator = $("#" + $modal.attr('id').replace('_modal', '') + "_recalc");
+                    recalcIndicator.hide();
+                    return;
+                } else {
+                	updateFee($modal, response.transactionJSON.feeNQT);
+                    return;
+                }
 			}
 			var sentToFunction = false;
 			if (!errorMessage) {

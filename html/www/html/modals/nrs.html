@@ -21,7 +21,7 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
                 <h4 class="modal-title">
-                    <span data-i18n="send">Send</span> <span class="coin-symbol">Apollo</span>
+                    <span>Privately send Apollo</span>
                 </h4>
             </div>
             <div class="modal-body">
@@ -78,6 +78,10 @@
                         </button>
                         <input type="password" name="secretPhrase" id="send_money_password_info" class="form-control" placeholder="" tabindex="111">
                     </div>
+                    <div class="callout account_info" style="display:none;margin-bottom: 0;"></div>
+                    <input type="hidden" name="request_type" value="sendMoneyPrivate" data-default="sendMoneyPrivate" />
+                    <input type="hidden" name="converted_account_id" value="" />
+                    <input type="hidden" name="merchant_info" value="" data-default="" />
 
                 </form>
             </div>

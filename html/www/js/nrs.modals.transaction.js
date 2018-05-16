@@ -30,6 +30,8 @@ var NRS = (function (NRS, $, undefined) {
         var isModalVisible = false;
         var hash = $(this).data("hash");
         var transaction = $(this).data("id");
+        console.log(transactionId);
+        $('#get_private_transaction').attr('data-id', transactionId);
 
         if (infoModal && infoModal.data('bs.modal')) {
             isModalVisible = infoModal.data('bs.modal').isShown;
@@ -44,7 +46,6 @@ var NRS = (function (NRS, $, undefined) {
 
             $('#get_private_transaction_type').modal('show');
             $('#get_private_transaction').attr('data-hash', hash);
-            $('#get_private_transaction').attr('data-id', transaction);
 
         } else {
             NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
