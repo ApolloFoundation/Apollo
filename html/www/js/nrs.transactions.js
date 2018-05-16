@@ -670,7 +670,7 @@ var NRS = (function(NRS, $, undefined) {
 
             html += "<a class='" + linkClass + "' href='#'";
             if (entry.eventType == 'TRANSACTION_FEE') {
-                html += "data-type='Private payment'";
+                html += "data-type='Transaction fee'";
             }
 			if (entry.eventType == 'ORDINARY_PAYMENT') {
                 html += "data-type='Ordinary payment'";
