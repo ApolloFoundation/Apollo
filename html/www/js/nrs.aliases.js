@@ -18,7 +18,7 @@
  * @depends {nrs.js}
  */
 var NRS = (function (NRS, $, undefined) {
-    var API = 'http://127.0.0.1:6876/apl?';
+    var API = '/apl?';
 
     NRS.pages.aliases = function () {
         var alias_count;
