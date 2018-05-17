@@ -20,7 +20,7 @@
 var NRS = (function(NRS, $, undefined) {
     var API = 'http://127.0.0.1:6876/apl?';
 
-    NRS.allowUpdate = true;
+    NRS.allowUpdate = false;
 	NRS.lastTransactions = "";
 	NRS.unconfirmedTransactions = [];
 	NRS.unconfirmedTransactionIds = "";
