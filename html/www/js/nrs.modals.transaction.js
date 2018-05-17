@@ -41,13 +41,37 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // the current modal
         }
 
-        if ($(this).attr('data-type') === 'Private payment' || $(this).attr('data-type') === 'Transaction fee') {
+        if ($(this).attr('data-type') === 'Private payment') {
             // NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
 
             $('#get_private_transaction_type').modal('show');
             $('#get_private_transaction').attr('data-hash', hash);
 
-        } else {
+        }
+        else if ($(this).attr('data-type') === 'Transaction fee') {
+            // NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+
+            var url  = API;
+            url += 'requestType=getTransaction&';
+            url += 'transaction=' + transactionId;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                cache: false,
+                success: function(data) {
+                    data = JSON.parse(data);
+                    console.log(data);
+                    if (data.errorCode) {
+
+                        $('#get_private_transaction_type').modal('show');
+                    } else {
+                        NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+                    }
+                }
+            });
+        }
+        else {
             NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
         }
     });
