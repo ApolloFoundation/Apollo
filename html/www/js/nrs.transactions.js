@@ -105,6 +105,9 @@ var NRS = (function(NRS, $, undefined) {
                     url += 'requestType=getAccountLedger&';
 
                 }
+                if (this.transactionType === 'getBlocks') {
+                    url += 'requestType=getBlocks&';
+                }
             }
             console.log(url);
 
@@ -160,6 +163,16 @@ var NRS = (function(NRS, $, undefined) {
                             NRS.dataLoaded(rows);
                         }
                     }
+                    if (that.transactionType === 'getBlocks') {
+                        that.items = JSON.parse(data).blocks;
+
+                        console.log(that.items);
+                        if ($el === '#blocks_contents') {
+                            NRS.blocksPageLoaded(that.items);
+
+                        }
+                    }
+
                 },
                 error: function(data) {
                     console.log('err: ', data);
