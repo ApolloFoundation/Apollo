@@ -316,6 +316,20 @@ img {
   display: none;
 }
 
+.data-pagination {
+  display: none;
+}
+
+[data-transactions-pagination] {
+  display: block;
+  text-align: center;
+}
+
+[data-transactions-pagination] > * {
+  display: inline-block;
+  margin: 0 20px;
+}
+
 #incorrect_passphrase_ledger_my_transactions.active {
   display: block;
 }
