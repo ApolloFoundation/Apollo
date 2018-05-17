@@ -282,7 +282,7 @@ var NRS = (function(NRS, $) {
 
 		//TODO multi calculating
 		$form.find(":input").each(function() {
-            console.log(name);
+            console.log(this);
 
             if ($(this).is(":invalid")) {
 				var error = "";
