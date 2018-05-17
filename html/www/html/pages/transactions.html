@@ -18,6 +18,9 @@
 <div id="ledger_page" class="paginated page">
     <section class="content-header">
         <h1 data-i18n="account_ledger">Account Ledger</h1>
+        <div class="align-button-page-title" style="float:right;padding-top:3px;">
+            <a href="#" id="show_ledger_private_transactions_btn" class="btn btn-default" role="button">Show private transactions</a>
+        </div>
     </section>
 
     <section class="content">
@@ -39,6 +42,13 @@
                     <tbody>
                     </tbody>
                 </table>
+                <div class="pagination-body" id="ledger_transactions_pgination" style="display: none;">
+                    <div class="page-back">prev</div>
+                    <ul class="current-page">
+
+                    </ul>
+                    <div class="page-forward">next</div>
+                </div>
                 <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                 <div class="data-empty-container" style="text-align:center;">
                     <p style="padding-top:80px;padding-bottom:100px;"><span data-i18n="no_account_ledger">No account ledger entries found</span>.</p>
@@ -52,6 +62,9 @@
 <div id="transactions_page" class="paginated page">
     <section class="content-header">
         <h1 data-i18n="my_transactions">My Transactions</h1>
+        <div class="align-button-page-title" style="float:right;padding-top:3px;">
+            <a href="#" id="show_private_transactions_btn" class="btn btn-default" role="button">Show private transactions</a>
+        </div>
     </section>
 
     <section class="content">
@@ -87,6 +100,14 @@
                     <tbody>
                     </tbody>
                 </table>
+                <div class="pagination-body" id="transactions_pgination" style="display: none;">
+                    <div class="page-back">prev</div>
+                    <ul class="current-page">
+                        
+                    </ul>
+                    <div class="page-forward">next</div>
+
+                </div>
                 <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                 <div class="data-empty-container" style="text-align:center;">
                     <p style="padding-top:80px;padding-bottom:100px;"><span data-i18n="no_transactions_found">No transactions found</span>.</p>

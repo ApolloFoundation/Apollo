@@ -36,5 +36,9 @@ else
     echo "no add-ons to compile"
     rm -f addons.tmp
 fi
+echo "compiling apl test..."
+find src/java/test/ -name "*.java" > sources.tmp
+javac -encoding utf8 -sourcepath "${SP}" -classpath "${CP}" -d classes/ @sources.tmp || exit 1
+echo "apl test class files compiled successfully"
 
 echo "compilation done"

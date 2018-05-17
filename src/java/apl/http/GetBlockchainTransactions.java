@@ -20,12 +20,15 @@ package apl.http;
 import apl.Apl;
 import apl.AplException;
 import apl.Transaction;
+import apl.TransactionType;
 import apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static apl.http.JSONResponses.*;
 
 public final class GetBlockchainTransactions extends APIServlet.APIRequestHandler {
 
@@ -54,25 +57,29 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         byte subtype;
         try {
             type = Byte.parseByte(req.getParameter("type"));
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             type = -1;
         }
         try {
             subtype = Byte.parseByte(req.getParameter("subtype"));
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             subtype = -1;
         }
-
+        if (TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
+            return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+        }
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(accountId, numberOfConfirmations,
                 type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly)) {
+                includeExpiredPrunable, executedOnly, false)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction, includePhasingResult));
+                    transactions.add(JSONData.transaction(transaction, includePhasingResult, false));
             }
         }
 

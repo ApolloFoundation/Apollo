@@ -71,6 +71,10 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             throws AplException {
         return createTransaction(req, senderAccount, recipientId, amountNQT, Attachment.ORDINARY_PAYMENT);
     }
+    final JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountNQT)
+            throws AplException {
+        return createTransaction(req, senderAccount, recipientId, amountNQT, Attachment.PRIVATE_PAYMENT);
+    }
 
     private Appendix.Phasing parsePhasing(HttpServletRequest req) throws ParameterException {
         int finishHeight = ParameterParser.getInt(req, "phasingFinishHeight",

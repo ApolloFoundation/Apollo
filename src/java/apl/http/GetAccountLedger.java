@@ -30,6 +30,8 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+import static apl.http.JSONResponses.ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+
 /**
  * <p>
  * The GetAccountLedger API will return entries from the account ledger.  The
@@ -272,21 +274,23 @@ public class GetAccountLedger extends APIServlet.APIRequestHandler {
         }
         boolean includeTransactions = "true".equalsIgnoreCase(req.getParameter("includeTransactions"));
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
-
+        if (event == LedgerEvent.PRIVATE_PAYMENT) {
+            return ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+        }
         //
         // Get the ledger entries
         //
         List<LedgerEntry> ledgerEntries = AccountLedger.getEntries(accountId, event, eventId,
-                                                                   holding, holdingId, firstIndex, lastIndex);
+                                                                   holding, holdingId, firstIndex, lastIndex, false);
         //
         // Return the response
         //
         JSONArray responseEntries = new JSONArray();
-        ledgerEntries.forEach((entry) -> {
+        for (LedgerEntry entry : ledgerEntries) {
             JSONObject responseEntry = new JSONObject();
             JSONData.ledgerEntry(responseEntry, entry, includeTransactions, includeHoldingInfo);
             responseEntries.add(responseEntry);
-        });
+        }
         JSONObject response = new JSONObject();
         response.put("entries", responseEntries);
         return response;

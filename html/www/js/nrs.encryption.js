@@ -73,7 +73,8 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.getAccountIdFromPublicKey = function(publicKey, isRsFormat) {
-		var hex = converters.hexStringToByteArray(publicKey);
+        console.log(publicKey, isRsFormat);
+        var hex = converters.hexStringToByteArray(publicKey);
 		var account = simpleHash(hex);
 		account = converters.byteArrayToHexString(account);
 		var slice = (converters.hexStringToByteArray(account)).slice(0, 8);
@@ -83,6 +84,10 @@ var NRS = (function (NRS, $) {
 		} else {
 			return accountId;
 		}
+	};
+
+	NRS.validatePassphrase = function(passphrase) {
+		return NRS.accountRS === NRS.getAccountId(passphrase, true);
 	};
 
 	NRS.getEncryptionKeys = function (options, secretPhrase){

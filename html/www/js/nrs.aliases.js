@@ -18,6 +18,8 @@
  * @depends {nrs.js}
  */
 var NRS = (function (NRS, $, undefined) {
+    var API = '/apl?';
+
     NRS.pages.aliases = function () {
         var alias_count;
         NRS.sendRequest("getAliasCount+", {"account": NRS.account}, function (response) {
@@ -598,6 +600,54 @@ var NRS = (function (NRS, $, undefined) {
                 $("#alias_info_modal").modal("show");
             }
         });
+    });
+
+    $('#hide_advanced').change(function() {
+        $('.optional_message').toggleClass('disabled');
+        $('.advanced_info').toggleClass('disabled');
+        $('#send_money_private').toggleClass('disabled');
+        $('#send_money_public').toggleClass('disabled');
+    });
+
+    $('body').on('click', '#send_money_private', function($modal) {
+        console.log(222)
+        var recipient  = $('#send_money_recipient').val();
+        var amount     = $('#send_money_amount').val();
+        var fee        = $('#send_money_fee').val();
+        var passphrase = $('#send_money_password').val();
+
+        console.log(NRS.getAccountId(passphrase, true));
+
+        console.log(NRS.accountRS === NRS.getAccountId(passphrase, true));
+        console.log([recipient, amount, fee, passphrase]);
+
+        var url = API;
+        url += 'requestType=sendMoneyPrivate';
+
+
+        var data = {
+            deadline:     1440,
+            feeNQT:       fee + '00000000',
+            amountNQT:    amount + '00000000',
+            recipient :   recipient,
+            secretPhrase: passphrase
+        };
+
+        if (NRS.validatePassphrase(passphrase)) {
+            $('#incorrect_passphrase_message').removeClass('active');
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function(res) {
+                    $('#send_money_modal').modal('hide');
+                }
+            });
+        } else {
+            $('#incorrect_passphrase_message').addClass('active');
+        }
+
     });
 
     return NRS;

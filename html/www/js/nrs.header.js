@@ -148,6 +148,9 @@ var NRS = (function(NRS, $) {
         var secretPhrase = data.secretPhrase;
         var account = data.account;
         var calculatedAccount = NRS.getAccountId(secretPhrase, true);
+
+        console.log(calculatedAccount);
+
         if (account == calculatedAccount) {
             $(".btn-passphrase-validation").removeClass("btn-danger").addClass("btn-success");
             return {

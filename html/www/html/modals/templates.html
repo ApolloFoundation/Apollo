@@ -33,13 +33,14 @@
     </div>
     <div class="form-group recipient_public_key">
         <label for="{{name}}_recipient_public_key" data-i18n="recipient_public_key">Recipient Public Key</label>
-        <input type="text" class="form-control" name="recipientPublicKey" id="{{name}}_recipient_public_key" placeholder="Public Key" data-i18n="[placeholder]public_key" tabindex="2" spellcheck="false" />
+        <input type="text" class="form-control" name="recipientPublicKey" id="{{name}}_recipient_public_key send_money_recipient" placeholder="Public Key" data-i18n="[placeholder]public_key" tabindex="2" spellcheck="false" />
     </div>
 </div>
 
 
 <div id="add_message_modal_template">
-    <div class="form-group add_message_container">
+    <a type="button" class="btn btn-primary" id="open_send_money_private" data-loading-text="Submitting..." style="margin-bottom: 25px;">Private?</a>
+    <div class="form-group add_message_container" style="margin-bottom: 20px;">
         <input type="checkbox" name="add_message" id="{{name}}_add_message" class="add_message" tabindex="101" /> <label for="{{name}}_add_message" style="font-weight:normal;margin-bottom:0;"> <span data-i18n="add_message_q">Add a Message?</span></label>
     </div>
     <div class="form-group optional_message">
@@ -61,6 +62,7 @@
 <div id="add_public_message_modal_template">
     <div class="form-group add_message_container">
         <input type="checkbox" name="add_message" id="{{name}}_add_public_message" class="add_message" tabindex="101" /> <label for="{{name}}_add_public_message" style="font-weight:normal;margin-bottom:0;"> <span data-i18n="add_message_q">Add a Message?</span></label>
+
     </div>
     <div class="form-group optional_message">
         <label for="{{name}}_public_message" data-i18n="message">MESSAGE</label>
