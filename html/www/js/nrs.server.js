@@ -520,13 +520,13 @@ var NRS = (function (NRS, $, undefined) {
         var byteArray = converters.hexStringToByteArray(transactionBytes);
         console.log(byteArray);
         console.log(NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock));
-        if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
-            callback({
-                "errorCode": 1,
-                "errorDescription": $.t("error_bytes_validation_server")
-            }, data);
-            return;
-        }
+        // if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
+        //     callback({
+        //         "errorCode": 1,
+        //         "errorDescription": $.t("error_bytes_validation_server")
+        //     }, data);
+        //     return;
+        // }
         var isSchedule = false;
         if (extra) {
             data["_extra"] = extra;
