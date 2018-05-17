@@ -20,7 +20,7 @@
  */
 
 var NRS = (function(NRS, $, undefined) {
-    var API = 'http://127.0.0.1:6876/apl?';
+    var API = '/apl?';
     var dataBlock = null;
 
 	$("body").on("click", ".show_block_modal_action", function(event) {

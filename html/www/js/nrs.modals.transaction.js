@@ -19,7 +19,7 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function (NRS, $, undefined) {
-    var API = 'http://127.0.0.1:6876/apl?';
+    var API = '/apl?';
 
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
