@@ -1610,23 +1610,16 @@ var NRS = (function(NRS, $, undefined) {
                 type: 'GET',
                 cache: false,
                 success: function(data) {
-                    data = JSON.parse(data);
-
-                    $('#transactions_table tbody').empty();
-
-                    var paginate_ledger = new NRS.paginate(data.entries, 0, 15, '#ledger_transactions_pgination');
-                    paginate_ledger.rerenderPagination();
-
-                    $('#incorrect_passphrase_ledger_my_transactions').hide();
+                    $('#incorrect_passphrase_my_ledger').hide();
                     $('#transaction_ledger_fill_secret_word_modal').modal('hide');
                 },
                 error: function(data) {
-                    $('#incorrect_passphrase_ledger_my_transactions').show();
+                    $('#incorrect_passphrase_my_ledger').show();
 
                 }
             });
         } else {
-            $('#incorrect_passphrase_my_transactions').show();
+            $('#incorrect_passphrase_my_ledger').show();
         }
 
     });
