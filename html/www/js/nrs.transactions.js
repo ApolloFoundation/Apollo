@@ -1450,6 +1450,9 @@ var NRS = (function(NRS, $, undefined) {
     $('#open_send_money_private').click(function() {
         $('#send_money_modal').modal('hide');
         $('#send_money_private_modal').modal('show');
+        $.growl($.t("success_send_money") + " <a href='#' data-account='" + NRS.getAccountFormatted(data, "recipient") + "' data-toggle='modal' data-target='#add_contact_modal' style='text-decoration:underline'>" + $.t("add_recipient_to_contacts_q") + "</a>", {
+            "type": "success"
+        });
     });
 
     $('body').on('click', '#send_money_private', function() {
