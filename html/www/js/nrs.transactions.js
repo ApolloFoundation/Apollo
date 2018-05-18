@@ -1580,25 +1580,19 @@ var NRS = (function(NRS, $, undefined) {
             console.log(formParams[0].value);
             myTransactionPagination.setPrivate(formParams[0].value);
 
-            // $.ajax({
-            //     url: API,
-            //     type: 'GET',
-            //     cache: false,
-            //     success: function(data) {
-            //     	allowUpdate = false;
-            //         data = JSON.parse(data);
-            //         $('#transactions_table tbody').empty();
-            //
-            //         var transactions = new NRS.paginate(data.transactions, 0, 15, '#transactions_pgination');
-            //         transactions.rerenderPagination();
-            //
-            //         $('#transaction_fill_secret_word_modal').modal('hide');
-            //         $('#incorrect_passphrase_my_transactions').hide();
-            //     },
-            //     error: function(data) {
-            //         console.log('err: ', data);
-            //     }
-            // });
+            $.ajax({
+                url: API,
+                type: 'GET',
+                cache: false,
+                success: function(data) {
+
+                    $('#transaction_fill_secret_word_modal').modal('hide');
+                    $('#incorrect_passphrase_my_transactions').hide();
+                },
+                error: function(data) {
+                    console.log('err: ', data);
+                }
+            });
 		} else {
             $('#incorrect_passphrase_my_transactions').show();
         }
