@@ -20,7 +20,7 @@
 var NRS = (function(NRS, $, undefined) {
     var API = '/apl?';
 
-    NRS.allowUpdate = false;
+    NRS.allowUpdate = true;
 	NRS.lastTransactions = "";
 	NRS.unconfirmedTransactions = [];
 	NRS.unconfirmedTransactionIds = "";
