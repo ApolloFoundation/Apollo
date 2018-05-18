@@ -420,7 +420,8 @@ final class BlockchainImpl implements Blockchain {
                 if (subtype >= 0) {
                     buf.append("AND subtype = ? ");
                 }
-            } else if (!includePrivate) {
+            }
+            if (!includePrivate) {
                     buf.append("AND (type <> ? ");
                     buf.append("OR subtype <> ? ) ");
             }
@@ -452,7 +453,8 @@ final class BlockchainImpl implements Blockchain {
                 if (subtype >= 0) {
                     buf.append("AND subtype = ? ");
                 }
-            } else if (!includePrivate) {
+            }
+            if (!includePrivate) {
                 buf.append("AND (type <> ? ");
                 buf.append("OR subtype <> ? ) ");
             }
@@ -488,7 +490,8 @@ final class BlockchainImpl implements Blockchain {
                 if (subtype >= 0) {
                     pstmt.setByte(++i, subtype);
                 }
-            } else if (!includePrivate) {
+            }
+            if (!includePrivate) {
                 pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
                 pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
             }
@@ -510,7 +513,8 @@ final class BlockchainImpl implements Blockchain {
                 if (subtype >= 0) {
                     pstmt.setByte(++i, subtype);
                 }
-            } else if (!includePrivate) {
+            }
+            if (!includePrivate) {
                 pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
                 pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
             }
