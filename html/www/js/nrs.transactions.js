@@ -111,26 +111,30 @@ var NRS = (function(NRS, $, undefined) {
             }
             console.log(url);
 
-            url += 'firstIndex=' + parseInt(this.page * 16 - 16) + '&';
-            console.log(url);
+            var nextPageUrl = url;
+            var prevPageUrl = url;
 
-            url += 'lastIndex='  + this.page * 16 + '&';
+            nextPageUrl += 'firstIndex=' + parseInt((this.page + 1) * 14 - 14) + '&';
+            nextPageUrl += 'lastIndex='  + (this.page + 1) * 16 + '&';
 
-            console.log(url);
+			prevPageUrl += 'firstIndex=' + parseInt((this.page - 1) * 14 - 14) + '&';
+			prevPageUrl += 'lastIndex='  + (this.page - 1) * 14 + '&';
+
+            url += 'firstIndex=' + parseInt((this.page) * 14 - 14) + '&';
+            url += 'lastIndex='  + (this.page) * 14 + '&';
+
             var that = this;
             var $el = $("#" + NRS.currentPage + "_contents");
             $el = $el.selector;
-            console.log($el);
 
             $.ajax({
                 url: url,
                 type: 'GET',
                 cache: false,
                 success: function(data) {
-                	console.log('success data');
+                    that.validatePagimation(prevPageUrl, 'prev');
+                	that.validatePagimation(nextPageUrl, 'next');
 
-                    console.log(that.page);
-                    console.log(that.transactionType);
                     var rows = "";
 
                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
@@ -172,13 +176,80 @@ var NRS = (function(NRS, $, undefined) {
 
                         }
                     }
-
                 },
                 error: function(data) {
                     console.log('err: ', data);
                 }
             });
         };
+        this.validatePagimation = function(url, action) {
+        	if (action === 'prev') {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        console.log('Validate data');
+
+                        var transactions = that.items = JSON.parse(data).transactions;
+                        var entries = that.items = JSON.parse(data).entries;
+                        var blocks = that.items = JSON.parse(data).blocks;
+
+                        if (transactions) {
+                            checkItems(transactions, 'prev');
+						}
+						if (entries) {
+                            checkItems(entries, 'prev');
+						}
+						if (blocks) {
+                            checkItems(blocks, 'prev')
+						}
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+			if (action === 'next') {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        var transactions = that.items = JSON.parse(data).transactions;
+                        var entries = that.items = JSON.parse(data).entries;
+                        var blocks = that.items = JSON.parse(data).blocks;
+
+                        if (transactions) {
+                            checkItems(transactions, 'next');
+                        }
+                        if (entries) {
+                            checkItems(entries, 'next');
+                        }
+                        if (blocks) {
+                            checkItems(blocks, 'next')
+                        }
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+
+			function checkItems(array, action) {
+                if (array.length == 1 || array.length == 0) {
+                    $(that.target).parent().find('[data-transactions-pagination]').find('[data-navigate-page="' + action + '"]').addClass('disabled');
+                    console.log(that.target);
+                    console.log($(that.target).parent().find('[data-transactions-pagination]'));
+                }
+                else {
+                    $(that.target).parent().find('[data-transactions-pagination]').find('[data-navigate-page="' + action + '"]').removeClass('disabled');
+                    console.log($(that.target).parent().find('[data-transactions-pagination]'));
+                    console.log(that.target, ' 3333');
+                }
+			}
+
+		};
         this.renderItems = function() {
             this.getItems();
 		};
