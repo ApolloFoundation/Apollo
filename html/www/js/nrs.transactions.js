@@ -1456,7 +1456,7 @@ var NRS = (function(NRS, $, undefined) {
     });
 
     $('body').on('click', '#send_money_private', function() {
-        console.log(222)
+        console.log(222);
         var recipient  = $('#send_money_recipient_info').val();
         var amount     = $('#send_money_amount_info').val();
         var fee        = $('#send_money_fee_info').val();

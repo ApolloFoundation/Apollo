@@ -29,9 +29,10 @@ var NRS = (function (NRS, $, undefined) {
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
         var hash = $(this).data("hash");
-        var transaction = $(this).data("id");
-        console.log(transactionId);
+        var transaction = $(this).attr("data-id");
+
         $('#get_private_transaction').attr('data-id', transactionId);
+        $('#get_private_transaction').attr('data-id', transaction);
 
         if (infoModal && infoModal.data('bs.modal')) {
             isModalVisible = infoModal.data('bs.modal').isShown;
@@ -82,13 +83,12 @@ var NRS = (function (NRS, $, undefined) {
 
         var formParams = $( this ).serializeArray();
         var passphrase = formParams[0].value;
-        var hash = $(this).data('hash');
-        var id = $(this).data('id');
+        var id = $(this).attr('data-id');
+
 
         var url = API;
         url += 'requestType=getPrivateTransaction&secretPhrase=' + formParams[0].value + '&';
         url += 'transaction=' + id + '&';
-        url += 'fullHash=' + hash;
 
         console.log(url);
         var infoModal = $('#transaction_info_modal');
