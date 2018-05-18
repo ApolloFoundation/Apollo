@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,7 +148,7 @@ public class NodeClient {
         return getJson(uri, params);
     }
 
-    public List<Transaction> getAccountTransactions(String url, String rsAddress, int from, int to) throws IOException {
+    public List<Transaction> getAccountTransactions(String url, String rsAddress, int from, int to, int type, int subtype) throws IOException {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getBlockchainTransactions");
@@ -155,10 +156,21 @@ public class NodeClient {
         params.put("includeTransactions", "true");
         params.put("firstIndex", String.valueOf(from));
         params.put("lastIndex", String.valueOf(to));
+        if (type >= 0) {
+            params.put("type", String.valueOf(type));
+        }
+        if (subtype >= 0) {
+            params.put("subtype", String.valueOf(subtype));
+        }
         String json =  getJson(uri, params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
-        return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
+        try {
+            return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
+        }
+        catch (Throwable e) {
+            return Collections.emptyList();
+        }
     }
 
     public List<Transaction> getAccountTransactionsList(String url, String rsAddress) throws ParseException, IOException {

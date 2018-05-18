@@ -255,18 +255,18 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(4, blockTransactionsList1.size());
         blockTransactionsList2.forEach(blockTransactionsList1::remove);
         blockTransactionsList1.forEach(tr1 ->
-            blockTransactionsList2.forEach(tr2 -> {
-            if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
-                Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
-                Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
-                Assert.assertFalse(tr1.getAmountNQT().equals(tr2.getAmountNQT()));
-            }
-        }));
+                blockTransactionsList2.forEach(tr2 -> {
+                    if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
+                        Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
+                        Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
+                        Assert.assertFalse(tr1.getAmountNQT().equals(tr2.getAmountNQT()));
+                    }
+                }));
     }
 
     @Test
     public void testGetTransactionsWithPagination() throws Exception {
-        List<Transaction> accountTransactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 1, 15);
+        List<Transaction> accountTransactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 1, 15, -1, -100);
         checkList(accountTransactions);
         Assert.assertEquals(15, accountTransactions.size());
         accountTransactions.forEach(transaction -> {
@@ -291,7 +291,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         for (int i = 1; i <= 6; i++) {
             client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i));
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i)*2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i) * 2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
@@ -299,7 +299,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         checkList(unconfirmedTransactions);
         Assert.assertEquals(4, unconfirmedTransactions.size());
         for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
-            Transaction transaction = unconfirmedTransactions.get(i-1);
+            Transaction transaction = unconfirmedTransactions.get(i - 1);
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
             Assert.assertEquals(nqt(i), transaction.getAmountNQT());
@@ -321,11 +321,11 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         checkList(unconfirmedTransactions);
         Assert.assertEquals(10, unconfirmedTransactions.size());
         for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
-            Transaction transaction = unconfirmedTransactions.get(i-1);
+            Transaction transaction = unconfirmedTransactions.get(i - 1);
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
             if (i % 2 != 0) {
-                Assert.assertEquals(nqt(i/2 +1), transaction.getAmountNQT());
+                Assert.assertEquals(nqt(i / 2 + 1), transaction.getAmountNQT());
                 Assert.assertFalse(transaction.isPrivate());
             } else {
                 Assert.assertEquals(nqt(i), transaction.getAmountNQT());
@@ -343,6 +343,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(164L, ledgerEntry.getLedgerId().longValue());
         Assert.assertEquals(MAIN_RS, ledgerEntry.getTransaction().getSenderRS());
     }
+
     @Test
     public void testGetUnknownAccountLedgerEntry() throws Exception {
         LedgerEntry ledgerEntry = client.getAccountLedgerEntry(url, PRIVATE_LEDGER_ENTRY_ID, true);
@@ -358,6 +359,72 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(nqt(-2), ledgerEntry.getChange());
         Assert.assertEquals(12150L, ledgerEntry.getHeight().longValue());
         Assert.assertEquals(9584301L, ledgerEntry.getTimestamp().longValue());
+    }
+
+    @Test
+    public void testGetTransactionsWithType() throws IOException {
+        List<Transaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 99, 0, -1);
+        checkList(transactions);
+        Assert.assertEquals(100, transactions.size());
+        transactions.forEach(transaction -> {
+            Assert.assertFalse(transaction.isPrivate());
+            Assert.assertEquals(0, transaction.getType().intValue());
+            if (!transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER)) {
+                Assert.fail("Not this user: " + PRIVATE_TRANSACTION_SENDER + ", transaction: " + transaction.toString());
+            }
+        });
+    }
+
+    @Test
+    public void testGetTransactionsWithSubtype() throws IOException {
+        List<Transaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, -71, 1);
+        checkList(transactions);
+        Assert.assertEquals(50, transactions.size());
+        transactions.forEach(transaction -> {
+            Assert.assertFalse(transaction.isPrivate());
+            if (!transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER)) {
+                Assert.fail("Not this user: " + PRIVATE_TRANSACTION_SENDER + ", transaction: " + transaction.toString());
+            }
+
+        });
+    }
+
+    @Test
+    public void testGetTransactionsWithTypeAndSubtype() throws IOException {
+        List<Transaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, 0, 0);
+        checkList(transactions);
+        Assert.assertEquals(50, transactions.size());
+        transactions.forEach(transaction -> {
+            Assert.assertFalse(transaction.isPrivate());
+            Assert.assertTrue(transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER));
+            if (!transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER)) {
+                Assert.fail("Not this user: " + PRIVATE_TRANSACTION_SENDER + ", transaction: " + transaction.toString());
+            }
+        });
+    }
+
+    @Test
+    public void testGetPrivateTransactionsThroughGetPublicTransactions() throws IOException {
+        List<Transaction> transactions1 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, 0, 1);
+        Assert.assertTrue("List contains Private transactions!", transactions1.isEmpty());
+        //do request for each type
+        for (int i = 0; i < 20; i++) {
+            List<Transaction> transactions2 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, i, -1);
+            int type = i;
+            transactions2.forEach(transaction -> {
+                Assert.assertTrue("Not this user: " + PRIVATE_TRANSACTION_SENDER + " transaction: " + transaction, transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER));
+                Assert.assertFalse("Transaction is private! " + transaction + ". Type: " + type, transaction.isPrivate());
+            });
+            //do request for each subtype
+            for (int j = 0; j < 20; j++) {
+                List<Transaction> transactions3 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, i, j);
+                int subtype = j;
+                transactions3.forEach(transaction -> {
+                    Assert.assertTrue("Not this user: " + PRIVATE_TRANSACTION_SENDER + " transaction: " + transaction, transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER));
+                    Assert.assertFalse("Transaction is private! " + transaction + ". Type: " + type + ". Subtype: " + subtype, transaction.isPrivate());
+                });
+            }
+        }
     }
 }
 
