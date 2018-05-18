@@ -275,4 +275,9 @@ public class Transaction {
     public boolean isPrivate() {
         return type == TransactionType.Payment.PRIVATE.getType() && subtype == TransactionType.Payment.PRIVATE.getSubtype();
     }
+
+    public boolean isOwnedBy(String accountRs) {
+        Objects.requireNonNull(accountRs);
+        return accountRs.equalsIgnoreCase(recipientRS) || accountRs.equalsIgnoreCase(senderRS);
+    }
 }
