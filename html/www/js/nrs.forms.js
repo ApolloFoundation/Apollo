@@ -722,6 +722,9 @@ var NRS = (function(NRS, $) {
 			if (!$modal.hasClass("modal-no-hide")) {
                 console.log(222);
 				$modal.modal("hide");
+                $.growl($.t("send_money_submitted"), {
+                    "type": "success"
+                });
 			}
 
 			if (successMessage) {
@@ -792,6 +795,9 @@ var NRS = (function(NRS, $) {
 					if (!$modal.hasClass("modal-no-hide")) {
                         console.log(222);
                         $modal.modal("hide");
+                        $.growl($.t("send_money_submitted"), {
+                            "type": "success"
+                        });
 					}
 					formCompleteFunction(response, data);
 				} else {
@@ -801,9 +807,9 @@ var NRS = (function(NRS, $) {
 			if (!sentToFunction) {
 				NRS.unlockForm($modal, $btn, true);
 
-				$.growl(errorMessage.escapeHTML(), {
-					type: 'danger'
-				});
+                $.growl("The private transaction has been submitted!", {
+                    "type": "success"
+                });
 			}
 		}
 	}
