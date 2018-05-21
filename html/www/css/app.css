@@ -139,8 +139,13 @@ body.fixed .wrapper {
 /* Content */
 .content {
   background: #edf1f5;
-  margin-bottom: 55px;
+  margin-bottom: 120px;
 }
+
+[data-transactions-pagination] [data-navigate-page].disabled {
+  display: none;
+}
+
 .alert-no-icon {
   margin-bottom: 25px !important;
 }

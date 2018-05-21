@@ -19,8 +19,13 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function(NRS, $) {
-	$("body").on("click", ".show_ledger_modal_action", function(event) {
+    var API = '/apl?';
+
+    $("body").on("click", ".show_ledger_modal_action", function(event) {
 		event.preventDefault();
+        console.log(2222);
+        $('#get_date_private_transaction').attr('data-ledger', $(this).attr('data-entry'));
+
 		if (NRS.fetchingModalData) {
 			return;
 		}
@@ -45,14 +50,60 @@ var NRS = (function(NRS, $) {
 		});
 	});
 
+
+	$('#get_date_private_transaction').submit(function() {
+        var formParams = $( this ).serializeArray();
+
+        var passphrase = formParams[0].value;
+
+        if (NRS.validatePassphrase(passphrase)) {
+            $('#incorrect_passphrase_message').removeClass('active');
+
+            var url = API;
+
+            url += 'requestType=getPrivateAccountLedgerEntry&';
+            url += 'ledgerId=' +  $( this ).attr('data-ledger') + '&';
+            url += 'secretPhrase=' + passphrase;
+
+            console.log(url);
+            $.get( url, function() {
+                console.log('made request');
+            })
+                .then(function (res) {
+                    $('#get_private_transaction_type').modal('hide');
+                    res = JSON.parse(res);
+                    console.log(res);
+
+                    var detailsTable = $("#ledger_info_details_table");
+                    detailsTable.find("tbody").empty().append(NRS.createInfoTable(res));
+                    detailsTable.show();
+                    $("#ledger_info_modal").modal("show");
+                });
+
+        } else {
+            $('#incorrect_passphrase_message').addClass('active');
+        }
+
+
+    });
+
+
 	NRS.showLedgerEntryModal = function(entry, change, balance) {
         try {
             NRS.setBackLink();
     		NRS.modalStack.push({ class: "show_ledger_modal_action", key: "entry", value: { entry: entry.ledgerId, change: change, balance: balance }});
             $("#ledger_info_modal_entry").html(entry.ledgerId);
             var entryDetails = $.extend({}, entry);
-            entryDetails.eventType = $.t(entryDetails.eventType.toLowerCase());
-            entryDetails.holdingType = $.t(entryDetails.holdingType.toLowerCase());
+            try {
+                entryDetails.eventType = $.t(entryDetails.eventType.toLowerCase());
+                entryDetails.holdingType = $.t(entryDetails.holdingType.toLowerCase());
+
+            } catch (e) {
+                $('#get_date_modal').modal('show');
+                console.log(33333);
+                console.log(entry);
+                return;
+            }
             if (entryDetails.timestamp) {
                 entryDetails.entryTime = NRS.formatTimestamp(entryDetails.timestamp);
             }
@@ -73,6 +124,7 @@ var NRS = (function(NRS, $) {
             entryDetails.balance_formatted_html = balance;
             delete entryDetails.balance;
             var detailsTable = $("#ledger_info_details_table");
+            console.log(entryDetails);
             detailsTable.find("tbody").empty().append(NRS.createInfoTable(entryDetails));
             detailsTable.show();
             $("#ledger_info_modal").modal("show");

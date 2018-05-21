@@ -20,7 +20,7 @@
 var NRS = (function(NRS, $, undefined) {
     var API = '/apl?';
 
-    NRS.allowUpdate = false;
+    NRS.allowUpdate = true;
 	NRS.lastTransactions = "";
 	NRS.unconfirmedTransactions = [];
 	NRS.unconfirmedTransactionIds = "";
@@ -111,26 +111,30 @@ var NRS = (function(NRS, $, undefined) {
             }
             console.log(url);
 
-            url += 'firstIndex=' + parseInt(this.page * 16 - 16) + '&';
-            console.log(url);
+            var nextPageUrl = url;
+            var prevPageUrl = url;
 
-            url += 'lastIndex='  + this.page * 16 + '&';
+            nextPageUrl += 'firstIndex=' + parseInt((this.page + 1) * 14 - 14) + '&';
+            nextPageUrl += 'lastIndex='  + (this.page + 1) * 16 + '&';
 
-            console.log(url);
+			prevPageUrl += 'firstIndex=' + parseInt((this.page - 1) * 14 - 14) + '&';
+			prevPageUrl += 'lastIndex='  + (this.page - 1) * 14 + '&';
+
+            url += 'firstIndex=' + parseInt((this.page) * 14 - 14) + '&';
+            url += 'lastIndex='  + (this.page) * 14 + '&';
+
             var that = this;
             var $el = $("#" + NRS.currentPage + "_contents");
             $el = $el.selector;
-            console.log($el);
 
             $.ajax({
                 url: url,
                 type: 'GET',
                 cache: false,
                 success: function(data) {
-                	console.log('success data');
+                    that.validatePagimation(prevPageUrl, 'prev');
+                	that.validatePagimation(nextPageUrl, 'next');
 
-                    console.log(that.page);
-                    console.log(that.transactionType);
                     var rows = "";
 
                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
@@ -172,13 +176,80 @@ var NRS = (function(NRS, $, undefined) {
 
                         }
                     }
-
                 },
                 error: function(data) {
                     console.log('err: ', data);
                 }
             });
         };
+        this.validatePagimation = function(url, action) {
+        	if (action === 'prev') {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        console.log('Validate data');
+
+                        var transactions = that.items = JSON.parse(data).transactions;
+                        var entries = that.items = JSON.parse(data).entries;
+                        var blocks = that.items = JSON.parse(data).blocks;
+
+                        if (transactions) {
+                            checkItems(transactions, 'prev');
+						}
+						if (entries) {
+                            checkItems(entries, 'prev');
+						}
+						if (blocks) {
+                            checkItems(blocks, 'prev')
+						}
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+			if (action === 'next') {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        var transactions = that.items = JSON.parse(data).transactions;
+                        var entries = that.items = JSON.parse(data).entries;
+                        var blocks = that.items = JSON.parse(data).blocks;
+
+                        if (transactions) {
+                            checkItems(transactions, 'next');
+                        }
+                        if (entries) {
+                            checkItems(entries, 'next');
+                        }
+                        if (blocks) {
+                            checkItems(blocks, 'next')
+                        }
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+
+			function checkItems(array, action) {
+                if (array.length == 1 || array.length == 0) {
+                    $(that.target).parent().find('[data-transactions-pagination]').find('[data-navigate-page="' + action + '"]').addClass('disabled');
+                    console.log(that.target);
+                    console.log($(that.target).parent().find('[data-transactions-pagination]'));
+                }
+                else {
+                    $(that.target).parent().find('[data-transactions-pagination]').find('[data-navigate-page="' + action + '"]').removeClass('disabled');
+                    console.log($(that.target).parent().find('[data-transactions-pagination]'));
+                    console.log(that.target, ' 3333');
+                }
+			}
+
+		};
         this.renderItems = function() {
             this.getItems();
 		};
@@ -1509,25 +1580,19 @@ var NRS = (function(NRS, $, undefined) {
             console.log(formParams[0].value);
             myTransactionPagination.setPrivate(formParams[0].value);
 
-            // $.ajax({
-            //     url: API,
-            //     type: 'GET',
-            //     cache: false,
-            //     success: function(data) {
-            //     	allowUpdate = false;
-            //         data = JSON.parse(data);
-            //         $('#transactions_table tbody').empty();
-            //
-            //         var transactions = new NRS.paginate(data.transactions, 0, 15, '#transactions_pgination');
-            //         transactions.rerenderPagination();
-            //
-            //         $('#transaction_fill_secret_word_modal').modal('hide');
-            //         $('#incorrect_passphrase_my_transactions').hide();
-            //     },
-            //     error: function(data) {
-            //         console.log('err: ', data);
-            //     }
-            // });
+            $.ajax({
+                url: API,
+                type: 'GET',
+                cache: false,
+                success: function(data) {
+
+                    $('#transaction_fill_secret_word_modal').modal('hide');
+                    $('#incorrect_passphrase_my_transactions').hide();
+                },
+                error: function(data) {
+                    console.log('err: ', data);
+                }
+            });
 		} else {
             $('#incorrect_passphrase_my_transactions').show();
         }
@@ -1545,23 +1610,16 @@ var NRS = (function(NRS, $, undefined) {
                 type: 'GET',
                 cache: false,
                 success: function(data) {
-                    data = JSON.parse(data);
-
-                    $('#transactions_table tbody').empty();
-
-                    var paginate_ledger = new NRS.paginate(data.entries, 0, 15, '#ledger_transactions_pgination');
-                    paginate_ledger.rerenderPagination();
-
-                    $('#incorrect_passphrase_ledger_my_transactions').hide();
+                    $('#incorrect_passphrase_my_ledger').hide();
                     $('#transaction_ledger_fill_secret_word_modal').modal('hide');
                 },
                 error: function(data) {
-                    $('#incorrect_passphrase_ledger_my_transactions').show();
+                    $('#incorrect_passphrase_my_ledger').show();
 
                 }
             });
         } else {
-            $('#incorrect_passphrase_my_transactions').show();
+            $('#incorrect_passphrase_my_ledger').show();
         }
 
     });

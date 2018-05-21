@@ -142,10 +142,11 @@ var NRS = (function(NRS, $, undefined) {
             detailsTable.show();
             var transactionsTable = $("#block_info_transactions_table");
             if (block.transactions.length) {
+                $("#height_show_private_transactions").show();
                 $("#block_info_transactions_none").hide();
                 transactionsTable.show();
 
-                console.log(block.transactions);
+                console.log(block.transactions.transactions);
 
                 var rows = "";
                 for (var i = 0; i < block.transactions.length; i++) {
@@ -166,6 +167,9 @@ var NRS = (function(NRS, $, undefined) {
                 }
                 transactionsTable.find("tbody").empty().append(rows);
             } else {
+                console.log(block.transactions.transactions);
+
+                $("#height_show_private_transactions").hide();
                 $("#block_info_transactions_none").show();
                 transactionsTable.hide();
             }
