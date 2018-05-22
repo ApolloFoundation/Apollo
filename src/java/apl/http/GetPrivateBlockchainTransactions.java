@@ -18,7 +18,6 @@
 package apl.http;
 
 import apl.*;
-import apl.crypto.Crypto;
 import apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -31,15 +30,14 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
     static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
 
     private GetPrivateBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "secretPhrase", "height", "firstIndex", "lastIndex", "type", "subtype");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "sharedKey", "account");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", true);
+        long accountId = ParameterParser.getAccountId(req, true);
         int height = ParameterParser.getHeight(req);
-        long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         byte type;
@@ -63,7 +61,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
                 if (transaction.getType() == TransactionType.Payment.PRIVATE && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
                     transactions.add(JSONData.transaction(true, transaction));
                 } else {
-                    transactions.add(JSONData.transaction(false, transaction));
+                    transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
                 }
             });
         } else {
@@ -72,7 +70,11 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
                     false, firstIndex, lastIndex, false, false, true)) {
                 while (iterator.hasNext()) {
                     Transaction transaction = iterator.next();
-                    transactions.add(JSONData.transaction(transaction, false, false));
+                    if (TransactionType.Payment.PRIVATE == transaction.getType()) {
+                        transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
+                    } else {
+                        transactions.add(JSONData.transaction(false, transaction));
+                    }
                 }
             }
         }

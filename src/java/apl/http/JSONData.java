@@ -1212,6 +1212,14 @@ public final class JSONData {
         }
     }
 
+    public static JSONObject encryptedTransaction(Transaction transaction, byte[] sharedKey) {
+        JSONObject encryptedTransaction = new JSONObject();
+        JSONObject transactionJson = JSONData.transaction(false, transaction);
+        byte[] encrypted = Crypto.aesEncrypt(transactionJson.toJSONString().getBytes(), sharedKey);
+        encryptedTransaction.put("encryptedTransaction", Convert.toString(encrypted));
+        return encryptedTransaction;
+    }
+
     interface VoteWeighter {
         long calcWeight(long voterId);
     }
