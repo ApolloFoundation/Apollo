@@ -594,7 +594,11 @@ var NRS = (function(NRS, $, undefined) {
     };
 
 	NRS.logout = function(stopForging) {
-		if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
+        delete NRS.myTransactionPagination;
+        delete NRS.accountLedgerPagination;
+        delete NRS.blocksPagination;
+
+        if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");
             stopForgingModal.find(".show_logout").show();
 			stopForgingModal.modal("show");

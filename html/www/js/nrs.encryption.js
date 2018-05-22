@@ -44,7 +44,11 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.getPublicKey = function(id, isAccountId) {
-		if (isAccountId) {
+        console.log('------------------');
+        console.log(id);
+        console.log(isAccountId);
+
+        if (isAccountId) {
             var publicKey = "";
 			NRS.sendRequest("getAccountPublicKey", {
 				"account": id
@@ -59,7 +63,9 @@ var NRS = (function (NRS, $) {
 		} else {
 			var secretPhraseBytes = converters.hexStringToByteArray(id);
 			var digest = simpleHash(secretPhraseBytes);
-			return converters.byteArrayToHexString(curve25519.keygen(digest).p);
+
+            console.log(converters.byteArrayToHexString(curve25519.keygen(digest).p));
+            return converters.byteArrayToHexString(curve25519.keygen(digest).p);
 		}
 	};
 

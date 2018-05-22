@@ -41,34 +41,21 @@ var NRS = (function(NRS, $, undefined) {
 			html += '<div data-navigate-page="prev">prev</div>';
 			html += '<div data-navigate-page="next">next</div>';
 
-            console.log($('[data-transactions-pagination]').html(html));
-            console.log($('[data-transactions-pagination]').html(html));
-            console.log($('[data-transactions-pagination]').html(html));
             $('[data-transactions-pagination]').html(html);
-            console.log($(target).parent().find('[data-transactions-pagination]'));
-
         };
         this.setPrivate = function(passphrase) {
             this.isPrivate = true;
-            console.log(passphrase);
             this.passPhrase = passphrase;
             this.getItems();
         };
 
 		$(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-			console.log($(that).find('[data-navigate-page]'));
-
-			// console.log(e.target);
-			// console.log($(e.target).attr('data-navigate-page'));
-			// console.log($(e.target).attr());
-
             if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
             } else {
                 that.page = that.page + 1;
             }
 
-            console.log(that.page);
             that.getItems(that.page);
 
         });
@@ -77,14 +64,9 @@ var NRS = (function(NRS, $, undefined) {
         	if (page) {
                 this.page = page;
             }
-            console.log(this.page);
-
 
             var url = API;
             url += 'account=' + NRS.account + '&';
-
-            console.log(this.transactionType);
-            console.log(this.passPhrase);
 
             if (this.isPrivate) {
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
@@ -96,20 +78,16 @@ var NRS = (function(NRS, $, undefined) {
                     url += 'secretPhrase=' + this.passPhrase + '&';
 				}
             } else {
-                console.log(this.transactionType);
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
                     url += 'requestType=getBlockchainTransactions&';
-
                 }
                 if (this.transactionType === 'getAccountLedger' || this.transactionType === 'getPrivateAccountLedger') {
                     url += 'requestType=getAccountLedger&';
-
                 }
                 if (this.transactionType === 'getBlocks') {
                     url += 'requestType=getBlocks&';
                 }
             }
-            console.log(url);
 
             var nextPageUrl = url;
             var prevPageUrl = url;
@@ -147,15 +125,12 @@ var NRS = (function(NRS, $, undefined) {
                         }
                         if ($el === '#transactions_contents') {
                             NRS.dataLoaded(rows);
-                            console.log($el);
 						}
 
                         NRS.addPhasingInfoToTransactionRows(that.items);
 					}
                     if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
                         that.items = JSON.parse(data).entries;
-
-                        console.log(that.items);
 
                         var decimalParams = NRS.getLedgerNumberOfDecimals(that.items);
                         for (var i = 0; i < that.items.length; i++) {
@@ -170,7 +145,6 @@ var NRS = (function(NRS, $, undefined) {
                     if (that.transactionType === 'getBlocks') {
                         that.items = JSON.parse(data).blocks;
 
-                        console.log(that.items);
                         if ($el === '#blocks_contents') {
                             NRS.blocksPageLoaded(that.items);
 
@@ -189,7 +163,6 @@ var NRS = (function(NRS, $, undefined) {
                     type: 'GET',
                     cache: false,
                     success: function(data) {
-                        console.log('Validate data');
 
                         var transactions = that.items = JSON.parse(data).transactions;
                         var entries = that.items = JSON.parse(data).entries;
@@ -267,9 +240,9 @@ var NRS = (function(NRS, $, undefined) {
         this.logPulling();
     };
 
-    var myTransactionPagination;
-    var accountLedgerPagination;
-    var blocksPagination;
+    NRS.myTransactionPagination;
+    NRS.accountLedgerPagination;
+    NRS.blocksPagination;
 
     NRS.handleIncomingTransactions = function(transactions, confirmedTransactionIds) {
 		var oldBlock = (confirmedTransactionIds === false); //we pass false instead of an [] in case there is no new block..
@@ -383,9 +356,9 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.getInitialTransactions = function(decimals) {
         console.log(decimals);
 
-        myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
-        accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
-        blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
+        NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
+        NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
+        NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
 
 		NRS.sendRequest("getBlockchainTransactions", {
 			"account": NRS.account,
@@ -1492,7 +1465,7 @@ var NRS = (function(NRS, $, undefined) {
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
             console.log(formParams[0].value);
-            accountLedgerPagination.setPrivate(formParams[0].value);
+            NRS.accountLedgerPagination.setPrivate(formParams[0].value);
 
             // $.ajax({
             //     url: API,
@@ -1578,7 +1551,7 @@ var NRS = (function(NRS, $, undefined) {
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
             console.log(formParams[0].value);
-            myTransactionPagination.setPrivate(formParams[0].value);
+            NRS.myTransactionPagination.setPrivate(formParams[0].value);
 
             $.ajax({
                 url: API,
