@@ -19,6 +19,7 @@ package apl.http;
 
 import apl.*;
 import apl.AccountLedger.LedgerEntry;
+import apl.Currency;
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
 import apl.db.DbIterator;
@@ -29,10 +30,7 @@ import apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public final class JSONData {
 
@@ -1216,7 +1214,10 @@ public final class JSONData {
         JSONObject encryptedTransaction = new JSONObject();
         JSONObject transactionJson = JSONData.transaction(false, transaction);
         byte[] encrypted = Crypto.aesEncrypt(transactionJson.toJSONString().getBytes(), sharedKey);
-        encryptedTransaction.put("encryptedTransaction", Convert.toString(encrypted));
+        if (encrypted.length % 16 != 0) {
+            encrypted = Arrays.copyOf(encrypted, encrypted.length + (16 - encrypted.length % 16));
+        }
+        encryptedTransaction.put("encryptedTransaction", Convert.toHexString(encrypted));
         return encryptedTransaction;
     }
 
