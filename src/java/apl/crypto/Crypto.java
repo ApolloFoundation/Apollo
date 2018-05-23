@@ -17,7 +17,6 @@
 
 package apl.crypto;
 
-import apl.Apl;
 import apl.util.Convert;
 import apl.util.Logger;
 import org.bouncycastle.crypto.CipherParameters;
@@ -38,7 +37,7 @@ import java.util.Arrays;
 
 public final class Crypto {
 
-    private static final boolean useStrongSecureRandom = Apl.getBooleanProperty("apl.useStrongSecureRandom");
+    private static final boolean useStrongSecureRandom = true;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
     private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
         @Override
