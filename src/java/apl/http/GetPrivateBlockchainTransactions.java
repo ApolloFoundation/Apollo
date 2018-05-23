@@ -18,25 +18,56 @@
 package apl.http;
 
 import apl.*;
+import apl.crypto.Crypto;
 import apl.db.DbIterator;
+import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static apl.http.JSONResponses.incorrect;
+import static apl.http.JSONResponses.missing;
+
 public final class GetPrivateBlockchainTransactions extends APIServlet.APIRequestHandler {
 
     static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
 
     private GetPrivateBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "sharedKey", "account");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "account", "signature", "secretPhrase", "message");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", true);
-        long accountId = ParameterParser.getAccountId(req, true);
+        long account = ParameterParser.getAccountId(req, false);
+        byte[] signature = Convert.emptyToNull(ParameterParser.getBytes(req, "signature", false));
+        byte[] message = Convert.emptyToNull(ParameterParser.getBytes(req, "message", false));
+        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        byte[] publicKey;
+        boolean encrypt;
+        //prefer request without secretPhrase
+        if (account != 0 && signature != null && message != null) {
+            publicKey = Account.getPublicKey(account);
+            if (publicKey == null) {
+                return incorrect("Public key", "Your account has no public key");
+            }
+            if (!Crypto.verify(signature, message, publicKey)) {
+                return incorrect("Signature");
+            }
+            encrypt = true;
+        } else if (secretPhrase != null) {
+            publicKey = Crypto.getPublicKey(secretPhrase);
+            account = Account.getId(publicKey);
+            if (Account.getPublicKey(account) == null) {
+                return incorrect("Public key", "Your account has no public key");
+            }
+            encrypt = false;
+        } else {
+            return missing("Secret phrase", "Account + signature + message");
+        }
+        long accountId = account;
+        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
         int height = ParameterParser.getHeight(req);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
@@ -57,11 +88,17 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
         JSONArray transactions = new JSONArray();
         if (height != -1) {
             Block block = Apl.getBlockchain().getBlockAtHeight(height);
-            block.getTransactions().forEach(transaction-> {
-                if (transaction.getType() == TransactionType.Payment.PRIVATE && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
-                    transactions.add(JSONData.transaction(true, transaction));
+            block.getTransactions().forEach(transaction -> {
+                if (transaction.getType() == TransactionType.Payment.PRIVATE) {
+                    if (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
+                        transactions.add(JSONData.transaction(true, transaction));
+                    } else if (encrypt){
+                        transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
+                    } else {
+                        transactions.add(JSONData.transaction(false, transaction));
+                    }
                 } else {
-                    transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
+                    transactions.add(JSONData.transaction(false, transaction));
                 }
             });
         } else {
@@ -70,7 +107,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
                     false, firstIndex, lastIndex, false, false, true)) {
                 while (iterator.hasNext()) {
                     Transaction transaction = iterator.next();
-                    if (TransactionType.Payment.PRIVATE == transaction.getType()) {
+                    if (TransactionType.Payment.PRIVATE == transaction.getType() && encrypt) {
                         transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
                     } else {
                         transactions.add(JSONData.transaction(false, transaction));
@@ -80,6 +117,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
         }
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
+        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
         return response;
     }
 
