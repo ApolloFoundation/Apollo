@@ -142,8 +142,19 @@ body.fixed .wrapper {
   margin-bottom: 120px;
 }
 
+[data-transactions-pagination] [data-navigate-page] {
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  user-select: none;
+}
+
+
 [data-transactions-pagination] [data-navigate-page].disabled {
   display: none;
+}
+
+[data-transactions-pagination] .page-nav {
+  pointer-events: none !important;
 }
 
 .alert-no-icon {

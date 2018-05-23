@@ -39,6 +39,7 @@ var NRS = (function(NRS, $, undefined) {
             var html = '';
 
 			html += '<div data-navigate-page="prev">prev</div>';
+			html += '<div class="page-nav"></div>';
 			html += '<div data-navigate-page="next">next</div>';
 
             $('[data-transactions-pagination]').html(html);
@@ -56,16 +57,28 @@ var NRS = (function(NRS, $, undefined) {
                 that.page = that.page + 1;
             }
 
+
             that.getItems(that.page);
 
         });
         this.getItems = function(page) {
-
         	if (page) {
                 this.page = page;
             }
 
+
+            var indicator = '';
+
+            indicator += parseInt(this.page * 15 - 14) + ' &hellip; ' + parseInt(this.page * 15);
+
+            console.log(indicator);
+
+            $(this.target).parent().find('[data-transactions-pagination]').find('.page-nav').html(indicator);
+
+
+
             var url = API;
+
             url += 'account=' + NRS.account + '&';
 
             if (this.isPrivate) {
@@ -221,9 +234,17 @@ var NRS = (function(NRS, $, undefined) {
                     console.log(that.target, ' 3333');
                 }
 			}
-
 		};
         this.renderItems = function() {
+            var indicator = '';
+
+            indicator += parseInt(this.page * 15 - 14) + ' &hellip; ' + parseInt(this.page * 15);
+
+            console.log(indicator);
+
+            $(this.target).parent().find('[data-transactions-pagination]').find('.page-nav').html(indicator);
+
+
             this.getItems();
 		};
 		this.logPulling = function() {
@@ -234,7 +255,7 @@ var NRS = (function(NRS, $, undefined) {
 		};
 
 		// initialisation
-
+        this.renderItems();
 		this.initPaginations();
         this.renderItems();
         this.logPulling();
