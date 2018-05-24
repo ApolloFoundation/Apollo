@@ -278,15 +278,23 @@ public class AccountLedger {
      * Return a single entry identified by the ledger entry identifier
      *
      * @param   ledgerId                    Ledger entry identifier
+     * @param allowPrivate                  Allow requested ledger entry to belong to private transaction or not
      * @return                              Ledger entry or null if entry not found
      */
-    public static LedgerEntry getEntry(long ledgerId) {
+    public static LedgerEntry getEntry(long ledgerId, boolean allowPrivate) {
         if (!ledgerEnabled)
             return null;
         LedgerEntry entry;
+        String sql = "SELECT * FROM account_ledger WHERE db_id = ? ";
+        if (!allowPrivate) {
+            sql += " AND event_id NOT IN (select event_id from account_ledger where event_type = ? ) ";
+        }
         try (Connection con = Db.db.getConnection();
-                PreparedStatement stmt = con.prepareStatement("SELECT * FROM account_ledger WHERE db_id = ?")) {
+                PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setLong(1, ledgerId);
+            if (!allowPrivate) {
+                stmt.setInt(2, LedgerEvent.PRIVATE_PAYMENT.code);
+            }
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next())
                     entry = new LedgerEntry(rs);
@@ -310,11 +318,12 @@ public class AccountLedger {
      * @param   holdingId                   Ledger holding identifier or zero if no holding identifier
      * @param   firstIndex                  First matching entry index, inclusive
      * @param   lastIndex                   Last matching entry index, inclusive
+     * @param   includePrivate              Boolean flag that specifies, should response include private ledger entries or not
      * @return                              List of ledger entries
      */
     public static List<LedgerEntry> getEntries(long accountId, LedgerEvent event, long eventId,
-                                                LedgerHolding holding, long holdingId,
-                                                int firstIndex, int lastIndex) {
+                                               LedgerHolding holding, long holdingId,
+                                               int firstIndex, int lastIndex, boolean includePrivate) {
         if (!ledgerEnabled) {
             return Collections.emptyList();
         }
@@ -329,8 +338,22 @@ public class AccountLedger {
         if (accountId != 0) {
             sb.append("account_id = ? ");
         }
-        if (event != null) {
+        if (!includePrivate && event == LedgerEvent.PRIVATE_PAYMENT) {
+            throw new RuntimeException("None of private ledger entries should be retrieved!");
+        }
+        if (!includePrivate) {
             if (accountId != 0) {
+                sb.append("AND ");
+            }
+            sb.append("event_id not in (select event_id from account_ledger where ");
+            if (accountId != 0)
+            {
+                sb.append("account_id = ? AND ");
+            }
+            sb.append("event_type = ? ) ");
+        }
+        if (event != null) {
+            if (accountId != 0 || !includePrivate) {
                 sb.append("AND ");
             }
             sb.append("event_type = ? ");
@@ -338,7 +361,7 @@ public class AccountLedger {
                 sb.append("AND event_id = ? ");
         }
         if (holding != null) {
-            if (accountId != 0 || event != null) {
+            if (accountId != 0 || event != null || !includePrivate) {
                 sb.append("AND ");
             }
             sb.append("holding_type = ? ");
@@ -356,6 +379,12 @@ public class AccountLedger {
             int i = 0;
             if (accountId != 0) {
                 pstmt.setLong(++i, accountId);
+            }
+            if (!includePrivate) {
+                if (accountId != 0) {
+                    pstmt.setLong(++i, accountId);
+                }
+                pstmt.setInt(++i, LedgerEvent.PRIVATE_PAYMENT.code);
             }
             if (event != null) {
                 pstmt.setByte(++i, (byte)event.getCode());

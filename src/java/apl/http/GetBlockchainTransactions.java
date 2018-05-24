@@ -28,6 +28,8 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static apl.http.JSONResponses.*;
+
 public final class GetBlockchainTransactions extends APIServlet.APIRequestHandler {
 
     static final GetBlockchainTransactions instance = new GetBlockchainTransactions();
@@ -65,19 +67,19 @@ public final class GetBlockchainTransactions extends APIServlet.APIRequestHandle
         catch (NumberFormatException e) {
             subtype = -1;
         }
-
+        if (TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
+            return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+        }
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(accountId, numberOfConfirmations,
                 type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly)) {
+                includeExpiredPrunable, executedOnly, false)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
-                if (!transaction.getType().equals(TransactionType.Payment.PRIVATE)) {
                     transactions.add(JSONData.transaction(transaction, includePhasingResult, false));
-                }
             }
         }
 
