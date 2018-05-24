@@ -17,13 +17,11 @@
 
 package apl.http;
 
-import apl.Account;
 import apl.AccountLedger;
 import apl.AccountLedger.LedgerEntry;
 import apl.AccountLedger.LedgerEvent;
 import apl.AccountLedger.LedgerHolding;
 import apl.AplException;
-import apl.crypto.Crypto;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -31,6 +29,8 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
+import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
 
@@ -44,7 +44,7 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
      */
     private GetPrivateAccountLedger() {
         super(new APITag[] {APITag.ACCOUNTS},  "firstIndex", "lastIndex",
-                "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo", "secretPhrase");
+                "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
 
     /**
@@ -59,8 +59,10 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
         //
         // Process the request parameters
         //
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
-        long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+        ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
+        if (data == null) {
+            return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
+        }
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         String eventType = Convert.emptyToNull(req.getParameter("eventType"));
@@ -93,7 +95,7 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
         //
         // Get the ledger entries
         //
-        List<LedgerEntry> ledgerEntries = AccountLedger.getEntries(accountId, event, eventId,
+        List<LedgerEntry> ledgerEntries = AccountLedger.getEntries(data.getAccountId(), event, eventId,
                 holding, holdingId, firstIndex, lastIndex, true);
         //
         // Return the response
@@ -102,11 +104,15 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
         ledgerEntries.forEach(entry -> {
             JSONObject responseEntry = new JSONObject();
             JSONData.ledgerEntry(responseEntry, entry, includeTransactions, includeHoldingInfo);
+            if (data.isEncrypt() && entry.getEvent() == LedgerEvent.PRIVATE_PAYMENT) {
+                responseEntry = JSONData.encryptedLedgerEntry(responseEntry, data.getSharedKey());
+            }
             responseEntries.add(responseEntry);
         });
 
         JSONObject response = new JSONObject();
         response.put("entries", responseEntries);
+        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
         return response;
     }
 }
