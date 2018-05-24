@@ -81,8 +81,6 @@ exports.load = function(callback) {
             global.client.processConstants(constants);
             callback(global.client);
         } catch (e) {
-            console.log(e.message);
-            console.log(e.stack);
             throw e;
         }
     });

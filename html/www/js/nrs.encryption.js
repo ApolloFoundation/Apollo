@@ -44,7 +44,7 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.getPublicKey = function(id, isAccountId) {
-		if (isAccountId) {
+        if (isAccountId) {
             var publicKey = "";
 			NRS.sendRequest("getAccountPublicKey", {
 				"account": id
@@ -59,7 +59,8 @@ var NRS = (function (NRS, $) {
 		} else {
 			var secretPhraseBytes = converters.hexStringToByteArray(id);
 			var digest = simpleHash(secretPhraseBytes);
-			return converters.byteArrayToHexString(curve25519.keygen(digest).p);
+
+            return converters.byteArrayToHexString(curve25519.keygen(digest).p);
 		}
 	};
 
@@ -73,7 +74,7 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.getAccountIdFromPublicKey = function(publicKey, isRsFormat) {
-		var hex = converters.hexStringToByteArray(publicKey);
+        var hex = converters.hexStringToByteArray(publicKey);
 		var account = simpleHash(hex);
 		account = converters.byteArrayToHexString(account);
 		var slice = (converters.hexStringToByteArray(account)).slice(0, 8);
@@ -83,6 +84,10 @@ var NRS = (function (NRS, $) {
 		} else {
 			return accountId;
 		}
+	};
+
+	NRS.validatePassphrase = function(passphrase) {
+		return NRS.accountRS === NRS.getAccountId(passphrase, true);
 	};
 
 	NRS.getEncryptionKeys = function (options, secretPhrase){

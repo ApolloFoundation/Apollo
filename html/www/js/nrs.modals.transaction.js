@@ -19,6 +19,8 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function (NRS, $, undefined) {
+    var API = '/apl?';
+
     $('body').on("click", ".show_transaction_modal_action", function (e) {
         e.preventDefault();
 
@@ -26,6 +28,12 @@ var NRS = (function (NRS, $, undefined) {
         var sharedKey = $(this).data("sharedkey");
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
+        var hash = $(this).data("hash");
+        var transaction = $(this).attr("data-id");
+
+        $('#get_private_transaction').attr('data-id', transactionId);
+        $('#get_private_transaction').attr('data-id', transaction);
+
         if (infoModal && infoModal.data('bs.modal')) {
             isModalVisible = infoModal.data('bs.modal').isShown;
         }
@@ -33,7 +41,76 @@ var NRS = (function (NRS, $, undefined) {
             NRS.modalStack.pop(); // The forward modal
             NRS.modalStack.pop(); // the current modal
         }
-        NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+
+        if ($(this).attr('data-type') === 'Private payment') {
+            // NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+
+            $('#get_private_transaction_type').modal('show');
+            $('#get_private_transaction').attr('data-hash', hash);
+
+        }
+        else if ($(this).attr('data-type') === 'Transaction fee') {
+            // NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+
+            var url  = API;
+            url += 'requestType=getTransaction&';
+            url += 'transaction=' + transactionId;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                cache: false,
+                success: function(data) {
+                    data = JSON.parse(data);
+                    if (data.errorCode) {
+
+                        $('#get_private_transaction_type').modal('show');
+                    } else {
+                        NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+                    }
+                }
+            });
+        }
+        else {
+            NRS.showTransactionModal(transactionId, isModalVisible, sharedKey);
+        }
+    });
+
+    $('#get_private_transaction').submit(function(e){
+        e.preventDefault();
+
+
+        var formParams = $( this ).serializeArray();
+        var passphrase = formParams[0].value;
+        var id = $(this).attr('data-id');
+
+
+        var url = API;
+        url += 'requestType=getPrivateTransaction&secretPhrase=' + formParams[0].value + '&';
+        url += 'transaction=' + id + '&';
+
+        var infoModal = $('#transaction_info_modal');
+        var isModalVisible = false;
+        if (infoModal && infoModal.data('bs.modal')) {
+            isModalVisible = infoModal.data('bs.modal').isShown;
+        }
+
+        if (NRS.validatePassphrase(passphrase)) {
+            $('#incorrect_passphrase_message').removeClass('active');
+
+
+            $.get( url, function() {
+                console.log('made request');
+            })
+                .then(function (res) {
+                    $('#get_private_transaction_type').modal('hide');
+                    res = JSON.parse(res);
+                    NRS.processTransactionModalData(res, isModalVisible, res.sharedKey);
+                });
+
+        } else {
+            $('#incorrect_passphrase_message').addClass('active');
+        }
     });
 
     NRS.showTransactionModal = function (transaction, isModalVisible, sharedKey) {
@@ -222,24 +299,22 @@ var NRS = (function (NRS, $, undefined) {
             var fieldsToDecrypt = {};
             var i;
             if (transaction.type == 0) {
-                switch (transaction.subtype) {
-                    case 0:
-                        data = {
-                            "type": $.t("ordinary_payment"),
-                            "amount": transaction.amountNQT,
-                            "fee": transaction.feeNQT,
-                            "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
-                            "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
-                        };
+                data = {
+                    "amount": transaction.amountNQT,
+                    "fee": transaction.feeNQT,
+                    "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
+                    "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
+                };
 
-                        infoTable.find("tbody").append(NRS.createInfoTable(data));
-                        infoTable.show();
-
-                        break;
-                    default:
-                        incorrect = true;
-                        break;
+                if (transaction.attachment['version.OrdinaryPayment'] == 0) {
+                    data.type = $.t("ordinary_payment");
                 }
+                if (transaction.attachment['version.PrivatePayment'] == 0) {
+                    data.type = "Private payment";
+                }
+
+                infoTable.find("tbody").append(NRS.createInfoTable(data));
+                infoTable.show();
             } else if (transaction.type == 1) {
                 switch (transaction.subtype) {
                     case 0:
@@ -1635,6 +1710,16 @@ var NRS = (function (NRS, $, undefined) {
     $("#transaction_info_modal").on("hide.bs.modal", function () {
         NRS.removeDecryptionForm($(this));
         $("#transaction_info_output_bottom, #transaction_info_output_top, #transaction_info_bottom").html("").hide();
+    });
+
+    var secretWor = $('#transaction_fill_secret_word_modal');
+    $(document).on('click', '#show_private_transactions_btn', function(e){
+        secretWor.modal("show");
+    });
+
+    var secretLedgerWor = $('#transaction_ledger_fill_secret_word_modal');
+    $(document).on('click', '#show_ledger_private_transactions_btn', function(e){
+        secretLedgerWor.modal("show");
     });
 
     return NRS;

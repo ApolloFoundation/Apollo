@@ -15,6 +15,86 @@
   ~                                                                           ~
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
+<div class="modal fade in" id="send_money_private_modal" data-transaction-type="0" data-transaction-subtype="0" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-dialog-700">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title">
+                    <span>Privately send Apollo</span>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <form role="form" autocomplete="off">
+                    <!--<div class="callout callout-danger error_message" id="incorrect_passphrase_message" style="display: none">Passphrase is incorrect.</div>-->
+                    <div class="callout callout-danger error_message"  style="display:none;">Passphrase is incorrect.</div>
+
+                    <div class="form-group">
+                        <label for="send_money_recipient_info" data-i18n="recipient">Recipient</label>
+                        <div id="send_money_account_id_reader" class="scan-qr-code-reader" style="display:none;margin:auto;width:384px;height:384px;"></div>
+                        <button type="button" data-reader="send_money_account_id_reader" data-result="send_money_recipient" class="scan-qr-code btn btn-default btn-xs">
+                            <i class="fa fa-qrcode"></i>
+                        </button>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="recipient" id="send_money_recipient_info" placeholder="Recipient Account" data-i18n="[placeholder]recipient_account" autofocus="" tabindex="1">
+                            <span class="input-group-btn btn-group recipient_selector">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span></button>
+                                                <!--suppress HtmlUnknownTag -->
+                                <ul class="dropdown-menu scrollable-menu" role="menu" style="right:0;left:auto;"></ul>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label for="send_money_amount_info" data-i18n="amount">Amount</label>
+                                <div class="input-group">
+                                    <input type="text" name="amountAPL" id="send_money_amount_info" step="any" min="0" class="form-control" placeholder="Amount" data-i18n="[placeholder]amount" tabindex="3">
+                                    <span class="input-group-addon coin-symbol">Apollo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label for="send_money_fee_info" data-i18n="fee">Fee</label>
+                                <button type="button" class="btn btn-default btn-xs btn-calculate-fee" data-loading-text="Calculating" data-i18n="[data-loading-text]calculating"><span data-i18n="calculate">Calculate</span><span class="warning-label" id="send_money_recalc"> *</span></button>
+                                <div class="input-group">
+                                    <input type="number" name="feeAPL" id="send_money_fee_info" class="form-control" step="any" placeholder="Minimum Fee" data-i18n="[placeholder]minimum_fee" tabindex="100">
+                                    <span class="input-group-addon coin-symbol">Apollo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group secret_phrase">
+                        <label for="send_money_password_info" data-i18n="passphrase">Passphrase</label>
+                        <div id="send_money_secret_phrase_reader" class="scan-qr-code-reader" style="display:none;margin:auto;width:384px;height:384px;"></div>
+                        <button id="send_money_secret_phrase_scan" type="button" data-reader="send_money_secret_phrase_reader" data-result="send_money_password" class="scan-qr-code btn btn-default btn-xs ">
+                            <i class="fa fa-qrcode"></i>
+                        </button>
+                        <input type="password" name="secretPhrase" id="send_money_password_info" class="form-control" placeholder="" tabindex="111">
+                    </div>
+                    <div class="callout account_info" style="display:none;margin-bottom: 0;"></div>
+                    <input type="hidden" name="request_type" value="sendMoneyPrivate" data-default="sendMoneyPrivate" />
+                    <input type="hidden" name="converted_account_id" value="" />
+                    <input type="hidden" name="merchant_info" value="" data-default="" />
+
+                </form>
+            </div>
+            <div class="modal-footer" style="margin-top:0;">
+                <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" data-loading-text="Submitting..." data-i18n="submit;[data-loading-text]submitting">Submit</button>
+                <!--<a type="button" class="btn btn-primary" id="send_money_private" data-loading-text="Submitting..." data-i18n="submit;[data-loading-text]submitting">Submit</a>-->
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="send_money_modal" data-transaction-type="0" data-transaction-subtype="0" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-700">
         <div class="modal-content">
@@ -26,14 +106,14 @@
             </div>
             <div class="modal-body">
                 <form role="form" autocomplete="off">
-                    <div class="callout callout-danger error_message" style="display:none"></div>
+                    <div class="callout callout-danger error_message"  style="display:none;">Passphrase is incorrect.</div>
                     <div data-replace-with-modal-template="recipient_modal_template"></div>
                     <div class="row">
                         <div class="col-xs-12 col-sm-6 col-md-6">
                             <div class="form-group">
                                 <label for="send_money_amount" data-i18n="amount">AMOUNT</label>
                                 <div class="input-group">
-                                    <input type="text" name="amountAPL" id="send_money_amount" step="any" min="0" class="form-control" placeholder="Amount" data-i18n="[placeholder]amount" tabindex="3">
+                                    <input type="text" name="amountAPL" id="send-money-amount" step="any" min="0" class="form-control" placeholder="Amount" data-i18n="[placeholder]amount" tabindex="3">
                                     <span class="input-group-addon coin-symbol"></span>
                                 </div>
                             </div>
@@ -58,7 +138,7 @@
                 <div class="advanced_info"><a href="#" data-i18n="advanced">advanced</a></div>
 
                 <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="cancel">Cancel</button>
-                <button type="button" class="btn btn-primary" data-loading-text="Submitting..." data-i18n="submit;[data-loading-text]submitting">Submit</button>
+                <button type="button" class="btn btn-primary" id="send_money_public" data-loading-text="Submitting..." data-i18n="submit;[data-loading-text]submitting">Submit</button>
             </div>
         </div>
     </div>
@@ -305,7 +385,6 @@
             </div>
             <div class="modal-footer" style="margin-top:0;">
                 <div class="advanced_info"><a href="#" data-i18n="advanced">advanced</a></div>
-
                 <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="cancel">Cancel</button>
                 <button type="button" class="btn btn-primary" data-loading-text="Submitting..." data-i18n="update_account_info;[data-loading-text]submitting">Update Account Info</button>
             </div>
@@ -669,8 +748,23 @@
                         <li><a href="#block_info_executed_phased_tab" data-toggle="tab" data-i18n="executed_phased_transactions">Executed Phased Transactions</a></li>
                         <li><a href="#block_info_details_tab" data-toggle="tab" data-i18n="block_details">Block Details</a></li>
                     </ul>
+
+
                     <div class="tab-content">
+
                         <div class="tab-pane active" id="block_info_transactions_tab" style="max-height:350px;overflow:auto;">
+                            <a href="#" class="btn btn-default" id="height_show_private_transactions">Show private transactions</a>
+
+                            <div class="callout callout-danger" id="incorrect_passphrase" style="margin-top: 10px;">Incorrect passphrase.</div>
+
+                            <div class="form-group passphrase-block" id="show_private_transactions_enter_secret_passphrase" style="margin-top: 10px;">
+                                <label for="send_money_amount">Passphrase</label>
+                                <div class="input-group" id="send_money_amount">
+                                    <input type="password" class="form-control" id="show_private_transactions_enter_secret_passphrase_value"/>
+                                    <button class="btn btn-primary" style="margin-top: 10px;" id="show_private_transactions_enter_secret_passphrase_submit">Submit</button>
+                                </div>
+                            </div>
+
                             <table class="table table-striped" id="block_info_transactions_table" style="margin-bottom:0">
                                 <thead>
                                 <tr>

@@ -335,7 +335,6 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			console.log("calling " + accountRequest);
 			NRS.sendRequest(accountRequest, requestVariable, function(response, data) {
-				console.log(accountRequest + " response received");
 				if (!response.errorCode) {
 					NRS.account = NRS.escapeRespStr(response.account);
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
@@ -594,7 +593,11 @@ var NRS = (function(NRS, $, undefined) {
     };
 
 	NRS.logout = function(stopForging) {
-		if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
+        delete NRS.myTransactionPagination;
+        delete NRS.accountLedgerPagination;
+        delete NRS.blocksPagination;
+
+        if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");
             stopForgingModal.find(".show_logout").show();
 			stopForgingModal.modal("show");
