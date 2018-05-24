@@ -285,7 +285,13 @@ public enum APIEnum {
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", GetNextBlockGeneratorsTemp.instance),
     GET_SCHEDULED_TRANSACTIONS("getScheduledTransactions", GetScheduledTransactions.instance),
     SCHEDULE_CURRENCY_BUY("scheduleCurrencyBuy", ScheduleCurrencyBuy.instance),
-    DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", DeleteScheduledTransaction.instance);
+    DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", DeleteScheduledTransaction.instance),
+    SEND_MONEY_PRIVATE("sendMoneyPrivate", SendMoneyPrivate.instance),
+    GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", GetPrivateBlockchainTransactions.instance),
+    GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance),
+    GET_PRIVATE_ACCOUNT_LEDGER("getPrivateAccountLedger", GetPrivateAccountLedger.instance),
+    GET_PRIVATE_UNCONFIRMED_TRANSACTIONS("getPrivateUnconfirmedTransactions", GetPrivateUnconfirmedTransactions.instance),
+    GET_PRIVATE_ACCOUNT_LEDGER_ENTRY("getPrivateAccountLedgerEntry", GetPrivateAccountLedgerEntry.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

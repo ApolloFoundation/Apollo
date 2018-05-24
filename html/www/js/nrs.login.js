@@ -208,7 +208,11 @@ var NRS = (function(NRS, $, undefined) {
 		NRS.accountRS = "";
 		NRS.publicKey = "";
 		NRS.accountInfo = {};
-
+		NRS.myTransactionPagination = "";
+		NRS.accountLedgerPagination = "";
+		NRS.blocksPagination = "";
+		NRS.lastTransactions = "";
+		
 		// Reset other functional state
 		$("#account_balance, #account_balance_sidebar, #account_nr_assets, #account_assets_balance, #account_currencies_balance, #account_nr_currencies, #account_purchase_count, #account_pending_sale_count, #account_completed_sale_count, #account_message_count, #account_alias_count").html("0");
 		$("#id_search").find("input[name=q]").val("");
@@ -335,7 +339,6 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			console.log("calling " + accountRequest);
 			NRS.sendRequest(accountRequest, requestVariable, function(response, data) {
-				console.log(accountRequest + " response received");
 				if (!response.errorCode) {
 					NRS.account = NRS.escapeRespStr(response.account);
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
@@ -594,7 +597,11 @@ var NRS = (function(NRS, $, undefined) {
     };
 
 	NRS.logout = function(stopForging) {
-		if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
+        delete NRS.myTransactionPagination;
+        delete NRS.accountLedgerPagination;
+        delete NRS.blocksPagination;
+
+        if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");
             stopForgingModal.find(".show_logout").show();
 			stopForgingModal.modal("show");

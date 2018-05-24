@@ -19,7 +19,7 @@ package apl.http;
 
 import apl.Apl;
 import apl.Transaction;
-import apl.db.DbIterator;
+import apl.TransactionType;
 import apl.db.FilteringIterator;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
@@ -46,7 +46,10 @@ public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandl
 
         JSONArray transactions = new JSONArray();
         if (accountIds.isEmpty()) {
-            try (DbIterator<? extends Transaction> transactionsIterator = Apl.getTransactionProcessor().getAllUnconfirmedTransactions(firstIndex, lastIndex)) {
+            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
+                    Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
+                    transaction -> transaction.getType() != TransactionType.Payment.PRIVATE,
+                    firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();
                     transactions.add(JSONData.unconfirmedTransaction(transaction));
@@ -55,7 +58,8 @@ public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandl
         } else {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
+                    transaction -> transaction.getType() != TransactionType.Payment.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
+                            accountIds.contains(transaction.getRecipientId())),
                     firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();

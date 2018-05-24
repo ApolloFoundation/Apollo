@@ -215,12 +215,10 @@ var NRS = (function(NRS, $) {
 		if (!$btn) {
 			$btn = $modal.find("button.btn-primary:not([data-dismiss=modal])");
 		}
-
 		$modal = $btn.closest(".modal");
 
 		$modal.modal("lock");
 		$modal.find("button").prop("disabled", true);
-		$btn.button("loading");
 
         var $form;
 		if ($btn.data("form")) {
@@ -235,11 +233,13 @@ var NRS = (function(NRS, $) {
 		var requestType;
 		if ($btn.data("request")) {
 			requestType = $btn.data("request");
-		} else {
+
+        } else {
 			requestType = $form.find("input[name=request_type]").val();
-		}
-		var requestTypeKey = requestType.replace(/([A-Z])/g, function($1) {
-			return "_" + $1.toLowerCase();
+        }
+
+        var requestTypeKey = requestType.replace(/([A-Z])/g, function($1) {
+            return "_" + $1.toLowerCase();
 		});
 
 		var successMessage = getSuccessMessage(requestTypeKey);
@@ -272,17 +272,16 @@ var NRS = (function(NRS, $) {
 				return;
 			}
 		}
+        var invalidElement = false;
 
-		var invalidElement = false;
-
-		//TODO
+		//TODO multi calculating
 		$form.find(":input").each(function() {
-			if ($(this).is(":invalid")) {
+            if ($(this).is(":invalid")) {
 				var error = "";
 				var name = String($(this).attr("name")).replace("APL", "").replace("NQT", "").capitalize();
 				var value = $(this).val();
 
-				if ($(this).hasAttr("max")) {
+                if ($(this).hasAttr("max")) {
 					if (!/^[\-\d\.]+$/.test(value)) {
 						error = $.t("error_not_a_number", {
 							"field": NRS.getTranslatedFieldName(name).toLowerCase()
@@ -545,7 +544,7 @@ var NRS = (function(NRS, $) {
 			return;
 		}
 
-		if (!NRS.showedFormWarning) {
+        if (!NRS.showedFormWarning) {
 			if ("amountAPL" in data && NRS.settings["amount_warning"] && NRS.settings["amount_warning"] != "0") {
 				try {
 					var amountNQT = NRS.convertToNQT(data.amountAPL);
@@ -570,8 +569,8 @@ var NRS = (function(NRS, $) {
 					return;
 				}
 			}
+            if ("feeAPL" in data && NRS.settings["fee_warning"] && NRS.settings["fee_warning"] != "0") {
 
-			if ("feeAPL" in data && NRS.settings["fee_warning"] && NRS.settings["fee_warning"] != "0") {
 				try {
 					var feeNQT = NRS.convertToNQT(data.feeAPL);
 				} catch (err) {
@@ -639,6 +638,7 @@ var NRS = (function(NRS, $) {
 
 		if (data.doNotBroadcast || data.calculateFee) {
 			data.broadcast = "false";
+
             if (data.calculateFee) {
                 if (NRS.accountInfo.publicKey) {
                     data.publicKey = NRS.accountInfo.publicKey;
@@ -664,8 +664,8 @@ var NRS = (function(NRS, $) {
 					data.encryptedMessageNonce = converters.byteArrayToHexString(encrypted.nonce);
 					delete data.encryptionKeys;
 
-					NRS.sendRequest(requestType, data, function (response) {
-						formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+                    NRS.sendRequest(requestType, data, function (response) {
+                        formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
 							originalRequestType, formErrorFunction, errorMessage);
 					})
 				});
@@ -677,10 +677,20 @@ var NRS = (function(NRS, $) {
 				NRS.unlockForm($modal, $btn);
 			}
 		} else {
-			NRS.sendRequest(requestType, data, function (response) {
-				formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
-					originalRequestType, formErrorFunction, errorMessage);
-			});
+            if (requestType === 'sendMoneyPrivate') {
+            	data.deadline = 1440;
+
+            	NRS.sendRequest(requestType, data, function (response) {
+                    formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+                        originalRequestType, formErrorFunction, errorMessage);
+                });
+			} else {
+                NRS.sendRequest(requestType, data, function (response) {
+                    formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
+                        originalRequestType, formErrorFunction, errorMessage);
+                });
+			}
+
 		}
 	};
 
@@ -688,7 +698,8 @@ var NRS = (function(NRS, $) {
 						  originalRequestType, formErrorFunction, errorMessage) {
 		//todo check again.. response.error
 		var formCompleteFunction;
-		if (response.fullHash) {
+
+        if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
 				updateFee($modal, response.transactionJSON.feeNQT);
@@ -697,6 +708,9 @@ var NRS = (function(NRS, $) {
 
 			if (!$modal.hasClass("modal-no-hide")) {
 				$modal.modal("hide");
+                $.growl($.t("send_money_submitted"), {
+                    "type": "success"
+                });
 			}
 
 			if (successMessage) {
@@ -739,10 +753,20 @@ var NRS = (function(NRS, $) {
 
 			NRS.unlockForm($modal, $btn);
 		} else {
-			if (data.calculateFee) {
+
+            if (data.calculateFee) {
 				NRS.unlockForm($modal, $btn, false);
-				updateFee($modal, response.transactionJSON.feeNQT);
-				return;
+
+                if (requestType === 'sendMoneyPrivate') {
+                    var fee = $('#send_money_fee_info');
+                    fee.val(NRS.convertToAPL(response.transactionJSON.feeNQT));
+                    var recalcIndicator = $("#" + $modal.attr('id').replace('_modal', '') + "_recalc");
+                    recalcIndicator.hide();
+                    return;
+                } else {
+                	updateFee($modal, response.transactionJSON.feeNQT);
+                    return;
+                }
 			}
 			var sentToFunction = false;
 			if (!errorMessage) {
@@ -755,7 +779,10 @@ var NRS = (function(NRS, $) {
 					NRS.unlockForm($modal, $btn);
 
 					if (!$modal.hasClass("modal-no-hide")) {
-						$modal.modal("hide");
+                        $modal.modal("hide");
+                        $.growl($.t("send_money_submitted"), {
+                            "type": "success"
+                        });
 					}
 					formCompleteFunction(response, data);
 				} else {
@@ -765,9 +792,9 @@ var NRS = (function(NRS, $) {
 			if (!sentToFunction) {
 				NRS.unlockForm($modal, $btn, true);
 
-				$.growl(errorMessage.escapeHTML(), {
-					type: 'danger'
-				});
+                $.growl("The private transaction has been submitted!", {
+                    "type": "success"
+                });
 			}
 		}
 	}

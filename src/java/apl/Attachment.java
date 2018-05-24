@@ -131,6 +131,17 @@ public interface Attachment extends Appendix {
 
     };
 
+    EmptyAttachment PRIVATE_PAYMENT = new EmptyAttachment() {
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Payment.PRIVATE;
+        }
+
+    };
+
+
+
     // the message payload is in the Appendix
     EmptyAttachment ARBITRARY_MESSAGE = new EmptyAttachment() {
 
