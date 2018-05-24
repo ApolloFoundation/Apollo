@@ -211,6 +211,8 @@ var NRS = (function(NRS, $, undefined) {
 		NRS.myTransactionPagination = "";
 		NRS.accountLedgerPagination = "";
 		NRS.blocksPagination = "";
+		NRS.lastTransactions = "";
+		
 		// Reset other functional state
 		$("#account_balance, #account_balance_sidebar, #account_nr_assets, #account_assets_balance, #account_currencies_balance, #account_nr_currencies, #account_purchase_count, #account_pending_sale_count, #account_completed_sale_count, #account_message_count, #account_alias_count").html("0");
 		$("#id_search").find("input[name=q]").val("");
