@@ -291,8 +291,8 @@ public class NodeClient {
         return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
     }
 
-    public List<Transaction> getEncryptedPrivateBlockchainTransactionsList(String url, String account, String signature, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String message) throws Exception {
-        String json = getEncryptedPrivateBlockchainTransactionsJson(url, account, height, firstIndex, lastIndex, signature, null, message);
+    public List<Transaction> getEncryptedPrivateBlockchainTransactionsList(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) throws Exception {
+        String json = getEncryptedPrivateBlockchainTransactionsJson(url, height, firstIndex, lastIndex, null, publicKey);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
         JsonNode serverPublicKey = root.get("serverPublicKey");
@@ -333,15 +333,13 @@ public class NodeClient {
         return getJson(uri, params);
     }
 
-    public String getEncryptedPrivateBlockchainTransactionsJson(String url, String account, Long height, Long firstIndex, Long lastIndex, String signature, String secretPhrase, String message) {
+    public String getEncryptedPrivateBlockchainTransactionsJson(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
 
-        if (account != null && message != null && signature != null) {
-            params.put("account", account);
-            params.put("message", message);
-            params.put("signature", signature);
+        if (publicKey != null) {
+            params.put("publicKey", publicKey);
         } else if (secretPhrase != null) {
             params.put("secretPhrase", secretPhrase);
         }

@@ -231,10 +231,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Test
     public void testGetEncryptedPrivateBlockTransactions() throws Exception {
         String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
-        byte[] random = new byte[32];
-        Crypto.getSecureRandom().nextBytes(random);
-        byte[] signature = Crypto.sign(random, secretPhrase);
-        List<Transaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_TRANSACTION_SENDER_ID.toString(), Convert.toHexString(signature), PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(random));
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        List<Transaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(publicKey));
         checkList(transactionsList);
         Assert.assertEquals(4, transactionsList.size());
         transactionsList.forEach(transaction -> {
@@ -249,42 +247,26 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testGetEncryptedTransactionWithChangedAcccount() throws Exception {
-        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
-        byte[] random = new byte[32];
-        Crypto.getSecureRandom().nextBytes(random);
-        byte[] signature = Crypto.sign(random, secretPhrase);
-        List<Transaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, Long.toString(1234567890L), Convert.toHexString(signature), PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(random));
+    public void testGetEncryptedTransactionWithoutPublicKeyAndSecretPhrase() throws Exception {
+        client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, null, null);
     }
-
-    @Test(expected = RuntimeException.class)
-    public void testGetEncryptedTransactionWithChangedSignature() throws Exception {
-        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
-        byte[] random = new byte[32];
-        Crypto.getSecureRandom().nextBytes(random);
-        byte[] signature = Crypto.sign(Convert.toBytes(PRIVATE_TRANSACTION_SENDER_ID), secretPhrase);
-        List<Transaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_TRANSACTION_SENDER_ID.toString(), Convert.toHexString(signature) + "14", PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(random));
-    }
-
 
     @Test
     public void testGetEncryptedPrivateBlockchainTransactionsWithPagination() throws Exception {
         String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
-        byte[] random = new byte[32];
-        Crypto.getSecureRandom().nextBytes(random);
-        byte[] signature = Crypto.sign(random, secretPhrase);
-        List<Transaction> transactionsList1 = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_TRANSACTION_SENDER_ID.toString(), Convert.toHexString(signature), null, 5L, 9L, secretPhrase, Convert.toHexString(random));
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        List<Transaction> transactionsList1 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, 9L, secretPhrase, Convert.toHexString(publicKey));
         checkList(transactionsList1);
         Assert.assertEquals(5, transactionsList1.size());
         checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
 
-        List<Transaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_TRANSACTION_SENDER_ID.toString(), Convert.toHexString(signature), null, null, 10L, secretPhrase, Convert.toHexString(random));
+        List<Transaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, null, 10L, secretPhrase,  Convert.toHexString(publicKey));
         checkList(transactionsList2);
         Assert.assertEquals(11, transactionsList2.size());
         Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
         checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
 
-        List<Transaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_TRANSACTION_SENDER_ID.toString(), Convert.toHexString(signature), null, 5L, null, secretPhrase, Convert.toHexString(random));
+        List<Transaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, null, secretPhrase,  Convert.toHexString(publicKey));
         checkList(transactionsList3);
         Assert.assertTrue(transactionsList3.size() > 5);
         Assert.assertTrue(transactionsList3.containsAll(transactionsList1));
