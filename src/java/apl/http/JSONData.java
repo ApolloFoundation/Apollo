@@ -1213,12 +1213,30 @@ public final class JSONData {
     public static JSONObject encryptedTransaction(Transaction transaction, byte[] sharedKey) {
         JSONObject encryptedTransaction = new JSONObject();
         JSONObject transactionJson = JSONData.transaction(false, transaction);
-        byte[] encrypted = Crypto.aesEncrypt(transactionJson.toJSONString().getBytes(), sharedKey);
-        if (encrypted.length % 16 != 0) {
-            encrypted = Arrays.copyOf(encrypted, encrypted.length + (16 - encrypted.length % 16));
-        }
+        byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(transactionJson.toJSONString().getBytes(), sharedKey));
         encryptedTransaction.put("encryptedTransaction", Convert.toHexString(encrypted));
         return encryptedTransaction;
+    }
+
+    public static JSONObject encryptedLedgerEntry(JSONObject ledgerEntryJson, byte[] sharedKey) {
+        JSONObject encryptedLedgerEntry = new JSONObject();
+        byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(ledgerEntryJson.toJSONString().getBytes(), sharedKey));
+        encryptedLedgerEntry.put("encryptedLedgerEntry", Convert.toHexString(encrypted));
+        return encryptedLedgerEntry;
+    }
+
+    private static byte[] prepareToAesDecryption(byte[] encryptedData) {
+        if (encryptedData.length % 16 != 0) {
+            return Arrays.copyOf(encryptedData, encryptedData.length + (16 - encryptedData.length % 16));
+        }
+        return encryptedData;
+    }
+
+    public static JSONObject encryptedUnconfirmedTransaction(Transaction transaction, byte[] sharedKey) {
+        JSONObject encryptedUnconfirmedTransaction = new JSONObject();
+        byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(unconfirmedTransaction(transaction).toJSONString().getBytes(), sharedKey));
+        encryptedUnconfirmedTransaction.put("encryptedUnconfirmedTransaction", Convert.toHexString(encrypted));
+        return encryptedUnconfirmedTransaction;
     }
 
     interface VoteWeighter {
