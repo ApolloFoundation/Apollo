@@ -39,7 +39,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] publicKey = ParameterParser.getBytes(req,"publicKey", false);
+        byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         boolean encrypt;
         //prefer public key
