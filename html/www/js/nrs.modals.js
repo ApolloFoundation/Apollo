@@ -64,7 +64,7 @@ var NRS = (function(NRS, $, undefined) {
 	$(".add_message").on("change", function() {
 		if ($(this).is(":checked")) {
 			$(this).closest("form").find(".optional_message").fadeIn();
-			$(this).closest(".form-group").css("margin-bottom", "5px");
+			$(this).closest(".form-group").css("margin-bottom", "25px");
 		} else {
 			$(this).closest("form").find(".optional_message").hide();
 			$(this).closest(".form-group").css("margin-bottom", "");

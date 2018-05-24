@@ -22,7 +22,7 @@ var NRS = (function(NRS, $) {
         var $recipientFields = $("#send_money_recipient, #transfer_asset_recipient, #transfer_currency_recipient, " +
         "#send_message_recipient, #add_contact_account_id, #update_contact_account_id, #lease_balance_recipient, " +
         "#transfer_alias_recipient, #sell_alias_recipient, #set_account_property_recipient, #delete_account_property_recipient, " +
-		"#add_monitored_account_recipient");
+		"#add_monitored_account_recipient, #send_money_recipient_info");
 
 		$recipientFields.on("blur", function() {
 			$(this).trigger("checkRecipient");
@@ -107,7 +107,9 @@ var NRS = (function(NRS, $) {
 	});
 
 	NRS.forms.sendMoneyComplete = function(response, data) {
-		if (!(data["_extra"] && data["_extra"].convertedAccount) && !(data.recipient in NRS.contacts)) {
+        console.log(data);
+        console.log(response);
+        if (!(data["_extra"] && data["_extra"].convertedAccount) && !(data.recipient in NRS.contacts)) {
 			$.growl($.t("success_send_money") + " <a href='#' data-account='" + NRS.getAccountFormatted(data, "recipient") + "' data-toggle='modal' data-target='#add_contact_modal' style='text-decoration:underline'>" + $.t("add_recipient_to_contacts_q") + "</a>", {
 				"type": "success"
 			});

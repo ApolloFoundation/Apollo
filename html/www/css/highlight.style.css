@@ -173,3 +173,11 @@ XCode style (c) Angel Garcia <angelgarcia.mail@gmail.com>
 .method .hljs-id {
   color: #000;
 }
+
+/* components*/
+.align-button-page-title {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}

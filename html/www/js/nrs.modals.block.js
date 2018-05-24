@@ -18,7 +18,11 @@
  * @depends {nrs.js}
  * @depends {nrs.modals.js}
  */
+
 var NRS = (function(NRS, $, undefined) {
+    var API = '/apl?';
+    var dataBlock = null;
+
 	$("body").on("click", ".show_block_modal_action", function(event) {
 		event.preventDefault();
 		if (NRS.fetchingModalData) {
@@ -45,11 +49,76 @@ var NRS = (function(NRS, $, undefined) {
 		});
 	});
 
+    $('body').on('click', '[data-block]', function(){
+        $('#show_private_transactions_enter_secret_passphrase').removeClass('active');
+        dataBlock = $(this).attr('data-block');
+    });
+
+    // $("body").on("click", "#height_show_private_transactions", function(event) {
+    //     event.preventDefault();
+    //     if (NRS.fetchingModalData) {
+    //         return;
+    //     }
+    //     NRS.fetchingModalData = true;
+    //     if ($(this).data("back") == "true") {
+    //         NRS.modalStack.pop(); // The forward modal
+    //         NRS.modalStack.pop(); // The current modal
+    //     }
+    //     var block = $(this).data("block");
+    //     var isBlockId = $(this).data("id");
+    //     var params = {
+    //         "includeTransactions": "true",
+    //         "includeExecutedPhased": "true"
+    //     };
+    //     if (isBlockId) {
+    //         params["block"] = block;
+    //     } else {
+    //         params["height"] = block;
+    //     }
+    //     NRS.sendRequest("getBlock+", params, function(response) {
+    //         NRS.showBlockModal(response);
+    //     });
+    // });
+
+    $('body').on('click', '#height_show_private_transactions', function(){
+        $('#show_private_transactions_enter_secret_passphrase').toggleClass('active');
+
+    });
+
+
+    $('body').on('click', '#show_private_transactions_enter_secret_passphrase_submit', function(){
+        var val = $('#show_private_transactions_enter_secret_passphrase_value').val();
+
+        var url = API;
+        url += 'requestType=getPrivateBlockchainTransactions&';
+        url += 'secretPhrase=' + val + '&';
+        url += 'height=' + dataBlock;
+
+        if (NRS.validatePassphrase(val, true)) {
+            $('#incorrect_passphrase').removeClass('active');
+
+            $.ajax({
+                url: url,
+                context: document.body
+            }).done(function(data) {
+                NRS.showBlockModal(JSON.parse(data));
+            });
+        } else {
+            $('#incorrect_passphrase').addClass('active');
+        }
+
+    });
+
 	NRS.showBlockModal = function(block) {
+        console.log(block);
+
+
         NRS.setBackLink();
         NRS.modalStack.push({ class: "show_block_modal_action", key: "block", value: block.height });
         try {
-            $("#block_info_modal_block").html(NRS.escapeRespStr(block.block));
+            if (block.block) {
+                $("#block_info_modal_block").html(NRS.escapeRespStr(block.block));
+            }
             $("#block_info_transactions_tab_link").tab("show");
 
             var blockDetails = $.extend({}, block);
@@ -73,8 +142,12 @@ var NRS = (function(NRS, $, undefined) {
             detailsTable.show();
             var transactionsTable = $("#block_info_transactions_table");
             if (block.transactions.length) {
+                $("#height_show_private_transactions").show();
                 $("#block_info_transactions_none").hide();
                 transactionsTable.show();
+
+                console.log(block.transactions.transactions);
+
                 var rows = "";
                 for (var i = 0; i < block.transactions.length; i++) {
                     var transaction = block.transactions[i];
@@ -94,11 +167,14 @@ var NRS = (function(NRS, $, undefined) {
                 }
                 transactionsTable.find("tbody").empty().append(rows);
             } else {
+                console.log(block.transactions.transactions);
+
+                $("#height_show_private_transactions").hide();
                 $("#block_info_transactions_none").show();
                 transactionsTable.hide();
             }
             var executedPhasedTable = $("#block_info_executed_phased_table");
-            if (block.executedPhasedTransactions.length) {
+            if (block.executedPhasedTransactions && block.executedPhasedTransactions.length) {
                 $("#block_info_executed_phased_none").hide();
                 executedPhasedTable.show();
                 rows = "";
