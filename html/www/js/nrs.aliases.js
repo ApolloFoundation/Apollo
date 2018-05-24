@@ -610,20 +610,13 @@ var NRS = (function (NRS, $, undefined) {
     });
 
     $('body').on('click', '#send_money_private', function($modal) {
-        console.log(222)
         var recipient  = $('#send_money_recipient').val();
         var amount     = $('#send_money_amount').val();
         var fee        = $('#send_money_fee').val();
         var passphrase = $('#send_money_password').val();
 
-        console.log(NRS.getAccountId(passphrase, true));
-
-        console.log(NRS.accountRS === NRS.getAccountId(passphrase, true));
-        console.log([recipient, amount, fee, passphrase]);
-
         var url = API;
         url += 'requestType=sendMoneyPrivate';
-
 
         var data = {
             deadline:     1440,

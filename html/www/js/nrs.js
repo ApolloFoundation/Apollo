@@ -199,7 +199,6 @@ var NRS = (function(NRS, $, undefined) {
             initImpl();
         }).catch(function() {
             var msg = $.t("cannot_find_remote_nodes");
-            console.log(msg);
             $.growl(msg);
 			var loadConstantsPromise = new Promise(function(resolve) {
 				console.log("load server constants");

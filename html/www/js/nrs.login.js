@@ -335,7 +335,6 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			console.log("calling " + accountRequest);
 			NRS.sendRequest(accountRequest, requestVariable, function(response, data) {
-				console.log(accountRequest + " response received");
 				if (!response.errorCode) {
 					NRS.account = NRS.escapeRespStr(response.account);
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
