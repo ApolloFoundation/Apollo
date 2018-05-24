@@ -27,7 +27,6 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static apl.http.JSONResponses.incorrect;
 import static apl.http.JSONResponses.missing;
 
 public final class GetPrivateBlockchainTransactions extends APIServlet.APIRequestHandler {
@@ -35,38 +34,25 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
     static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
 
     private GetPrivateBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "account", "signature", "secretPhrase", "message");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "publicKey", "secretPhrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long account = ParameterParser.getAccountId(req, false);
-        byte[] signature = Convert.emptyToNull(ParameterParser.getBytes(req, "signature", false));
-        byte[] message = Convert.emptyToNull(ParameterParser.getBytes(req, "message", false));
+        byte[] publicKey = ParameterParser.getBytes(req,"publicKey", false);
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        byte[] publicKey;
         boolean encrypt;
-        //prefer request without secretPhrase
-        if (account != 0 && signature != null && message != null) {
-            publicKey = Account.getPublicKey(account);
-            if (publicKey == null) {
-                return incorrect("Public key", "Your account has no public key");
-            }
-            if (!Crypto.verify(signature, message, publicKey)) {
-                return incorrect("Signature");
-            }
-            encrypt = true;
-        } else if (secretPhrase != null) {
+        //prefer public key
+        if (secretPhrase != null && publicKey == null) {
             publicKey = Crypto.getPublicKey(secretPhrase);
-            account = Account.getId(publicKey);
-            if (Account.getPublicKey(account) == null) {
-                return incorrect("Public key", "Your account has no public key");
-            }
             encrypt = false;
         } else {
-            return missing("Secret phrase", "Account + signature + message");
+            encrypt = true;
         }
-        long accountId = account;
+        if (publicKey == null) {
+            return missing("Secret phrase", "Public key");
+        }
+        long accountId = Account.getId(publicKey);
         byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
         int height = ParameterParser.getHeight(req);
         int firstIndex = ParameterParser.getFirstIndex(req);
