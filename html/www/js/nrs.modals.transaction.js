@@ -62,7 +62,6 @@ var NRS = (function (NRS, $, undefined) {
                 cache: false,
                 success: function(data) {
                     data = JSON.parse(data);
-                    console.log(data);
                     if (data.errorCode) {
 
                         $('#get_private_transaction_type').modal('show');
@@ -90,7 +89,6 @@ var NRS = (function (NRS, $, undefined) {
         url += 'requestType=getPrivateTransaction&secretPhrase=' + formParams[0].value + '&';
         url += 'transaction=' + id + '&';
 
-        console.log(url);
         var infoModal = $('#transaction_info_modal');
         var isModalVisible = false;
         if (infoModal && infoModal.data('bs.modal')) {
@@ -107,7 +105,6 @@ var NRS = (function (NRS, $, undefined) {
                 .then(function (res) {
                     $('#get_private_transaction_type').modal('hide');
                     res = JSON.parse(res);
-                    console.log(res);
                     NRS.processTransactionModalData(res, isModalVisible, res.sharedKey);
                 });
 
@@ -316,7 +313,6 @@ var NRS = (function (NRS, $, undefined) {
                     data.type = "Private payment";
                 }
 
-                console.log(transaction);
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
             } else if (transaction.type == 1) {

@@ -23,7 +23,6 @@ var NRS = (function(NRS, $) {
 
     $("body").on("click", ".show_ledger_modal_action", function(event) {
 		event.preventDefault();
-        console.log(2222);
         $('#get_date_private_transaction').attr('data-ledger', $(this).attr('data-entry'));
 
 		if (NRS.fetchingModalData) {
@@ -65,14 +64,12 @@ var NRS = (function(NRS, $) {
             url += 'ledgerId=' +  $( this ).attr('data-ledger') + '&';
             url += 'secretPhrase=' + passphrase;
 
-            console.log(url);
             $.get( url, function() {
                 console.log('made request');
             })
                 .then(function (res) {
                     $('#get_private_transaction_type').modal('hide');
                     res = JSON.parse(res);
-                    console.log(res);
 
                     var detailsTable = $("#ledger_info_details_table");
                     detailsTable.find("tbody").empty().append(NRS.createInfoTable(res));
@@ -100,8 +97,6 @@ var NRS = (function(NRS, $) {
 
             } catch (e) {
                 $('#get_date_modal').modal('show');
-                console.log(33333);
-                console.log(entry);
                 return;
             }
             if (entryDetails.timestamp) {
