@@ -217,7 +217,7 @@ var NRS = (function(NRS, $) {
 		if (!$btn) {
 			$btn = $modal.find("button.btn-primary:not([data-dismiss=modal])");
 		}
-		console.log('Form submitting');
+
 		$modal = $btn.closest(".modal");
 
 		$modal.modal("lock");
@@ -277,19 +277,17 @@ var NRS = (function(NRS, $) {
 				return;
 			}
 		}
-        console.log('continue');
         var invalidElement = false;
 
 		//TODO multi calculating
 		$form.find(":input").each(function() {
-            console.log(this);
 
             if ($(this).is(":invalid")) {
 				var error = "";
 				var name = String($(this).attr("name")).replace("APL", "").replace("NQT", "").capitalize();
 				var value = $(this).val();
 
-                console.log(name);
+
                 if ($(this).hasAttr("max")) {
 					if (!/^[\-\d\.]+$/.test(value)) {
 						error = $.t("error_not_a_number", {
@@ -554,7 +552,6 @@ var NRS = (function(NRS, $) {
 			return;
 		}
 
-        console.log(NRS.showedFormWarning);
         if (!NRS.showedFormWarning) {
 			if ("amountAPL" in data && NRS.settings["amount_warning"] && NRS.settings["amount_warning"] != "0") {
 				try {
@@ -675,7 +672,6 @@ var NRS = (function(NRS, $) {
 					data.encryptedMessageNonce = converters.byteArrayToHexString(encrypted.nonce);
 					delete data.encryptionKeys;
 
-                    console.log(3333);
                     NRS.sendRequest(requestType, data, function (response) {
                         formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
 							originalRequestType, formErrorFunction, errorMessage);
@@ -711,7 +707,7 @@ var NRS = (function(NRS, $) {
 		//todo check again.. response.error
 		var formCompleteFunction;
 
-		console.log(22);
+
         if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
@@ -793,7 +789,7 @@ var NRS = (function(NRS, $) {
 					NRS.unlockForm($modal, $btn);
 
 					if (!$modal.hasClass("modal-no-hide")) {
-                        console.log(222);
+
                         $modal.modal("hide");
                         $.growl($.t("send_money_submitted"), {
                             "type": "success"
@@ -832,7 +828,6 @@ var NRS = (function(NRS, $) {
 		}
 		$modal.modal("unlock");
 		if (hide) {
-            console.log(222);
 			$modal.modal("hide");
 		}
 	};
