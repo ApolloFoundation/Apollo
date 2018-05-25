@@ -14,7 +14,7 @@ public class Block {
     private String generatorRS;
     private Long numberOfTransactions;
     private String blockSignature;
-    private List<String> transactions;
+    private List<Transaction> transactions;
     private Long version;
     private Long totalFeeNQT;
     private String previousBlock;
@@ -99,11 +99,11 @@ public class Block {
         return numberOfTransactions;
     }
 
-    public List<String> getTransactions() {
+    public List<Transaction> getTransactions() {
         return transactions;
     }
 
-    public void setTransactions(List<String> transactions) {
+    public void setTransactions(List<Transaction> transactions) {
         this.transactions = transactions;
     }
 

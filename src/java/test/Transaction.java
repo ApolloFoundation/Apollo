@@ -1,5 +1,11 @@
 package test;
 
+import apl.TransactionType;
+
+import java.util.Objects;
+
+import static test.TestUtil.fromNqt;
+
 /**
  * Simple DTO object for {@link apl.TransactionImpl}
  */
@@ -32,12 +38,13 @@ public class Transaction {
     @Override
     public String toString() {
         return "Transaction{" +
-            "amountNQT=" + amountNQT +
-            ", feeNQT=" + feeNQT +
-            ", senderRS='" + senderRS + '\'' +
-            ", height=" + height +
-            ", recipientRS='" + recipientRS + '\'' +
-            '}';
+                "type=" + TransactionType.findTransactionType(type,subtype) +
+                "amountNQT=" + fromNqt(amountNQT) +
+                ", feeNQT=" + fromNqt(feeNQT) +
+                ", senderRS='" + senderRS + '\'' +
+                ", height=" + height +
+                ", recipientRS='" + recipientRS + '\'' +
+                '}';
     }
 
     public Long getBlockTimestamp() {
@@ -221,7 +228,56 @@ public class Transaction {
         return recipientRS;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Transaction)) return false;
+        Transaction that = (Transaction) o;
+        return Objects.equals(getSenderPublicKey(), that.getSenderPublicKey()) &&
+                Objects.equals(getSignature(), that.getSignature()) &&
+                Objects.equals(getFeeNQT(), that.getFeeNQT()) &&
+                Objects.equals(getTransactionIndex(), that.getTransactionIndex()) &&
+                Objects.equals(getType(), that.getType()) &&
+                Objects.equals(getConfirmations(), that.getConfirmations()) &&
+                Objects.equals(getFullHash(), that.getFullHash()) &&
+                Objects.equals(getVersion(), that.getVersion()) &&
+                Objects.equals(getPhased(), that.getPhased()) &&
+                Objects.equals(getEcBlockId(), that.getEcBlockId()) &&
+                Objects.equals(getSignatureHash(), that.getSignatureHash()) &&
+                Objects.equals(getSenderRS(), that.getSenderRS()) &&
+                Objects.equals(getSubtype(), that.getSubtype()) &&
+                Objects.equals(getAmountNQT(), that.getAmountNQT()) &&
+                Objects.equals(getSender(), that.getSender()) &&
+                Objects.equals(getEcBlockHeight(), that.getEcBlockHeight()) &&
+                Objects.equals(getBlock(), that.getBlock()) &&
+                Objects.equals(getBlockTimestamp(), that.getBlockTimestamp()) &&
+                Objects.equals(getDeadline(), that.getDeadline()) &&
+                Objects.equals(getTransaction(), that.getTransaction()) &&
+                Objects.equals(getTimestamp(), that.getTimestamp()) &&
+                Objects.equals(getHeight(), that.getHeight()) &&
+                Objects.equals(getRecipientRS(), that.getRecipientRS());
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(getSenderPublicKey(), getSignature(), getFeeNQT(), getTransactionIndex(), getType(), getConfirmations(), getFullHash(), getVersion(), getPhased(), getEcBlockId(), getSignatureHash(), getSenderRS(), getSubtype(), getAmountNQT(), getSender(), getEcBlockHeight(), getBlock(), getBlockTimestamp(), getDeadline(), getTransaction(), getTimestamp(), getHeight(), getRecipientRS());
+    }
+
     public void setRecipientRS(String recipientRS) {
         this.recipientRS = recipientRS;
+    }
+
+    public boolean isNull() {
+        return signature == null || signatureHash == null || fullHash == null;
+    }
+
+    public boolean isPrivate() {
+        return type == TransactionType.Payment.PRIVATE.getType() && subtype == TransactionType.Payment.PRIVATE.getSubtype();
+    }
+
+    public boolean isOwnedBy(String accountRs) {
+        Objects.requireNonNull(accountRs);
+        return accountRs.equalsIgnoreCase(recipientRS) || accountRs.equalsIgnoreCase(senderRS);
     }
 }

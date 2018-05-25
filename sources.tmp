@@ -1,0 +1,10 @@
+src/java/test/NodeClientTestTestnet.java
+src/java/test/TestData.java
+src/java/test/Block.java
+src/java/test/TestnetIntegrationScenario.java
+src/java/test/AbstractNodeClientTest.java
+src/java/test/Transaction.java
+src/java/test/NodeClient.java
+src/java/test/NodeClientTestMainnet.java
+src/java/test/TestUtil.java
+src/java/test/Peer.java
