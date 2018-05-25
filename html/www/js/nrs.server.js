@@ -518,6 +518,7 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyAndSignTransactionBytes = function (transactionBytes, signature, requestType, data, callback, response, extra, isVerifyECBlock) {
         var byteArray = converters.hexStringToByteArray(transactionBytes);
+      
         // if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
         //     callback({
         //         "errorCode": 1,

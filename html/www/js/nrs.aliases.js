@@ -614,10 +614,12 @@ var NRS = (function (NRS, $, undefined) {
         var amount     = $('#send_money_amount').val();
         var fee        = $('#send_money_fee').val();
         var passphrase = $('#send_money_password').val();
-
+      
         var url = API;
         url += 'requestType=sendMoneyPrivate';
 
+        var url = API;
+        url += 'requestType=sendMoneyPrivate';
         var data = {
             deadline:     1440,
             feeNQT:       fee + '00000000',

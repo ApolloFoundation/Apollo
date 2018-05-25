@@ -74,6 +74,7 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.getAccountIdFromPublicKey = function(publicKey, isRsFormat) {
+    
         var hex = converters.hexStringToByteArray(publicKey);
 		var account = simpleHash(hex);
 		account = converters.byteArrayToHexString(account);

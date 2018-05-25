@@ -263,14 +263,15 @@ var NRS = (function(NRS, $, undefined) {
 
 		// initialisation
         this.renderItems();
-		this.initPaginations();
+		    this.initPaginations();
         this.renderItems();
         this.logPulling();
     };
-
+  
     NRS.myTransactionPagination;
     NRS.accountLedgerPagination;
     NRS.blocksPagination;
+  
 
     NRS.handleIncomingTransactions = function(transactions, confirmedTransactionIds) {
 		var oldBlock = (confirmedTransactionIds === false); //we pass false instead of an [] in case there is no new block..
@@ -385,7 +386,7 @@ var NRS = (function(NRS, $, undefined) {
         NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
         NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
-
+    
 		NRS.sendRequest("getBlockchainTransactions", {
 			"account": NRS.account,
 			"firstIndex": 0,
@@ -747,6 +748,7 @@ var NRS = (function(NRS, $, undefined) {
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
 		var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
+        console.log(decimals);
 
 		if (transactionType === 'Unknown') {
             transactionType = 'Private payment';
@@ -1042,7 +1044,6 @@ var NRS = (function(NRS, $, undefined) {
 			"firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
 			"lastIndex": NRS.pageNumber * NRS.itemsPerPage
 		};
-
         if (transactions) {
             if (transactions && transactions.length) {
                 var decimals = NRS.getTransactionsAmountDecimals(transactions);
@@ -1476,6 +1477,7 @@ var NRS = (function(NRS, $, undefined) {
         var API = '/apl?requestType=getPrivateBlockchainTransactions&secretPhrase=' + formParams[0].value;
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
+
             NRS.accountLedgerPagination.setPrivate(formParams[0].value);
         } else {
             $('#incorrect_passphrase_my_transactions').show();
@@ -1491,6 +1493,7 @@ var NRS = (function(NRS, $, undefined) {
     });
 
     $('body').on('click', '#send_money_private', function() {
+
         var recipient  = $('#send_money_recipient_info').val();
         var amount     = $('#send_money_amount_info').val();
         var fee        = $('#send_money_fee_info').val();
@@ -1535,7 +1538,9 @@ var NRS = (function(NRS, $, undefined) {
         var API = '/apl?requestType=getPrivateBlockchainTransactions&secretPhrase=' + formParams[0].value;
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
+
             NRS.myTransactionPagination.setPrivate(formParams[0].value);
+
 
             $.ajax({
                 url: API,

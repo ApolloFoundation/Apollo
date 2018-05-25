@@ -84,6 +84,9 @@ var NRS = (function(NRS, $, undefined) {
     });
 
 	NRS.showBlockModal = function(block) {
+        console.log(block);
+
+
         NRS.setBackLink();
         NRS.modalStack.push({ class: "show_block_modal_action", key: "block", value: block.height });
         try {
@@ -136,6 +139,7 @@ var NRS = (function(NRS, $, undefined) {
                 }
                 transactionsTable.find("tbody").empty().append(rows);
             } else {
+
 
                 $("#height_show_private_transactions").hide();
                 $("#block_info_transactions_none").show();
