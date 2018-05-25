@@ -157,7 +157,7 @@ public class LedgerEntry {
     }
 
     public boolean isPrivate() {
-        return AccountLedger.LedgerEvent.PRIVATE_PAYMENT == eventType;
+        return AccountLedger.LedgerEvent.PRIVATE_PAYMENT == eventType || (transaction != null && transaction.isPrivate());
     }
 
     public boolean isNull() {

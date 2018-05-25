@@ -4,14 +4,14 @@ package test;
 import apl.AccountLedger;
 import apl.crypto.Crypto;
 import apl.util.Convert;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static test.NodeClient.DEFAULT_DEADLINE;
@@ -232,7 +232,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     public void testGetEncryptedPrivateBlockTransactions() throws Exception {
         String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
         byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-        List<Transaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(publicKey));
+        List<Transaction> transactionsList = decryptList(client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, Convert.toHexString(publicKey)), secretPhrase, "transaction", Transaction.class);
         checkList(transactionsList);
         Assert.assertEquals(4, transactionsList.size());
         transactionsList.forEach(transaction -> {
@@ -248,25 +248,25 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test(expected = RuntimeException.class)
     public void testGetEncryptedTransactionWithoutPublicKeyAndSecretPhrase() throws Exception {
-        client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, null, null);
+        decryptList(client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, 9L, null), null, "transaction", Transaction.class);
     }
 
     @Test
     public void testGetEncryptedPrivateBlockchainTransactionsWithPagination() throws Exception {
         String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
         byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-        List<Transaction> transactionsList1 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, 9L, secretPhrase, Convert.toHexString(publicKey));
+        List<Transaction> transactionsList1 = decryptList(client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, 9L, Convert.toHexString(publicKey)), secretPhrase, "transaction", Transaction.class);
         checkList(transactionsList1);
         Assert.assertEquals(5, transactionsList1.size());
         checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
 
-        List<Transaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, null, 10L, secretPhrase,  Convert.toHexString(publicKey));
+        List<Transaction> transactionsList2 = decryptList(client.getEncryptedPrivateBlockchainTransactionsList(url, null, null, 10L, Convert.toHexString(publicKey)), secretPhrase, "transaction", Transaction.class);
         checkList(transactionsList2);
         Assert.assertEquals(11, transactionsList2.size());
         Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
         checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
 
-        List<Transaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, null, secretPhrase,  Convert.toHexString(publicKey));
+        List<Transaction> transactionsList3 = decryptList(client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, null, Convert.toHexString(publicKey)), secretPhrase, "transaction", Transaction.class);
         checkList(transactionsList3);
         Assert.assertTrue(transactionsList3.size() > 5);
         Assert.assertTrue(transactionsList3.containsAll(transactionsList1));
@@ -356,29 +356,10 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateUnconfirmedTransactions() throws Exception {
-        for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i), DEFAULT_FEE, DEFAULT_DEADLINE);
-            TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i) * 2,
-                    NodeClient.DEFAULT_FEE, DEFAULT_DEADLINE);
-            TimeUnit.SECONDS.sleep(1);
-        }
-        TimeUnit.SECONDS.sleep(3);
-        List<Transaction> unconfirmedTransactions = client.getPrivateUnconfirmedTransactions(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 0, 9);
-        checkList(unconfirmedTransactions);
-        Assert.assertEquals(10, unconfirmedTransactions.size());
-        for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
-            Transaction transaction = unconfirmedTransactions.get(i - 1);
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
-            Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
-            if (i % 2 != 0) {
-                Assert.assertEquals(nqt(i / 2 + 1), transaction.getAmountNQT());
-                Assert.assertFalse(transaction.isPrivate());
-            } else {
-                Assert.assertEquals(nqt(i), transaction.getAmountNQT());
-                Assert.assertTrue(transaction.isPrivate());
-            }
-        }
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        prepareUnconfirmedTransactionsPool(secretPhrase);
+        List<Transaction> unconfirmedTransactions = client.getPrivateUnconfirmedTransactions(url, secretPhrase, 0, 9);
+        validatePrivateUnconfirmedTransactions(unconfirmedTransactions);
     }
 
     @Test
@@ -472,6 +453,146 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
                 });
             }
         }
+    }
+
+    @Test
+    public void testGetEncryptedPrivateAccountLedger() throws Exception {
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER
+        );
+        String publicKey = Convert.toHexString(Crypto.getPublicKey(secretPhrase));
+        List<LedgerEntry> accountLedger = decryptList(client.getEncryptedPrivateAccountLedger(url, publicKey, true), secretPhrase, "ledgerEntry", LedgerEntry.class);
+        checkList(accountLedger);
+        accountLedger.forEach(entry -> {
+            Transaction transaction = entry.getTransaction();
+            if (transaction != null && !transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER)) {
+                Assert.fail("Not this user ledger!");
+            }
+        });
+        List<LedgerEntry> publicLedger = client.getAccountLedger(url,PRIVATE_TRANSACTION_SENDER, true);
+        publicLedger.forEach(accountLedger::remove);
+        accountLedger.forEach(entry -> {
+            if (!entry.getEventType().equals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT)
+                    && !entry.getEventType().equals(AccountLedger.LedgerEvent.TRANSACTION_FEE)) {
+                Assert.fail("Not only private payment and theirs fee are present in accountLedger. Fail for entry: " + entry);
+            }
+        });
+    }
+
+    private <T> List<T> decryptList(String json, String secretPhrase, String name, Class<T> objectClass) throws Exception {
+        ObjectMapper mapper = getMAPPER();
+        JsonNode root = mapper.readTree(json);
+        Iterator<JsonNode> iterator = root.iterator();
+        JsonNode objectArray = null;
+        while (iterator.hasNext()) {
+            JsonNode node = iterator.next();
+            if (node.isArray()) {
+                objectArray = node;
+                break;
+            }
+        }
+        JsonNode serverPublicKey = root.get("serverPublicKey");
+        if (objectArray == null || serverPublicKey == null) {
+            throw new RuntimeException("Server bad response: " + root.toString());
+        }
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), Convert.parseHexString(serverPublicKey.textValue()));
+        List<T> objectList = new ArrayList<>();
+        if (objectArray.isArray()) {
+            for (final JsonNode objectJson : objectArray) {
+                String fieldName = "encrypted" + name.substring(0, 1).toUpperCase() + name.substring(1);
+                JsonNode encryptedObject = objectJson.get(fieldName);
+                if (encryptedObject != null) {
+                    objectList.add(decrypt(encryptedObject.textValue(), sharedKey, objectClass));
+                } else {
+                    objectList.add(mapper.readValue(objectJson.toString(), objectClass));
+                }
+            }
+        }
+        return objectList;
+    }
+
+    private <T> T decrypt(String encryptedString, byte[] sharedKey, Class<T> objectClass) throws Exception {
+        byte[] encryptedBytes = Convert.parseHexString(encryptedString);
+        byte[] decryptedData = Crypto.aesDecrypt(encryptedBytes, sharedKey);
+        String decryptedJson = Convert.toString(decryptedData);
+        T object = getMAPPER().readValue(decryptedJson, objectClass);
+        Method isPrivate = objectClass.getMethod("isPrivate");
+        Object result = isPrivate.invoke(object);
+        Assert.assertTrue((Boolean) result);
+        return object;
+    }
+
+    private <T> T decryptObject(String json, String secretPhrase, String name, Class<T> objectClass) throws Exception {
+        JsonNode root = getMAPPER().readTree(json);
+        byte[] serverPublicKey = Convert.parseHexString(root.get("serverPublicKey").textValue());
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), serverPublicKey);
+        String fieldName = "encrypted" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        String encryptedJsonString = root.get(fieldName).textValue();
+        return decrypt(encryptedJsonString, sharedKey, objectClass);
+    }
+
+    @Test
+    public void testGetEncryptedPrivateUnconfirmedTransactions() throws Exception {
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        prepareUnconfirmedTransactionsPool(secretPhrase);
+        String publicKey = Convert.toHexString(Crypto.getPublicKey(secretPhrase));
+        List<Transaction> unconfirmedTransactions = decryptList(client.getEncryptedPrivateUnconfirmedTransactions(url, publicKey, 0, 9), secretPhrase, "unconfirmedTransaction", Transaction.class);
+        validatePrivateUnconfirmedTransactions(unconfirmedTransactions);
+    }
+
+    private void validatePrivateUnconfirmedTransactions(List<Transaction> unconfirmedTransactions) {
+        checkList(unconfirmedTransactions);
+        Assert.assertEquals(10, unconfirmedTransactions.size());
+        for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
+            Transaction transaction = unconfirmedTransactions.get(i - 1);
+            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
+            Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
+            if (i % 2 != 0) {
+                Assert.assertEquals(nqt(i / 2 + 1), transaction.getAmountNQT());
+                Assert.assertFalse(transaction.isPrivate());
+            } else {
+                Assert.assertEquals(nqt(i), transaction.getAmountNQT());
+                Assert.assertTrue(transaction.isPrivate());
+            }
+        }
+    }
+
+    private void prepareUnconfirmedTransactionsPool(String senderSecretPhrase) throws Exception{
+        for (int i = 1; i <= 6; i++) {
+            client.sendMoney(url, senderSecretPhrase, PRIVATE_TRANSACTION_RECIPIENT, nqt(i), DEFAULT_FEE, DEFAULT_DEADLINE);
+            TimeUnit.SECONDS.sleep(1);
+            client.sendMoneyPrivateTransaction(url, senderSecretPhrase, PRIVATE_TRANSACTION_RECIPIENT, nqt(i) * 2,
+                    NodeClient.DEFAULT_FEE, DEFAULT_DEADLINE);
+            TimeUnit.SECONDS.sleep(1);
+        }
+        TimeUnit.SECONDS.sleep(3);
+    }
+
+    @Test
+    public void testGetEncryptedPrivateAccountLedgerEntry() throws Exception {
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        String publicKey = Convert.toHexString(Crypto.getPublicKey(secretPhrase));
+        LedgerEntry ledgerEntry = decryptObject(client.getEncryptedPrivateAccountLedgerEntry(url, publicKey, PRIVATE_LEDGER_ENTRY_ID, true), secretPhrase, "ledgerEntry", LedgerEntry.class);
+        Assert.assertFalse(ledgerEntry.isNull());
+        Assert.assertEquals(PRIVATE_LEDGER_ENTRY_ID, ledgerEntry.getLedgerId());
+        Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, ledgerEntry.getEventType());
+        Assert.assertEquals(nqt(-2), ledgerEntry.getChange());
+        Assert.assertEquals(12150L, ledgerEntry.getHeight().longValue());
+        Assert.assertEquals(9584301L, ledgerEntry.getTimestamp().longValue());
+    }
+
+    @Test
+    public void testGetEncryptedPrivateTransaction() throws Exception {
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        String publicKey = Convert.toHexString(Crypto.getPublicKey(secretPhrase));
+        Transaction privateTransaction1 = decryptObject(client.getEncryptedPrivateTransaction(url, publicKey, PRIVATE_TRANSACTION_HASH, null), secretPhrase, "transaction", Transaction.class);
+        Transaction privateTransaction2 = decryptObject(client.getEncryptedPrivateTransaction(url, publicKey, null, PRIVATE_TRANSACTION_ID), secretPhrase, "transaction", Transaction.class);
+        Assert.assertEquals(privateTransaction1, privateTransaction2);
+        Assert.assertEquals(privateTransaction1.getSenderRS(), PRIVATE_TRANSACTION_SENDER);
+        Assert.assertEquals(privateTransaction1.getFullHash(), PRIVATE_TRANSACTION_HASH);
+        Assert.assertEquals(privateTransaction1.getRecipientRS(), "APL-8BNS-LMPW-3KHL-3B7JM");
+        Assert.assertEquals(privateTransaction1.getAmountNQT(), nqt(2));
+        Assert.assertEquals(privateTransaction1.getFeeNQT(), nqt(1));
+        Assert.assertTrue(privateTransaction1.isPrivate());
     }
 }
 

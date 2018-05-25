@@ -15,10 +15,10 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 import static test.TestData.URLS;
 
 public class TestUtil {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final Random RANDOM = new Random();
     static {
-        MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     private TestUtil() {} //never
@@ -41,7 +41,7 @@ public class TestUtil {
     }
 
     public static ObjectMapper getMAPPER() {
-        return MAPPER;
+        return mapper;
     }
 
     public static Map<String, String> loadKeys(String fileName) {
