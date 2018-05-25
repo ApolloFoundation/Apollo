@@ -29,6 +29,8 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
@@ -101,13 +103,15 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
         // Return the response
         //
         JSONArray responseEntries = new JSONArray();
+        Map<Long, List<LedgerEntry>> ledgerEntriesByEventId = ledgerEntries.stream().collect(Collectors.groupingBy(LedgerEntry::getEventId));
         ledgerEntries.forEach(entry -> {
             JSONObject responseEntry = new JSONObject();
             JSONData.ledgerEntry(responseEntry, entry, includeTransactions, includeHoldingInfo);
-            if (data.isEncrypt() && entry.getEvent() == LedgerEvent.PRIVATE_PAYMENT) {
-                responseEntry = JSONData.encryptedLedgerEntry(responseEntry, data.getSharedKey());
+            if (data.isEncrypt() && (entry.getEvent() == LedgerEvent.PRIVATE_PAYMENT || ledgerEntriesByEventId.get(entry.getEventId()).stream().anyMatch(e->e.getEvent() == LedgerEvent.PRIVATE_PAYMENT))) {
+                responseEntries.add(JSONData.encryptedLedgerEntry(responseEntry, data.getSharedKey()));
+            } else {
+                responseEntries.add(responseEntry);
             }
-            responseEntries.add(responseEntry);
         });
 
         JSONObject response = new JSONObject();
