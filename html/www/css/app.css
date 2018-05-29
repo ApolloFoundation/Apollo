@@ -142,13 +142,31 @@ body.fixed .wrapper {
   margin-bottom: 120px;
 }
 
+[data-transactions-pagination] [data-navigate-page] {
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+
 [data-transactions-pagination] [data-navigate-page].disabled {
+  display: none;
+}
+
+[data-transactions-pagination] .page-nav {
+  pointer-events: none !important;
+  cursor: auto !important;
+}
+
+[data-transactions-pagination] .page-nav.disabled {
   display: none;
 }
 
 .alert-no-icon {
   margin-bottom: 25px !important;
 }
+
 /* Utility */
 /* H1 - H6 font */
 /* h1,

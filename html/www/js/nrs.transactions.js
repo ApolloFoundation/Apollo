@@ -34,57 +34,55 @@ var NRS = (function(NRS, $, undefined) {
         this.passPhrase = '';
         this.items = null;
         this.target = target;
+		this.itemsFiltration = $(this.target).parent().parent();
+		this.filter = null;
 
-        this.initPaginations = function() {
-            var html = '';
-
-			html += '<div data-navigate-page="prev">prev</div>';
-			html += '<div data-navigate-page="next">next</div>';
-
-            console.log($('[data-transactions-pagination]').html(html));
-            console.log($('[data-transactions-pagination]').html(html));
-            console.log($('[data-transactions-pagination]').html(html));
-            $('[data-transactions-pagination]').html(html);
-            console.log($(target).parent().find('[data-transactions-pagination]'));
-
-        };
-        this.setPrivate = function(passphrase) {
-            this.isPrivate = true;
-            console.log(passphrase);
-            this.passPhrase = passphrase;
-            this.getItems();
-        };
-
-		$(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-			console.log($(that).find('[data-navigate-page]'));
-
-			// console.log(e.target);
-			// console.log($(e.target).attr('data-navigate-page'));
-			// console.log($(e.target).attr());
-
+        $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
             if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
             } else {
                 that.page = that.page + 1;
             }
 
-            console.log(that.page);
+
             that.getItems(that.page);
 
         });
-        this.getItems = function(page) {
 
+        this.itemsFiltration.click(function(){});
+
+        this.setFiltration = function(filter) {
+            this.filter = filter;
+            this.filter = parseInt(this.filter);
+
+            this.getItems();
+		};
+        this.initPaginations = function() {
+            var html = '';
+
+			html += '<div data-navigate-page="prev" class="fa fa-arrow-circle-left" style="color: #337ab7; font-size: 20px;"></div>';
+			html += '<div class="page-nav"></div>';
+			html += '<div data-navigate-page="next" class="fa fa-arrow-circle-right" style="color: #337ab7; font-size: 20px;"></div>';
+
+            $('[data-transactions-pagination]').html(html);
+        };
+        this.setPrivate = function(passphrase) {
+            this.isPrivate = true;
+            this.passPhrase = passphrase;
+            this.getItems();
+        };
+        this.getItems = function(page) {
         	if (page) {
                 this.page = page;
             }
-            console.log(this.page);
 
+            var indicator = '';
+            indicator += parseInt(this.page * 15 - 14) + ' &hellip; ' + parseInt(this.page * 15);
+            $(this.target).parent().find('[data-transactions-pagination]').find('.page-nav').html(indicator);
 
             var url = API;
-            url += 'account=' + NRS.account + '&';
 
-            console.log(this.transactionType);
-            console.log(this.passPhrase);
+            url += 'account=' + NRS.account + '&';
 
             if (this.isPrivate) {
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
@@ -96,20 +94,20 @@ var NRS = (function(NRS, $, undefined) {
                     url += 'secretPhrase=' + this.passPhrase + '&';
 				}
             } else {
-                console.log(this.transactionType);
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
                     url += 'requestType=getBlockchainTransactions&';
-
                 }
                 if (this.transactionType === 'getAccountLedger' || this.transactionType === 'getPrivateAccountLedger') {
                     url += 'requestType=getAccountLedger&';
-
                 }
                 if (this.transactionType === 'getBlocks') {
                     url += 'requestType=getBlocks&';
                 }
             }
-            console.log(url);
+
+            if (this.filter >= 0) {
+                url += 'type=' + this.filter + '&';
+			}
 
             var nextPageUrl = url;
             var prevPageUrl = url;
@@ -140,6 +138,12 @@ var NRS = (function(NRS, $, undefined) {
                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
                         that.items = JSON.parse(data).transactions;
 
+                        if (that.items.length < 15 && that.page == 1) {
+                            $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
+						} else {
+                            $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
+                        }
+
                         for (var i = 0; i < that.items.length; i++) {
                             var transaction = that.items[i];
                             transaction.confirmed = true;
@@ -147,15 +151,12 @@ var NRS = (function(NRS, $, undefined) {
                         }
                         if ($el === '#transactions_contents') {
                             NRS.dataLoaded(rows);
-                            console.log($el);
 						}
 
                         NRS.addPhasingInfoToTransactionRows(that.items);
 					}
                     if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
                         that.items = JSON.parse(data).entries;
-
-                        console.log(that.items);
 
                         var decimalParams = NRS.getLedgerNumberOfDecimals(that.items);
                         for (var i = 0; i < that.items.length; i++) {
@@ -170,7 +171,6 @@ var NRS = (function(NRS, $, undefined) {
                     if (that.transactionType === 'getBlocks') {
                         that.items = JSON.parse(data).blocks;
 
-                        console.log(that.items);
                         if ($el === '#blocks_contents') {
                             NRS.blocksPageLoaded(that.items);
 
@@ -189,7 +189,6 @@ var NRS = (function(NRS, $, undefined) {
                     type: 'GET',
                     cache: false,
                     success: function(data) {
-                        console.log('Validate data');
 
                         var transactions = that.items = JSON.parse(data).transactions;
                         var entries = that.items = JSON.parse(data).entries;
@@ -239,18 +238,20 @@ var NRS = (function(NRS, $, undefined) {
 			function checkItems(array, action) {
                 if (array.length == 1 || array.length == 0) {
                     $(that.target).parent().find('[data-transactions-pagination]').find('[data-navigate-page="' + action + '"]').addClass('disabled');
-                    console.log(that.target);
-                    console.log($(that.target).parent().find('[data-transactions-pagination]'));
                 }
                 else {
                     $(that.target).parent().find('[data-transactions-pagination]').find('[data-navigate-page="' + action + '"]').removeClass('disabled');
-                    console.log($(that.target).parent().find('[data-transactions-pagination]'));
-                    console.log(that.target, ' 3333');
                 }
 			}
-
 		};
         this.renderItems = function() {
+            var indicator = '';
+
+            indicator += parseInt(this.page * 15 - 14) + ' &hellip; ' + parseInt(this.page * 15);
+
+            $(this.target).parent().find('[data-transactions-pagination]').find('.page-nav').html(indicator);
+
+
             this.getItems();
 		};
 		this.logPulling = function() {
@@ -261,15 +262,16 @@ var NRS = (function(NRS, $, undefined) {
 		};
 
 		// initialisation
-
-		this.initPaginations();
+        this.renderItems();
+		    this.initPaginations();
         this.renderItems();
         this.logPulling();
     };
-
-    var myTransactionPagination;
-    var accountLedgerPagination;
-    var blocksPagination;
+  
+    NRS.myTransactionPagination;
+    NRS.accountLedgerPagination;
+    NRS.blocksPagination;
+  
 
     NRS.handleIncomingTransactions = function(transactions, confirmedTransactionIds) {
 		var oldBlock = (confirmedTransactionIds === false); //we pass false instead of an [] in case there is no new block..
@@ -381,12 +383,10 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.getInitialTransactions = function(decimals) {
-        console.log(decimals);
-
-        myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
-        accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
-        blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
-
+        NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
+        NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
+        NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
+    
 		NRS.sendRequest("getBlockchainTransactions", {
 			"account": NRS.account,
 			"firstIndex": 0,
@@ -917,8 +917,6 @@ var NRS = (function(NRS, $, undefined) {
             html += "<a class='" + linkClass + "' href='#' data-type='Private payment' data-id='" + entry.event + "' data-timestamp='" + NRS.escapeRespStr(entry.timestamp) + "' " + dataToken + ">";
         }
 		else {
-            console.log(entry);
-
             html += "<a class='" + linkClass + "' href='#'";
             if (entry.eventType == 'TRANSACTION_FEE') {
                 html += "data-type='Transaction fee'";
@@ -1013,15 +1011,8 @@ var NRS = (function(NRS, $, undefined) {
 		subtypeNavi.append(html);
 
 		var typeIndex = $('#transactions_type_navi').find('li.active a').attr('data-transaction-type');
-		if (typeIndex && typeIndex != "unconfirmed" && typeIndex != "all_unconfirmed" && typeIndex != "phasing") {
-			var typeDict = NRS.transactionTypes[typeIndex];
-			$.each(typeDict["subTypes"], function(subTypeIndex, subTypeDict) {
-				var subTitleString = $.t(subTypeDict.i18nKeyTitle);
-				html = '<li role="presentation"><a href="#" data-transaction-sub-type="' + subTypeIndex + '">';
-				html += subTypeDict.iconHTML + ' ' + subTitleString + '</a></li>';
-				$('#transactions_sub_type_navi').append(html);
-			});
-		}
+
+        NRS.myTransactionPagination.setFiltration(typeIndex);
 	};
 
     NRS.displayUnconfirmedTransactions = function(account) {
@@ -1053,8 +1044,6 @@ var NRS = (function(NRS, $, undefined) {
 			"firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
 			"lastIndex": NRS.pageNumber * NRS.itemsPerPage
 		};
-        console.log(params);
-
         if (transactions) {
             if (transactions && transactions.length) {
                 var decimals = NRS.getTransactionsAmountDecimals(transactions);
@@ -1107,9 +1096,7 @@ var NRS = (function(NRS, $, undefined) {
         }
 
         if (transactions) {
-            console.log(NRS.allowUpdate);
             NRS.allowUpdate = false;
-            console.log(NRS.allowUpdate);
 
             if (transactions && transactions.length) {
                 var decimals = NRS.getTransactionsAmountDecimals(transactions);
@@ -1126,7 +1113,6 @@ var NRS = (function(NRS, $, undefined) {
                 NRS.dataLoaded(rows);
             }
         } else {
-            console.log(NRS.allowUpdate);
             if (NRS.allowUpdate) {
                 NRS.sendRequest("getBlockchainTransactions+", params, function(response) {
                     if (response.transactions && response.transactions.length) {
@@ -1491,28 +1477,8 @@ var NRS = (function(NRS, $, undefined) {
         var API = '/apl?requestType=getPrivateBlockchainTransactions&secretPhrase=' + formParams[0].value;
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
-            console.log(formParams[0].value);
-            accountLedgerPagination.setPrivate(formParams[0].value);
 
-            // $.ajax({
-            //     url: API,
-            //     type: 'GET',
-            //     cache: false,
-            //     success: function(data) {
-            //     	allowUpdate = false;
-            //         data = JSON.parse(data);
-            //         $('#transactions_table tbody').empty();
-            //
-            //         var transactions = new NRS.paginate(data.transactions, 0, 15, '#transactions_pgination');
-            //         transactions.rerenderPagination();
-            //
-            //         $('#transaction_fill_secret_word_modal').modal('hide');
-            //         $('#incorrect_passphrase_my_transactions').hide();
-            //     },
-            //     error: function(data) {
-            //         console.log('err: ', data);
-            //     }
-            // });
+            NRS.accountLedgerPagination.setPrivate(formParams[0].value);
         } else {
             $('#incorrect_passphrase_my_transactions').show();
         }
@@ -1527,16 +1493,11 @@ var NRS = (function(NRS, $, undefined) {
     });
 
     $('body').on('click', '#send_money_private', function() {
-        console.log(222);
+
         var recipient  = $('#send_money_recipient_info').val();
         var amount     = $('#send_money_amount_info').val();
         var fee        = $('#send_money_fee_info').val();
         var passphrase = $('#send_money_password_info').val();
-
-        console.log(NRS.getAccountId(passphrase, true));
-
-        console.log(NRS.accountRS === NRS.getAccountId(passphrase, true));
-        console.log([recipient, amount, fee, passphrase]);
 
         var url = API;
         url += 'requestType=sendMoneyPrivate';
@@ -1577,8 +1538,9 @@ var NRS = (function(NRS, $, undefined) {
         var API = '/apl?requestType=getPrivateBlockchainTransactions&secretPhrase=' + formParams[0].value;
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
-            console.log(formParams[0].value);
-            myTransactionPagination.setPrivate(formParams[0].value);
+
+            NRS.myTransactionPagination.setPrivate(formParams[0].value);
+
 
             $.ajax({
                 url: API,
