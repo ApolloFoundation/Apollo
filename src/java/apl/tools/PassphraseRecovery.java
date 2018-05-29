@@ -107,7 +107,7 @@ public final class PassphraseRecovery {
         return IntStream.rangeClosed(from, to).mapToObj(c -> "" + (char) c).collect(Collectors.joining()).toCharArray();
     }
 
-    static Map<Long, byte[]> getPublicKeys() {
+    static Map<Long, byte[]> getPublicKeys() throws SQLException {
         Db.init();
         Map<Long, byte[]> publicKeys = new HashMap<>();
         try (Connection con = Db.db.getConnection();

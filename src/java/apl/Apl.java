@@ -19,6 +19,7 @@ package apl;
 
 import apl.addons.AddOns;
 import apl.crypto.Crypto;
+import apl.db.FullTextTrigger;
 import apl.env.DirProvider;
 import apl.env.RuntimeEnvironment;
 import apl.env.RuntimeMode;
@@ -32,12 +33,7 @@ import apl.util.ThreadPool;
 import apl.util.Time;
 import org.json.simple.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.Files;
@@ -45,10 +41,13 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+
+import static apl.Db.PREFIX;
 
 public final class Apl {
 
@@ -344,6 +343,26 @@ public final class Apl {
         runtimeMode.shutdown();
     }
 
+    public static void tryToRecoverDB() {
+        Path dbPath = Paths.get(Apl.getStringProperty(PREFIX + "Dir"));
+        try {
+            System.out.println("Trying to reindex db...");
+            FullTextTrigger.reindex(Db.db.getConnection());
+        }
+        catch (SQLException sqlEx) {
+            System.out.println("Failed to reindex db! " + sqlEx + " Removing...");
+            shutdown();
+            try {
+                Files.deleteIfExists(dbPath);
+                init();
+            }
+            catch (IOException ioEx) {
+                System.out.println("Unable to delete from path:" + dbPath.toString() + " Error: " + ioEx);
+                System.exit(-1);
+            }
+        }
+    }
+
     private static class Init {
 
         private static volatile boolean initialized = false;
@@ -402,7 +421,8 @@ public final class Apl {
                 }
                 try {
                     secureRandomInitThread.join(10000);
-                } catch (InterruptedException ignore) {}
+                }
+                catch (InterruptedException ignore) {}
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
@@ -420,6 +440,10 @@ public final class Apl {
                 if (Constants.isTestnet) {
                     Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
+            }
+            catch (SQLException e) {
+                System.out.println("DB error: " + e.toString());
+                tryToRecoverDB();
             } catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
                 runtimeMode.alert(e.getMessage() + "\n" +

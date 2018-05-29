@@ -20,6 +20,8 @@ package apl;
 import apl.db.BasicDb;
 import apl.db.TransactionalDb;
 
+import java.sql.SQLException;
+
 public final class Db {
 
     public static final String PREFIX = Constants.isTestnet ? "apl.testDb" : "apl.db";
@@ -37,7 +39,7 @@ public final class Db {
             .maxMemoryRows(Apl.getIntProperty("apl.dbMaxMemoryRows"))
     );
 
-    public static void init() {
+    public static void init() throws SQLException {
         db.init(new AplDbVersion());
     }
 
