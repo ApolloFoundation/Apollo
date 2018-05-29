@@ -54,32 +54,6 @@ var NRS = (function(NRS, $, undefined) {
         dataBlock = $(this).attr('data-block');
     });
 
-    // $("body").on("click", "#height_show_private_transactions", function(event) {
-    //     event.preventDefault();
-    //     if (NRS.fetchingModalData) {
-    //         return;
-    //     }
-    //     NRS.fetchingModalData = true;
-    //     if ($(this).data("back") == "true") {
-    //         NRS.modalStack.pop(); // The forward modal
-    //         NRS.modalStack.pop(); // The current modal
-    //     }
-    //     var block = $(this).data("block");
-    //     var isBlockId = $(this).data("id");
-    //     var params = {
-    //         "includeTransactions": "true",
-    //         "includeExecutedPhased": "true"
-    //     };
-    //     if (isBlockId) {
-    //         params["block"] = block;
-    //     } else {
-    //         params["height"] = block;
-    //     }
-    //     NRS.sendRequest("getBlock+", params, function(response) {
-    //         NRS.showBlockModal(response);
-    //     });
-    // });
-
     $('body').on('click', '#height_show_private_transactions', function(){
         $('#show_private_transactions_enter_secret_passphrase').toggleClass('active');
 
@@ -146,8 +120,6 @@ var NRS = (function(NRS, $, undefined) {
                 $("#block_info_transactions_none").hide();
                 transactionsTable.show();
 
-                console.log(block.transactions.transactions);
-
                 var rows = "";
                 for (var i = 0; i < block.transactions.length; i++) {
                     var transaction = block.transactions[i];
@@ -167,7 +139,7 @@ var NRS = (function(NRS, $, undefined) {
                 }
                 transactionsTable.find("tbody").empty().append(rows);
             } else {
-                console.log(block.transactions.transactions);
+
 
                 $("#height_show_private_transactions").hide();
                 $("#block_info_transactions_none").show();
