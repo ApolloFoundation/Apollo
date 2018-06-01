@@ -36,6 +36,24 @@ QUnit.test("getPrivateKey", function (assert) {
     assert.equal(NRS.getPrivateKey("12345678"), "e8797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f", "private.key");
 });
 
+// QUnit.test("getSharedKey", function(assert) {
+//     console.log(options.privateKey);
+//     console.log(options.publicKey);
+//
+//     var publicKey =  converters.hexStringToByteArray('184f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567054');
+//     var privateKey = converters.hexStringToByteArray('4652486ebc271520d844e5bdda9ac243c05dcbe7bc9b93807073a32177a6f73d');
+//     var byteArray = [82,-18,95,-13,-126,103,1,-1,84,66, -83, -42, -68, 99, -58, -37, -128, 18, 32, -114, -97, -18, -14, 9, -111, -22, 16, -118, 68, -3, 109, -22]
+//
+//     var sharedKey = getSharedSecret(privateKey, publicKey);
+//
+//     console.log(NRS.getSharedKey(privateKey, publicKey, byteArray));
+//     console.log(converters.byteArrayToHexString(NRS.getSharedKey(privateKey, publicKey, byteArray)));
+//
+//     console.log(converters.byteArrayToHexString(sharedKey));
+//     assert.equal(NRS.getPrivateKey("12345678"), "e8797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f", "private.key");
+//
+// });
+
 QUnit.test("encryptDecryptNote", function (assert) {
     var senderPrivateKey = "rshw9abtpsa2";
     var senderPublicKeyHex = NRS.getPublicKey(converters.stringToHexString(senderPrivateKey));
@@ -86,6 +104,8 @@ QUnit.test("getSharedKey", function (assert) {
     options.sharedKey = sharedKeyBytes;
     var encryptedMessage = "8adee4dee3e3311a631a29553140d177932cf0743c05846d897b24545d6839cbf368fc0b0eec628bfd69e95d006e3eb8";
     var decryptedMessage = NRS.decryptDataRoof(converters.hexStringToByteArray(encryptedMessage), options);
+
+
     assert.equal(decryptedMessage.message, "hello world");
     assert.equal(decryptedMessage.sharedKey, converters.byteArrayToHexString(sharedKeyBytes));
 });
@@ -154,4 +174,10 @@ QUnit.test("decryptUncompressedBinary", function (assert) {
     var decryptedMessage = NRS.decryptDataRoof(converters.hexStringToByteArray(encryptedMessage), options);
     assert.equal(converters.byteArrayToString(converters.hexStringToByteArray(decryptedMessage.message)).substring(0, 11), "hello world");
 });
+
+
+
+
+// huita
+
 
