@@ -47,8 +47,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static apl.Db.PREFIX;
-
 public final class Apl {
 
     public static final String VERSION = "1.11.10";
@@ -433,8 +431,7 @@ public final class Apl {
                     }
                 }
                 Logger.logErrorMessage("Database initialization failed ", e);
-                Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
-                runtimeMode.recoverDb(dbPath);
+                runtimeMode.recoverDb();
             }
             catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
