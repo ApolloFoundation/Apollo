@@ -17,11 +17,8 @@
 
 package apl.env;
 
-import apl.db.TransactionalDb;
-
 import java.io.File;
 import java.net.URI;
-import java.nio.file.Path;
 
 public interface RuntimeMode {
 
@@ -35,7 +32,7 @@ public interface RuntimeMode {
 
     void alert(String message);
 
-    default void recoverDb(Path path, TransactionalDb db) {
-        alert("Db Failed! Try to remove it from path: " + path.toAbsolutePath().toString());
+    default void recoverDb() {
+        alert("Db Failed! Try to remove it from.");
     }
 }

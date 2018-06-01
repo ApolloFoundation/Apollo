@@ -20,7 +20,6 @@ package apl.env;
 import apl.Apl;
 import apl.Db;
 import apl.db.FullTextTrigger;
-import apl.db.TransactionalDb;
 import apl.util.Logger;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -32,11 +31,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -87,11 +81,11 @@ public class DesktopMode implements RuntimeMode {
     }
 
     @Override
-    public void recoverDb(Path dbPath, TransactionalDb db) {
-        tryToRecoverDB(dbPath, db);
+    public void recoverDb() {
+        tryToRecoverDB();
     }
 
-    public static void tryToRecoverDB(Path dbPath, TransactionalDb db) {
+    private void tryToRecoverDB() {
         new JFXPanel(); // prepare JavaFX toolkit and environment
         Platform.runLater(() -> {
             Alert alert = prepareAlert(Alert.AlertType.ERROR, "Db initialization failed", "Db was crashed! Do you want to recover db?", 180, new ButtonType("Yes", ButtonBar.ButtonData.YES), new ButtonType("No", ButtonBar.ButtonData.NO));
@@ -106,14 +100,14 @@ public class DesktopMode implements RuntimeMode {
                             ButtonType clickedButton = clickedButtonType.get();
                             if (clickedButton.getText().equalsIgnoreCase("Remove db")) {
                                 //delete db and show alert
-                                deleteDbAndHandleException(dbPath, db).show();
+                                deleteDbAndHandleException().show();
                             }
                         }
                     }
                     catch (SQLException sqlEx) {
                         Logger.logErrorMessage("Cannot reindex database!", sqlEx);
                         //delete db and show alert
-                        deleteDbAndHandleException(dbPath, db).show();
+                        deleteDbAndHandleException().show();
                     }
                 }
             }
@@ -140,38 +134,16 @@ public class DesktopMode implements RuntimeMode {
         return alert;
     }
 
-    private static void deleteDb(Path dbPath) throws IOException {
-        Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
-
-    private static void tryToDeleteDb(Path dbPath, TransactionalDb db) throws IOException {
-        db.shutdown();
-        Logger.logInfoMessage("Removing db...");
-        deleteDb(dbPath);
-        Logger.logInfoMessage("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
-    }
-    private static Alert deleteDbAndHandleException(Path dbPath, TransactionalDb db) {
+    private static Alert deleteDbAndHandleException() {
 
         Alert alert;
         try {
-            tryToDeleteDb(dbPath, db);
+            Db.tryToDeleteDb();
             alert = prepareAlert(Alert.AlertType.INFORMATION, "Success", "DB was removed successfully! Please, restart the wallet.", 180);
         }
         catch (IOException e) {
-            Logger.logErrorMessage("Unable to delete db from path:" + dbPath.toString(), e);
-            alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete folder:" + dbPath.toAbsolutePath().toString() + "or start app with admin rights", 180);
+            Logger.logErrorMessage("Unable to delete db!", e);
+            alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete db folder.", 180);
         }
         return alert;
     }

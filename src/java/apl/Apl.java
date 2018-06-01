@@ -423,7 +423,7 @@ public final class Apl {
                 }
             }
             catch (final RuntimeException e) {
-                if (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName())) {
+                if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
                     Throwable exception = e;
                     while (exception.getCause() != null) { //get root cause of RuntimeException
                         exception = exception.getCause();
@@ -434,7 +434,7 @@ public final class Apl {
                 }
                 Logger.logErrorMessage("Database initialization failed ", e);
                 Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
-                runtimeMode.recoverDb(dbPath, Db.db);
+                runtimeMode.recoverDb(dbPath);
             }
             catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
