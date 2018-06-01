@@ -31,21 +31,22 @@ import apl.util.Convert;
 import apl.util.Logger;
 import apl.util.ThreadPool;
 import apl.util.Time;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessControlException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import static apl.Db.PREFIX;
 
@@ -344,23 +345,88 @@ public final class Apl {
     }
 
     public static void tryToRecoverDB() {
-        Path dbPath = Paths.get(Apl.getStringProperty(PREFIX + "Dir"));
-        try {
-            System.out.println("Trying to reindex db...");
-            FullTextTrigger.reindex(Db.db.getConnection());
-        }
-        catch (SQLException sqlEx) {
-            System.out.println("Failed to reindex db! " + sqlEx + " Removing...");
+        new JFXPanel(); // prepare JavaFX toolkit and environment
+        Platform.runLater(() -> {
+            Alert alert = prepareAlert(Alert.AlertType.ERROR, "Db initialization failed", "Db was crashed! Do you want to recover db?", 180, new ButtonType("Yes", ButtonBar.ButtonData.YES), new ButtonType("No", ButtonBar.ButtonData.NO));
+            Optional<ButtonType> selectedButtonType = alert.showAndWait();
+            if (selectedButtonType.isPresent()) {
+                if (selectedButtonType.get().getButtonData() == ButtonBar.ButtonData.YES) {
+                    Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
+                    try {
+                        Logger.logInfoMessage("Trying to reindex db...");
+                        //re-index fb and return alert
+                        Optional<ButtonType> clickedButtonType = reindexDb().showAndWait();
+                        if (clickedButtonType.isPresent()) {
+                            ButtonType clickedButton = clickedButtonType.get();
+                            if (clickedButton.getText().equalsIgnoreCase("Remove db")) {
+                                //delete db and show alert
+                                deleteDbAndHandleException(dbPath).show();
+                            }
+                        }
+                    }
+                    catch (SQLException sqlEx) {
+                        Logger.logErrorMessage("Cannot reindex database!", sqlEx);
+                        //delete db and show alert
+                        deleteDbAndHandleException(dbPath).show();
+                    }
+                }
+            }
             shutdown();
-            try {
-                Files.deleteIfExists(dbPath);
-                init();
-            }
-            catch (IOException ioEx) {
-                System.out.println("Unable to delete from path:" + dbPath.toString() + " Error: " + ioEx);
-                System.exit(-1);
+        });
+    }
+
+    private static Alert reindexDb() throws SQLException {
+        FullTextTrigger.reindex(Db.db.getConnection());
+        return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. If this didnt help. Click \'Remove db\'", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
+    }
+
+
+    private static Alert prepareAlert(Alert.AlertType alertType, String title, String contentText, int height, ButtonType... buttons) {
+        Alert alert = new Alert(alertType, contentText);
+        alert.getDialogPane().setMinHeight(height); // resizing
+        alert.setTitle(title);
+        if (buttons != null && buttons.length != 0) {
+            alert.getButtonTypes().clear();
+            for (ButtonType button : buttons) {
+                alert.getButtonTypes().add(button);
             }
         }
+        return alert;
+    }
+
+    private static void deleteDb(Path dbPath) throws IOException {
+        Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    private static void tryToDeleteDb(Path dbPath) throws IOException {
+        Db.shutdown();
+        Logger.logInfoMessage("Removing db...");
+        deleteDb(dbPath);
+        Logger.logInfoMessage("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
+    }
+    private static Alert deleteDbAndHandleException(Path dbPath) {
+        Alert alert;
+        try {
+            tryToDeleteDb(dbPath);
+            alert = prepareAlert(Alert.AlertType.INFORMATION, "Success", "DB was removed successfully! Please, restart the wallet.", 180);
+        }
+        catch (IOException e) {
+            Logger.logErrorMessage("Unable to delete db from path:" + dbPath.toString(), e);
+            alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete folder:" + dbPath.toAbsolutePath().toString() + "or start app with admin rights", 180);
+        }
+        return alert;
     }
 
     private static class Init {
@@ -441,10 +507,20 @@ public final class Apl {
                     Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
             }
-            catch (SQLException e) {
-                System.out.println("DB error: " + e.toString());
+            catch (final RuntimeException e) {
+                if (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName())) {
+                    Throwable exception = e;
+                    while (exception.getCause() != null) { //get root cause of RuntimeException
+                        exception = exception.getCause();
+                    }
+                    if (exception.getClass() != JdbcSQLException.class && exception.getClass() != SQLException.class) {
+                        throw e; //re-throw non-db exception
+                    }
+                }
+                Logger.logErrorMessage("Database initialization failed ", e);
                 tryToRecoverDB();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
                 runtimeMode.alert(e.getMessage() + "\n" +
                         "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");

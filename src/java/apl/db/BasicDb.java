@@ -134,7 +134,7 @@ public class BasicDb {
         this.maxMemoryRows = dbProperties.maxMemoryRows;
     }
 
-    public void init(DbVersion dbVersion) throws SQLException {
+    public void init(DbVersion dbVersion) {
         Logger.logDebugMessage("Database jdbc url set to %s username %s", dbUrl, dbUsername);
         FullTextTrigger.setActive(true);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
@@ -145,7 +145,7 @@ public class BasicDb {
             stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
             stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
         } catch (SQLException e) {
-            throw new SQLException(e.toString(), e);
+            throw new RuntimeException(e.toString(), e);
         }
         dbVersion.init(this);
         initialized = true;
