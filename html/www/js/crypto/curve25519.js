@@ -258,52 +258,68 @@ var curve25519 = function () {
         }
     }
 
+    // TODO
+    function is_overflow_java(x) {
+        return (
+            ((x._0.greater(P26) - 19)) &&
+            ((x._1.and(x._3).and(x._5).add(x._7).add(x._9)).equals(P25)) &&
+            ((x._2.and(x._4).and(x._6).and(x._8)).equals(P26))
+        ) || (x._9.greater(P25));
+    }
+
     function packJava(x, m) {
         var ld = 0, ud = 0;
         var t;
-        ld = (is_overflow(x) ? 1 : 0) - ((x._9 < 0) ? 1 : 0);
-        ud = ld * -(P25 + 1);
-        ld *= 19;
-        t = ld + x._0 + (x._1 << 26);
+        ld = new bigInt((is_overflow_java(x) ? 1 : 0) - ((x._9.lesser(0)) ? 1 : 0));
+
+        ud = ld.multiply((bigInt(-P25).add(1)));
+        ld = ld.multiply(19);
+        console.log('ud : ', ud);
+
+        t = ld.add(x._0).add(x._1.shiftLeft(26));
+
         m[0] = t;
-        m[1] = (t >> 8);
-        m[2] = (t >> 16);
-        m[3] = (t >> 24);
-        t = (t >> 32) + (x._2 << 19);
+        m[1] = (t.shiftRight(8));
+
+        m[2] = (t.shiftRight(16));
+        m[3] = (t.shiftRight(24));
+        t = (t.shiftRight(32)).add(x._2.shiftLeft(19));
         m[4] = t;
-        m[5] = (t >> 8);
-        m[6] = (t >> 16);
-        m[7] = (t >> 24);
-        t = (t >> 32) + (x._3 << 13);
+        m[5] = (t.shiftRight(8));
+        m[6] = (t.shiftRight(16));
+        m[7] = (t.shiftRight(24));
+        t = (t.shiftRight(32)).add(x._3.shiftLeft(13));
         m[8] =   t;
-        m[9] =   (t >> 8);
-        m[10] =  (t >> 16);
-        m[11] =  (t >> 24);
-        t = (t >> 32) + (x._4 << 6);
+        m[9] =   (t.shiftRight(8));
+        m[10] =  (t.shiftRight(16));
+        m[11] =  (t.shiftRight(24));
+        t = (t.shiftRight(32)).add(x._4.shiftLeft(6));
         m[12] = t;
-        m[13] = (t >> 8);
-        m[14] = (t >> 16);
-        m[15] = (t >> 24);
-        t = (t >> 32) + x._5 + (x._6 << 25);
+        m[13] = (t.shiftRight(8));
+        m[14] = (t.shiftRight(16));
+        m[15] = (t.shiftRight(24));
+        t = (t.shiftRight(32)).add(x._5).add(x._6.shiftLeft(25));
         m[16] = t;
-        m[17] = (t >> 8);
-        m[18] = (t >> 16);
-        m[19] = (t >> 24);
-        t = (t >> 32) + (x._7 << 19);
+        console.log(t);
+        m[17] = (t.shiftRight(8));
+        m[18] = (t.shiftRight(16));
+        m[19] = (t.shiftRight(24));
+
+        t = (t.shiftRight(32)).add(x._7.shiftLeft(19));
         m[20] = t;
-        m[21] = (t >> 8);
-        m[22] = (t >> 16);
-        m[23] = (t >> 24);
-        t = (t >> 32) + (x._8 << 12);
+        m[21] = (t.shiftRight(8));
+        m[22] = (t.shiftRight(16));
+        m[23] = (t.shiftRight(24));
+        t = (t.shiftRight(32)).add(x._8.shiftLeft(12));
         m[24] = t;
-        m[25] = (t >> 8);
-        m[26] = (t >> 16);
-        m[27] = (t >> 24);
-        t = (t >> 32) + ((x._9 + ud) << 6);
+        m[25] = (t.shiftRight(8));
+        m[26] = (t.shiftRight(16));
+        m[27] = (t.shiftRight(24));
+        t = (t.shiftRight(32)).add((x._9.add(ud)).shiftLeft(6));
         m[28] =  t;
-        m[29] =  (t >> 8);
-        m[30] =  (t >> 16);
-        m[31] =  (t >> 24);
+        m[29] =  (t.shiftRight(8));
+        m[30] =  (t.shiftRight(16));
+        m[31] =  (t.shiftRight(24));
     }
 
     //endregion
@@ -1401,7 +1417,9 @@ var curve25519 = function () {
         addJava : addJava,
         subJava : subJava,
         sqrJava: sqrJava,
-        recipJava : recipJava
+        recipJava : recipJava,
+        packJava : packJava,
+        is_overflow_java : is_overflow_java
 
     };
 }();
@@ -1447,99 +1465,140 @@ var long10 = function(arr) {
 
 
 // Ready!!
-QUnit.test("addJava", function (assert) {
-    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-    var xy = long10();
+// QUnit.test("addJava", function (assert) {
+//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+//     var xy = long10();
+//
+//     var temp = curve25519.addJava(xy, x, y);
+//
+//     xy = Object.values(xy);
+//     xy = xy.map(function(i) {
+//
+//         return i['value'];
+//     });
+//
+//     console.log('addJava :[' + xy.toString() + ']');
+//
+//     assert.deepEqual(xy, [14000, 16000, 18000, 20000, 22000, 24000, 26000,28000, 30000, 32000]);
+// });
+//
+// // Ready!!
+// QUnit.test("subJava", function (assert) {
+//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+//     var xy = long10();
+//
+//     var temp = curve25519.subJava(xy, x, y);
+//
+//     xy = Object.values(xy);
+//     xy = xy.map(function(i) {
+//         return i['value'];
+//     });
+//
+//     console.log('subJava :[' + xy.toString() + ']');
+//
+//     assert.deepEqual(xy, [-10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000 ]);
+// });
+//
+// // Development
+// QUnit.test("mulJava", function (assert) {
+//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+//     var xy = long10();
+//
+//     var temp = curve25519.mulJava(xy, x, y);
+//
+//     xy = Object.values(xy);
+//     xy = xy.map(function(i) {
+//         return i['value'];
+//     });
+//
+//
+//     console.log('mulJava :[' + xy.toString() + ']');
+//
+//
+//     assert.deepEqual(xy, [48773799, 20865339, 11427004, 27705909, 58870161, 30257923, 42212139, 18739108, 13888390, 16921620]);
+// });
+//
+// // Development
+// QUnit.test("sqrJava", function (assert) {
+//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+//     var xy = long10();
+//
+//     var temp = curve25519.sqrJava(x, y);
+//
+//     x = Object.values(x);
+//     console.log(x);
+//     x = x.map(function(i) {
+//         return i['value'];
+//     });
+//
+//     console.log('sqrJava :[' + x.toString() + ']');
+//
+//
+//     assert.deepEqual(x, [23182666, 27320415, 33593052, 15097837, 55426326, 16784192, 6900223, 22597206, 7559059, 22754602]);
+// });
+//
+// // Ready!!!
+// QUnit.test("recipJava", function (assert) {
+//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+//     var xy = long10();
+//
+//     var temp = curve25519.recipJava(xy, x, y);
+//
+//     xy = Object.values(xy);
+//     xy = xy.map(function(i) {
+//         return i['value'];
+//     });
+//
+//
+//     console.log('recipJava :[' + xy.toString() + ']');
+//
+//
+//     assert.deepEqual(xy, [28752729, 24156288, 50485493, 28444979, 25105293, 5300205, 14135273, 33260211, 43142049, 12499538]);
+// });
 
-    var temp = curve25519.addJava(xy, x, y);
-
-    xy = Object.values(xy);
-    xy = xy.map(function(i) {
-
-        return i['value'];
-    });
-
-    console.log('addJava :[' + xy.toString() + ']');
-
-    assert.deepEqual(xy, [14000, 16000, 18000, 20000, 22000, 24000, 26000,28000, 30000, 32000]);
-});
-
-// Ready!!
-QUnit.test("subJava", function (assert) {
-    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-    var xy = long10();
-
-    var temp = curve25519.subJava(xy, x, y);
-
-    xy = Object.values(xy);
-    xy = xy.map(function(i) {
-        return i['value'];
-    });
-
-    console.log('subJava :[' + xy.toString() + ']');
-
-    assert.deepEqual(xy, [-10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000 ]);
-});
-
-// Development
-QUnit.test("mulJava", function (assert) {
-    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-    var xy = long10();
-
-    var temp = curve25519.mulJava(xy, x, y);
-
-    xy = Object.values(xy);
-    xy = xy.map(function(i) {
-        return i['value'];
-    });
+// Ready!!!
+// QUnit.test("packJava", function (assert) {
+//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y = [] ;
+//     var xy = long10();
+//
+//     var temp = curve25519.packJava(x, y);
+//
+//     y = Object.values(y);
+//     y = y.map(function(i) {
+//         return i['value'];
+//     });
+//
+//     y = new Int8Array(y);
+//     y = Object.values(y);
+//     var testArray = [-48, 7, 0, -32, 46, 0, 0, 125, 0, 0, 113, 2, 0, -36, 5, 0, 88, 27, 0, -128, 62, 0, 64, 25, 1, 0, 113, 2, 0, -66, 10, 0];
+//
+//     console.log('packJava      :[' + y.toString() + ']');
+//     console.log('packJava test :[' + testArray.toString() + ']');
+//
+//     assert.deepEqual(y, testArray);
+// });
 
 
-    console.log('mulJava :[' + xy.toString() + ']');
-
-
-    assert.deepEqual(xy, [48773799, 20865339, 11427004, 27705909, 58870161, 30257923, 42212139, 18739108, 13888390, 16921620]);
-});
-
-// Development
-QUnit.test("sqrJava", function (assert) {
-    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-    var xy = long10();
-
-    var temp = curve25519.sqrJava(x, y);
-
-    x = Object.values(x);
-    console.log(x);
-    x = x.map(function(i) {
-        return i['value'];
-    });
-
-    console.log('sqrJava :[' + x.toString() + ']');
-
-
-    assert.deepEqual(x, [23182666, 27320415, 33593052, 15097837, 55426326, 16784192, 6900223, 22597206, 7559059, 22754602]);
-});
-
-// Development
-QUnit.test("recipJava", function (assert) {
-    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-    var xy = long10();
-
-    var temp = curve25519.recipJava(xy, x, y);
-
-    xy = Object.values(xy);
-    xy = xy.map(function(i) {
-        return i['value'];
-    });
-
-
-    console.log('recipJava :[' + xy.toString() + ']');
-
-
-    assert.deepEqual(xy, [28752729, 24156288, 50485493, 28444979, 25105293, 5300205, 14135273, 33260211, 43142049, 12499538]);
-});
-
+// Ready!!!
+// QUnit.test("is_overflow_java", function (assert) {
+//     var x1  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, '1100000000000000000']);
+//     var x2 = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 110000]);
+//
+//     var temp1 = curve25519.is_overflow_java(x1);
+//     var temp2 = curve25519.is_overflow_java(x2);
+//
+//
+//
+//     console.log('is_overflow_java greater :[' + x1.toString() + ']');
+//     console.log('is_overflow_java less    :[' + x2.toString() + ']');
+//
+//
+//     assert.deepEqual(temp1, true);
+//     assert.deepEqual(temp2, false);
+// });
