@@ -613,6 +613,18 @@ var curve25519 = function () {
         return x2;
     };
 
+    function cpyJava(out, inp) {
+        out._0 = inp._0;
+        out._1 = inp._1;
+        out._2 = inp._2;
+        out._3 = inp._3;
+        out._4 = inp._4;
+        out._5 = inp._5;
+        out._6 = inp._6;
+        out._7 = inp._7;
+        out._8 = inp._8;
+        out._9 = inp._9;
+    }
 
     //endregion
 
@@ -1419,7 +1431,8 @@ var curve25519 = function () {
         sqrJava: sqrJava,
         recipJava : recipJava,
         packJava : packJava,
-        is_overflow_java : is_overflow_java
+        is_overflow_java : is_overflow_java,
+        cpyJava : cpyJava
 
     };
 }();
@@ -1602,3 +1615,18 @@ var long10 = function(arr) {
 //     assert.deepEqual(temp1, true);
 //     assert.deepEqual(temp2, false);
 // });
+
+// // Ready!!!
+// QUnit.test("cpyJava", function (assert) {
+//     var x1  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 1100000]);
+//     var x2 =  long10();
+//
+//     var temp1 = curve25519.cpyJava(x2, x1);
+//
+//     assert.deepEqual(x2, x1);
+//     x1._5 = bigInt(0);
+//     assert.notDeepEqual(x2, x1);
+//
+// });
+
+
