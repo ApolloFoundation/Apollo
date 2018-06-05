@@ -345,6 +345,19 @@ var curve25519 = function () {
             d[i] = 0;
     }
 
+    function setJava(out, inp) {
+        out._0 = inp;
+        out._1 = bigInt(0);
+        out._2 = bigInt(0);
+        out._3 = bigInt(0);
+        out._4 = bigInt(0);
+        out._5 = bigInt(0);
+        out._6 = bigInt(0);
+        out._7 = bigInt(0);
+        out._8 = bigInt(0);
+        out._9 = bigInt(0);
+    }
+
     /* Add/subtract two numbers.  The inputs must be in reduced form, and the
      * output isn't, so to do another addition or subtraction on the output,
      * first multiply it by one to reduce it. */
@@ -1432,7 +1445,8 @@ var curve25519 = function () {
         recipJava : recipJava,
         packJava : packJava,
         is_overflow_java : is_overflow_java,
-        cpyJava : cpyJava
+        cpyJava : cpyJava,
+        setJava : setJava
 
     };
 }();
@@ -1629,4 +1643,19 @@ var long10 = function(arr) {
 //
 // });
 
+// // Ready!!!
+// QUnit.test("setJava", function (assert) {
+//     var x  = long10([1111,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+//     var y = bigInt(19) ;
+//     var testArray = [19,  0,  0,  0,  0, 0,  0,  0,  0, 0];
+//
+//     var temp = curve25519.setJava(x, y);
+//
+//     x = Object.values(x);
+//     x = x.map(function(i) {
+//         return i['value'];
+//     });
+//
+//     assert.deepEqual(x, testArray);
+// });
 
