@@ -258,6 +258,54 @@ var curve25519 = function () {
         }
     }
 
+    function packJava(x, m) {
+        var ld = 0, ud = 0;
+        var t;
+        ld = (is_overflow(x) ? 1 : 0) - ((x._9 < 0) ? 1 : 0);
+        ud = ld * -(P25 + 1);
+        ld *= 19;
+        t = ld + x._0 + (x._1 << 26);
+        m[0] = t;
+        m[1] = (t >> 8);
+        m[2] = (t >> 16);
+        m[3] = (t >> 24);
+        t = (t >> 32) + (x._2 << 19);
+        m[4] = t;
+        m[5] = (t >> 8);
+        m[6] = (t >> 16);
+        m[7] = (t >> 24);
+        t = (t >> 32) + (x._3 << 13);
+        m[8] =   t;
+        m[9] =   (t >> 8);
+        m[10] =  (t >> 16);
+        m[11] =  (t >> 24);
+        t = (t >> 32) + (x._4 << 6);
+        m[12] = t;
+        m[13] = (t >> 8);
+        m[14] = (t >> 16);
+        m[15] = (t >> 24);
+        t = (t >> 32) + x._5 + (x._6 << 25);
+        m[16] = t;
+        m[17] = (t >> 8);
+        m[18] = (t >> 16);
+        m[19] = (t >> 24);
+        t = (t >> 32) + (x._7 << 19);
+        m[20] = t;
+        m[21] = (t >> 8);
+        m[22] = (t >> 16);
+        m[23] = (t >> 24);
+        t = (t >> 32) + (x._8 << 12);
+        m[24] = t;
+        m[25] = (t >> 8);
+        m[26] = (t >> 16);
+        m[27] = (t >> 24);
+        t = (t >> 32) + ((x._9 + ud) << 6);
+        m[28] =  t;
+        m[29] =  (t >> 8);
+        m[30] =  (t >> 16);
+        m[31] =  (t >> 24);
+    }
+
     //endregion
 
     function createUnpackedArray () {
@@ -288,6 +336,7 @@ var curve25519 = function () {
     var sub = c255lsubmodp;
 
     var addJava = c255laddmodpJava;
+    var subJava = c255lsubmodpJava;
 
     /* Multiply a number by a small integer in range -185861411 .. 185861411.
      * The output is in reduced form, the input x need not be.  x and xy may point
@@ -301,6 +350,8 @@ var curve25519 = function () {
 
     /* Square a number.  Optimization of  mul25519(x2, x, x)  */
     var sqr = c255lsqrmodp;
+    var sqrJava = sqrJava;
+    // var sqrJava = c255lsqrmodpJava;
 
     /* Calculates a reciprocal.  The output is in reduced form, the inputs need not
      * be.  Simply calculates  y = x^(p-2)  so it's not too fast. */
@@ -377,6 +428,78 @@ var curve25519 = function () {
         }
     }
 
+    function recipJava (y, x, sqrtassist) {
+        var t0 = createUnpackedArray();
+        var t1 = createUnpackedArray();
+        var t2 = createUnpackedArray();
+        var t3 = createUnpackedArray();
+        var t4 = createUnpackedArray();
+
+        /* the chain for x^(2^255-21) is straight from djb's implementation */
+        var i;
+        sqrJava(t1, x); /*  2 === 2 * 1	*/
+        sqrJava(t2, t1); /*  4 === 2 * 2	*/
+        sqrJava(t0, t2); /*  8 === 2 * 4	*/
+        mulJava(t2, t0, x); /*  9 === 8 + 1	*/
+        mulJava(t0, t2, t1); /* 11 === 9 + 2	*/
+        sqrJava(t1, t0); /* 22 === 2 * 11	*/
+        mulJava(t3, t1, t2); /* 31 === 22 + 9 === 2^5   - 2^0	*/
+        sqrJava(t1, t3); /* 2^6   - 2^1	*/
+        sqrJava(t2, t1); /* 2^7   - 2^2	*/
+        sqrJava(t1, t2); /* 2^8   - 2^3	*/
+        sqrJava(t2, t1); /* 2^9   - 2^4	*/
+        sqrJava(t1, t2); /* 2^10  - 2^5	*/
+        mulJava(t2, t1, t3); /* 2^10  - 2^0	*/
+        sqrJava(t1, t2); /* 2^11  - 2^1	*/
+        sqrJava(t3, t1); /* 2^12  - 2^2	*/
+        for (i = 1; i < 5; i++) {
+            sqrJava(t1, t3);
+            sqrJava(t3, t1);
+        } /* t3 */ /* 2^20  - 2^10	*/
+        mulJava(t1, t3, t2); /* 2^20  - 2^0	*/
+        sqrJava(t3, t1); /* 2^21  - 2^1	*/
+        sqrJava(t4, t3); /* 2^22  - 2^2	*/
+        for (i = 1; i < 10; i++) {
+            sqrJava(t3, t4);
+            sqrJava(t4, t3);
+        } /* t4 */ /* 2^40  - 2^20	*/
+        mulJava(t3, t4, t1); /* 2^40  - 2^0	*/
+        for (i = 0; i < 5; i++) {
+            sqrJava(t1, t3);
+            sqrJava(t3, t1);
+        } /* t3 */ /* 2^50  - 2^10	*/
+        mulJava(t1, t3, t2); /* 2^50  - 2^0	*/
+        sqrJava(t2, t1); /* 2^51  - 2^1	*/
+        sqrJava(t3, t2); /* 2^52  - 2^2	*/
+        for (i = 1; i < 25; i++) {
+            sqrJava(t2, t3);
+            sqrJava(t3, t2);
+        } /* t3 */ /* 2^100 - 2^50 */
+        mulJava(t2, t3, t1); /* 2^100 - 2^0	*/
+        sqrJava(t3, t2); /* 2^101 - 2^1	*/
+        sqrJava(t4, t3); /* 2^102 - 2^2	*/
+        for (i = 1; i < 50; i++) {
+            sqrJava(t3, t4);
+            sqrJava(t4, t3);
+        } /* t4 */ /* 2^200 - 2^100 */
+        mulJava(t3, t4, t2); /* 2^200 - 2^0	*/
+        for (i = 0; i < 25; i++) {
+            sqrJava(t4, t3);
+            sqrJava(t3, t4);
+        } /* t3 */ /* 2^250 - 2^50	*/
+        mulJava(t2, t3, t1); /* 2^250 - 2^0	*/
+        sqrJava(t1, t2); /* 2^251 - 2^1	*/
+        sqrJava(t2, t1); /* 2^252 - 2^2	*/
+        if (sqrtassist !== 0) {
+            mulJava(y, x, t2); /* 2^252 - 3 */
+        } else {
+            sqrJava(t1, t2); /* 2^253 - 2^3	*/
+            sqrJava(t2, t1); /* 2^254 - 2^4	*/
+            sqrJava(t1, t2); /* 2^255 - 2^5	*/
+            mulJava(y, t1, t0); /* 2^255 - 21	*/
+        }
+    }
+
     /* checks if x is "negative", requires reduced input */
     function is_negative (x) {
         var isOverflowOrNegative = is_overflow(x) || x[9] < 0;
@@ -398,6 +521,82 @@ var curve25519 = function () {
         mul(t1, v, t2); /* t1 = v(2uv^2-1)	*/
         mul(x, u, t1); /* x = uv(2uv^2-1)	*/
     }
+
+    function sqrJava(x2, x) {
+        var
+        x_0=x._0,x_1=x._1,x_2=x._2,x_3=x._3,x_4=x._4,
+            x_5=x._5,x_6=x._6,x_7=x._7,x_8=x._8,x_9=x._9;
+        var t;
+        t = (x_4.multiply(x_4))
+            .add((bigInt(2).multiply((x_0.multiply(x_8)).add(x_2.multiply(x_6)))))
+            .add((bigInt(38).multiply(x_9*x_9)))
+            .add((bigInt(4).multiply((x_1.multiply(x_7)).add(x_3.multiply(x_5)))));
+
+
+        x2._8 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
+        t = (t.shiftRight(26))
+            .add((bigInt(2).multiply((x_0.multiply(x_9)).add(x_1.multiply(x_8)).add(x_2.multiply(x_7)).add(x_3.multiply(x_6)).add(x_4.multiply(x_5)))));
+
+
+        x2._9 = (t.and((bigInt(1).shiftLeft(25)).minus(1)));
+        t = bigInt(19).multiply(t.shiftRight(25)).add(x_0.multiply(x_0))
+            .add((bigInt(38).multiply((x_2.multiply(x_8)).add(x_4.multiply(x_6)).add(x_5.multiply(x_5)))))
+            .add((bigInt(76).multiply((x_1.multiply(x_9)).add(x_3.multiply(x_7)))));
+
+
+        x2._0 = (t.and((bigInt(1).shiftLeft(26).minus(1))));
+        t = (t.shiftRight(26))
+            .add(bigInt(2) .multiply(x_0 .multiply(x_1)))
+            .add(bigInt(38).multiply((x_2.multiply(x_9)).add(x_3.multiply(x_8)).add(x_4.multiply(x_7)).add(x_5.multiply(x_6))));
+
+
+        x2._1 = (t.and((bigInt(1).shiftLeft(25).minus(1))));
+        t = (t.shiftRight(25))
+            .add((bigInt(19).multiply((x_6.multiply(x_6)))))
+            .add((bigInt(2 ).multiply((x_0.multiply(x_2)) + (x_1.multiply(x_1)))))
+            .add((bigInt(38).multiply( x_4.multiply(x_8))))
+            .add((bigInt(76).multiply((x_3.multiply(x_9)) + (x_5.multiply(x_7)))));
+
+        console.log();
+
+
+        x2._2 = (t.and((bigInt(1).shiftLeft(26).minus(1))));
+        t = (t.shiftRight(26))
+            .add(bigInt(2 ) .multiply((x_0.multiply(x_3)).add(x_1.multiply(x_2))))
+            .add(bigInt(38) .multiply((x_4.multiply(x_9)).add(x_5.multiply(x_8)).add(x_6.multiply(x_7))));
+
+        x2._3 = (t.and((bigInt(1).shiftLeft(25).minus(1))));
+        t = (t.shiftRight(25)).add(x_2.multiply(x_2))
+            .add((bigInt(2 ).multiply(x_0.multiply(x_4))))
+            .add((bigInt(38).multiply(x_6.multiply(x_8).add(x_7.multiply(x_7)))))
+            .add((bigInt(4 ).multiply(x_1.multiply(x_3))))
+            .add((bigInt(76).multiply(x_5.multiply(x_9))));
+
+        x2._4 = (t.and((bigInt(1).shiftLeft(26).minus(1))));
+        t = (t.shiftRight(26))
+            .add((bigInt(2 ).multiply((x_0.multiply(x_5)).add(x_1.multiply(x_4)).add(x_2.multiply(x_3)))))
+            .add((bigInt(38).multiply((x_6.multiply(x_9)).add(x_7.multiply(x_8)))));
+
+        x2._5 = (t.and((bigInt(1).shiftLeft(25).minus(1))));
+        t = (t.shiftRight(25))
+            .add((bigInt(19).multiply(x_8 .multiply(x_8))))
+            .add((bigInt(2 ).multiply((x_0.multiply(x_6)).add((x_2.multiply(x_4)).add((x_3.multiply((x_3))))))))
+            .add((bigInt(4 ).multiply(x_1 .multiply(x_5))))
+            .add((bigInt(76).multiply(x_7 .multiply(x_9))));
+
+        x2._6 = (t.and((bigInt(1).shiftLeft(26).minus(1))));
+        t = (t.shiftRight(26))
+            .add((bigInt(2 ).multiply(((x_0.multiply(x_7)).add(x_1.multiply(x_6)).add(x_2.multiply(x_5)).add(x_3.multiply(x_4))))))
+            .add((bigInt(38).multiply(x_8  .multiply(x_9))));
+
+        x2._7 = (t.and((bigInt(1).shiftLeft(25).minus(1))));
+        t = (t.shiftRight(25)).add(x2._8);
+
+        x2._8 = (t.and((bigInt(1).shiftLeft(26).minus(1))));
+        x2._9 = x2._9.add(t.shiftRight(26));
+        return x2;
+    };
+
 
     //endregion
 
@@ -513,12 +712,17 @@ var curve25519 = function () {
         var
         y_0=y._0,y_1=y._1,y_2=y._2,y_3=y._3,y_4=y._4,
             y_5=y._5,y_6=y._6,y_7=y._7,y_8=y._8,y_9=y._9;
+
+        //
         var t;
         t = (x_0.multiply(y_8)).add(x_2.multiply(y_6)).add(x_4.multiply(y_4)).add(x_6.multiply(y_2))
             .add(x_8.multiply(y_0)).add(bigInt(2).multiply((x_1.multiply(y_7)).add(x_3.multiply(y_5)).add
                 (x_5.multiply(y_3)).add(x_7.multiply(y_1)))).add(bigInt(38).multiply(x_9.multiply(y_9)));
 
-        xy._8 = t.add(bigInt(1).shiftLeft(26).minus(1));
+
+        xy._8 = t.and(bigInt(1).shiftLeft(26).minus(1));
+
+        console.log('xy._8 = ',xy._8);
 
         t = (t.shiftRight(26)).add(x_0.multiply(y_9)).add(x_1.multiply(y_8)).add(x_2.multiply(y_7))
                 .add(x_3.multiply(y_6)).add(x_4.multiply(y_5)).add(x_5.multiply(y_4))
@@ -526,77 +730,76 @@ var curve25519 = function () {
                 .add(x_9.multiply(y_0));
 
         xy._9 = (t.and(bigInt(1).shiftLeft(25).minus(1)));
-        console.log('x: ', y._9);
 
-        t = (x_0.multiply(y_0)).add(19).multiply((t.shiftRight(25)).add(x_2.multiply(y_8)).add(x_4.multiply(y_6))
-                .add(x_6.multiply(y_4)).add(x_8.multiply(y_2))).add(38)
+        console.log('xy._9 = ',xy._9);
+
+        t = (x_0.multiply(y_0)).add((bigInt(19)).multiply((t.shiftRight(25)).add(x_2.multiply(y_8)).add(x_4.multiply(y_6))
+                .add(x_6.multiply(y_4)).add(x_8.multiply(y_2)))).add(bigInt(38)
                 .multiply((x_1.multiply(y_9)).add(x_3.multiply(y_7)).add(x_5.multiply(y_5))
-                .add(x_7.multiply(y_3)).add(x_9.multiply(y_1)));
+                .add(x_7.multiply(y_3)).add(x_9.multiply(y_1))));
+
 
         xy._0 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
 
-        t = (t.shiftRight(26)).add(x_0.multiply(y_1)).add(x_1.multiply(y_0)).add(19).multiply((x_2.multiply(y_9))
+        console.log('xy._0 = ',xy._0);
+
+        t = (t.shiftRight(26)).add(x_0.multiply(y_1)).add(x_1.multiply(y_0)).add((bigInt(19)).multiply((x_2.multiply(y_9))
                 .add(x_3.multiply(y_8)).add(x_4.multiply(y_7)).add(x_5.multiply(y_6))
                 .add(x_6.multiply(y_5)).add(x_7.multiply(y_4)).add(x_8.multiply(y_3))
-                .add(x_9.multiply(y_2)));
+                .add(x_9.multiply(y_2))));
+
 
         xy._1 = (t.and((bigInt(1).shiftLeft(25)).minus(1)));
 
-        t = (t.shiftRight(25)).add(x_0.multiply(y_2)).add(x_2.multiply(y_0)).add(19).multiply((x_4.multiply(y_8))
-                .add(x_6.multiply(y_6)).add(x_8.multiply(y_4))).add(2).multiply(x_1.multiply(y_1))
-                .add(38).multiply((x_3.multiply(y_9)).add(x_5.multiply(y_7))
-                .add(x_7.multiply(y_5)).add(x_9.multiply(y_3)));
+        t = (t.shiftRight(25)).add(x_0.multiply(y_2)).add(x_2.multiply(y_0)).add((bigInt(19)).multiply((x_4.multiply(y_8))
+                .add(x_6.multiply(y_6)).add(x_8.multiply(y_4))))
+                .add((bigInt(2)).multiply(x_1.multiply(y_1)))
+                .add((bigInt(38)).multiply((x_3.multiply(y_9)).add(x_5.multiply(y_7))
+                .add(x_7.multiply(y_5)).add(x_9.multiply(y_3))));
+
 
         xy._2 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
 
         t = (t.shiftRight(26)).add(x_0.multiply(y_3)).add(x_1.multiply(y_2)).add(x_2.multiply(y_1))
-                .add(x_3.multiply(y_0)).add(19).multiply((x_4.multiply(y_9)).add(x_5.multiply(y_8))
+                .add(x_3.multiply(y_0)).add((bigInt(19)).multiply((x_4.multiply(y_9)).add(x_5.multiply(y_8))
                 .add(x_6.multiply(y_7)).add(x_7.multiply(y_6))
-                .add(x_8.multiply(y_5)).add(x_9.multiply(y_4)));
+                .add(x_8.multiply(y_5)).add(x_9.multiply(y_4))));
 
         xy._3 = (t.and((bigInt(1).shiftLeft(25)).minus(1)));
 
-        t = (t.shiftRight(25)).add(x_0.multiply(y_4)).add(x_2.multiply(y_2)).add(x_4.multiply(y_0)).add(19)
-                .multiply((x_6.multiply(y_8)).add(x_8.multiply(y_6))).add(2).multiply((x_1.multiply(y_3))
-                .add(x_3*y_1)).add(38).multiply((x_5.multiply(y_9)).add(x_7.multiply(y_7)).add(x_9.multiply(y_5)));
+        t = (t.shiftRight(25)).add(x_0.multiply(y_4)).add(x_2.multiply(y_2)).add(x_4.multiply(y_0)).add((bigInt(19)
+                .multiply((x_6.multiply(y_8)).add(x_8.multiply(y_6)))).add((bigInt(2)).multiply((x_1.multiply(y_3))
+                .add(x_3*y_1))).add((bigInt(38)).multiply((x_5.multiply(y_9)).add(x_7.multiply(y_7)).add(x_9.multiply(y_5)))));
 
         xy._4 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
 
         t = (t.shiftRight(26)).add(x_0.multiply(y_5)).add(x_1.multiply(y_4)).add(x_2.multiply(y_3))
             .add(x_3.multiply(y_2)).add(x_4.multiply(y_1)).add(x_5.multiply(y_0))
-            .add(19).multiply((x_6.multiply(y_9)).add(x_7.multiply(y_8)).add(x_8.multiply(y_7)).add(x_9.multiply(y_6)));
+            .add((bigInt(19)).multiply((x_6.multiply(y_9)).add(x_7.multiply(y_8)).add(x_8.multiply(y_7)).add(x_9.multiply(y_6))));
 
         xy._5 = (t.and((bigInt(1).shiftLeft(25)).minus(1)));
 
         t = (t.shiftRight(25)).add(x_0.multiply(y_6)).add(x_2.multiply(y_4)).add(x_4.multiply(y_2))
-            .add(x_6.multiply(y_0)).add(19).multiply(x_8.multiply(y_8)).add(2).multiply((x_1.multiply(y_5))
-            .add(x_3.multiply(y_3)).add(x_5.multiply(y_1)))
-            .add(38).multiply((x_7.multiply(y_9)).add(x_9.multiply(y_7)));
+            .add(x_6.multiply(y_0)).add((bigInt(19)).multiply(x_8.multiply(y_8))).add((bigInt(2)).multiply((x_1.multiply(y_5))
+            .add(x_3.multiply(y_3)).add(x_5.multiply(y_1))))
+            .add((bigInt(38).multiply((x_7.multiply(y_9)).add(x_9.multiply(y_7)))));
+
 
         xy._6 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
 
         t = (t.shiftRight(26)).add(x_0.multiply(y_7)).add(x_1.multiply(y_6)).add(x_2.multiply(y_5))
             .add(x_3.multiply(y_4)).add(x_4.multiply(y_3)).add(x_5.multiply(y_2))
-            .add(x_6.multiply(y_1)).add(x_7.multiply(y_0)).add(19).multiply((x_8.multiply(y_9))
-            .add(x_9.multiply(y_8)));
+            .add(x_6.multiply(y_1)).add(x_7.multiply(y_0)).add((bigInt(19)).multiply((x_8.multiply(y_9))
+            .add(x_9.multiply(y_8))));
 
         xy._7 = (t.and((bigInt(1).shiftLeft(25)).minus(1)));
 
         t = (t.shiftRight(25)).add(xy._8);
 
-        xy._8 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
-        xy._9 += (t.shiftRight(26));
+        console.log('t: ',t);
 
-        console.log('x0: ', xy._0);
-        console.log('x1: ', xy._1);
-        console.log('x2: ', xy._2);
-        console.log('x3: ', xy._3);
-        console.log('x4: ', xy._4);
-        console.log('x5: ', xy._5);
-        console.log('x6: ', xy._6);
-        console.log('x7: ', xy._7);
-        console.log('x8: ', xy._8);
-        console.log('x9: ', xy._9);
+        xy._8 = (t.and((bigInt(1).shiftLeft(26)).minus(1)));
+        xy._9 =  xy._9.add(t.shiftRight(26));
 
         return xy;
     }
@@ -642,11 +845,11 @@ var curve25519 = function () {
 
     // TODO: migrate to bigint
     function c255lsubmodpJava (xy, x, y) {
-        xy._0 = x._0 - y._0;    xy._1 = x._1 - y._1;
-        xy._2 = x._2 - y._2;    xy._3 = x._3 - y._3;
-        xy._4 = x._4 - y._4;    xy._5 = x._5 - y._5;
-        xy._6 = x._6 - y._6;    xy._7 = x._7 - y._7;
-        xy._8 = x._8 - y._8;    xy._9 = x._9 - y._9;
+        xy._0 = x._0.minus(y._0);    xy._1 = x._1.minus(y._1);
+        xy._2 = x._2.minus(y._2);    xy._3 = x._3.minus(y._3);
+        xy._4 = x._4.minus(y._4);    xy._5 = x._5.minus(y._5);
+        xy._6 = x._6.minus(y._6);    xy._7 = x._7.minus(y._7);
+        xy._8 = x._8.minus(y._8);    xy._9 = x._9.minus(y._9);
     }
 
     function c255lmulasmall (r, a, m) {
@@ -730,6 +933,75 @@ var curve25519 = function () {
         add(t, t, C1);
         mul(y2, t, x);
     }
+
+
+    // function mul( xy,  x,  y) {
+    //     /* sahn0:
+    //      * Using local variables to avoid class access.
+    //      * This seem to improve performance a bit...
+    //      */
+    //     long
+    //     x_0=x._0,x_1=x._1,x_2=x._2,x_3=x._3,x_4=x._4,
+    //         x_5=x._5,x_6=x._6,x_7=x._7,x_8=x._8,x_9=x._9;
+    //     long
+    //     y_0=y._0,y_1=y._1,y_2=y._2,y_3=y._3,y_4=y._4,
+    //         y_5=y._5,y_6=y._6,y_7=y._7,y_8=y._8,y_9=y._9;
+    //     long t;
+    //     t = (x_0*y_8) + (x_2*y_6) + (x_4*y_4) + (x_6*y_2) +
+    //         (x_8*y_0) + 2 * ((x_1*y_7) + (x_3*y_5) +
+    //             (x_5*y_3) + (x_7*y_1)) + 38 *
+    //         (x_9*y_9);
+    //     xy._8 = (t & ((1 << 26) - 1));
+    //     t = (t >> 26) + (x_0*y_9) + (x_1*y_8) + (x_2*y_7) +
+    //         (x_3*y_6) + (x_4*y_5) + (x_5*y_4) +
+    //         (x_6*y_3) + (x_7*y_2) + (x_8*y_1) +
+    //         (x_9*y_0);
+    //     xy._9 = (t & ((1 << 25) - 1));
+    //     t = (x_0*y_0) + 19 * ((t >> 25) + (x_2*y_8) + (x_4*y_6)
+    //         + (x_6*y_4) + (x_8*y_2)) + 38 *
+    //         ((x_1*y_9) + (x_3*y_7) + (x_5*y_5) +
+    //             (x_7*y_3) + (x_9*y_1));
+    //     xy._0 = (t & ((1 << 26) - 1));
+    //     t = (t >> 26) + (x_0*y_1) + (x_1*y_0) + 19 * ((x_2*y_9)
+    //         + (x_3*y_8) + (x_4*y_7) + (x_5*y_6) +
+    //         (x_6*y_5) + (x_7*y_4) + (x_8*y_3) +
+    //         (x_9*y_2));
+    //     xy._1 = (t & ((1 << 25) - 1));
+    //     t = (t >> 25) + (x_0*y_2) + (x_2*y_0) + 19 * ((x_4*y_8)
+    //         + (x_6*y_6) + (x_8*y_4)) + 2 * (x_1*y_1)
+    //         + 38 * ((x_3*y_9) + (x_5*y_7) +
+    //             (x_7*y_5) + (x_9*y_3));
+    //     xy._2 = (t & ((1 << 26) - 1));
+    //     t = (t >> 26) + (x_0*y_3) + (x_1*y_2) + (x_2*y_1) +
+    //         (x_3*y_0) + 19 * ((x_4*y_9) + (x_5*y_8) +
+    //             (x_6*y_7) + (x_7*y_6) +
+    //             (x_8*y_5) + (x_9*y_4));
+    //     xy._3 = (t & ((1 << 25) - 1));
+    //     t = (t >> 25) + (x_0*y_4) + (x_2*y_2) + (x_4*y_0) + 19 *
+    //         ((x_6*y_8) + (x_8*y_6)) + 2 * ((x_1*y_3) +
+    //             (x_3*y_1)) + 38 *
+    //         ((x_5*y_9) + (x_7*y_7) + (x_9*y_5));
+    //     xy._4 = (t & ((1 << 26) - 1));
+    //     t = (t >> 26) + (x_0*y_5) + (x_1*y_4) + (x_2*y_3) +
+    //         (x_3*y_2) + (x_4*y_1) + (x_5*y_0) + 19 *
+    //         ((x_6*y_9) + (x_7*y_8) + (x_8*y_7) +
+    //             (x_9*y_6));
+    //     xy._5 = (t & ((1 << 25) - 1));
+    //     t = (t >> 25) + (x_0*y_6) + (x_2*y_4) + (x_4*y_2) +
+    //         (x_6*y_0) + 19 * (x_8*y_8) + 2 * ((x_1*y_5) +
+    //             (x_3*y_3) + (x_5*y_1)) + 38 *
+    //         ((x_7*y_9) + (x_9*y_7));
+    //     xy._6 = (t & ((1 << 26) - 1));
+    //     t = (t >> 26) + (x_0*y_7) + (x_1*y_6) + (x_2*y_5) +
+    //         (x_3*y_4) + (x_4*y_3) + (x_5*y_2) +
+    //         (x_6*y_1) + (x_7*y_0) + 19 * ((x_8*y_9) +
+    //             (x_9*y_8));
+    //     xy._7 = (t & ((1 << 25) - 1));
+    //     t = (t >> 25) + xy._8;
+    //     xy._8 = (t & ((1 << 26) - 1));
+    //     xy._9 += (t >> 26);
+    //     return xy;
+    // }
 
     /* P = kG   and  s = sign(P)/k  */
     function core (Px, s, k, Gx) {
@@ -823,13 +1095,13 @@ var curve25519 = function () {
     * Gx = publicKey
     * */
     function coreJava (Px, s, k, Gx) {
-        var dx = new Array.long10();
-        var t1 = new Array.long10();
-        var t2 = new Array.long10();
-        var t3 = new Array.long10();
-        var t4 = new Array.long10();
-        var x = [new Array.long10(), new Array.long10()];
-        var z = [new Array.long10(), new Array.long10()];
+        var dx = new long10();
+        var t1 = new long10();
+        var t2 = new long10();
+        var t3 = new long10();
+        var t4 = new long10();
+        var x = [new long10(), new long10()];
+        var z = [new long10(), new long10()];
         var i, j;
 
         /* unpack the base */
@@ -1127,6 +1399,9 @@ var curve25519 = function () {
         keygen: keygen,
         mulJava: mulJava,
         addJava : addJava,
+        subJava : subJava,
+        sqrJava: sqrJava,
+        recipJava : recipJava
 
     };
 }();
@@ -1170,37 +1445,45 @@ var long10 = function(arr) {
 
 // Tests
 
-// QUnit.test("mulJava", function (assert) {
-//     var x  = Array.long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = Array.long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = Array.long10();
-//
-//     var temp = curve25519.mulJava(xy, x, y);
-//
-//     console.log(temp);
-//
-//
-//     assert.equal('1', '1');
-// });
 
 // Ready!!
-// QUnit.test("addJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = long10();
-//
-//     var temp = curve25519.addJava(xy, x, y);
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//         console.log(i['value']);
-//
-//         return i['value'];
-//     });
-//
-//     assert.deepEqual(xy, [14000, 16000, 18000, 20000, 22000, 24000, 26000,28000, 30000, 32000]);
-// });
+QUnit.test("addJava", function (assert) {
+    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+    var xy = long10();
 
+    var temp = curve25519.addJava(xy, x, y);
+
+    xy = Object.values(xy);
+    xy = xy.map(function(i) {
+
+        return i['value'];
+    });
+
+    console.log('addJava :[' + xy.toString() + ']');
+
+    assert.deepEqual(xy, [14000, 16000, 18000, 20000, 22000, 24000, 26000,28000, 30000, 32000]);
+});
+
+// Ready!!
+QUnit.test("subJava", function (assert) {
+    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+    var xy = long10();
+
+    var temp = curve25519.subJava(xy, x, y);
+
+    xy = Object.values(xy);
+    xy = xy.map(function(i) {
+        return i['value'];
+    });
+
+    console.log('subJava :[' + xy.toString() + ']');
+
+    assert.deepEqual(xy, [-10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000 ]);
+});
+
+// Development
 QUnit.test("mulJava", function (assert) {
     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
@@ -1213,6 +1496,50 @@ QUnit.test("mulJava", function (assert) {
         return i['value'];
     });
 
-    assert.deepEqual(xy, [14000, 16000, 18000, 20000, 22000, 24000, 26000,28000, 30000, 32000]);
+
+    console.log('mulJava :[' + xy.toString() + ']');
+
+
+    assert.deepEqual(xy, [48773799, 20865339, 11427004, 27705909, 58870161, 30257923, 42212139, 18739108, 13888390, 16921620]);
+});
+
+// Development
+QUnit.test("sqrJava", function (assert) {
+    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+    var xy = long10();
+
+    var temp = curve25519.sqrJava(x, y);
+
+    x = Object.values(x);
+    console.log(x);
+    x = x.map(function(i) {
+        return i['value'];
+    });
+
+    console.log('sqrJava :[' + x.toString() + ']');
+
+
+    assert.deepEqual(x, [23182666, 27320415, 33593052, 15097837, 55426326, 16784192, 6900223, 22597206, 7559059, 22754602]);
+});
+
+// Development
+QUnit.test("recipJava", function (assert) {
+    var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
+    var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
+    var xy = long10();
+
+    var temp = curve25519.recipJava(xy, x, y);
+
+    xy = Object.values(xy);
+    xy = xy.map(function(i) {
+        return i['value'];
+    });
+
+
+    console.log('recipJava :[' + xy.toString() + ']');
+
+
+    assert.deepEqual(xy, [28752729, 24156288, 50485493, 28444979, 25105293, 5300205, 14135273, 33260211, 43142049, 12499538]);
 });
 
