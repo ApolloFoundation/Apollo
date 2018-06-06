@@ -5,7 +5,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -34,8 +34,10 @@ var NRS = (function(NRS, $) {
 	$(".modal button.btn-primary:not([data-dismiss=modal]):not([data-ignore=true]),button.btn-calculate-fee,button.scan-qr-code").click(function() {
 		var $btn = $(this);
 		var $modal = $(this).closest(".modal");
+        console.log('calsulate form 333');
         if ($btn.hasClass("scan-qr-code")) {
             var data = $btn.data();
+            console.log(data);
             NRS.scanQRCode(data.reader, function(text) {
                 $modal.find("#" + data.result).val(text);
             });
@@ -215,6 +217,7 @@ var NRS = (function(NRS, $) {
 		if (!$btn) {
 			$btn = $modal.find("button.btn-primary:not([data-dismiss=modal])");
 		}
+
 		$modal = $btn.closest(".modal");
 
 		$modal.modal("lock");
@@ -253,8 +256,10 @@ var NRS = (function(NRS, $) {
 		if (typeof formErrorFunction != "function") {
 			formErrorFunction = false;
 		}
+        console.log('continue');
 
 		var originalRequestType = requestType;
+        console.log(NRS.isRequireBlockchain(requestType));
         if (NRS.isRequireBlockchain(requestType)) {
 			if (NRS.downloadingBlockchain && !NRS.state.apiProxy) {
 				$form.find(".error_message").html($.t("error_blockchain_downloading")).show();
@@ -276,10 +281,12 @@ var NRS = (function(NRS, $) {
 
 		//TODO multi calculating
 		$form.find(":input").each(function() {
+
             if ($(this).is(":invalid")) {
 				var error = "";
 				var name = String($(this).attr("name")).replace("APL", "").replace("NQT", "").capitalize();
 				var value = $(this).val();
+
 
                 if ($(this).hasAttr("max")) {
 					if (!/^[\-\d\.]+$/.test(value)) {
@@ -384,6 +391,7 @@ var NRS = (function(NRS, $) {
 			data = NRS.getFormData($form);
 		}
         if ($btn.hasClass("btn-calculate-fee")) {
+            console.log('calculate form');
             data.calculateFee = true;
             data.feeAPL = "0";
             $form.find(".error_message").html("").hide();
@@ -699,6 +707,7 @@ var NRS = (function(NRS, $) {
 		//todo check again.. response.error
 		var formCompleteFunction;
 
+
         if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
@@ -707,6 +716,7 @@ var NRS = (function(NRS, $) {
 			}
 
 			if (!$modal.hasClass("modal-no-hide")) {
+                console.log(222);
 				$modal.modal("hide");
                 $.growl($.t("send_money_submitted"), {
                     "type": "success"
@@ -779,6 +789,7 @@ var NRS = (function(NRS, $) {
 					NRS.unlockForm($modal, $btn);
 
 					if (!$modal.hasClass("modal-no-hide")) {
+
                         $modal.modal("hide");
                         $.growl($.t("send_money_submitted"), {
                             "type": "success"
