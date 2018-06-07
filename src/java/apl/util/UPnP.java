@@ -118,6 +118,7 @@ public class UPnP {
      */
     private static void init() {
         initDone = true;
+        Apl.getRuntimeMode().updateAppStatus("UPnP initialization...");
         //
         // Discover the gateway devices on the local network
         //
