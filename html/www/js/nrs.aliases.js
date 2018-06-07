@@ -621,7 +621,7 @@ var NRS = (function (NRS, $, undefined) {
         var url = API;
         url += 'requestType=sendMoneyPrivate';
         var data = {
-            deadline:     1440,
+            deadline:     '1440',
             feeNQT:       fee + '00000000',
             amountNQT:    amount + '00000000',
             recipient :   recipient,

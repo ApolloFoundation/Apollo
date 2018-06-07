@@ -1504,7 +1504,7 @@ var NRS = (function(NRS, $, undefined) {
 
 
         var data = {
-            deadline:     1440,
+            deadline:     '1440',
             feeNQT:       fee + '00000000',
             amountNQT:    amount + '00000000',
             recipient :   recipient,
