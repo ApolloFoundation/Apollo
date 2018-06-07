@@ -62,6 +62,7 @@ var NRS = (function (NRS, $, undefined) {
                 cache: false,
                 success: function(data) {
                     data = JSON.parse(data);
+
                     if (data.errorCode) {
 
                         $('#get_private_transaction_type').modal('show');
@@ -105,6 +106,7 @@ var NRS = (function (NRS, $, undefined) {
                 .then(function (res) {
                     $('#get_private_transaction_type').modal('hide');
                     res = JSON.parse(res);
+
                     NRS.processTransactionModalData(res, isModalVisible, res.sharedKey);
                 });
 
@@ -313,6 +315,7 @@ var NRS = (function (NRS, $, undefined) {
                     data.type = "Private payment";
                 }
 
+              
                 infoTable.find("tbody").append(NRS.createInfoTable(data));
                 infoTable.show();
             } else if (transaction.type == 1) {

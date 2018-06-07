@@ -525,6 +525,7 @@ var NRS = (function (NRS, $, undefined) {
             }, data);
             return;
         }
+
         var isSchedule = false;
         if (extra) {
             data["_extra"] = extra;

@@ -158,6 +158,7 @@ body.fixed .wrapper {
   pointer-events: none !important;
   cursor: auto !important;
 }
+
 [data-transactions-pagination] .page-nav.disabled {
   display: none;
 }
@@ -165,6 +166,7 @@ body.fixed .wrapper {
 .alert-no-icon {
   margin-bottom: 25px !important;
 }
+
 /* Utility */
 /* H1 - H6 font */
 /* h1,
