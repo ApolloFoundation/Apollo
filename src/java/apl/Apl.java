@@ -62,6 +62,10 @@ public final class Apl {
     private static final RuntimeMode runtimeMode;
     private static final DirProvider dirProvider;
 
+    public static RuntimeMode getRuntimeMode() {
+        return runtimeMode;
+    }
+
     private static final Properties defaultProperties = new Properties();
     static {
         redirectSystemStreams("out");
@@ -354,6 +358,7 @@ public final class Apl {
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
+                runtimeMode.updateAppStatus("Database initialization...");
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
@@ -361,6 +366,7 @@ public final class Apl {
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
                 AccountRestrictions.init();
+                runtimeMode.updateAppStatus("Account ledger initialization...");
                 AccountLedger.init();
                 Alias.init();
                 Asset.init();
@@ -386,10 +392,13 @@ public final class Apl {
                 ShufflingParticipant.init();
                 PrunableMessage.init();
                 TaggedData.init();
+                runtimeMode.updateAppStatus("Peer server initialization...");
                 Peers.init();
+                runtimeMode.updateAppStatus("API Proxy initialization...");
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();
+                runtimeMode.updateAppStatus("API initialization...");
                 API.init();
                 DebugTrace.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
@@ -405,7 +414,9 @@ public final class Apl {
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
-                Logger.logMessage(Apl.APPLICATION + " server " + VERSION + " started successfully.");
+                String message = Apl.APPLICATION + " server " + VERSION + " started successfully.";
+                Logger.logMessage(message);
+                runtimeMode.updateAppStatus(message);
                 Logger.logMessage("Copyright © 2013-2016 The Apl Core Developers.");
                 Logger.logMessage("Copyright © 2016-2017 Apollo Foundation IP B.V.");
                 Logger.logMessage("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
@@ -414,6 +425,7 @@ public final class Apl {
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
                 if (isDesktopApplicationEnabled()) {
+                    runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
                 if (Constants.isTestnet) {
