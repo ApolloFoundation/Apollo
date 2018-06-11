@@ -17,7 +17,6 @@
 
 package apl.env;
 
-import apl.Apl;
 import apl.Db;
 import apl.util.Logger;
 
@@ -52,6 +51,6 @@ public class CommandLineMode implements RuntimeMode {
         catch (IOException e) {
             Logger.logErrorMessage("Cannot delete db", e);
         }
-        Apl.shutdown();
+        System.exit(0);
     }
 }

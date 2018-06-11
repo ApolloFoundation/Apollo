@@ -61,7 +61,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static apldesktop.DesktopApplication.MainApplication.showStage;
 
 public class DesktopApplication extends Application {
     private static final MainApplication MAIN_APPLICATION = MainApplication.getInstance();
@@ -103,11 +102,12 @@ public class DesktopApplication extends Application {
             return;
         }
         if (mainStage != null) {
-            Platform.runLater(() -> showStage(false));
+            Platform.runLater(() -> MainApplication.showStage(false));
         }
     }
 
     public static void recoverDbUI() {
+        SPLASH_SCREEN.shutdown();
         DB_RECOVERING_UI.tryToRecoverDB();
     }
 
@@ -131,13 +131,11 @@ public class DesktopApplication extends Application {
 
     @SuppressWarnings("unused")
     public static void shutdown() {
-        System.out.println("shutting down JavaFX platform");
-        if (screenStage.isShowing()) {
-            screenStage.close();
-        }
-        if (mainStage.isShowing()) {
-            mainStage.close();
-        }
+        System.out.println("Shutting down JavaFX platform");
+        Platform.runLater(()-> {
+            SPLASH_SCREEN.shutdown();
+            MAIN_APPLICATION.shutdown();
+        });
         Platform.exit();
         if (ENABLE_JAVASCRIPT_DEBUGGER) {
             try {
@@ -158,7 +156,7 @@ public class DesktopApplication extends Application {
         showSplashScreen();
     }
 
-    public static class SplashScreen {
+    private static class SplashScreen {
         private static SplashScreen instance = new SplashScreen();
         private AtomicBoolean shutdown = new AtomicBoolean(false);
         private String lastStatus;
@@ -219,7 +217,9 @@ public class DesktopApplication extends Application {
                 Platform.runLater(() -> screenStage.hide());
                 shutdown.set(false);
             };
-            new Thread(statusUpdater).start();
+            Thread statusUpdaterThread = new Thread(statusUpdater, "Splash screen status updater");
+//            statusUpdaterThread.setDaemon(true);
+            statusUpdaterThread.start();
         }
 
         public void shutdown() {
@@ -227,7 +227,7 @@ public class DesktopApplication extends Application {
         }
     }
 
-    public static class MainApplication {
+    static class MainApplication {
         private static final Set DOWNLOAD_REQUEST_TYPES = new HashSet<>(Arrays.asList("downloadTaggedData", "downloadPrunableMessage"));
         private static volatile WebEngine webEngine;
         private static MainApplication instance = new MainApplication();
@@ -242,7 +242,7 @@ public class DesktopApplication extends Application {
             Platform.runLater(() -> showStage(true));
         }
 
-        static void showStage(boolean isRefresh) {
+        public static void showStage(boolean isRefresh) {
             if (isRefresh) {
                 webEngine.load(getUrl());
             }
@@ -511,6 +511,9 @@ public class DesktopApplication extends Application {
             }
         }
 
+        public void shutdown() {
+            Platform.runLater(()->mainStage.close());
+        }
         public void stop() {
             System.out.println("DesktopApplication stopped"); // Should never happen
         }
@@ -555,18 +558,18 @@ public class DesktopApplication extends Application {
                                 ButtonType clickedButton = clickedButtonType.get();
                                 if (clickedButton.getText().equalsIgnoreCase("Remove db")) {
                                     //delete db and show alert
-                                    deleteDbAndHandleException().show();
+                                    deleteDbAndHandleException().showAndWait();
                                 }
                             }
                         }
                         catch (SQLException sqlEx) {
                             Logger.logErrorMessage("Cannot reindex database!", sqlEx);
                             //delete db and show alert
-                            deleteDbAndHandleException().show();
+                            deleteDbAndHandleException().showAndWait();
                         }
                     }
                 }
-                Apl.shutdown();
+                System.exit(0); //trigger shutdown hook Apl.shutdown
             });
         }
 
