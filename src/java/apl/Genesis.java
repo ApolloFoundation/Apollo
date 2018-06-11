@@ -76,7 +76,9 @@ public final class Genesis {
         }
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-        Logger.logDebugMessage("Loading public keys");
+        String loadingPublicKeysString = "Loading public keys";
+        Logger.logDebugMessage(loadingPublicKeysString);
+        Apl.getRuntimeMode().updateAppStatus(loadingPublicKeysString + "...");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = Account.addOrGetAccount(Account.getId(publicKey));
@@ -88,7 +90,9 @@ public final class Genesis {
         Logger.logDebugMessage("Loaded " + publicKeys.size() + " public keys");
         count = 0;
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
-        Logger.logDebugMessage("Loading genesis amounts");
+        String loadingAmountsString = "Loading genesis amounts";
+        Logger.logDebugMessage(loadingAmountsString);
+        Apl.getRuntimeMode().updateAppStatus(loadingAmountsString + "...");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
             Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()));
