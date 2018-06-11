@@ -30,14 +30,10 @@ import apl.util.Convert;
 import apl.util.Logger;
 import apl.util.ThreadPool;
 import apl.util.Time;
+import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.Files;
@@ -45,6 +41,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -344,6 +341,7 @@ public final class Apl {
         runtimeMode.shutdown();
     }
 
+
     private static class Init {
 
         private static volatile boolean initialized = false;
@@ -402,7 +400,8 @@ public final class Apl {
                 }
                 try {
                     secureRandomInitThread.join(10000);
-                } catch (InterruptedException ignore) {}
+                }
+                catch (InterruptedException ignore) {}
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
@@ -420,7 +419,21 @@ public final class Apl {
                 if (Constants.isTestnet) {
                     Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
-            } catch (Exception e) {
+            }
+            catch (final RuntimeException e) {
+                if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
+                    Throwable exception = e;
+                    while (exception.getCause() != null) { //get root cause of RuntimeException
+                        exception = exception.getCause();
+                    }
+                    if (exception.getClass() != JdbcSQLException.class && exception.getClass() != SQLException.class) {
+                        throw e; //re-throw non-db exception
+                    }
+                }
+                Logger.logErrorMessage("Database initialization failed ", e);
+                runtimeMode.recoverDb();
+            }
+            catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
                 runtimeMode.alert(e.getMessage() + "\n" +
                         "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");
