@@ -84,9 +84,6 @@ var NRS = (function(NRS, $, undefined) {
     });
 
 	NRS.showBlockModal = function(block) {
-        console.log(block);
-
-
         NRS.setBackLink();
         NRS.modalStack.push({ class: "show_block_modal_action", key: "block", value: block.height });
         try {
