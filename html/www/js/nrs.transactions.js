@@ -153,6 +153,11 @@ var NRS = (function(NRS, $, undefined) {
 
                          that.serverKey = JSON.parse(data).serverPublicKey;
 
+                         console.log('++++++++++++++++++++++++++++++++++++++');
+                         console.log(JSON.parse(data));
+                         console.log(that.serverKey);
+
+
                          if (that.items.length < 15 && that.page == 1) {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
 					 } else {
@@ -400,8 +405,20 @@ var NRS = (function(NRS, $, undefined) {
         NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
         NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
-    
-		NRS.sendRequest("getBlockchainTransactions", {
+
+        var publicKey  =  converters.hexStringToInt8ByteArray('999b8e4a543a98aaa2863783dd675579711e58b499485a5d5b655c5ad6ed7411');
+        var privateKey =  converters.hexStringToInt8ByteArray(NRS.getPrivateKey('test1'));
+
+
+        console.log(publicKey);
+        console.log(privateKey);
+        var sharedKey = NRS.getSharedSecretJava(privateKey, publicKey);
+        console.log(sharedKey);
+        sharedKey = converters.byteArrayToHexString(sharedKey);
+
+        // console.log(sharedKey);
+
+        NRS.sendRequest("getBlockchainTransactions", {
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -762,118 +779,125 @@ var NRS = (function(NRS, $, undefined) {
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
 		if ('encryptedTransaction' in t) {
-			console.log(t);
-
             var options = {
-                publicKey : NRS.myTransactionPagination.serverKey,
-                privateKey : NRS.myTransactionPagination.privateKey,
+
+                publicKey  :  converters.hexStringToInt8ByteArray(NRS.myTransactionPagination.serverKey),
+                privateKey :  converters.hexStringToInt8ByteArray(NRS.myTransactionPagination.privateKey),
             };
 
-            var message =  NRS.decryptData(t.encryptedTransaction, options);
+            options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
-            console.log(message);
 
+            var decrypted =  NRS.decryptData(t.encryptedTransaction, options);
+            decrypted = decrypted.message;
+            decrypted = converters.hexStringToString(decrypted);
+            decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
+            decrypted = JSON.parse(decrypted);
+
+            t = decrypted;
+        }
+
+        console.log(t);
+
+        var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
+        console.log(decimals);
+
+        if (transactionType === 'Unknown') {
+            transactionType = 'Private payment';
+        }
+
+        if (t.type == 1 && t.subtype == 6 && t.attachment.priceNQT == "0") {
+            if (t.sender == NRS.account && t.recipient == NRS.account) {
+                transactionType = $.t("alias_sale_cancellation");
+            } else {
+                transactionType = $.t("alias_transfer");
+            }
+        }
+
+        var amount = "";
+        var sign = 0;
+        var fee = new BigInteger(t.feeNQT);
+        var feeColor = "";
+        var receiving = t.recipient == NRS.account && !(t.sender == NRS.account);
+        if (receiving) {
+            if (t.amountNQT != "0") {
+                amount = new BigInteger(t.amountNQT);
+                sign = 1;
+            }
+            feeColor = "color:black;";
         } else {
-            var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
-            console.log(decimals);
-
-            if (transactionType === 'Unknown') {
-                transactionType = 'Private payment';
-            }
-
-            if (t.type == 1 && t.subtype == 6 && t.attachment.priceNQT == "0") {
-                if (t.sender == NRS.account && t.recipient == NRS.account) {
-                    transactionType = $.t("alias_sale_cancellation");
-                } else {
-                    transactionType = $.t("alias_transfer");
-                }
-            }
-
-            var amount = "";
-            var sign = 0;
-            var fee = new BigInteger(t.feeNQT);
-            var feeColor = "";
-            var receiving = t.recipient == NRS.account && !(t.sender == NRS.account);
-            if (receiving) {
+            if (t.sender != t.recipient) {
                 if (t.amountNQT != "0") {
                     amount = new BigInteger(t.amountNQT);
-                    sign = 1;
+                    amount = amount.negate();
+                    sign = -1;
                 }
-                feeColor = "color:black;";
             } else {
-                if (t.sender != t.recipient) {
-                    if (t.amountNQT != "0") {
-                        amount = new BigInteger(t.amountNQT);
-                        amount = amount.negate();
-                        sign = -1;
-                    }
-                } else {
-                    if (t.amountNQT != "0") {
-                        amount = new BigInteger(t.amountNQT); // send to myself
-                    }
-                }
-                feeColor = "color:red;";
-            }
-            var formattedAmount = "";
-            if (amount != "") {
-                formattedAmount = NRS.formatAmount(amount, false, false, decimals.amount);
-            }
-            var formattedFee = NRS.formatAmount(fee, false, false, decimals.fee);
-            var amountColor = (sign == 1 ? "color:green;" : (sign == -1 ? "color:red;" : "color:black;"));
-            var hasMessage = false;
-
-            if (t.attachment) {
-                if (t.attachment.encryptedMessage || t.attachment.message) {
-                    hasMessage = true;
-                } else if (t.sender == NRS.account && t.attachment.encryptToSelfMessage) {
-                    hasMessage = true;
+                if (t.amountNQT != "0") {
+                    amount = new BigInteger(t.amountNQT); // send to myself
                 }
             }
-            var html = "";
-            html += "<tr class='tr_transaction_" + t.transaction + "'>";
-            html += "<td style='vertical-align:middle;'>";
-            if (isScheduled) {
-                html += "<a href='#' onclick='NRS.showTransactionModal(" + JSON.stringify(t) + ");'>" + NRS.formatTimestamp(t.timestamp) + "</a>";
-            }  else {
-                html += "<a class='show_transaction_modal_action' href='#' data-id='" + t.transaction + "' data-hash='" + t.fullHash + "' data-type='" + transactionType + "' data-timestamp='" + NRS.escapeRespStr(t.timestamp) + "' ";
-                html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
-                html += NRS.formatTimestamp(t.timestamp) + "</a>";
-            }
+            feeColor = "color:red;";
+        }
+        var formattedAmount = "";
+        if (amount != "") {
+            formattedAmount = NRS.formatAmount(amount, false, false, decimals.amount);
+        }
+        var formattedFee = NRS.formatAmount(fee, false, false, decimals.fee);
+        var amountColor = (sign == 1 ? "color:green;" : (sign == -1 ? "color:red;" : "color:black;"));
+        var hasMessage = false;
 
+        if (t.attachment) {
+            if (t.attachment.encryptedMessage || t.attachment.message) {
+                hasMessage = true;
+            } else if (t.sender == NRS.account && t.attachment.encryptToSelfMessage) {
+                hasMessage = true;
+            }
+        }
+        var html = "";
+        html += "<tr class='tr_transaction_" + t.transaction + "'>";
+        html += "<td style='vertical-align:middle;'>";
+        if (isScheduled) {
+            html += "<a href='#' onclick='NRS.showTransactionModal(" + JSON.stringify(t) + ");'>" + NRS.formatTimestamp(t.timestamp) + "</a>";
+        }  else {
+            html += "<a class='show_transaction_modal_action' href='#' data-id='" + t.transaction + "' data-hash='" + t.fullHash + "' data-type='" + transactionType + "' data-timestamp='" + NRS.escapeRespStr(t.timestamp) + "' ";
+            html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
+            html += NRS.formatTimestamp(t.timestamp) + "</a>";
+        }
+
+        html += "</td>";
+        html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
+        html += '<td style="vertical-align:middle;">';
+        html += '<span class="label label-danger label-rouded">' + transactionType + '</span>';
+        html += '</td>';
+        html += "<td style='vertical-align:middle;text-align:right;" + amountColor + "'>" + formattedAmount + "</td>";
+        html += "<td style='vertical-align:middle;text-align:right;" + feeColor + "'>" + formattedFee + "</td>";
+        html += "<td style='vertical-align:middle;'>" + ((NRS.getAccountLink(t, "sender") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "sender")) + " ";
+        html += "<i class='fa fa-arrow-circle-right' style='color:#777;'></i> " + ((NRS.getAccountLink(t, "recipient") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "recipient")) + "</td>";
+        if (!isScheduled) {
+            html += "<td class='td_transaction_phasing' style='min-width:100px;vertical-align:middle;text-align:center;'></td>";
+            html += "<td style='vertical-align:middle;text-align:center;'>" + (t.confirmed ? NRS.getBlockLink(t.height, null, true) : "-") + "</td>";
+            html += "<td class='confirmations' style='vertical-align:middle;text-align:center;font-size:12px;'>";
+            html += "<span class='show_popover' data-content='" + (t.confirmed ? NRS.formatAmount(t.confirmations) + " " + $.t("confirmations") : $.t("unconfirmed_transaction")) + "' ";
+            html += "data-container='body' data-placement='left'>";
+            html += (!t.confirmed ? "-" : (t.confirmations > 1440 ? (NRS.formatAmount('144000000000') + "+") : NRS.formatAmount(t.confirmations))) + "</span></td>";
+        }
+        if (actions && actions.length != undefined) {
+            html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
+            if (actions.indexOf('approve') > -1) {
+                html += "<a class='btn btn-xs btn-default approve_transaction_btn' href='#' data-toggle='modal' data-target='#approve_transaction_modal' ";
+                html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "' data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
+                html += "data-timestamp='" + t.timestamp + "' " + "data-votingmodel='" + t.attachment.phasingVotingModel + "' ";
+                html += "data-fee='1' data-min-balance-formatted=''>" + $.t('approve') + "</a>";
+            }
+            if (actions.indexOf('delete') > -1) {
+                html += "<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#delete_scheduled_transaction_modal' ";
+                html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>" + $.t("delete") + "</a>";
+            }
             html += "</td>";
-            html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
-            html += '<td style="vertical-align:middle;">';
-            html += '<span class="label label-danger label-rouded">' + transactionType + '</span>';
-            html += '</td>';
-            html += "<td style='vertical-align:middle;text-align:right;" + amountColor + "'>" + formattedAmount + "</td>";
-            html += "<td style='vertical-align:middle;text-align:right;" + feeColor + "'>" + formattedFee + "</td>";
-            html += "<td style='vertical-align:middle;'>" + ((NRS.getAccountLink(t, "sender") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "sender")) + " ";
-            html += "<i class='fa fa-arrow-circle-right' style='color:#777;'></i> " + ((NRS.getAccountLink(t, "recipient") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "recipient")) + "</td>";
-            if (!isScheduled) {
-                html += "<td class='td_transaction_phasing' style='min-width:100px;vertical-align:middle;text-align:center;'></td>";
-                html += "<td style='vertical-align:middle;text-align:center;'>" + (t.confirmed ? NRS.getBlockLink(t.height, null, true) : "-") + "</td>";
-                html += "<td class='confirmations' style='vertical-align:middle;text-align:center;font-size:12px;'>";
-                html += "<span class='show_popover' data-content='" + (t.confirmed ? NRS.formatAmount(t.confirmations) + " " + $.t("confirmations") : $.t("unconfirmed_transaction")) + "' ";
-                html += "data-container='body' data-placement='left'>";
-                html += (!t.confirmed ? "-" : (t.confirmations > 1440 ? (NRS.formatAmount('144000000000') + "+") : NRS.formatAmount(t.confirmations))) + "</span></td>";
-            }
-            if (actions && actions.length != undefined) {
-                html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
-                if (actions.indexOf('approve') > -1) {
-                    html += "<a class='btn btn-xs btn-default approve_transaction_btn' href='#' data-toggle='modal' data-target='#approve_transaction_modal' ";
-                    html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "' data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
-                    html += "data-timestamp='" + t.timestamp + "' " + "data-votingmodel='" + t.attachment.phasingVotingModel + "' ";
-                    html += "data-fee='1' data-min-balance-formatted=''>" + $.t('approve') + "</a>";
-                }
-                if (actions.indexOf('delete') > -1) {
-                    html += "<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#delete_scheduled_transaction_modal' ";
-                    html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>" + $.t("delete") + "</a>";
-                }
-                html += "</td>";
-            }
-            html += "</tr>";
-            return html;
-		}
+        }
+        html += "</tr>";
+        return html;
 	};
 
     NRS.getLedgerEntryRow = function(entry, decimalParams) {

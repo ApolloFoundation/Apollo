@@ -9,7 +9,9 @@
  *
  * Based on work by Daniel J Bernstein, http://cr.yp.to/ecdh.html
  */
-var bigInt =require('./bigInt.min');
+
+// TODO : implement require
+var bigInt=function(undefined){"use strict";var BASE=1e7,LOG_BASE=7,MAX_INT=9007199254740992,MAX_INT_ARR=smallToArray(MAX_INT),LOG_MAX_INT=Math.log(MAX_INT);function Integer(v,radix){if(typeof v==="undefined")return Integer[0];if(typeof radix!=="undefined")return+radix===10?parseValue(v):parseBase(v,radix);return parseValue(v)}function BigInteger(value,sign){this.value=value;this.sign=sign;this.isSmall=false}BigInteger.prototype=Object.create(Integer.prototype);function SmallInteger(value){this.value=value;this.sign=value<0;this.isSmall=true}SmallInteger.prototype=Object.create(Integer.prototype);function isPrecise(n){return-MAX_INT<n&&n<MAX_INT}function smallToArray(n){if(n<1e7)return[n];if(n<1e14)return[n%1e7,Math.floor(n/1e7)];return[n%1e7,Math.floor(n/1e7)%1e7,Math.floor(n/1e14)]}function arrayToSmall(arr){trim(arr);var length=arr.length;if(length<4&&compareAbs(arr,MAX_INT_ARR)<0){switch(length){case 0:return 0;case 1:return arr[0];case 2:return arr[0]+arr[1]*BASE;default:return arr[0]+(arr[1]+arr[2]*BASE)*BASE}}return arr}function trim(v){var i=v.length;while(v[--i]===0);v.length=i+1}function createArray(length){var x=new Array(length);var i=-1;while(++i<length){x[i]=0}return x}function truncate(n){if(n>0)return Math.floor(n);return Math.ceil(n)}function add(a,b){var l_a=a.length,l_b=b.length,r=new Array(l_a),carry=0,base=BASE,sum,i;for(i=0;i<l_b;i++){sum=a[i]+b[i]+carry;carry=sum>=base?1:0;r[i]=sum-carry*base}while(i<l_a){sum=a[i]+carry;carry=sum===base?1:0;r[i++]=sum-carry*base}if(carry>0)r.push(carry);return r}function addAny(a,b){if(a.length>=b.length)return add(a,b);return add(b,a)}function addSmall(a,carry){var l=a.length,r=new Array(l),base=BASE,sum,i;for(i=0;i<l;i++){sum=a[i]-base+carry;carry=Math.floor(sum/base);r[i]=sum-carry*base;carry+=1}while(carry>0){r[i++]=carry%base;carry=Math.floor(carry/base)}return r}BigInteger.prototype.add=function(v){var n=parseValue(v);if(this.sign!==n.sign){return this.subtract(n.negate())}var a=this.value,b=n.value;if(n.isSmall){return new BigInteger(addSmall(a,Math.abs(b)),this.sign)}return new BigInteger(addAny(a,b),this.sign)};BigInteger.prototype.plus=BigInteger.prototype.add;SmallInteger.prototype.add=function(v){var n=parseValue(v);var a=this.value;if(a<0!==n.sign){return this.subtract(n.negate())}var b=n.value;if(n.isSmall){if(isPrecise(a+b))return new SmallInteger(a+b);b=smallToArray(Math.abs(b))}return new BigInteger(addSmall(b,Math.abs(a)),a<0)};SmallInteger.prototype.plus=SmallInteger.prototype.add;function subtract(a,b){var a_l=a.length,b_l=b.length,r=new Array(a_l),borrow=0,base=BASE,i,difference;for(i=0;i<b_l;i++){difference=a[i]-borrow-b[i];if(difference<0){difference+=base;borrow=1}else borrow=0;r[i]=difference}for(i=b_l;i<a_l;i++){difference=a[i]-borrow;if(difference<0)difference+=base;else{r[i++]=difference;break}r[i]=difference}for(;i<a_l;i++){r[i]=a[i]}trim(r);return r}function subtractAny(a,b,sign){var value;if(compareAbs(a,b)>=0){value=subtract(a,b)}else{value=subtract(b,a);sign=!sign}value=arrayToSmall(value);if(typeof value==="number"){if(sign)value=-value;return new SmallInteger(value)}return new BigInteger(value,sign)}function subtractSmall(a,b,sign){var l=a.length,r=new Array(l),carry=-b,base=BASE,i,difference;for(i=0;i<l;i++){difference=a[i]+carry;carry=Math.floor(difference/base);difference%=base;r[i]=difference<0?difference+base:difference}r=arrayToSmall(r);if(typeof r==="number"){if(sign)r=-r;return new SmallInteger(r)}return new BigInteger(r,sign)}BigInteger.prototype.subtract=function(v){var n=parseValue(v);if(this.sign!==n.sign){return this.add(n.negate())}var a=this.value,b=n.value;if(n.isSmall)return subtractSmall(a,Math.abs(b),this.sign);return subtractAny(a,b,this.sign)};BigInteger.prototype.minus=BigInteger.prototype.subtract;SmallInteger.prototype.subtract=function(v){var n=parseValue(v);var a=this.value;if(a<0!==n.sign){return this.add(n.negate())}var b=n.value;if(n.isSmall){return new SmallInteger(a-b)}return subtractSmall(b,Math.abs(a),a>=0)};SmallInteger.prototype.minus=SmallInteger.prototype.subtract;BigInteger.prototype.negate=function(){return new BigInteger(this.value,!this.sign)};SmallInteger.prototype.negate=function(){var sign=this.sign;var small=new SmallInteger(-this.value);small.sign=!sign;return small};BigInteger.prototype.abs=function(){return new BigInteger(this.value,false)};SmallInteger.prototype.abs=function(){return new SmallInteger(Math.abs(this.value))};function multiplyLong(a,b){var a_l=a.length,b_l=b.length,l=a_l+b_l,r=createArray(l),base=BASE,product,carry,i,a_i,b_j;for(i=0;i<a_l;++i){a_i=a[i];for(var j=0;j<b_l;++j){b_j=b[j];product=a_i*b_j+r[i+j];carry=Math.floor(product/base);r[i+j]=product-carry*base;r[i+j+1]+=carry}}trim(r);return r}function multiplySmall(a,b){var l=a.length,r=new Array(l),base=BASE,carry=0,product,i;for(i=0;i<l;i++){product=a[i]*b+carry;carry=Math.floor(product/base);r[i]=product-carry*base}while(carry>0){r[i++]=carry%base;carry=Math.floor(carry/base)}return r}function shiftLeft(x,n){var r=[];while(n-- >0)r.push(0);return r.concat(x)}function multiplyKaratsuba(x,y){var n=Math.max(x.length,y.length);if(n<=30)return multiplyLong(x,y);n=Math.ceil(n/2);var b=x.slice(n),a=x.slice(0,n),d=y.slice(n),c=y.slice(0,n);var ac=multiplyKaratsuba(a,c),bd=multiplyKaratsuba(b,d),abcd=multiplyKaratsuba(addAny(a,b),addAny(c,d));var product=addAny(addAny(ac,shiftLeft(subtract(subtract(abcd,ac),bd),n)),shiftLeft(bd,2*n));trim(product);return product}function useKaratsuba(l1,l2){return-.012*l1-.012*l2+15e-6*l1*l2>0}BigInteger.prototype.multiply=function(v){var n=parseValue(v),a=this.value,b=n.value,sign=this.sign!==n.sign,abs;if(n.isSmall){if(b===0)return Integer[0];if(b===1)return this;if(b===-1)return this.negate();abs=Math.abs(b);if(abs<BASE){return new BigInteger(multiplySmall(a,abs),sign)}b=smallToArray(abs)}if(useKaratsuba(a.length,b.length))return new BigInteger(multiplyKaratsuba(a,b),sign);return new BigInteger(multiplyLong(a,b),sign)};BigInteger.prototype.times=BigInteger.prototype.multiply;function multiplySmallAndArray(a,b,sign){if(a<BASE){return new BigInteger(multiplySmall(b,a),sign)}return new BigInteger(multiplyLong(b,smallToArray(a)),sign)}SmallInteger.prototype._multiplyBySmall=function(a){if(isPrecise(a.value*this.value)){return new SmallInteger(a.value*this.value)}return multiplySmallAndArray(Math.abs(a.value),smallToArray(Math.abs(this.value)),this.sign!==a.sign)};BigInteger.prototype._multiplyBySmall=function(a){if(a.value===0)return Integer[0];if(a.value===1)return this;if(a.value===-1)return this.negate();return multiplySmallAndArray(Math.abs(a.value),this.value,this.sign!==a.sign)};SmallInteger.prototype.multiply=function(v){return parseValue(v)._multiplyBySmall(this)};SmallInteger.prototype.times=SmallInteger.prototype.multiply;function square(a){var l=a.length,r=createArray(l+l),base=BASE,product,carry,i,a_i,a_j;for(i=0;i<l;i++){a_i=a[i];for(var j=0;j<l;j++){a_j=a[j];product=a_i*a_j+r[i+j];carry=Math.floor(product/base);r[i+j]=product-carry*base;r[i+j+1]+=carry}}trim(r);return r}BigInteger.prototype.square=function(){return new BigInteger(square(this.value),false)};SmallInteger.prototype.square=function(){var value=this.value*this.value;if(isPrecise(value))return new SmallInteger(value);return new BigInteger(square(smallToArray(Math.abs(this.value))),false)};function divMod1(a,b){var a_l=a.length,b_l=b.length,base=BASE,result=createArray(b.length),divisorMostSignificantDigit=b[b_l-1],lambda=Math.ceil(base/(2*divisorMostSignificantDigit)),remainder=multiplySmall(a,lambda),divisor=multiplySmall(b,lambda),quotientDigit,shift,carry,borrow,i,l,q;if(remainder.length<=a_l)remainder.push(0);divisor.push(0);divisorMostSignificantDigit=divisor[b_l-1];for(shift=a_l-b_l;shift>=0;shift--){quotientDigit=base-1;if(remainder[shift+b_l]!==divisorMostSignificantDigit){quotientDigit=Math.floor((remainder[shift+b_l]*base+remainder[shift+b_l-1])/divisorMostSignificantDigit)}carry=0;borrow=0;l=divisor.length;for(i=0;i<l;i++){carry+=quotientDigit*divisor[i];q=Math.floor(carry/base);borrow+=remainder[shift+i]-(carry-q*base);carry=q;if(borrow<0){remainder[shift+i]=borrow+base;borrow=-1}else{remainder[shift+i]=borrow;borrow=0}}while(borrow!==0){quotientDigit-=1;carry=0;for(i=0;i<l;i++){carry+=remainder[shift+i]-base+divisor[i];if(carry<0){remainder[shift+i]=carry+base;carry=0}else{remainder[shift+i]=carry;carry=1}}borrow+=carry}result[shift]=quotientDigit}remainder=divModSmall(remainder,lambda)[0];return[arrayToSmall(result),arrayToSmall(remainder)]}function divMod2(a,b){var a_l=a.length,b_l=b.length,result=[],part=[],base=BASE,guess,xlen,highx,highy,check;while(a_l){part.unshift(a[--a_l]);trim(part);if(compareAbs(part,b)<0){result.push(0);continue}xlen=part.length;highx=part[xlen-1]*base+part[xlen-2];highy=b[b_l-1]*base+b[b_l-2];if(xlen>b_l){highx=(highx+1)*base}guess=Math.ceil(highx/highy);do{check=multiplySmall(b,guess);if(compareAbs(check,part)<=0)break;guess--}while(guess);result.push(guess);part=subtract(part,check)}result.reverse();return[arrayToSmall(result),arrayToSmall(part)]}function divModSmall(value,lambda){var length=value.length,quotient=createArray(length),base=BASE,i,q,remainder,divisor;remainder=0;for(i=length-1;i>=0;--i){divisor=remainder*base+value[i];q=truncate(divisor/lambda);remainder=divisor-q*lambda;quotient[i]=q|0}return[quotient,remainder|0]}function divModAny(self,v){var value,n=parseValue(v);var a=self.value,b=n.value;var quotient;if(b===0)throw new Error("Cannot divide by zero");if(self.isSmall){if(n.isSmall){return[new SmallInteger(truncate(a/b)),new SmallInteger(a%b)]}return[Integer[0],self]}if(n.isSmall){if(b===1)return[self,Integer[0]];if(b==-1)return[self.negate(),Integer[0]];var abs=Math.abs(b);if(abs<BASE){value=divModSmall(a,abs);quotient=arrayToSmall(value[0]);var remainder=value[1];if(self.sign)remainder=-remainder;if(typeof quotient==="number"){if(self.sign!==n.sign)quotient=-quotient;return[new SmallInteger(quotient),new SmallInteger(remainder)]}return[new BigInteger(quotient,self.sign!==n.sign),new SmallInteger(remainder)]}b=smallToArray(abs)}var comparison=compareAbs(a,b);if(comparison===-1)return[Integer[0],self];if(comparison===0)return[Integer[self.sign===n.sign?1:-1],Integer[0]];if(a.length+b.length<=200)value=divMod1(a,b);else value=divMod2(a,b);quotient=value[0];var qSign=self.sign!==n.sign,mod=value[1],mSign=self.sign;if(typeof quotient==="number"){if(qSign)quotient=-quotient;quotient=new SmallInteger(quotient)}else quotient=new BigInteger(quotient,qSign);if(typeof mod==="number"){if(mSign)mod=-mod;mod=new SmallInteger(mod)}else mod=new BigInteger(mod,mSign);return[quotient,mod]}BigInteger.prototype.divmod=function(v){var result=divModAny(this,v);return{quotient:result[0],remainder:result[1]}};SmallInteger.prototype.divmod=BigInteger.prototype.divmod;BigInteger.prototype.divide=function(v){return divModAny(this,v)[0]};SmallInteger.prototype.over=SmallInteger.prototype.divide=BigInteger.prototype.over=BigInteger.prototype.divide;BigInteger.prototype.mod=function(v){return divModAny(this,v)[1]};SmallInteger.prototype.remainder=SmallInteger.prototype.mod=BigInteger.prototype.remainder=BigInteger.prototype.mod;BigInteger.prototype.pow=function(v){var n=parseValue(v),a=this.value,b=n.value,value,x,y;if(b===0)return Integer[1];if(a===0)return Integer[0];if(a===1)return Integer[1];if(a===-1)return n.isEven()?Integer[1]:Integer[-1];if(n.sign){return Integer[0]}if(!n.isSmall)throw new Error("The exponent "+n.toString()+" is too large.");if(this.isSmall){if(isPrecise(value=Math.pow(a,b)))return new SmallInteger(truncate(value))}x=this;y=Integer[1];while(true){if(b&1===1){y=y.times(x);--b}if(b===0)break;b/=2;x=x.square()}return y};SmallInteger.prototype.pow=BigInteger.prototype.pow;BigInteger.prototype.modPow=function(exp,mod){exp=parseValue(exp);mod=parseValue(mod);if(mod.isZero())throw new Error("Cannot take modPow with modulus 0");var r=Integer[1],base=this.mod(mod);while(exp.isPositive()){if(base.isZero())return Integer[0];if(exp.isOdd())r=r.multiply(base).mod(mod);exp=exp.divide(2);base=base.square().mod(mod)}return r};SmallInteger.prototype.modPow=BigInteger.prototype.modPow;function compareAbs(a,b){if(a.length!==b.length){return a.length>b.length?1:-1}for(var i=a.length-1;i>=0;i--){if(a[i]!==b[i])return a[i]>b[i]?1:-1}return 0}BigInteger.prototype.compareAbs=function(v){var n=parseValue(v),a=this.value,b=n.value;if(n.isSmall)return 1;return compareAbs(a,b)};SmallInteger.prototype.compareAbs=function(v){var n=parseValue(v),a=Math.abs(this.value),b=n.value;if(n.isSmall){b=Math.abs(b);return a===b?0:a>b?1:-1}return-1};BigInteger.prototype.compare=function(v){if(v===Infinity){return-1}if(v===-Infinity){return 1}var n=parseValue(v),a=this.value,b=n.value;if(this.sign!==n.sign){return n.sign?1:-1}if(n.isSmall){return this.sign?-1:1}return compareAbs(a,b)*(this.sign?-1:1)};BigInteger.prototype.compareTo=BigInteger.prototype.compare;SmallInteger.prototype.compare=function(v){if(v===Infinity){return-1}if(v===-Infinity){return 1}var n=parseValue(v),a=this.value,b=n.value;if(n.isSmall){return a==b?0:a>b?1:-1}if(a<0!==n.sign){return a<0?-1:1}return a<0?1:-1};SmallInteger.prototype.compareTo=SmallInteger.prototype.compare;BigInteger.prototype.equals=function(v){return this.compare(v)===0};SmallInteger.prototype.eq=SmallInteger.prototype.equals=BigInteger.prototype.eq=BigInteger.prototype.equals;BigInteger.prototype.notEquals=function(v){return this.compare(v)!==0};SmallInteger.prototype.neq=SmallInteger.prototype.notEquals=BigInteger.prototype.neq=BigInteger.prototype.notEquals;BigInteger.prototype.greater=function(v){return this.compare(v)>0};SmallInteger.prototype.gt=SmallInteger.prototype.greater=BigInteger.prototype.gt=BigInteger.prototype.greater;BigInteger.prototype.lesser=function(v){return this.compare(v)<0};SmallInteger.prototype.lt=SmallInteger.prototype.lesser=BigInteger.prototype.lt=BigInteger.prototype.lesser;BigInteger.prototype.greaterOrEquals=function(v){return this.compare(v)>=0};SmallInteger.prototype.geq=SmallInteger.prototype.greaterOrEquals=BigInteger.prototype.geq=BigInteger.prototype.greaterOrEquals;BigInteger.prototype.lesserOrEquals=function(v){return this.compare(v)<=0};SmallInteger.prototype.leq=SmallInteger.prototype.lesserOrEquals=BigInteger.prototype.leq=BigInteger.prototype.lesserOrEquals;BigInteger.prototype.isEven=function(){return(this.value[0]&1)===0};SmallInteger.prototype.isEven=function(){return(this.value&1)===0};BigInteger.prototype.isOdd=function(){return(this.value[0]&1)===1};SmallInteger.prototype.isOdd=function(){return(this.value&1)===1};BigInteger.prototype.isPositive=function(){return!this.sign};SmallInteger.prototype.isPositive=function(){return this.value>0};BigInteger.prototype.isNegative=function(){return this.sign};SmallInteger.prototype.isNegative=function(){return this.value<0};BigInteger.prototype.isUnit=function(){return false};SmallInteger.prototype.isUnit=function(){return Math.abs(this.value)===1};BigInteger.prototype.isZero=function(){return false};SmallInteger.prototype.isZero=function(){return this.value===0};BigInteger.prototype.isDivisibleBy=function(v){var n=parseValue(v);var value=n.value;if(value===0)return false;if(value===1)return true;if(value===2)return this.isEven();return this.mod(n).equals(Integer[0])};SmallInteger.prototype.isDivisibleBy=BigInteger.prototype.isDivisibleBy;function isBasicPrime(v){var n=v.abs();if(n.isUnit())return false;if(n.equals(2)||n.equals(3)||n.equals(5))return true;if(n.isEven()||n.isDivisibleBy(3)||n.isDivisibleBy(5))return false;if(n.lesser(25))return true}BigInteger.prototype.isPrime=function(){var isPrime=isBasicPrime(this);if(isPrime!==undefined)return isPrime;var n=this.abs(),nPrev=n.prev();var a=[2,3,5,7,11,13,17,19],b=nPrev,d,t,i,x;while(b.isEven())b=b.divide(2);for(i=0;i<a.length;i++){x=bigInt(a[i]).modPow(b,n);if(x.equals(Integer[1])||x.equals(nPrev))continue;for(t=true,d=b;t&&d.lesser(nPrev);d=d.multiply(2)){x=x.square().mod(n);if(x.equals(nPrev))t=false}if(t)return false}return true};SmallInteger.prototype.isPrime=BigInteger.prototype.isPrime;BigInteger.prototype.isProbablePrime=function(iterations){var isPrime=isBasicPrime(this);if(isPrime!==undefined)return isPrime;var n=this.abs();var t=iterations===undefined?5:iterations;for(var i=0;i<t;i++){var a=bigInt.randBetween(2,n.minus(2));if(!a.modPow(n.prev(),n).isUnit())return false}return true};SmallInteger.prototype.isProbablePrime=BigInteger.prototype.isProbablePrime;BigInteger.prototype.modInv=function(n){var t=bigInt.zero,newT=bigInt.one,r=parseValue(n),newR=this.abs(),q,lastT,lastR;while(!newR.equals(bigInt.zero)){q=r.divide(newR);lastT=t;lastR=r;t=newT;r=newR;newT=lastT.subtract(q.multiply(newT));newR=lastR.subtract(q.multiply(newR))}if(!r.equals(1))throw new Error(this.toString()+" and "+n.toString()+" are not co-prime");if(t.compare(0)===-1){t=t.add(n)}if(this.isNegative()){return t.negate()}return t};SmallInteger.prototype.modInv=BigInteger.prototype.modInv;BigInteger.prototype.next=function(){var value=this.value;if(this.sign){return subtractSmall(value,1,this.sign)}return new BigInteger(addSmall(value,1),this.sign)};SmallInteger.prototype.next=function(){var value=this.value;if(value+1<MAX_INT)return new SmallInteger(value+1);return new BigInteger(MAX_INT_ARR,false)};BigInteger.prototype.prev=function(){var value=this.value;if(this.sign){return new BigInteger(addSmall(value,1),true)}return subtractSmall(value,1,this.sign)};SmallInteger.prototype.prev=function(){var value=this.value;if(value-1>-MAX_INT)return new SmallInteger(value-1);return new BigInteger(MAX_INT_ARR,true)};var powersOfTwo=[1];while(2*powersOfTwo[powersOfTwo.length-1]<=BASE)powersOfTwo.push(2*powersOfTwo[powersOfTwo.length-1]);var powers2Length=powersOfTwo.length,highestPower2=powersOfTwo[powers2Length-1];function shift_isSmall(n){return(typeof n==="number"||typeof n==="string")&&+Math.abs(n)<=BASE||n instanceof BigInteger&&n.value.length<=1}BigInteger.prototype.shiftLeft=function(n){if(!shift_isSmall(n)){throw new Error(String(n)+" is too large for shifting.")}n=+n;if(n<0)return this.shiftRight(-n);var result=this;while(n>=powers2Length){result=result.multiply(highestPower2);n-=powers2Length-1}return result.multiply(powersOfTwo[n])};SmallInteger.prototype.shiftLeft=BigInteger.prototype.shiftLeft;BigInteger.prototype.shiftRight=function(n){var remQuo;if(!shift_isSmall(n)){throw new Error(String(n)+" is too large for shifting.")}n=+n;if(n<0)return this.shiftLeft(-n);var result=this;while(n>=powers2Length){if(result.isZero())return result;remQuo=divModAny(result,highestPower2);result=remQuo[1].isNegative()?remQuo[0].prev():remQuo[0];n-=powers2Length-1}remQuo=divModAny(result,powersOfTwo[n]);return remQuo[1].isNegative()?remQuo[0].prev():remQuo[0]};SmallInteger.prototype.shiftRight=BigInteger.prototype.shiftRight;function bitwise(x,y,fn){y=parseValue(y);var xSign=x.isNegative(),ySign=y.isNegative();var xRem=xSign?x.not():x,yRem=ySign?y.not():y;var xDigit=0,yDigit=0;var xDivMod=null,yDivMod=null;var result=[];while(!xRem.isZero()||!yRem.isZero()){xDivMod=divModAny(xRem,highestPower2);xDigit=xDivMod[1].toJSNumber();if(xSign){xDigit=highestPower2-1-xDigit}yDivMod=divModAny(yRem,highestPower2);yDigit=yDivMod[1].toJSNumber();if(ySign){yDigit=highestPower2-1-yDigit}xRem=xDivMod[0];yRem=yDivMod[0];result.push(fn(xDigit,yDigit))}var sum=fn(xSign?1:0,ySign?1:0)!==0?bigInt(-1):bigInt(0);for(var i=result.length-1;i>=0;i-=1){sum=sum.multiply(highestPower2).add(bigInt(result[i]))}return sum}BigInteger.prototype.not=function(){return this.negate().prev()};SmallInteger.prototype.not=BigInteger.prototype.not;BigInteger.prototype.and=function(n){return bitwise(this,n,function(a,b){return a&b})};SmallInteger.prototype.and=BigInteger.prototype.and;BigInteger.prototype.or=function(n){return bitwise(this,n,function(a,b){return a|b})};SmallInteger.prototype.or=BigInteger.prototype.or;BigInteger.prototype.xor=function(n){return bitwise(this,n,function(a,b){return a^b})};SmallInteger.prototype.xor=BigInteger.prototype.xor;var LOBMASK_I=1<<30,LOBMASK_BI=(BASE&-BASE)*(BASE&-BASE)|LOBMASK_I;function roughLOB(n){var v=n.value,x=typeof v==="number"?v|LOBMASK_I:v[0]+v[1]*BASE|LOBMASK_BI;return x&-x}function integerLogarithm(value,base){if(base.compareTo(value)<=0){var tmp=integerLogarithm(value,base.square(base));var p=tmp.p;var e=tmp.e;var t=p.multiply(base);return t.compareTo(value)<=0?{p:t,e:e*2+1}:{p:p,e:e*2}}return{p:bigInt(1),e:0}}BigInteger.prototype.bitLength=function(){var n=this;if(n.compareTo(bigInt(0))<0){n=n.negate().subtract(bigInt(1))}if(n.compareTo(bigInt(0))===0){return bigInt(0)}return bigInt(integerLogarithm(n,bigInt(2)).e).add(bigInt(1))};SmallInteger.prototype.bitLength=BigInteger.prototype.bitLength;function max(a,b){a=parseValue(a);b=parseValue(b);return a.greater(b)?a:b}function min(a,b){a=parseValue(a);b=parseValue(b);return a.lesser(b)?a:b}function gcd(a,b){a=parseValue(a).abs();b=parseValue(b).abs();if(a.equals(b))return a;if(a.isZero())return b;if(b.isZero())return a;var c=Integer[1],d,t;while(a.isEven()&&b.isEven()){d=Math.min(roughLOB(a),roughLOB(b));a=a.divide(d);b=b.divide(d);c=c.multiply(d)}while(a.isEven()){a=a.divide(roughLOB(a))}do{while(b.isEven()){b=b.divide(roughLOB(b))}if(a.greater(b)){t=b;b=a;a=t}b=b.subtract(a)}while(!b.isZero());return c.isUnit()?a:a.multiply(c)}function lcm(a,b){a=parseValue(a).abs();b=parseValue(b).abs();return a.divide(gcd(a,b)).multiply(b)}function randBetween(a,b){a=parseValue(a);b=parseValue(b);var low=min(a,b),high=max(a,b);var range=high.subtract(low).add(1);if(range.isSmall)return low.add(Math.floor(Math.random()*range));var length=range.value.length-1;var result=[],restricted=true;for(var i=length;i>=0;i--){var top=restricted?range.value[i]:BASE;var digit=truncate(Math.random()*top);result.unshift(digit);if(digit<top)restricted=false}result=arrayToSmall(result);return low.add(typeof result==="number"?new SmallInteger(result):new BigInteger(result,false))}var parseBase=function(text,base){var length=text.length;var i;var absBase=Math.abs(base);for(var i=0;i<length;i++){var c=text[i].toLowerCase();if(c==="-")continue;if(/[a-z0-9]/.test(c)){if(/[0-9]/.test(c)&&+c>=absBase){if(c==="1"&&absBase===1)continue;throw new Error(c+" is not a valid digit in base "+base+".")}else if(c.charCodeAt(0)-87>=absBase){throw new Error(c+" is not a valid digit in base "+base+".")}}}if(2<=base&&base<=36){if(length<=LOG_MAX_INT/Math.log(base)){var result=parseInt(text,base);if(isNaN(result)){throw new Error(c+" is not a valid digit in base "+base+".")}return new SmallInteger(parseInt(text,base))}}base=parseValue(base);var digits=[];var isNegative=text[0]==="-";for(i=isNegative?1:0;i<text.length;i++){var c=text[i].toLowerCase(),charCode=c.charCodeAt(0);if(48<=charCode&&charCode<=57)digits.push(parseValue(c));else if(97<=charCode&&charCode<=122)digits.push(parseValue(c.charCodeAt(0)-87));else if(c==="<"){var start=i;do{i++}while(text[i]!==">");digits.push(parseValue(text.slice(start+1,i)))}else throw new Error(c+" is not a valid character")}return parseBaseFromArray(digits,base,isNegative)};function parseBaseFromArray(digits,base,isNegative){var val=Integer[0],pow=Integer[1],i;for(i=digits.length-1;i>=0;i--){val=val.add(digits[i].times(pow));pow=pow.times(base)}return isNegative?val.negate():val}function stringify(digit){if(digit<=35){return"0123456789abcdefghijklmnopqrstuvwxyz".charAt(digit)}return"<"+digit+">"}function toBase(n,base){base=bigInt(base);if(base.isZero()){if(n.isZero())return{value:[0],isNegative:false};throw new Error("Cannot convert nonzero numbers to base 0.")}if(base.equals(-1)){if(n.isZero())return{value:[0],isNegative:false};if(n.isNegative())return{value:[].concat.apply([],Array.apply(null,Array(-n)).map(Array.prototype.valueOf,[1,0])),isNegative:false};var arr=Array.apply(null,Array(+n-1)).map(Array.prototype.valueOf,[0,1]);arr.unshift([1]);return{value:[].concat.apply([],arr),isNegative:false}}var neg=false;if(n.isNegative()&&base.isPositive()){neg=true;n=n.abs()}if(base.equals(1)){if(n.isZero())return{value:[0],isNegative:false};return{value:Array.apply(null,Array(+n)).map(Number.prototype.valueOf,1),isNegative:neg}}var out=[];var left=n,divmod;while(left.isNegative()||left.compareAbs(base)>=0){divmod=left.divmod(base);left=divmod.quotient;var digit=divmod.remainder;if(digit.isNegative()){digit=base.minus(digit).abs();left=left.next()}out.push(digit.toJSNumber())}out.push(left.toJSNumber());return{value:out.reverse(),isNegative:neg}}function toBaseString(n,base){var arr=toBase(n,base);return(arr.isNegative?"-":"")+arr.value.map(stringify).join("")}BigInteger.prototype.toArray=function(radix){return toBase(this,radix)};SmallInteger.prototype.toArray=function(radix){return toBase(this,radix)};BigInteger.prototype.toString=function(radix){if(radix===undefined)radix=10;if(radix!==10)return toBaseString(this,radix);var v=this.value,l=v.length,str=String(v[--l]),zeros="0000000",digit;while(--l>=0){digit=String(v[l]);str+=zeros.slice(digit.length)+digit}var sign=this.sign?"-":"";return sign+str};SmallInteger.prototype.toString=function(radix){if(radix===undefined)radix=10;if(radix!=10)return toBaseString(this,radix);return String(this.value)};BigInteger.prototype.toJSON=SmallInteger.prototype.toJSON=function(){return this.toString()};BigInteger.prototype.valueOf=function(){return parseInt(this.toString(),10)};BigInteger.prototype.toJSNumber=BigInteger.prototype.valueOf;SmallInteger.prototype.valueOf=function(){return this.value};SmallInteger.prototype.toJSNumber=SmallInteger.prototype.valueOf;function parseStringValue(v){if(isPrecise(+v)){var x=+v;if(x===truncate(x))return new SmallInteger(x);throw"Invalid integer: "+v}var sign=v[0]==="-";if(sign)v=v.slice(1);var split=v.split(/e/i);if(split.length>2)throw new Error("Invalid integer: "+split.join("e"));if(split.length===2){var exp=split[1];if(exp[0]==="+")exp=exp.slice(1);exp=+exp;if(exp!==truncate(exp)||!isPrecise(exp))throw new Error("Invalid integer: "+exp+" is not a valid exponent.");var text=split[0];var decimalPlace=text.indexOf(".");if(decimalPlace>=0){exp-=text.length-decimalPlace-1;text=text.slice(0,decimalPlace)+text.slice(decimalPlace+1)}if(exp<0)throw new Error("Cannot include negative exponent part for integers");text+=new Array(exp+1).join("0");v=text}var isValid=/^([0-9][0-9]*)$/.test(v);if(!isValid)throw new Error("Invalid integer: "+v);var r=[],max=v.length,l=LOG_BASE,min=max-l;while(max>0){r.push(+v.slice(min,max));min-=l;if(min<0)min=0;max-=l}trim(r);return new BigInteger(r,sign)}function parseNumberValue(v){if(isPrecise(v)){if(v!==truncate(v))throw new Error(v+" is not an integer.");return new SmallInteger(v)}return parseStringValue(v.toString())}function parseValue(v){if(typeof v==="number"){return parseNumberValue(v)}if(typeof v==="string"){return parseStringValue(v)}return v}for(var i=0;i<1e3;i++){Integer[i]=new SmallInteger(i);if(i>0)Integer[-i]=new SmallInteger(-i)}Integer.one=Integer[1];Integer.zero=Integer[0];Integer.minusOne=Integer[-1];Integer.max=max;Integer.min=min;Integer.gcd=gcd;Integer.lcm=lcm;Integer.isInstance=function(x){return x instanceof BigInteger||x instanceof SmallInteger};Integer.randBetween=randBetween;Integer.fromArray=function(digits,base,isNegative){return parseBaseFromArray(digits.map(parseValue),parseValue(base||10),isNegative)};return Integer}();if(typeof module!=="undefined"&&module.hasOwnProperty("exports")){module.exports=bigInt}if(typeof define==="function"&&define.amd){define("big-integer",[],function(){return bigInt})};
 
 
 var curve25519 = function () {
@@ -1279,6 +1281,14 @@ var curve25519 = function () {
         /* calculate s such that s abs(P) = G  .. assumes G is std base point */
     }
 
+    function generateSharedKey(sharedKey, publicKey, privateKey) {
+        sharedKey = new Int8Array(32);
+        coreJava(sharedKey, null, publicKey, privateKey);
+
+        return sharedKey;
+    }
+
+
     function mixCollumns (Px, s, k, Gx, testRow) {
         var dx = new long10();
         var t1 = new long10();
@@ -1325,7 +1335,7 @@ var curve25519 = function () {
 
                 mont_prepJava(t3, t4, bx, bz);
 
-                
+
                 mont_addJava(t1, t2, t3, t4, ax, az, dx, row, iterator);
 
 
@@ -1535,6 +1545,41 @@ var curve25519 = function () {
         return Y;
     }
 
+    var long10 = function(arr) {
+        if (arr && arr.length) {
+
+            return {
+                _0 : bigInt(arr[0]),
+                _1 : bigInt(arr[1]),
+                _2 : bigInt(arr[2]),
+                _3 : bigInt(arr[3]),
+                _4 : bigInt(arr[4]),
+                _5 : bigInt(arr[5]),
+                _6 : bigInt(arr[6]),
+                _7 : bigInt(arr[7]),
+                _8 : bigInt(arr[8]),
+                _9 : bigInt(arr[9])
+
+            }
+        } else {
+
+            return {
+                _0 : bigInt(0),
+                _1 : bigInt(0),
+                _2 : bigInt(0),
+                _3 : bigInt(0),
+                _4 : bigInt(0),
+                _5 : bigInt(0),
+                _6 : bigInt(0),
+                _7 : bigInt(0),
+                _8 : bigInt(0),
+                _9 : bigInt(0)
+
+            }
+        }
+    };
+
+
     /* Key-pair generation
      *   P  [out] your public key
      *   s  [out] your private key for signing
@@ -1557,512 +1602,15 @@ var curve25519 = function () {
         sign: sign,
         verify: verify,
         keygen: keygen,
-        mulJava: mulJava,
-        addJava : addJava,
-        subJava : subJava,
-        sqrJava: sqrJava,
-        recipJava : recipJava,
-        packJava : packJava,
-        is_overflow_java : is_overflow_java,
-        cpyJava : cpyJava,
-        setJava : setJava,
-        mul_smallJava : mul_smallJava,
-        coreJava : coreJava,
-        unpackJava : unpackJava,
-        mont_addJava : mont_addJava,
-        mixCollumns : mixCollumns
+        coreJava: coreJava,
+        generateSharedKey : generateSharedKey
 
     };
 }();
 
-module.exports = curve25519;
+if (isNode) {
+    module.exports = curve25519;
 
-
-var long10 = function(arr) {
-    if (arr && arr.length) {
-
-        return {
-            _0 : bigInt(arr[0]),
-            _1 : bigInt(arr[1]),
-            _2 : bigInt(arr[2]),
-            _3 : bigInt(arr[3]),
-            _4 : bigInt(arr[4]),
-            _5 : bigInt(arr[5]),
-            _6 : bigInt(arr[6]),
-            _7 : bigInt(arr[7]),
-            _8 : bigInt(arr[8]),
-            _9 : bigInt(arr[9])
-
-        }
-    } else {
-
-        return {
-            _0 : bigInt(0),
-            _1 : bigInt(0),
-            _2 : bigInt(0),
-            _3 : bigInt(0),
-            _4 : bigInt(0),
-            _5 : bigInt(0),
-            _6 : bigInt(0),
-            _7 : bigInt(0),
-            _8 : bigInt(0),
-            _9 : bigInt(0)
-
-        }
-    }
-};
-
-// Tests
-
-
-// // Ready!!
-// QUnit.test("addJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = long10();
-//
-//     var temp = curve25519.addJava(xy, x, y);
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//
-//         return i['value'];
-//     });
-//
-//     console.log('addJava :[' + xy.toString() + ']');
-//
-//     assert.deepEqual(xy, [14000, 16000, 18000, 20000, 22000, 24000, 26000,28000, 30000, 32000]);
-// });
-// //
-// // // Ready!!
-// QUnit.test("subJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = long10();
-//
-//     var temp = curve25519.subJava(xy, x, y);
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     console.log('subJava :[' + xy.toString() + ']');
-//
-//     assert.deepEqual(xy, [-10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000 ]);
-// });
-// //
-// // // Development
-// QUnit.test("mulJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = long10();
-//
-//     var temp = curve25519.mulJava(xy, x, y);
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//         return i['value'];
-//     });
-//
-//
-//     console.log('mulJava :[' + xy.toString() + ']');
-//
-//
-//     assert.deepEqual(xy, [48773799, 20865339, 11427004, 27705909, 58870161, 30257923, 42212139, 18739108, 13888390, 16921620]);
-// });
-// //
-// // // Development
-// QUnit.test("sqrJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = long10();
-//
-//     var temp = curve25519.sqrJava(x, y);
-//
-//     x = Object.values(x);
-//     console.log(x);
-//     x = x.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     console.log('sqrJava :[' + x.toString() + ']');
-//
-//
-//     assert.deepEqual(x, [23182666, 27320415, 33593052, 15097837, 55426326, 16784192, 6900223, 22597206, 7559059, 22754602]);
-// });
-// //
-// // // Ready!!!
-// QUnit.test("recipJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = long10([12000, 13000, 14000, 15000, 16000,17000, 18000, 19000, 20000, 21000]);
-//     var xy = long10();
-//
-//     var temp = curve25519.recipJava(xy, x, y);
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//         return i['value'];
-//     });
-//
-//
-//     console.log('recipJava :[' + xy.toString() + ']');
-//
-//
-//     assert.deepEqual(xy, [28752729, 24156288, 50485493, 28444979, 25105293, 5300205, 14135273, 33260211, 43142049, 12499538]);
-// });
-//
-// // Ready!!!
-// QUnit.test("packJava", function (assert) {
-//     var x  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y = [] ;
-//     var xy = long10();
-//
-//     var temp = curve25519.packJava(x, y);
-//
-//     y = Object.values(y);
-//     y = y.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     y = new Int8Array(y);
-//     y = Object.values(y);
-//     var testArray = [-48, 7, 0, -32, 46, 0, 0, 125, 0, 0, 113, 2, 0, -36, 5, 0, 88, 27, 0, -128, 62, 0, 64, 25, 1, 0, 113, 2, 0, -66, 10, 0];
-//
-//     console.log('packJava      :[' + y.toString() + ']');
-//     console.log('packJava test :[' + testArray.toString() + ']');
-//
-//     assert.deepEqual(y, testArray);
-// });
-//
-//
-// // Ready!!!
-// QUnit.test("is_overflow_java", function (assert) {
-//     var x1  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, '1100000000000000000']);
-//     var x2 = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 110000]);
-//
-//     var temp1 = curve25519.is_overflow_java(x1);
-//     var temp2 = curve25519.is_overflow_java(x2);
-//
-//
-//
-//     console.log('is_overflow_java greater :[' + x1.toString() + ']');
-//     console.log('is_overflow_java less    :[' + x2.toString() + ']');
-//
-//
-//     assert.deepEqual(temp1, true);
-//     assert.deepEqual(temp2, false);
-// });
-//
-// // // Ready!!!
-// QUnit.test("cpyJava", function (assert) {
-//     var x1  = long10([2000,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 1100000]);
-//     var x2 =  long10();
-//
-//     var temp1 = curve25519.cpyJava(x2, x1);
-//
-//     assert.deepEqual(x2, x1);
-//     x1._5 = bigInt(0);
-//     assert.notDeepEqual(x2, x1);
-//
-// });
-//
-// // Ready!!!
-// QUnit.test("setJava", function (assert) {
-//     var x  = long10([1111,  3000,  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y = bigInt(19) ;
-//     var testArray = [19,  0,  0,  0,  0, 0,  0,  0,  0, 0];
-//
-//     var temp = curve25519.setJava(x, y);
-//
-//     x = Object.values(x);
-//     x = x.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     assert.deepEqual(x, testArray);
-// });
-//
-// // // Ready!!!
-// QUnit.test("mul_smallJava", function (assert) {
-//     var x  = long10([-32343,  '30000000000',  4000,  5000,  6000, 7000,  8000,  9000,  10000, 11000]);
-//     var y  = bigInt(100000);
-//     var xy = long10();
-//     var testArray = [54034944, 5472207, 19644919, 30237959, 63129102, 28911368, 61802516, 27584779, 60475930, 26258190];
-//
-//
-//     var temp = curve25519.mul_smallJava(xy, x, y);
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     console.log('xy        :[' + xy.toString() + ']');
-//     console.log('testArray :[' + testArray.toString() + ']');
-//
-//     assert.deepEqual(xy, testArray);
-// });
-
-// Ready!!!
-// QUnit.test("coreJava", function (assert) {
-//     var k = new Int8Array([-42,72,59,14,-18,102,-76,-20,57,127, 62, -43, -102, -62, -55, 37, -11, 11, -52, 40, 104, 51, -117, 105, 55, -98, -26, 94, 46, -97, 28, 45]);
-//     var p = new Int8Array([-2, -120, -71, 80, -31, -76, 120, 115, -33, -15,  -34,  -113,  -87,  37,  13,  82,  -54,  -24,  82,  -64,  -15,  93,  94,  -56,  19,  -64,  83,  37,  -120,  -26,  -41,  62]);
-//
-//     var z = new Int8Array(32);
-//
-//     var testArray = new Int8Array([-96,78,95,-81,-7,57,-127,54,4,8, 7, -1, -14, -121, -10, 102, 114, 34, 75, -80, 20, -2, 27, -42, -53, 33, 14, -10, 74, -52, 62, 21]);
-//
-//
-//     curve25519.coreJava(z, null, k, p);
-//
-//
-//     assert.deepEqual(z, testArray);
-// });
-
-//
-// QUnit.test("unpackJava", function (assert) {
-//     var x  = new Int8Array([-2, -120, -71, 80, -31, -76, 120, 115, -33, -15,  -34,  -113,  -87,  37,  13,  82,  -54,  -24,  82,  -64,  -15,  93,  94,  -56,  19,  -64,  83,  37,  -120,  -26,  -41,  62]);
-//     var y = [] ;
-//     var xy = long10();
-//
-//     var testArray = [12159230, 2963540, 37482095, 21790455, 21509270, 5433546, 53410016, 162059, 8541500, 16474010];
-//
-//     curve25519.unpackJava(y, x);
-//
-//     y = Object.values(y);
-//     y = y.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     assert.deepEqual(y, testArray);
-// });
-
-// QUnit.test("mont_addJava", function (assert) {
-//     var y = new long10();
-//     var x = new long10([2000,
-//         3000,
-//         4000,
-//         5000,
-//         6000,
-//         7000,
-//         8000,
-//         9000,
-//         10000,
-//         11000
-//     ]);
-//     var xy = new long10();
-//     var  t1 = new long10(),
-//         t2 = new long10(),
-//         t3 = new long10(),
-//         t4 = new long10();
-//     t1._0 = new bigInt(1  );
-//     t1._1 = new bigInt(2  );
-//     t1._2 = new bigInt(3  );
-//     t1._3 = new bigInt(4  );
-//     t1._4 = new bigInt(5  );
-//     t1._5 = new bigInt(6  );
-//     t1._6 = new bigInt(7  );
-//     t1._7 = new bigInt(8  );
-//     t1._8 = new bigInt(9  );
-//     t1._9 = new bigInt(10 );
-//     t2._0 = new bigInt(11 );
-//     t2._1 = new bigInt(12 );
-//     t2._2 = new bigInt(13 );
-//     t2._3 = new bigInt(14 );
-//     t2._4 = new bigInt(15 );
-//     t2._5 = new bigInt(16 );
-//     t2._6 = new bigInt(17 );
-//     t2._7 = new bigInt(18 );
-//     t2._8 = new bigInt(19 );
-//     t2._9 = new bigInt(110);
-//
-//     t3._0 = bigInt(211 );
-//     t3._1 = bigInt(212 );
-//     t3._2 = bigInt(213 );
-//     t3._3 = bigInt(214 );
-//     t3._4 = bigInt(215 );
-//     t3._5 = bigInt(216 );
-//     t3._6 = bigInt(217 );
-//     t3._7 = bigInt(218 );
-//     t3._8 = bigInt(219 );
-//     t3._9 = bigInt(2110);
-//
-//
-//     t4._0 = bigInt(1211 );
-//     t4._1 = bigInt(1212 );
-//     t4._2 = bigInt(1213 );
-//     t4._3 = bigInt(1214 );
-//     t4._4 = bigInt(1215 );
-//     t4._5 = bigInt(1216 );
-//     t4._6 = bigInt(1217 );
-//     t4._7 = bigInt(1218 );
-//     t4._8 = bigInt(1219 );
-//     t4._9 = bigInt(12110);
-//
-//
-//
-//     xy._0 = bigInt(20000 );
-//     xy._1 = bigInt(30000 );
-//     xy._2 = bigInt(40000 );
-//     xy._3 = bigInt(50000 );
-//     xy._4 = bigInt(60000 );
-//     xy._5 = bigInt(70000 );
-//     xy._6 = bigInt(80000 );
-//     xy._7 = bigInt(90000 );
-//     xy._8 = bigInt(100000);
-//     xy._9 = bigInt(110000);
-//
-//     y._0 = bigInt(12000);
-//     y._1 = bigInt(13000);
-//     y._2 = bigInt(14000);
-//     y._3 = bigInt(15000);
-//     y._4 = bigInt(16000);
-//     y._5 = bigInt(17000);
-//     y._6 = bigInt(18000);
-//     y._7 = bigInt(19000);
-//     y._8 = bigInt(20000);
-//     y._9 = bigInt(21000);
-//     curve25519.mont_addJava(t1, t2, t3, t4, x, xy, y);
-//
-//     console.log(t1);
-//     //
-//     // var testArray = [12159230, 2963540, 37482095, 21790455, 21509270, 5433546, 53410016, 162059, 8541500, 16474010];
-//     //
-//     // curve25519.mont_addJava(y, x);
-//     //
-//
-//     x = Object.values(x);
-//     x = x.map(function(i) {
-//         return i['value'];
-//     });
-//
-//     xy = Object.values(xy);
-//     xy = xy.map(function(i) {
-//         return i['value'];
-//     });
-//
-//
-//     t1 = Object.values(t1);
-//     t1 = t1.map(function(i) {
-//         return i['value'];
-//     });
-//
-//
-//     t2 = Object.values(t2);
-//     t2 = t2.map(function(i) {
-//         return i['value'];
-//     });
-//
-//
-//     assert.deepEqual(x,  [42629323,    16226435,    46018287,    26696867,    44013895,    22312338,    36210007,    24530621,    51726663,    25892576]);
-//     assert.deepEqual(xy, [33619967, 8203851, 63270125, 17906134, 21275946, 7669431, 44336006, 2169839, 52098263, 24220155]);
-//     assert.deepEqual(t1, [56500801,    5403858,    63001947,    26628536,    59425263,    4403448,    42203217,    14644909,    21361002,    13033704]);
-//     assert.deepEqual(t2, [-261090,    -447360,    -926910,    -736800,    -1485810,    -954960,    -1937790,    -1101840,     4180950,    -4560]);
-// });
-
-
-QUnit.test("curveTestProblem", function (assert) {
-    var k = new Int8Array([-42,72,59,14,-18,102,-76,-20,57,127, 62, -43, -102, -62, -55, 37, -11, 11, -52, 40, 104, 51, -117, 105, 55, -98, -26, 94, 46, -97, 28, 45]);
-    var p = new Int8Array([-2, -120, -71, 80, -31, -76, 120, 115, -33, -15,  -34,  -113,  -87,  37,  13,  82,  -54,  -24,  82,  -64,  -15,  93,  94,  -56,  19,  -64,  83,  37,  -120,  -26,  -41,  62]);
-
-    var z = new Int8Array(32);
-
-    var testArray = new Int8Array([-96,78,95,-81,-7,57,-127,54,4,8, 7, -1, -14, -121, -10, 102, 114, 34, 75, -80, 20, -2, 27, -42, -53, 33, 14, -10, 74, -52, 62, 21]);
-    var testRow = [12159230, 2963540, 37482095, 21790455, 21509270, 5433546, 53410016, 162059, 8541500, 16474010];
-    var test = require('./test_curve');
-    test = test.row;
-    curve25519.coreJava(z, null, k, p);
-
-    assert.deepEqual(z, testArray);
-});
-
-
-// QUnit.test("curveTestProblem", function (assert) {
-//
-//     var t1 = new long10([20946383,11876573,10277867,16366167,35346322,11820037,45786420,13247379,62335160,46293007]);
-//     var t2 = new long10([66247166,4451512,11230476,24924854,13153813,14669515,44661845,31773211,66786692,45493813]);
-//     var t3 = new long10([62142051,25305274,56467468,25127789,25511306,265992,5016020,12245217,37970329,21807320]);
-//     var t4 = new long10([1384928,2674096,54138324,33435930,22427047,11181457,10236342,8698833,14201489,50645333]);
-//     var ax = new long10([2525332,632076,64169949,13988410,45220081,13871272,36091669,12743149,30670827,18301822]);
-//     var az = new long10([1961995,27227022,63906128,19825001,20281673,25176928,15121066,13434821,57597611,28143193]);
-//     var dx = new long10([52088079,29809804,38129142,22368409,55442249,17299629,43446640,4521969,50894909,25940978]);
-//
-//     var row = require('./test_curve').result256;
-//     var result = true;
-//     for (var i = 0; i < 256; i++) {
-//         curve25519.mont_addJava(t1, t2, t3, t4, ax, az, dx);
-//
-//         var tempRow = row[i]['result'];
-//
-//         var comparet1 = comparelong10(long10(Object.values(tempRow.t1)), t1);
-//         var comparet2 = comparelong10(long10(Object.values(tempRow.t2)), t2);
-//         var comparet3 = comparelong10(long10(Object.values(tempRow.t3)), t3);
-//         var comparet4 = comparelong10(long10(Object.values(tempRow.t4)), t4);
-//         var compareax = comparelong10(long10(Object.values(tempRow.ax)), ax);
-//         var compareaz = comparelong10(long10(Object.values(tempRow.az)), az);
-//         var comparedx = comparelong10(long10(Object.values(tempRow.dx)), dx);
-//
-//
-//         console.log('iteration['+ i +']: ', comparet1 && comparet2 && comparet3 && comparet4 && compareax && compareaz && comparedx);
-//         var local = comparet1 || comparet2 || comparet3 || comparet4 || compareax || compareaz || comparedx;
-//         result = result && local;
-//
-//         if (i == 49 || i == 55) {
-//
-//
-//             console.log('comparet1: ' + comparet1);
-//             console.log('comparet2: ' + comparet2);
-//             console.log('comparet3: ' + comparet3);
-//             console.log('comparet4: ' + comparet4);
-//             console.log('compareax: ' + compareax);
-//             console.log('compareaz: ' + compareaz);
-//             console.log('comparedx: ' + comparedx);
-//
-//
-//         }
-//
-//
-//     }
-// });
-
-function comparelong10 (a, b) {
-    a = Object.values(a);
-    b = Object.values(b);
-
-    return a.filter(function(item, iterator) {
-        return item.equals(b[iterator]);
-    }).length == 10;
 }
 
 
-// QUnit.test("long10", function (assert) {
-//
-//     var a = new long10([-42,72,59,14,-18,102,-76,-20,57,127]);
-//     var b = new long10([-42,72,59,14,-18,102,-76,-20,57,127]);
-//
-//     var amap = Object.values(a);
-//     var amap = amap.map(function(item) {
-//         return item.value;
-//     });
-//
-//     var bmap = Object.values(b);
-//     var bmap = bmap.map(function(item) {
-//         return item.value;
-//     });
-//
-//
-//     var compare = function(a, b) {
-//         return a.filter(function(item, count) {
-//             return item == b[count];
-//         })
-//     };
-//
-//     var res = compare(amap,bmap);
-//
-//     console.log("+++++++++");
-//     console.log(res);
-//
-//
-//     assert.deepEqual(res.length, 10);
-// });

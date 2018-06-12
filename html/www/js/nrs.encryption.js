@@ -161,9 +161,6 @@ var NRS = (function (NRS, $) {
 	};
 
 	NRS.decryptNote = function(message, options, secretPhrase) {
-        console.log(message);
-        console.log(options);
-        console.log(secretPhrase);
 
         try {
 			if (!options.sharedKey) {
@@ -764,58 +761,40 @@ var NRS = (function (NRS, $) {
 
 	function decryptData(data, options) {
 		if (!options.sharedKey) {
-			options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
+			options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
-            // options.sharedKey = getSharedSecret(converters.hexStringToByteArray(options.privateKey), converters.hexStringToByteArray(options.publicKey));
-
-            console.log(options.privateKey);
-            console.log(options.publicKey);
-
-            var publicKey =  converters.hexStringToInt8ByteArray('184f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567054');
-			var privateKey = converters.hexStringToInt8ByteArray('4652486ebc271520d844e5bdda9ac243c05dcbe7bc9b93807073a32177a6f73d');
-			// var byteArray = [82,-18,95,-13,-126,103,1,-1,84,66, -83, -42, -68, 99, -58, -37, -128, 18, 32, -114, -97, -18, -14, 9, -111, -22, 16, -118, 68, -3, 109, -22];
-			var byteArray = [34, 12, 123, -100, -125, -26, -108, -101, 97, 124, 95, -113, -46, -22, 37, 36, 1, -50, 50, -8, 10, -64, 92, -86, -87, -7, 81, -26, -85, -20, 125, -127];
-
-			console.log(converters.byteArrayToHexString([131, 134, 51, 182, 37, 45, 39, 227, 178, 10, 57, 249, 86, 81, 99, 22, 60, 180, 86, 114, 104, 177, 41, 47, 3, 15, 19, 231, 88, 169, 107, 127]));
-
-			console.log(converters.byteArrayToHexString(byteArray));
-
-            var sharedKey =  getSharedSecretJava(privateKey, publicKey);
-
-            console.log('==================================================================');
-            console.log(publicKey);
-            console.log(privateKey);
-            console.log('Andrey shared key');
-            console.log(converters.hexStringToInt8ByteArray('220c7b9c83e6949b617c5f8fd2ea252401ce32f80ac05caaa9f951e6abec7d81'));
-
-            console.log('Generated shared key');
-            console.log(sharedKey);
-            sharedKey = new Int8Array(sharedKey);
-            console.log(sharedKey);
-
-            console.log('==================================================================');
-
+            var sharedKey =  NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
             var options = {};
             options.sharedKey = sharedKey;
-            var encryptedMessage = "2ae45ed064ad635d799df3dee4e67ba7fe0f6aa5b47c5c8c253c004bd9a2b7714ecfaddea79366e4b91b07316968090b16ca17c8995da42ff3f0c0e734c2f749a55c35be4f3a398a6af3af3e95351d36deef9e429e21edf0511fe3735b24a38a66ab750689fa2de5fdaf60d581fce5d6250b794901a444de4cc328175021c9958b16ab4efddea1dc3dc08e1a772503e27c9921d6237b80d57e190d494e07b651a8490b5daa7f123dd37fc8686771d6931d1686e3e568cb5400ed7509798f2f400a4fc2819495920d007e82ab0c0961cd5741abb8a40e2bbf99861328b969facba0a929865ccd033aa32422d1e79220825d1e082115374281001c225d55e9aa054200d1ed2f4d8ac13a5ebb256f4ebc514b1d758f84715b9c71e86f1f02980b60bf5dccd0df32222ac4efe7dbb622a9c28bd8d6001aaac3a66b73054960caacaa02bb54453e5180cb77e2a582e3b1dcbe8c69a96d24b75c61e89866398d5c771e370586b27f37f876ce72aa1e24936917b5b87b1e6e464e62570cf2e429a5cd48baa532f0c94bc21f610a4b1cc3b70ed795e515c8d3a475360d62c030dd743169a94a2a8cdb73843f98437c48e96a65fa26ba3a0620be12cd17c7960c738e96d484cef2f8714d9c44ed551fa73f9d998cdc64ec4307e6d8e3f9f5c3a39813d6a38689814993c92c5509c4f81e0d4b3bfc3072024b45aded32e000724b49de5b01179c3193d56b0dddfc3eccd299ba80b3c852f41565d9de72dec21113c37d91c857683b2684764f5dafc29bf28d2f975ab0b44f8ba62295dc8965369da617f85f3931cd7618034d2ad9e9370c8b1801444cd81ead0626f5ebc58c58752b7ff8e17b1d7af8db40a088d95f5c45695e8f077174ca770154536ae05072b7e7dc0e21d0b4e2de5ccad87fc4cc1769e2127b801e7491b647babfdfec931f891fe9dc1337bdc73413aa430a0f6d9c31d7276f18299f9b68e22611a83baf3939f89b1421f9759d3e8c5bf9f1810afd7b343a82b43f00b31211372b458ae71d5ced67e6329d4d89cd364f741c6a9b20b90ee113c56f7d98ef0487455828af285e31e6f11d610c905a282ca1e2bccda97706347c1f39ebccabc64b75a7e42cdb09b49d1602263ac6fbe991d327738fae6664a92c084e022771bc1ea676c404f1b51abe31c4fce224b223beb776e0278926b5900a29c65c4e7a20557c3ad144b7d5b6932e1061ec75b287dca2d95661c70b33a6fe1963b39ac944c42ad45082392d3d5fbfe9f1c43b7c442087f4611b7774979f2a8867023c85025b22d52a4c76cb608c5161";
-
-            var decryptedMessage = NRS.decryptDataRoof(converters.hexStringToByteArray(encryptedMessage), options);
-
-            console.log(decryptedMessage);
-
         }
+
+
+        console.log('private key: ', options.privateKey);
+        console.log('public key : ', options.publicKey);
+        console.log('shared key        : ', options.sharedKey);
+        options.sharedKey = new Uint8Array(options.sharedKey);
+        console.log('shared key [uint8]: ', options.sharedKey);
+
+        //
+        // console.log('private key [hex]: ', converters.byteArrayToHexString(new Uint8Array(options.privateKey)));
+        // console.log('public  key [hex]: ', converters.byteArrayToHexString(new Uint8Array(options.publicKey)));
+        // console.log('shared  key [hex]: ', converters.byteArrayToHexString(new Uint8Array(options.sharedKey)));
 
 		// data = converters.hexStringToByteArray(data);
         // console.log(data);
 
+        data = converters.hexStringToByteArray(data);
+        console.log('ecrypted data ',data);
+
         var result = aesDecrypt(data, options);
+
+		console.log('decrypted data', result.decrypted);
+
         var binData = new Uint8Array(result.decrypted);
         options.isCompressed = false;
         options.isText = false;
 
-        console.log(result);
-        console.log(binData);
 
         if (!(options.isCompressed === false)) {
 			binData = pako.inflate(binData);
@@ -826,6 +805,7 @@ var NRS = (function (NRS, $) {
 		} else {
 			message = converters.byteArrayToHexString(binData);
 		}
+
         return { message: message, sharedKey: converters.byteArrayToHexString(result.sharedKey) };
 	}
 
@@ -833,16 +813,22 @@ var NRS = (function (NRS, $) {
         return converters.shortArrayToByteArray(curve25519_(converters.byteArrayToShortArray(key1), converters.byteArrayToShortArray(key2), null));
     }
 
-	function getSharedSecretJava (key1, key2) {
+    NRS.getSharedSecretJava = function (key1, key2) {
+        var sharedKey;
 
-        console.log(curve25519_(key1, key2));
-        console.log(converters.shortArrayToByteArray(curve25519_(key1, key2)));
-        console.log(converters.shortArrayToInt8ByteArray(curve25519_(key1, key2)));
-        console.log(converters.byteArrayToShortArray(key1));
-        console.log(converters.byteArrayToShortArray(key2));
+        var result =  curve25519.generateSharedKey(sharedKey, key1, key2);
+		var result = new Uint8Array(result);
 
-        return converters.shortArrayToByteArray(curve25519_(converters.byteArrayToShortArray(key1), converters.byteArrayToShortArray(key2), null));
-	}
+        var sha256 = CryptoJS.algo.SHA256.create();
+        sha256.update(converters.byteArrayToWordArray(result));
+
+        var hash = sha256.finalize();
+        hash = converters.wordArrayToByteArrayImpl(hash, false);
+
+        hash = new Int8Array(hash);
+
+        return hash;
+	};
 
     NRS.sharedSecretToSharedKey = function (sharedSecret, nonce) {
         for (var i = 0; i < 32; i++) {
