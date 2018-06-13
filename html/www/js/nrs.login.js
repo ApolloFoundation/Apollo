@@ -199,6 +199,10 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.switchAccount = function(account) {
+        delete NRS.myTransactionPagination;
+        delete NRS.accountLedgerPagination;
+        delete NRS.blocksPagination;
+
 		// Reset security related state
 		NRS.resetEncryptionState();
 		NRS.setServerPassword(null);
