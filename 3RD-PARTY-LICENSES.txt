@@ -93,10 +93,10 @@ Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
 
 Jelruda:
 This software contains code from
-NRS (https://www.apollofoundation.com/),
+NRS (https://www.jelurida.com/),
 which is licensed and available under the JPL 1.0.
 An original copy of the license agreement can be found at:
-https://www.apollofoundation.com/jpl
+https://www.jelurida.com/jpl
 
 Apache Tika:
 
