@@ -687,7 +687,6 @@ var NRS = (function(NRS, $) {
 		} else {
             if (requestType === 'sendMoneyPrivate') {
             	data.deadline = '1440';
-
             	NRS.sendRequest(requestType, data, function (response) {
                     formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
                         originalRequestType, formErrorFunction, errorMessage);
