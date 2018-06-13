@@ -17,8 +17,9 @@
 
 package apl.http;
 
-import apl.Constants;
 import apl.Apl;
+import apl.Constants;
+import apl.crypto.Crypto;
 import apl.util.Convert;
 import apl.util.Logger;
 import apl.util.ThreadPool;
@@ -26,13 +27,7 @@ import apl.util.UPnP;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -46,48 +41,28 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-import static apl.http.JSONResponses.MISSING_ADMIN_PASSWORD;
-import static apl.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
-import static apl.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
-import static apl.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
+import static apl.http.JSONResponses.*;
 
 public final class API {
 
     public static final int TESTNET_API_PORT = 6876;
     public static final int TESTNET_API_SSLPORT = 6877;
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
-
+    private static byte[] privateKey;
+    private static byte[] publicKey;
     public static final int openAPIPort;
     public static final int openAPISSLPort;
     public static final boolean isOpenAPI;
-
     public static final List<String> disabledAPIs;
     public static final List<APITag> disabledAPITags;
 
@@ -105,8 +80,32 @@ public final class API {
     private static final Server apiServer;
     private static URI welcomePageUri;
     private static URI serverRootUri;
+    private static Thread serverKeysGenerator = new Thread(() -> {
+
+        while (!Thread.currentThread().isInterrupted()) {
+            synchronized (API.class) {
+                byte[] seed = Crypto.getSecureRandom().generateSeed(32);
+                privateKey = Crypto.getPrivateKey(seed);
+                publicKey = Crypto.getPublicKey(seed);
+            }
+            try {
+                TimeUnit.MINUTES.sleep(10);
+            }
+            catch (InterruptedException e) {
+                return;
+            }
+        }
+    });
+
+    public static synchronized byte[] getServerPublicKey() {
+        return publicKey;
+    }
+    public static synchronized byte[] getServerPrivateKey() {
+        return privateKey;
+    }
 
     static {
+        serverKeysGenerator.setDaemon(true);
         List<String> disabled = new ArrayList<>(Apl.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
         disabledAPIs = Collections.unmodifiableList(disabled);
@@ -281,6 +280,7 @@ public final class API {
 
             ThreadPool.runBeforeStart(() -> {
                 try {
+                    serverKeysGenerator.start();
                     if (enableAPIUPnP) {
                         Connector[] apiConnectors = apiServer.getConnectors();
                         for (Connector apiConnector : apiConnectors) {

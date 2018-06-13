@@ -34,10 +34,8 @@ var NRS = (function(NRS, $) {
 	$(".modal button.btn-primary:not([data-dismiss=modal]):not([data-ignore=true]),button.btn-calculate-fee,button.scan-qr-code").click(function() {
 		var $btn = $(this);
 		var $modal = $(this).closest(".modal");
-        console.log('calsulate form 333');
         if ($btn.hasClass("scan-qr-code")) {
             var data = $btn.data();
-            console.log(data);
             NRS.scanQRCode(data.reader, function(text) {
                 $modal.find("#" + data.result).val(text);
             });
@@ -256,10 +254,8 @@ var NRS = (function(NRS, $) {
 		if (typeof formErrorFunction != "function") {
 			formErrorFunction = false;
 		}
-        console.log('continue');
 
 		var originalRequestType = requestType;
-        console.log(NRS.isRequireBlockchain(requestType));
         if (NRS.isRequireBlockchain(requestType)) {
 			if (NRS.downloadingBlockchain && !NRS.state.apiProxy) {
 				$form.find(".error_message").html($.t("error_blockchain_downloading")).show();
@@ -391,7 +387,6 @@ var NRS = (function(NRS, $) {
 			data = NRS.getFormData($form);
 		}
         if ($btn.hasClass("btn-calculate-fee")) {
-            console.log('calculate form');
             data.calculateFee = true;
             data.feeAPL = "0";
             $form.find(".error_message").html("").hide();
@@ -686,8 +681,7 @@ var NRS = (function(NRS, $) {
 			}
 		} else {
             if (requestType === 'sendMoneyPrivate') {
-            	data.deadline = 1440;
-
+            	data.deadline = '1440';
             	NRS.sendRequest(requestType, data, function (response) {
                     formResponse(response, data, requestType, $modal, $form, $btn, successMessage,
                         originalRequestType, formErrorFunction, errorMessage);
@@ -716,7 +710,6 @@ var NRS = (function(NRS, $) {
 			}
 
 			if (!$modal.hasClass("modal-no-hide")) {
-                console.log(222);
 				$modal.modal("hide");
                 $.growl($.t("send_money_submitted"), {
                     "type": "success"

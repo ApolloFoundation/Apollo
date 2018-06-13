@@ -18,6 +18,7 @@
 package apl.env;
 
 import apl.util.Logger;
+import apldesktop.DesktopApplication;
 
 import javax.swing.*;
 import java.io.File;
@@ -26,11 +27,13 @@ import java.net.URI;
 public class DesktopMode implements RuntimeMode {
 
     private DesktopSystemTray desktopSystemTray;
-    private Class desktopApplication;
-
+    private Thread desktopAppThread;
     @Override
     public void init() {
         LookAndFeel.init();
+//        desktopApplication = DesktopApplication.getInstance();
+        desktopAppThread = new Thread(DesktopApplication::launch);
+        desktopAppThread.start();
         desktopSystemTray = new DesktopSystemTray();
         SwingUtilities.invokeLater(desktopSystemTray::createAndShowGUI);
     }
@@ -43,29 +46,27 @@ public class DesktopMode implements RuntimeMode {
     @Override
     public void launchDesktopApplication() {
         Logger.logInfoMessage("Launching desktop wallet");
-        try {
-            desktopApplication = Class.forName("apldesktop.DesktopApplication");
-            desktopApplication.getMethod("launch").invoke(null);
-        } catch (ReflectiveOperationException e) {
-            Logger.logInfoMessage("apldesktop.DesktopApplication failed to launch", e);
-        }
+        DesktopApplication.startDesktopApplication();
     }
 
     @Override
     public void shutdown() {
         desktopSystemTray.shutdown();
-        if (desktopApplication == null) {
-            return;
-        }
-        try {
-            desktopApplication.getMethod("shutdown").invoke(null);
-        } catch (ReflectiveOperationException e) {
-            Logger.logInfoMessage("apldesktop.DesktopApplication failed to shutdown", e);
-        }
+        DesktopApplication.shutdown();
     }
 
     @Override
     public void alert(String message) {
         desktopSystemTray.alert(message);
+    }
+
+    @Override
+    public void recoverDb() {
+        DesktopApplication.recoverDbUI();
+    }
+
+    @Override
+    public void updateAppStatus(String newStatus) {
+        DesktopApplication.updateSplashScreenStatus(newStatus);
     }
 }
