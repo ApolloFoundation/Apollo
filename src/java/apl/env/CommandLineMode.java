@@ -51,6 +51,8 @@ public class CommandLineMode implements RuntimeMode {
         catch (IOException e) {
             Logger.logErrorMessage("Cannot delete db", e);
         }
+
         System.exit(0);
+
     }
 }
