@@ -6,7 +6,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -17,15 +17,16 @@
 
 package apl.http;
 
-import apl.Account;
 import apl.AccountLedger;
 import apl.AccountLedger.LedgerEntry;
 import apl.AplException;
-import apl.crypto.Crypto;
+import apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
 
@@ -36,7 +37,7 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * Create the GetPrivateAccountLedgerEntry instance
      */
     private GetPrivateAccountLedgerEntry() {
-        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase");
+        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
 
     /**
@@ -51,8 +52,10 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
         //
         // Process the request parameters
         //
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
-        Long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+        ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
+        if (data == null) {
+            return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
+        }
         long ledgerId = ParameterParser.getUnsignedLong(req, "ledgerId", true);
         boolean includeTransaction = "true".equalsIgnoreCase(req.getParameter("includeTransaction"));
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
@@ -61,13 +64,17 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
         // Get the ledger entry
         //
         LedgerEntry ledgerEntry = AccountLedger.getEntry(ledgerId, true);
-        if (ledgerEntry == null || ledgerEntry.getAccountId() != accountId)
+        if (ledgerEntry == null || ledgerEntry.getAccountId() != data.getAccountId())
             return JSONResponses.UNKNOWN_ENTRY;
         //
         // Return the response
         //
         JSONObject response = new JSONObject();
         JSONData.ledgerEntry(response, ledgerEntry, includeTransaction, includeHoldingInfo);
+        if (data.isEncrypt()) {
+            response = JSONData.encryptedLedgerEntry(response, data.getSharedKey());
+            response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        }
         return response;
     }
 

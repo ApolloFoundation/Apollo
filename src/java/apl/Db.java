@@ -6,7 +6,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -19,6 +19,11 @@ package apl;
 
 import apl.db.BasicDb;
 import apl.db.TransactionalDb;
+import apl.util.Logger;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 public final class Db {
 
@@ -47,4 +52,26 @@ public final class Db {
 
     private Db() {} // never
 
+    public static void tryToDeleteDb() throws IOException {
+            db.shutdown();
+            Logger.logInfoMessage("Removing db...");
+            Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
+            removeDb(dbPath);
+            Logger.logInfoMessage("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
+    }
+    private static void removeDb(Path dbPath) throws IOException {
+        Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
 }

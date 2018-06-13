@@ -6,7 +6,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -30,14 +30,10 @@ import apl.util.Convert;
 import apl.util.Logger;
 import apl.util.ThreadPool;
 import apl.util.Time;
+import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.Files;
@@ -45,6 +41,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final String VERSION = "1.11.10";
+    public static final String VERSION = "1.0.2";
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
@@ -64,6 +61,10 @@ public final class Apl {
 
     private static final RuntimeMode runtimeMode;
     private static final DirProvider dirProvider;
+
+    public static RuntimeMode getRuntimeMode() {
+        return runtimeMode;
+    }
 
     private static final Properties defaultProperties = new Properties();
     static {
@@ -344,6 +345,7 @@ public final class Apl {
         runtimeMode.shutdown();
     }
 
+
     private static class Init {
 
         private static volatile boolean initialized = false;
@@ -356,6 +358,7 @@ public final class Apl {
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
+                runtimeMode.updateAppStatus("Database initialization...");
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
@@ -363,6 +366,7 @@ public final class Apl {
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
                 AccountRestrictions.init();
+                runtimeMode.updateAppStatus("Account ledger initialization...");
                 AccountLedger.init();
                 Alias.init();
                 Asset.init();
@@ -388,10 +392,13 @@ public final class Apl {
                 ShufflingParticipant.init();
                 PrunableMessage.init();
                 TaggedData.init();
+                runtimeMode.updateAppStatus("Peer server initialization...");
                 Peers.init();
+                runtimeMode.updateAppStatus("API Proxy initialization...");
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();
+                runtimeMode.updateAppStatus("API initialization...");
                 API.init();
                 DebugTrace.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
@@ -402,11 +409,14 @@ public final class Apl {
                 }
                 try {
                     secureRandomInitThread.join(10000);
-                } catch (InterruptedException ignore) {}
+                }
+                catch (InterruptedException ignore) {}
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
-                Logger.logMessage(Apl.APPLICATION + " server " + VERSION + " started successfully.");
+                String message = Apl.APPLICATION + " server " + VERSION + " started successfully.";
+                Logger.logMessage(message);
+                runtimeMode.updateAppStatus(message);
                 Logger.logMessage("Copyright © 2013-2016 The Apl Core Developers.");
                 Logger.logMessage("Copyright © 2016-2017 Apollo Foundation IP B.V.");
                 Logger.logMessage("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
@@ -415,12 +425,27 @@ public final class Apl {
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
                 if (isDesktopApplicationEnabled()) {
+                    runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
                 if (Constants.isTestnet) {
                     Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
-            } catch (Exception e) {
+            }
+            catch (final RuntimeException e) {
+                if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
+                    Throwable exception = e;
+                    while (exception.getCause() != null) { //get root cause of RuntimeException
+                        exception = exception.getCause();
+                    }
+                    if (exception.getClass() != JdbcSQLException.class && exception.getClass() != SQLException.class) {
+                        throw e; //re-throw non-db exception
+                    }
+                }
+                Logger.logErrorMessage("Database initialization failed ", e);
+                runtimeMode.recoverDb();
+            }
+            catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
                 runtimeMode.alert(e.getMessage() + "\n" +
                         "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");

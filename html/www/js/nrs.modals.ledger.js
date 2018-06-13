@@ -5,7 +5,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -23,6 +23,7 @@ var NRS = (function(NRS, $) {
 
     $("body").on("click", ".show_ledger_modal_action", function(event) {
 		event.preventDefault();
+
         $('#get_date_private_transaction').attr('data-ledger', $(this).attr('data-entry'));
 
 		if (NRS.fetchingModalData) {
@@ -71,6 +72,7 @@ var NRS = (function(NRS, $) {
                     $('#get_private_transaction_type').modal('hide');
                     res = JSON.parse(res);
 
+
                     var detailsTable = $("#ledger_info_details_table");
                     detailsTable.find("tbody").empty().append(NRS.createInfoTable(res));
                     detailsTable.show();
@@ -97,6 +99,7 @@ var NRS = (function(NRS, $) {
 
             } catch (e) {
                 $('#get_date_modal').modal('show');
+
                 return;
             }
             if (entryDetails.timestamp) {

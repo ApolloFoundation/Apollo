@@ -5,7 +5,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -281,14 +281,15 @@ var NRS = (function(NRS, $, undefined) {
 
 		// initialisation
         this.renderItems();
-		this.initPaginations();
+		    this.initPaginations();
         this.renderItems();
         this.logPulling();
     };
-
+  
     NRS.myTransactionPagination;
     NRS.accountLedgerPagination;
     NRS.blocksPagination;
+  
 
     NRS.handleIncomingTransactions = function(transactions, confirmedTransactionIds) {
 		var oldBlock = (confirmedTransactionIds === false); //we pass false instead of an [] in case there is no new block..
@@ -404,6 +405,7 @@ var NRS = (function(NRS, $, undefined) {
         NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
 
+
         var publicKey  =  converters.hexStringToInt8ByteArray('999b8e4a543a98aaa2863783dd675579711e58b499485a5d5b655c5ad6ed7411');
         var privateKey =  converters.hexStringToInt8ByteArray(NRS.getPrivateKey('test1'));
 
@@ -417,6 +419,7 @@ var NRS = (function(NRS, $, undefined) {
         // console.log(sharedKey);
 
         NRS.sendRequest("getBlockchainTransactions", {
+
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -1549,7 +1552,7 @@ var NRS = (function(NRS, $, undefined) {
 
 
         var data = {
-            deadline:     1440,
+            deadline:     '1440',
             feeNQT:       fee + '00000000',
             amountNQT:    amount + '00000000',
             recipient :   recipient,
@@ -1581,6 +1584,7 @@ var NRS = (function(NRS, $, undefined) {
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
 
+
             // NRS.myTransactionPagination.setPrivate(formParams[0].value);
 
 
@@ -1592,6 +1596,7 @@ var NRS = (function(NRS, $, undefined) {
 
             $('#transaction_fill_secret_word_modal').modal('hide');
             $('#incorrect_passphrase_my_transactions').hide();
+
 
 
 		} else {

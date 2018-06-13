@@ -5,7 +5,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -518,13 +518,15 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyAndSignTransactionBytes = function (transactionBytes, signature, requestType, data, callback, response, extra, isVerifyECBlock) {
         var byteArray = converters.hexStringToByteArray(transactionBytes);
-        // if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
-        //     callback({
-        //         "errorCode": 1,
-        //         "errorDescription": $.t("error_bytes_validation_server")
-        //     }, data);
-        //     return;
-        // }
+        if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
+            callback({
+                "errorCode": 1,
+                "errorDescription": $.t("error_bytes_validation_server")
+            }, data);
+            return;
+        }
+
+
         var isSchedule = false;
         if (extra) {
             data["_extra"] = extra;
