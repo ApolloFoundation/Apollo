@@ -789,7 +789,78 @@ public final class ParameterParser {
         return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
     }
 
+    public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
+        byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
+        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        boolean encrypt;
+        //prefer public key
+        if (secretPhrase != null && publicKey == null) {
+            publicKey = Crypto.getPublicKey(secretPhrase);
+            encrypt = false;
+        } else {
+            encrypt = true;
+        }
+        if (publicKey == null) {
+            return null;
+        }
+        long accountId = Account.getId(publicKey);
+        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
+        return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
+    }
     private ParameterParser() {} // never
+
+    public static class PrivateTransactionsAPIData {
+        private boolean encrypt;
+        private byte[] publicKey;
+        private byte[] sharedKey;
+        private long accountId;
+
+        public PrivateTransactionsAPIData() {
+        }
+
+        public PrivateTransactionsAPIData(boolean encrypt, byte[] publicKey, byte[] sharedKey, long accountId) {
+            this.encrypt = encrypt;
+            this.publicKey = publicKey;
+            this.sharedKey = sharedKey;
+            this.accountId = accountId;
+        }
+
+        public boolean isEncrypt() {
+            return encrypt;
+        }
+
+        public void setEncrypt(boolean encrypt) {
+            this.encrypt = encrypt;
+        }
+
+        public byte[] getPublicKey() {
+            return publicKey;
+        }
+
+        public void setPublicKey(byte[] publicKey) {
+            this.publicKey = publicKey;
+        }
+
+        public byte[] getSharedKey() {
+            return sharedKey;
+        }
+
+        public void setSharedKey(byte[] sharedKey) {
+            this.sharedKey = sharedKey;
+        }
+
+        public long getAccountId() {
+            return accountId;
+        }
+
+        public void setAccountId(long accountId) {
+            this.accountId = accountId;
+        }
+
+        public boolean isValid() {
+            return publicKey != null;
+        }
+    }
 
     public static class FileData {
         private final Part part;

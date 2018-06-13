@@ -31,4 +31,10 @@ public interface RuntimeMode {
     void shutdown();
 
     void alert(String message);
+
+    default void recoverDb() {
+        alert("Db Failed! Try to manually remove it.");
+    }
+
+    default void updateAppStatus(String newStatus) {}
 }
