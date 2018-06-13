@@ -144,17 +144,11 @@ var NRS = (function(NRS, $, undefined) {
 
                     var rows = "";
                     that.items = JSON.parse(data);
-                    console.log(that.items);
 
                      if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
                          that.items = JSON.parse(data).transactions;
 
                          that.serverKey = JSON.parse(data).serverPublicKey;
-
-                         console.log('++++++++++++++++++++++++++++++++++++++');
-                         console.log(JSON.parse(data));
-                         console.log(that.serverKey);
-
 
                          if (that.items.length < 15 && that.page == 1) {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
@@ -409,11 +403,7 @@ var NRS = (function(NRS, $, undefined) {
         var publicKey  =  converters.hexStringToInt8ByteArray('999b8e4a543a98aaa2863783dd675579711e58b499485a5d5b655c5ad6ed7411');
         var privateKey =  converters.hexStringToInt8ByteArray(NRS.getPrivateKey('test1'));
 
-
-        console.log(publicKey);
-        console.log(privateKey);
         var sharedKey = NRS.getSharedSecretJava(privateKey, publicKey);
-        console.log(sharedKey);
         sharedKey = converters.byteArrayToHexString(sharedKey);
 
         // console.log(sharedKey);
@@ -798,10 +788,7 @@ var NRS = (function(NRS, $, undefined) {
             t = decrypted;
         }
 
-        console.log(t);
-
         var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
-        console.log(decimals);
 
         if (transactionType === 'Unknown') {
             transactionType = 'Private payment';
