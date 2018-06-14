@@ -14,8 +14,8 @@ Java 8 is required to run the desktop clients.
 # Links #
 
 
-Website:  Apollocurrency.com
-Twitter:  Twitter.com/Apollocurrency
-Telegram: T.me/apollocommunity
+Website:  https://Apollocurrency.com
+Twitter:  https://Twitter.com/Apollocurrency
+Telegram: https://T.me/apollocommunity
 Facebook: https://www.facebook.com/Apolloprivacycoin
 Youtube:  https://www.youtube.com/channel/UCZbB3PAUlkSKuBYEMG-l_CQ
