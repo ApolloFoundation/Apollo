@@ -73,6 +73,21 @@ var converters = function() {
 		hexStringToString: function(hex) {
 			return this.byteArrayToString(this.hexStringToByteArray(hex));
 		},
+        hexStringToInt8ByteArray: function(str) {
+            var bytes = [];
+            var i = 0;
+            if (0 !== str.length % 2) {
+                bytes.push(charToNibble[str.charAt(0)]);
+                ++i;
+            }
+
+            for (; i < str.length - 1; i += 2)
+                bytes.push((charToNibble[str.charAt(i)] << 4) + charToNibble[str.charAt(i + 1)]);
+
+            var bytes = new Int8Array(bytes);
+
+            return bytes;
+        },
 		checkBytesToIntInput: function(bytes, numBytes, opt_startIndex) {
 			var startIndex = opt_startIndex || 0;
 			if (startIndex < 0) {
