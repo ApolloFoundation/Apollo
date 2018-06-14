@@ -518,7 +518,6 @@ var NRS = (function (NRS, $) {
                         options.isText = _encryptedNote.transaction.attachment[key].isText;
                         options.isCompressed = _encryptedNote.transaction.attachment[key].isCompressed;
                     }
-
                     data = NRS.decryptNote(encrypted, options, password);
 					decryptedFields[key] = data;
 				} catch (err) {
@@ -682,7 +681,8 @@ var NRS = (function (NRS, $) {
 	}
 
 	function aesDecrypt(ivCiphertext, options) {
-        if (ivCiphertext.length < 16 || ivCiphertext.length % 16 != 0) {
+    if (ivCiphertext.length < 16 || ivCiphertext.length % 16 != 0) {
+
 			throw {
 				name: "invalid ciphertext"
 			};
@@ -745,20 +745,13 @@ var NRS = (function (NRS, $) {
 		};
 	}
 
-	NRS.getSharedSecret = function(privateKey, publicKey) {
-        getSharedSecret(privateKey, publicKey);
-	}
-
 	NRS.decryptDataRoof = function(data, options) {
 		return decryptData(data, options);
 	};
 
-    NRS.decryptData = function(data, options) {
-        return decryptData(data, options);
-	};
-
 	function decryptData(data, options) {
 		if (!options.sharedKey) {
+      
 			options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
             var sharedKey =  NRS.getSharedSecretJava(options.privateKey, options.publicKey);
@@ -773,9 +766,12 @@ var NRS = (function (NRS, $) {
         var binData = new Uint8Array(result.decrypted);
         options.isCompressed = false;
         options.isText = false;
+			  options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
+		}
 
-
-        if (!(options.isCompressed === false)) {
+		var result = aesDecrypt(data, options);
+		var binData = new Uint8Array(result.decrypted);
+		if (!(options.isCompressed === false)) {
 			binData = pako.inflate(binData);
 		}
 		var message;
@@ -790,23 +786,6 @@ var NRS = (function (NRS, $) {
 	function getSharedSecret(key1, key2) {
 		return converters.shortArrayToByteArray(curve25519_(converters.byteArrayToShortArray(key1), converters.byteArrayToShortArray(key2), null));
 	}
-
-    NRS.getSharedSecretJava = function (key1, key2) {
-        var sharedKey;
-
-        var result =  curve25519.generateSharedKey(sharedKey, key1, key2);
-		var result = new Uint8Array(result);
-
-        var sha256 = CryptoJS.algo.SHA256.create();
-        sha256.update(converters.byteArrayToWordArray(result));
-
-        var hash = sha256.finalize();
-        hash = converters.wordArrayToByteArrayImpl(hash, false);
-
-        hash = new Int8Array(hash);
-
-        return hash;
-	};
 
     NRS.sharedSecretToSharedKey = function (sharedSecret, nonce) {
         for (var i = 0; i < 32; i++) {
@@ -836,10 +815,6 @@ var NRS = (function (NRS, $) {
 			callback({ file: blob, nonce: encrypted.nonce });
 		};
 		r.readAsArrayBuffer(file);
-	};
-
-	NRS.getRandomBytes = function(length) {
-        return getRandomBytes(length);
 	};
 
     function getRandomBytes(length) {
