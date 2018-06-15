@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final String VERSION = "1.11.10";
+    public static final String VERSION = "1.0.3";
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
@@ -417,8 +417,9 @@ public final class Apl {
                 String message = Apl.APPLICATION + " server " + VERSION + " started successfully.";
                 Logger.logMessage(message);
                 runtimeMode.updateAppStatus(message);
-                Logger.logMessage("Copyright © 2013-2016 The Apl Core Developers.");
-                Logger.logMessage("Copyright © 2016-2017 Apollo Foundation IP B.V.");
+                Logger.logMessage("Copyright © 2013-2016 The NXT Core Developers.");
+                Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V..");
+                Logger.logMessage("Copyright © 2016-2017 Apollo Foundation.");
                 Logger.logMessage("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
                 if (API.getWelcomePageUri() != null) {
                     Logger.logMessage("Client UI is at " + API.getWelcomePageUri());

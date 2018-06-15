@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,6 +17,7 @@
 
 package apl.env;
 
+import apl.Apl;
 import apl.Db;
 import apl.util.Logger;
 
@@ -51,8 +52,6 @@ public class CommandLineMode implements RuntimeMode {
         catch (IOException e) {
             Logger.logErrorMessage("Cannot delete db", e);
         }
-
-        System.exit(0);
-
+        Apl.shutdown();
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -61,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static apldesktop.DesktopApplication.MainApplication.showStage;
 
 public class DesktopApplication extends Application {
     private static final MainApplication MAIN_APPLICATION = MainApplication.getInstance();
@@ -102,15 +103,11 @@ public class DesktopApplication extends Application {
             return;
         }
         if (mainStage != null) {
-
-            Platform.runLater(() -> MainApplication.showStage(false));
-
+            Platform.runLater(() -> showStage(false));
         }
     }
 
-
-        SPLASH_SCREEN.shutdown();
-
+    public static void recoverDbUI() {
         DB_RECOVERING_UI.tryToRecoverDB();
     }
 
@@ -134,13 +131,13 @@ public class DesktopApplication extends Application {
 
     @SuppressWarnings("unused")
     public static void shutdown() {
-
-        System.out.println("Shutting down JavaFX platform");
-        Platform.runLater(()-> {
-            SPLASH_SCREEN.shutdown();
-            MAIN_APPLICATION.shutdown();
-        });
-
+        System.out.println("shutting down JavaFX platform");
+        if (screenStage.isShowing()) {
+            screenStage.close();
+        }
+        if (mainStage.isShowing()) {
+            mainStage.close();
+        }
         Platform.exit();
         if (ENABLE_JAVASCRIPT_DEBUGGER) {
             try {
@@ -161,14 +158,12 @@ public class DesktopApplication extends Application {
         showSplashScreen();
     }
 
-
-    private static class SplashScreen {
+    public static class SplashScreen {
         private static SplashScreen instance = new SplashScreen();
         private AtomicBoolean shutdown = new AtomicBoolean(false);
         private String lastStatus;
 
         private SplashScreen() {}
-
 
         public static SplashScreen getInstance() {
             return instance;
@@ -224,11 +219,7 @@ public class DesktopApplication extends Application {
                 Platform.runLater(() -> screenStage.hide());
                 shutdown.set(false);
             };
-
-            Thread statusUpdaterThread = new Thread(statusUpdater, "Splash screen status updater");
-//            statusUpdaterThread.setDaemon(true);
-            statusUpdaterThread.start();
-
+            new Thread(statusUpdater).start();
         }
 
         public void shutdown() {
@@ -236,8 +227,7 @@ public class DesktopApplication extends Application {
         }
     }
 
-    static class MainApplication {
-
+    public static class MainApplication {
         private static final Set DOWNLOAD_REQUEST_TYPES = new HashSet<>(Arrays.asList("downloadTaggedData", "downloadPrunableMessage"));
         private static volatile WebEngine webEngine;
         private static MainApplication instance = new MainApplication();
@@ -252,9 +242,7 @@ public class DesktopApplication extends Application {
             Platform.runLater(() -> showStage(true));
         }
 
-
-        public static void showStage(boolean isRefresh) {
-
+        static void showStage(boolean isRefresh) {
             if (isRefresh) {
                 webEngine.load(getUrl());
             }
@@ -452,7 +440,6 @@ public class DesktopApplication extends Application {
                 }
                 if (taggedData == null) {
                     growl("Tagged data not found");
-
                     return;
                 }
                 byte[] data = taggedData.getData();
@@ -485,7 +472,6 @@ public class DesktopApplication extends Application {
                     growl("Do not specify both secret phrase and shared key");
                     return;
                 }
-
                 byte[] data = null;
                 if (prunableMessage != null) {
                     try {
@@ -525,10 +511,6 @@ public class DesktopApplication extends Application {
             }
         }
 
-        public void shutdown() {
-            Platform.runLater(()->mainStage.close());
-        }
-
         public void stop() {
             System.out.println("DesktopApplication stopped"); // Should never happen
         }
@@ -556,7 +538,6 @@ public class DesktopApplication extends Application {
 
         public static DbRecoveringUI getInstance() {
             return instance;
-
         }
 
         public void tryToRecoverDB() {
@@ -574,21 +555,20 @@ public class DesktopApplication extends Application {
                                 ButtonType clickedButton = clickedButtonType.get();
                                 if (clickedButton.getText().equalsIgnoreCase("Remove db")) {
                                     //delete db and show alert
-                                    deleteDbAndHandleException().showAndWait();
+                                    deleteDbAndHandleException().show();
                                 }
                             }
                         }
                         catch (SQLException sqlEx) {
                             Logger.logErrorMessage("Cannot reindex database!", sqlEx);
                             //delete db and show alert
-                            deleteDbAndHandleException().showAndWait();
+                            deleteDbAndHandleException().show();
                         }
                     }
                 }
-                System.exit(0); //trigger shutdown hook Apl.shutdown
+                Apl.shutdown();
             });
         }
-
 
         private Alert reindexDbUI() throws SQLException {
             FullTextTrigger.reindex(Db.db.getConnection());
