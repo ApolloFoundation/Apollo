@@ -25,6 +25,7 @@ RUN apt-get install -y wget unzip
 RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
 RUN apt-get install -y oracle-java8-installer
 
+
 # run and compile apl
 RUN mkdir /apl
 ADD . /apl
@@ -39,3 +40,4 @@ RUN cd /apl; ./compile.sh
 # both Apl ports get exposed
 EXPOSE 7874 7876
 CMD ["/docker_start.sh"]
+
