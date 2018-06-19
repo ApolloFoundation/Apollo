@@ -19,6 +19,10 @@ package apl;
 
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
+import apl.updater.Architecture;
+import apl.updater.Level;
+import apl.updater.Platform;
+import apl.updater.Version;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -3555,4 +3559,122 @@ public interface Attachment extends Appendix {
         }
 
     }
+
+    final class Update extends AbstractAttachment {
+
+        private final Platform platform;
+        private final Architecture architecture;
+        private final String url;
+        private final Version version;
+        private final Level level;
+        private final int hash;
+        private final byte[] signature;
+
+        Update(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), 10).trim());
+            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), 10).trim());
+            url = Convert.readString(buffer, buffer.getShort(), 200).trim();
+            version = Version.from(Convert.readString(buffer, buffer.get(), 50).trim());
+            level = Level.valueOf(Convert.readString(buffer, buffer.get(), 10).trim());
+            hash = buffer.getInt();
+            //TODO dynamic signature length
+            signature = new byte[32];
+            buffer.get(signature);
+        }
+
+        Update(JSONObject attachmentData) {
+            super(attachmentData);
+            platform = Platform.valueOf(Convert.nullToEmpty((String) attachmentData.get("platform")).trim());
+            architecture = Architecture.valueOf(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
+            url = Convert.nullToEmpty((String) attachmentData.get("url")).trim();
+            version = Version.from(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
+            level = Level.valueOf(Convert.nullToEmpty((String) attachmentData.get("level")).trim());
+            hash = (int) attachmentData.get("hash");
+            signature = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("signature")).trim());
+        }
+
+        public Update(Platform platform, Architecture architecture, String url, Version version, Level level, int hash, byte[] signature) {
+            this.platform = platform;
+            this.architecture = architecture;
+            this.url = url;
+            this.version = version;
+            this.level = level;
+            this.hash = hash;
+            this.signature = signature;
+        }
+
+        @Override
+        int getMySize() {
+            return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
+            +2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 1 + Convert.toBytes(level.name()).length + 4 + signature.length;
+        }
+
+        @Override
+        void putMyBytes(ByteBuffer buffer) {
+            byte[] platform = Convert.toBytes(this.platform.toString());
+            byte[] architecture = Convert.toBytes(this.architecture.toString());
+            byte[] url = Convert.toBytes(this.url);
+            byte[] version = Convert.toBytes(this.version.toString());
+            byte[] level = Convert.toBytes(this.level.toString());
+            buffer.put((byte)platform.length);
+            buffer.put(platform);
+            buffer.put((byte)architecture.length);
+            buffer.put(architecture);
+            buffer.putShort((short) url.length);
+            buffer.put(url);
+            buffer.put((byte)version.length);
+            buffer.put(version);
+            buffer.put((byte)level.length);
+            buffer.put(level);
+            buffer.putInt(hash);
+            //TODO dynamic signature length
+            buffer.put(signature);
+        }
+
+        @Override
+        void putMyJSON(JSONObject attachment) {
+            attachment.put("platform", platform.toString());
+            attachment.put("architecture", architecture.toString());
+            attachment.put("url", url);
+            attachment.put("version", version.toString());
+            attachment.put("level", level.toString());
+            attachment.put("hash", hash);
+            attachment.put("signature", Convert.toHexString(signature));
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.CRITICAL;
+        }
+
+        public Platform getPlatform() {
+            return platform;
+        }
+
+        public Architecture getArchitecture() {
+            return architecture;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public Version getAppVersion() {
+            return version;
+        }
+
+        public Level getLevel() {
+            return level;
+        }
+
+        public int getHash() {
+            return hash;
+        }
+
+        public byte[] getSignature() {
+            return signature;
+        }
+    }
+
 }

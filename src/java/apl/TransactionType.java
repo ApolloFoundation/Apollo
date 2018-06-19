@@ -45,6 +45,7 @@ public abstract class TransactionType {
     static final byte TYPE_MONETARY_SYSTEM = 5;
     private static final byte TYPE_DATA = 6;
     static final byte TYPE_SHUFFLING = 7;
+    private static final byte TYPE_UPDATE = 8;
 
     private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     private static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
@@ -85,6 +86,10 @@ public abstract class TransactionType {
 
     private static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
     private static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
+
+    private static final byte SUBTYPE_UPDATE_CRITICAL = 0;
+    private static final byte SUBTYPE_UPDATE_NORMAL = 1;
+    private static final byte SUBTYPE_UPDATE_FINE = 2;
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -190,6 +195,12 @@ public abstract class TransactionType {
                 }
             case TYPE_SHUFFLING:
                 return ShufflingTransaction.findTransactionType(subtype);
+            case TYPE_UPDATE:
+                switch (subtype) {
+                    case SUBTYPE_UPDATE_CRITICAL:
+                    case SUBTYPE_UPDATE_NORMAL:
+                    case SUBTYPE_UPDATE_FINE:
+                }
             default:
                 return null;
         }
@@ -3116,4 +3127,74 @@ public abstract class TransactionType {
 
     }
 
+    public static abstract class Update extends TransactionType {
+
+        private Update() {
+        }
+
+        @Override
+        public final byte getType() {
+            return TransactionType.TYPE_UPDATE;
+        }
+
+        @Override
+        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+
+        @Override
+        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        }
+
+        @Override
+        public final boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public final boolean isPhasingSafe() {
+            return true;
+        }
+
+        public static final TransactionType CRITICAL = new Update() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_UPDATE_CRITICAL;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.UPDATE;
+            }
+
+            @Override
+            public String getName() {
+                return "Update";
+            }
+
+            @Override
+            Attachment.Update parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.Update(buffer);
+            }
+
+            @Override
+            Attachment.Update parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.Update(attachmentData);
+            }
+
+            @Override
+            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+                //TODO: call AuthorityChecker
+                //check version
+                if (transaction.getAmountNQT() <= 0 || transaction.getAmountNQT() >= Constants.MAX_BALANCE_NQT) {
+                    throw new AplException.NotValidException("Invalid ordinary payment");
+                }
+            }
+
+            @Override
+            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+
+        };
+    }
 }
