@@ -488,7 +488,9 @@ public class AccountLedger {
             SHUFFLING_CANCELLATION(53, true),
             SHUFFLING_DISTRIBUTION(54, true),
         // TYPE_UPDATE
-            UPDATE(59, true);
+            UPDATE_CRITICAL(59, true),
+            UPDATE_IMPORTANT(60, true),
+            UPDATE_MINOR(61, true);
 
         /** Event code mapping */
         private static final Map<Integer, LedgerEvent> eventMap = new HashMap<>();

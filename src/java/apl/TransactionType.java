@@ -19,8 +19,8 @@ package apl;
 
 import apl.Account.ControlType;
 import apl.AccountLedger.LedgerEvent;
-import apl.Attachment.AbstractAttachment;
 import apl.AplException.ValidationException;
+import apl.Attachment.AbstractAttachment;
 import apl.VoteWeighting.VotingModel;
 import apl.util.Convert;
 import apl.util.Logger;
@@ -88,8 +88,8 @@ public abstract class TransactionType {
     private static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
 
     private static final byte SUBTYPE_UPDATE_CRITICAL = 0;
-    private static final byte SUBTYPE_UPDATE_NORMAL = 1;
-    private static final byte SUBTYPE_UPDATE_FINE = 2;
+    private static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
+    private static final byte SUBTYPE_UPDATE_MINOR = 2;
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -198,8 +198,13 @@ public abstract class TransactionType {
             case TYPE_UPDATE:
                 switch (subtype) {
                     case SUBTYPE_UPDATE_CRITICAL:
-                    case SUBTYPE_UPDATE_NORMAL:
-                    case SUBTYPE_UPDATE_FINE:
+                        return Update.CRITICAL;
+                    case SUBTYPE_UPDATE_IMPORTANT:
+                        return Update.IMPORTANT;
+                    case SUBTYPE_UPDATE_MINOR:
+                        return Update.MINOR;
+                    default:
+                        return null;
                 }
             default:
                 return null;
@@ -457,7 +462,6 @@ public abstract class TransactionType {
                     throw new AplException.NotValidException("Invalid private payment");
                 }
             }
-
         };
 
     }
@@ -3156,6 +3160,19 @@ public abstract class TransactionType {
             return true;
         }
 
+        @Override
+        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            //TODO: call AuthorityChecker
+            Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+            //check version
+            if (!attachment.getAppVersion().greaterThan(Apl.VERSION)) {
+                throw new AplException.NotValidException("Update version: " + attachment.getAppVersion() + " is not newer than current version: " + Apl.VERSION);
+            }
+        }
+
+        @Override
+        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+
         public static final TransactionType CRITICAL = new Update() {
 
             @Override
@@ -3165,36 +3182,79 @@ public abstract class TransactionType {
 
             @Override
             public LedgerEvent getLedgerEvent() {
-                return LedgerEvent.UPDATE;
+                return LedgerEvent.UPDATE_CRITICAL;
             }
 
             @Override
             public String getName() {
-                return "Update";
+                return "CriticalUpdate";
             }
 
             @Override
-            Attachment.Update parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-                return new Attachment.Update(buffer);
+            Attachment.CriticalUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.CriticalUpdate(buffer);
             }
 
             @Override
-            Attachment.Update parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-                return new Attachment.Update(attachmentData);
+            Attachment.CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.CriticalUpdate(attachmentData);
+            }
+
+        };
+
+        public static final TransactionType IMPORTANT = new Update() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_UPDATE_IMPORTANT;
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-                //TODO: call AuthorityChecker
-                //check version
-                if (transaction.getAmountNQT() <= 0 || transaction.getAmountNQT() >= Constants.MAX_BALANCE_NQT) {
-                    throw new AplException.NotValidException("Invalid ordinary payment");
-                }
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.UPDATE_IMPORTANT;
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+            public String getName() {
+                return "ImportantUpdate";
+            }
 
+            @Override
+            Attachment.ImportantUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.ImportantUpdate(buffer);
+            }
+
+            @Override
+            Attachment.ImportantUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.ImportantUpdate(attachmentData);
+            }
+        };
+        public static final TransactionType MINOR = new Update() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_UPDATE_MINOR;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.UPDATE_MINOR;
+            }
+
+            @Override
+            public String getName() {
+                return "MinorUpdate";
+            }
+
+            @Override
+            Attachment.MinorUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.MinorUpdate(buffer);
+            }
+
+            @Override
+            Attachment.MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.MinorUpdate(attachmentData);
+            }
         };
     }
 }
