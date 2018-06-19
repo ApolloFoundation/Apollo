@@ -2390,7 +2390,9 @@ http://wrapbootstrap.com/preview/WB0907F35 */
 
 
 
-
+.aliases-pagination {
+    display: block !important;
+}
 
 
 /* wesley */
