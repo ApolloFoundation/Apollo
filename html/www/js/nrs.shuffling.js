@@ -177,12 +177,12 @@ var NRS = (function(NRS, $) {
 			$("#shuffling_asset_id_group").css("display", "inline");
 			$("#shuffling_ms_currency_group").css("display", "none");
             $('#m_shuffling_create_unit').html($.t('quantity'));
-            $('#m_shuffling_create_amount').attr('name', 'amountQNTf');
+            $('#m_shuffling_create_amount').attr('name', 'amountATUf');
 		} else if(holdingType.val() == "2") {
 			$("#shuffling_asset_id_group").css("display", "none");
 			$("#shuffling_ms_currency_group").css("display", "inline");
             $('#m_shuffling_create_unit').html($.t('units'));
-            $('#m_shuffling_create_amount').attr('name', 'amountQNTf');
+            $('#m_shuffling_create_amount').attr('name', 'amountATUf');
 		}
     });
 

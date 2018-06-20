@@ -624,7 +624,7 @@ var NRS = (function(NRS, $) {
             var key = $(this).attr("name");
             var value = $(this).val();
             if (/_warning/i.test(key) && isAmountWarning(key)) {
-                value = NRS.convertToNQT(value);
+                value = NRS.convertToATM(value);
             }
             NRS.updateSettings(key, value);
         });

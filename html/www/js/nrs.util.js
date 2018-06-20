@@ -58,12 +58,12 @@ var NRS = (function (NRS, $, undefined) {
 		return formattedWeight.escapeHTML();
 	};
 
-    NRS.formatOrderPricePerWholeQNT = function (price, decimals, zeroPad) {
-		price = NRS.calculateOrderPricePerWholeQNT(price, decimals, true);
+    NRS.formatOrderPricePerWholeATU = function (price, decimals, zeroPad) {
+		price = NRS.calculateOrderPricePerWholeATU(price, decimals, true);
 		return NRS.format(price, false, zeroPad);
 	};
 
-    NRS.calculateOrderPricePerWholeQNT = function (price, decimals, returnAsObject) {
+    NRS.calculateOrderPricePerWholeATU = function (price, decimals, returnAsObject) {
 		if (typeof price != "object") {
 			price = new BigInteger(String(price));
 		}
@@ -71,7 +71,7 @@ var NRS = (function (NRS, $, undefined) {
 		return NRS.convertToAPL(price.multiply(new BigInteger("" + Math.pow(10, decimals))), returnAsObject);
 	};
 
-    NRS.calculatePricePerWholeQNT = function (price, decimals) {
+    NRS.calculatePricePerWholeATU = function (price, decimals) {
 		price = String(price);
 
 		if (decimals) {
@@ -88,22 +88,22 @@ var NRS = (function (NRS, $, undefined) {
 		}
 	};
 
-    function calculateOrderTotalImpl(quantityQNT, priceNQT) {
-        if (typeof quantityQNT != "object") {
-            quantityQNT = new BigInteger(String(quantityQNT));
+    function calculateOrderTotalImpl(quantityATU, priceATM) {
+        if (typeof quantityATU != "object") {
+            quantityATU = new BigInteger(String(quantityATU));
         }
-        if (typeof priceNQT != "object") {
-            priceNQT = new BigInteger(String(priceNQT));
+        if (typeof priceATM != "object") {
+            priceATM = new BigInteger(String(priceATM));
         }
-        return quantityQNT.multiply(priceNQT);
+        return quantityATU.multiply(priceATM);
     }
 
-    NRS.calculateOrderTotalNQT = function (quantityQNT, priceNQT) {
-        return calculateOrderTotalImpl(quantityQNT, priceNQT).toString();
+    NRS.calculateOrderTotalATM = function (quantityATU, priceATM) {
+        return calculateOrderTotalImpl(quantityATU, priceATM).toString();
     };
 
-    NRS.calculateOrderTotal = function (quantityQNT, priceNQT) {
-        return NRS.convertToAPL(calculateOrderTotalImpl(quantityQNT, priceNQT));
+    NRS.calculateOrderTotal = function (quantityATU, priceATM) {
+        return NRS.convertToAPL(calculateOrderTotalImpl(quantityATU, priceATM));
     };
 
     NRS.calculatePercentage = function (a, b, rounding_mode) {
@@ -182,7 +182,7 @@ var NRS = (function (NRS, $, undefined) {
 		}
 	};
 
-    NRS.convertToNQT = function (currency) {
+    NRS.convertToATM = function (currency) {
 		currency = String(currency);
 
 		var parts = currency.split(".");
@@ -224,7 +224,7 @@ var NRS = (function (NRS, $, undefined) {
 		return result;
 	};
 
-    NRS.convertToQNTf = function (quantity, decimals, returnAsObject) {
+    NRS.convertToATUf = function (quantity, decimals, returnAsObject) {
 		quantity = String(quantity);
 
 		if (quantity.length < decimals) {
@@ -260,7 +260,7 @@ var NRS = (function (NRS, $, undefined) {
         }
     };
 
-    NRS.convertToQNT = function (quantity, decimals) {
+    NRS.convertToATU = function (quantity, decimals) {
 		quantity = String(quantity);
 
 		var parts = quantity.split(".");
@@ -361,7 +361,7 @@ var NRS = (function (NRS, $, undefined) {
 	};
 
     NRS.formatQuantity = function (quantity, decimals, no_escaping, zeroPad) {
-		return NRS.format(NRS.convertToQNTf(quantity, decimals, true), no_escaping, zeroPad);
+		return NRS.format(NRS.convertToATUf(quantity, decimals, true), no_escaping, zeroPad);
 	};
 
     NRS.formatAmount = function (amount, round, no_escaping, zeroPad) {
@@ -422,11 +422,11 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.getTransactionsAmountDecimals = function(transactions) {
         var decimals = {};
-   		decimals.amount = NRS.getNumberOfDecimals(transactions, "amountNQT", function (transaction) {
-   			return NRS.formatAmount(transaction.amountNQT);
+   		decimals.amount = NRS.getNumberOfDecimals(transactions, "amountATM", function (transaction) {
+   			return NRS.formatAmount(transaction.amountATM);
    		});
-   		decimals.fee = NRS.getNumberOfDecimals(transactions, "feeNQT", function (transaction) {
-   			return NRS.formatAmount(transaction.feeNQT);
+   		decimals.fee = NRS.getNumberOfDecimals(transactions, "feeATM", function (transaction) {
+   			return NRS.formatAmount(transaction.feeATM);
    		});
         return decimals;
    	};
@@ -817,7 +817,7 @@ var NRS = (function (NRS, $, undefined) {
             }
 			var value = data[key];
 
-			var match = key.match(/(.*)(NQT|QNT|RS)$/);
+			var match = key.match(/(.*)(ATM|ATU|RS)$/);
 			var type = "";
 
 			if (match && match[1]) {
@@ -1310,7 +1310,7 @@ var NRS = (function (NRS, $, undefined) {
 	};
 
     NRS.getTranslatedFieldName = function (name) {
-        var nameKey = String(name).replace(/NQT|QNT|RS$/, "").replace(/\s+/g, "").replace(/([A-Z])/g, function ($1) {
+        var nameKey = String(name).replace(/ATM|ATU|RS$/, "").replace(/\s+/g, "").replace(/([A-Z])/g, function ($1) {
 			return "_" + $1.toLowerCase();
 		});
 
@@ -1677,7 +1677,7 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.getMandatoryParams = function() {
         return {
-            feeNQT: "0",
+            feeATM: "0",
             deadline: "1440"
         }
     };
