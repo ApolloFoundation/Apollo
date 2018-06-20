@@ -180,7 +180,7 @@ public final class Alias {
 
     static void sellAlias(Transaction transaction, Attachment.MessagingAliasSell attachment) {
         final String aliasName = attachment.getAliasName();
-        final long priceNQT = attachment.getPriceNQT();
+        final long priceNQT = attachment.getPriceATM();
         final long buyerId = transaction.getRecipientId();
         if (priceNQT > 0) {
             Alias alias = getAlias(aliasName);

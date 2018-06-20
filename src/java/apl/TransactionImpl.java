@@ -1032,11 +1032,11 @@ final class TransactionImpl implements Transaction {
             }
         }
         if (referencedTransactionFullHash != null) {
-            senderAccount.addToUnconfirmedBalanceNQT(getType().getLedgerEvent(), getId(),
+            senderAccount.addToUnconfirmedBalanceATM(getType().getLedgerEvent(), getId(),
                     0, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
         }
         if (attachmentIsPhased()) {
-            senderAccount.addToBalanceNQT(getType().getLedgerEvent(), getId(), 0, -feeNQT);
+            senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeNQT);
         }
         for (Appendix.AbstractAppendix appendage : appendages) {
             if (!appendage.isPhased(this)) {

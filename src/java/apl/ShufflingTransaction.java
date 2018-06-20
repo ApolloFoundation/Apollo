@@ -152,12 +152,12 @@ public abstract class ShufflingTransaction extends TransactionType {
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
                         && senderAccount.getUnconfirmedBalanceATM() >= Constants.SHUFFLING_DEPOSIT_ATM) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_ATM);
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_ATM);
                     return true;
                 }
             } else {
                 if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getAmount()) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -attachment.getAmount());
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -attachment.getAmount());
                     return true;
                 }
             }
@@ -176,9 +176,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_ATM);
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_ATM);
             } else {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), attachment.getAmount());
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getAmount());
             }
         }
 
@@ -269,12 +269,12 @@ public abstract class ShufflingTransaction extends TransactionType {
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
                         && senderAccount.getUnconfirmedBalanceATM() >= Constants.SHUFFLING_DEPOSIT_ATM) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_ATM);
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_ATM);
                     return true;
                 }
             } else {
                 if (senderAccount.getUnconfirmedBalanceATM() >= shuffling.getAmount()) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
                     return true;
                 }
             }
@@ -295,9 +295,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), shuffling.getAmount());
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_ATM);
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Constants.SHUFFLING_DEPOSIT_ATM);
             } else {
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), shuffling.getAmount());
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), shuffling.getAmount());
             }
         }
 

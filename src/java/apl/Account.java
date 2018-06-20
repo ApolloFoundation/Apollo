@@ -984,17 +984,17 @@ public final class Account {
         return accountCurrencyTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), height, from, to);
     }
 
-    public static long getAssetBalanceQNT(long accountId, long assetId, int height) {
+    public static long getAssetBalanceATU(long accountId, long assetId, int height) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId), height);
         return accountAsset == null ? 0 : accountAsset.quantityQNT;
     }
 
-    public static long getAssetBalanceQNT(long accountId, long assetId) {
+    public static long getAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.quantityQNT;
     }
 
-    public static long getUnconfirmedAssetBalanceQNT(long accountId, long assetId) {
+    public static long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityQNT;
     }
@@ -1356,16 +1356,16 @@ public final class Account {
         return accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId), height);
     }
 
-    public long getAssetBalanceQNT(long assetId) {
-        return getAssetBalanceQNT(this.id, assetId);
+    public long getAssetBalanceATU(long assetId) {
+        return getAssetBalanceATU(this.id, assetId);
     }
 
-    public long getAssetBalanceQNT(long assetId, int height) {
-        return getAssetBalanceQNT(this.id, assetId, height);
+    public long getAssetBalanceATU(long assetId, int height) {
+        return getAssetBalanceATU(this.id, assetId, height);
     }
 
-    public long getUnconfirmedAssetBalanceQNT(long assetId) {
-        return getUnconfirmedAssetBalanceQNT(this.id, assetId);
+    public long getUnconfirmedAssetBalanceATU(long assetId) {
+        return getUnconfirmedAssetBalanceATU(this.id, assetId);
     }
 
     public AccountCurrency getCurrency(long currencyId) {
@@ -1506,7 +1506,7 @@ public final class Account {
         this.publicKey = publicKey;
     }
 
-    void addToAssetBalanceQNT(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
+    void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
         if (quantityQNT == 0) {
             return;
         }
@@ -1528,7 +1528,7 @@ public final class Account {
         }
     }
 
-    void addToUnconfirmedAssetBalanceQNT(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
+    void addToUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
         if (quantityQNT == 0) {
             return;
         }
@@ -1554,7 +1554,7 @@ public final class Account {
         }
     }
 
-    void addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
+    void addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
         if (quantityQNT == 0) {
             return;
         }
@@ -1664,11 +1664,11 @@ public final class Account {
         }
     }
 
-    void addToBalanceNQT(LedgerEvent event, long eventId, long amountNQT) {
-        addToBalanceNQT(event, eventId, amountNQT, 0);
+    void addToBalanceATM(LedgerEvent event, long eventId, long amountNQT) {
+        addToBalanceATM(event, eventId, amountNQT, 0);
     }
 
-    void addToBalanceNQT(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
+    void addToBalanceATM(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
         if (amountNQT == 0 && feeNQT == 0) {
             return;
         }
@@ -1690,11 +1690,11 @@ public final class Account {
         }
     }
 
-    void addToUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT) {
-        addToUnconfirmedBalanceNQT(event, eventId, amountNQT, 0);
+    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT) {
+        addToUnconfirmedBalanceATM(event, eventId, amountNQT, 0);
     }
 
-    void addToUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
+    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
         if (amountNQT == 0 && feeNQT == 0) {
             return;
         }
@@ -1718,11 +1718,11 @@ public final class Account {
         }
     }
 
-    void addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT) {
-        addToBalanceAndUnconfirmedBalanceNQT(event, eventId, amountNQT, 0);
+    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT) {
+        addToBalanceAndUnconfirmedBalanceATM(event, eventId, amountNQT, 0);
     }
 
-    void addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
+    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
         if (amountNQT == 0 && feeNQT == 0) {
             return;
         }
@@ -1817,18 +1817,18 @@ public final class Account {
                 accountAssets.add(iterator.next());
             }
         }
-        final long amountNQTPerQNT = attachment.getAmountNQTPerQNT();
+        final long amountNQTPerQNT = attachment.getAmountATMPerATU();
         long numAccounts = 0;
         for (final AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityATU() != 0) {
                 long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), amountNQTPerQNT);
                 Account.getAccount(accountAsset.getAccountId())
-                        .addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
+                        .addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
                 totalDividend += dividend;
                 numAccounts += 1;
             }
         }
-        this.addToBalanceNQT(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
+        this.addToBalanceATM(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 

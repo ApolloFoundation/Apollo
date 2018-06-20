@@ -42,7 +42,7 @@ public enum HoldingType {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            account.addToBalanceNQT(event, eventId, amount);
+            account.addToBalanceATM(event, eventId, amount);
         }
 
         @Override
@@ -50,7 +50,7 @@ public enum HoldingType {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            account.addToUnconfirmedBalanceNQT(event, eventId, amount);
+            account.addToUnconfirmedBalanceATM(event, eventId, amount);
         }
 
         @Override
@@ -58,7 +58,7 @@ public enum HoldingType {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            account.addToBalanceAndUnconfirmedBalanceNQT(event, eventId, amount);
+            account.addToBalanceAndUnconfirmedBalanceATM(event, eventId, amount);
         }
 
     },
@@ -67,27 +67,27 @@ public enum HoldingType {
 
         @Override
         public long getBalance(Account account, long holdingId) {
-            return account.getAssetBalanceQNT(holdingId);
+            return account.getAssetBalanceATU(holdingId);
         }
 
         @Override
         public long getUnconfirmedBalance(Account account, long holdingId) {
-            return account.getUnconfirmedAssetBalanceQNT(holdingId);
+            return account.getUnconfirmedAssetBalanceATU(holdingId);
         }
 
         @Override
         void addToBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
-            account.addToAssetBalanceQNT(event, eventId, holdingId, amount);
+            account.addToAssetBalanceATU(event, eventId, holdingId, amount);
         }
 
         @Override
         void addToUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
-            account.addToUnconfirmedAssetBalanceQNT(event, eventId, holdingId, amount);
+            account.addToUnconfirmedAssetBalanceATU(event, eventId, holdingId, amount);
         }
 
         @Override
         void addToBalanceAndUnconfirmedBalance(Account account, AccountLedger.LedgerEvent event, long eventId, long holdingId, long amount) {
-            account.addToAssetAndUnconfirmedAssetBalanceQNT(event, eventId, holdingId, amount);
+            account.addToAssetAndUnconfirmedAssetBalanceATU(event, eventId, holdingId, amount);
         }
 
     },

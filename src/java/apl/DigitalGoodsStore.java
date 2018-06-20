@@ -58,7 +58,7 @@ public final class DigitalGoodsStore {
             }
             for (Purchase purchase : expiredPurchases) {
                 Account buyer = Account.getAccount(purchase.getBuyerId());
-                buyer.addToUnconfirmedBalanceNQT(LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
+                buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
                         Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM()));
                 Goods.getGoods(purchase.getGoodsId()).changeQuantity(purchase.getQuantity());
                 purchase.setPending(false);
@@ -310,7 +310,7 @@ public final class DigitalGoodsStore {
             this.tags = attachment.getTags();
             this.parsedTags = Search.parseTags(this.tags, 3, 20, 3);
             this.quantity = attachment.getQuantity();
-            this.priceNQT = attachment.getPriceNQT();
+            this.priceNQT = attachment.getPriceATM();
             this.delisted = false;
             this.timestamp = Apl.getBlockchain().getLastBlockTimestamp();
             this.hasImage = transaction.getPrunablePlainMessage() != null;
@@ -685,7 +685,7 @@ public final class DigitalGoodsStore {
             this.goodsId = attachment.getGoodsId();
             this.sellerId = sellerId;
             this.quantity = attachment.getQuantity();
-            this.priceNQT = attachment.getPriceNQT();
+            this.priceNQT = attachment.getPriceATM();
             this.deadline = attachment.getDeliveryDeadlineTimestamp();
             this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
             this.timestamp = Apl.getBlockchain().getLastBlockTimestamp();
@@ -933,15 +933,15 @@ public final class DigitalGoodsStore {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
-                && attachment.getPriceNQT() == goods.getPriceATM()) {
+                && attachment.getPriceATM() == goods.getPriceATM()) {
             goods.changeQuantity(-attachment.getQuantity());
             Purchase purchase = new Purchase(transaction, attachment, goods.getSellerId());
             Purchase.purchaseTable.insert(purchase);
             purchaseListeners.notify(purchase, Event.PURCHASE);
         } else {
             Account buyer = Account.getAccount(transaction.getSenderId());
-            buyer.addToUnconfirmedBalanceNQT(LedgerEvent.DIGITAL_GOODS_DELISTED, transaction.getId(),
-                    Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
+            buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELISTED, transaction.getId(),
+                    Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
             // restoring the unconfirmed balance if purchase not successful, however buyer still lost the transaction fees
         }
     }
@@ -952,14 +952,14 @@ public final class DigitalGoodsStore {
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
         Account buyer = Account.getAccount(purchase.getBuyerId());
         long transactionId = transaction.getId();
-        buyer.addToBalanceNQT(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
-                Math.subtractExact(attachment.getDiscountNQT(), totalWithoutDiscount));
-        buyer.addToUnconfirmedBalanceNQT(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountNQT());
+        buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
+                Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
+        buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
         Account seller = Account.getAccount(transaction.getSenderId());
-        seller.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
-                Math.subtractExact(totalWithoutDiscount, attachment.getDiscountNQT()));
+        seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
+                Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         purchase.setEncryptedGoods(attachment.getGoods(), attachment.goodsIsText());
-        purchase.setDiscountNQT(attachment.getDiscountNQT());
+        purchase.setDiscountNQT(attachment.getDiscountATM());
         purchaseListeners.notify(purchase, Event.DELIVERY);
     }
 
@@ -967,9 +967,9 @@ public final class DigitalGoodsStore {
                        Appendix.EncryptedMessage encryptedMessage) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
-        seller.addToBalanceNQT(event, eventId, -refundNQT);
+        seller.addToBalanceATM(event, eventId, -refundNQT);
         Account buyer = Account.getAccount(purchase.getBuyerId());
-        buyer.addToBalanceAndUnconfirmedBalanceNQT(event, eventId, refundNQT);
+        buyer.addToBalanceAndUnconfirmedBalanceATM(event, eventId, refundNQT);
         if (encryptedMessage != null) {
             purchase.setRefundNote(encryptedMessage.getEncryptedData());
         }

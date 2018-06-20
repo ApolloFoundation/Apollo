@@ -212,18 +212,18 @@ public abstract class TransactionType {
 
     // return false iff double spending
     final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
-        long amountNQT = transaction.getAmountATM();
-        long feeNQT = transaction.getFeeATM();
+        long amountATM = transaction.getAmountATM();
+        long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
-            feeNQT = Math.addExact(feeNQT, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
+            feeATM = Math.addExact(feeATM, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        if (senderAccount.getUnconfirmedBalanceATM() < totalAmountNQT) {
+        long totalAmountATM = Math.addExact(amountATM, feeATM);
+        if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
             return false;
         }
-        senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -amountNQT, -feeNQT);
+        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), amountNQT, feeNQT);
+            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), amountATM, feeATM);
             return false;
         }
         return true;
@@ -235,12 +235,12 @@ public abstract class TransactionType {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
-            senderAccount.addToBalanceNQT(getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
+            senderAccount.addToBalanceATM(getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
         } else {
-            senderAccount.addToBalanceNQT(getLedgerEvent(), transactionId, -amount);
+            senderAccount.addToBalanceATM(getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
-            recipientAccount.addToBalanceAndUnconfirmedBalanceNQT(getLedgerEvent(), transactionId, amount);
+            recipientAccount.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transactionId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -249,10 +249,10 @@ public abstract class TransactionType {
 
     final void undoUnconfirmed(TransactionImpl transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
-            senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), 0,
+            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), 0,
                     Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
         }
     }
@@ -358,7 +358,7 @@ public abstract class TransactionType {
         @Override
         final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (recipientAccount == null) {
-                Account.getAccount(Genesis.CREATOR_ID).addToBalanceAndUnconfirmedBalanceNQT(getLedgerEvent(),
+                Account.getAccount(Genesis.CREATOR_ID).addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(),
                         transaction.getId(), transaction.getAmountATM());
             }
         }
@@ -670,11 +670,11 @@ public abstract class TransactionType {
                 if (aliasName == null || aliasName.length() == 0) {
                     throw new AplException.NotValidException("Missing alias name");
                 }
-                long priceNQT = attachment.getPriceNQT();
-                if (priceNQT < 0 || priceNQT > Constants.MAX_BALANCE_ATM) {
-                    throw new AplException.NotValidException("Invalid alias sell price: " + priceNQT);
+                long priceATM = attachment.getPriceATM();
+                if (priceATM < 0 || priceATM > Constants.MAX_BALANCE_ATM) {
+                    throw new AplException.NotValidException("Invalid alias sell price: " + priceATM);
                 }
-                if (priceNQT == 0) {
+                if (priceATM == 0) {
                     if (Genesis.CREATOR_ID == transaction.getRecipientId()) {
                         throw new AplException.NotValidException("Transferring aliases to Genesis account not allowed");
                     } else if (transaction.getRecipientId() == 0) {
@@ -1466,8 +1466,8 @@ public abstract class TransactionType {
                 if (isSingletonIssuance(transaction)) {
                     return Convert.EMPTY_LONG;
                 }
-                long feeNQT = transaction.getFeeATM();
-                return new long[] {feeNQT * 3 / 10, feeNQT * 2 / 10, feeNQT / 10};
+                long feeATM = transaction.getFeeATM();
+                return new long[] {feeATM * 3 / 10, feeATM * 2 / 10, feeATM / 10};
             }
 
             @Override
@@ -1490,7 +1490,7 @@ public abstract class TransactionType {
                 Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
                 long assetId = transaction.getId();
                 Asset.addAsset(transaction, attachment);
-                senderAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), assetId, assetId, attachment.getQuantityQNT());
+                senderAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
             }
 
             @Override
@@ -1504,8 +1504,8 @@ public abstract class TransactionType {
                         || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH
                         || attachment.getDescription().length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH
                         || attachment.getDecimals() < 0 || attachment.getDecimals() > 8
-                        || attachment.getQuantityQNT() <= 0
-                        || attachment.getQuantityQNT() > Constants.MAX_ASSET_QUANTITY_ATU
+                        || attachment.getQuantityATU() <= 0
+                        || attachment.getQuantityATU() > Constants.MAX_ASSET_QUANTITY_ATU
                         ) {
                     throw new AplException.NotValidException("Invalid asset issuance: " + attachment.getJSONObject());
                 }
@@ -1534,7 +1534,7 @@ public abstract class TransactionType {
 
             private boolean isSingletonIssuance(Transaction transaction) {
                 Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance)transaction.getAttachment();
-                return attachment.getQuantityQNT() == 1 && attachment.getDecimals() == 0
+                return attachment.getQuantityATU() == 1 && attachment.getDecimals() == 0
                         && attachment.getDescription().length() <= Constants.MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH;
             }
 
@@ -1570,9 +1570,9 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
-                long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
+                long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
                 if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
-                    senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                             attachment.getAssetId(), -attachment.getQuantityATU());
                     return true;
                 }
@@ -1582,12 +1582,12 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
-                senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
+                senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
                         -attachment.getQuantityATU());
                 if (recipientAccount.getId() == Genesis.CREATOR_ID) {
                     Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
                 } else {
-                    recipientAccount.addToAssetAndUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                    recipientAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                             attachment.getAssetId(), attachment.getQuantityATU());
                     AssetTransfer.addAssetTransfer(transaction, attachment);
                 }
@@ -1596,7 +1596,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityATU());
             }
 
@@ -1662,9 +1662,9 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
-                long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
+                long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
                 if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
-                    senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                             attachment.getAssetId(), -attachment.getQuantityATU());
                     return true;
                 }
@@ -1674,7 +1674,7 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
-                senderAccount.addToAssetBalanceQNT(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
+                senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(),
                         -attachment.getQuantityATU());
                 Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
             }
@@ -1682,7 +1682,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityATU());
             }
 
@@ -1775,9 +1775,9 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-                long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceQNT(attachment.getAssetId());
+                long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
                 if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
-                    senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                             attachment.getAssetId(), -attachment.getQuantityATU());
                     return true;
                 }
@@ -1793,7 +1793,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-                senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityATU());
             }
 
@@ -1830,7 +1830,7 @@ public abstract class TransactionType {
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
                 if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                             -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
                     return true;
                 }
@@ -1846,7 +1846,7 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
             }
 
@@ -1914,7 +1914,7 @@ public abstract class TransactionType {
                 Order order = Order.Ask.getAskOrder(attachment.getOrderId());
                 Order.Ask.removeOrder(attachment.getOrderId());
                 if (order != null) {
-                    senderAccount.addToUnconfirmedAssetBalanceQNT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                             order.getAssetId(), order.getQuantityATU());
                 }
             }
@@ -1967,7 +1967,7 @@ public abstract class TransactionType {
                 Order order = Order.Bid.getBidOrder(attachment.getOrderId());
                 Order.Bid.removeOrder(attachment.getOrderId());
                 if (order != null) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                             Math.multiplyExact(order.getQuantityATU(), order.getPriceATM()));
                 }
             }
@@ -2022,10 +2022,10 @@ public abstract class TransactionType {
                 if (asset == null) {
                     return true;
                 }
-                long quantityQNT = asset.getQuantityATU() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
-                long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
+                long quantityATU = asset.getQuantityATU() - senderAccount.getAssetBalanceATU(assetId, attachment.getHeight());
+                long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
                 if (senderAccount.getUnconfirmedBalanceATM() >= totalDividendPayment) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -totalDividendPayment);
                     return true;
                 }
                 return false;
@@ -2045,9 +2045,9 @@ public abstract class TransactionType {
                 if (asset == null) {
                     return;
                 }
-                long quantityQNT = asset.getQuantityATU() - senderAccount.getAssetBalanceQNT(assetId, attachment.getHeight());
-                long totalDividendPayment = Math.multiplyExact(attachment.getAmountNQTPerQNT(), quantityQNT);
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), totalDividendPayment);
+                long quantityATU = asset.getQuantityATU() - senderAccount.getAssetBalanceATU(assetId, attachment.getHeight());
+                long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), totalDividendPayment);
             }
 
             @Override
@@ -2067,7 +2067,7 @@ public abstract class TransactionType {
                     throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId())
                             + " for dividend payment doesn't exist yet");
                 }
-                if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountNQTPerQNT() <= 0) {
+                if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountATMPerATU() <= 0) {
                     throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
                 }
                 AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
@@ -2182,7 +2182,7 @@ public abstract class TransactionType {
                         || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH
                         || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH
                         || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-                        || attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_ATM) {
+                        || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > Constants.MAX_BALANCE_ATM) {
                     throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
                 }
                 Appendix.PrunablePlainMessage prunablePlainMessage = transaction.getPrunablePlainMessage();
@@ -2315,14 +2315,14 @@ public abstract class TransactionType {
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
-                DigitalGoodsStore.changePrice(attachment.getGoodsId(), attachment.getPriceNQT());
+                DigitalGoodsStore.changePrice(attachment.getGoodsId(), attachment.getPriceATM());
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
                 DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
-                if (attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_ATM
+                if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > Constants.MAX_BALANCE_ATM
                         || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                     throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
                 }
@@ -2448,9 +2448,9 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT())) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
-                            -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
+                if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
+                            -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
                     return true;
                 }
                 return false;
@@ -2459,8 +2459,8 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(),
-                        Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceNQT()));
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
+                        Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
             }
 
             @Override
@@ -2474,7 +2474,7 @@ public abstract class TransactionType {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
                 DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
                 if (attachment.getQuantity() <= 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-                        || attachment.getPriceNQT() <= 0 || attachment.getPriceNQT() > Constants.MAX_BALANCE_ATM
+                        || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > Constants.MAX_BALANCE_ATM
                         || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
                 }
@@ -2485,7 +2485,7 @@ public abstract class TransactionType {
                     throw new AplException.NotCurrentlyValidException("Goods " + Long.toUnsignedString(attachment.getGoodsId()) +
                             "not yet listed or already delisted");
                 }
-                if (attachment.getQuantity() > goods.getQuantity() || attachment.getPriceNQT() != goods.getPriceATM()) {
+                if (attachment.getQuantity() > goods.getQuantity() || attachment.getPriceATM() != goods.getPriceATM()) {
                     throw new AplException.NotCurrentlyValidException("Goods price or quantity changed: " + attachment.getJSONObject());
                 }
                 if (attachment.getDeliveryDeadlineTimestamp() <= Apl.getBlockchain().getLastBlockTimestamp()) {
@@ -2573,11 +2573,11 @@ public abstract class TransactionType {
                         throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
                     }
                 }
-                if (attachment.getDiscountNQT() < 0 || attachment.getDiscountNQT() > Constants.MAX_BALANCE_ATM
+                if (attachment.getDiscountATM() < 0 || attachment.getDiscountATM() > Constants.MAX_BALANCE_ATM
                         || (purchase != null &&
                         (purchase.getBuyerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getSellerId()
-                                || attachment.getDiscountNQT() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
+                                || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
                     throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
                 }
                 if (purchase == null || purchase.getEncryptedGoods() != null) {
@@ -2702,8 +2702,8 @@ public abstract class TransactionType {
             @Override
             boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getRefundNQT()) {
-                    senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -attachment.getRefundNQT());
+                if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getRefundATM()) {
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -attachment.getRefundATM());
                     return true;
                 }
                 return false;
@@ -2712,21 +2712,21 @@ public abstract class TransactionType {
             @Override
             void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
-                senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), attachment.getRefundNQT());
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getRefundATM());
             }
 
             @Override
             void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
                 DigitalGoodsStore.refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(),
-                        attachment.getPurchaseId(), attachment.getRefundNQT(), transaction.getEncryptedMessage());
+                        attachment.getPurchaseId(), attachment.getRefundATM(), transaction.getEncryptedMessage());
             }
 
             @Override
             void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
                 DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(attachment.getPurchaseId());
-                if (attachment.getRefundNQT() < 0 || attachment.getRefundNQT() > Constants.MAX_BALANCE_ATM
+                if (attachment.getRefundATM() < 0 || attachment.getRefundATM() > Constants.MAX_BALANCE_ATM
                         || (purchase != null &&
                         (purchase.getBuyerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getSellerId()))) {

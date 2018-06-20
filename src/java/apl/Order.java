@@ -46,17 +46,17 @@ public abstract class Order {
 
             askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
                             Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
+            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
             bidOrder.updateQuantityQNT(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                             assetId, trade.getQuantityATU());
-            bidAccount.addToBalanceNQT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                             -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            bidAccount.addToUnconfirmedBalanceNQT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                             Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 

@@ -98,11 +98,11 @@ public final class JSONResponses {
     public static final JSONStreamAware MISSING_DELIVERY_DEADLINE_TIMESTAMP = missing("deliveryDeadlineTimestamp");
     public static final JSONStreamAware INCORRECT_DELIVERY_DEADLINE_TIMESTAMP = incorrect("deliveryDeadlineTimestamp");
     public static final JSONStreamAware INCORRECT_PURCHASE_QUANTITY = incorrect("quantity", "(quantity exceeds available goods quantity)");
-    public static final JSONStreamAware INCORRECT_PURCHASE_PRICE = incorrect("priceNQT", "(purchase price doesn't match goods price)");
+    public static final JSONStreamAware INCORRECT_PURCHASE_PRICE = incorrect("priceATM", "(purchase price doesn't match goods price)");
     public static final JSONStreamAware INCORRECT_PURCHASE = incorrect("purchase");
     public static final JSONStreamAware INCORRECT_DGS_GOODS = incorrect("goodsToEncrypt");
-    public static final JSONStreamAware INCORRECT_DGS_DISCOUNT = incorrect("discountNQT");
-    public static final JSONStreamAware INCORRECT_DGS_REFUND = incorrect("refundNQT");
+    public static final JSONStreamAware INCORRECT_DGS_DISCOUNT = incorrect("discountATM");
+    public static final JSONStreamAware INCORRECT_DGS_REFUND = incorrect("refundATM");
     public static final JSONStreamAware INCORRECT_ENCRYPTED_MESSAGE = incorrect("encryptedMessageData");
     public static final JSONStreamAware INCORRECT_DGS_ENCRYPTED_GOODS = incorrect("goodsData");
     public static final JSONStreamAware INCORRECT_HEIGHT = incorrect("height");

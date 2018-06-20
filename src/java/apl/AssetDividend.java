@@ -107,7 +107,7 @@ public final class AssetDividend {
         this.id = transactionId;
         this.dbKey = dividendDbKeyFactory.newKey(this.id);
         this.assetId = attachment.getAssetId();
-        this.amountNQTPerQNT = attachment.getAmountNQTPerQNT();
+        this.amountNQTPerQNT = attachment.getAmountATMPerATU();
         this.dividendHeight = attachment.getHeight();
         this.totalDividend = totalDividend;
         this.numAccounts = numAccounts;

@@ -593,7 +593,7 @@ public final class DebugTrace {
             }
             Attachment.ColoredCoinsAssetIssuance assetIssuance = (Attachment.ColoredCoinsAssetIssuance)attachment;
             map.put("asset", transaction.getStringId());
-            map.put("asset quantity", String.valueOf(assetIssuance.getQuantityQNT()));
+            map.put("asset quantity", String.valueOf(assetIssuance.getQuantityATU()));
             map.put("event", "asset issuance");
         } else if (attachment instanceof Attachment.ColoredCoinsAssetTransfer) {
             Attachment.ColoredCoinsAssetTransfer assetTransfer = (Attachment.ColoredCoinsAssetTransfer)attachment;
@@ -632,7 +632,7 @@ public final class DebugTrace {
             }
             map.put("event", "delivery");
             map.put("purchase", Long.toUnsignedString(delivery.getPurchaseId()));
-            long discount = delivery.getDiscountNQT();
+            long discount = delivery.getDiscountATM();
             map.put("purchase price", String.valueOf(purchase.getPriceATM()));
             map.put("purchase quantity", String.valueOf(purchase.getQuantity()));
             long cost = Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity());
@@ -651,7 +651,7 @@ public final class DebugTrace {
             }
             map.put("event", "refund");
             map.put("purchase", Long.toUnsignedString(refund.getPurchaseId()));
-            long refundNQT = refund.getRefundNQT();
+            long refundNQT = refund.getRefundATM();
             if (! isRecipient) {
                 refundNQT = - refundNQT;
             }
@@ -707,7 +707,7 @@ public final class DebugTrace {
             Attachment.MonetarySystemReserveIncrease reserveIncrease = (Attachment.MonetarySystemReserveIncrease) attachment;
             map.put("currency", Long.toUnsignedString(reserveIncrease.getCurrencyId()));
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
-            map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitNQT(), currency.getReserveSupply())));
+            map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitATM(), currency.getReserveSupply())));
             map.put("event", "currency reserve");
         } else if (attachment instanceof Attachment.ColoredCoinsDividendPayment) {
             Attachment.ColoredCoinsDividendPayment dividendPayment = (Attachment.ColoredCoinsDividendPayment)attachment;
@@ -717,7 +717,7 @@ public final class DebugTrace {
                 while (iterator.hasNext()) {
                     Account.AccountAsset accountAsset = iterator.next();
                     if (accountAsset.getAccountId() != accountId && accountAsset.getQuantityATU() != 0) {
-                        long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), dividendPayment.getAmountNQTPerQNT());
+                        long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), dividendPayment.getAmountATMPerATU());
                         Map recipient = getValues(accountAsset.getAccountId(), false);
                         recipient.put("dividend", String.valueOf(dividend));
                         recipient.put("asset", assetId);

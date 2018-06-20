@@ -58,7 +58,7 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long qntBalance = Account.getAssetBalanceQNT(voterId, voteWeighting.holdingId, height);
+                long qntBalance = Account.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
                 return qntBalance >= voteWeighting.minBalance ? qntBalance : 0;
             }
             @Override
@@ -146,7 +146,7 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAssetBalanceQNT(voterId, voteWeighting.holdingId, height);
+                return Account.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
             }
         },
         CURRENCY(3) {

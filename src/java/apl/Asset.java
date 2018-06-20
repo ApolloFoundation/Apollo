@@ -120,7 +120,7 @@ public final class Asset {
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.description = attachment.getDescription();
-        this.quantityQNT = attachment.getQuantityQNT();
+        this.quantityQNT = attachment.getQuantityATU();
         this.initialQuantityQNT = this.quantityQNT;
         this.decimals = attachment.getDecimals();
     }
