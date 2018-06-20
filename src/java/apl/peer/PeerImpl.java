@@ -17,42 +17,18 @@
 
 package apl.peer;
 
-import apl.Account;
-import apl.BlockchainProcessor;
-import apl.Constants;
-import apl.Apl;
-import apl.AplException;
+import apl.*;
 import apl.http.API;
 import apl.http.APIEnum;
-import apl.util.Convert;
-import apl.util.CountingInputReader;
-import apl.util.CountingInputStream;
-import apl.util.CountingOutputWriter;
-import apl.util.JSON;
-import apl.util.Logger;
+import apl.updater.Version;
+import apl.util.*;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.io.*;
+import java.net.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -73,7 +49,7 @@ final class PeerImpl implements Peer {
     private volatile int apiSSLPort;
     private volatile EnumSet<APIEnum> disabledAPIs;
     private volatile int apiServerIdleTimeout;
-    private volatile String version;
+    private volatile Version version;
     private volatile boolean isOldVersion;
     private volatile long adjustedWeight;
     private volatile int blacklistingTime;
@@ -156,14 +132,11 @@ final class PeerImpl implements Peer {
     }
 
     @Override
-    public String getVersion() {
+    public Version getVersion() {
         return version;
     }
 
-    void setVersion(String version) {
-        if (version != null && version.length() > Peers.MAX_VERSION_LENGTH) {
-            throw new IllegalArgumentException("Invalid version length: " + version.length());
-        }
+    void setVersion(Version version) {
         boolean versionChanged = version == null || !version.equals(this.version);
         this.version = version;
         isOldVersion = false;
@@ -208,7 +181,7 @@ final class PeerImpl implements Peer {
     @Override
     public String getSoftware() {
         return Convert.truncate(application, "?", 10, false)
-                + " (" + Convert.truncate(version, "?", 10, false) + ")"
+                + " (" + Convert.truncate(version.toString(), "?", 10, false) + ")"
                 + " @ " + Convert.truncate(platform, "?", 10, false);
     }
 
@@ -649,7 +622,7 @@ final class PeerImpl implements Peer {
                 setApiServerIdleTimeout(response.get("apiServerIdleTimeout"));
                 setBlockchainState(response.get("blockchainState"));
                 lastUpdated = lastConnectAttempt;
-                setVersion((String) response.get("version"));
+                setVersion(Version.from((String) response.get("version")));
                 setPlatform((String) response.get("platform"));
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));

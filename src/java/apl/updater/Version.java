@@ -66,7 +66,7 @@ public class Version implements Comparable<Version> {
         if (!versionString.matches("\\d+\\.\\d+\\.\\d+")) {
             throw new RuntimeException("Incorrect versionString :  " + versionString);
         }
-        String[] versionNumbers = versionString.split(".");
+        String[] versionNumbers = versionString.split("\\.");
         Version v = new Version();
         v.setMajorVersion(Integer.parseInt(versionNumbers[0]));
         v.setIntermediateVersion(Integer.parseInt(versionNumbers[1]));

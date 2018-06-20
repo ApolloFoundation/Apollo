@@ -78,7 +78,7 @@ public final class Apl {
         dirProvider = RuntimeEnvironment.getDirProvider();
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         loadProperties(defaultProperties, APL_DEFAULT_PROPERTIES, true);
-        if (!VERSION.equals(Apl.defaultProperties.getProperty("apl.version"))) {
+        if (!VERSION.equals(Version.from(Apl.defaultProperties.getProperty("apl.version")))) {
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
     }
