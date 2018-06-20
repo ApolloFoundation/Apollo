@@ -177,7 +177,7 @@ public class DesktopSystemTray {
 
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Apl.APPLICATION);
-        addDataRow(statusPanel, "Version", Apl.VERSION);
+        addDataRow(statusPanel, "Version", Apl.VERSION.toString());
         addDataRow(statusPanel, "Network", (Constants.isTestnet) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
