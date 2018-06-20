@@ -1759,7 +1759,7 @@ public final class Account {
         }
     }
 
-    void addToForgedBalanceNQT(long amountNQT) {
+    void addToForgedBalanceATM(long amountNQT) {
         if (amountNQT == 0) {
             return;
         }
