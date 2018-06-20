@@ -3574,8 +3574,8 @@ public interface Attachment extends Appendix {
             url = Convert.readString(buffer, buffer.getShort(), 200).trim();
             version = Version.from(Convert.readString(buffer, buffer.get(), 50).trim());
             hash = buffer.getInt();
-            //TODO dynamic signature length
-            signature = new byte[32];
+            int signatureLength = buffer.getShort();
+            signature = new byte[signatureLength];
             buffer.get(signature);
         }
 
@@ -3619,7 +3619,7 @@ public interface Attachment extends Appendix {
             buffer.put((byte)version.length);
             buffer.put(version);
             buffer.putInt(hash);
-            //TODO dynamic signature length
+            buffer.putShort((short) signature.length);
             buffer.put(signature);
         }
 
