@@ -17,8 +17,6 @@
 
 package apl;
 
-import apl.updater.Version;
-
 import java.math.BigInteger;
 
 public final class Constants {

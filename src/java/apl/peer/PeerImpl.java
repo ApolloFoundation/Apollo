@@ -20,7 +20,7 @@ package apl.peer;
 import apl.*;
 import apl.http.API;
 import apl.http.APIEnum;
-import apl.updater.Version;
+import apl.Version;
 import apl.util.*;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

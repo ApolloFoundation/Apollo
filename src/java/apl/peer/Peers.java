@@ -25,7 +25,7 @@ import apl.Apl;
 import apl.Transaction;
 import apl.http.API;
 import apl.http.APIEnum;
-import apl.updater.Version;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.Filter;
 import apl.util.JSON;

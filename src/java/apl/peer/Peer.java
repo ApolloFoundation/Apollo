@@ -18,7 +18,7 @@
 package apl.peer;
 
 import apl.http.APIEnum;
-import apl.updater.Version;
+import apl.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

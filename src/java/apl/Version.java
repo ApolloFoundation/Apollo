@@ -1,4 +1,4 @@
-package apl.updater;
+package apl;
 
 import java.util.Objects;
 

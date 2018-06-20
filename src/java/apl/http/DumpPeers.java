@@ -20,7 +20,7 @@ package apl.http;
 import apl.Constants;
 import apl.peer.Peer;
 import apl.peer.Peers;
-import apl.updater.Version;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.Logger;
 import org.json.simple.JSONObject;

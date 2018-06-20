@@ -26,7 +26,6 @@ import apl.env.ServerStatus;
 import apl.http.API;
 import apl.http.APIProxy;
 import apl.peer.Peers;
-import apl.updater.Version;
 import apl.util.Convert;
 import apl.util.Logger;
 import apl.util.ThreadPool;

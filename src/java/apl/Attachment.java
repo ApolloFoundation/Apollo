@@ -20,14 +20,11 @@ package apl;
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
 import apl.updater.Architecture;
-import apl.updater.Level;
 import apl.updater.Platform;
-import apl.updater.Version;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.swing.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.ArrayList;

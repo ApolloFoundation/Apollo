@@ -18,7 +18,7 @@
 package apl.peer;
 
 import apl.Apl;
-import apl.updater.Version;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.JSON;
 import apl.util.Logger;

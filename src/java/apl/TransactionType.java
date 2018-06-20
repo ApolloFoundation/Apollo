@@ -22,6 +22,7 @@ import apl.AccountLedger.LedgerEvent;
 import apl.AplException.ValidationException;
 import apl.Attachment.AbstractAttachment;
 import apl.VoteWeighting.VotingModel;
+import apl.updater.AuthorityChecker;
 import apl.util.Convert;
 import apl.util.Logger;
 import org.apache.tika.Tika;
@@ -3162,8 +3163,10 @@ public abstract class TransactionType {
 
         @Override
         void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            //TODO: call AuthorityChecker
             Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+            if (!AuthorityChecker.checkSignature(attachment)) {
+                throw new AplException.NotValidException("Unauthorized update transaction from account: " + Convert.rsAccount(transaction.getSenderId()));
+            }
             //check version
             if (!attachment.getAppVersion().greaterThan(Apl.VERSION)) {
                 throw new AplException.NotValidException("Update version: " + attachment.getAppVersion() + " is not newer than current version: " + Apl.VERSION);
@@ -3229,6 +3232,7 @@ public abstract class TransactionType {
                 return new Attachment.ImportantUpdate(attachmentData);
             }
         };
+
         public static final TransactionType MINOR = new Update() {
 
             @Override
