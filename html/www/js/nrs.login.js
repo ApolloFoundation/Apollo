@@ -18,6 +18,21 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $, undefined) {
+	
+	NRS.saveAccountLocal = function() {
+		localStorage.setItem('aplUser', 'red');
+	};
+	
+	NRS.getAccountLocal = function() {
+		return localStorage.getItem('aplUser');
+	};
+	
+	NRS.removeAccountLocal = function() {
+		localStorage.removeItem('aplUser');
+	};
+	
+	
+	
 	NRS.newlyCreatedAccount = false;
 
 	NRS.allowLoginViaEnter = function() {
@@ -295,7 +310,7 @@ var NRS = (function(NRS, $, undefined) {
 		console.log("login isPassphraseLogin = " + isPassphraseLogin +
 			", isAccountSwitch = " + isAccountSwitch +
 			", isSavedPassphrase = " + isSavedPassphrase);
-        NRS.spinner.spin($("#center")[0]);
+	    NRS.spinner.spin($("#center")[0]);
         if (isPassphraseLogin && !isSavedPassphrase){
 			var loginCheckPasswordLength = $("#login_check_password_length");
 			if (!id.length) {
@@ -317,7 +332,8 @@ var NRS = (function(NRS, $, undefined) {
 			$("#login_password, #registration_password, #registration_password_repeat").val("");
 			loginCheckPasswordLength.val(1);
 		}
-
+	 
+		
 		console.log("login calling getBlockchainStatus");
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
 			if (response.errorCode) {
@@ -342,6 +358,10 @@ var NRS = (function(NRS, $, undefined) {
 				if (!response.errorCode) {
 					NRS.account = NRS.escapeRespStr(response.account);
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
+					
+					NRS.setJSONItem('aplUser', NRS.accountRS);
+					console.log(NRS.accountRS);
+					
 					if (isPassphraseLogin) {
                         NRS.publicKey = NRS.getPublicKey(converters.stringToHexString(id));
                     } else {
@@ -600,7 +620,8 @@ var NRS = (function(NRS, $, undefined) {
         delete NRS.myTransactionPagination;
         delete NRS.accountLedgerPagination;
         delete NRS.blocksPagination;
-
+		
+		NRS.getAccountLocal();
         if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");
             stopForgingModal.find(".show_logout").show();
