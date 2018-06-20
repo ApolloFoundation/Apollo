@@ -72,7 +72,7 @@ public final class Currency {
         private final DbKey dbKey;
         private final long currencyId;
         private long currentSupply;
-        private long currentReservePerUnitNQT;
+        private long currentReservePerUnitATM;
 
         private CurrencySupply(Currency currency) {
             this.currencyId = currency.currencyId;
@@ -83,7 +83,9 @@ public final class Currency {
             this.currencyId = rs.getLong("id");
             this.dbKey = dbKey;
             this.currentSupply = rs.getLong("current_supply");
-            this.currentReservePerUnitNQT = rs.getLong("current_reserve_per_unit_nqt");
+            this.currentReservePerUnitATM =
+                    //TODO: remove nqt from database column name
+                    rs.getLong("current_reserve_per_unit_nqt");
         }
 
         private void save(Connection con) throws SQLException {
@@ -93,7 +95,7 @@ public final class Currency {
                 int i = 0;
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
-                pstmt.setLong(++i, this.currentReservePerUnitNQT);
+                pstmt.setLong(++i, this.currentReservePerUnitATM);
                 pstmt.setInt(++i, Apl.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
@@ -204,7 +206,7 @@ public final class Currency {
     private final long reserveSupply;
     private final int creationHeight;
     private final int issuanceHeight;
-    private final long minReservePerUnitNQT;
+    private final long minReservePerUnitATM;
     private final int minDifficulty;
     private final int maxDifficulty;
     private final byte ruleset;
@@ -226,7 +228,7 @@ public final class Currency {
         this.maxSupply = attachment.getMaxSupply();
         this.creationHeight = Apl.getBlockchain().getHeight();
         this.issuanceHeight = attachment.getIssuanceHeight();
-        this.minReservePerUnitNQT = attachment.getMinReservePerUnitATM();
+        this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
         this.minDifficulty = attachment.getMinDifficulty();
         this.maxDifficulty = attachment.getMaxDifficulty();
         this.ruleset = attachment.getRuleset();
@@ -247,7 +249,7 @@ public final class Currency {
         this.maxSupply = rs.getLong("max_supply");
         this.creationHeight = rs.getInt("creation_height");
         this.issuanceHeight = rs.getInt("issuance_height");
-        this.minReservePerUnitNQT = rs.getLong("min_reserve_per_unit_nqt");
+        this.minReservePerUnitATM = rs.getLong("min_reserve_per_unit_nqt");
         this.minDifficulty = rs.getByte("min_difficulty") & 0xFF;
         this.maxDifficulty = rs.getByte("max_difficulty") & 0xFF;
         this.ruleset = rs.getByte("ruleset");
@@ -272,7 +274,7 @@ public final class Currency {
             pstmt.setLong(++i, this.maxSupply);
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setInt(++i, this.issuanceHeight);
-            pstmt.setLong(++i, this.minReservePerUnitNQT);
+            pstmt.setLong(++i, this.minReservePerUnitATM);
             pstmt.setByte(++i, (byte)this.minDifficulty);
             pstmt.setByte(++i, (byte)this.maxDifficulty);
             pstmt.setByte(++i, this.ruleset);
@@ -338,7 +340,7 @@ public final class Currency {
     }
 
     public long getMinReservePerUnitATM() {
-        return minReservePerUnitNQT;
+        return minReservePerUnitATM;
     }
 
     public int getMinDifficulty() {
@@ -365,7 +367,7 @@ public final class Currency {
         if (!is(CurrencyType.RESERVABLE) || getSupplyData() == null) {
             return 0;
         }
-        return currencySupply.currentReservePerUnitNQT;
+        return currencySupply.currentReservePerUnitATM;
     }
 
     public boolean isActive() {
@@ -385,13 +387,13 @@ public final class Currency {
         return currencySupply;
     }
 
-    static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitNQT) {
+    static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM) {
         Currency currency = Currency.getCurrency(currencyId);
-        account.addToBalanceATM(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
+        account.addToBalanceATM(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
         CurrencySupply currencySupply = currency.getSupplyData();
-        currencySupply.currentReservePerUnitNQT += amountPerUnitNQT;
+        currencySupply.currentReservePerUnitATM += amountPerUnitATM;
         currencySupplyTable.insert(currencySupply);
-        CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitNQT);
+        CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
     }
 
     static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {

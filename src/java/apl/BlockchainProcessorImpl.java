@@ -1717,15 +1717,15 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp);
         List<TransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
-        long totalAmountNQT = 0;
-        long totalFeeNQT = 0;
+        long totalAmountATM = 0;
+        long totalFeeATM = 0;
         int payloadLength = 0;
         for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
             TransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
-            totalAmountNQT += transaction.getAmountATM();
-            totalFeeNQT += transaction.getFeeATM();
+            totalAmountATM += transaction.getAmountATM();
+            totalFeeATM += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();
         }
         byte[] payloadHash = digest.digest();
@@ -1734,7 +1734,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
-        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
+        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
 
         try {
