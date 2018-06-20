@@ -32,7 +32,7 @@ public final class TransferAsset extends CreateTransaction {
     static final TransferAsset instance = new TransferAsset();
 
     private TransferAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityQNT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
     }
 
     @Override
@@ -41,10 +41,10 @@ public final class TransferAsset extends CreateTransaction {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
 
         Asset asset = ParameterParser.getAsset(req);
-        long quantityQNT = ParameterParser.getQuantityATU(req);
+        long quantityATU = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityQNT);
+        Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (AplException.InsufficientBalanceException e) {

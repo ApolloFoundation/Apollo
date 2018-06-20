@@ -32,17 +32,17 @@ public final class DeleteAssetShares extends CreateTransaction {
     static final DeleteAssetShares instance = new DeleteAssetShares();
 
     private DeleteAssetShares() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityQNT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
-        long quantityQNT = ParameterParser.getQuantityATU(req);
+        long quantityATU = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsAssetDelete(asset.getId(), quantityQNT);
+        Attachment attachment = new Attachment.ColoredCoinsAssetDelete(asset.getId(), quantityATU);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {
