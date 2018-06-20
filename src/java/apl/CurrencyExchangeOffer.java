@@ -32,18 +32,18 @@ public abstract class CurrencyExchangeOffer {
 
     public static final class AvailableOffers {
 
-        private final long rateNQT;
+        private final long rateATM;
         private final long units;
-        private final long amountNQT;
+        private final long amountATM;
 
-        private AvailableOffers(long rateNQT, long units, long amountNQT) {
-            this.rateNQT = rateNQT;
+        private AvailableOffers(long rateATM, long units, long amountATM) {
+            this.rateATM = rateATM;
             this.units = units;
-            this.amountNQT = amountNQT;
+            this.amountATM = amountATM;
         }
 
         public long getRateATM() {
-            return rateNQT;
+            return rateATM;
         }
 
         public long getUnits() {
@@ -51,7 +51,7 @@ public abstract class CurrencyExchangeOffer {
         }
 
         public long getAmountATM() {
-            return amountNQT;
+            return amountATM;
         }
 
     }
@@ -80,20 +80,20 @@ public abstract class CurrencyExchangeOffer {
     }
 
     private static AvailableOffers calculateTotal(List<CurrencyExchangeOffer> offers, final long units) {
-        long totalAmountNQT = 0;
+        long totalAmountATM = 0;
         long remainingUnits = units;
-        long rateNQT = 0;
+        long rateATM = 0;
         for (CurrencyExchangeOffer offer : offers) {
             if (remainingUnits == 0) {
                 break;
             }
-            rateNQT = offer.getRateATM();
+            rateATM = offer.getRateATM();
             long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateATM());
-            totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
+            long curAmountATM = Math.multiplyExact(curUnits, offer.getRateATM());
+            totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
         }
-        return new AvailableOffers(rateNQT, Math.subtractExact(units, remainingUnits), totalAmountNQT);
+        return new AvailableOffers(rateATM, Math.subtractExact(units, remainingUnits), totalAmountATM);
     }
 
     static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
@@ -103,11 +103,11 @@ public abstract class CurrencyExchangeOffer {
         return calculateTotal(getAvailableBuyOffers(currencyId, 0L), units);
     }
 
-    private static List<CurrencyExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateNQT) {
+    private static List<CurrencyExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateATM) {
         List<CurrencyExchangeOffer> currencyExchangeOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
-        if (minRateNQT > 0) {
-            dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.GTE, minRateNQT));
+        if (minRateATM > 0) {
+            dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.GTE, minRateATM));
         }
         try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(dbClause, 0, -1,
                 " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
@@ -118,32 +118,32 @@ public abstract class CurrencyExchangeOffer {
         return currencyExchangeOffers;
     }
 
-    static void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateNQT, final long units) {
-        List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateNQT);
+    static void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
+        List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateATM);
 
-        long totalAmountNQT = 0;
+        long totalAmountATM = 0;
         long remainingUnits = units;
         for (CurrencyExchangeOffer offer : currencyBuyOffers) {
             if (remainingUnits == 0) {
                 break;
             }
             long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateATM());
+            long curAmountATM = Math.multiplyExact(curUnits, offer.getRateATM());
 
-            totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
+            totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
 
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
             Account counterAccount = Account.getAccount(offer.getAccountId());
-            counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountNQT);
+            counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountATM);
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
             counterAccount.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
             Exchange.addExchange(transaction, currencyId, offer, account.getId(), offer.getAccountId(), curUnits);
         }
         long transactionId = transaction.getId();
-        account.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountNQT);
+        account.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountATM);
         account.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, -(units - remainingUnits));
         account.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, remainingUnits);
     }
@@ -152,11 +152,11 @@ public abstract class CurrencyExchangeOffer {
         return calculateTotal(getAvailableSellOffers(currencyId, 0L), units);
     }
 
-    private static List<CurrencyExchangeOffer> getAvailableSellOffers(long currencyId, long maxRateNQT) {
+    private static List<CurrencyExchangeOffer> getAvailableSellOffers(long currencyId, long maxRateATM) {
         List<CurrencyExchangeOffer> currencySellOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
-        if (maxRateNQT > 0) {
-            dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.LTE, maxRateNQT));
+        if (maxRateATM > 0) {
+            dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.LTE, maxRateATM));
         }
         try (DbIterator<CurrencySellOffer> offers = CurrencySellOffer.getOffers(dbClause, 0, -1,
                 " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
@@ -167,9 +167,9 @@ public abstract class CurrencyExchangeOffer {
         return currencySellOffers;
     }
 
-    static void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateNQT, final long units) {
-        List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateNQT);
-        long totalAmountNQT = 0;
+    static void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
+        List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
+        long totalAmountATM = 0;
         long remainingUnits = units;
 
         for (CurrencyExchangeOffer offer : currencySellOffers) {
@@ -177,16 +177,16 @@ public abstract class CurrencyExchangeOffer {
                 break;
             }
             long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateATM());
+            long curAmountATM = Math.multiplyExact(curUnits, offer.getRateATM());
 
-            totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
+            totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
 
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
             Account counterAccount = Account.getAccount(offer.getAccountId());
-            counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountNQT);
+            counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountATM);
             counterAccount.addToUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
                     Math.addExact(
                             Math.multiplyExact(curUnits - excess, offer.getRateATM() - offer.getCounterOffer().getRateATM()),
@@ -199,8 +199,8 @@ public abstract class CurrencyExchangeOffer {
         long transactionId = transaction.getId();
         account.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId,
                 currencyId, Math.subtractExact(units, remainingUnits));
-        account.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountNQT);
-        account.addToUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateNQT) - totalAmountNQT);
+        account.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
+        account.addToUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateATM) - totalAmountATM);
     }
 
     static void removeOffer(LedgerEvent event, CurrencyBuyOffer buyOffer) {
@@ -218,7 +218,7 @@ public abstract class CurrencyExchangeOffer {
     final long id;
     private final long currencyId;
     private final long accountId;
-    private final long rateNQT;
+    private final long rateATM;
     private long limit; // limit on the total sum of units for this offer across transactions
     private long supply; // total units supply for the offer
     private final int expirationHeight;
@@ -226,12 +226,12 @@ public abstract class CurrencyExchangeOffer {
     private final short transactionIndex;
     private final int transactionHeight;
 
-    CurrencyExchangeOffer(long id, long currencyId, long accountId, long rateNQT, long limit, long supply,
+    CurrencyExchangeOffer(long id, long currencyId, long accountId, long rateATM, long limit, long supply,
                           int expirationHeight, int transactionHeight, short transactionIndex) {
         this.id = id;
         this.currencyId = currencyId;
         this.accountId = accountId;
-        this.rateNQT = rateNQT;
+        this.rateATM = rateATM;
         this.limit = limit;
         this.supply = supply;
         this.expirationHeight = expirationHeight;
@@ -244,7 +244,7 @@ public abstract class CurrencyExchangeOffer {
         this.id = rs.getLong("id");
         this.currencyId = rs.getLong("currency_id");
         this.accountId = rs.getLong("account_id");
-        this.rateNQT = rs.getLong("rate");
+        this.rateATM = rs.getLong("rate");
         this.limit = rs.getLong("unit_limit");
         this.supply = rs.getLong("supply");
         this.expirationHeight = rs.getInt("expiration_height");
@@ -261,7 +261,7 @@ public abstract class CurrencyExchangeOffer {
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
-            pstmt.setLong(++i, this.rateNQT);
+            pstmt.setLong(++i, this.rateATM);
             pstmt.setLong(++i, this.limit);
             pstmt.setLong(++i, this.supply);
             pstmt.setInt(++i, this.expirationHeight);
@@ -286,7 +286,7 @@ public abstract class CurrencyExchangeOffer {
     }
 
     public long getRateATM() {
-        return rateNQT;
+        return rateATM;
     }
 
     public long getLimit() {
