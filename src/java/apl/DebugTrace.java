@@ -651,11 +651,11 @@ public final class DebugTrace {
             }
             map.put("event", "refund");
             map.put("purchase", Long.toUnsignedString(refund.getPurchaseId()));
-            long refundNQT = refund.getRefundATM();
+            long refundATM = refund.getRefundATM();
             if (! isRecipient) {
-                refundNQT = - refundNQT;
+                refundATM = - refundATM;
             }
-            map.put("refund", String.valueOf(refundNQT));
+            map.put("refund", String.valueOf(refundATM));
         } else if (attachment == Attachment.ARBITRARY_MESSAGE) {
             map = new HashMap<>();
             map.put("account", Long.toUnsignedString(accountId));

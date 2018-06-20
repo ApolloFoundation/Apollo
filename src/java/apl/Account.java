@@ -1089,9 +1089,9 @@ public final class Account {
     private final long id;
     private final DbKey dbKey;
     private PublicKey publicKey;
-    private long balanceNQT;
-    private long unconfirmedBalanceNQT;
-    private long forgedBalanceNQT;
+    private long balanceATM;
+    private long unconfirmedBalanceATM;
+    private long forgedBalanceATM;
     private long activeLesseeId;
     private Set<ControlType> controls;
 
@@ -1107,9 +1107,9 @@ public final class Account {
     private Account(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
-        this.balanceNQT = rs.getLong("balance");
-        this.unconfirmedBalanceNQT = rs.getLong("unconfirmed_balance");
-        this.forgedBalanceNQT = rs.getLong("forged_balance");
+        this.balanceATM = rs.getLong("balance");
+        this.unconfirmedBalanceATM = rs.getLong("unconfirmed_balance");
+        this.forgedBalanceATM = rs.getLong("forged_balance");
         this.activeLesseeId = rs.getLong("active_lessee_id");
         if (rs.getBoolean("has_control_phasing")) {
             controls = Collections.unmodifiableSet(EnumSet.of(ControlType.PHASING_ONLY));
@@ -1125,9 +1125,9 @@ public final class Account {
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
-            pstmt.setLong(++i, this.balanceNQT);
-            pstmt.setLong(++i, this.unconfirmedBalanceNQT);
-            pstmt.setLong(++i, this.forgedBalanceNQT);
+            pstmt.setLong(++i, this.balanceATM);
+            pstmt.setLong(++i, this.unconfirmedBalanceATM);
+            pstmt.setLong(++i, this.forgedBalanceATM);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.activeLesseeId);
             pstmt.setBoolean(++i, controls.contains(ControlType.PHASING_ONLY));
             pstmt.setInt(++i, Apl.getBlockchain().getHeight());
@@ -1136,7 +1136,7 @@ public final class Account {
     }
 
     private void save() {
-        if (balanceNQT == 0 && unconfirmedBalanceNQT == 0 && forgedBalanceNQT == 0 && activeLesseeId == 0 && controls.isEmpty()) {
+        if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
             accountTable.delete(this, true);
         } else {
             accountTable.insert(this);
@@ -1200,15 +1200,15 @@ public final class Account {
     }
 
     public long getBalanceATM() {
-        return balanceNQT;
+        return balanceATM;
     }
 
     public long getUnconfirmedBalanceATM() {
-        return unconfirmedBalanceNQT;
+        return unconfirmedBalanceATM;
     }
 
     public long getForgedBalanceATM() {
-        return forgedBalanceNQT;
+        return forgedBalanceATM;
     }
 
     public long getEffectiveBalanceAPL() {
@@ -1228,17 +1228,17 @@ public final class Account {
         }
         Apl.getBlockchain().readLock();
         try {
-            long effectiveBalanceNQT = getLessorsGuaranteedBalanceNQT(height);
+            long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
-                effectiveBalanceNQT += getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
+                effectiveBalanceATM += getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
             }
-	        return effectiveBalanceNQT < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceNQT / Constants.ONE_APL;
+	        return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         } finally {
             Apl.getBlockchain().readUnlock();
         }
     }
 
-    private long getLessorsGuaranteedBalanceNQT(int height) {
+    private long getLessorsGuaranteedBalanceATM(int height) {
         List<Account> lessors = new ArrayList<>();
         try (DbIterator<Account> iterator = getLessors(height)) {
             while (iterator.hasNext()) {
@@ -1312,9 +1312,9 @@ public final class Account {
                 pstmt.setInt(3, currentHeight);
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (!rs.next()) {
-                        return balanceNQT;
+                        return balanceATM;
                     }
-                    return Math.max(Math.subtractExact(balanceNQT, rs.getLong("additions")), 0);
+                    return Math.max(Math.subtractExact(balanceATM, rs.getLong("additions")), 0);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
@@ -1664,73 +1664,73 @@ public final class Account {
         }
     }
 
-    void addToBalanceATM(LedgerEvent event, long eventId, long amountNQT) {
-        addToBalanceATM(event, eventId, amountNQT, 0);
+    void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+        addToBalanceATM(event, eventId, amountATM, 0);
     }
 
-    void addToBalanceATM(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
-        if (amountNQT == 0 && feeNQT == 0) {
+    void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
+        if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        this.balanceNQT = Math.addExact(this.balanceNQT, totalAmountNQT);
-        addToGuaranteedBalanceNQT(totalAmountNQT);
-        checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+        long totalAmountATM = Math.addExact(amountATM, feeATM);
+        this.balanceATM = Math.addExact(this.balanceATM, totalAmountATM);
+        addToGuaranteedBalanceATM(totalAmountATM);
+        checkBalance(this.id, this.balanceATM, this.unconfirmedBalanceATM);
         save();
         listeners.notify(this, Event.BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
-            if (feeNQT != 0) {
+            if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.APL_BALANCE, null, feeNQT, this.balanceNQT - amountNQT));
+                        LedgerHolding.APL_BALANCE, null, feeATM, this.balanceATM - amountATM));
             }
-            if (amountNQT != 0) {
+            if (amountATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.APL_BALANCE, null, amountNQT, this.balanceNQT));
+                        LedgerHolding.APL_BALANCE, null, amountATM, this.balanceATM));
             }
         }
     }
 
-    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT) {
-        addToUnconfirmedBalanceATM(event, eventId, amountNQT, 0);
+    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+        addToUnconfirmedBalanceATM(event, eventId, amountATM, 0);
     }
 
-    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
-        if (amountNQT == 0 && feeNQT == 0) {
+    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
+        if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        this.unconfirmedBalanceNQT = Math.addExact(this.unconfirmedBalanceNQT, totalAmountNQT);
-        checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+        long totalAmountATM = Math.addExact(amountATM, feeATM);
+        this.unconfirmedBalanceATM = Math.addExact(this.unconfirmedBalanceATM, totalAmountATM);
+        checkBalance(this.id, this.balanceATM, this.unconfirmedBalanceATM);
         save();
         listeners.notify(this, Event.UNCONFIRMED_BALANCE);
         if (event == null) {
             return;
         }
         if (AccountLedger.mustLogEntry(this.id, true)) {
-            if (feeNQT != 0) {
+            if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeNQT, this.unconfirmedBalanceNQT - amountNQT));
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, this.unconfirmedBalanceATM - amountATM));
             }
-            if (amountNQT != 0) {
+            if (amountATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountNQT, this.unconfirmedBalanceNQT));
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, this.unconfirmedBalanceATM));
             }
         }
     }
 
-    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT) {
-        addToBalanceAndUnconfirmedBalanceATM(event, eventId, amountNQT, 0);
+    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+        addToBalanceAndUnconfirmedBalanceATM(event, eventId, amountATM, 0);
     }
 
-    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountNQT, long feeNQT) {
-        if (amountNQT == 0 && feeNQT == 0) {
+    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
+        if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        long totalAmountNQT = Math.addExact(amountNQT, feeNQT);
-        this.balanceNQT = Math.addExact(this.balanceNQT, totalAmountNQT);
-        this.unconfirmedBalanceNQT = Math.addExact(this.unconfirmedBalanceNQT, totalAmountNQT);
-        addToGuaranteedBalanceNQT(totalAmountNQT);
-        checkBalance(this.id, this.balanceNQT, this.unconfirmedBalanceNQT);
+        long totalAmountATM = Math.addExact(amountATM, feeATM);
+        this.balanceATM = Math.addExact(this.balanceATM, totalAmountATM);
+        this.unconfirmedBalanceATM = Math.addExact(this.unconfirmedBalanceATM, totalAmountATM);
+        addToGuaranteedBalanceATM(totalAmountATM);
+        checkBalance(this.id, this.balanceATM, this.unconfirmedBalanceATM);
         save();
         listeners.notify(this, Event.BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_BALANCE);
@@ -1738,32 +1738,32 @@ public final class Account {
             return;
         }
         if (AccountLedger.mustLogEntry(this.id, true)) {
-            if (feeNQT != 0) {
+            if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeNQT, this.unconfirmedBalanceNQT - amountNQT));
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, this.unconfirmedBalanceATM - amountATM));
             }
-            if (amountNQT != 0) {
+            if (amountATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountNQT, this.unconfirmedBalanceNQT));
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, this.unconfirmedBalanceATM));
             }
         }
         if (AccountLedger.mustLogEntry(this.id, false)) {
-            if (feeNQT != 0) {
+            if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.APL_BALANCE, null, feeNQT, this.balanceNQT - amountNQT));
+                        LedgerHolding.APL_BALANCE, null, feeATM, this.balanceATM - amountATM));
             }
-            if (amountNQT != 0) {
+            if (amountATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.APL_BALANCE, null, amountNQT, this.balanceNQT));
+                        LedgerHolding.APL_BALANCE, null, amountATM, this.balanceATM));
             }
         }
     }
 
-    void addToForgedBalanceATM(long amountNQT) {
-        if (amountNQT == 0) {
+    void addToForgedBalanceATM(long amountATM) {
+        if (amountATM == 0) {
             return;
         }
-        this.forgedBalanceNQT = Math.addExact(this.forgedBalanceNQT, amountNQT);
+        this.forgedBalanceATM = Math.addExact(this.forgedBalanceATM, amountATM);
         save();
     }
 
@@ -1782,8 +1782,8 @@ public final class Account {
         }
     }
 
-    private void addToGuaranteedBalanceNQT(long amountNQT) {
-        if (amountNQT <= 0) {
+    private void addToGuaranteedBalanceATM(long amountATM) {
+        if (amountATM <= 0) {
             return;
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
@@ -1795,7 +1795,7 @@ public final class Account {
             pstmtSelect.setLong(1, this.id);
             pstmtSelect.setInt(2, blockchainHeight);
             try (ResultSet rs = pstmtSelect.executeQuery()) {
-                long additions = amountNQT;
+                long additions = amountATM;
                 if (rs.next()) {
                     additions = Math.addExact(additions, rs.getLong("additions"));
                 }
@@ -1817,11 +1817,11 @@ public final class Account {
                 accountAssets.add(iterator.next());
             }
         }
-        final long amountNQTPerQNT = attachment.getAmountATMPerATU();
+        final long amountATMPerATU = attachment.getAmountATMPerATU();
         long numAccounts = 0;
         for (final AccountAsset accountAsset : accountAssets) {
             if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityATU() != 0) {
-                long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), amountNQTPerQNT);
+                long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU);
                 Account.getAccount(accountAsset.getAccountId())
                         .addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
                 totalDividend += dividend;
