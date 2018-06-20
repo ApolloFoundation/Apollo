@@ -127,6 +127,10 @@ public final class Constants {
     public static final int MAX_TAGGED_DATA_CHANNEL_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_FILENAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DATA_LENGTH = 42 * 1024;
+    public static final int MAX_UPDATE_URL_LENGTH = 200;
+    public static final int MAX_UPDATE_PLATFORM_LENGTH = 10;
+    public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
+    public static final int MAX_UPDATE_VERSION_LENGTH = 10;
 
     public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * 1440 * 60;
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;

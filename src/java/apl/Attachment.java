@@ -3569,10 +3569,10 @@ public interface Attachment extends Appendix {
 
         UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), 10).trim());
-            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), 10).trim());
-            url = Convert.readString(buffer, buffer.getShort(), 200).trim();
-            version = Version.from(Convert.readString(buffer, buffer.get(), 50).trim());
+            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
+            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
+            url = Convert.readString(buffer, buffer.getShort(), Constants.MAX_UPDATE_URL_LENGTH).trim();
+            version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
             hash = buffer.getInt();
             int signatureLength = buffer.getShort();
             signature = new byte[signatureLength];
@@ -3601,7 +3601,7 @@ public interface Attachment extends Appendix {
         @Override
         int getMySize() {
             return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
-            +2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + signature.length;
+                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + signature.length;
         }
 
         @Override
@@ -3610,13 +3610,13 @@ public interface Attachment extends Appendix {
             byte[] architecture = Convert.toBytes(this.architecture.toString());
             byte[] url = Convert.toBytes(this.url);
             byte[] version = Convert.toBytes(this.version.toString());
-            buffer.put((byte)platform.length);
+            buffer.put((byte) platform.length);
             buffer.put(platform);
-            buffer.put((byte)architecture.length);
+            buffer.put((byte) architecture.length);
             buffer.put(architecture);
             buffer.putShort((short) url.length);
             buffer.put(url);
-            buffer.put((byte)version.length);
+            buffer.put((byte) version.length);
             buffer.put(version);
             buffer.putInt(hash);
             buffer.putShort((short) signature.length);
@@ -3656,7 +3656,19 @@ public interface Attachment extends Appendix {
         public byte[] getSignature() {
             return signature;
         }
+
+        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature, byte level) {
+            if (level == TransactionType.Update.CRITICAL.getSubtype()) {
+                return new Attachment.CriticalUpdate(platform, architecture, url, version, hash, signature);
+            } else if (level == TransactionType.Update.IMPORTANT.getSubtype()) {
+                return new Attachment.ImportantUpdate(platform, architecture, url, version, hash, signature);
+            } else if (level == TransactionType.Update.MINOR.getSubtype()) {
+                return new Attachment.MinorUpdate(platform, architecture, url, version, hash, signature);
+            }
+            return null;
+        }
     }
+
     final class CriticalUpdate extends UpdateAttachment {
         CriticalUpdate(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
