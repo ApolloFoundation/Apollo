@@ -3601,7 +3601,7 @@ public interface Attachment extends Appendix {
         @Override
         int getMySize() {
             return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
-                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + signature.length;
+                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + 2 + signature.length;
         }
 
         @Override

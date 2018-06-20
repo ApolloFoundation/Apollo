@@ -41,7 +41,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
         byte[] signature = ParameterParser.getBytes(req, "signature", true);
         int hash = ParameterParser.getInt(req, "hash", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
         byte level = ParameterParser.getByte(req, "level", (byte)0, Byte.MAX_VALUE, true);
-        if (url.length() > Constants.MAX_UPDATE_URL_LENGTH) {
+        if (url.isEmpty() || url.length() > Constants.MAX_UPDATE_URL_LENGTH) {
             return JSONResponses.INCORRECT_UPDATE_URL_LENGTH;
         }
         Account account = ParameterParser.getSenderAccount(req);
