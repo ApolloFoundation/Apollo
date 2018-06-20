@@ -69,20 +69,20 @@ public class CurrencyFounder {
     private final DbKey dbKey;
     private final long currencyId;
     private final long accountId;
-    private long amountPerUnitNQT;
+    private long amountPerUnitATM;
 
-    private CurrencyFounder(long currencyId, long accountId, long amountPerUnitNQT) {
+    private CurrencyFounder(long currencyId, long accountId, long amountPerUnitATM) {
         this.currencyId = currencyId;
         this.dbKey = currencyFounderDbKeyFactory.newKey(currencyId, accountId);
         this.accountId = accountId;
-        this.amountPerUnitNQT = amountPerUnitNQT;
+        this.amountPerUnitATM = amountPerUnitATM;
     }
 
     private CurrencyFounder(ResultSet rs, DbKey dbKey) throws SQLException {
         this.currencyId = rs.getLong("currency_id");
         this.accountId = rs.getLong("account_id");
         this.dbKey = dbKey;
-        this.amountPerUnitNQT = rs.getLong("amount");
+        this.amountPerUnitATM = rs.getLong("amount");
     }
 
     private void save(Connection con) throws SQLException {
@@ -106,7 +106,7 @@ public class CurrencyFounder {
     }
 
     public long getAmountPerUnitATM() {
-        return amountPerUnitNQT;
+        return amountPerUnitATM;
     }
 
     static void addOrUpdateFounder(long currencyId, long accountId, long amount) {
@@ -114,7 +114,7 @@ public class CurrencyFounder {
         if (founder == null) {
             founder = new CurrencyFounder(currencyId, accountId, amount);
         } else {
-            founder.amountPerUnitNQT += amount;
+            founder.amountPerUnitATM += amount;
         }
         currencyFounderTable.insert(founder);
     }

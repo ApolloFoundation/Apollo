@@ -64,23 +64,23 @@ public final class Account {
         private final long accountId;
         private final long assetId;
         private final DbKey dbKey;
-        private long quantityQNT;
-        private long unconfirmedQuantityQNT;
+        private long quantityATU;
+        private long unconfirmedQuantityATU;
 
-        private AccountAsset(long accountId, long assetId, long quantityQNT, long unconfirmedQuantityQNT) {
+        private AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU) {
             this.accountId = accountId;
             this.assetId = assetId;
             this.dbKey = accountAssetDbKeyFactory.newKey(this.accountId, this.assetId);
-            this.quantityQNT = quantityQNT;
-            this.unconfirmedQuantityQNT = unconfirmedQuantityQNT;
+            this.quantityATU = quantityATU;
+            this.unconfirmedQuantityATU = unconfirmedQuantityATU;
         }
 
         private AccountAsset(ResultSet rs, DbKey dbKey) throws SQLException {
             this.accountId = rs.getLong("account_id");
             this.assetId = rs.getLong("asset_id");
             this.dbKey = dbKey;
-            this.quantityQNT = rs.getLong("quantity");
-            this.unconfirmedQuantityQNT = rs.getLong("unconfirmed_quantity");
+            this.quantityATU = rs.getLong("quantity");
+            this.unconfirmedQuantityATU = rs.getLong("unconfirmed_quantity");
         }
 
         private void save(Connection con) throws SQLException {
@@ -90,8 +90,8 @@ public final class Account {
                 int i = 0;
                 pstmt.setLong(++i, this.accountId);
                 pstmt.setLong(++i, this.assetId);
-                pstmt.setLong(++i, this.quantityQNT);
-                pstmt.setLong(++i, this.unconfirmedQuantityQNT);
+                pstmt.setLong(++i, this.quantityATU);
+                pstmt.setLong(++i, this.unconfirmedQuantityATU);
                 pstmt.setInt(++i, Apl.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
@@ -106,16 +106,16 @@ public final class Account {
         }
 
         public long getQuantityATU() {
-            return quantityQNT;
+            return quantityATU;
         }
 
         public long getUnconfirmedQuantityATU() {
-            return unconfirmedQuantityQNT;
+            return unconfirmedQuantityATU;
         }
 
         private void save() {
-            checkBalance(this.accountId, this.quantityQNT, this.unconfirmedQuantityQNT);
-            if (this.quantityQNT > 0 || this.unconfirmedQuantityQNT > 0) {
+            checkBalance(this.accountId, this.quantityATU, this.unconfirmedQuantityATU);
+            if (this.quantityATU > 0 || this.unconfirmedQuantityATU > 0) {
                 accountAssetTable.insert(this);
             } else {
                 accountAssetTable.delete(this);
@@ -125,7 +125,7 @@ public final class Account {
         @Override
         public String toString() {
             return "AccountAsset account_id: " + Long.toUnsignedString(accountId) + " asset_id: " + Long.toUnsignedString(assetId)
-                    + " quantity: " + quantityQNT + " unconfirmedQuantity: " + unconfirmedQuantityQNT;
+                    + " quantity: " + quantityATU + " unconfirmedQuantity: " + unconfirmedQuantityATU;
         }
 
     }
@@ -139,12 +139,12 @@ public final class Account {
         private long units;
         private long unconfirmedUnits;
 
-        private AccountCurrency(long accountId, long currencyId, long quantityQNT, long unconfirmedQuantityQNT) {
+        private AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU) {
             this.accountId = accountId;
             this.currencyId = currencyId;
             this.dbKey = accountCurrencyDbKeyFactory.newKey(this.accountId, this.currencyId);
-            this.units = quantityQNT;
-            this.unconfirmedUnits = unconfirmedQuantityQNT;
+            this.units = quantityATU;
+            this.unconfirmedUnits = unconfirmedQuantityATU;
         }
 
         private AccountCurrency(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -986,17 +986,17 @@ public final class Account {
 
     public static long getAssetBalanceATU(long accountId, long assetId, int height) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId), height);
-        return accountAsset == null ? 0 : accountAsset.quantityQNT;
+        return accountAsset == null ? 0 : accountAsset.quantityATU;
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
-        return accountAsset == null ? 0 : accountAsset.quantityQNT;
+        return accountAsset == null ? 0 : accountAsset.quantityATU;
     }
 
     public static long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
-        return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityQNT;
+        return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
     }
 
     public static long getCurrencyUnits(long accountId, long currencyId, int height) {
@@ -1506,40 +1506,40 @@ public final class Account {
         this.publicKey = publicKey;
     }
 
-    void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
-        if (quantityQNT == 0) {
+    void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
+        if (quantityATU == 0) {
             return;
         }
         AccountAsset accountAsset;
         accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
-        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityQNT;
-        assetBalance = Math.addExact(assetBalance, quantityQNT);
+        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
+        assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
             accountAsset = new AccountAsset(this.id, assetId, assetBalance, 0);
         } else {
-            accountAsset.quantityQNT = assetBalance;
+            accountAsset.quantityATU = assetBalance;
         }
         accountAsset.save();
         listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id, LedgerHolding.ASSET_BALANCE, assetId,
-                    quantityQNT, assetBalance));
+                    quantityATU, assetBalance));
         }
     }
 
-    void addToUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
-        if (quantityQNT == 0) {
+    void addToUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
+        if (quantityATU == 0) {
             return;
         }
         AccountAsset accountAsset;
         accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
-        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityQNT;
-        unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityQNT);
+        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
+        unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
             accountAsset = new AccountAsset(this.id, assetId, 0, unconfirmedAssetBalance);
         } else {
-            accountAsset.unconfirmedQuantityQNT = unconfirmedAssetBalance;
+            accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
         accountAsset.save();
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
@@ -1550,25 +1550,25 @@ public final class Account {
         if (AccountLedger.mustLogEntry(this.id, true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
                     LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                    quantityQNT, unconfirmedAssetBalance));
+                    quantityATU, unconfirmedAssetBalance));
         }
     }
 
-    void addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityQNT) {
-        if (quantityQNT == 0) {
+    void addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
+        if (quantityATU == 0) {
             return;
         }
         AccountAsset accountAsset;
         accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
-        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityQNT;
-        assetBalance = Math.addExact(assetBalance, quantityQNT);
-        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityQNT;
-        unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityQNT);
+        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
+        assetBalance = Math.addExact(assetBalance, quantityATU);
+        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
+        unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
             accountAsset = new AccountAsset(this.id, assetId, assetBalance, unconfirmedAssetBalance);
         } else {
-            accountAsset.quantityQNT = assetBalance;
-            accountAsset.unconfirmedQuantityQNT = unconfirmedAssetBalance;
+            accountAsset.quantityATU = assetBalance;
+            accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
         accountAsset.save();
         listeners.notify(this, Event.ASSET_BALANCE);
@@ -1578,12 +1578,12 @@ public final class Account {
         if (AccountLedger.mustLogEntry(this.id, true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
                     LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                    quantityQNT, unconfirmedAssetBalance));
+                    quantityATU, unconfirmedAssetBalance));
         }
         if (AccountLedger.mustLogEntry(this.id, false)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
                     LedgerHolding.ASSET_BALANCE, assetId,
-                    quantityQNT, assetBalance));
+                    quantityATU, assetBalance));
         }
     }
 

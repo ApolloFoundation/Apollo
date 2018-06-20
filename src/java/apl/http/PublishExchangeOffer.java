@@ -31,8 +31,8 @@ import javax.servlet.http.HttpServletRequest;
  * Parameters
  * <ul>
  * <li>currency - currency id of an active currency
- * <li>buyRateNQT - APL amount for buying a currency unit specified in ATM
- * <li>sellRateNQT - APL amount for selling a currency unit specified in ATM
+ * <li>buyRateATM - APL amount for buying a currency unit specified in ATM
+ * <li>sellRateATM - APL amount for selling a currency unit specified in ATM
  * <li>initialBuySupply - Initial number of currency units offered to buy by the publisher
  * <li>initialSellSupply - Initial number of currency units offered for sell by the publisher
  * <li>totalBuyLimit - Total number of currency units which can be bought from the offer
@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletRequest;
  *
  * <p>
  * Publishing an exchange offer internally creates a buy offer and a counter sell offer linked together.
- * Typically the buyRateNQT specified would be less than the sellRateNQT thus allowing the publisher to make profit
+ * Typically the buyRateATM specified would be less than the sellRateATM thus allowing the publisher to make profit
  *
  * <p>
  * Each {@link CurrencyBuy} transaction which matches this offer reduces the sell supply and increases the buy supply
@@ -60,15 +60,15 @@ public final class PublishExchangeOffer extends CreateTransaction {
     static final PublishExchangeOffer instance = new PublishExchangeOffer();
 
     private PublishExchangeOffer() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateNQT", "sellRateNQT",
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",
                 "totalBuyLimit", "totalSellLimit", "initialBuySupply", "initialSellSupply", "expirationHeight");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
-        long buyRateNQT = ParameterParser.getLong(req, "buyRateNQT", 0, Long.MAX_VALUE, true);
-        long sellRateNQT= ParameterParser.getLong(req, "sellRateNQT", 0, Long.MAX_VALUE, true);
+        long buyRateATM = ParameterParser.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
+        long sellRateATM= ParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
         long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
         long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
         long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
@@ -76,7 +76,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
         int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.MonetarySystemPublishExchangeOffer(currency.getId(), buyRateNQT, sellRateNQT,
+        Attachment attachment = new Attachment.MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
                 totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
         try {
             return createTransaction(req, account, attachment);

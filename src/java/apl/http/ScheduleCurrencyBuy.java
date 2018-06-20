@@ -42,7 +42,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     static final ScheduleCurrencyBuy instance = new ScheduleCurrencyBuy();
 
     private ScheduleCurrencyBuy() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateNQT", "units", "offerIssuer",
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
                 "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }
 
@@ -62,11 +62,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     return JSONResponses.error("Must use broadcast=false to schedule a future currency buy");
                 }
                 Currency currency = ParameterParser.getCurrency(req);
-                long rateNQT = ParameterParser.getLong(req, "rateNQT", 0, Long.MAX_VALUE, true);
+                long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = ParameterParser.getSenderAccount(req);
                 String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateNQT, units);
+                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (secretPhrase == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
@@ -137,12 +137,12 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
 
         private final long senderId;
         private final long currencyId;
-        private final long rateNQT;
+        private final long rateATM;
 
-        private ExchangeOfferFilter(long senderId, long currencyId, long rateNQT) {
+        private ExchangeOfferFilter(long senderId, long currencyId, long rateATM) {
             this.senderId = senderId;
             this.currencyId = currencyId;
-            this.rateNQT = rateNQT;
+            this.rateATM = rateATM;
         }
 
         @Override
@@ -153,7 +153,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 return false;
             }
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
-            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateNQT) {
+            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
                 return false;
             }
             return true;
