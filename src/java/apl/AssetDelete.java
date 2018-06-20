@@ -144,7 +144,7 @@ public final class AssetDelete {
         return accountId;
     }
 
-    public long getQuantityQNT() { return quantityQNT; }
+    public long getQuantityATU() { return quantityQNT; }
 
     public int getTimestamp() {
         return timestamp;

@@ -46,7 +46,7 @@ public interface Block {
 
     long getTotalAmountNQT();
 
-    long getTotalFeeNQT();
+    long getTotalFeeATM();
 
     int getPayloadLength();
 

@@ -43,7 +43,7 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
         Attachment.ColoredCoinsOrderPlacement a1 = (Attachment.ColoredCoinsOrderPlacement)o1.getAttachment();
         Attachment.ColoredCoinsOrderPlacement a2 = (Attachment.ColoredCoinsOrderPlacement)o2.getAttachment();
-        return Long.compare(a2.getPriceNQT(), a1.getPriceNQT());
+        return Long.compare(a2.getPriceATM(), a1.getPriceATM());
     };
 
     @Override

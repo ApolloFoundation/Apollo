@@ -1428,12 +1428,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             }
-            calculatedTotalAmount += transaction.getAmountNQT();
-            calculatedTotalFee += transaction.getFeeNQT();
+            calculatedTotalAmount += transaction.getAmountATM();
+            calculatedTotalFee += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();
             digest.update(transaction.bytes());
         }
-        if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
+        if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeATM()) {
             throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
         }
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
@@ -1724,8 +1724,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             TransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
-            totalAmountNQT += transaction.getAmountNQT();
-            totalFeeNQT += transaction.getFeeNQT();
+            totalAmountNQT += transaction.getAmountATM();
+            totalFeeNQT += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();
         }
         byte[] payloadHash = digest.digest();
@@ -1741,7 +1741,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             pushBlock(block);
             blockListeners.notify(block, Event.BLOCK_GENERATED);
             Logger.logDebugMessage("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeNQT())/Constants.ONE_APL);
+                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeATM())/Constants.ONE_APL);
         } catch (TransactionNotAcceptedException e) {
             Logger.logDebugMessage("Generate block failed: " + e.getMessage());
             TransactionProcessorImpl.getInstance().processWaitingTransactions();

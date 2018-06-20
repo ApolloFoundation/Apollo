@@ -43,7 +43,7 @@ public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
         if (account == null) {
             response.put("guaranteedBalanceNQT", "0");
         } else {
-            response.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceNQT(numberOfConfirmations, Apl.getBlockchain().getHeight())));
+            response.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceATM(numberOfConfirmations, Apl.getBlockchain().getHeight())));
         }
 
         return response;

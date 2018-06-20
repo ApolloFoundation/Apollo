@@ -42,7 +42,7 @@ public abstract class CurrencyExchangeOffer {
             this.amountNQT = amountNQT;
         }
 
-        public long getRateNQT() {
+        public long getRateATM() {
             return rateNQT;
         }
 
@@ -50,7 +50,7 @@ public abstract class CurrencyExchangeOffer {
             return units;
         }
 
-        public long getAmountNQT() {
+        public long getAmountATM() {
             return amountNQT;
         }
 
@@ -87,9 +87,9 @@ public abstract class CurrencyExchangeOffer {
             if (remainingUnits == 0) {
                 break;
             }
-            rateNQT = offer.getRateNQT();
+            rateNQT = offer.getRateATM();
             long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateNQT());
+            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateATM());
             totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
         }
@@ -128,7 +128,7 @@ public abstract class CurrencyExchangeOffer {
                 break;
             }
             long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateNQT());
+            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateATM());
 
             totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
@@ -177,7 +177,7 @@ public abstract class CurrencyExchangeOffer {
                 break;
             }
             long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateNQT());
+            long curAmountNQT = Math.multiplyExact(curUnits, offer.getRateATM());
 
             totalAmountNQT = Math.addExact(totalAmountNQT, curAmountNQT);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
@@ -189,8 +189,8 @@ public abstract class CurrencyExchangeOffer {
             counterAccount.addToBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountNQT);
             counterAccount.addToUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
                     Math.addExact(
-                            Math.multiplyExact(curUnits - excess, offer.getRateNQT() - offer.getCounterOffer().getRateNQT()),
-                            Math.multiplyExact(excess, offer.getRateNQT())
+                            Math.multiplyExact(curUnits - excess, offer.getRateATM() - offer.getCounterOffer().getRateATM()),
+                            Math.multiplyExact(excess, offer.getRateATM())
                     )
             );
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, -curUnits);
@@ -210,7 +210,7 @@ public abstract class CurrencyExchangeOffer {
         CurrencySellOffer.remove(sellOffer);
 
         Account account = Account.getAccount(buyOffer.getAccountId());
-        account.addToUnconfirmedBalanceNQT(event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateNQT()));
+        account.addToUnconfirmedBalanceNQT(event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateATM()));
         account.addToUnconfirmedCurrencyUnits(event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 
@@ -285,7 +285,7 @@ public abstract class CurrencyExchangeOffer {
         return accountId;
     }
 
-    public long getRateNQT() {
+    public long getRateATM() {
         return rateNQT;
     }
 

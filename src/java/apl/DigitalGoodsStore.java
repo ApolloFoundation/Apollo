@@ -59,7 +59,7 @@ public final class DigitalGoodsStore {
             for (Purchase purchase : expiredPurchases) {
                 Account buyer = Account.getAccount(purchase.getBuyerId());
                 buyer.addToUnconfirmedBalanceNQT(LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
-                        Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceNQT()));
+                        Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM()));
                 Goods.getGoods(purchase.getGoodsId()).changeQuantity(purchase.getQuantity());
                 purchase.setPending(false);
             }
@@ -396,7 +396,7 @@ public final class DigitalGoodsStore {
             goodsTable.insert(this);
         }
 
-        public long getPriceNQT() {
+        public long getPriceATM() {
             return priceNQT;
         }
 
@@ -759,7 +759,7 @@ public final class DigitalGoodsStore {
             return quantity;
         }
 
-        public long getPriceNQT() {
+        public long getPriceATM() {
             return priceNQT;
         }
 
@@ -855,7 +855,7 @@ public final class DigitalGoodsStore {
             publicFeedbackTable.insert(this, publicFeedbacks);
         }
 
-        public long getDiscountNQT() {
+        public long getDiscountATM() {
             return discountNQT;
         }
 
@@ -864,7 +864,7 @@ public final class DigitalGoodsStore {
             purchaseTable.insert(this);
         }
 
-        public long getRefundNQT() {
+        public long getRefundATM() {
             return refundNQT;
         }
 
@@ -933,7 +933,7 @@ public final class DigitalGoodsStore {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
-                && attachment.getPriceNQT() == goods.getPriceNQT()) {
+                && attachment.getPriceNQT() == goods.getPriceATM()) {
             goods.changeQuantity(-attachment.getQuantity());
             Purchase purchase = new Purchase(transaction, attachment, goods.getSellerId());
             Purchase.purchaseTable.insert(purchase);
@@ -949,7 +949,7 @@ public final class DigitalGoodsStore {
     static void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
         Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
         purchase.setPending(false);
-        long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceNQT());
+        long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
         Account buyer = Account.getAccount(purchase.getBuyerId());
         long transactionId = transaction.getId();
         buyer.addToBalanceNQT(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,

@@ -263,7 +263,7 @@ final class BlockDb {
                 pstmt.setInt(++i, block.getTimestamp());
                 DbUtils.setLongZeroToNull(pstmt, ++i, block.getPreviousBlockId());
                 pstmt.setLong(++i, block.getTotalAmountNQT());
-                pstmt.setLong(++i, block.getTotalFeeNQT());
+                pstmt.setLong(++i, block.getTotalFeeATM());
                 pstmt.setInt(++i, block.getPayloadLength());
                 pstmt.setBytes(++i, block.getPreviousBlockHash());
                 pstmt.setLong(++i, 0L); // next_block_id set to 0 at first

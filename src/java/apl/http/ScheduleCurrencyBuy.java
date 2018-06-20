@@ -88,13 +88,13 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             }
 
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();
-            Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateNQT());
+            Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
             Apl.getBlockchain().updateLock();
             try {
                 transaction.validate();
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
-                if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateNQT() <= attachment.getRateNQT()) {
+                if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
                     Logger.logDebugMessage("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
                     Apl.getTransactionProcessor().broadcast(transaction);
                     response.put("broadcasted", true);
@@ -153,7 +153,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 return false;
             }
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
-            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateNQT() > rateNQT) {
+            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateNQT) {
                 return false;
             }
             return true;

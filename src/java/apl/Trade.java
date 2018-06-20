@@ -195,12 +195,12 @@ public final class Trade {
         this.sellerId = askOrder.getAccountId();
         this.buyerId = bidOrder.getAccountId();
         this.dbKey = tradeDbKeyFactory.newKey(this.askOrderId, this.bidOrderId);
-        this.quantityQNT = Math.min(askOrder.getQuantityQNT(), bidOrder.getQuantityQNT());
+        this.quantityQNT = Math.min(askOrder.getQuantityATU(), bidOrder.getQuantityATU());
         this.isBuy = askOrderHeight < bidOrderHeight ||
                 askOrderHeight == bidOrderHeight &&
                         (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
                                 (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() && askOrder.getTransactionIndex() < bidOrder.getTransactionIndex()));
-        this.priceNQT = isBuy ? askOrder.getPriceNQT() : bidOrder.getPriceNQT();
+        this.priceNQT = isBuy ? askOrder.getPriceATM() : bidOrder.getPriceATM();
     }
 
     private Trade(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -264,9 +264,9 @@ public final class Trade {
         return buyerId;
     }
 
-    public long getQuantityQNT() { return quantityQNT; }
+    public long getQuantityATU() { return quantityQNT; }
 
-    public long getPriceNQT() { return priceNQT; }
+    public long getPriceATM() { return priceNQT; }
     
     public long getAssetId() { return assetId; }
     

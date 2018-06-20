@@ -105,11 +105,11 @@ public final class Account {
             return assetId;
         }
 
-        public long getQuantityQNT() {
+        public long getQuantityATU() {
             return quantityQNT;
         }
 
-        public long getUnconfirmedQuantityQNT() {
+        public long getUnconfirmedQuantityATU() {
             return unconfirmedQuantityQNT;
         }
 
@@ -1199,15 +1199,15 @@ public final class Account {
         return decrypted;
     }
 
-    public long getBalanceNQT() {
+    public long getBalanceATM() {
         return balanceNQT;
     }
 
-    public long getUnconfirmedBalanceNQT() {
+    public long getUnconfirmedBalanceATM() {
         return unconfirmedBalanceNQT;
     }
 
-    public long getForgedBalanceNQT() {
+    public long getForgedBalanceATM() {
         return forgedBalanceNQT;
     }
 
@@ -1218,7 +1218,7 @@ public final class Account {
     public long getEffectiveBalanceAPL(int height) {
         if (height <= 1440) {
             Account genesisAccount = getAccount(id, 0);
-            return genesisAccount == null ? 0 : genesisAccount.getBalanceNQT() / Constants.ONE_APL;
+            return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (this.publicKey == null) {
             this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
@@ -1230,7 +1230,7 @@ public final class Account {
         try {
             long effectiveBalanceNQT = getLessorsGuaranteedBalanceNQT(height);
             if (activeLesseeId == 0) {
-                effectiveBalanceNQT += getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
+                effectiveBalanceNQT += getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
             }
 	        return effectiveBalanceNQT < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceNQT / Constants.ONE_APL;
         } finally {
@@ -1249,7 +1249,7 @@ public final class Account {
         long[] balances = new long[lessors.size()];
         for (int i = 0; i < lessors.size(); i++) {
             lessorIds[i] = lessors.get(i).getId();
-            balances[i] = lessors.get(i).getBalanceNQT();
+            balances[i] = lessors.get(i).getBalanceATM();
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
         try (Connection con = Db.db.getConnection();
@@ -1292,11 +1292,11 @@ public final class Account {
         return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
     }
 
-    public long getGuaranteedBalanceNQT() {
-        return getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, Apl.getBlockchain().getHeight());
+    public long getGuaranteedBalanceATM() {
+        return getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, Apl.getBlockchain().getHeight());
     }
 
-    public long getGuaranteedBalanceNQT(final int numberOfConfirmations, final int currentHeight) {
+    public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
         Apl.getBlockchain().readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
@@ -1820,8 +1820,8 @@ public final class Account {
         final long amountNQTPerQNT = attachment.getAmountNQTPerQNT();
         long numAccounts = 0;
         for (final AccountAsset accountAsset : accountAssets) {
-            if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityQNT() != 0) {
-                long dividend = Math.multiplyExact(accountAsset.getQuantityQNT(), amountNQTPerQNT);
+            if (accountAsset.getAccountId() != this.id && accountAsset.getQuantityATU() != 0) {
+                long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), amountNQTPerQNT);
                 Account.getAccount(accountAsset.getAccountId())
                         .addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
                 totalDividend += dividend;

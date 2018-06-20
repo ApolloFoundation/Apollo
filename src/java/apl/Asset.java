@@ -170,11 +170,11 @@ public final class Asset {
         return description;
     }
 
-    public long getInitialQuantityQNT() {
+    public long getInitialQuantityATU() {
         return initialQuantityQNT;
     }
 
-    public long getQuantityQNT() {
+    public long getQuantityATU() {
         return quantityQNT;
     }
 

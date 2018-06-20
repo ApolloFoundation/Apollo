@@ -356,12 +356,12 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public long getAmountNQT() {
+    public long getAmountATM() {
         return amountNQT;
     }
 
     @Override
-    public long getFeeNQT() {
+    public long getFeeATM() {
         return feeNQT;
     }
 
@@ -966,7 +966,7 @@ final class TransactionImpl implements Transaction {
         }
 
         if (! type.canHaveRecipient()) {
-            if (recipientId != 0 || getAmountNQT() != 0) {
+            if (recipientId != 0 || getAmountATM() != 0) {
                 throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
             }
         }

@@ -26,7 +26,7 @@ public enum HoldingType {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            return account.getBalanceNQT();
+            return account.getBalanceATM();
         }
 
         @Override
@@ -34,7 +34,7 @@ public enum HoldingType {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
-            return account.getUnconfirmedBalanceNQT();
+            return account.getUnconfirmedBalanceATM();
         }
 
         @Override

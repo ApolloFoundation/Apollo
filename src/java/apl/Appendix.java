@@ -1413,7 +1413,7 @@ public interface Appendix {
             Account senderAccount = Account.getAccount(transaction.getSenderId());
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
             senderAccount.addToUnconfirmedBalanceNQT(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
-                                                     transaction.getAmountNQT());
+                                                     transaction.getAmountATM());
             TransactionProcessorImpl.getInstance()
                     .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
             Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been rejected");

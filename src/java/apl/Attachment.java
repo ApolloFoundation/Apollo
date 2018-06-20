@@ -1031,7 +1031,7 @@ public interface Attachment extends Appendix {
             return assetId;
         }
 
-        public long getQuantityQNT() {
+        public long getQuantityATU() {
             return quantityQNT;
         }
 
@@ -1085,7 +1085,7 @@ public interface Attachment extends Appendix {
             return assetId;
         }
 
-        public long getQuantityQNT() {
+        public long getQuantityATU() {
             return quantityQNT;
         }
 
@@ -1140,11 +1140,11 @@ public interface Attachment extends Appendix {
             return assetId;
         }
 
-        public long getQuantityQNT() {
+        public long getQuantityATU() {
             return quantityQNT;
         }
 
-        public long getPriceNQT() {
+        public long getPriceATM() {
             return priceNQT;
         }
     }
@@ -2351,11 +2351,11 @@ public interface Attachment extends Appendix {
             return currencyId;
         }
 
-        public long getBuyRateNQT() {
+        public long getBuyRateATM() {
             return buyRateNQT;
         }
 
-        public long getSellRateNQT() {
+        public long getSellRateATM() {
             return sellRateNQT;
         }
 
@@ -2431,7 +2431,7 @@ public interface Attachment extends Appendix {
             return currencyId;
         }
 
-        public long getRateNQT() {
+        public long getRateATM() {
             return rateNQT;
         }
 

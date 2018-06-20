@@ -209,7 +209,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
             Transaction transaction = builder.build(secretPhrase);
             try {
-                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT()) {
+                if (Math.addExact(amountNQT, transaction.getFeeATM()) > senderAccount.getUnconfirmedBalanceATM()) {
                     return NOT_ENOUGH_FUNDS;
                 }
             } catch (ArithmeticException e) {

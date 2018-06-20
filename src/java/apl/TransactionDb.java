@@ -316,8 +316,8 @@ final class TransactionDb {
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());
-                    pstmt.setLong(++i, transaction.getAmountNQT());
-                    pstmt.setLong(++i, transaction.getFeeNQT());
+                    pstmt.setLong(++i, transaction.getAmountATM());
+                    pstmt.setLong(++i, transaction.getFeeATM());
                     DbUtils.setBytes(pstmt, ++i, transaction.referencedTransactionFullHash());
                     pstmt.setInt(++i, transaction.getHeight());
                     pstmt.setLong(++i, transaction.getBlockId());

@@ -139,7 +139,7 @@ final class BlockImpl implements Block {
     }
 
     @Override
-    public long getTotalFeeNQT() {
+    public long getTotalFeeATM() {
         return totalFeeNQT;
     }
 

@@ -151,7 +151,7 @@ public final class AssetTransfer {
         this.assetId = attachment.getAssetId();
         this.senderId = transaction.getSenderId();
         this.recipientId = transaction.getRecipientId();
-        this.quantityQNT = attachment.getQuantityQNT();
+        this.quantityQNT = attachment.getQuantityATU();
         this.timestamp = Apl.getBlockchain().getLastBlockTimestamp();
     }
 
@@ -196,7 +196,7 @@ public final class AssetTransfer {
         return recipientId;
     }
 
-    public long getQuantityQNT() { return quantityQNT; }
+    public long getQuantityATU() { return quantityQNT; }
 
     public int getTimestamp() {
         return timestamp;

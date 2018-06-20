@@ -47,7 +47,7 @@ public final class VoteWeighting {
         NQT(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long nqtBalance = Account.getAccount(voterId, height).getBalanceNQT();
+                long nqtBalance = Account.getAccount(voterId, height).getBalanceATM();
                 return nqtBalance >= voteWeighting.minBalance ? nqtBalance : 0;
             }
             @Override
@@ -140,7 +140,7 @@ public final class VoteWeighting {
         NQT(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAccount(voterId, height).getBalanceNQT();
+                return Account.getAccount(voterId, height).getBalanceATM();
             }
         },
         ASSET(2) {

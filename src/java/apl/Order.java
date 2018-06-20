@@ -38,26 +38,26 @@ public abstract class Order {
         while ((askOrder = Ask.getNextOrder(assetId)) != null
                 && (bidOrder = Bid.getNextOrder(assetId)) != null) {
 
-            if (askOrder.getPriceNQT() > bidOrder.getPriceNQT()) {
+            if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
                 break;
             }
 
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
 
-            askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
+            askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());
             askAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.ASSET_TRADE, askOrder.getId(),
-                            Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityQNT());
+                            Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
-            bidOrder.updateQuantityQNT(Math.subtractExact(bidOrder.getQuantityQNT(), trade.getQuantityQNT()));
+            bidOrder.updateQuantityQNT(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
             bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            assetId, trade.getQuantityQNT());
+                            assetId, trade.getQuantityATU());
             bidAccount.addToBalanceNQT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            -Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
+                            -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
             bidAccount.addToUnconfirmedBalanceNQT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            Math.multiplyExact(trade.getQuantityQNT(), (bidOrder.getPriceNQT() - trade.getPriceNQT())));
+                            Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 
     }
@@ -82,8 +82,8 @@ public abstract class Order {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.assetId = attachment.getAssetId();
-        this.quantityQNT = attachment.getQuantityQNT();
-        this.priceNQT = attachment.getPriceNQT();
+        this.quantityQNT = attachment.getQuantityATU();
+        this.priceNQT = attachment.getPriceATM();
         this.creationHeight = Apl.getBlockchain().getHeight();
         this.transactionIndex = transaction.getIndex();
         this.transactionHeight = transaction.getHeight();
@@ -129,11 +129,11 @@ public abstract class Order {
         return assetId;
     }
 
-    public final long getPriceNQT() {
+    public final long getPriceATM() {
         return priceNQT;
     }
 
-    public final long getQuantityQNT() {
+    public final long getQuantityATU() {
         return quantityQNT;
     }
 
@@ -295,9 +295,9 @@ public abstract class Order {
         /*
         @Override
         public int compareTo(Ask o) {
-            if (this.getPriceNQT() < o.getPriceNQT()) {
+            if (this.getPriceATM() < o.getPriceATM()) {
                 return -1;
-            } else if (this.getPriceNQT() > o.getPriceNQT()) {
+            } else if (this.getPriceATM() > o.getPriceATM()) {
                 return 1;
             } else {
                 return super.compareTo(o);
@@ -424,9 +424,9 @@ public abstract class Order {
         /*
         @Override
         public int compareTo(Bid o) {
-            if (this.getPriceNQT() > o.getPriceNQT()) {
+            if (this.getPriceATM() > o.getPriceATM()) {
                 return -1;
-            } else if (this.getPriceNQT() < o.getPriceNQT()) {
+            } else if (this.getPriceATM() < o.getPriceATM()) {
                 return 1;
             } else {
                 return super.compareTo(o);

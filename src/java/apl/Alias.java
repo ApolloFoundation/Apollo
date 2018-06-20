@@ -67,7 +67,7 @@ public final class Alias {
             return aliasId;
         }
 
-        public long getPriceNQT() {
+        public long getPriceATM() {
             return priceNQT;
         }
 

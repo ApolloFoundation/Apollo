@@ -152,7 +152,7 @@ public final class AssetDividend {
         return assetId;
     }
 
-    public long getAmountNQTPerQNT() {
+    public long getAmountATMPerATU() {
         return amountNQTPerQNT;
     }
 

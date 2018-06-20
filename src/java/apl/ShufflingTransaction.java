@@ -119,7 +119,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 if (asset == null) {
                     throw new AplException.NotCurrentlyValidException("Unknown asset " + Long.toUnsignedString(attachment.getHoldingId()));
                 }
-                if (amount <= 0 || amount > asset.getInitialQuantityQNT()) {
+                if (amount <= 0 || amount > asset.getInitialQuantityATU()) {
                     throw new AplException.NotValidException("Invalid asset quantity " + amount);
                 }
             } else if (holdingType == HoldingType.CURRENCY) {
@@ -150,13 +150,13 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
-                        && senderAccount.getUnconfirmedBalanceNQT() >= Constants.SHUFFLING_DEPOSIT_ATM) {
+                        && senderAccount.getUnconfirmedBalanceATM() >= Constants.SHUFFLING_DEPOSIT_ATM) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
                     senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_ATM);
                     return true;
                 }
             } else {
-                if (senderAccount.getUnconfirmedBalanceNQT() >= attachment.getAmount()) {
+                if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getAmount()) {
                     senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -attachment.getAmount());
                     return true;
                 }
@@ -267,13 +267,13 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                        && senderAccount.getUnconfirmedBalanceNQT() >= Constants.SHUFFLING_DEPOSIT_ATM) {
+                        && senderAccount.getUnconfirmedBalanceATM() >= Constants.SHUFFLING_DEPOSIT_ATM) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
                     senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -Constants.SHUFFLING_DEPOSIT_ATM);
                     return true;
                 }
             } else {
-                if (senderAccount.getUnconfirmedBalanceNQT() >= shuffling.getAmount()) {
+                if (senderAccount.getUnconfirmedBalanceATM() >= shuffling.getAmount()) {
                     senderAccount.addToUnconfirmedBalanceNQT(getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
                     return true;
                 }

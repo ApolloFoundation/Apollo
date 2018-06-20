@@ -91,7 +91,7 @@ public class CurrencyFounder {
             int i = 0;
             pstmt.setLong(++i, this.getCurrencyId());
             pstmt.setLong(++i, this.getAccountId());
-            pstmt.setLong(++i, this.getAmountPerUnitNQT());
+            pstmt.setLong(++i, this.getAmountPerUnitATM());
             pstmt.setInt(++i, Apl.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
@@ -105,7 +105,7 @@ public class CurrencyFounder {
         return accountId;
     }
 
-    public long getAmountPerUnitNQT() {
+    public long getAmountPerUnitATM() {
         return amountPerUnitNQT;
     }
 
