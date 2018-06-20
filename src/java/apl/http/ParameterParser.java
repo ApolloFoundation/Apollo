@@ -238,8 +238,8 @@ public final class ParameterParser {
         return alias;
     }
 
-    public static long getAmountNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountNQT", 1L, Constants.MAX_BALANCE_ATM, true);
+    public static long getAmountATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "amountATM", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {

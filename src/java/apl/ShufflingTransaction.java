@@ -111,7 +111,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             long amount = attachment.getAmount();
             if (holdingType == HoldingType.APL) {
                 if (amount < Constants.SHUFFLING_DEPOSIT_ATM || amount > Constants.MAX_BALANCE_ATM) {
-                    throw new AplException.NotValidException("Invalid NQT amount " + amount
+                    throw new AplException.NotValidException("Invalid ATM amount " + amount
                             + ", minimum is " + Constants.SHUFFLING_DEPOSIT_ATM);
                 }
             } else if (holdingType == HoldingType.ASSET) {

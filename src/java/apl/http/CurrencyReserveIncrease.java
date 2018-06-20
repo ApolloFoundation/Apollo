@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
  * Parameters
  * <ul>
  * <li>currency - currency id
- * <li>amountPerUnitNQT - the NQT amount invested into increasing the value of a single currency unit.<br>
+ * <li>amountPerUnitNQT - the ATM amount invested into increasing the value of a single currency unit.<br>
  * This value is multiplied by the currency total supply and the result is deducted from the sender's account balance.
  * </ul>
  * <p>
@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletRequest;
  * <p>
  * The sender account is registered as a founder. Once the currency becomes active
  * the total supply is distributed between the founders based on their proportional investment<br>
- * The list of founders and their NQT investment can be obtained using the {@link apl.http.GetCurrencyFounders} API.
+ * The list of founders and their ATM investment can be obtained using the {@link apl.http.GetCurrencyFounders} API.
  */
 
 public final class CurrencyReserveIncrease extends CreateTransaction {

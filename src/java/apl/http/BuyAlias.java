@@ -40,7 +40,7 @@ public final class BuyAlias extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Account buyer = ParameterParser.getSenderAccount(req);
         Alias alias = ParameterParser.getAlias(req);
-        long amountNQT = ParameterParser.getAmountNQT(req);
+        long amountNQT = ParameterParser.getAmountATM(req);
         if (Alias.getOffer(alias) == null) {
             return INCORRECT_ALIAS_NOTFORSALE;
         }

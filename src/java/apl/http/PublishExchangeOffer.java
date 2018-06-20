@@ -31,8 +31,8 @@ import javax.servlet.http.HttpServletRequest;
  * Parameters
  * <ul>
  * <li>currency - currency id of an active currency
- * <li>buyRateNQT - APL amount for buying a currency unit specified in NQT
- * <li>sellRateNQT - APL amount for selling a currency unit specified in NQT
+ * <li>buyRateNQT - APL amount for buying a currency unit specified in ATM
+ * <li>sellRateNQT - APL amount for selling a currency unit specified in ATM
  * <li>initialBuySupply - Initial number of currency units offered to buy by the publisher
  * <li>initialSellSupply - Initial number of currency units offered for sell by the publisher
  * <li>totalBuyLimit - Total number of currency units which can be bought from the offer
