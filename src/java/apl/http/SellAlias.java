@@ -44,7 +44,7 @@ public final class SellAlias extends CreateTransaction {
         Alias alias = ParameterParser.getAlias(req);
         Account owner = ParameterParser.getSenderAccount(req);
 
-        long priceNQT = ParameterParser.getLong(req, "priceNQT", 0L, Constants.MAX_BALANCE_NQT, true);
+        long priceNQT = ParameterParser.getLong(req, "priceNQT", 0L, Constants.MAX_BALANCE_ATM, true);
 
         String recipientValue = Convert.emptyToNull(req.getParameter("recipient"));
         long recipientId = 0;

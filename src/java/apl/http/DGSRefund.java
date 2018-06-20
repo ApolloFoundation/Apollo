@@ -65,7 +65,7 @@ public final class DGSRefund extends CreateTransaction {
         } catch (RuntimeException e) {
             return INCORRECT_DGS_REFUND;
         }
-        if (refundNQT < 0 || refundNQT > Constants.MAX_BALANCE_NQT) {
+        if (refundNQT < 0 || refundNQT > Constants.MAX_BALANCE_ATM) {
             return INCORRECT_DGS_REFUND;
         }
 

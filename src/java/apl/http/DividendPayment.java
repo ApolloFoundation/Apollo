@@ -38,7 +38,7 @@ public class DividendPayment extends CreateTransaction {
             throws AplException
     {
         final int height = ParameterParser.getHeight(request);
-        final long amountNQTPerQNT = ParameterParser.getAmountNQTPerQNT(request);
+        final long amountNQTPerQNT = ParameterParser.getAmountATMPerATU(request);
         final Account account = ParameterParser.getSenderAccount(request);
         final Asset asset = ParameterParser.getAsset(request);
         if (Asset.getAsset(asset.getId(), height) == null) {

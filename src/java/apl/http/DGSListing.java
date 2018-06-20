@@ -50,7 +50,7 @@ public final class DGSListing extends CreateTransaction {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceNQT = ParameterParser.getPriceATM(req);
         int quantity = ParameterParser.getGoodsQuantity(req);
 
         if (name == null) {

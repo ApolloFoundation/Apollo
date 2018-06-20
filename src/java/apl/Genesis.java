@@ -102,8 +102,8 @@ public final class Genesis {
                 Db.db.commitTransaction();
             }
         }
-        if (total > Constants.MAX_BALANCE_NQT) {
-            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_NQT);
+        if (total > Constants.MAX_BALANCE_ATM) {
+            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_ATM);
         }
         Logger.logDebugMessage("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.COIN_SYMBOL);
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID);

@@ -39,7 +39,7 @@ public final class DeleteAssetShares extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long quantityQNT = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new Attachment.ColoredCoinsAssetDelete(asset.getId(), quantityQNT);

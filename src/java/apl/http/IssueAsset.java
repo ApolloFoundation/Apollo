@@ -78,7 +78,7 @@ public final class IssueAsset extends CreateTransaction {
             }
         }
 
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long quantityQNT = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityQNT, decimals);
         return createTransaction(req, account, attachment);

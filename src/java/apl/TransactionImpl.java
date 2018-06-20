@@ -949,9 +949,9 @@ final class TransactionImpl implements Transaction {
     @Override
     public void validate() throws AplException.ValidationException {
         if (timestamp == 0 ? (deadline != 0 || feeNQT != 0) : (deadline < 1 || feeNQT <= 0)
-                || feeNQT > Constants.MAX_BALANCE_NQT
+                || feeNQT > Constants.MAX_BALANCE_ATM
                 || amountNQT < 0
-                || amountNQT > Constants.MAX_BALANCE_NQT
+                || amountNQT > Constants.MAX_BALANCE_ATM
                 || type == null) {
             throw new AplException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + timestamp
                     + ", deadline: " + deadline + ", fee: " + feeNQT + ", amount: " + amountNQT);
@@ -1033,7 +1033,7 @@ final class TransactionImpl implements Transaction {
         }
         if (referencedTransactionFullHash != null) {
             senderAccount.addToUnconfirmedBalanceNQT(getType().getLedgerEvent(), getId(),
-                    0, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
+                    0, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
         }
         if (attachmentIsPhased()) {
             senderAccount.addToBalanceNQT(getType().getLedgerEvent(), getId(), 0, -feeNQT);

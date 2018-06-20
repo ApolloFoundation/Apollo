@@ -73,7 +73,7 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         Account account = ParameterParser.getSenderAccount(request);
         PhasingParams phasingParams = parsePhasingParams(request, "control");
-        long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, Constants.MAX_BALANCE_NQT, false);
+        long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, Constants.MAX_BALANCE_ATM, false);
         short minDuration = (short)ParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         short maxDuration = (short) ParameterParser.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         return createTransaction(request, account, new Attachment.SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration));

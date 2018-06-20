@@ -261,10 +261,10 @@ public final class DebugTrace {
         long blamedAccountId = shuffling.getAssigneeAccountId();
         if (blamedAccountId != 0 && include(blamedAccountId)) {
             Map<String,String> map = getValues(blamedAccountId, false);
-            map.put("transaction fee", String.valueOf(-Constants.SHUFFLING_DEPOSIT_NQT));
+            map.put("transaction fee", String.valueOf(-Constants.SHUFFLING_DEPOSIT_ATM));
             map.put("event", "shuffling blame");
             log(map);
-            long fee = Constants.SHUFFLING_DEPOSIT_NQT / 4;
+            long fee = Constants.SHUFFLING_DEPOSIT_ATM / 4;
             int height = Apl.getBlockchain().getHeight();
             for (int i = 0; i < 3; i++) {
                 long generatorId = BlockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
@@ -275,7 +275,7 @@ public final class DebugTrace {
                     log(generatorMap);
                 }
             }
-            fee = Constants.SHUFFLING_DEPOSIT_NQT - 3 * fee;
+            fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
             long generatorId = Apl.getBlockchain().getLastBlock().getGeneratorId();
             if (include(generatorId)) {
                 Map<String,String> generatorMap = getValues(generatorId, false);
@@ -434,7 +434,7 @@ public final class DebugTrace {
         Map<String,String> map = getValues(accountId, false);
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
-        String deposit = String.valueOf(isRecipient ? Constants.SHUFFLING_DEPOSIT_NQT : -Constants.SHUFFLING_DEPOSIT_NQT);
+        String deposit = String.valueOf(isRecipient ? Constants.SHUFFLING_DEPOSIT_ATM : -Constants.SHUFFLING_DEPOSIT_ATM);
         if (shuffling.getHoldingType() == HoldingType.APL) {
             map.put("transaction amount", amount);
         } else if (shuffling.getHoldingType() == HoldingType.ASSET) {

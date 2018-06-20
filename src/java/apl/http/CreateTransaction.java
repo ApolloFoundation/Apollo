@@ -175,7 +175,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             return INCORRECT_DEADLINE;
         }
 
-        long feeNQT = ParameterParser.getFeeNQT(req);
+        long feeNQT = ParameterParser.getFeeATM(req);
         int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
         long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
         if (ecBlockId != 0 && ecBlockId != Apl.getBlockchain().getBlockIdAtHeight(ecBlockHeight)) {

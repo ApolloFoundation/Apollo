@@ -55,7 +55,7 @@ public final class DGSPurchase extends CreateTransaction {
             return INCORRECT_PURCHASE_QUANTITY;
         }
 
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceNQT = ParameterParser.getPriceATM(req);
         if (priceNQT != goods.getPriceNQT()) {
             return INCORRECT_PURCHASE_PRICE;
         }

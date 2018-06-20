@@ -1232,7 +1232,7 @@ public final class Account {
             if (activeLesseeId == 0) {
                 effectiveBalanceNQT += getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
             }
-	        return effectiveBalanceNQT < Constants.MIN_FORGING_BALANCE_NQT ? 0 : effectiveBalanceNQT / Constants.ONE_APL;
+	        return effectiveBalanceNQT < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceNQT / Constants.ONE_APL;
         } finally {
             Apl.getBlockchain().readUnlock();
         }

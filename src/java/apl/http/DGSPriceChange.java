@@ -40,7 +40,7 @@ public final class DGSPriceChange extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Account account = ParameterParser.getSenderAccount(req);
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceNQT = ParameterParser.getPriceATM(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }

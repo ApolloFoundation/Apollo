@@ -41,7 +41,7 @@ public final class TransferAsset extends CreateTransaction {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
 
         Asset asset = ParameterParser.getAsset(req);
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long quantityQNT = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityQNT);

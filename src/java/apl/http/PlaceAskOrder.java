@@ -39,8 +39,8 @@ public final class PlaceAskOrder extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
-        long priceNQT = ParameterParser.getPriceNQT(req);
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long priceNQT = ParameterParser.getPriceATM(req);
+        long quantityQNT = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new Attachment.ColoredCoinsAskOrderPlacement(asset.getId(), quantityQNT, priceNQT);
