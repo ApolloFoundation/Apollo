@@ -1,5 +1,6 @@
 package test;
 
+import apl.UpdaterUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -42,6 +43,45 @@ public class TestnetIntegrationScenario {
         LOG.info("Private {} was successfully confirmed. Checking peers...", transaction);
         testIsAllPeersConnected();
         testIsFork();
+    }
+
+    @Test
+    public void testStopForgingAndBlockAcceptance() throws Exception {
+        testIsFork();
+        testIsAllPeersConnected();
+        ACCOUNTS.forEach((accountRS, secretPhrase) -> {
+            try {
+                CLIENT.startForging(TEST_LOCALHOST, secretPhrase);
+            }
+            catch (IOException e) {
+                LOG.error("Cannot start forging for account: " + accountRS + " on " + TEST_LOCALHOST, e);
+            }
+        });
+        waitBlocks(2);
+        NextGenerators generators = CLIENT.getNextGenerators(randomUrl(), 10L);
+        Assert.assertEquals(6, generators.getActiveCount().intValue());
+        Assert.assertEquals(6, generators.getGenerators().size());
+        generators.getGenerators().forEach( generator -> {
+            if (!ACCOUNTS.containsKey(generator.getAccountRS()) && !MAIN_RS.equals(generator.getAccountRS())) {
+                Assert.fail("Incorrect generator: " + generator.getAccountRS());
+            }
+        });
+        waitBlocks(2);
+        UpdaterUtil.stopForgingAndBlockAcceptance();
+        long localHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+        long remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
+        Assert.assertEquals(localHeight, remoteHeight);
+        Assert.assertEquals(CLIENT.getBlock(randomUrl(), remoteHeight), CLIENT.getBlock(TEST_LOCALHOST, localHeight));
+        generators = CLIENT.getNextGenerators(randomUrl(), 10L);
+        Assert.assertEquals(1, generators.getActiveCount().intValue());
+        Assert.assertEquals(1, generators.getGenerators().size());
+        Assert.assertEquals(MAIN_RS, generators.getGenerators().get(0).getAccountRS());
+        waitBlocks(5);
+        remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
+        Assert.assertEquals(localHeight, CLIENT.getBlockchainHeight(TEST_LOCALHOST).longValue());
+        Assert.assertEquals(remoteHeight, localHeight + 5);
+        testIsFork();
+        testIsAllPeersConnected();
     }
 
     private boolean waitForConfirmation(Transaction transaction, int seconds) throws InterruptedException, IOException {
@@ -120,5 +160,15 @@ public class TestnetIntegrationScenario {
         String secretPhrase = ACCOUNTS.get(sender);
         Long amount = nqt(RANDOM.nextInt(10) + 1);
         return CLIENT.sendMoneyPrivateTransaction(host, secretPhrase, recipient, amount, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+    }
+
+    private void waitBlocks(long numberOfBlocks) throws Exception {
+        long startBlockchainHeight = CLIENT.getBlockchainHeight(randomUrl());
+        long currentBlockchainHeight = CLIENT.getBlockchainHeight(randomUrl());
+        while (currentBlockchainHeight != numberOfBlocks + startBlockchainHeight) {
+            TimeUnit.MILLISECONDS.sleep(300);
+            currentBlockchainHeight = CLIENT.getBlockchainHeight(randomUrl());
+        }
+        TimeUnit.MILLISECONDS.sleep(300);
     }
 }
