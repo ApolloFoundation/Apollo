@@ -67,7 +67,6 @@ var NRS = (function(NRS, $) {
             url += 'secretPhrase=' + passphrase;
 
             $.get( url, function() {
-                console.log('made request');
             })
                 .then(function (res) {
                     $('#get_private_transaction_type').modal('hide');
