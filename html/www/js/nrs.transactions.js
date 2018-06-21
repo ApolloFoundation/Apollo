@@ -153,7 +153,7 @@ var NRS = (function(NRS, $, undefined) {
 
                          if (that.items.length < 15 && that.page == 1) {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
-					 } else {
+					               } else {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
                          }
 
@@ -164,7 +164,7 @@ var NRS = (function(NRS, $, undefined) {
                          }
                          if ($el === '#transactions_contents') {
                              NRS.dataLoaded(rows);
-					 }
+					               }
 
                          NRS.addPhasingInfoToTransactionRows(that.items);
                      }
@@ -212,6 +212,7 @@ var NRS = (function(NRS, $, undefined) {
 
                          }
                      }
+
                 },
                 error: function(data) {
                     console.log('err: ', data);
@@ -421,7 +422,6 @@ var NRS = (function(NRS, $, undefined) {
         NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
         NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
-
 
         NRS.sendRequest("getBlockchainTransactions", {
 
@@ -784,6 +784,7 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
+
 		if ('encryptedTransaction' in t) {
             var options = {
 
@@ -809,6 +810,7 @@ var NRS = (function(NRS, $, undefined) {
 
 
         if (transactionType === 'Unknown') {
+
 
             transactionType = 'Private payment';
         }
