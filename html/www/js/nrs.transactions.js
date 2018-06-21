@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -144,6 +145,7 @@ var NRS = (function(NRS, $, undefined) {
 
                     var rows = "";
                     that.items = JSON.parse(data);
+
                      if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
                          that.items = JSON.parse(data).transactions;
 
@@ -420,9 +422,9 @@ var NRS = (function(NRS, $, undefined) {
         NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
 
-        // console.log(sharedKey);
 
         NRS.sendRequest("getBlockchainTransactions", {
+
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -789,6 +791,7 @@ var NRS = (function(NRS, $, undefined) {
                 privateKey :  converters.hexStringToInt8ByteArray(NRS.myTransactionPagination.privateKey),
             };
 
+
             options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
 
@@ -801,12 +804,12 @@ var NRS = (function(NRS, $, undefined) {
             t = decrypted;
         }
 
-        console.log(t);
 
         var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
-        console.log(decimals);
+
 
         if (transactionType === 'Unknown') {
+
             transactionType = 'Private payment';
         }
 

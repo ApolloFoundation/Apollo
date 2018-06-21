@@ -20,6 +20,7 @@ package apl.http;
 import apl.Constants;
 import apl.peer.Peer;
 import apl.peer.Peers;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.Logger;
 import org.json.simple.JSONObject;
@@ -45,7 +46,8 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        String version = Convert.nullToEmpty(req.getParameter("version"));
+        Version version = Version.from(Convert.nullToEmpty(req.getParameter("version")));
+
         int weight = ParameterParser.getInt(req, "weight", 0, (int)Constants.MAX_BALANCE_APL, false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
         if (connect) {
@@ -66,7 +68,7 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
                     if (peer.getState() == Peer.State.CONNECTED
                             && peer.shareAddress()
                             && !peer.isBlacklisted()
-                            && peer.getVersion() != null && peer.getVersion().startsWith(version)
+                            && peer.getVersion() != null && peer.getVersion().equals(version)
                             && (weight == 0 || peer.getWeight() > weight)) {
                         addresses.add(peer.getAnnouncedAddress());
                     }

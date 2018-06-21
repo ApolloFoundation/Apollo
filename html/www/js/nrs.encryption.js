@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -681,7 +682,8 @@ var NRS = (function (NRS, $) {
 	}
 
 	function aesDecrypt(ivCiphertext, options) {
-		if (ivCiphertext.length < 16 || ivCiphertext.length % 16 != 0) {
+    if (ivCiphertext.length < 16 || ivCiphertext.length % 16 != 0) {
+
 			throw {
 				name: "invalid ciphertext"
 			};
@@ -750,7 +752,22 @@ var NRS = (function (NRS, $) {
 
 	function decryptData(data, options) {
 		if (!options.sharedKey) {
-			options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
+      
+			options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
+
+            var sharedKey =  NRS.getSharedSecretJava(options.privateKey, options.publicKey);
+
+            var options = {};
+            options.sharedKey = sharedKey;
+        }
+
+        options.sharedKey = new Uint8Array(options.sharedKey);
+        data = converters.hexStringToByteArray(data);
+        var result = aesDecrypt(data, options);
+        var binData = new Uint8Array(result.decrypted);
+        options.isCompressed = false;
+        options.isText = false;
+			  options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
 		}
 
 		var result = aesDecrypt(data, options);
