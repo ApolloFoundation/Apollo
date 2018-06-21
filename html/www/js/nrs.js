@@ -151,7 +151,6 @@ var NRS = (function(NRS, $, undefined) {
             , position: 'absolute' // Element positioning
         };
         NRS.spinner = new Spinner(opts);
-		console.log("Spinner initialized");
     }
 
     NRS.init = function() {
@@ -202,7 +201,6 @@ var NRS = (function(NRS, $, undefined) {
             var msg = $.t("cannot_find_remote_nodes");
             $.growl(msg);
 			var loadConstantsPromise = new Promise(function(resolve) {
-				console.log("load server constants");
 				NRS.loadServerConstants(resolve);
 			});
 			loadConstantsPromise.then(function() {
@@ -225,17 +223,14 @@ var NRS = (function(NRS, $, undefined) {
 
     function initImpl() {
 		var loadConstantsPromise = new Promise(function(resolve) {
-			console.log("load server constants");
 			NRS.loadServerConstants(resolve);
 		});
 		loadConstantsPromise.then(function() {
             applyBranding(NRS.constants);
 			var getStatePromise = new Promise(function(resolve) {
-				console.log("calling getState");
 				NRS.sendRequest("getState", {
 					"includeCounts": "false"
 				}, function (response) {
-					console.log("getState response received");
 					var isTestnet = false;
 					var isOffline = false;
                     var customLoginWarning;
@@ -290,13 +285,11 @@ var NRS = (function(NRS, $, undefined) {
 					}
 					NRS.printEnvInfo();
 					NRS.spinner.stop();
-					console.log("getState response processed");
 					resolve();
 				});
 			});
 
 			getStatePromise.then(function() {
-				console.log("continue initialization");
 				var hasLocalStorage = false;
 				try {
 					//noinspection BadExpressionStatementJS
@@ -370,7 +363,6 @@ var NRS = (function(NRS, $, undefined) {
 				$("[data-toggle='tooltip']").tooltip();
 
 				$("#dgs_search_account_center").mask(NRS.getAccountMask("*"));
-				console.log("done initialization");
 				if (NRS.getUrlParameter("account")) {
 					NRS.login(false, NRS.getUrlParameter("account"));
 				} else if (savedPassphrase) {
@@ -541,7 +533,6 @@ var NRS = (function(NRS, $, undefined) {
 						}
 					}, { isAsync: false });
 					if (!NRS.isMobileApp()) {
-						console.log("look for remote confirmation nodes");
 						NRS.initRemoteNodesMgr(NRS.isTestnet);
 					}
 				} else {
@@ -1831,7 +1822,6 @@ if (isNode) {
     module.exports = NRS;
 } else {
     $(document).ready(function() {
-        console.log("document.ready");
         NRS.init();
     });
 }

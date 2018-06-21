@@ -102,7 +102,6 @@ var NRS = (function (NRS, $, undefined) {
 
 
             $.get( url, function() {
-                console.log('made request');
             })
                 .then(function (res) {
                     $('#get_private_transaction_type').modal('hide');
