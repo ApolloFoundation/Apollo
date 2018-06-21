@@ -407,24 +407,29 @@ public class NodeClient {
     }
 
 
-    public ForgingDetails startForging(String url, String secretPhrase) throws IOException {
-        return sendForgingRequest(url, secretPhrase, "startForging");
+    public List<ForgingDetails> startForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "startForging", null);
     }
 
-    private ForgingDetails sendForgingRequest(String url, String secretPhrase, String requestType) throws IOException {
+    private List<ForgingDetails> sendForgingRequest(String url, String secretPhrase, String requestType,String adminPassword) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", requestType);
-        parameters.put("secretPhrase", secretPhrase);
+        if (secretPhrase != null) {
+            parameters.put("secretPhrase", secretPhrase);
+        }
+        if (adminPassword != null) {
+            parameters.put("adminPassword", adminPassword);
+        }
         String json = postJson(createURI(url), parameters, "");
-        return MAPPER.readValue(json, ForgingDetails.class);
+        return MAPPER.readValue(json, new TypeReference<List<ForgingDetails>>() {});
     }
 
-    public ForgingDetails getForging(String url, String secretPhrase) throws IOException {
-        return sendForgingRequest(url, secretPhrase, "getForging");
+    public List<ForgingDetails> getForging(String url, String secretPhrase, String adminPassword) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "getForging", adminPassword);
     }
 
-    public ForgingDetails stopForging(String url, String secretPhrase) throws IOException {
-        return sendForgingRequest(url, secretPhrase, "stopForging");
+    public List<ForgingDetails> stopForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "stopForging", null);
     }
 
     public NextGenerators getNextGenerators(String url, Long limit) throws IOException {
