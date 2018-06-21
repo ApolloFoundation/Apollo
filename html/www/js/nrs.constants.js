@@ -136,7 +136,6 @@ var NRS = (function (NRS, $) {
             NRS.constants.GENESIS_RS = converters.convertNumericToRSAccountFormat(response.genesisAccountId);
             NRS.constants.INITIAL_BASE_TARGET = parseInt(response.initialBaseTarget);
             NRS.constants.CURRENCY_TYPES = response.currencyTypes;
-            console.log("done loading server constants");
             if (resolve) {
                 resolve();
             }
