@@ -17,6 +17,9 @@ public class Generator {
         this.hitTime = hitTime;
     }
 
+    public Generator() {
+    }
+
     public Long getEffectiveBalanceAPL() {
         return effectiveBalanceAPL;
     }

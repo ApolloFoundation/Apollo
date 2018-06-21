@@ -1,5 +1,6 @@
 package test;
 
+import apl.Apl;
 import apl.UpdaterUtil;
 import org.junit.Assert;
 import org.junit.Test;
@@ -7,6 +8,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +22,7 @@ public class TestnetIntegrationScenario {
     private static final NodeClient CLIENT = new NodeClient();
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
     private static final Random RANDOM = new Random();
-
+    private static final String adminPass = Apl.getStringProperty("adminPassword");
     @Test
     public void testSendTransaction() throws Exception {
         testIsFork();
@@ -58,11 +60,10 @@ public class TestnetIntegrationScenario {
             }
         });
         waitBlocks(2);
-        NextGenerators generators = CLIENT.getNextGenerators(randomUrl(), 10L);
-        Assert.assertEquals(6, generators.getActiveCount().intValue());
-        Assert.assertEquals(6, generators.getGenerators().size());
-        generators.getGenerators().forEach( generator -> {
-            if (!ACCOUNTS.containsKey(generator.getAccountRS()) && !MAIN_RS.equals(generator.getAccountRS())) {
+        List<ForgingDetails> forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
+        Assert.assertEquals(6, forgers.size());
+        forgers.forEach( generator -> {
+            if (!ACCOUNTS.containsKey(generator.getAccountRS())) {
                 Assert.fail("Incorrect generator: " + generator.getAccountRS());
             }
         });
@@ -72,10 +73,8 @@ public class TestnetIntegrationScenario {
         long remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
         Assert.assertEquals(localHeight, remoteHeight);
         Assert.assertEquals(CLIENT.getBlock(randomUrl(), remoteHeight), CLIENT.getBlock(TEST_LOCALHOST, localHeight));
-        generators = CLIENT.getNextGenerators(randomUrl(), 10L);
-        Assert.assertEquals(1, generators.getActiveCount().intValue());
-        Assert.assertEquals(1, generators.getGenerators().size());
-        Assert.assertEquals(MAIN_RS, generators.getGenerators().get(0).getAccountRS());
+        forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
+        Assert.assertEquals(0, forgers.size());
         waitBlocks(5);
         remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
         Assert.assertEquals(localHeight, CLIENT.getBlockchainHeight(TEST_LOCALHOST).longValue());
@@ -102,6 +101,7 @@ public class TestnetIntegrationScenario {
         System.out.println("PeerCount=" + CLIENT.getPeersCount(URLS.get(0)));
         System.out.println("BLOCKS=" + CLIENT.getBlocksList(URLS.get(0), false, null));
         System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(URLS.get(0)));
+        System.out.println("Forgers="+ CLIENT.getForging(TEST_LOCALHOST, null, adminPass));
     }
 
     @Test
@@ -130,16 +130,20 @@ public class TestnetIntegrationScenario {
     }
 
     private boolean isAllPeersConnected() throws Exception {
-        int peerQuantity = URLS.size() - 1;
+        int peerQuantity = (int) Math.ceil((double)URLS.size() * 0.51);
         int peers = 0;
-        if (CLIENT.getPeersCount(TEST_LOCALHOST) != peerQuantity + 1) {
+        int localHostPeers = CLIENT.getPeersCount(TEST_LOCALHOST);
+        if (localHostPeers >= peerQuantity) {
+            LOG.error("Localhost peer has {}/{} peers.", localHostPeers, peerQuantity);
             return false;
         }
         for (String ip : URLS) {
             peers = CLIENT.getPeersCount(ip);
-            if (peers != peerQuantity) {
+            if (peers >= peerQuantity) {
+                LOG.error("Peer with {} has {}/{} peers.", ip, peers, peerQuantity);
                 return false;
             }
+            LOG.info("Peer with {} has {}/{} peers.", ip, peers, peerQuantity);
         }
         return true;
     }
