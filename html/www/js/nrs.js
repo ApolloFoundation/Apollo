@@ -154,7 +154,16 @@ var NRS = (function(NRS, $, undefined) {
     }
 
     NRS.init = function() {
-        i18next.use(i18nextXHRBackend)
+	    
+	    var savedAccountRS = NRS.getJSONItem('aplUser');
+	    console.log(savedAccountRS);
+	    if (NRS.getJSONItem('aplUser')) {
+		    $("#remember_me").prop("checked", true);
+			initSpinner();
+		    NRS.login(false, savedAccountRS, null, false, false);
+	    }
+	
+	    i18next.use(i18nextXHRBackend)
             .use(i18nextLocalStorageCache)
             .use(i18nextBrowserLanguageDetector)
             .use(i18nextSprintfPostProcessor)
@@ -331,6 +340,10 @@ var NRS = (function(NRS, $, undefined) {
 				});
 
 				var savedPassphrase = NRS.getStrItem("savedPassphrase");
+				var savedPassphrase = NRS.getStrItem("savedPassphrase");
+				console.log('______________________________________________________');
+				console.log(savedPassphrase);
+				
 				if (!savedPassphrase) {
 					NRS.showLockscreen();
 				}
@@ -365,8 +378,10 @@ var NRS = (function(NRS, $, undefined) {
 				$("#dgs_search_account_center").mask(NRS.getAccountMask("*"));
 				if (NRS.getUrlParameter("account")) {
 					NRS.login(false, NRS.getUrlParameter("account"));
+					
 				} else if (savedPassphrase) {
 					$("#remember_me").prop("checked", true);
+					
 					NRS.login(true, savedPassphrase, null, false, true);
 				}
 			});
