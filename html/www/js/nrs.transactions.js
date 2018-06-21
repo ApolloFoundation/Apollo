@@ -39,12 +39,12 @@ var NRS = (function(NRS, $, undefined) {
 		this.filter = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-            if ($(e.target).attr('data-navigate-page') === 'prev') {
+	        console.log(e.target);
+	        if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
-            } else {
-                that.page = that.page + 1;
-            }
-
+            } if ($(e.target).attr('data-navigate-page') === 'next') {
+		        that.page = that.page + 1;
+	        }
 
             that.getItems(that.page);
 
