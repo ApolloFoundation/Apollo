@@ -405,4 +405,33 @@ public class NodeClient {
             String json = getJson(createURI(url), parameters);
             return MAPPER.readValue(json, LedgerEntry.class);
     }
+
+
+    public ForgingDetails startForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "startForging");
+    }
+
+    private ForgingDetails sendForgingRequest(String url, String secretPhrase, String requestType) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", requestType);
+        parameters.put("secretPhrase", secretPhrase);
+        String json = postJson(createURI(url), parameters, "");
+        return MAPPER.readValue(json, ForgingDetails.class);
+    }
+
+    public ForgingDetails getForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "getForging");
+    }
+
+    public ForgingDetails stopForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "stopForging");
+    }
+
+    public NextGenerators getNextGenerators(String url, Long limit) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getNextBlockGenerators");
+        parameters.put("limit", limit.toString());
+        String json = getJson(createURI(url), parameters);
+        return MAPPER.readValue(json, NextGenerators.class);
+    }
 }
