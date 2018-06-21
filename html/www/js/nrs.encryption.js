@@ -682,8 +682,7 @@ var NRS = (function (NRS, $) {
 	}
 
 	function aesDecrypt(ivCiphertext, options) {
-    if (ivCiphertext.length < 16 || ivCiphertext.length % 16 != 0) {
-
+		if (ivCiphertext.length < 16 || ivCiphertext.length % 16 != 0) {
 			throw {
 				name: "invalid ciphertext"
 			};
@@ -752,22 +751,7 @@ var NRS = (function (NRS, $) {
 
 	function decryptData(data, options) {
 		if (!options.sharedKey) {
-      
-			options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
-
-            var sharedKey =  NRS.getSharedSecretJava(options.privateKey, options.publicKey);
-
-            var options = {};
-            options.sharedKey = sharedKey;
-        }
-
-        options.sharedKey = new Uint8Array(options.sharedKey);
-        data = converters.hexStringToByteArray(data);
-        var result = aesDecrypt(data, options);
-        var binData = new Uint8Array(result.decrypted);
-        options.isCompressed = false;
-        options.isText = false;
-			  options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
+			options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
 		}
 
 		var result = aesDecrypt(data, options);
