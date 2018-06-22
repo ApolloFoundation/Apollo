@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -518,14 +519,15 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyAndSignTransactionBytes = function (transactionBytes, signature, requestType, data, callback, response, extra, isVerifyECBlock) {
         var byteArray = converters.hexStringToByteArray(transactionBytes);
-      
-        // if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
-        //     callback({
-        //         "errorCode": 1,
-        //         "errorDescription": $.t("error_bytes_validation_server")
-        //     }, data);
-        //     return;
-        // }
+        if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
+            callback({
+                "errorCode": 1,
+                "errorDescription": $.t("error_bytes_validation_server")
+            }, data);
+            return;
+        }
+
+
         var isSchedule = false;
         if (extra) {
             data["_extra"] = extra;

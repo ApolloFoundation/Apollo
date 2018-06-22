@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -19,6 +19,8 @@ package apl;
 
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
+import apl.updater.Architecture;
+import apl.updater.Platform;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -3555,4 +3557,173 @@ public interface Attachment extends Appendix {
         }
 
     }
+
+    abstract class UpdateAttachment extends AbstractAttachment {
+
+        private final Platform platform;
+        private final Architecture architecture;
+        private final String url;
+        private final Version version;
+        private final int hash;
+        private final byte[] signature;
+
+        UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
+            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
+            url = Convert.readString(buffer, buffer.getShort(), Constants.MAX_UPDATE_URL_LENGTH).trim();
+            version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
+            hash = buffer.getInt();
+            int signatureLength = buffer.getShort();
+            signature = new byte[signatureLength];
+            buffer.get(signature);
+        }
+
+        UpdateAttachment(JSONObject attachmentData) {
+            super(attachmentData);
+            platform = Platform.valueOf(Convert.nullToEmpty((String) attachmentData.get("platform")).trim());
+            architecture = Architecture.valueOf(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
+            url = Convert.nullToEmpty((String) attachmentData.get("url")).trim();
+            version = Version.from(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
+            hash = (int) attachmentData.get("hash");
+            signature = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("signature")).trim());
+        }
+
+        public UpdateAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            this.platform = platform;
+            this.architecture = architecture;
+            this.url = url;
+            this.version = version;
+            this.hash = hash;
+            this.signature = signature;
+        }
+
+        @Override
+        int getMySize() {
+            return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
+                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + 2 + signature.length;
+        }
+
+        @Override
+        void putMyBytes(ByteBuffer buffer) {
+            byte[] platform = Convert.toBytes(this.platform.toString());
+            byte[] architecture = Convert.toBytes(this.architecture.toString());
+            byte[] url = Convert.toBytes(this.url);
+            byte[] version = Convert.toBytes(this.version.toString());
+            buffer.put((byte) platform.length);
+            buffer.put(platform);
+            buffer.put((byte) architecture.length);
+            buffer.put(architecture);
+            buffer.putShort((short) url.length);
+            buffer.put(url);
+            buffer.put((byte) version.length);
+            buffer.put(version);
+            buffer.putInt(hash);
+            buffer.putShort((short) signature.length);
+            buffer.put(signature);
+        }
+
+        @Override
+        void putMyJSON(JSONObject attachment) {
+            attachment.put("platform", platform.toString());
+            attachment.put("architecture", architecture.toString());
+            attachment.put("url", url);
+            attachment.put("version", version.toString());
+            attachment.put("hash", hash);
+            attachment.put("signature", Convert.toHexString(signature));
+        }
+
+        public Platform getPlatform() {
+            return platform;
+        }
+
+        public Architecture getArchitecture() {
+            return architecture;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public Version getAppVersion() {
+            return version;
+        }
+
+        public int getHash() {
+            return hash;
+        }
+
+        public byte[] getSignature() {
+            return signature;
+        }
+
+        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature, byte level) {
+            if (level == TransactionType.Update.CRITICAL.getSubtype()) {
+                return new Attachment.CriticalUpdate(platform, architecture, url, version, hash, signature);
+            } else if (level == TransactionType.Update.IMPORTANT.getSubtype()) {
+                return new Attachment.ImportantUpdate(platform, architecture, url, version, hash, signature);
+            } else if (level == TransactionType.Update.MINOR.getSubtype()) {
+                return new Attachment.MinorUpdate(platform, architecture, url, version, hash, signature);
+            }
+            return null;
+        }
+    }
+
+    final class CriticalUpdate extends UpdateAttachment {
+        CriticalUpdate(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+        }
+
+        CriticalUpdate(JSONObject attachmentData) {
+            super(attachmentData);
+        }
+
+        public CriticalUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.CRITICAL;
+        }
+    }
+
+    final class ImportantUpdate extends UpdateAttachment {
+        ImportantUpdate(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+        }
+
+        ImportantUpdate(JSONObject attachmentData) {
+            super(attachmentData);
+        }
+
+        public ImportantUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.IMPORTANT;
+        }
+    }
+
+    final class MinorUpdate extends UpdateAttachment {
+        MinorUpdate(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+        }
+
+        MinorUpdate(JSONObject attachmentData) {
+            super(attachmentData);
+        }
+
+        public MinorUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.MINOR;
+        }
+    }
+
 }

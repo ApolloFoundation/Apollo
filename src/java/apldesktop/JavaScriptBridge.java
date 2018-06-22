@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -17,13 +17,13 @@
 
 package apldesktop;
 
-import javafx.application.Platform;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import apl.Apl;
 import apl.http.API;
 import apl.util.JSON;
 import apl.util.Logger;
+import javafx.application.Platform;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import org.json.simple.JSONObject;
 
 import java.awt.*;
@@ -39,10 +39,10 @@ import java.nio.file.Paths;
 @SuppressWarnings("WeakerAccess")
 public class JavaScriptBridge {
 
-    DesktopApplication application;
+    DesktopApplication.MainApplication application;
     private Clipboard clipboard;
 
-    public JavaScriptBridge(DesktopApplication application) {
+    public JavaScriptBridge(DesktopApplication.MainApplication application) {
         this.application = application;
     }
 

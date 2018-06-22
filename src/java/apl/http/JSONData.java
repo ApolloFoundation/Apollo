@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -19,6 +19,7 @@ package apl.http;
 
 import apl.*;
 import apl.AccountLedger.LedgerEntry;
+import apl.Currency;
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
 import apl.db.DbIterator;
@@ -29,10 +30,7 @@ import apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public final class JSONData {
 
@@ -494,7 +492,7 @@ public final class JSONData {
         json.put("downloadedVolume", peer.getDownloadedVolume());
         json.put("uploadedVolume", peer.getUploadedVolume());
         json.put("application", peer.getApplication());
-        json.put("version", peer.getVersion());
+        json.put("version", peer.getVersion().toString());
         json.put("platform", peer.getPlatform());
         if (peer.getApiPort() != 0) {
             json.put("apiPort", peer.getApiPort());
@@ -1210,6 +1208,35 @@ public final class JSONData {
             Transaction transaction = Apl.getBlockchain().getTransaction(entry.getEventId());
             json.put("transaction", JSONData.transaction(false, transaction));
         }
+    }
+
+    public static JSONObject encryptedTransaction(Transaction transaction, byte[] sharedKey) {
+        JSONObject encryptedTransaction = new JSONObject();
+        JSONObject transactionJson = JSONData.transaction(false, transaction);
+        byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(transactionJson.toJSONString().getBytes(), sharedKey));
+        encryptedTransaction.put("encryptedTransaction", Convert.toHexString(encrypted));
+        return encryptedTransaction;
+    }
+
+    public static JSONObject encryptedLedgerEntry(JSONObject ledgerEntryJson, byte[] sharedKey) {
+        JSONObject encryptedLedgerEntry = new JSONObject();
+        byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(ledgerEntryJson.toJSONString().getBytes(), sharedKey));
+        encryptedLedgerEntry.put("encryptedLedgerEntry", Convert.toHexString(encrypted));
+        return encryptedLedgerEntry;
+    }
+
+    private static byte[] prepareToAesDecryption(byte[] encryptedData) {
+        if (encryptedData.length % 16 != 0) {
+            return Arrays.copyOf(encryptedData, encryptedData.length + (16 - encryptedData.length % 16));
+        }
+        return encryptedData;
+    }
+
+    public static JSONObject encryptedUnconfirmedTransaction(Transaction transaction, byte[] sharedKey) {
+        JSONObject encryptedUnconfirmedTransaction = new JSONObject();
+        byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(unconfirmedTransaction(transaction).toJSONString().getBytes(), sharedKey));
+        encryptedUnconfirmedTransaction.put("encryptedUnconfirmedTransaction", Convert.toHexString(encrypted));
+        return encryptedUnconfirmedTransaction;
     }
 
     interface VoteWeighter {
