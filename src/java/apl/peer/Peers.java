@@ -137,6 +137,7 @@ public final class Peers {
     private static volatile Peer.BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
+    private static boolean shutdown;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
 
@@ -411,6 +412,7 @@ public final class Peers {
         private final static Server peerServer;
 
         static {
+            shutdown = false;
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
@@ -500,7 +502,9 @@ public final class Peers {
 
         @Override
         public void run() {
-
+            if (shutdown) {
+                return;
+            }
             try {
                 try {
 
@@ -788,6 +792,7 @@ public final class Peers {
     }
 
     public static void shutdown() {
+        shutdown = true;
         if (Init.peerServer != null) {
             try {
                 Init.peerServer.stop();
@@ -1024,6 +1029,11 @@ public final class Peers {
     }
 
     private static void sendToSomePeers(final JSONObject request) {
+        if (shutdown) {
+            String errorMessage = "Cannot send request to peers. Peer server was already shutdown";
+            Logger.logErrorMessage(errorMessage);
+            throw new RuntimeException(errorMessage);
+        }
         sendingService.submit(() -> {
             final JSONStreamAware jsonRequest = JSON.prepareRequest(request);
 
