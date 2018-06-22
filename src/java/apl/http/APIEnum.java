@@ -291,8 +291,7 @@ public enum APIEnum {
     GET_PRIVATE_TRANSACTION("getPrivateTransaction", GetPrivateTransaction.instance),
     GET_PRIVATE_ACCOUNT_LEDGER("getPrivateAccountLedger", GetPrivateAccountLedger.instance),
     GET_PRIVATE_UNCONFIRMED_TRANSACTIONS("getPrivateUnconfirmedTransactions", GetPrivateUnconfirmedTransactions.instance),
-    GET_PRIVATE_ACCOUNT_LEDGER_ENTRY("getPrivateAccountLedgerEntry", GetPrivateAccountLedgerEntry.instance),
-    STOP_FORGING_AND_BLOCK_ACCEPTANCE("stopForgingAndBlockAcceptance", StopForgingAndBlockAcceptance.instance);
+    GET_PRIVATE_ACCOUNT_LEDGER_ENTRY("getPrivateAccountLedgerEntry", GetPrivateAccountLedgerEntry.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
