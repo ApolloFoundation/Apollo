@@ -7,7 +7,7 @@ public class ForgingDetails {
     Long hitTime;
     Long remaining;
     Boolean foundAndStopped;
-    Long account;
+    String account;
     String accountRS;
 
     public ForgingDetails() {
@@ -77,11 +77,11 @@ public class ForgingDetails {
         this.foundAndStopped = foundAndStopped;
     }
 
-    public Long getAccount() {
+    public String getAccount() {
         return account;
     }
 
-    public void setAccount(Long account) {
+    public void setAccount(String account) {
         this.account = account;
     }
 
@@ -93,7 +93,7 @@ public class ForgingDetails {
         this.accountRS = accountRS;
     }
 
-    public ForgingDetails(Long deadline, Long hitTime, Long remaining, Boolean foundAndStopped, Long account, String accountRS) {
+    public ForgingDetails(Long deadline, Long hitTime, Long remaining, Boolean foundAndStopped, String account, String accountRS) {
         this.deadline = deadline;
         this.hitTime = hitTime;
         this.remaining = remaining;

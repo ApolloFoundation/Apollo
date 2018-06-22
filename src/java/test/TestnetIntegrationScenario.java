@@ -1,16 +1,13 @@
 package test;
 
-import apl.Apl;
-import apl.UpdaterUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -22,7 +19,18 @@ public class TestnetIntegrationScenario {
     private static final NodeClient CLIENT = new NodeClient();
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
     private static final Random RANDOM = new Random();
-    private static final String adminPass = Apl.getStringProperty("adminPassword");
+    private static String adminPass;
+
+    static {
+        Properties properties = new Properties();
+        try {
+            properties.load(Files.newInputStream(Paths.get("conf/apl.properties")));
+            adminPass = String.valueOf(properties.get("apl.adminPassword"));
+        }
+        catch (IOException e) {
+            LOG.error("Cannot read apl.properties file", e);
+        }
+    }
     @Test
     public void testSendTransaction() throws Exception {
         testIsFork();
@@ -51,6 +59,7 @@ public class TestnetIntegrationScenario {
     public void testStopForgingAndBlockAcceptance() throws Exception {
         testIsFork();
         testIsAllPeersConnected();
+        LOG.info("Starting forging on {} accounts", ACCOUNTS.size());
         ACCOUNTS.forEach((accountRS, secretPhrase) -> {
             try {
                 CLIENT.startForging(TEST_LOCALHOST, secretPhrase);
@@ -59,25 +68,34 @@ public class TestnetIntegrationScenario {
                 LOG.error("Cannot start forging for account: " + accountRS + " on " + TEST_LOCALHOST, e);
             }
         });
-        waitBlocks(2);
+//        LOG.info("Waiting 2 blocks creation...");
+//        waitBlocks(2);
+        TimeUnit.SECONDS.sleep(5);
+        LOG.info("Verifying forgers on localhost");
         List<ForgingDetails> forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
-        Assert.assertEquals(6, forgers.size());
+        Assert.assertEquals(5, forgers.size());
         forgers.forEach( generator -> {
             if (!ACCOUNTS.containsKey(generator.getAccountRS())) {
                 Assert.fail("Incorrect generator: " + generator.getAccountRS());
             }
         });
-        waitBlocks(2);
-        UpdaterUtil.stopForgingAndBlockAcceptance();
-        long localHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+//        UpdaterUtil.stopForgingAndBlockAcceptance();
+        LOG.info("Stopping forging and peer server...");
         long remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
+        CLIENT.stopForgingAndBlockAcceptance(TEST_LOCALHOST, adminPass);
+        long localHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+        LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
         Assert.assertEquals(localHeight, remoteHeight);
         Assert.assertEquals(CLIENT.getBlock(randomUrl(), remoteHeight), CLIENT.getBlock(TEST_LOCALHOST, localHeight));
+        LOG.info("Checking forgers on node (Assuming no forgers)");
         forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
         Assert.assertEquals(0, forgers.size());
+        LOG.info("Waiting 5 blocks creation...");
         waitBlocks(5);
         remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
-        Assert.assertEquals(localHeight, CLIENT.getBlockchainHeight(TEST_LOCALHOST).longValue());
+        long actualLocalHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+        LOG.info("Comparing blockchain height local/remote: {}/{}", actualLocalHeight, remoteHeight);
+        Assert.assertEquals(localHeight, actualLocalHeight);
         Assert.assertEquals(remoteHeight, localHeight + 5);
         testIsFork();
         testIsAllPeersConnected();
@@ -130,20 +148,21 @@ public class TestnetIntegrationScenario {
     }
 
     private boolean isAllPeersConnected() throws Exception {
-        int peerQuantity = (int) Math.ceil((double)URLS.size() * 0.51);
+        int peerQuantity = (int) Math.ceil((double) URLS.size() * 0.51);
+        int maxPeerQuantity = URLS.size();
         int peers = 0;
         int localHostPeers = CLIENT.getPeersCount(TEST_LOCALHOST);
-        if (localHostPeers >= peerQuantity) {
-            LOG.error("Localhost peer has {}/{} peers.", localHostPeers, peerQuantity);
+        if (localHostPeers < peerQuantity) {
+            LOG.error("Localhost peer has {}/{} peers. Required >= {}", localHostPeers, maxPeerQuantity, peerQuantity);
             return false;
         }
         for (String ip : URLS) {
             peers = CLIENT.getPeersCount(ip);
-            if (peers >= peerQuantity) {
-                LOG.error("Peer with {} has {}/{} peers.", ip, peers, peerQuantity);
+            if (peers < peerQuantity) {
+                LOG.error("Peer with {} has {}/{} peers. Required >= {}", ip, peers, maxPeerQuantity, peerQuantity);
                 return false;
             }
-            LOG.info("Peer with {} has {}/{} peers.", ip, peers, peerQuantity);
+            LOG.info("Peer with {} has {}/{} peers.", ip, peers, maxPeerQuantity);
         }
         return true;
     }

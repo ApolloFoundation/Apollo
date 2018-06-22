@@ -1,6 +1,7 @@
 package test;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Block {
     private String previousBlockHash;
@@ -22,6 +23,38 @@ public class Block {
     private String block; //block id
     private Long height;
     private Long timestamp; //time in seconds since genesis block
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Block)) return false;
+        Block block1 = (Block) o;
+        return Objects.equals(previousBlockHash, block1.previousBlockHash) &&
+                Objects.equals(payloadLength, block1.payloadLength) &&
+                Objects.equals(totalAmountNQT, block1.totalAmountNQT) &&
+                Objects.equals(generationSignature, block1.generationSignature) &&
+                Objects.equals(generator, block1.generator) &&
+                Objects.equals(generatorPublicKey, block1.generatorPublicKey) &&
+                Objects.equals(baseTarget, block1.baseTarget) &&
+                Objects.equals(payloadHash, block1.payloadHash) &&
+                Objects.equals(generatorRS, block1.generatorRS) &&
+                Objects.equals(numberOfTransactions, block1.numberOfTransactions) &&
+                Objects.equals(blockSignature, block1.blockSignature) &&
+                Objects.equals(transactions, block1.transactions) &&
+                Objects.equals(version, block1.version) &&
+                Objects.equals(totalFeeNQT, block1.totalFeeNQT) &&
+                Objects.equals(previousBlock, block1.previousBlock) &&
+                Objects.equals(cumulativeDifficulty, block1.cumulativeDifficulty) &&
+                Objects.equals(block, block1.block) &&
+                Objects.equals(height, block1.height) &&
+                Objects.equals(timestamp, block1.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(previousBlockHash, payloadLength, totalAmountNQT, generationSignature, generator, generatorPublicKey, baseTarget, payloadHash, generatorRS, numberOfTransactions, blockSignature, transactions, version, totalFeeNQT, previousBlock, cumulativeDifficulty, block, height, timestamp);
+    }
 
     public String getPreviousBlockHash() {
         return previousBlockHash;
