@@ -298,7 +298,7 @@ var NRS = (function(NRS, $) {
         NRS.sendRequest("getTransaction", {
             "transaction": transaction
         }, function (response) {
-            var fee = NRS.convertToAPL(NRS.escapeRespStr(response.feeNQT));
+            var fee = NRS.convertToAPL(NRS.escapeRespStr(response.feeATM));
             $('#extend_data_fee').val(fee);
             $('#extend_data_fee_label').html(String(fee) + " " + NRS.constants.COIN_SYMBOL);
         })

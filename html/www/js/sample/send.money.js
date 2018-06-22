@@ -5,7 +5,7 @@ loader.load(function(NRS) {
     var data = {
         recipient: NRS.getAccountIdFromPublicKey(config.recipientPublicKey), // public key to account id
         recipientPublicKey: config.recipientPublicKey, // Optional - public key announcement to init a new account
-        amountNQT: NRS.convertToNQT("1.234"), // APL to NQT conversion
+        amountATM: NRS.convertToATM("1.234"), // APL to ATM conversion
         secretPhrase: config.secretPhrase,
         encryptedMessageIsPrunable: "true" // Optional - make the attached message prunable
     };

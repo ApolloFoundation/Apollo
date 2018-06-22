@@ -142,7 +142,7 @@ var NRS = (function(NRS, $) {
 						"type": "info",
 						"message": $.t("recipient_info_with_name", {
 							"name" : NRS.unescapeRespStr(response.name),
-							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+							"amount": NRS.formatAmount(response.unconfirmedBalanceATM, false, true),
                             "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
@@ -152,7 +152,7 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "info",
 						"message": $.t("recipient_info", {
-							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+							"amount": NRS.formatAmount(response.unconfirmedBalanceATM, false, true),
                             "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
@@ -184,7 +184,7 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "warning",
 						"message": $.t("recipient_no_public_key_pka", {
-							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+							"amount": NRS.formatAmount(response.unconfirmedBalanceATM, false, true),
                             "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response,
