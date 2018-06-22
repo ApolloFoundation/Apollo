@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -127,6 +127,10 @@ public final class Constants {
     public static final int MAX_TAGGED_DATA_CHANNEL_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_FILENAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DATA_LENGTH = 42 * 1024;
+    public static final int MAX_UPDATE_URL_LENGTH = 200;
+    public static final int MAX_UPDATE_PLATFORM_LENGTH = 10;
+    public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
+    public static final int MAX_UPDATE_VERSION_LENGTH = 10;
 
     public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * 1440 * 60;
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
@@ -135,8 +139,8 @@ public final class Constants {
     // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
     public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
-    public static final int[] MIN_VERSION = new int[] {1, 0};
-    public static final int[] MIN_PROXY_VERSION = new int[] {1, 0};
+    public static final Version MIN_VERSION = new Version(1, 0, 0);
+    public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
     static final long UNCONFIRMED_POOL_DEPOSIT_NQT = (isTestnet ? 50 : 100) * ONE_APL;
     public static final long SHUFFLING_DEPOSIT_NQT = (isTestnet ? 7 : 1000) * ONE_APL;

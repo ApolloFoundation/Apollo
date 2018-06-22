@@ -21,7 +21,6 @@ import static test.TestUtil.*;
  * Test scenarios on testnet for {@link NodeClient}
  */
 public class NodeClientTestTestnet extends AbstractNodeClientTest {
-    public static final String MAIN_RS = "APL-NZKH-MZRE-2CTT-98NPZ";
     //transaction hash from 7446 block 20_000 APL to RS4
     public static final String TRANSACTION_HASH = "0619d7f4e0f8d2dab76f28e320c5ca819b2a08dc2294e53151bf14d318d5cefa";
     public static final String PRIVATE_TRANSACTION_HASH = "6c55253438130d20e70834ed67d7fcfc11c79528d1cdfbff3d6398bf67357fad";

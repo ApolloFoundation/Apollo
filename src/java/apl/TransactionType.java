@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -19,9 +19,10 @@ package apl;
 
 import apl.Account.ControlType;
 import apl.AccountLedger.LedgerEvent;
-import apl.Attachment.AbstractAttachment;
 import apl.AplException.ValidationException;
+import apl.Attachment.AbstractAttachment;
 import apl.VoteWeighting.VotingModel;
+import apl.updater.AuthorityChecker;
 import apl.util.Convert;
 import apl.util.Logger;
 import org.apache.tika.Tika;
@@ -45,6 +46,7 @@ public abstract class TransactionType {
     static final byte TYPE_MONETARY_SYSTEM = 5;
     private static final byte TYPE_DATA = 6;
     static final byte TYPE_SHUFFLING = 7;
+    private static final byte TYPE_UPDATE = 8;
 
     private static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     private static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
@@ -85,6 +87,10 @@ public abstract class TransactionType {
 
     private static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
     private static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
+
+    private static final byte SUBTYPE_UPDATE_CRITICAL = 0;
+    private static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
+    private static final byte SUBTYPE_UPDATE_MINOR = 2;
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -190,6 +196,17 @@ public abstract class TransactionType {
                 }
             case TYPE_SHUFFLING:
                 return ShufflingTransaction.findTransactionType(subtype);
+            case TYPE_UPDATE:
+                switch (subtype) {
+                    case SUBTYPE_UPDATE_CRITICAL:
+                        return Update.CRITICAL;
+                    case SUBTYPE_UPDATE_IMPORTANT:
+                        return Update.IMPORTANT;
+                    case SUBTYPE_UPDATE_MINOR:
+                        return Update.MINOR;
+                    default:
+                        return null;
+                }
             default:
                 return null;
         }
@@ -446,7 +463,6 @@ public abstract class TransactionType {
                     throw new AplException.NotValidException("Invalid private payment");
                 }
             }
-
         };
 
     }
@@ -3116,4 +3132,133 @@ public abstract class TransactionType {
 
     }
 
+    public static abstract class Update extends TransactionType {
+
+        private Update() {
+        }
+
+        @Override
+        public final byte getType() {
+            return TransactionType.TYPE_UPDATE;
+        }
+
+        @Override
+        final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+
+        @Override
+        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        }
+
+        @Override
+        public final boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public final boolean isPhasingSafe() {
+            return true;
+        }
+
+        @Override
+        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+            if (!AuthorityChecker.checkSignature(attachment)) {
+                throw new AplException.NotValidException("Unauthorized update transaction from account: " + Convert.rsAccount(transaction.getSenderId()));
+            }
+            //check version
+            if (!attachment.getAppVersion().greaterThan(Apl.VERSION)) {
+                throw new AplException.NotValidException("Update version: " + attachment.getAppVersion() + " is not newer than current version: " + Apl.VERSION);
+            }
+        }
+
+        @Override
+        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+
+        public static final TransactionType CRITICAL = new Update() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_UPDATE_CRITICAL;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.UPDATE_CRITICAL;
+            }
+
+            @Override
+            public String getName() {
+                return "CriticalUpdate";
+            }
+
+            @Override
+            Attachment.CriticalUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.CriticalUpdate(buffer);
+            }
+
+            @Override
+            Attachment.CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.CriticalUpdate(attachmentData);
+            }
+
+        };
+
+        public static final TransactionType IMPORTANT = new Update() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_UPDATE_IMPORTANT;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.UPDATE_IMPORTANT;
+            }
+
+            @Override
+            public String getName() {
+                return "ImportantUpdate";
+            }
+
+            @Override
+            Attachment.ImportantUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.ImportantUpdate(buffer);
+            }
+
+            @Override
+            Attachment.ImportantUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.ImportantUpdate(attachmentData);
+            }
+        };
+
+        public static final TransactionType MINOR = new Update() {
+
+            @Override
+            public final byte getSubtype() {
+                return TransactionType.SUBTYPE_UPDATE_MINOR;
+            }
+
+            @Override
+            public LedgerEvent getLedgerEvent() {
+                return LedgerEvent.UPDATE_MINOR;
+            }
+
+            @Override
+            public String getName() {
+                return "MinorUpdate";
+            }
+
+            @Override
+            Attachment.MinorUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+                return new Attachment.MinorUpdate(buffer);
+            }
+
+            @Override
+            Attachment.MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+                return new Attachment.MinorUpdate(attachmentData);
+            }
+        };
+    }
 }

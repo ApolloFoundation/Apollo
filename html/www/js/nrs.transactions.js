@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -38,12 +39,12 @@ var NRS = (function(NRS, $, undefined) {
 		this.filter = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-            if ($(e.target).attr('data-navigate-page') === 'prev') {
+	        console.log(e.target);
+	        if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
-            } else {
-                that.page = that.page + 1;
-            }
-
+            } if ($(e.target).attr('data-navigate-page') === 'next') {
+		        that.page = that.page + 1;
+	        }
 
             that.getItems(that.page);
 
@@ -748,7 +749,6 @@ var NRS = (function(NRS, $, undefined) {
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
 		var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
-        console.log(decimals);
 
 		if (transactionType === 'Unknown') {
             transactionType = 'Private payment';
@@ -1482,7 +1482,7 @@ var NRS = (function(NRS, $, undefined) {
 
 
         var data = {
-            deadline:     1440,
+            deadline:     '1440',
             feeNQT:       fee + '00000000',
             amountNQT:    amount + '00000000',
             recipient :   recipient,
