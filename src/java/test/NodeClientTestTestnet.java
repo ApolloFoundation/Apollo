@@ -50,8 +50,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(BLOCK_HEIGHT.longValue(), block.getHeight().longValue());
         Assert.assertEquals(MAIN_RS, block.getGeneratorRS());
         Assert.assertEquals(3, block.getNumberOfTransactions().intValue());
-        Assert.assertEquals(nqt(3).longValue(), block.getTotalFeeNQT().longValue());
-        Assert.assertEquals(nqt(58_000).longValue(), block.getTotalAmountNQT().longValue());
+        Assert.assertEquals(atm(3).longValue(), block.getTotalFeeATM().longValue());
+        Assert.assertEquals(atm(58_000).longValue(), block.getTotalAmountATM().longValue());
     }
 
 
@@ -85,17 +85,17 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Block block2 = client.getBlock(url, PRIVATE_BLOCK_HEIGHT);
         Assert.assertEquals(block1.getTransactions().size(), block2.getTransactions().size());
         Assert.assertEquals(4, block1.getTransactions().size());
-        Assert.assertFalse(block1.getTotalAmountNQT().equals(block2.getTotalAmountNQT()));
-        Assert.assertFalse(block1.getTotalAmountNQT() <= nqt(2));
-        Assert.assertEquals(block1.getTotalAmountNQT().longValue(), block1.getTransactions().stream().mapToLong(Transaction::getAmountNQT).sum());
-        Assert.assertEquals(block2.getTotalAmountNQT().longValue(), block2.getTransactions().stream().mapToLong(Transaction::getAmountNQT).sum());
+        Assert.assertFalse(block1.getTotalAmountATM().equals(block2.getTotalAmountATM()));
+        Assert.assertFalse(block1.getTotalAmountATM() <= atm(2));
+        Assert.assertEquals(block1.getTotalAmountATM().longValue(), block1.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
+        Assert.assertEquals(block2.getTotalAmountATM().longValue(), block2.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
     }
 
     @Test
     public void testGetBlockWithPublicTransactions() throws IOException {
         Block block = client.getBlock(url, BLOCK_HEIGHT);
-        Assert.assertEquals(nqt(58_000), block.getTotalAmountNQT());
-        Assert.assertEquals(nqt(58_000).longValue(), block.getTransactions().stream().mapToLong(Transaction::getAmountNQT).sum());
+        Assert.assertEquals(atm(58_000), block.getTotalAmountATM());
+        Assert.assertEquals(atm(58_000).longValue(), block.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
     }
 
     @Test
@@ -144,8 +144,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Transaction transaction = client.getTransaction(url, TRANSACTION_HASH);
         Assert.assertNotNull(transaction);
         Assert.assertEquals(TRANSACTION_HASH, transaction.getFullHash());
-        Assert.assertEquals(nqt(1), transaction.getFeeNQT());
-        Assert.assertEquals(nqt(20_000), transaction.getAmountNQT());
+        Assert.assertEquals(atm(1), transaction.getFeeATM());
+        Assert.assertEquals(atm(20_000), transaction.getAmountATM());
         Assert.assertFalse(transaction.isPrivate());
         Assert.assertEquals(0, transaction.getSubtype().intValue());
         Assert.assertEquals(0, transaction.getType().intValue());
@@ -198,8 +198,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(privateTransaction1.getSenderRS(), PRIVATE_TRANSACTION_SENDER);
         Assert.assertEquals(privateTransaction1.getFullHash(), PRIVATE_TRANSACTION_HASH);
         Assert.assertEquals(privateTransaction1.getRecipientRS(), "APL-8BNS-LMPW-3KHL-3B7JM");
-        Assert.assertEquals(privateTransaction1.getAmountNQT(), nqt(2));
-        Assert.assertEquals(privateTransaction1.getFeeNQT(), nqt(1));
+        Assert.assertEquals(privateTransaction1.getAmountATM(), atm(2));
+        Assert.assertEquals(privateTransaction1.getFeeATM(), atm(1));
         Assert.assertTrue(privateTransaction1.isPrivate());
     }
 
@@ -258,7 +258,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
                     if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
                         Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
                         Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
-                        Assert.assertFalse(tr1.getAmountNQT().equals(tr2.getAmountNQT()));
+                        Assert.assertFalse(tr1.getAmountATM().equals(tr2.getAmountATM()));
                     }
                 }));
     }
@@ -288,9 +288,9 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Test
     public void testGetUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i));
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i));
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i) * 2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i) * 2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
@@ -301,7 +301,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
             Transaction transaction = unconfirmedTransactions.get(i - 1);
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
-            Assert.assertEquals(nqt(i), transaction.getAmountNQT());
+            Assert.assertEquals(atm(i), transaction.getAmountATM());
             Assert.assertFalse(transaction.isPrivate());
         }
     }
@@ -309,9 +309,9 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Test
     public void testGetPrivateUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i), DEFAULT_FEE, DEFAULT_DEADLINE);
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i), DEFAULT_FEE, DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, nqt(i) * 2,
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i) * 2,
                     NodeClient.DEFAULT_FEE, DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
@@ -324,10 +324,10 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
             if (i % 2 != 0) {
-                Assert.assertEquals(nqt(i / 2 + 1), transaction.getAmountNQT());
+                Assert.assertEquals(atm(i / 2 + 1), transaction.getAmountATM());
                 Assert.assertFalse(transaction.isPrivate());
             } else {
-                Assert.assertEquals(nqt(i), transaction.getAmountNQT());
+                Assert.assertEquals(atm(i), transaction.getAmountATM());
                 Assert.assertTrue(transaction.isPrivate());
             }
         }
@@ -338,7 +338,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         LedgerEntry ledgerEntry = client.getAccountLedgerEntry(url, LEDGER_ENTRY_ID, true);
         Assert.assertEquals(AccountLedger.LedgerEvent.ORDINARY_PAYMENT, ledgerEntry.getEventType());
         Assert.assertEquals(PRIVATE_TRANSACTION_SENDER_ID.toString(), ledgerEntry.getAccount());
-        Assert.assertEquals(nqt(100_000).longValue(), ledgerEntry.getChange().longValue());
+        Assert.assertEquals(atm(100_000).longValue(), ledgerEntry.getChange().longValue());
         Assert.assertEquals(164L, ledgerEntry.getLedgerId().longValue());
         Assert.assertEquals(MAIN_RS, ledgerEntry.getTransaction().getSenderRS());
     }
@@ -355,7 +355,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertFalse(ledgerEntry.isNull());
         Assert.assertEquals(PRIVATE_LEDGER_ENTRY_ID, ledgerEntry.getLedgerId());
         Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, ledgerEntry.getEventType());
-        Assert.assertEquals(nqt(-2), ledgerEntry.getChange());
+        Assert.assertEquals(atm(-2), ledgerEntry.getChange());
         Assert.assertEquals(12150L, ledgerEntry.getHeight().longValue());
         Assert.assertEquals(9584301L, ledgerEntry.getTimestamp().longValue());
     }
