@@ -88,10 +88,10 @@ public enum CurrencyType {
                         String.format("Reservable currency activation height %d not higher than transaction apply height %d",
                                 issuanceHeight, finishHeight));
                 }
-                if (attachment.getMinReservePerUnitNQT() <= 0) {
+                if (attachment.getMinReservePerUnitATM() <= 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
-                if (Math.multiplyExact(attachment.getMinReservePerUnitNQT(), attachment.getReserveSupply()) > Constants.MAX_BALANCE_NQT) {
+                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > Constants.MAX_BALANCE_ATM) {
                     throw new AplException.NotValidException("Minimum reserve per unit is too large");
                 }
                 if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {
@@ -119,7 +119,7 @@ public enum CurrencyType {
                 if (attachment.getIssuanceHeight() != 0) {
                     throw new AplException.NotValidException("Issuance height for non-reservable currency must be 0");
                 }
-                if (attachment.getMinReservePerUnitNQT() > 0) {
+                if (attachment.getMinReservePerUnitATM() > 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit for non-reservable currency must be 0 ");
                 }
                 if (attachment.getReserveSupply() > 0) {
@@ -260,7 +260,7 @@ public enum CurrencyType {
     }
 
     private static void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountNQT() != 0) {
+        if (transaction.getAmountATM() != 0) {
             throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", Constants.COIN_SYMBOL));
         }
 

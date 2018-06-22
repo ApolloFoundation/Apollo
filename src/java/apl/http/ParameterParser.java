@@ -238,16 +238,16 @@ public final class ParameterParser {
         return alias;
     }
 
-    public static long getAmountNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountNQT", 1L, Constants.MAX_BALANCE_NQT, true);
+    public static long getAmountATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "amountATM", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
-    public static long getFeeNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeNQT", 0L, Constants.MAX_BALANCE_NQT, true);
+    public static long getFeeATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "feeATM", 0L, Constants.MAX_BALANCE_ATM, true);
     }
 
-    public static long getPriceNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "priceNQT", 1L, Constants.MAX_BALANCE_NQT, true);
+    public static long getPriceATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "priceATM", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
@@ -302,12 +302,12 @@ public final class ParameterParser {
         return shuffling;
     }
 
-    public static long getQuantityQNT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "quantityQNT", 1L, Constants.MAX_ASSET_QUANTITY_QNT, true);
+    public static long getQuantityATU(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "quantityATU", 1L, Constants.MAX_ASSET_QUANTITY_ATU, true);
     }
 
-    public static long getAmountNQTPerQNT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountNQTPerQNT", 1L, Constants.MAX_BALANCE_NQT, true);
+    public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "amountATMPerATU", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
     public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {

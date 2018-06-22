@@ -42,7 +42,7 @@ public final class GetExpectedSellOffers extends APIServlet.APIRequestHandler {
     private final Comparator<Transaction> rateComparator = (o1, o2) -> {
         Attachment.MonetarySystemPublishExchangeOffer a1 = (Attachment.MonetarySystemPublishExchangeOffer)o1.getAttachment();
         Attachment.MonetarySystemPublishExchangeOffer a2 = (Attachment.MonetarySystemPublishExchangeOffer)o2.getAttachment();
-        return Long.compare(a1.getSellRateNQT(), a2.getSellRateNQT());
+        return Long.compare(a1.getSellRateATM(), a2.getSellRateATM());
     };
 
     @Override
