@@ -163,8 +163,19 @@
 
     <section class="content">
         <div id="scheduled_transactions_error_message" class="callout callout-danger" style="display:none"></div>
-        <div class="panel panel-default">
-            <div class="data-container data-loading panel-body">
+    
+        <form class="tabbable" id="get_scheduled_transactions">
+            <div class="form-group">
+                <label for="send_money_amount">Administrator Password</label>
+                <div class="input-group" id="send_money_amount">
+                    <input type="password" name="secretWord" class="form-control">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom: 20px;">Enter</button>
+        </form>
+        
+        <div class="panel panel-default panel-box" id="scheduled_transactions_box">
+            <div class="data-container data-loading">
                 <table class="table table-striped" id="scheduled_transactions_table">
                     <thead>
                     <tr>
@@ -180,7 +191,6 @@
                     <tbody>
                     </tbody>
                 </table>
-                <div class="data-loading-container"><img src="img/loading_indicator.gif" alt="Loading..." width="32" height="32" /></div>
                 <div class="data-empty-container" style="text-align:center;">
                     <p style="padding-top:80px;padding-bottom:100px;"><span data-i18n="no_transactions_found">No transactions found</span>.</p>
                 </div>
