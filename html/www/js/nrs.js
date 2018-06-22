@@ -954,7 +954,7 @@ var NRS = (function(NRS, $, undefined) {
 			description: "TEXT",
 			name: "VARCHAR(10)",
 			decimals: "NUMBER",
-			quantityQNT: "VARCHAR(15)",
+			quantityATU: "VARCHAR(15)",
 			groupName: "VARCHAR(30) COLLATE NOCASE"
 		};
 		schema["data"] = {
@@ -1008,7 +1008,7 @@ var NRS = (function(NRS, $, undefined) {
 			description: "TEXT",
 			name: "VARCHAR(10)",
 			decimals: "NUMBER",
-			quantityQNT: "VARCHAR(15)",
+			quantityATU: "VARCHAR(15)",
 			groupName: "VARCHAR(30) COLLATE NOCASE"
 		};
 		schema["polls"] = {
@@ -1057,7 +1057,7 @@ var NRS = (function(NRS, $, undefined) {
 			return;
 		}
 		var schema = createSchema();
-		NRS.assetTableKeys = ["account", "accountRS", "asset", "description", "name", "position", "decimals", "quantityQNT", "groupName"];
+		NRS.assetTableKeys = ["account", "accountRS", "asset", "description", "name", "position", "decimals", "quantityATU", "groupName"];
 		NRS.pollsTableKeys = ["account", "accountRS", "poll", "description", "name", "finishHeight"];
 		try {
 			NRS.logConsole("Opening database " + dbName);
@@ -1128,8 +1128,8 @@ var NRS = (function(NRS, $, undefined) {
 					NRS.accountRS = NRS.accountInfo.accountRS;
 				}
                 NRS.updateDashboardMessage();
-                $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(response.unconfirmedBalanceNQT));
-                $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceNQT));
+                $("#account_balance, #account_balance_sidebar").html(NRS.formatStyledAmount(response.unconfirmedBalanceATM));
+                $("#account_forged_balance").html(NRS.formatStyledAmount(response.forgedBalanceATM));
 
                 if (NRS.isDisplayOptionalDashboardTiles()) {
                     // only show if happened within last week and not during account switch
@@ -1177,9 +1177,9 @@ var NRS = (function(NRS, $, undefined) {
                         var assetBalances = response.assetBalances;
                         var assetBalancesMap = {};
                         for (i = 0; i < assetBalances.length; i++) {
-                            if (assetBalances[i].balanceQNT != "0") {
+                            if (assetBalances[i].balanceATU != "0") {
                                 assets.push(assetBalances[i].asset);
-                                assetBalancesMap[assetBalances[i].asset] = assetBalances[i].balanceQNT;
+                                assetBalancesMap[assetBalances[i].asset] = assetBalances[i].balanceATU;
                             }
                         }
                         NRS.sendRequest("getLastTrades", {
@@ -1189,7 +1189,7 @@ var NRS = (function(NRS, $, undefined) {
                                 var assetTotal = 0;
                                 for (i = 0; i < response.trades.length; i++) {
                                     var trade = response.trades[i];
-                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceNQT / 100000000;
+                                    assetTotal += assetBalancesMap[trade.asset] * trade.priceATM / 100000000;
                                 }
                                 $("#account_assets_balance").html(NRS.formatStyledAmount(new Big(assetTotal).toFixed(8)));
                                 $("#account_nr_assets").html(response.trades.length);
@@ -1224,7 +1224,7 @@ var NRS = (function(NRS, $, undefined) {
                                 var currencyTotal = 0;
                                 for (i = 0; i < response.exchanges.length; i++) {
                                     var exchange = response.exchanges[i];
-                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateNQT / 100000000;
+                                    currencyTotal += currencyBalancesMap[exchange.currency] * exchange.rateATM / 100000000;
                                 }
                                 $("#account_currencies_balance").html(NRS.formatStyledAmount(new Big(currencyTotal).toFixed(8)));
                             } else {
@@ -1539,7 +1539,7 @@ var NRS = (function(NRS, $, undefined) {
                 if (!previous_balances.hasOwnProperty(k)) {
                     continue;
                 }
-				previous_balances_[previous_balances[k].asset] = previous_balances[k].balanceQNT;
+				previous_balances_[previous_balances[k].asset] = previous_balances[k].balanceATU;
 			}
 		}
 
@@ -1548,7 +1548,7 @@ var NRS = (function(NRS, $, undefined) {
                 if (!current_balances.hasOwnProperty(k)) {
                     continue;
                 }
-				current_balances_[current_balances[k].asset] = current_balances[k].balanceQNT;
+				current_balances_[current_balances[k].asset] = current_balances[k].balanceATU;
 			}
 		}
 

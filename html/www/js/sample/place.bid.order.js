@@ -7,8 +7,8 @@ loader.load(function(NRS) {
     var price = 1.2;
     var data = {
         asset: "6094526212840718212",
-        quantityQNT: NRS.convertToQNT(quantity, decimals),
-        priceNQT: NRS.calculatePricePerWholeQNT(NRS.convertToNQT(price), decimals),
+        quantityATU: NRS.convertToATU(quantity, decimals),
+        priceATM: NRS.calculatePricePerWholeATU(NRS.convertToATM(price), decimals),
         secretPhrase: config.secretPhrase
     };
     data = Object.assign(
