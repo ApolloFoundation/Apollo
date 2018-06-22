@@ -14,22 +14,8 @@ public class UpdaterCore {
     private final SecurityAlertSender alertSender = new SecurityAlertSender();
     private final AuthorityChecker checker = new AuthorityChecker();
     //todo: consider opportunity to move listener to UpdaterMediator
-    private final Listener<List<? extends Transaction>> updateListener = transactions -> {
-        transactions.forEach(transaction -> {
-            if (mediator.isUpdateTransaction(transaction)) {
-                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-                if (!checker.checkSignature(attachment)) {
-                    alertSender.send(transaction);
-                } else if (attachment.getAppVersion().greaterThan(mediator.getWalletVersion())) {
-                    Platform currentPlatform = Platform.current();
-                    Architecture currentArchitecture = Architecture.current();
-                    if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                        triggerUpdate(attachment);
-                    }
-                }
-            }
-        });
-    };
+    private final Listener<List<? extends Transaction>> updateListener = transactions ->
+            proccessTransactions(transactions);
 
     private UpdaterCore() {
         mediator.addUpdateListener(updateListener);
@@ -53,5 +39,22 @@ public class UpdaterCore {
 
     public static UpdaterCore getInstance() {
         return instance;
+    }
+
+    public  void proccessTransactions(List<? extends Transaction> transactions) {
+        transactions.forEach(transaction -> {
+            if (mediator.isUpdateTransaction(transaction)) {
+                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+                if (!checker.checkSignature(attachment)) {
+                    alertSender.send(transaction);
+                } else if (attachment.getAppVersion().greaterThan(mediator.getWalletVersion())) {
+                    Platform currentPlatform = Platform.current();
+                    Architecture currentArchitecture = Architecture.current();
+                    if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
+                        triggerUpdate(attachment);
+                    }
+                }
+            }
+        });
     }
 }
