@@ -1214,6 +1214,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     void shutdown() {
         ThreadPool.shutdownExecutor("networkService", networkService, 5);
+        getMoreBlocks = false;
     }
 
     private void addBlock(BlockImpl block) {
