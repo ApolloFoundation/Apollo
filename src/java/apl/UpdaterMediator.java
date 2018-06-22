@@ -4,10 +4,50 @@ import apl.peer.Peers;
 import apl.util.Listener;
 
 import java.util.List;
-
+//todo consider UpdaterMediator interface with only get methods
 public class UpdaterMediator {
+    private boolean isUpdate = false;
+    private long updateHeight;
+    private int receivedUpdateHeight;
+    private String updateLevel = "";
+    private Version updateVersion;
 
-    public UpdaterMediator() {}
+    public synchronized Version getUpdateVersion() {
+        return updateVersion;
+    }
+
+    public void setUpdateVersion(Version updateVersion) {
+        this.updateVersion = updateVersion;
+    }
+
+    private static UpdaterMediator instance = new UpdaterMediator();
+
+    private UpdaterMediator() {}
+
+    public synchronized long getUpdateHeight() {
+        return updateHeight;
+    }
+
+    public void setUpdateHeight(long updateHeight) {
+        this.updateHeight = updateHeight;
+    }
+
+    public synchronized int getReceivedUpdateHeight() {
+        return receivedUpdateHeight;
+    }
+
+    public void setReceivedUpdateHeight(int receivedUpdateHeight) {
+        this.receivedUpdateHeight = receivedUpdateHeight;
+    }
+
+    public synchronized String getUpdateLevel() {
+
+        return updateLevel;
+    }
+
+    public void setUpdateLevel(String updateLevel) {
+        this.updateLevel = updateLevel;
+    }
 
     public int stopForging() {
         return Generator.stopForging();
@@ -36,4 +76,67 @@ public class UpdaterMediator {
         return Apl.VERSION;
     }
 
+    public synchronized boolean isUpdate() {
+        return isUpdate;
+    }
+
+    public void setUpdate(boolean update) {
+        isUpdate = update;
+    }
+
+    public static UpdaterMediator getInstance() {
+        return instance;
+    }
+
+    public static void setInstance(UpdaterMediator instance) {
+        UpdaterMediator.instance = instance;
+    }
+
+    public int getBlockchainHeight() {
+        return BlockchainImpl.getInstance().getHeight();
+    }
+    public static class UpdateInfo {
+        private boolean isUpdate;
+        private long updateHeight;
+        private int receivedUpdateHeight;
+        private String updateLevel;
+        private Version updateVersion;
+
+        public boolean isUpdate() {
+            return isUpdate;
+        }
+
+        private UpdateInfo(boolean isUpdate, long updateHeight, int receivedUpdateHeight, String updateLevel, Version updateVersion) {
+            this.isUpdate = isUpdate;
+            this.updateHeight = updateHeight;
+            this.receivedUpdateHeight = receivedUpdateHeight;
+            this.updateLevel = updateLevel;
+            this.updateVersion = updateVersion;
+        }
+
+        public void setUpdate(boolean update) {
+            isUpdate = update;
+        }
+
+        public long getUpdateHeight() {
+            return updateHeight;
+        }
+
+        public int getReceivedUpdateHeight() {
+            return receivedUpdateHeight;
+        }
+
+        public String getUpdateLevel() {
+            return updateLevel;
+        }
+
+
+        public Version getUpdateVersion() {
+            return updateVersion;
+        }
+    }
+
+    public synchronized UpdateInfo getUpdateInfo() {
+        return new UpdateInfo(isUpdate(), getUpdateHeight(), getReceivedUpdateHeight(), getUpdateLevel(), getUpdateVersion());
+    }
 }

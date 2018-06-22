@@ -2,15 +2,17 @@ package apl.updater;
 
 import apl.Attachment;
 import apl.Transaction;
+import apl.TransactionType;
 import apl.UpdaterMediator;
 import apl.util.Listener;
 import apl.util.Logger;
 
 import java.util.List;
+import java.util.Random;
 
 public class UpdaterCore {
     private static UpdaterCore instance = new UpdaterCore();
-    private final UpdaterMediator mediator = new UpdaterMediator();
+    private final UpdaterMediator mediator = UpdaterMediator.getInstance();
     private final SecurityAlertSender alertSender = new SecurityAlertSender();
     private final AuthorityChecker checker = new AuthorityChecker();
     //todo: consider opportunity to move listener to UpdaterMediator
@@ -33,15 +35,33 @@ public class UpdaterCore {
         Logger.logInfoMessage("Blockchain processor was shutdown");
     }
 
-    public void triggerUpdate(Attachment.UpdateAttachment attachment) {
-        Logger.logInfoMessage("Starting update to version: " +  attachment.getAppVersion());
+    public void triggerUpdate(Transaction transaction) {
+        TransactionType type = transaction.getType();
+        Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+        synchronized (mediator) {
+            mediator.setReceivedUpdateHeight(transaction.getHeight());
+            mediator.setUpdate(true);
+            mediator.setUpdateLevel(type.getName());
+            mediator.setUpdateVersion(attachment.getAppVersion());
+            mediator.setUpdateHeight(getUpdateHeightFromType(type));
+        }
+        if (type == TransactionType.Update.CRITICAL) {
+            //stop forging and peer server immediately
+            stopForgingAndBlockAcceptance();
+            //Downloader downloads update package
+        } else if (type == TransactionType.Update.IMPORTANT) {
+            //stop forging and peer server at random block (100...1000)
+        } else if (type == TransactionType.Update.MINOR) {
+            //dont stop forging and peer server. Show user notification, which represents that minor update is available  now
+        }
+        Logger.logInfoMessage("Starting update to version: " + attachment.getAppVersion());
     }
 
     public static UpdaterCore getInstance() {
         return instance;
     }
 
-    public  void proccessTransactions(List<? extends Transaction> transactions) {
+    private void proccessTransactions(List<? extends Transaction> transactions) {
         transactions.forEach(transaction -> {
             if (mediator.isUpdateTransaction(transaction)) {
                 Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
@@ -51,10 +71,16 @@ public class UpdaterCore {
                     Platform currentPlatform = Platform.current();
                     Architecture currentArchitecture = Architecture.current();
                     if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                        triggerUpdate(attachment);
+                        triggerUpdate(transaction);
                     }
                 }
             }
         });
     }
+
+    private int getUpdateHeightFromType(TransactionType type) {
+        return type == TransactionType.Update.CRITICAL ?  mediator.getBlockchainHeight() : type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900) + 100 + mediator.getBlockchainHeight() :
+            type == TransactionType.Update.MINOR ? -1 : 0;//assume not mandatory update
+    }
+
 }
