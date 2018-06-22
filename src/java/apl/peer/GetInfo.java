@@ -18,6 +18,7 @@
 package apl.peer;
 
 import apl.Apl;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.JSON;
 import apl.util.Logger;
@@ -79,11 +80,15 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
         }
         peerImpl.setApplication(application.trim());
 
-        String version = (String)request.get("version");
-        if (version == null) {
-            version = "?";
+        Version version = null;
+        try {
+            version = Version.from((String)request.get("version"));
         }
-        peerImpl.setVersion(version.trim());
+        catch (Exception e) {
+            Logger.logErrorMessage("Cannot parse version.", e);
+            version = new Version(1, 0, 0);
+        }
+        peerImpl.setVersion(version);
 
         String platform = (String)request.get("platform");
         if (platform == null) {

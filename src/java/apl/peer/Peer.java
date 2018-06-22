@@ -18,6 +18,7 @@
 package apl.peer;
 
 import apl.http.APIEnum;
+import apl.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -66,7 +67,7 @@ public interface Peer extends Comparable<Peer> {
 
     State getState();
 
-    String getVersion();
+    Version getVersion();
 
     String getApplication();
 

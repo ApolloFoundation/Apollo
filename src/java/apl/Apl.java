@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final String VERSION = "1.0.3";
+    public static final Version VERSION = Version.from("1.0.3");
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
@@ -77,7 +77,7 @@ public final class Apl {
         dirProvider = RuntimeEnvironment.getDirProvider();
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         loadProperties(defaultProperties, APL_DEFAULT_PROPERTIES, true);
-        if (!VERSION.equals(Apl.defaultProperties.getProperty("apl.version"))) {
+        if (!VERSION.equals(Version.from(Apl.defaultProperties.getProperty("apl.version")))) {
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
     }
