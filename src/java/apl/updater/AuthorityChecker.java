@@ -22,4 +22,5 @@ public class AuthorityChecker {
     public boolean checkSignature(Attachment.UpdateAttachment attachment) {
         return true;
     }
+
 }

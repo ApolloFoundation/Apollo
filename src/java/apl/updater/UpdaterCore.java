@@ -22,14 +22,20 @@ import apl.UpdaterMediator;
 import apl.util.Listener;
 import apl.util.Logger;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
 
 public class UpdaterCore {
     private static UpdaterCore instance = new UpdaterCore();
     private final UpdaterMediator mediator = UpdaterMediator.getInstance();
+    private final Downloader downloader = Downloader.getInstance();
     private final SecurityAlertSender alertSender = new SecurityAlertSender();
     private final AuthorityChecker checker = new AuthorityChecker();
+    private final Unpacker unpacker = new Unpacker();
+    private final PlatformDependentUpdater platformDependentUpdater = new PlatformDependentUpdater();
+
     //todo: consider opportunity to move listener to UpdaterMediator
     private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
 
@@ -37,6 +43,11 @@ public class UpdaterCore {
         mediator.addUpdateListener(updateListener);
     }
 
+    public static UpdaterCore getInstance() {
+        return instance;
+    }
+
+    //todo: consider using separated Logger
     public void stopForgingAndBlockAcceptance() {
         Logger.logDebugMessage("Stopping forging...");
         int numberOfGenerators = mediator.stopForging();
@@ -64,6 +75,19 @@ public class UpdaterCore {
             //stop forging and peer server immediately
             stopForgingAndBlockAcceptance();
             //Downloader downloads update package
+            Path path = downloader.tryDownload(attachment.getUrl(), attachment.getHash());
+            if (path != null) {
+                try {
+                    Path unpackedDirPath = unpacker.unpack(path);
+                    platformDependentUpdater.continueUpdate(unpackedDirPath);
+                }
+                catch (IOException e) {
+                    Logger.logErrorMessage("Cannot unpack file: " + path.toString());
+                }
+            } else {
+                Logger.logErrorMessage("FAILURE! Update file was not downloaded");
+                //some important actions (notify user, update state, etc.)
+            }
         } else if (type == TransactionType.Update.IMPORTANT) {
             //stop forging and peer server at random block (100...1000)
         } else if (type == TransactionType.Update.MINOR) {
@@ -72,21 +96,19 @@ public class UpdaterCore {
         Logger.logInfoMessage("Starting update to version: " + attachment.getAppVersion());
     }
 
-    public static UpdaterCore getInstance() {
-        return instance;
-    }
-
     private void processTransactions(List<? extends Transaction> transactions) {
         transactions.forEach(transaction -> {
             if (mediator.isUpdateTransaction(transaction)) {
                 Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-                if (!checker.checkSignature(attachment)) {
-                    alertSender.send(transaction);
-                } else if (attachment.getAppVersion().greaterThan(mediator.getWalletVersion())) {
-                    Platform currentPlatform = Platform.current();
-                    Architecture currentArchitecture = Architecture.current();
-                    if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                        triggerUpdate(transaction);
+                if (attachment.getAppVersion().greaterThan(mediator.getWalletVersion())) {
+                    if (!checker.checkSignature(attachment)) {
+                        alertSender.send(transaction);
+                    } else {
+                        Platform currentPlatform = Platform.current();
+                        Architecture currentArchitecture = Architecture.current();
+                        if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
+                            new Thread(() -> triggerUpdate(transaction), "Apollo updater thread").start();
+                        }
                     }
                 }
             }
@@ -94,8 +116,8 @@ public class UpdaterCore {
     }
 
     private int getUpdateHeightFromType(TransactionType type) {
-        return type == TransactionType.Update.CRITICAL ?  mediator.getBlockchainHeight() : type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900) + 100 + mediator.getBlockchainHeight() :
-            type == TransactionType.Update.MINOR ? -1 : 0;//assume not mandatory update
+        return type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() : type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900) + 100 + mediator.getBlockchainHeight() :
+                type == TransactionType.Update.MINOR ? -1 : 0;//assume not mandatory update
     }
 
 }
