@@ -132,6 +132,7 @@ public final class Constants {
     public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
     public static final int MAX_UPDATE_VERSION_LENGTH = 10;
     public static final int MAX_UPDATE_SIGNATURE_LENGTH = 2048;
+    public static final int MAX_UPDATE_HASH_LENGTH = 512;
 
     public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * 1440 * 60;
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;

@@ -31,8 +31,7 @@ public class UpdaterCore {
     private final SecurityAlertSender alertSender = new SecurityAlertSender();
     private final AuthorityChecker checker = new AuthorityChecker();
     //todo: consider opportunity to move listener to UpdaterMediator
-    private final Listener<List<? extends Transaction>> updateListener = transactions ->
-            proccessTransactions(transactions);
+    private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
 
     private UpdaterCore() {
         mediator.addUpdateListener(updateListener);
@@ -53,6 +52,7 @@ public class UpdaterCore {
     public void triggerUpdate(Transaction transaction) {
         TransactionType type = transaction.getType();
         Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+        //todo: consider separating mediator and update status holder
         synchronized (mediator) {
             mediator.setReceivedUpdateHeight(transaction.getHeight());
             mediator.setUpdate(true);
@@ -76,7 +76,7 @@ public class UpdaterCore {
         return instance;
     }
 
-    private void proccessTransactions(List<? extends Transaction> transactions) {
+    private void processTransactions(List<? extends Transaction> transactions) {
         transactions.forEach(transaction -> {
             if (mediator.isUpdateTransaction(transaction)) {
                 Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();

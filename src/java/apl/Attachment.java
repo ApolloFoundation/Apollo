@@ -3564,7 +3564,7 @@ public interface Attachment extends Appendix {
         private final Architecture architecture;
         private final String url;
         private final Version version;
-        private final int hash;
+        private final byte[] hash;
         private final byte[] signature;
 
         UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
@@ -3573,7 +3573,9 @@ public interface Attachment extends Appendix {
             architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
             url = Convert.readString(buffer, buffer.getShort(), Constants.MAX_UPDATE_URL_LENGTH).trim();
             version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
-            hash = buffer.getInt();
+            int hashLength = buffer.getShort();
+            hash = new byte[hashLength];
+            buffer.get(hash);
             int signatureLength = buffer.getShort();
             signature = new byte[signatureLength];
             buffer.get(signature);
@@ -3585,11 +3587,11 @@ public interface Attachment extends Appendix {
             architecture = Architecture.valueOf(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
             url = Convert.nullToEmpty((String) attachmentData.get("url")).trim();
             version = Version.from(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
-            hash = (int) attachmentData.get("hash");
+            hash = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("hash")).trim());
             signature = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("signature")).trim());
         }
 
-        public UpdateAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+        public UpdateAttachment(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature) {
             this.platform = platform;
             this.architecture = architecture;
             this.url = url;
@@ -3601,7 +3603,7 @@ public interface Attachment extends Appendix {
         @Override
         int getMySize() {
             return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
-                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + 2 + signature.length;
+                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 2+ hash.length + 2 + signature.length;
         }
 
         @Override
@@ -3618,7 +3620,8 @@ public interface Attachment extends Appendix {
             buffer.put(url);
             buffer.put((byte) version.length);
             buffer.put(version);
-            buffer.putInt(hash);
+            buffer.putShort((short) hash.length);
+            buffer.put(hash);
             buffer.putShort((short) signature.length);
             buffer.put(signature);
         }
@@ -3629,7 +3632,7 @@ public interface Attachment extends Appendix {
             attachment.put("architecture", architecture.toString());
             attachment.put("url", url);
             attachment.put("version", version.toString());
-            attachment.put("hash", hash);
+            attachment.put("hash", Convert.toHexString(hash));
             attachment.put("signature", Convert.toHexString(signature));
         }
 
@@ -3649,7 +3652,7 @@ public interface Attachment extends Appendix {
             return version;
         }
 
-        public int getHash() {
+        public byte[] getHash() {
             return hash;
         }
 
@@ -3657,7 +3660,7 @@ public interface Attachment extends Appendix {
             return signature;
         }
 
-        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature, byte level) {
+        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature, byte level) {
             if (level == TransactionType.Update.CRITICAL.getSubtype()) {
                 return new Attachment.CriticalUpdate(platform, architecture, url, version, hash, signature);
             } else if (level == TransactionType.Update.IMPORTANT.getSubtype()) {
@@ -3678,7 +3681,7 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public CriticalUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+        public CriticalUpdate(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature) {
             super(platform, architecture, url, version, hash, signature);
         }
 
@@ -3697,7 +3700,7 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public ImportantUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+        public ImportantUpdate(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature) {
             super(platform, architecture, url, version, hash, signature);
         }
 
@@ -3716,7 +3719,7 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public MinorUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+        public MinorUpdate(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature) {
             super(platform, architecture, url, version, hash, signature);
         }
 
