@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -32,7 +32,7 @@ public final class TransferAsset extends CreateTransaction {
     static final TransferAsset instance = new TransferAsset();
 
     private TransferAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityQNT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
     }
 
     @Override
@@ -41,10 +41,10 @@ public final class TransferAsset extends CreateTransaction {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
 
         Asset asset = ParameterParser.getAsset(req);
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long quantityATU = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityQNT);
+        Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (AplException.InsufficientBalanceException e) {

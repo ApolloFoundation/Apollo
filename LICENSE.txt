@@ -1,5 +1,6 @@
-
-Copyright © 2017-2018 Apollo Foundation
+Copyright © 2017-2018 Apollo Foundation. 
+Copyright © 2016-2017 Jelurida IP B.V.
+Copyright © 2013-2016 The Nxt Core Developers.
 
 This program is distributed under the terms of the GNU General Public License
 version 3.0 for the Apollo Public Blockchain Platform.
@@ -188,5 +189,5 @@ This License, the documents related to it and any agreement that incorporates
 any of these are governed by and shall be construed in accordance with the laws
 of the United States Of America. Any and all disputes arising out of or in connection with
 this License, the documents related to it and any agreement that incorporates
-any of these shall be exclusively referred to the competent court in Houston,
-Texas USA.
+any of these shall be exclusively referred to the competent court in Valletta,
+Malta.

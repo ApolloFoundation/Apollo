@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -41,7 +41,7 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
     protected JSONObject processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         response.put("application", Apl.APPLICATION);
-        response.put("version", Apl.VERSION);
+        response.put("version", Apl.VERSION.toString());
         response.put("time", Apl.getEpochTime());
         Block lastBlock = Apl.getBlockchain().getLastBlock();
         response.put("lastBlock", lastBlock.getStringId());

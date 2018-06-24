@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -21,14 +22,12 @@ var NRS = (function(NRS) {
     var requestConfirmations = [];
 
     NRS.updateRemoteNodes = function() {
-        console.log("Updating remote nodes");
         var data = {state: "CONNECTED", includePeerInfo: true};
         NRS.sendRequest("getPeers", data, function (response) {
             if (response.peers) {
                 NRS.remoteNodesMgr.nodes = {};
                 NRS.remoteNodesMgr.addRemoteNodes(response.peers);
             }
-            console.log("remote nodes updated");
         });
     };
 

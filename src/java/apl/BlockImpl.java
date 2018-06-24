@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -40,8 +40,8 @@ final class BlockImpl implements Block {
     private final long previousBlockId;
     private volatile byte[] generatorPublicKey;
     private final byte[] previousBlockHash;
-    private final long totalAmountNQT;
-    private final long totalFeeNQT;
+    private final long totalAmountATM;
+    private final long totalFeeATM;
     private final int payloadLength;
     private final byte[] generationSignature;
     private final byte[] payloadHash;
@@ -64,21 +64,21 @@ final class BlockImpl implements Block {
         this.height = 0;
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, List<TransactionImpl> transactions, String secretPhrase) {
-        this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, transactions);
         blockSignature = Crypto.sign(bytes(), secretPhrase);
         bytes = null;
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength, byte[] payloadHash,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, List<TransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
-        this.totalAmountNQT = totalAmountNQT;
-        this.totalFeeNQT = totalFeeNQT;
+        this.totalAmountATM = totalAmountATM;
+        this.totalFeeATM = totalFeeATM;
         this.payloadLength = payloadLength;
         this.payloadHash = payloadHash;
         this.generatorPublicKey = generatorPublicKey;
@@ -90,11 +90,11 @@ final class BlockImpl implements Block {
         }
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountNQT, long totalFeeNQT, int payloadLength,
+    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id,
               List<TransactionImpl> blockTransactions) {
-        this(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                 null, generationSignature, blockSignature, previousBlockHash, null);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
@@ -134,13 +134,13 @@ final class BlockImpl implements Block {
     }
 
     @Override
-    public long getTotalAmountNQT() {
-        return totalAmountNQT;
+    public long getTotalAmountATM() {
+        return totalAmountATM;
     }
 
     @Override
-    public long getTotalFeeNQT() {
-        return totalFeeNQT;
+    public long getTotalFeeATM() {
+        return totalFeeATM;
     }
 
     @Override
@@ -251,8 +251,8 @@ final class BlockImpl implements Block {
         json.put("version", version);
         json.put("timestamp", timestamp);
         json.put("previousBlock", Long.toUnsignedString(previousBlockId));
-        json.put("totalAmountNQT", totalAmountNQT);
-        json.put("totalFeeNQT", totalFeeNQT);
+        json.put("totalAmountATM", totalAmountATM);
+        json.put("totalFeeATM", totalFeeATM);
         json.put("payloadLength", payloadLength);
         json.put("payloadHash", Convert.toHexString(payloadHash));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
@@ -270,8 +270,8 @@ final class BlockImpl implements Block {
             int version = ((Long) blockData.get("version")).intValue();
             int timestamp = ((Long) blockData.get("timestamp")).intValue();
             long previousBlock = Convert.parseUnsignedLong((String) blockData.get("previousBlock"));
-            long totalAmountNQT = Convert.parseLong(blockData.get("totalAmountNQT"));
-            long totalFeeNQT = Convert.parseLong(blockData.get("totalFeeNQT"));
+            long totalAmountATM = Convert.parseLong(blockData.get("totalAmountATM"));
+            long totalFeeATM = Convert.parseLong(blockData.get("totalFeeATM"));
             int payloadLength = ((Long) blockData.get("payloadLength")).intValue();
             byte[] payloadHash = Convert.parseHexString((String) blockData.get("payloadHash"));
             byte[] generatorPublicKey = Convert.parseHexString((String) blockData.get("generatorPublicKey"));
@@ -282,7 +282,7 @@ final class BlockImpl implements Block {
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
-            BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash, generatorPublicKey,
+            BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
                     generationSignature, blockSignature, previousBlockHash, blockTransactions);
             if (!block.checkSignature()) {
                 throw new AplException.NotValidException("Invalid block signature");
@@ -307,8 +307,8 @@ final class BlockImpl implements Block {
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
             buffer.putInt(getTransactions().size());
-            buffer.putLong(totalAmountNQT);
-            buffer.putLong(totalFeeNQT);
+            buffer.putLong(totalAmountATM);
+            buffer.putLong(totalFeeATM);
             buffer.putInt(payloadLength);
             buffer.put(payloadHash);
             buffer.put(getGeneratorPublicKey());
@@ -390,15 +390,15 @@ final class BlockImpl implements Block {
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
                 Logger.logDebugMessage("Back fees %f %s to forger at height %d", ((double)backFees[i])/Constants.ONE_APL, Constants.COIN_SYMBOL, this.height - i - 1);
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
-                previousGeneratorAccount.addToForgedBalanceNQT(backFees[i]);
+                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
+                previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
             Logger.logDebugMessage("Fee reduced by %f %s at height %d", ((double)totalBackFees)/Constants.ONE_APL, Constants.COIN_SYMBOL, this.height);
         }
-        generatorAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeNQT - totalBackFees);
-        generatorAccount.addToForgedBalanceNQT(totalFeeNQT - totalBackFees);
+        generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
+        generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);
     }
 
     void setPrevious(BlockImpl block) {

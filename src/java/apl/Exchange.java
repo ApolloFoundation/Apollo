@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -187,7 +187,7 @@ public final class Exchange {
         this.buyerId = buyerId;
         this.dbKey = exchangeDbKeyFactory.newKey(this.transactionId, this.offerId);
         this.units = units;
-        this.rate = offer.getRateNQT();
+        this.rate = offer.getRateATM();
     }
 
     private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {

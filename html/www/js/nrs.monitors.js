@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -208,11 +209,11 @@ var NRS = (function(NRS, $) {
             return;
         }
         var value = {};
-        var amount = NRS.convertToNQT($("#add_monitored_account_amount").val());
+        var amount = NRS.convertToATM($("#add_monitored_account_amount").val());
         if (currentMonitor.amount != amount) {
             value.amount = amount;
         }
-        var threshold = NRS.convertToNQT($("#add_monitored_account_threshold").val());
+        var threshold = NRS.convertToATM($("#add_monitored_account_threshold").val());
         if (currentMonitor.threshold != threshold) {
             value.threshold = threshold;
         }

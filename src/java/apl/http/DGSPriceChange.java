@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -33,18 +33,18 @@ public final class DGSPriceChange extends CreateTransaction {
 
     private DGSPriceChange() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "goods", "priceNQT");
+                "goods", "priceATM");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Account account = ParameterParser.getSenderAccount(req);
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceATM = ParameterParser.getPriceATM(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new Attachment.DigitalGoodsPriceChange(goods.getId(), priceNQT);
+        Attachment attachment = new Attachment.DigitalGoodsPriceChange(goods.getId(), priceATM);
         return createTransaction(req, account, attachment);
     }
 

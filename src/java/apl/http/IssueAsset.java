@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -37,7 +37,7 @@ public final class IssueAsset extends CreateTransaction {
     static final IssueAsset instance = new IssueAsset();
 
     private IssueAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityQNT", "decimals");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
     }
 
     @Override
@@ -78,9 +78,9 @@ public final class IssueAsset extends CreateTransaction {
             }
         }
 
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long quantityATU = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityQNT, decimals);
+        Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityATU, decimals);
         return createTransaction(req, account, attachment);
 
     }

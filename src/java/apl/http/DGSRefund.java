@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -38,7 +38,7 @@ public final class DGSRefund extends CreateTransaction {
 
     private DGSRefund() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "purchase", "refundNQT");
+                "purchase", "refundATM");
     }
 
     @Override
@@ -56,22 +56,22 @@ public final class DGSRefund extends CreateTransaction {
             return GOODS_NOT_DELIVERED;
         }
 
-        String refundValueNQT = Convert.emptyToNull(req.getParameter("refundNQT"));
-        long refundNQT = 0;
+        String refundValueATM = Convert.emptyToNull(req.getParameter("refundATM"));
+        long refundATM = 0;
         try {
-            if (refundValueNQT != null) {
-                refundNQT = Long.parseLong(refundValueNQT);
+            if (refundValueATM != null) {
+                refundATM = Long.parseLong(refundValueATM);
             }
         } catch (RuntimeException e) {
             return INCORRECT_DGS_REFUND;
         }
-        if (refundNQT < 0 || refundNQT > Constants.MAX_BALANCE_NQT) {
+        if (refundATM < 0 || refundATM > Constants.MAX_BALANCE_ATM) {
             return INCORRECT_DGS_REFUND;
         }
 
         Account buyerAccount = Account.getAccount(purchase.getBuyerId());
 
-        Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundNQT);
+        Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -32,17 +32,17 @@ public final class DeleteAssetShares extends CreateTransaction {
     static final DeleteAssetShares instance = new DeleteAssetShares();
 
     private DeleteAssetShares() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityQNT");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
-        long quantityQNT = ParameterParser.getQuantityQNT(req);
+        long quantityATU = ParameterParser.getQuantityATU(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsAssetDelete(asset.getId(), quantityQNT);
+        Attachment attachment = new Attachment.ColoredCoinsAssetDelete(asset.getId(), quantityATU);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

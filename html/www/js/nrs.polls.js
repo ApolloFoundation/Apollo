@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -326,11 +327,11 @@ var NRS = (function(NRS, $, undefined) {
 		}
 		if ((pollType == 0 && mbType == 2) || pollType == 2) {
 			$('#min_voting_balance_label_unit').html($.t('asset'));
-			$('#create_poll_min_balance').attr('name', 'minBalanceQNTf');
+			$('#create_poll_min_balance').attr('name', 'minBalanceATUf');
 		}
 		if ((pollType == 0 && mbType == 3) || pollType == 3) {
 			$('#min_voting_balance_label_unit').html($.t('currency'));
-			$('#create_poll_min_balance').attr('name', 'minBalanceQNTf');
+			$('#create_poll_min_balance').attr('name', 'minBalanceATUf');
 		}
 	}
 

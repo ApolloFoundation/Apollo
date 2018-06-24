@@ -24,6 +24,7 @@ grant {
   permission java.net.NetPermission "getNetworkInformation";
 };
 
+
 grant codeBase "file:classes/-" {
   permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
 };

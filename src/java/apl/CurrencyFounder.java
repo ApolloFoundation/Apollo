@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -69,20 +69,20 @@ public class CurrencyFounder {
     private final DbKey dbKey;
     private final long currencyId;
     private final long accountId;
-    private long amountPerUnitNQT;
+    private long amountPerUnitATM;
 
-    private CurrencyFounder(long currencyId, long accountId, long amountPerUnitNQT) {
+    private CurrencyFounder(long currencyId, long accountId, long amountPerUnitATM) {
         this.currencyId = currencyId;
         this.dbKey = currencyFounderDbKeyFactory.newKey(currencyId, accountId);
         this.accountId = accountId;
-        this.amountPerUnitNQT = amountPerUnitNQT;
+        this.amountPerUnitATM = amountPerUnitATM;
     }
 
     private CurrencyFounder(ResultSet rs, DbKey dbKey) throws SQLException {
         this.currencyId = rs.getLong("currency_id");
         this.accountId = rs.getLong("account_id");
         this.dbKey = dbKey;
-        this.amountPerUnitNQT = rs.getLong("amount");
+        this.amountPerUnitATM = rs.getLong("amount");
     }
 
     private void save(Connection con) throws SQLException {
@@ -91,7 +91,7 @@ public class CurrencyFounder {
             int i = 0;
             pstmt.setLong(++i, this.getCurrencyId());
             pstmt.setLong(++i, this.getAccountId());
-            pstmt.setLong(++i, this.getAmountPerUnitNQT());
+            pstmt.setLong(++i, this.getAmountPerUnitATM());
             pstmt.setInt(++i, Apl.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
@@ -105,8 +105,8 @@ public class CurrencyFounder {
         return accountId;
     }
 
-    public long getAmountPerUnitNQT() {
-        return amountPerUnitNQT;
+    public long getAmountPerUnitATM() {
+        return amountPerUnitATM;
     }
 
     static void addOrUpdateFounder(long currencyId, long accountId, long amount) {
@@ -114,7 +114,7 @@ public class CurrencyFounder {
         if (founder == null) {
             founder = new CurrencyFounder(currencyId, accountId, amount);
         } else {
-            founder.amountPerUnitNQT += amount;
+            founder.amountPerUnitATM += amount;
         }
         currencyFounderTable.insert(founder);
     }

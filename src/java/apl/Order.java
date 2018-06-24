@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -38,26 +38,26 @@ public abstract class Order {
         while ((askOrder = Ask.getNextOrder(assetId)) != null
                 && (bidOrder = Bid.getNextOrder(assetId)) != null) {
 
-            if (askOrder.getPriceNQT() > bidOrder.getPriceNQT()) {
+            if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
                 break;
             }
 
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
 
-            askOrder.updateQuantityQNT(Math.subtractExact(askOrder.getQuantityQNT(), trade.getQuantityQNT()));
+            askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
             Account askAccount = Account.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.ASSET_TRADE, askOrder.getId(),
-                            Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            askAccount.addToAssetBalanceQNT(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityQNT());
+            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+                            Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
-            bidOrder.updateQuantityQNT(Math.subtractExact(bidOrder.getQuantityQNT(), trade.getQuantityQNT()));
+            bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
             Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceQNT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            assetId, trade.getQuantityQNT());
-            bidAccount.addToBalanceNQT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            -Math.multiplyExact(trade.getQuantityQNT(), trade.getPriceNQT()));
-            bidAccount.addToUnconfirmedBalanceNQT(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            Math.multiplyExact(trade.getQuantityQNT(), (bidOrder.getPriceNQT() - trade.getPriceNQT())));
+            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+                            assetId, trade.getQuantityATU());
+            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+                            -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+                            Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 
     }
@@ -71,19 +71,19 @@ public abstract class Order {
     private final long id;
     private final long accountId;
     private final long assetId;
-    private final long priceNQT;
+    private final long priceATM;
     private final int creationHeight;
     private final short transactionIndex;
     private final int transactionHeight;
 
-    private long quantityQNT;
+    private long quantityATU;
 
     private Order(Transaction transaction, Attachment.ColoredCoinsOrderPlacement attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.assetId = attachment.getAssetId();
-        this.quantityQNT = attachment.getQuantityQNT();
-        this.priceNQT = attachment.getPriceNQT();
+        this.quantityATU = attachment.getQuantityATU();
+        this.priceATM = attachment.getPriceATM();
         this.creationHeight = Apl.getBlockchain().getHeight();
         this.transactionIndex = transaction.getIndex();
         this.transactionHeight = transaction.getHeight();
@@ -93,8 +93,8 @@ public abstract class Order {
         this.id = rs.getLong("id");
         this.accountId = rs.getLong("account_id");
         this.assetId = rs.getLong("asset_id");
-        this.priceNQT = rs.getLong("price");
-        this.quantityQNT = rs.getLong("quantity");
+        this.priceATM = rs.getLong("price");
+        this.quantityATU = rs.getLong("quantity");
         this.creationHeight = rs.getInt("creation_height");
         this.transactionIndex = rs.getShort("transaction_index");
         this.transactionHeight = rs.getInt("transaction_height");
@@ -107,8 +107,8 @@ public abstract class Order {
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);
             pstmt.setLong(++i, this.assetId);
-            pstmt.setLong(++i, this.priceNQT);
-            pstmt.setLong(++i, this.quantityQNT);
+            pstmt.setLong(++i, this.priceATM);
+            pstmt.setLong(++i, this.quantityATU);
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setShort(++i, this.transactionIndex);
             pstmt.setInt(++i, this.transactionHeight);
@@ -129,12 +129,12 @@ public abstract class Order {
         return assetId;
     }
 
-    public final long getPriceNQT() {
-        return priceNQT;
+    public final long getPriceATM() {
+        return priceATM;
     }
 
-    public final long getQuantityQNT() {
-        return quantityQNT;
+    public final long getQuantityATU() {
+        return quantityATU;
     }
 
     public final int getHeight() {
@@ -152,12 +152,12 @@ public abstract class Order {
     @Override
     public String toString() {
         return getClass().getSimpleName() + " id: " + Long.toUnsignedString(id) + " account: " + Long.toUnsignedString(accountId)
-                + " asset: " + Long.toUnsignedString(assetId) + " price: " + priceNQT + " quantity: " + quantityQNT
+                + " asset: " + Long.toUnsignedString(assetId) + " price: " + priceATM + " quantity: " + quantityATU
                 + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
     }
 
-    private void setQuantityQNT(long quantityQNT) {
-        this.quantityQNT = quantityQNT;
+    private void setQuantityATU(long quantityATU) {
+        this.quantityATU = quantityATU;
     }
 
     /*
@@ -280,14 +280,14 @@ public abstract class Order {
             super.save(con, table);
         }
 
-        private void updateQuantityQNT(long quantityQNT) {
-            super.setQuantityQNT(quantityQNT);
-            if (quantityQNT > 0) {
+        private void updateQuantityATU(long quantityATU) {
+            super.setQuantityATU(quantityATU);
+            if (quantityATU > 0) {
                 askOrderTable.insert(this);
-            } else if (quantityQNT == 0) {
+            } else if (quantityATU == 0) {
                 askOrderTable.delete(this);
             } else {
-                throw new IllegalArgumentException("Negative quantity: " + quantityQNT
+                throw new IllegalArgumentException("Negative quantity: " + quantityATU
                         + " for order: " + Long.toUnsignedString(getId()));
             }
         }
@@ -295,9 +295,9 @@ public abstract class Order {
         /*
         @Override
         public int compareTo(Ask o) {
-            if (this.getPriceNQT() < o.getPriceNQT()) {
+            if (this.getPriceATM() < o.getPriceATM()) {
                 return -1;
-            } else if (this.getPriceNQT() > o.getPriceNQT()) {
+            } else if (this.getPriceATM() > o.getPriceATM()) {
                 return 1;
             } else {
                 return super.compareTo(o);
@@ -409,14 +409,14 @@ public abstract class Order {
             super.save(con, table);
         }
 
-        private void updateQuantityQNT(long quantityQNT) {
-            super.setQuantityQNT(quantityQNT);
-            if (quantityQNT > 0) {
+        private void updateQuantityATU(long quantityATU) {
+            super.setQuantityATU(quantityATU);
+            if (quantityATU > 0) {
                 bidOrderTable.insert(this);
-            } else if (quantityQNT == 0) {
+            } else if (quantityATU == 0) {
                 bidOrderTable.delete(this);
             } else {
-                throw new IllegalArgumentException("Negative quantity: " + quantityQNT
+                throw new IllegalArgumentException("Negative quantity: " + quantityATU
                         + " for order: " + Long.toUnsignedString(getId()));
             }
         }
@@ -424,9 +424,9 @@ public abstract class Order {
         /*
         @Override
         public int compareTo(Bid o) {
-            if (this.getPriceNQT() > o.getPriceNQT()) {
+            if (this.getPriceATM() > o.getPriceATM()) {
                 return -1;
-            } else if (this.getPriceNQT() < o.getPriceNQT()) {
+            } else if (this.getPriceATM() < o.getPriceATM()) {
                 return 1;
             } else {
                 return super.compareTo(o);

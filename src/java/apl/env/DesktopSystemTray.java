@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -177,7 +177,7 @@ public class DesktopSystemTray {
 
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Apl.APPLICATION);
-        addDataRow(statusPanel, "Version", Apl.VERSION);
+        addDataRow(statusPanel, "Version", Apl.VERSION.toString());
         addDataRow(statusPanel, "Network", (Constants.isTestnet) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));

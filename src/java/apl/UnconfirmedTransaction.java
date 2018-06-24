@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -38,7 +38,7 @@ class UnconfirmedTransaction implements Transaction {
     UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp) {
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
-        this.feePerByte = transaction.getFeeNQT() / transaction.getFullSize();
+        this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
     }
 
     UnconfirmedTransaction(ResultSet rs) throws SQLException {
@@ -168,13 +168,13 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public long getAmountNQT() {
-        return transaction.getAmountNQT();
+    public long getAmountATM() {
+        return transaction.getAmountATM();
     }
 
     @Override
-    public long getFeeNQT() {
-        return transaction.getFeeNQT();
+    public long getFeeATM() {
+        return transaction.getFeeATM();
     }
 
     @Override

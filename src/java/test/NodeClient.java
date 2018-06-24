@@ -95,7 +95,7 @@ public class NodeClient {
 
     /**
      * curl -X POST -d "requestType=sendMoney&secretPhrase=dont know secret phrase hungry&recipient=APL-R3YT-LZ35-PS5X-3NMHR&amountNQ
-     * T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
+     * T=100000000&feeATM=100000000&deadline=60" http://localhost:7876/apl
      */
 
     public String getPeers(String url) {
@@ -216,46 +216,46 @@ public class NodeClient {
         return transactionsList;
     }
 
-    public String sendMoney(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) {
+    public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendMoney");
         parameters.put("secretPhrase", secretPhrase);
         parameters.put("recipient", recipient);
-        parameters.put("amountNQT", amountNQT.toString());
-        parameters.put("feeNQT", feeNQT.toString());
+        parameters.put("amountATM", amountATM.toString());
+        parameters.put("feeATM", feeATM.toString());
         parameters.put("deadline", deadline.toString());
         return postJson(createURI(url), parameters, "");
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) throws IOException, ParseException {
-        String json = sendMoney(url, secretPhrase, recipient, amountNQT, feeNQT, deadline);
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+        String json = sendMoney(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
         return MAPPER.readValue(transactionJSON, Transaction.class);
     }
 
-    private String sendMoneyPrivate(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) {
+    private String sendMoneyPrivate(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendMoneyPrivate");
         parameters.put("secretPhrase", secretPhrase);
         parameters.put("recipient", recipient);
-        parameters.put("amountNQT", amountNQT.toString());
-        parameters.put("feeNQT", feeNQT.toString());
+        parameters.put("amountATM", amountATM.toString());
+        parameters.put("feeATM", feeATM.toString());
         parameters.put("deadline", deadline.toString());
         return postJson(createURI(url), parameters, "");
     }
 
-    public Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) throws IOException, ParseException {
-        String json = sendMoneyPrivate(url, secretPhrase, recipient, amountNQT, feeNQT, deadline);
+    public Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+        String json = sendMoneyPrivate(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
         return MAPPER.readValue(transactionJSON, Transaction.class);
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT) throws IOException, ParseException {
-        return sendMoneyTransaction(url, secretPhrase, recipient, amountNQT, feeNQT, DEFAULT_DEADLINE);
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) throws IOException, ParseException {
+        return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountNQT) throws IOException, ParseException {
-        return sendMoneyTransaction(url, secretPhrase, recipient, amountNQT, DEFAULT_FEE);
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM) throws IOException, ParseException {
+        return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, DEFAULT_FEE);
     }
 
     public List<Block> getBlocksList(String url, boolean includeTransactions, Long timestamp) throws IOException {
@@ -265,12 +265,12 @@ public class NodeClient {
         return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {});
     }
 
-    public String sendMoney(String url, String secretPhrase, String recipient, Long amountNQT) {
-        return sendMoney(url, secretPhrase, recipient, amountNQT, DEFAULT_FEE);
+    public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM) {
+        return sendMoney(url, secretPhrase, recipient, amountATM, DEFAULT_FEE);
     }
 
-    public String sendMoney(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT) {
-        return sendMoney(url, secretPhrase, recipient, amountNQT, feeNQT, DEFAULT_DEADLINE);
+    public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) {
+        return sendMoney(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
 
     public String sendMoney(String url, String secretPhrase, String recipient) {

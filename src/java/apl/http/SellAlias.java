@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -36,7 +36,7 @@ public final class SellAlias extends CreateTransaction {
     static final SellAlias instance = new SellAlias();
 
     private SellAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceNQT");
+        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceATM");
     }
 
     @Override
@@ -44,7 +44,7 @@ public final class SellAlias extends CreateTransaction {
         Alias alias = ParameterParser.getAlias(req);
         Account owner = ParameterParser.getSenderAccount(req);
 
-        long priceNQT = ParameterParser.getLong(req, "priceNQT", 0L, Constants.MAX_BALANCE_NQT, true);
+        long priceATM = ParameterParser.getLong(req, "priceATM", 0L, Constants.MAX_BALANCE_ATM, true);
 
         String recipientValue = Convert.emptyToNull(req.getParameter("recipient"));
         long recipientId = 0;
@@ -63,7 +63,7 @@ public final class SellAlias extends CreateTransaction {
             return INCORRECT_ALIAS_OWNER;
         }
 
-        Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceNQT);
+        Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceATM);
         return createTransaction(req, owner, recipientId, 0, attachment);
     }
 }

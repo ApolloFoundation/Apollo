@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -41,7 +41,7 @@ public final class DGSListing extends CreateTransaction {
 
     private DGSListing() {
         super("messageFile", new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "name", "description", "tags", "quantity", "priceNQT");
+                "name", "description", "tags", "quantity", "priceATM");
     }
 
     @Override
@@ -50,7 +50,7 @@ public final class DGSListing extends CreateTransaction {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
-        long priceNQT = ParameterParser.getPriceNQT(req);
+        long priceATM = ParameterParser.getPriceATM(req);
         int quantity = ParameterParser.getGoodsQuantity(req);
 
         if (name == null) {
@@ -82,7 +82,7 @@ public final class DGSListing extends CreateTransaction {
         }
 
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.DigitalGoodsListing(name, description, tags, quantity, priceNQT);
+        Attachment attachment = new Attachment.DigitalGoodsListing(name, description, tags, quantity, priceATM);
         return createTransaction(req, account, attachment);
 
     }

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -19,6 +19,8 @@ package apl;
 
 import apl.crypto.Crypto;
 import apl.crypto.EncryptedData;
+import apl.updater.Architecture;
+import apl.updater.Platform;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -212,23 +214,23 @@ public interface Attachment extends Appendix {
     final class MessagingAliasSell extends AbstractAttachment {
 
         private final String aliasName;
-        private final long priceNQT;
+        private final long priceATM;
 
         MessagingAliasSell(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
             this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
-            this.priceNQT = buffer.getLong();
+            this.priceATM = buffer.getLong();
         }
 
         MessagingAliasSell(JSONObject attachmentData) {
             super(attachmentData);
             this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-            this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
+            this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
         }
 
-        public MessagingAliasSell(String aliasName, long priceNQT) {
+        public MessagingAliasSell(String aliasName, long priceATM) {
             this.aliasName = aliasName;
-            this.priceNQT = priceNQT;
+            this.priceATM = priceATM;
         }
 
         @Override
@@ -246,21 +248,21 @@ public interface Attachment extends Appendix {
             byte[] aliasBytes = Convert.toBytes(aliasName);
             buffer.put((byte)aliasBytes.length);
             buffer.put(aliasBytes);
-            buffer.putLong(priceNQT);
+            buffer.putLong(priceATM);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("alias", aliasName);
-            attachment.put("priceNQT", priceNQT);
+            attachment.put("priceATM", priceATM);
         }
 
         public String getAliasName(){
             return aliasName;
         }
 
-        public long getPriceNQT(){
-            return priceNQT;
+        public long getPriceATM(){
+            return priceATM;
         }
     }
 
@@ -910,14 +912,14 @@ public interface Attachment extends Appendix {
 
         private final String name;
         private final String description;
-        private final long quantityQNT;
+        private final long quantityATU;
         private final byte decimals;
 
         ColoredCoinsAssetIssuance(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
             this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ASSET_NAME_LENGTH);
             this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ASSET_DESCRIPTION_LENGTH);
-            this.quantityQNT = buffer.getLong();
+            this.quantityATU = buffer.getLong();
             this.decimals = buffer.get();
         }
 
@@ -925,14 +927,14 @@ public interface Attachment extends Appendix {
             super(attachmentData);
             this.name = (String) attachmentData.get("name");
             this.description = Convert.nullToEmpty((String) attachmentData.get("description"));
-            this.quantityQNT = Convert.parseLong(attachmentData.get("quantityQNT"));
+            this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
             this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
         }
 
-        public ColoredCoinsAssetIssuance(String name, String description, long quantityQNT, byte decimals) {
+        public ColoredCoinsAssetIssuance(String name, String description, long quantityATU, byte decimals) {
             this.name = name;
             this.description = Convert.nullToEmpty(description);
-            this.quantityQNT = quantityQNT;
+            this.quantityATU = quantityATU;
             this.decimals = decimals;
         }
 
@@ -949,7 +951,7 @@ public interface Attachment extends Appendix {
             buffer.put(name);
             buffer.putShort((short) description.length);
             buffer.put(description);
-            buffer.putLong(quantityQNT);
+            buffer.putLong(quantityATU);
             buffer.put(decimals);
         }
 
@@ -957,7 +959,7 @@ public interface Attachment extends Appendix {
         void putMyJSON(JSONObject attachment) {
             attachment.put("name", name);
             attachment.put("description", description);
-            attachment.put("quantityQNT", quantityQNT);
+            attachment.put("quantityATU", quantityATU);
             attachment.put("decimals", decimals);
         }
 
@@ -974,8 +976,8 @@ public interface Attachment extends Appendix {
             return description;
         }
 
-        public long getQuantityQNT() {
-            return quantityQNT;
+        public long getQuantityATU() {
+            return quantityATU;
         }
 
         public byte getDecimals() {
@@ -986,23 +988,23 @@ public interface Attachment extends Appendix {
     final class ColoredCoinsAssetTransfer extends AbstractAttachment {
 
         private final long assetId;
-        private final long quantityQNT;
+        private final long quantityATU;
 
         ColoredCoinsAssetTransfer(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
             this.assetId = buffer.getLong();
-            this.quantityQNT = buffer.getLong();
+            this.quantityATU = buffer.getLong();
         }
 
         ColoredCoinsAssetTransfer(JSONObject attachmentData) {
             super(attachmentData);
             this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-            this.quantityQNT = Convert.parseLong(attachmentData.get("quantityQNT"));
+            this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         }
 
-        public ColoredCoinsAssetTransfer(long assetId, long quantityQNT) {
+        public ColoredCoinsAssetTransfer(long assetId, long quantityATU) {
             this.assetId = assetId;
-            this.quantityQNT = quantityQNT;
+            this.quantityATU = quantityATU;
         }
 
         @Override
@@ -1013,13 +1015,13 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(assetId);
-            buffer.putLong(quantityQNT);
+            buffer.putLong(quantityATU);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityQNT", quantityQNT);
+            attachment.put("quantityATU", quantityATU);
         }
 
         @Override
@@ -1031,8 +1033,8 @@ public interface Attachment extends Appendix {
             return assetId;
         }
 
-        public long getQuantityQNT() {
-            return quantityQNT;
+        public long getQuantityATU() {
+            return quantityATU;
         }
 
     }
@@ -1040,23 +1042,23 @@ public interface Attachment extends Appendix {
     final class ColoredCoinsAssetDelete extends AbstractAttachment {
 
         private final long assetId;
-        private final long quantityQNT;
+        private final long quantityATU;
 
         ColoredCoinsAssetDelete(ByteBuffer buffer) {
             super(buffer);
             this.assetId = buffer.getLong();
-            this.quantityQNT = buffer.getLong();
+            this.quantityATU = buffer.getLong();
         }
 
         ColoredCoinsAssetDelete(JSONObject attachmentData) {
             super(attachmentData);
             this.assetId = Convert.parseUnsignedLong((String)attachmentData.get("asset"));
-            this.quantityQNT = Convert.parseLong(attachmentData.get("quantityQNT"));
+            this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         }
 
-        public ColoredCoinsAssetDelete(long assetId, long quantityQNT) {
+        public ColoredCoinsAssetDelete(long assetId, long quantityATU) {
             this.assetId = assetId;
-            this.quantityQNT = quantityQNT;
+            this.quantityATU = quantityATU;
         }
 
         @Override
@@ -1067,13 +1069,13 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(assetId);
-            buffer.putLong(quantityQNT);
+            buffer.putLong(quantityATU);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityQNT", quantityQNT);
+            attachment.put("quantityATU", quantityATU);
         }
 
         @Override
@@ -1085,8 +1087,8 @@ public interface Attachment extends Appendix {
             return assetId;
         }
 
-        public long getQuantityQNT() {
-            return quantityQNT;
+        public long getQuantityATU() {
+            return quantityATU;
         }
 
     }
@@ -1094,27 +1096,27 @@ public interface Attachment extends Appendix {
     abstract class ColoredCoinsOrderPlacement extends AbstractAttachment {
 
         private final long assetId;
-        private final long quantityQNT;
-        private final long priceNQT;
+        private final long quantityATU;
+        private final long priceATM;
 
         private ColoredCoinsOrderPlacement(ByteBuffer buffer) {
             super(buffer);
             this.assetId = buffer.getLong();
-            this.quantityQNT = buffer.getLong();
-            this.priceNQT = buffer.getLong();
+            this.quantityATU = buffer.getLong();
+            this.priceATM = buffer.getLong();
         }
 
         private ColoredCoinsOrderPlacement(JSONObject attachmentData) {
             super(attachmentData);
             this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-            this.quantityQNT = Convert.parseLong(attachmentData.get("quantityQNT"));
-            this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
+            this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
+            this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
         }
 
-        private ColoredCoinsOrderPlacement(long assetId, long quantityQNT, long priceNQT) {
+        private ColoredCoinsOrderPlacement(long assetId, long quantityATU, long priceATM) {
             this.assetId = assetId;
-            this.quantityQNT = quantityQNT;
-            this.priceNQT = priceNQT;
+            this.quantityATU = quantityATU;
+            this.priceATM = priceATM;
         }
 
         @Override
@@ -1125,27 +1127,27 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(assetId);
-            buffer.putLong(quantityQNT);
-            buffer.putLong(priceNQT);
+            buffer.putLong(quantityATU);
+            buffer.putLong(priceATM);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityQNT", quantityQNT);
-            attachment.put("priceNQT", priceNQT);
+            attachment.put("quantityATU", quantityATU);
+            attachment.put("priceATM", priceATM);
         }
 
         public long getAssetId() {
             return assetId;
         }
 
-        public long getQuantityQNT() {
-            return quantityQNT;
+        public long getQuantityATU() {
+            return quantityATU;
         }
 
-        public long getPriceNQT() {
-            return priceNQT;
+        public long getPriceATM() {
+            return priceATM;
         }
     }
 
@@ -1159,8 +1161,8 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public ColoredCoinsAskOrderPlacement(long assetId, long quantityQNT, long priceNQT) {
-            super(assetId, quantityQNT, priceNQT);
+        public ColoredCoinsAskOrderPlacement(long assetId, long quantityATU, long priceATM) {
+            super(assetId, quantityATU, priceATM);
         }
 
         @Override
@@ -1180,8 +1182,8 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public ColoredCoinsBidOrderPlacement(long assetId, long quantityQNT, long priceNQT) {
-            super(assetId, quantityQNT, priceNQT);
+        public ColoredCoinsBidOrderPlacement(long assetId, long quantityATU, long priceATM) {
+            super(assetId, quantityATU, priceATM);
         }
 
         @Override
@@ -1275,26 +1277,26 @@ public interface Attachment extends Appendix {
 
         private final long assetId;
         private final int height;
-        private final long amountNQTPerQNT;
+        private final long amountATMPerATU;
 
         ColoredCoinsDividendPayment(ByteBuffer buffer) {
             super(buffer);
             this.assetId = buffer.getLong();
             this.height = buffer.getInt();
-            this.amountNQTPerQNT = buffer.getLong();
+            this.amountATMPerATU = buffer.getLong();
         }
 
         ColoredCoinsDividendPayment(JSONObject attachmentData) {
             super(attachmentData);
             this.assetId = Convert.parseUnsignedLong((String)attachmentData.get("asset"));
             this.height = ((Long)attachmentData.get("height")).intValue();
-            this.amountNQTPerQNT = Convert.parseLong(attachmentData.get("amountNQTPerQNT"));
+            this.amountATMPerATU = Convert.parseLong(attachmentData.get("amountATMPerATU"));
         }
 
-        public ColoredCoinsDividendPayment(long assetId, int height, long amountNQTPerQNT) {
+        public ColoredCoinsDividendPayment(long assetId, int height, long amountATMPerATU) {
             this.assetId = assetId;
             this.height = height;
-            this.amountNQTPerQNT = amountNQTPerQNT;
+            this.amountATMPerATU = amountATMPerATU;
         }
 
         @Override
@@ -1306,14 +1308,14 @@ public interface Attachment extends Appendix {
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(assetId);
             buffer.putInt(height);
-            buffer.putLong(amountNQTPerQNT);
+            buffer.putLong(amountATMPerATU);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
             attachment.put("height", height);
-            attachment.put("amountNQTPerQNT", amountNQTPerQNT);
+            attachment.put("amountATMPerATU", amountATMPerATU);
         }
 
         @Override
@@ -1329,8 +1331,8 @@ public interface Attachment extends Appendix {
             return height;
         }
 
-        public long getAmountNQTPerQNT() {
-            return amountNQTPerQNT;
+        public long getAmountATMPerATU() {
+            return amountATMPerATU;
         }
 
     }
@@ -1341,7 +1343,7 @@ public interface Attachment extends Appendix {
         private final String description;
         private final String tags;
         private final int quantity;
-        private final long priceNQT;
+        private final long priceATM;
 
         DigitalGoodsListing(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
@@ -1349,7 +1351,7 @@ public interface Attachment extends Appendix {
             this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH);
             this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_TAGS_LENGTH);
             this.quantity = buffer.getInt();
-            this.priceNQT = buffer.getLong();
+            this.priceATM = buffer.getLong();
         }
 
         DigitalGoodsListing(JSONObject attachmentData) {
@@ -1358,15 +1360,15 @@ public interface Attachment extends Appendix {
             this.description = (String) attachmentData.get("description");
             this.tags = (String) attachmentData.get("tags");
             this.quantity = ((Long) attachmentData.get("quantity")).intValue();
-            this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
+            this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
         }
 
-        public DigitalGoodsListing(String name, String description, String tags, int quantity, long priceNQT) {
+        public DigitalGoodsListing(String name, String description, String tags, int quantity, long priceATM) {
             this.name = name;
             this.description = description;
             this.tags = tags;
             this.quantity = quantity;
-            this.priceNQT = priceNQT;
+            this.priceATM = priceATM;
         }
 
         @Override
@@ -1387,7 +1389,7 @@ public interface Attachment extends Appendix {
             buffer.putShort((short) tagsBytes.length);
             buffer.put(tagsBytes);
             buffer.putInt(quantity);
-            buffer.putLong(priceNQT);
+            buffer.putLong(priceATM);
         }
 
         @Override
@@ -1396,7 +1398,7 @@ public interface Attachment extends Appendix {
             attachment.put("description", description);
             attachment.put("tags", tags);
             attachment.put("quantity", quantity);
-            attachment.put("priceNQT", priceNQT);
+            attachment.put("priceATM", priceATM);
         }
 
         @Override
@@ -1412,7 +1414,7 @@ public interface Attachment extends Appendix {
 
         public int getQuantity() { return quantity; }
 
-        public long getPriceNQT() { return priceNQT; }
+        public long getPriceATM() { return priceATM; }
 
     }
 
@@ -1461,23 +1463,23 @@ public interface Attachment extends Appendix {
     final class DigitalGoodsPriceChange extends AbstractAttachment {
 
         private final long goodsId;
-        private final long priceNQT;
+        private final long priceATM;
 
         DigitalGoodsPriceChange(ByteBuffer buffer) {
             super(buffer);
             this.goodsId = buffer.getLong();
-            this.priceNQT = buffer.getLong();
+            this.priceATM = buffer.getLong();
         }
 
         DigitalGoodsPriceChange(JSONObject attachmentData) {
             super(attachmentData);
             this.goodsId = Convert.parseUnsignedLong((String)attachmentData.get("goods"));
-            this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
+            this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
         }
 
-        public DigitalGoodsPriceChange(long goodsId, long priceNQT) {
+        public DigitalGoodsPriceChange(long goodsId, long priceATM) {
             this.goodsId = goodsId;
-            this.priceNQT = priceNQT;
+            this.priceATM = priceATM;
         }
 
         @Override
@@ -1488,13 +1490,13 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(goodsId);
-            buffer.putLong(priceNQT);
+            buffer.putLong(priceATM);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("goods", Long.toUnsignedString(goodsId));
-            attachment.put("priceNQT", priceNQT);
+            attachment.put("priceATM", priceATM);
         }
 
         @Override
@@ -1504,7 +1506,7 @@ public interface Attachment extends Appendix {
 
         public long getGoodsId() { return goodsId; }
 
-        public long getPriceNQT() { return priceNQT; }
+        public long getPriceATM() { return priceATM; }
 
     }
 
@@ -1562,14 +1564,14 @@ public interface Attachment extends Appendix {
 
         private final long goodsId;
         private final int quantity;
-        private final long priceNQT;
+        private final long priceATM;
         private final int deliveryDeadlineTimestamp;
 
         DigitalGoodsPurchase(ByteBuffer buffer) {
             super(buffer);
             this.goodsId = buffer.getLong();
             this.quantity = buffer.getInt();
-            this.priceNQT = buffer.getLong();
+            this.priceATM = buffer.getLong();
             this.deliveryDeadlineTimestamp = buffer.getInt();
         }
 
@@ -1577,14 +1579,14 @@ public interface Attachment extends Appendix {
             super(attachmentData);
             this.goodsId = Convert.parseUnsignedLong((String)attachmentData.get("goods"));
             this.quantity = ((Long)attachmentData.get("quantity")).intValue();
-            this.priceNQT = Convert.parseLong(attachmentData.get("priceNQT"));
+            this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
             this.deliveryDeadlineTimestamp = ((Long)attachmentData.get("deliveryDeadlineTimestamp")).intValue();
         }
 
-        public DigitalGoodsPurchase(long goodsId, int quantity, long priceNQT, int deliveryDeadlineTimestamp) {
+        public DigitalGoodsPurchase(long goodsId, int quantity, long priceATM, int deliveryDeadlineTimestamp) {
             this.goodsId = goodsId;
             this.quantity = quantity;
-            this.priceNQT = priceNQT;
+            this.priceATM = priceATM;
             this.deliveryDeadlineTimestamp = deliveryDeadlineTimestamp;
         }
 
@@ -1597,7 +1599,7 @@ public interface Attachment extends Appendix {
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(goodsId);
             buffer.putInt(quantity);
-            buffer.putLong(priceNQT);
+            buffer.putLong(priceATM);
             buffer.putInt(deliveryDeadlineTimestamp);
         }
 
@@ -1605,7 +1607,7 @@ public interface Attachment extends Appendix {
         void putMyJSON(JSONObject attachment) {
             attachment.put("goods", Long.toUnsignedString(goodsId));
             attachment.put("quantity", quantity);
-            attachment.put("priceNQT", priceNQT);
+            attachment.put("priceATM", priceATM);
             attachment.put("deliveryDeadlineTimestamp", deliveryDeadlineTimestamp);
         }
 
@@ -1618,7 +1620,7 @@ public interface Attachment extends Appendix {
 
         public int getQuantity() { return quantity; }
 
-        public long getPriceNQT() { return priceNQT; }
+        public long getPriceATM() { return priceATM; }
 
         public int getDeliveryDeadlineTimestamp() { return deliveryDeadlineTimestamp; }
 
@@ -1628,7 +1630,7 @@ public interface Attachment extends Appendix {
 
         private final long purchaseId;
         private EncryptedData goods;
-        private final long discountNQT;
+        private final long discountATM;
         private final boolean goodsIsText;
 
         DigitalGoodsDelivery(ByteBuffer buffer) throws AplException.NotValidException {
@@ -1640,7 +1642,7 @@ public interface Attachment extends Appendix {
                 length &= Integer.MAX_VALUE;
             }
             this.goods = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_DGS_GOODS_LENGTH);
-            this.discountNQT = buffer.getLong();
+            this.discountATM = buffer.getLong();
         }
 
         DigitalGoodsDelivery(JSONObject attachmentData) {
@@ -1648,14 +1650,14 @@ public interface Attachment extends Appendix {
             this.purchaseId = Convert.parseUnsignedLong((String) attachmentData.get("purchase"));
             this.goods = new EncryptedData(Convert.parseHexString((String)attachmentData.get("goodsData")),
                     Convert.parseHexString((String)attachmentData.get("goodsNonce")));
-            this.discountNQT = Convert.parseLong(attachmentData.get("discountNQT"));
+            this.discountATM = Convert.parseLong(attachmentData.get("discountATM"));
             this.goodsIsText = Boolean.TRUE.equals(attachmentData.get("goodsIsText"));
         }
 
-        public DigitalGoodsDelivery(long purchaseId, EncryptedData goods, boolean goodsIsText, long discountNQT) {
+        public DigitalGoodsDelivery(long purchaseId, EncryptedData goods, boolean goodsIsText, long discountATM) {
             this.purchaseId = purchaseId;
             this.goods = goods;
-            this.discountNQT = discountNQT;
+            this.discountATM = discountATM;
             this.goodsIsText = goodsIsText;
         }
 
@@ -1670,7 +1672,7 @@ public interface Attachment extends Appendix {
             buffer.putInt(goodsIsText ? goods.getData().length | Integer.MIN_VALUE : goods.getData().length);
             buffer.put(goods.getData());
             buffer.put(goods.getNonce());
-            buffer.putLong(discountNQT);
+            buffer.putLong(discountATM);
         }
 
         @Override
@@ -1678,7 +1680,7 @@ public interface Attachment extends Appendix {
             attachment.put("purchase", Long.toUnsignedString(purchaseId));
             attachment.put("goodsData", Convert.toHexString(goods.getData()));
             attachment.put("goodsNonce", Convert.toHexString(goods.getNonce()));
-            attachment.put("discountNQT", discountNQT);
+            attachment.put("discountATM", discountATM);
             attachment.put("goodsIsText", goodsIsText);
         }
 
@@ -1703,8 +1705,8 @@ public interface Attachment extends Appendix {
             return goods.getData().length;
         }
 
-        public final long getDiscountNQT() {
-            return discountNQT;
+        public final long getDiscountATM() {
+            return discountATM;
         }
 
         public final boolean goodsIsText() {
@@ -1727,8 +1729,8 @@ public interface Attachment extends Appendix {
             this.recipientPublicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
         }
 
-        public UnencryptedDigitalGoodsDelivery(long purchaseId, byte[] goodsToEncrypt, boolean goodsIsText, long discountNQT, byte[] recipientPublicKey) {
-            super(purchaseId, null, goodsIsText, discountNQT);
+        public UnencryptedDigitalGoodsDelivery(long purchaseId, byte[] goodsToEncrypt, boolean goodsIsText, long discountATM, byte[] recipientPublicKey) {
+            super(purchaseId, null, goodsIsText, discountATM);
             this.goodsToEncrypt = goodsToEncrypt;
             this.recipientPublicKey = recipientPublicKey;
         }
@@ -1755,7 +1757,7 @@ public interface Attachment extends Appendix {
                 attachment.put("goodsToEncrypt", goodsIsText() ? Convert.toString(goodsToEncrypt) : Convert.toHexString(goodsToEncrypt));
                 attachment.put("recipientPublicKey", Convert.toHexString(recipientPublicKey));
                 attachment.put("purchase", Long.toUnsignedString(getPurchaseId()));
-                attachment.put("discountNQT", getDiscountNQT());
+                attachment.put("discountATM", getDiscountATM());
                 attachment.put("goodsIsText", goodsIsText());
             } else {
                 super.putMyJSON(attachment);
@@ -1823,23 +1825,23 @@ public interface Attachment extends Appendix {
     final class DigitalGoodsRefund extends AbstractAttachment {
 
         private final long purchaseId;
-        private final long refundNQT;
+        private final long refundATM;
 
         DigitalGoodsRefund(ByteBuffer buffer) {
             super(buffer);
             this.purchaseId = buffer.getLong();
-            this.refundNQT = buffer.getLong();
+            this.refundATM = buffer.getLong();
         }
 
         DigitalGoodsRefund(JSONObject attachmentData) {
             super(attachmentData);
             this.purchaseId = Convert.parseUnsignedLong((String)attachmentData.get("purchase"));
-            this.refundNQT = Convert.parseLong(attachmentData.get("refundNQT"));
+            this.refundATM = Convert.parseLong(attachmentData.get("refundATM"));
         }
 
-        public DigitalGoodsRefund(long purchaseId, long refundNQT) {
+        public DigitalGoodsRefund(long purchaseId, long refundATM) {
             this.purchaseId = purchaseId;
-            this.refundNQT = refundNQT;
+            this.refundATM = refundATM;
         }
 
         @Override
@@ -1850,13 +1852,13 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(purchaseId);
-            buffer.putLong(refundNQT);
+            buffer.putLong(refundATM);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("purchase", Long.toUnsignedString(purchaseId));
-            attachment.put("refundNQT", refundNQT);
+            attachment.put("refundATM", refundATM);
         }
 
         @Override
@@ -1866,7 +1868,7 @@ public interface Attachment extends Appendix {
 
         public long getPurchaseId() { return purchaseId; }
 
-        public long getRefundNQT() { return refundNQT; }
+        public long getRefundATM() { return refundATM; }
 
     }
 
@@ -1929,7 +1931,7 @@ public interface Attachment extends Appendix {
         private final long reserveSupply;
         private final long maxSupply;
         private final int issuanceHeight;
-        private final long minReservePerUnitNQT;
+        private final long minReservePerUnitATM;
         private final int minDifficulty;
         private final int maxDifficulty;
         private final byte ruleset;
@@ -1946,7 +1948,7 @@ public interface Attachment extends Appendix {
             this.reserveSupply = buffer.getLong();
             this.maxSupply = buffer.getLong();
             this.issuanceHeight = buffer.getInt();
-            this.minReservePerUnitNQT = buffer.getLong();
+            this.minReservePerUnitATM = buffer.getLong();
             this.minDifficulty = buffer.get() & 0xFF;
             this.maxDifficulty = buffer.get() & 0xFF;
             this.ruleset = buffer.get();
@@ -1964,7 +1966,7 @@ public interface Attachment extends Appendix {
             this.reserveSupply = Convert.parseLong(attachmentData.get("reserveSupply"));
             this.maxSupply = Convert.parseLong(attachmentData.get("maxSupply"));
             this.issuanceHeight = ((Long)attachmentData.get("issuanceHeight")).intValue();
-            this.minReservePerUnitNQT = Convert.parseLong(attachmentData.get("minReservePerUnitNQT"));
+            this.minReservePerUnitATM = Convert.parseLong(attachmentData.get("minReservePerUnitATM"));
             this.minDifficulty = ((Long)attachmentData.get("minDifficulty")).intValue();
             this.maxDifficulty = ((Long)attachmentData.get("maxDifficulty")).intValue();
             this.ruleset = ((Long)attachmentData.get("ruleset")).byteValue();
@@ -1973,7 +1975,7 @@ public interface Attachment extends Appendix {
         }
 
         public MonetarySystemCurrencyIssuance(String name, String code, String description, byte type, long initialSupply, long reserveSupply,
-                                              long maxSupply, int issuanceHeight, long minReservePerUnitNQT, int minDifficulty, int maxDifficulty,
+                                              long maxSupply, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty,
                                               byte ruleset, byte algorithm, byte decimals) {
             this.name = name;
             this.code = code;
@@ -1983,7 +1985,7 @@ public interface Attachment extends Appendix {
             this.reserveSupply = reserveSupply;
             this.maxSupply = maxSupply;
             this.issuanceHeight = issuanceHeight;
-            this.minReservePerUnitNQT = minReservePerUnitNQT;
+            this.minReservePerUnitATM = minReservePerUnitATM;
             this.minDifficulty = minDifficulty;
             this.maxDifficulty = maxDifficulty;
             this.ruleset = ruleset;
@@ -2013,7 +2015,7 @@ public interface Attachment extends Appendix {
             buffer.putLong(reserveSupply);
             buffer.putLong(maxSupply);
             buffer.putInt(issuanceHeight);
-            buffer.putLong(minReservePerUnitNQT);
+            buffer.putLong(minReservePerUnitATM);
             buffer.put((byte)minDifficulty);
             buffer.put((byte)maxDifficulty);
             buffer.put(ruleset);
@@ -2031,7 +2033,7 @@ public interface Attachment extends Appendix {
             attachment.put("reserveSupply", reserveSupply);
             attachment.put("maxSupply", maxSupply);
             attachment.put("issuanceHeight", issuanceHeight);
-            attachment.put("minReservePerUnitNQT", minReservePerUnitNQT);
+            attachment.put("minReservePerUnitATM", minReservePerUnitATM);
             attachment.put("minDifficulty", minDifficulty);
             attachment.put("maxDifficulty", maxDifficulty);
             attachment.put("ruleset", ruleset);
@@ -2076,8 +2078,8 @@ public interface Attachment extends Appendix {
             return issuanceHeight;
         }
 
-        public long getMinReservePerUnitNQT() {
-            return minReservePerUnitNQT;
+        public long getMinReservePerUnitATM() {
+            return minReservePerUnitATM;
         }
 
         public int getMinDifficulty() {
@@ -2104,23 +2106,23 @@ public interface Attachment extends Appendix {
     final class MonetarySystemReserveIncrease extends AbstractAttachment implements MonetarySystemAttachment {
 
         private final long currencyId;
-        private final long amountPerUnitNQT;
+        private final long amountPerUnitATM;
 
         MonetarySystemReserveIncrease(ByteBuffer buffer) {
             super(buffer);
             this.currencyId = buffer.getLong();
-            this.amountPerUnitNQT = buffer.getLong();
+            this.amountPerUnitATM = buffer.getLong();
         }
 
         MonetarySystemReserveIncrease(JSONObject attachmentData) {
             super(attachmentData);
             this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-            this.amountPerUnitNQT = Convert.parseLong(attachmentData.get("amountPerUnitNQT"));
+            this.amountPerUnitATM = Convert.parseLong(attachmentData.get("amountPerUnitATM"));
         }
 
-        public MonetarySystemReserveIncrease(long currencyId, long amountPerUnitNQT) {
+        public MonetarySystemReserveIncrease(long currencyId, long amountPerUnitATM) {
             this.currencyId = currencyId;
-            this.amountPerUnitNQT = amountPerUnitNQT;
+            this.amountPerUnitATM = amountPerUnitATM;
         }
 
         @Override
@@ -2131,13 +2133,13 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(currencyId);
-            buffer.putLong(amountPerUnitNQT);
+            buffer.putLong(amountPerUnitATM);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("currency", Long.toUnsignedString(currencyId));
-            attachment.put("amountPerUnitNQT", amountPerUnitNQT);
+            attachment.put("amountPerUnitATM", amountPerUnitATM);
         }
 
         @Override
@@ -2150,8 +2152,8 @@ public interface Attachment extends Appendix {
             return currencyId;
         }
 
-        public long getAmountPerUnitNQT() {
-            return amountPerUnitNQT;
+        public long getAmountPerUnitATM() {
+            return amountPerUnitATM;
         }
 
     }
@@ -2268,8 +2270,8 @@ public interface Attachment extends Appendix {
     final class MonetarySystemPublishExchangeOffer extends AbstractAttachment implements MonetarySystemAttachment {
 
         private final long currencyId;
-        private final long buyRateNQT;
-        private final long sellRateNQT;
+        private final long buyRateATM;
+        private final long sellRateATM;
         private final long totalBuyLimit;
         private final long totalSellLimit;
         private final long initialBuySupply;
@@ -2279,8 +2281,8 @@ public interface Attachment extends Appendix {
         MonetarySystemPublishExchangeOffer(ByteBuffer buffer) {
             super(buffer);
             this.currencyId = buffer.getLong();
-            this.buyRateNQT = buffer.getLong();
-            this.sellRateNQT = buffer.getLong();
+            this.buyRateATM = buffer.getLong();
+            this.sellRateATM = buffer.getLong();
             this.totalBuyLimit = buffer.getLong();
             this.totalSellLimit = buffer.getLong();
             this.initialBuySupply = buffer.getLong();
@@ -2291,8 +2293,8 @@ public interface Attachment extends Appendix {
         MonetarySystemPublishExchangeOffer(JSONObject attachmentData) {
             super(attachmentData);
             this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-            this.buyRateNQT = Convert.parseLong(attachmentData.get("buyRateNQT"));
-            this.sellRateNQT = Convert.parseLong(attachmentData.get("sellRateNQT"));
+            this.buyRateATM = Convert.parseLong(attachmentData.get("buyRateATM"));
+            this.sellRateATM = Convert.parseLong(attachmentData.get("sellRateATM"));
             this.totalBuyLimit = Convert.parseLong(attachmentData.get("totalBuyLimit"));
             this.totalSellLimit = Convert.parseLong(attachmentData.get("totalSellLimit"));
             this.initialBuySupply = Convert.parseLong(attachmentData.get("initialBuySupply"));
@@ -2300,11 +2302,11 @@ public interface Attachment extends Appendix {
             this.expirationHeight = ((Long)attachmentData.get("expirationHeight")).intValue();
         }
 
-        public MonetarySystemPublishExchangeOffer(long currencyId, long buyRateNQT, long sellRateNQT, long totalBuyLimit,
+        public MonetarySystemPublishExchangeOffer(long currencyId, long buyRateATM, long sellRateATM, long totalBuyLimit,
                                                   long totalSellLimit, long initialBuySupply, long initialSellSupply, int expirationHeight) {
             this.currencyId = currencyId;
-            this.buyRateNQT = buyRateNQT;
-            this.sellRateNQT = sellRateNQT;
+            this.buyRateATM = buyRateATM;
+            this.sellRateATM = sellRateATM;
             this.totalBuyLimit = totalBuyLimit;
             this.totalSellLimit = totalSellLimit;
             this.initialBuySupply = initialBuySupply;
@@ -2320,8 +2322,8 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(currencyId);
-            buffer.putLong(buyRateNQT);
-            buffer.putLong(sellRateNQT);
+            buffer.putLong(buyRateATM);
+            buffer.putLong(sellRateATM);
             buffer.putLong(totalBuyLimit);
             buffer.putLong(totalSellLimit);
             buffer.putLong(initialBuySupply);
@@ -2332,8 +2334,8 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("currency", Long.toUnsignedString(currencyId));
-            attachment.put("buyRateNQT", buyRateNQT);
-            attachment.put("sellRateNQT", sellRateNQT);
+            attachment.put("buyRateATM", buyRateATM);
+            attachment.put("sellRateATM", sellRateATM);
             attachment.put("totalBuyLimit", totalBuyLimit);
             attachment.put("totalSellLimit", totalSellLimit);
             attachment.put("initialBuySupply", initialBuySupply);
@@ -2351,12 +2353,12 @@ public interface Attachment extends Appendix {
             return currencyId;
         }
 
-        public long getBuyRateNQT() {
-            return buyRateNQT;
+        public long getBuyRateATM() {
+            return buyRateATM;
         }
 
-        public long getSellRateNQT() {
-            return sellRateNQT;
+        public long getSellRateATM() {
+            return sellRateATM;
         }
 
         public long getTotalBuyLimit() {
@@ -2384,26 +2386,26 @@ public interface Attachment extends Appendix {
     abstract class MonetarySystemExchange extends AbstractAttachment implements MonetarySystemAttachment {
 
         private final long currencyId;
-        private final long rateNQT;
+        private final long rateATM;
         private final long units;
 
         private MonetarySystemExchange(ByteBuffer buffer) {
             super(buffer);
             this.currencyId = buffer.getLong();
-            this.rateNQT = buffer.getLong();
+            this.rateATM = buffer.getLong();
             this.units = buffer.getLong();
         }
 
         private MonetarySystemExchange(JSONObject attachmentData) {
             super(attachmentData);
             this.currencyId = Convert.parseUnsignedLong((String)attachmentData.get("currency"));
-            this.rateNQT = Convert.parseLong(attachmentData.get("rateNQT"));
+            this.rateATM = Convert.parseLong(attachmentData.get("rateATM"));
             this.units = Convert.parseLong(attachmentData.get("units"));
         }
 
-        private MonetarySystemExchange(long currencyId, long rateNQT, long units) {
+        private MonetarySystemExchange(long currencyId, long rateATM, long units) {
             this.currencyId = currencyId;
-            this.rateNQT = rateNQT;
+            this.rateATM = rateATM;
             this.units = units;
         }
 
@@ -2415,14 +2417,14 @@ public interface Attachment extends Appendix {
         @Override
         void putMyBytes(ByteBuffer buffer) {
             buffer.putLong(currencyId);
-            buffer.putLong(rateNQT);
+            buffer.putLong(rateATM);
             buffer.putLong(units);
         }
 
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("currency", Long.toUnsignedString(currencyId));
-            attachment.put("rateNQT", rateNQT);
+            attachment.put("rateATM", rateATM);
             attachment.put("units", units);
         }
 
@@ -2431,8 +2433,8 @@ public interface Attachment extends Appendix {
             return currencyId;
         }
 
-        public long getRateNQT() {
-            return rateNQT;
+        public long getRateATM() {
+            return rateATM;
         }
 
         public long getUnits() {
@@ -2451,8 +2453,8 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public MonetarySystemExchangeBuy(long currencyId, long rateNQT, long units) {
-            super(currencyId, rateNQT, units);
+        public MonetarySystemExchangeBuy(long currencyId, long rateATM, long units) {
+            super(currencyId, rateATM, units);
         }
 
         @Override
@@ -2472,8 +2474,8 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public MonetarySystemExchangeSell(long currencyId, long rateNQT, long units) {
-            super(currencyId, rateNQT, units);
+        public MonetarySystemExchangeSell(long currencyId, long rateATM, long units) {
+            super(currencyId, rateATM, units);
         }
 
         @Override
@@ -3555,4 +3557,173 @@ public interface Attachment extends Appendix {
         }
 
     }
+
+    abstract class UpdateAttachment extends AbstractAttachment {
+
+        private final Platform platform;
+        private final Architecture architecture;
+        private final String url;
+        private final Version version;
+        private final int hash;
+        private final byte[] signature;
+
+        UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
+            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
+            url = Convert.readString(buffer, buffer.getShort(), Constants.MAX_UPDATE_URL_LENGTH).trim();
+            version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
+            hash = buffer.getInt();
+            int signatureLength = buffer.getShort();
+            signature = new byte[signatureLength];
+            buffer.get(signature);
+        }
+
+        UpdateAttachment(JSONObject attachmentData) {
+            super(attachmentData);
+            platform = Platform.valueOf(Convert.nullToEmpty((String) attachmentData.get("platform")).trim());
+            architecture = Architecture.valueOf(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
+            url = Convert.nullToEmpty((String) attachmentData.get("url")).trim();
+            version = Version.from(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
+            hash = (int) attachmentData.get("hash");
+            signature = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("signature")).trim());
+        }
+
+        public UpdateAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            this.platform = platform;
+            this.architecture = architecture;
+            this.url = url;
+            this.version = version;
+            this.hash = hash;
+            this.signature = signature;
+        }
+
+        @Override
+        int getMySize() {
+            return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
+                    + 2 + Convert.toBytes(url).length + 1 + Convert.toBytes(version.toString()).length + 4 + 2 + signature.length;
+        }
+
+        @Override
+        void putMyBytes(ByteBuffer buffer) {
+            byte[] platform = Convert.toBytes(this.platform.toString());
+            byte[] architecture = Convert.toBytes(this.architecture.toString());
+            byte[] url = Convert.toBytes(this.url);
+            byte[] version = Convert.toBytes(this.version.toString());
+            buffer.put((byte) platform.length);
+            buffer.put(platform);
+            buffer.put((byte) architecture.length);
+            buffer.put(architecture);
+            buffer.putShort((short) url.length);
+            buffer.put(url);
+            buffer.put((byte) version.length);
+            buffer.put(version);
+            buffer.putInt(hash);
+            buffer.putShort((short) signature.length);
+            buffer.put(signature);
+        }
+
+        @Override
+        void putMyJSON(JSONObject attachment) {
+            attachment.put("platform", platform.toString());
+            attachment.put("architecture", architecture.toString());
+            attachment.put("url", url);
+            attachment.put("version", version.toString());
+            attachment.put("hash", hash);
+            attachment.put("signature", Convert.toHexString(signature));
+        }
+
+        public Platform getPlatform() {
+            return platform;
+        }
+
+        public Architecture getArchitecture() {
+            return architecture;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public Version getAppVersion() {
+            return version;
+        }
+
+        public int getHash() {
+            return hash;
+        }
+
+        public byte[] getSignature() {
+            return signature;
+        }
+
+        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature, byte level) {
+            if (level == TransactionType.Update.CRITICAL.getSubtype()) {
+                return new Attachment.CriticalUpdate(platform, architecture, url, version, hash, signature);
+            } else if (level == TransactionType.Update.IMPORTANT.getSubtype()) {
+                return new Attachment.ImportantUpdate(platform, architecture, url, version, hash, signature);
+            } else if (level == TransactionType.Update.MINOR.getSubtype()) {
+                return new Attachment.MinorUpdate(platform, architecture, url, version, hash, signature);
+            }
+            return null;
+        }
+    }
+
+    final class CriticalUpdate extends UpdateAttachment {
+        CriticalUpdate(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+        }
+
+        CriticalUpdate(JSONObject attachmentData) {
+            super(attachmentData);
+        }
+
+        public CriticalUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.CRITICAL;
+        }
+    }
+
+    final class ImportantUpdate extends UpdateAttachment {
+        ImportantUpdate(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+        }
+
+        ImportantUpdate(JSONObject attachmentData) {
+            super(attachmentData);
+        }
+
+        public ImportantUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.IMPORTANT;
+        }
+    }
+
+    final class MinorUpdate extends UpdateAttachment {
+        MinorUpdate(ByteBuffer buffer) throws AplException.NotValidException {
+            super(buffer);
+        }
+
+        MinorUpdate(JSONObject attachmentData) {
+            super(attachmentData);
+        }
+
+        public MinorUpdate(Platform platform, Architecture architecture, String url, Version version, int hash, byte[] signature) {
+            super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public TransactionType getTransactionType() {
+            return TransactionType.Update.MINOR;
+        }
+    }
+
 }

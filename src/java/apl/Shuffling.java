@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -672,7 +672,7 @@ public final class Shuffling {
                 Account participantAccount = Account.getAccount(participant.getAccountId());
                 holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                 if (holdingType != HoldingType.APL) {
-                    participantAccount.addToBalanceNQT(event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
+                    participantAccount.addToBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
                 }
             }
         }
@@ -682,7 +682,7 @@ public final class Shuffling {
             recipientAccount.apply(recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
-                recipientAccount.addToBalanceAndUnconfirmedBalanceNQT(event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
+                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
             }
         }
         setStage(Stage.DONE, 0, (short)0);
@@ -703,29 +703,29 @@ public final class Shuffling {
                 holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                 if (participantAccount.getId() != blamedAccountId) {
                     if (holdingType != HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceNQT(event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
+                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
                     }
                 } else {
                     if (holdingType == HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceNQT(event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
+                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
                     }
-                    participantAccount.addToBalanceNQT(event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
+                    participantAccount.addToBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
                 }
             }
         }
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
-            long fee = Constants.SHUFFLING_DEPOSIT_NQT / 4;
+            long fee = Constants.SHUFFLING_DEPOSIT_ATM / 4;
             for (int i = 0; i < 3; i++) {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-                previousGeneratorAccount.addToForgedBalanceNQT(fee);
+                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
+                previousGeneratorAccount.addToForgedBalanceATM(fee);
                 Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
             }
-            fee = Constants.SHUFFLING_DEPOSIT_NQT - 3 * fee;
+            fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
-            blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-            blockGeneratorAccount.addToForgedBalanceNQT(fee);
+            blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
+            blockGeneratorAccount.addToForgedBalanceATM(fee);
             Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
         }
         setStage(Stage.CANCELLED, blamedAccountId, (short)0);

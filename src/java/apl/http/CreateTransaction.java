@@ -1,7 +1,7 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
@@ -30,7 +30,7 @@ import static apl.http.JSONResponses.*;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
-    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeNQT",
+    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
             "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
@@ -67,13 +67,13 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return createTransaction(req, senderAccount, 0, 0, attachment);
     }
 
-    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountNQT)
+    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
             throws AplException {
-        return createTransaction(req, senderAccount, recipientId, amountNQT, Attachment.ORDINARY_PAYMENT);
+        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.ORDINARY_PAYMENT);
     }
-    final JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountNQT)
+    final JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
             throws AplException {
-        return createTransaction(req, senderAccount, recipientId, amountNQT, Attachment.PRIVATE_PAYMENT);
+        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
     }
 
     private Appendix.Phasing parsePhasing(HttpServletRequest req) throws ParameterException {
@@ -123,7 +123,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     }
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
-                                            long amountNQT, Attachment attachment) throws AplException {
+                                            long amountATM, Attachment attachment) throws AplException {
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
@@ -175,7 +175,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             return INCORRECT_DEADLINE;
         }
 
-        long feeNQT = ParameterParser.getFeeNQT(req);
+        long feeATM = ParameterParser.getFeeATM(req);
         int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
         long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
         if (ecBlockId != 0 && ecBlockId != Apl.getBlockchain().getBlockIdAtHeight(ecBlockHeight)) {
@@ -191,7 +191,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         byte[] publicKey = secretPhrase != null ? Crypto.getPublicKey(secretPhrase) : Convert.parseHexString(publicKeyValue);
 
         try {
-            Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountNQT, feeNQT,
+            Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountATM, feeATM,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
@@ -209,7 +209,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
             Transaction transaction = builder.build(secretPhrase);
             try {
-                if (Math.addExact(amountNQT, transaction.getFeeNQT()) > senderAccount.getUnconfirmedBalanceNQT()) {
+                if (Math.addExact(amountATM, transaction.getFeeATM()) > senderAccount.getUnconfirmedBalanceATM()) {
                     return NOT_ENOUGH_FUNDS;
                 }
             } catch (ArithmeticException e) {

@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -141,7 +142,7 @@ var NRS = (function(NRS, $) {
 						"type": "info",
 						"message": $.t("recipient_info_with_name", {
 							"name" : NRS.unescapeRespStr(response.name),
-							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+							"amount": NRS.formatAmount(response.unconfirmedBalanceATM, false, true),
                             "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
@@ -151,7 +152,7 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "info",
 						"message": $.t("recipient_info", {
-							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+							"amount": NRS.formatAmount(response.unconfirmedBalanceATM, false, true),
                             "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response
@@ -183,7 +184,7 @@ var NRS = (function(NRS, $) {
 					result = {
 						"type": "warning",
 						"message": $.t("recipient_no_public_key_pka", {
-							"amount": NRS.formatAmount(response.unconfirmedBalanceNQT, false, true),
+							"amount": NRS.formatAmount(response.unconfirmedBalanceATM, false, true),
                             "symbol": NRS.constants.COIN_SYMBOL
 						}),
 						"account": response,

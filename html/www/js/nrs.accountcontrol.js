@@ -1,6 +1,7 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
@@ -51,7 +52,7 @@ var NRS = (function(NRS, $) {
 			labelText: "Asset Quantity",
 			labelI18n: "asset_quantity",
 			helpI18n: "approve_transaction_amount_help",
-			inputName: "controlQuorumQNTf",
+			inputName: "controlQuorumATUf",
 			addonText: "Quantity",
 			addonI18n: "quantity"
 		}
@@ -62,7 +63,7 @@ var NRS = (function(NRS, $) {
 			labelText: "Currency Units",
 			labelI18n: "currency_units",
 			helpI18n: "approve_transaction_amount_help",
-			inputName: "controlQuorumQNTf",
+			inputName: "controlQuorumATUf",
 			addonText: "Units",
 			addonI18n: "units"
 		}
@@ -115,14 +116,14 @@ var NRS = (function(NRS, $) {
 		$elems.find('input').prop("disabled", true);
 		$elems.hide();
 
-		context['inputName'] = 'controlMinBalanceQNTf';
+		context['inputName'] = 'controlMinBalanceATUf';
 		context['addonText'] = 'Quantity';
 		context['addonI18n'] = 'quantity';
 		var $elems = NRS.initModalUIElement($modal, '.phasing_only_min_balance_asset_quantity', 'simple_input_with_addon_modal_ui_element', context);
 		$elems.find('input').prop("disabled", true);
 		$elems.hide();
 
-		context['inputName'] = 'controlMinBalanceQNTf';
+		context['inputName'] = 'controlMinBalanceATUf';
 		context['addonText'] = 'Units';
 		context['addonI18n'] = 'units';
 		var $elems = NRS.initModalUIElement($modal, '.phasing_only_min_balance_currency_units', 'simple_input_with_addon_modal_ui_element', context);
