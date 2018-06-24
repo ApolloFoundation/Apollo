@@ -621,7 +621,8 @@ var NRS = (function(NRS, $, undefined) {
         delete NRS.accountLedgerPagination;
         delete NRS.blocksPagination;
 		
-		NRS.getAccountLocal();
+		NRS.removeAccountLocal();
+		
         if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");
             stopForgingModal.find(".show_logout").show();
