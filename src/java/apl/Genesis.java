@@ -96,19 +96,19 @@ public final class Genesis {
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
             Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()));
-            account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
+            account.addToBalanceAndUnconfirmedBalanceNQT(null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
                 Db.db.commitTransaction();
             }
         }
-        if (total > Constants.MAX_BALANCE_ATM) {
-            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_ATM);
+        if (total > Constants.MAX_BALANCE_NQT) {
+            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_NQT);
         }
         Logger.logDebugMessage("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.COIN_SYMBOL);
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY);
-        creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
+        creatorAccount.addToBalanceAndUnconfirmedBalanceNQT(null, 0, -total);
         genesisAccountsJSON = null;
     }
 

@@ -298,7 +298,7 @@ final class PeerImpl implements Peer {
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < Apl.getBlockchain().getHeight() - 60) {
             long accountId = hallmark.getAccountId();
             Account account = Account.getAccount(accountId);
-            hallmarkBalance = account == null ? 0 : account.getBalanceATM();
+            hallmarkBalance = account == null ? 0 : account.getBalanceNQT();
             hallmarkBalanceHeight = Apl.getBlockchain().getHeight();
         }
         return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / Constants.MAX_BALANCE_APL);

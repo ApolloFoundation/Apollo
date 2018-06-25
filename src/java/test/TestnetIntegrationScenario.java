@@ -109,7 +109,7 @@ public class TestnetIntegrationScenario {
         String sender = getRandomRS(ACCOUNTS);
         String recipient = getRandomRecipientRS(ACCOUNTS, sender);
         String secretPhrase = ACCOUNTS.get(sender);
-        Long amount = atm(RANDOM.nextInt(10) + 1);
+        Long amount = nqt(RANDOM.nextInt(10) + 1);
         return CLIENT.sendMoneyTransaction(host, secretPhrase, recipient, amount);
     }
 
@@ -118,7 +118,7 @@ public class TestnetIntegrationScenario {
         String sender = getRandomRS(ACCOUNTS);
         String recipient = getRandomRecipientRS(ACCOUNTS, sender);
         String secretPhrase = ACCOUNTS.get(sender);
-        Long amount = atm(RANDOM.nextInt(10) + 1);
+        Long amount = nqt(RANDOM.nextInt(10) + 1);
         return CLIENT.sendMoneyPrivateTransaction(host, secretPhrase, recipient, amount, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
     }
 }

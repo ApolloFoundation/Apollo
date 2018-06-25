@@ -167,8 +167,8 @@ final class TransactionDb {
             byte subtype = rs.getByte("subtype");
             int timestamp = rs.getInt("timestamp");
             short deadline = rs.getShort("deadline");
-            long amountATM = rs.getLong("amount");
-            long feeATM = rs.getLong("fee");
+            long amountNQT = rs.getLong("amount");
+            long feeNQT = rs.getLong("fee");
             byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
             int ecBlockHeight = rs.getInt("ec_block_height");
             long ecBlockId = rs.getLong("ec_block_id");
@@ -190,7 +190,7 @@ final class TransactionDb {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer))
+                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer))
                     .timestamp(timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
@@ -316,8 +316,8 @@ final class TransactionDb {
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());
-                    pstmt.setLong(++i, transaction.getAmountATM());
-                    pstmt.setLong(++i, transaction.getFeeATM());
+                    pstmt.setLong(++i, transaction.getAmountNQT());
+                    pstmt.setLong(++i, transaction.getFeeNQT());
                     DbUtils.setBytes(pstmt, ++i, transaction.referencedTransactionFullHash());
                     pstmt.setInt(++i, transaction.getHeight());
                     pstmt.setLong(++i, transaction.getBlockId());

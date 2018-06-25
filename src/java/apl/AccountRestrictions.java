@@ -134,7 +134,7 @@ public final class AccountRestrictions {
         }
 
         private void checkTransaction(Transaction transaction) throws AccountControlException {
-            if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
+            if (maxFees > 0 && Math.addExact(transaction.getFeeNQT(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL, Constants.COIN_SYMBOL));
             }
             if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {

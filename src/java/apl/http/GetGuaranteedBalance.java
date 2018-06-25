@@ -41,9 +41,9 @@ public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
 
         JSONObject response = new JSONObject();
         if (account == null) {
-            response.put("guaranteedBalanceATM", "0");
+            response.put("guaranteedBalanceNQT", "0");
         } else {
-            response.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(numberOfConfirmations, Apl.getBlockchain().getHeight())));
+            response.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceNQT(numberOfConfirmations, Apl.getBlockchain().getHeight())));
         }
 
         return response;

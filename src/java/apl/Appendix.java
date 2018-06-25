@@ -1412,8 +1412,8 @@ public interface Appendix {
         void reject(TransactionImpl transaction) {
             Account senderAccount = Account.getAccount(transaction.getSenderId());
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-            senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
-                                                     transaction.getAmountATM());
+            senderAccount.addToUnconfirmedBalanceNQT(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+                                                     transaction.getAmountNQT());
             TransactionProcessorImpl.getInstance()
                     .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
             Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been rejected");

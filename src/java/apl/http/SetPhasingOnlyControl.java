@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
  *  <ul>
  *  <li>NONE(-1) - the phasing control is removed</li>
  *  <li>ACCOUNT(0) - only by-account voting is allowed</li>
- *  <li>ATM(1) - only balance voting is allowed</li>
+ *  <li>NQT(1) - only balance voting is allowed</li>
  *  <li>ASSET(2) - only asset voting is allowed</li>
  *  <li>CURRENCY(3) - only currency voting is allowed</li>
  *  </ul>
@@ -45,7 +45,7 @@ import javax.servlet.http.HttpServletRequest;
  * <li>controlMinBalanceModel - The expected minimum balance model. Possible values:
  * <ul>
  *  <li>NONE(0) No minimum balance restriction</li>
- *  <li>ATM(1) Apl balance threshold</li>
+ *  <li>NQT(1) Apl balance threshold</li>
  *  <li>ASSET(2) Asset balance threshold</li>
  *  <li>CURRENCY(3) Currency balance threshold</li>
  * </ul>
@@ -73,7 +73,7 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         Account account = ParameterParser.getSenderAccount(request);
         PhasingParams phasingParams = parsePhasingParams(request, "control");
-        long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, Constants.MAX_BALANCE_ATM, false);
+        long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, Constants.MAX_BALANCE_NQT, false);
         short minDuration = (short)ParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         short maxDuration = (short) ParameterParser.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         return createTransaction(request, account, new Attachment.SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration));

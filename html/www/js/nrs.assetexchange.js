@@ -145,7 +145,7 @@ var NRS = (function (NRS, $, undefined) {
             "groupName": String(asset.groupName).toLowerCase(),
             "account": String(asset.account),
             "accountRS": String(asset.accountRS),
-            "quantityATU": String(asset.quantityATU),
+            "quantityQNT": String(asset.quantityQNT),
             "decimals": parseInt(asset.decimals, 10)
         };
         assets.push(cachedAsset);
@@ -256,7 +256,7 @@ var NRS = (function (NRS, $, undefined) {
                 "description": String(asset.description),
                 "account": String(asset.account),
                 "accountRS": String(asset.accountRS),
-                "quantityATU": String(asset.quantityATU),
+                "quantityQNT": String(asset.quantityQNT),
                 "decimals": parseInt(asset.decimals, 10),
                 "groupName": ""
             };
@@ -390,12 +390,12 @@ var NRS = (function (NRS, $, undefined) {
             }
 
             var ownsAsset = false;
-            var ownsQuantityATU = 0;
+            var ownsQuantityQNT = 0;
             if (NRS.accountInfo.assetBalances) {
                 $.each(NRS.accountInfo.assetBalances, function (key, assetBalance) {
-                    if (assetBalance.asset == asset.asset && assetBalance.balanceATU != "0") {
+                    if (assetBalance.asset == asset.asset && assetBalance.balanceQNT != "0") {
                         ownsAsset = true;
-                        ownsQuantityATU = assetBalance.balanceATU;
+                        ownsQuantityQNT = assetBalance.balanceQNT;
                         return false;
                     }
                 });
@@ -406,7 +406,7 @@ var NRS = (function (NRS, $, undefined) {
             rows += "data-asset='" + NRS.escapeRespStr(asset.asset) + "'" + (!ungrouped ? " data-groupname='" + NRS.escapeRespStr(asset.groupName) + "'" : "");
             rows += (isClosedGroup ? " style='display:none'" : "") + " data-closed='" + isClosedGroup + "'>";
             rows += "<h4 class='list-group-item-heading'>" + NRS.escapeRespStr(asset.name) + "</h4>";
-            rows += "<p class='list-group-item-text'><span>" + $.t('quantity') + "</span>: " + NRS.formatQuantity(ownsQuantityATU, asset.decimals) + "</p>";
+            rows += "<p class='list-group-item-text'><span>" + $.t('quantity') + "</span>: " + NRS.formatQuantity(ownsQuantityQNT, asset.decimals) + "</p>";
             rows += "</a>";
         }
 
@@ -480,7 +480,7 @@ var NRS = (function (NRS, $, undefined) {
         assetExchangeSidebar.find("a.list-group-item.owns_asset").removeClass("owns_asset").addClass("not_owns_asset");
         if (NRS.accountInfo.assetBalances) {
             $.each(NRS.accountInfo.assetBalances, function (key, assetBalance) {
-                if (assetBalance.balanceATU != "0") {
+                if (assetBalance.balanceQNT != "0") {
                     $("#asset_exchange_sidebar").find("a.list-group-item[data-asset=" + assetBalance.asset + "]").addClass("owns_asset").removeClass("not_owns_asset");
                 }
             });
@@ -614,7 +614,7 @@ var NRS = (function (NRS, $, undefined) {
                             }, 50);
                         });
                     }
-                    $("#asset_quantity").html(NRS.formatQuantity(response.quantityATU, response.decimals));
+                    $("#asset_quantity").html(NRS.formatQuantity(response.quantityQNT, response.decimals));
                 }
             });
 
@@ -634,11 +634,11 @@ var NRS = (function (NRS, $, undefined) {
             $("#dividend_payment_link").hide();
         }
 
-        if (NRS.accountInfo.unconfirmedBalanceATM == "0") {
+        if (NRS.accountInfo.unconfirmedBalanceNQT == "0") {
             $("#your_apl_balance").html("0");
             $("#buy_automatic_price").addClass("zero").removeClass("nonzero");
         } else {
-            $("#your_apl_balance").html(NRS.formatAmount(NRS.accountInfo.unconfirmedBalanceATM));
+            $("#your_apl_balance").html(NRS.formatAmount(NRS.accountInfo.unconfirmedBalanceNQT));
             $("#buy_automatic_price").addClass("nonzero").removeClass("zero");
         }
 
@@ -646,9 +646,9 @@ var NRS = (function (NRS, $, undefined) {
             for (var i = 0; i < NRS.accountInfo.unconfirmedAssetBalances.length; i++) {
                 var balance = NRS.accountInfo.unconfirmedAssetBalances[i];
                 if (balance.asset == assetId) {
-                    currentAsset.yourBalanceATU = balance.unconfirmedBalanceATU;
-                    $("#your_asset_balance").html(NRS.formatQuantity(balance.unconfirmedBalanceATU, currentAsset.decimals));
-                    if (balance.unconfirmedBalanceATU == "0") {
+                    currentAsset.yourBalanceQNT = balance.unconfirmedBalanceQNT;
+                    $("#your_asset_balance").html(NRS.formatQuantity(balance.unconfirmedBalanceQNT, currentAsset.decimals));
+                    if (balance.unconfirmedBalanceQNT == "0") {
                         $("#sell_automatic_price").addClass("zero").removeClass("nonzero");
                     } else {
                         $("#sell_automatic_price").addClass("nonzero").removeClass("zero");
@@ -658,8 +658,8 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
 
-        if (!currentAsset.yourBalanceATU) {
-            currentAsset.yourBalanceATU = "0";
+        if (!currentAsset.yourBalanceQNT) {
+            currentAsset.yourBalanceQNT = "0";
             $("#your_asset_balance").html("0");
         }
 
@@ -675,32 +675,32 @@ var NRS = (function (NRS, $, undefined) {
             $("#" + (type == "ask" ? "sell" : "buy") + "_orders_count").html("(" + orders.length + (orders.length == 50 ? "+" : "") + ")");
             var rows = "";
             var sum = new BigInteger(String("0"));
-            var quantityDecimals = NRS.getNumberOfDecimals(orders, "quantityATU", function(val) {
-                return NRS.formatQuantity(val.quantityATU, currentAsset.decimals);
+            var quantityDecimals = NRS.getNumberOfDecimals(orders, "quantityQNT", function(val) {
+                return NRS.formatQuantity(val.quantityQNT, currentAsset.decimals);
             });
-            var priceDecimals = NRS.getNumberOfDecimals(orders, "priceATM", function(val) {
-                return NRS.formatOrderPricePerWholeATU(val.priceATM, currentAsset.decimals);
+            var priceDecimals = NRS.getNumberOfDecimals(orders, "priceNQT", function(val) {
+                return NRS.formatOrderPricePerWholeQNT(val.priceNQT, currentAsset.decimals);
             });
-            var amountDecimals = NRS.getNumberOfDecimals(orders, "totalATM", function(val) {
-                return NRS.formatAmount(NRS.calculateOrderTotalATM(val.quantityATU, val.priceATM));
+            var amountDecimals = NRS.getNumberOfDecimals(orders, "totalNQT", function(val) {
+                return NRS.formatAmount(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT));
             });
             for (var i = 0; i < orders.length; i++) {
                 order = orders[i];
-                order.priceATM = new BigInteger(order.priceATM);
-                order.quantityATU = new BigInteger(order.quantityATU);
-                order.totalATM = new BigInteger(NRS.calculateOrderTotalATM(order.quantityATU, order.priceATM));
-                sum = sum.add(order.totalATM);
+                order.priceNQT = new BigInteger(order.priceNQT);
+                order.quantityQNT = new BigInteger(order.quantityQNT);
+                order.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(order.quantityQNT, order.priceNQT));
+                sum = sum.add(order.totalNQT);
                 if (i == 0 && !refresh) {
-                    $("#" + (type == "ask" ? "buy" : "sell") + "_asset_price").val(NRS.calculateOrderPricePerWholeATU(order.priceATM, currentAsset.decimals));
+                    $("#" + (type == "ask" ? "buy" : "sell") + "_asset_price").val(NRS.calculateOrderPricePerWholeQNT(order.priceNQT, currentAsset.decimals));
                 }
                 var statusIcon = NRS.getTransactionStatusIcon(order);
                 var className = (order.account == NRS.account ? "your-order" : "");
-                rows += "<tr class='" + className + "' data-transaction='" + NRS.escapeRespStr(order.order) + "' data-quantity='" + order.quantityATU.toString().escapeHTML() + "' data-price='" + order.priceATM.toString().escapeHTML() + "'>" +
+                rows += "<tr class='" + className + "' data-transaction='" + NRS.escapeRespStr(order.order) + "' data-quantity='" + order.quantityQNT.toString().escapeHTML() + "' data-price='" + order.priceNQT.toString().escapeHTML() + "'>" +
                     "<td>" + NRS.getTransactionLink(order.order, statusIcon, true) + "</td>" +
                     "<td>" + NRS.getAccountLink(order, "account", currentAsset.accountRS, "asset_issuer") + "</td>" +
-                    "<td class='numeric'>" + NRS.formatQuantity(order.quantityATU, currentAsset.decimals, false, quantityDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatOrderPricePerWholeATU(order.priceATM, currentAsset.decimals, priceDecimals) + "</td>" +
-                    "<td class='numeric'>" + NRS.formatAmount(order.totalATM, false, false, amountDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatQuantity(order.quantityQNT, currentAsset.decimals, false, quantityDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatOrderPricePerWholeQNT(order.priceNQT, currentAsset.decimals, priceDecimals) + "</td>" +
+                    "<td class='numeric'>" + NRS.formatAmount(order.totalNQT, false, false, amountDecimals) + "</td>" +
                     "<td class='numeric'>" + NRS.formatAmount(sum, false, false, amountDecimals) + "</td>" +
                 "</tr>";
             }
@@ -753,9 +753,9 @@ var NRS = (function (NRS, $, undefined) {
             var orders = results[0].concat(results[1]);
             orders.sort(function (a, b) {
                 if (type == "ask") {
-                    return a.priceATM - b.priceATM;
+                    return a.priceNQT - b.priceNQT;
                 } else {
-                    return b.priceATM - a.priceATM;
+                    return b.priceNQT - a.priceNQT;
                 }
             });
             processOrders(orders, type, refresh);
@@ -783,20 +783,20 @@ var NRS = (function (NRS, $, undefined) {
             var accountsDecimals = NRS.getNumberOfDecimals(dividends, "numberOfAccounts", function(val) {
                 return NRS.formatAmount(val.numberOfAccounts);
             });
-            var amountATMPerATUDecimals = NRS.getNumberOfDecimals(dividends, "amountATMPerATU", function(val) {
-                return NRS.formatOrderPricePerWholeATU(val.amountATMPerATU, currentAsset.decimals);
+            var amountNQTPerQNTDecimals = NRS.getNumberOfDecimals(dividends, "amountNQTPerQNT", function(val) {
+                return NRS.formatOrderPricePerWholeQNT(val.amountNQTPerQNT, currentAsset.decimals);
             });
             for (var i = 0; i < dividends.length; i++) {
                 var dividend = dividends[i];
                 dividend.numberOfAccounts = new BigInteger(dividend.numberOfAccounts.toString());
-                dividend.amountATMPerATU = new BigInteger(dividend.amountATMPerATU);
+                dividend.amountNQTPerQNT = new BigInteger(dividend.amountNQTPerQNT);
                 dividend.totalDividend = new BigInteger(dividend.totalDividend);
                 view.data.push({
                     "timestamp": NRS.getTransactionLink(dividend.assetDividend, NRS.formatTimestamp(dividend.timestamp)),
                     "dividend_height": String(dividend.dividendHeight).escapeHTML(),
                     "total": NRS.formatAmount(dividend.totalDividend, false, false, amountDecimals),
                     "accounts": NRS.formatQuantity(dividend.numberOfAccounts, false, false, accountsDecimals),
-                    "amount_per_share": NRS.formatOrderPricePerWholeATU(dividend.amountATMPerATU, currentAsset.decimals, amountATMPerATUDecimals)
+                    "amount_per_share": NRS.formatOrderPricePerWholeQNT(dividend.amountNQTPerQNT, currentAsset.decimals, amountNQTPerQNTDecimals)
                 })
             }
             view.render({
@@ -823,25 +823,25 @@ var NRS = (function (NRS, $, undefined) {
             if (response.trades && response.trades.length) {
                 var trades = response.trades;
                 var rows = "";
-                var quantityDecimals = NRS.getNumberOfDecimals(trades, "quantityATU", function(val) {
-                    return NRS.formatQuantity(val.quantityATU, currentAsset.decimals);
+                var quantityDecimals = NRS.getNumberOfDecimals(trades, "quantityQNT", function(val) {
+                    return NRS.formatQuantity(val.quantityQNT, currentAsset.decimals);
                 });
-                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceATM", function(val) {
-                    return NRS.formatOrderPricePerWholeATU(val.priceATM, currentAsset.decimals);
+                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
+                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, currentAsset.decimals);
                 });
                 var amountDecimals = NRS.getNumberOfDecimals(trades, "sum", function(val) {
-                    return NRS.formatAmount(NRS.calculateOrderTotalATM(val.quantityATU, val.priceATM));
+                    return NRS.formatAmount(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT));
                 });
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
-                    trade.priceATM = new BigInteger(trade.priceATM);
-                    trade.quantityATU = new BigInteger(trade.quantityATU);
-                    trade.totalATM = new BigInteger(NRS.calculateOrderTotalATM(trade.priceATM, trade.quantityATU));
+                    trade.priceNQT = new BigInteger(trade.priceNQT);
+                    trade.quantityQNT = new BigInteger(trade.quantityQNT);
+                    trade.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trade.priceNQT, trade.quantityQNT));
                     rows += "<tr>" +
                         "<td>" + NRS.getTransactionLink(trade.bidOrder, NRS.formatTimestamp(trade.timestamp)) + "</td>" +
                         "<td>" + $.t(trade.tradeType) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityATU, currentAsset.decimals, false, quantityDecimals) + "</td>" +
-                        "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeATU(trade.priceATM, currentAsset.decimals, priceDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, currentAsset.decimals, false, quantityDecimals) + "</td>" +
+                        "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeQNT(trade.priceNQT, currentAsset.decimals, priceDecimals) + "</td>" +
                         "<td style='text-align:right;color:";
                         if (trade.buyer == NRS.account && trade.buyer != trade.seller) {
                             rows += "red";
@@ -850,7 +850,7 @@ var NRS = (function (NRS, $, undefined) {
                         } else {
                             rows += "black";
                         }
-                    rows += "'>" + NRS.formatAmount(trade.totalATM, false, false, amountDecimals) + "</td>" +
+                    rows += "'>" + NRS.formatAmount(trade.totalNQT, false, false, amountDecimals) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "buyer", currentAsset.accountRS, "asset_issuer") + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "seller", currentAsset.accountRS, "asset_issuer") + "</td>" +
                     "</tr>";
@@ -937,25 +937,25 @@ var NRS = (function (NRS, $, undefined) {
         var type = ($target.closest("table").attr("id") == "asset_exchange_bid_orders_table" ? "sell" : "buy");
         var $tr = $target.closest("tr");
         try {
-            var priceATM = new BigInteger(String($tr.data("price")));
-            var quantityATU = new BigInteger(String($tr.data("quantity")));
-            var totalATM = new BigInteger(NRS.calculateOrderTotalATM(quantityATU, priceATM));
+            var priceNQT = new BigInteger(String($tr.data("price")));
+            var quantityQNT = new BigInteger(String($tr.data("quantity")));
+            var totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT));
 
-            $("#" + type + "_asset_price").val(NRS.calculateOrderPricePerWholeATU(priceATM, currentAsset.decimals));
-            $("#" + type + "_asset_quantity").val(NRS.convertToATUf(quantityATU, currentAsset.decimals));
-            $("#" + type + "_asset_total").val(NRS.convertToAPL(totalATM));
+            $("#" + type + "_asset_price").val(NRS.calculateOrderPricePerWholeQNT(priceNQT, currentAsset.decimals));
+            $("#" + type + "_asset_quantity").val(NRS.convertToQNTf(quantityQNT, currentAsset.decimals));
+            $("#" + type + "_asset_total").val(NRS.convertToAPL(totalNQT));
         } catch (err) {
             return;
         }
 
         if (type == "buy") {
             try {
-                var balanceATM = new BigInteger(NRS.accountInfo.unconfirmedBalanceATM);
+                var balanceNQT = new BigInteger(NRS.accountInfo.unconfirmedBalanceNQT);
             } catch (err) {
                 return;
             }
 
-            if (totalATM.compareTo(balanceATM) > 0) {
+            if (totalNQT.compareTo(balanceNQT) > 0) {
                 $("#" + type + "_asset_total").css({
                     "background": "#ED4348",
                     "color": "white"
@@ -980,10 +980,10 @@ var NRS = (function (NRS, $, undefined) {
         try {
             var type = ($(this).attr("id") == "sell_automatic_price" ? "sell" : "buy");
             var assetPrice = $("#" + type + "_asset_price");
-            var price = new Big(NRS.convertToATM(String(assetPrice.val())));
-            var balanceATM = new Big(NRS.accountInfo.unconfirmedBalanceATM);
-            var maxQuantity = new Big(NRS.convertToATUf(currentAsset.quantityATU, currentAsset.decimals));
-            if (balanceATM.cmp(new Big("0")) <= 0) {
+            var price = new Big(NRS.convertToNQT(String(assetPrice.val())));
+            var balanceNQT = new Big(NRS.accountInfo.unconfirmedBalanceNQT);
+            var maxQuantity = new Big(NRS.convertToQNTf(currentAsset.quantityQNT, currentAsset.decimals));
+            if (balanceNQT.cmp(new Big("0")) <= 0) {
                 return;
             }
 
@@ -995,9 +995,9 @@ var NRS = (function (NRS, $, undefined) {
 
             var quantity;
             if (type == "sell") {
-                quantity = new Big(currentAsset.yourBalanceATU ? NRS.convertToATUf(currentAsset.yourBalanceATU, currentAsset.decimals) : "0");
+                quantity = new Big(currentAsset.yourBalanceQNT ? NRS.convertToQNTf(currentAsset.yourBalanceQNT, currentAsset.decimals) : "0");
             } else {
-                quantity = new Big(NRS.amountToPrecision(balanceATM.div(price).toString(), currentAsset.decimals));
+                quantity = new Big(NRS.amountToPrecision(balanceNQT.div(price).toString(), currentAsset.decimals));
             }
             var total = quantity.times(price);
 
@@ -1034,13 +1034,13 @@ var NRS = (function (NRS, $, undefined) {
     $("#sell_asset_quantity, #sell_asset_price, #buy_asset_quantity, #buy_asset_price").keyup(function () {
         var orderType = $(this).data("type").toLowerCase();
         try {
-            var quantityATU = new BigInteger(NRS.convertToATU(String($("#" + orderType + "_asset_quantity").val()), currentAsset.decimals));
-            var priceATM = new BigInteger(NRS.calculatePricePerWholeATU(NRS.convertToATM(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals));
+            var quantityQNT = new BigInteger(NRS.convertToQNT(String($("#" + orderType + "_asset_quantity").val()), currentAsset.decimals));
+            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals));
 
-            if (priceATM.toString() == "0" || quantityATU.toString() == "0") {
+            if (priceNQT.toString() == "0" || quantityQNT.toString() == "0") {
                 $("#" + orderType + "_asset_total").val("0");
             } else {
-                var total = NRS.calculateOrderTotal(quantityATU, priceATM, currentAsset.decimals);
+                var total = NRS.calculateOrderTotal(quantityQNT, priceNQT, currentAsset.decimals);
                 $("#" + orderType + "_asset_total").val(total.toString());
             }
         } catch (err) {
@@ -1058,9 +1058,9 @@ var NRS = (function (NRS, $, undefined) {
         orderType = orderType.toLowerCase();
         try {
             var quantity = String($("#" + orderType + "_asset_quantity").val());
-            var quantityATU = new BigInteger(NRS.convertToATU(quantity, currentAsset.decimals));
-            var priceATM = new BigInteger(NRS.calculatePricePerWholeATU(NRS.convertToATM(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals));
-            var totalAPL = NRS.formatAmount(NRS.calculateOrderTotalATM(quantityATU, priceATM, currentAsset.decimals), false, true);
+            var quantityQNT = new BigInteger(NRS.convertToQNT(quantity, currentAsset.decimals));
+            var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(String($("#" + orderType + "_asset_price").val())), currentAsset.decimals));
+            var totalAPL = NRS.formatAmount(NRS.calculateOrderTotalNQT(quantityQNT, priceNQT, currentAsset.decimals), false, true);
         } catch (err) {
             $.growl($.t("error_invalid_input"), {
                 "type": "danger"
@@ -1068,37 +1068,37 @@ var NRS = (function (NRS, $, undefined) {
             return e.preventDefault();
         }
 
-        if (priceATM.toString() == "0" || quantityATU.toString() == "0") {
+        if (priceNQT.toString() == "0" || quantityQNT.toString() == "0") {
             $.growl($.t("error_amount_price_required"), {
                 "type": "danger"
             });
             return e.preventDefault();
         }
 
-        var priceATMPerWholeATU = priceATM.multiply(new BigInteger("" + Math.pow(10, currentAsset.decimals)));
+        var priceNQTPerWholeQNT = priceNQT.multiply(new BigInteger("" + Math.pow(10, currentAsset.decimals)));
         var description;
         var tooltipTitle;
         if (orderType == "buy") {
             description = $.t("buy_order_description", {
-                "quantity": NRS.formatQuantity(quantityATU, currentAsset.decimals, true),
+                "quantity": NRS.formatQuantity(quantityQNT, currentAsset.decimals, true),
                 "asset_name": $("#asset_name").html().escapeHTML(),
-                "amount": NRS.formatAmount(priceATMPerWholeATU),
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT),
                 "symbol": NRS.constants.COIN_SYMBOL
             });
             tooltipTitle = $.t("buy_order_description_help", {
-                "amount": NRS.formatAmount(priceATMPerWholeATU, false, true),
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
                 "total": totalAPL,
                 "symbol": NRS.constants.COIN_SYMBOL
             });
         } else {
             description = $.t("sell_order_description", {
-                "quantity": NRS.formatQuantity(quantityATU, currentAsset.decimals, true),
+                "quantity": NRS.formatQuantity(quantityQNT, currentAsset.decimals, true),
                 "asset_name": $("#asset_name").html().escapeHTML(),
-                "amount": NRS.formatAmount(priceATMPerWholeATU),
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT),
                 "symbol": NRS.constants.COIN_SYMBOL
             });
             tooltipTitle = $.t("sell_order_description_help", {
-                "amount": NRS.formatAmount(priceATMPerWholeATU, false, true),
+                "amount": NRS.formatAmount(priceNQTPerWholeQNT, false, true),
                 "total": totalAPL,
                 "symbol": NRS.constants.COIN_SYMBOL
             });
@@ -1122,8 +1122,8 @@ var NRS = (function (NRS, $, undefined) {
 
         $("#asset_order_type").val((orderType == "buy" ? "placeBidOrder" : "placeAskOrder"));
         $("#asset_order_asset").val(assetId);
-        $("#asset_order_quantity").val(quantityATU.toString());
-        $("#asset_order_price").val(priceATM.toString());
+        $("#asset_order_quantity").val(quantityQNT.toString());
+        $("#asset_order_price").val(priceNQT.toString());
     });
 
     NRS.forms.orderAsset = function () {
@@ -1150,13 +1150,13 @@ var NRS = (function (NRS, $, undefined) {
                 "error": $.t("error_whole_quantity")
             };
         } else {
-            data.quantityATU = String(data.quantity);
+            data.quantityQNT = String(data.quantity);
             if (data.decimals == "") {
                 data.decimals = "0";
             }
             if (data.decimals > 0) {
                 for (var i = 0; i < data.decimals; i++) {
-                    data.quantityATU += "0";
+                    data.quantityQNT += "0";
                 }
             }
             delete data.quantity;
@@ -1359,29 +1359,29 @@ var NRS = (function (NRS, $, undefined) {
                     response.trades.pop();
                 }
                 var trades = response.trades;
-                var quantityDecimals = NRS.getNumberOfDecimals(trades, "quantityATU", function(val) {
-                    return NRS.formatQuantity(val.quantityATU, val.decimals);
+                var quantityDecimals = NRS.getNumberOfDecimals(trades, "quantityQNT", function(val) {
+                    return NRS.formatQuantity(val.quantityQNT, val.decimals);
                 });
-                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceATM", function(val) {
-                    return NRS.formatOrderPricePerWholeATU(val.priceATM, val.decimals);
+                var priceDecimals = NRS.getNumberOfDecimals(trades, "priceNQT", function(val) {
+                    return NRS.formatOrderPricePerWholeQNT(val.priceNQT, val.decimals);
                 });
-                var amountDecimals = NRS.getNumberOfDecimals(trades, "totalATM", function(val) {
-                    return NRS.formatAmount(NRS.calculateOrderTotalATM(val.quantityATU, val.priceATM));
+                var amountDecimals = NRS.getNumberOfDecimals(trades, "totalNQT", function(val) {
+                    return NRS.formatAmount(NRS.calculateOrderTotalNQT(val.quantityQNT, val.priceNQT));
                 });
                 var rows = "";
                 for (var i = 0; i < trades.length; i++) {
                     var trade = trades[i];
-                    trade.priceATM = new BigInteger(trade.priceATM);
-                    trade.quantityATU = new BigInteger(trade.quantityATU);
-                    trade.totalATM = new BigInteger(NRS.calculateOrderTotalATM(trade.priceATM, trade.quantityATU));
+                    trade.priceNQT = new BigInteger(trade.priceNQT);
+                    trade.quantityQNT = new BigInteger(trade.quantityQNT);
+                    trade.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(trade.priceNQT, trade.quantityQNT));
                     var type = (trade.buyerRS == NRS.accountRS ? "buy" : "sell");
                     rows += "<tr>" +
                         "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(trade.asset) + "'>" + NRS.escapeRespStr(trade.name) + "</a></td>" +
                         "<td>" + NRS.formatTimestamp(trade.timestamp) + "</td>" +
                         "<td>" + $.t(trade.tradeType) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityATU, trade.decimals, false, quantityDecimals) + "</td>" +
-                        "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeATU(trade.priceATM, trade.decimals, priceDecimals) + "</td>" +
-                        "<td style='" + (type == "buy" ? "color:red" : "color:green") + "' class='numeric'>" + NRS.formatAmount(trade.totalATM, false, false, amountDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(trade.quantityQNT, trade.decimals, false, quantityDecimals) + "</td>" +
+                        "<td class='asset_price numeric'>" + NRS.formatOrderPricePerWholeQNT(trade.priceNQT, trade.decimals, priceDecimals) + "</td>" +
+                        "<td style='" + (type == "buy" ? "color:red" : "color:green") + "' class='numeric'>" + NRS.formatAmount(trade.totalNQT, false, false, amountDecimals) + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "buyer") + "</td>" +
                         "<td>" + NRS.getAccountLink(trade, "seller") + "</td>" +
                     "</tr>";
@@ -1407,19 +1407,19 @@ var NRS = (function (NRS, $, undefined) {
                     response.transfers.pop();
                 }
                 var transfers = response.transfers;
-                var quantityDecimals = NRS.getNumberOfDecimals(transfers, "quantityATU", function(val) {
-                    return NRS.formatQuantity(val.quantityATU, val.decimals);
+                var quantityDecimals = NRS.getNumberOfDecimals(transfers, "quantityQNT", function(val) {
+                    return NRS.formatQuantity(val.quantityQNT, val.decimals);
                 });
                 var rows = "";
                 for (var i = 0; i < transfers.length; i++) {
                     var transfer = transfers[i];
-                    transfer.quantityATU = new BigInteger(transfer.quantityATU);
+                    transfer.quantityQNT = new BigInteger(transfer.quantityQNT);
                     var type = (transfer.recipientRS == NRS.accountRS ? "receive" : "send");
                     rows += "<tr>" +
                         "<td>" + NRS.getTransactionLink(transfer.assetTransfer) + "</td>" +
                         "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(transfer.asset) + "'>" + NRS.escapeRespStr(transfer.name) + "</a></td>" +
                         "<td>" + NRS.formatTimestamp(transfer.timestamp) + "</td>" +
-                        "<td style='" + (type == "receive" ? "color:green" : "color:red") + "' class='numeric'>" + NRS.formatQuantity(transfer.quantityATU, transfer.decimals, false, quantityDecimals) + "</td>" +
+                        "<td style='" + (type == "receive" ? "color:green" : "color:red") + "' class='numeric'>" + NRS.formatQuantity(transfer.quantityQNT, transfer.decimals, false, quantityDecimals) + "</td>" +
                         "<td>" + NRS.getAccountLink(transfer, "recipient") + "</td>" +
                         "<td>" + NRS.getAccountLink(transfer, "sender") + "</td>" +
                     "</tr>";
@@ -1445,17 +1445,17 @@ var NRS = (function (NRS, $, undefined) {
                     response.deletes.pop();
                 }
                 var deletes = response.deletes;
-                var quantityDecimals = NRS.getNumberOfDecimals(deletes, "quantityATU", function(val) {
-                    return NRS.formatQuantity(val.quantityATU, val.decimals);
+                var quantityDecimals = NRS.getNumberOfDecimals(deletes, "quantityQNT", function(val) {
+                    return NRS.formatQuantity(val.quantityQNT, val.decimals);
                 });
                 var rows = "";
                 for (var i = 0; i < deletes.length; i++) {
-                    deletes[i].quantityATU = new BigInteger(deletes[i].quantityATU);
+                    deletes[i].quantityQNT = new BigInteger(deletes[i].quantityQNT);
                     rows += "<tr>" +
                         "<td>" + NRS.getTransactionLink(deletes[i].assetDelete) + "</td>" +
                         "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(deletes[i].asset) + "'>" + NRS.escapeRespStr(deletes[i].name) + "</a></td>" +
                         "<td>" + NRS.formatTimestamp(deletes[i].timestamp) + "</td>" +
-                        "<td class='numeric'>" + NRS.formatQuantity(deletes[i].quantityATU, deletes[i].decimals, false, quantityDecimals) + "</td>" +
+                        "<td class='numeric'>" + NRS.formatQuantity(deletes[i].quantityQNT, deletes[i].decimals, false, quantityDecimals) + "</td>" +
                     "</tr>";
                 }
                 NRS.dataLoaded(rows);
@@ -1482,7 +1482,7 @@ var NRS = (function (NRS, $, undefined) {
             };
 
             for (var i = 0; i < NRS.accountInfo.assetBalances.length; i++) {
-                if (NRS.accountInfo.assetBalances[i].balanceATU == "0") {
+                if (NRS.accountInfo.assetBalances[i].balanceQNT == "0") {
                     count.ignored_assets++;
                     if (NRS.checkMyAssetsPageLoaded(count)) {
                         NRS.myAssetsPageLoaded(result);
@@ -1500,7 +1500,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
 
                     if (response.askOrders && response.askOrders.length) {
-                        result.ask_orders[input.asset] = new BigInteger(response.askOrders[0].priceATM);
+                        result.ask_orders[input.asset] = new BigInteger(response.askOrders[0].priceNQT);
                     } else {
                         result.ask_orders[input.asset] = -1;
                     }
@@ -1521,7 +1521,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
 
                     if (response.bidOrders && response.bidOrders.length) {
-                        result.bid_orders[input.asset] = new BigInteger(response.bidOrders[0].priceATM);
+                        result.bid_orders[input.asset] = new BigInteger(response.bidOrders[0].priceNQT);
                     } else {
                         result.bid_orders[input.asset] = -1;
                     }
@@ -1536,7 +1536,7 @@ var NRS = (function (NRS, $, undefined) {
                 NRS.sendRequest("getAsset+", {
                     "asset": NRS.accountInfo.assetBalances[i].asset,
                     "_extra": {
-                        "balanceATU": NRS.accountInfo.assetBalances[i].balanceATU
+                        "balanceQNT": NRS.accountInfo.assetBalances[i].balanceQNT
                     }
                 }, function (asset, input) {
                     if (NRS.currentPage != "my_assets") {
@@ -1544,8 +1544,8 @@ var NRS = (function (NRS, $, undefined) {
                     }
 
                     asset.asset = input.asset;
-                    asset.balanceATU = new BigInteger(input["_extra"].balanceATU);
-                    asset.quantityATU = new BigInteger(asset.quantityATU);
+                    asset.balanceQNT = new BigInteger(input["_extra"].balanceQNT);
+                    asset.quantityQNT = new BigInteger(asset.quantityQNT);
                     asset.ask_orders = result.ask_orders[asset.asset];
                     asset.bid_orders = result.bid_orders[asset.asset];
 
@@ -1577,48 +1577,48 @@ var NRS = (function (NRS, $, undefined) {
                 return 0;
             }
         });
-        var quantityDecimals = NRS.getNumberOfDecimals(result.assets, "balanceATU", function(asset) {
-            return NRS.formatQuantity(asset.balanceATU, asset.decimals);
+        var quantityDecimals = NRS.getNumberOfDecimals(result.assets, "balanceQNT", function(asset) {
+            return NRS.formatQuantity(asset.balanceQNT, asset.decimals);
         });
-        var totalDecimals = NRS.getNumberOfDecimals(result.assets, "quantityATU", function(asset) {
-            return NRS.formatQuantity(asset.quantityATU, asset.decimals);
+        var totalDecimals = NRS.getNumberOfDecimals(result.assets, "quantityQNT", function(asset) {
+            return NRS.formatQuantity(asset.quantityQNT, asset.decimals);
         });
         var askDecimals = NRS.getNumberOfDecimals(result.assets, "ask", function(asset) {
             if (!asset.ask_orders || asset.ask_orders == -1) {
                 return "";
             }
-            return NRS.formatOrderPricePerWholeATU(asset.ask_orders, asset.decimals);
+            return NRS.formatOrderPricePerWholeQNT(asset.ask_orders, asset.decimals);
         });
         var bidDecimals = NRS.getNumberOfDecimals(result.assets, "bid", function(asset) {
             if (!asset.bid_orders || asset.bid_orders == -1) {
                 return "";
             }
-            return NRS.formatOrderPricePerWholeATU(asset.bid_orders, asset.decimals);
+            return NRS.formatOrderPricePerWholeQNT(asset.bid_orders, asset.decimals);
         });
         var valueDecimals = NRS.getNumberOfDecimals(result.assets, "bid", function(asset) {
             if (!asset.bid_orders || asset.bid_orders == -1) {
                 return "";
             }
-            var totalATM = new BigInteger(NRS.calculateOrderTotalATM(asset.balanceATU, asset.bid_orders));
-            return NRS.formatAmount(totalATM);
+            var totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(asset.balanceQNT, asset.bid_orders));
+            return NRS.formatAmount(totalNQT);
         });
         for (var i = 0; i < result.assets.length; i++) {
             var asset = result.assets[i];
             var lowestAskOrder = result.ask_orders[asset.asset];
             var highestBidOrder = result.bid_orders[asset.asset];
-            var percentageAsset = NRS.calculatePercentage(asset.balanceATU, asset.quantityATU);
+            var percentageAsset = NRS.calculatePercentage(asset.balanceQNT, asset.quantityQNT);
 
             if (highestBidOrder != -1) {
-                var totalATM = new BigInteger(NRS.calculateOrderTotalATM(asset.balanceATU, highestBidOrder));
+                var totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(asset.balanceQNT, highestBidOrder));
             }
             rows += "<tr data-asset='" + NRS.escapeRespStr(asset.asset) + "'>" +
                 "<td><a href='#' data-goto-asset='" + NRS.escapeRespStr(asset.asset) + "'>" + NRS.escapeRespStr(asset.name) + "</a></td>" +
-                "<td class='quantity numeric'>" + NRS.formatQuantity(asset.balanceATU, asset.decimals, false, quantityDecimals) + "</td>" +
-                "<td class='numeric'>" + NRS.formatQuantity(asset.quantityATU, asset.decimals, false, totalDecimals) + "</td>" +
+                "<td class='quantity numeric'>" + NRS.formatQuantity(asset.balanceQNT, asset.decimals, false, quantityDecimals) + "</td>" +
+                "<td class='numeric'>" + NRS.formatQuantity(asset.quantityQNT, asset.decimals, false, totalDecimals) + "</td>" +
                 "<td class='numeric'>" + percentageAsset + "%</td>" +
-                "<td class='numeric'>" + (lowestAskOrder != -1 ? NRS.formatOrderPricePerWholeATU(lowestAskOrder, asset.decimals, askDecimals) : "") + "</td>" +
-                "<td class='numeric'>" + (highestBidOrder != -1 ? NRS.formatOrderPricePerWholeATU(highestBidOrder, asset.decimals, bidDecimals) : "") + "</td>" +
-                "<td class='numeric'>" + (highestBidOrder != -1 ? NRS.formatAmount(totalATM, false, false, valueDecimals) : "") + "</td>" +
+                "<td class='numeric'>" + (lowestAskOrder != -1 ? NRS.formatOrderPricePerWholeQNT(lowestAskOrder, asset.decimals, askDecimals) : "") + "</td>" +
+                "<td class='numeric'>" + (highestBidOrder != -1 ? NRS.formatOrderPricePerWholeQNT(highestBidOrder, asset.decimals, bidDecimals) : "") + "</td>" +
+                "<td class='numeric'>" + (highestBidOrder != -1 ? NRS.formatAmount(totalNQT, false, false, valueDecimals) : "") + "</td>" +
                 "<td>" +
                     "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#transfer_asset_modal' data-asset='" + NRS.escapeRespStr(asset.asset) + "' data-name='" + NRS.escapeRespStr(asset.name) + "' data-decimals='" + NRS.escapeRespStr(asset.decimals) + "' data-action='transfer_asset'>" + $.t("transfer") + "</a>" +
                     "<a href='#' class='btn btn-xs btn-default' data-toggle='modal' data-target='#transfer_asset_modal' data-asset='" + NRS.escapeRespStr(asset.asset) + "' data-name='" + NRS.escapeRespStr(asset.name) + "' data-decimals='" + NRS.escapeRespStr(asset.decimals) + "' data-action='delete_shares'>" + $.t("delete_shares") + "</a>" +
@@ -1643,13 +1643,13 @@ var NRS = (function (NRS, $, undefined) {
             var rows = "";
             if (response.accountAssets) {
                 response.accountAssets.sort(function (a, b) {
-                    return new BigInteger(b.quantityATU).compareTo(new BigInteger(a.quantityATU));
+                    return new BigInteger(b.quantityQNT).compareTo(new BigInteger(a.quantityQNT));
                 });
 
                 for (var i = 0; i < response.accountAssets.length; i++) {
                     var account = response.accountAssets[i];
-                    var percentageAsset = NRS.calculatePercentage(account.quantityATU, currentAsset.quantityATU);
-                    rows += "<tr><td>" + NRS.getAccountLink(account, "account", currentAsset.accountRS, "asset_issuer") + "</td><td>" + NRS.formatQuantity(account.quantityATU, currentAsset.decimals) + "</td><td>" + percentageAsset + "%</td></tr>";
+                    var percentageAsset = NRS.calculatePercentage(account.quantityQNT, currentAsset.quantityQNT);
+                    rows += "<tr><td>" + NRS.getAccountLink(account, "account", currentAsset.accountRS, "asset_issuer") + "</td><td>" + NRS.formatQuantity(account.quantityQNT, currentAsset.decimals) + "</td><td>" + percentageAsset + "%</td></tr>";
                 }
             }
             var assetDistributionTable = $("#asset_distribution_table");
@@ -1689,7 +1689,7 @@ var NRS = (function (NRS, $, undefined) {
         if (NRS.accountInfo.assetBalances) {
             $.each(NRS.accountInfo.assetBalances, function (key, assetBalance) {
                 if (assetBalance.asset == assetId) {
-                    confirmedBalance = assetBalance.balanceATU;
+                    confirmedBalance = assetBalance.balanceQNT;
                     return false;
                 }
             });
@@ -1698,7 +1698,7 @@ var NRS = (function (NRS, $, undefined) {
         if (NRS.accountInfo.unconfirmedAssetBalances) {
             $.each(NRS.accountInfo.unconfirmedAssetBalances, function (key, assetBalance) {
                 if (assetBalance.asset == assetId) {
-                    unconfirmedBalance = assetBalance.unconfirmedBalanceATU;
+                    unconfirmedBalance = assetBalance.unconfirmedBalanceQNT;
                     return false;
                 }
             });
@@ -1749,7 +1749,7 @@ var NRS = (function (NRS, $, undefined) {
         }
 
         try {
-            data.quantityATU = NRS.convertToATU(data.quantity, data.decimals);
+            data.quantityQNT = NRS.convertToQNT(data.quantity, data.decimals);
         } catch (e) {
             return {
                 "error": $.t("error_incorrect_quantity_plus", {
@@ -1906,10 +1906,10 @@ var NRS = (function (NRS, $, undefined) {
         var rows = "";
         for (var i = 0; i < orders.length; i++) {
             var completeOrder = orders[i];
-            completeOrder.priceATM = new BigInteger(completeOrder.priceATM);
-            completeOrder.quantityATU = new BigInteger(completeOrder.quantityATU);
-            completeOrder.totalATM = new BigInteger(NRS.calculateOrderTotalATM(completeOrder.quantityATU, completeOrder.priceATM));
-            rows += "<tr data-order='" + NRS.escapeRespStr(completeOrder.order) + "'><td><a href='#' data-goto-asset='" + NRS.escapeRespStr(completeOrder.asset) + "'>" + NRS.escapeRespStr(completeOrder.assetName) + "</a></td><td>" + NRS.formatQuantity(completeOrder.quantityATU, completeOrder.decimals) + "</td><td>" + NRS.formatOrderPricePerWholeATU(completeOrder.priceATM, completeOrder.decimals) + "</td><td>" + NRS.formatAmount(completeOrder.totalATM) + "</td><td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_order_modal' data-order='" + NRS.escapeRespStr(completeOrder.order) + "' data-type='" + type + "'>" + $.t("cancel") + "</a></td></tr>";
+            completeOrder.priceNQT = new BigInteger(completeOrder.priceNQT);
+            completeOrder.quantityQNT = new BigInteger(completeOrder.quantityQNT);
+            completeOrder.totalNQT = new BigInteger(NRS.calculateOrderTotalNQT(completeOrder.quantityQNT, completeOrder.priceNQT));
+            rows += "<tr data-order='" + NRS.escapeRespStr(completeOrder.order) + "'><td><a href='#' data-goto-asset='" + NRS.escapeRespStr(completeOrder.asset) + "'>" + NRS.escapeRespStr(completeOrder.assetName) + "</a></td><td>" + NRS.formatQuantity(completeOrder.quantityQNT, completeOrder.decimals) + "</td><td>" + NRS.formatOrderPricePerWholeQNT(completeOrder.priceNQT, completeOrder.decimals) + "</td><td>" + NRS.formatAmount(completeOrder.totalNQT) + "</td><td class='cancel'><a href='#' data-toggle='modal' data-target='#cancel_order_modal' data-order='" + NRS.escapeRespStr(completeOrder.order) + "' data-type='" + type + "'>" + $.t("cancel") + "</a></td></tr>";
         }
         openOrdersTable.find("tbody").empty().append(rows);
         NRS.dataLoadFinished(openOrdersTable);

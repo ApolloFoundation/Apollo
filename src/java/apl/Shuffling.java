@@ -672,7 +672,7 @@ public final class Shuffling {
                 Account participantAccount = Account.getAccount(participant.getAccountId());
                 holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                 if (holdingType != HoldingType.APL) {
-                    participantAccount.addToBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
+                    participantAccount.addToBalanceNQT(event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                 }
             }
         }
@@ -682,7 +682,7 @@ public final class Shuffling {
             recipientAccount.apply(recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
-                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
+                recipientAccount.addToBalanceAndUnconfirmedBalanceNQT(event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
             }
         }
         setStage(Stage.DONE, 0, (short)0);
@@ -703,29 +703,29 @@ public final class Shuffling {
                 holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                 if (participantAccount.getId() != blamedAccountId) {
                     if (holdingType != HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
+                        participantAccount.addToUnconfirmedBalanceNQT(event, this.id, Constants.SHUFFLING_DEPOSIT_NQT);
                     }
                 } else {
                     if (holdingType == HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
+                        participantAccount.addToUnconfirmedBalanceNQT(event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                     }
-                    participantAccount.addToBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
+                    participantAccount.addToBalanceNQT(event, this.id, -Constants.SHUFFLING_DEPOSIT_NQT);
                 }
             }
         }
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
-            long fee = Constants.SHUFFLING_DEPOSIT_ATM / 4;
+            long fee = Constants.SHUFFLING_DEPOSIT_NQT / 4;
             for (int i = 0; i < 3; i++) {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-                previousGeneratorAccount.addToForgedBalanceATM(fee);
+                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
+                previousGeneratorAccount.addToForgedBalanceNQT(fee);
                 Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
             }
-            fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
+            fee = Constants.SHUFFLING_DEPOSIT_NQT - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
-            blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-            blockGeneratorAccount.addToForgedBalanceATM(fee);
+            blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceNQT(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
+            blockGeneratorAccount.addToForgedBalanceNQT(fee);
             Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
         }
         setStage(Stage.CANCELLED, blamedAccountId, (short)0);

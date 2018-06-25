@@ -327,11 +327,11 @@ var NRS = (function(NRS, $, undefined) {
 		}
 		if ((pollType == 0 && mbType == 2) || pollType == 2) {
 			$('#min_voting_balance_label_unit').html($.t('asset'));
-			$('#create_poll_min_balance').attr('name', 'minBalanceATUf');
+			$('#create_poll_min_balance').attr('name', 'minBalanceQNTf');
 		}
 		if ((pollType == 0 && mbType == 3) || pollType == 3) {
 			$('#min_voting_balance_label_unit').html($.t('currency'));
-			$('#create_poll_min_balance').attr('name', 'minBalanceATUf');
+			$('#create_poll_min_balance').attr('name', 'minBalanceQNTf');
 		}
 	}
 

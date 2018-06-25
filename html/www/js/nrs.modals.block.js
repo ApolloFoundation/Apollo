@@ -121,9 +121,9 @@ var NRS = (function(NRS, $, undefined) {
                 var rows = "";
                 for (var i = 0; i < block.transactions.length; i++) {
                     var transaction = block.transactions[i];
-                    if (transaction.amountATM) {
-                        transaction.amount = new BigInteger(transaction.amountATM);
-                        transaction.fee = new BigInteger(transaction.feeATM);
+                    if (transaction.amountNQT) {
+                        transaction.amount = new BigInteger(transaction.amountNQT);
+                        transaction.fee = new BigInteger(transaction.feeNQT);
                         rows += "<tr>" +
                         "<td>" + transaction.transactionIndex + (transaction.phased ? "&nbsp<i class='fa fa-gavel' title='" + $.t("phased") + "'></i>" : "") + "</td>" +
                         "<td>" + NRS.getTransactionLink(transaction.transaction, NRS.formatTimestamp(transaction.timestamp)) + "</td>" +

@@ -95,7 +95,7 @@ public final class AssetDividend {
     private final long id;
     private final DbKey dbKey;
     private final long assetId;
-    private final long amountATMPerATU;
+    private final long amountNQTPerQNT;
     private final int dividendHeight;
     private final long totalDividend;
     private final long numAccounts;
@@ -107,7 +107,7 @@ public final class AssetDividend {
         this.id = transactionId;
         this.dbKey = dividendDbKeyFactory.newKey(this.id);
         this.assetId = attachment.getAssetId();
-        this.amountATMPerATU = attachment.getAmountATMPerATU();
+        this.amountNQTPerQNT = attachment.getAmountNQTPerQNT();
         this.dividendHeight = attachment.getHeight();
         this.totalDividend = totalDividend;
         this.numAccounts = numAccounts;
@@ -119,7 +119,7 @@ public final class AssetDividend {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
         this.assetId = rs.getLong("asset_id");
-        this.amountATMPerATU = rs.getLong("amount");
+        this.amountNQTPerQNT = rs.getLong("amount");
         this.dividendHeight = rs.getInt("dividend_height");
         this.totalDividend = rs.getLong("total_dividend");
         this.numAccounts = rs.getLong("num_accounts");
@@ -134,7 +134,7 @@ public final class AssetDividend {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.assetId);
-            pstmt.setLong(++i, this.amountATMPerATU);
+            pstmt.setLong(++i, this.amountNQTPerQNT);
             pstmt.setInt(++i, this.dividendHeight);
             pstmt.setLong(++i, this.totalDividend);
             pstmt.setLong(++i, this.numAccounts);
@@ -152,8 +152,8 @@ public final class AssetDividend {
         return assetId;
     }
 
-    public long getAmountATMPerATU() {
-        return amountATMPerATU;
+    public long getAmountNQTPerQNT() {
+        return amountNQTPerQNT;
     }
 
     public int getDividendHeight() {

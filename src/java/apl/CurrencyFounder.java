@@ -69,20 +69,20 @@ public class CurrencyFounder {
     private final DbKey dbKey;
     private final long currencyId;
     private final long accountId;
-    private long amountPerUnitATM;
+    private long amountPerUnitNQT;
 
-    private CurrencyFounder(long currencyId, long accountId, long amountPerUnitATM) {
+    private CurrencyFounder(long currencyId, long accountId, long amountPerUnitNQT) {
         this.currencyId = currencyId;
         this.dbKey = currencyFounderDbKeyFactory.newKey(currencyId, accountId);
         this.accountId = accountId;
-        this.amountPerUnitATM = amountPerUnitATM;
+        this.amountPerUnitNQT = amountPerUnitNQT;
     }
 
     private CurrencyFounder(ResultSet rs, DbKey dbKey) throws SQLException {
         this.currencyId = rs.getLong("currency_id");
         this.accountId = rs.getLong("account_id");
         this.dbKey = dbKey;
-        this.amountPerUnitATM = rs.getLong("amount");
+        this.amountPerUnitNQT = rs.getLong("amount");
     }
 
     private void save(Connection con) throws SQLException {
@@ -91,7 +91,7 @@ public class CurrencyFounder {
             int i = 0;
             pstmt.setLong(++i, this.getCurrencyId());
             pstmt.setLong(++i, this.getAccountId());
-            pstmt.setLong(++i, this.getAmountPerUnitATM());
+            pstmt.setLong(++i, this.getAmountPerUnitNQT());
             pstmt.setInt(++i, Apl.getBlockchain().getHeight());
             pstmt.executeUpdate();
         }
@@ -105,8 +105,8 @@ public class CurrencyFounder {
         return accountId;
     }
 
-    public long getAmountPerUnitATM() {
-        return amountPerUnitATM;
+    public long getAmountPerUnitNQT() {
+        return amountPerUnitNQT;
     }
 
     static void addOrUpdateFounder(long currencyId, long accountId, long amount) {
@@ -114,7 +114,7 @@ public class CurrencyFounder {
         if (founder == null) {
             founder = new CurrencyFounder(currencyId, accountId, amount);
         } else {
-            founder.amountPerUnitATM += amount;
+            founder.amountPerUnitNQT += amount;
         }
         currencyFounderTable.insert(founder);
     }

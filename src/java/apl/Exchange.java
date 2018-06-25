@@ -187,7 +187,7 @@ public final class Exchange {
         this.buyerId = buyerId;
         this.dbKey = exchangeDbKeyFactory.newKey(this.transactionId, this.offerId);
         this.units = units;
-        this.rate = offer.getRateATM();
+        this.rate = offer.getRateNQT();
     }
 
     private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {

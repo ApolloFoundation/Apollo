@@ -268,14 +268,14 @@ var NRS = (function(NRS, $) {
 
 		for (var i = 0; i < blocks.length; i++) {
 			var block = blocks[i];
-			totalAmount = totalAmount.add(new BigInteger(block.totalAmountATM));
-			totalFees = totalFees.add(new BigInteger(block.totalFeeATM));
+			totalAmount = totalAmount.add(new BigInteger(block.totalAmountNQT));
+			totalFees = totalFees.add(new BigInteger(block.totalFeeNQT));
 			totalTransactions += block.numberOfTransactions;
 			rows += "<tr>" +
                 "<td><a href='#' data-block='" + NRS.escapeRespStr(block.height) + "' data-blockid='" + NRS.escapeRespStr(block.block) + "' class='block show_block_modal_action'" + (block.numberOfTransactions > 0 ? " style='font-weight:bold'" : "") + ">" + NRS.escapeRespStr(block.height) + "</a></td>" +
                 "<td>" + NRS.formatTimestamp(block.timestamp) + "</td>" +
-                "<td>" + NRS.formatAmount(block.totalAmountATM) + "</td>" +
-                "<td>" + NRS.formatAmount(block.totalFeeATM) + "</td>" +
+                "<td>" + NRS.formatAmount(block.totalAmountNQT) + "</td>" +
+                "<td>" + NRS.formatAmount(block.totalFeeNQT) + "</td>" +
                 "<td>" + NRS.formatAmount(block.numberOfTransactions) + "</td>" +
                 "<td>" + NRS.getAccountLink(block, "generator") + "</td>" +
                 "<td>" + NRS.formatVolume(block.payloadLength) + "</td>" +
@@ -290,14 +290,14 @@ var NRS = (function(NRS, $) {
 			}, function(response) {
 				if (response.numberOfBlocks && response.numberOfBlocks > 0) {
 					$("#forged_blocks_total").html(response.numberOfBlocks).removeClass("loading_dots");
-                    var avgFee = new Big(NRS.accountInfo.forgedBalanceATM).div(response.numberOfBlocks).div(new Big("100000000")).toFixed(2);
-                    $("#blocks_average_fee").html(NRS.formatStyledAmount(NRS.convertToATM(avgFee))).removeClass("loading_dots");
+                    var avgFee = new Big(NRS.accountInfo.forgedBalanceNQT).div(response.numberOfBlocks).div(new Big("100000000")).toFixed(2);
+                    $("#blocks_average_fee").html(NRS.formatStyledAmount(NRS.convertToNQT(avgFee))).removeClass("loading_dots");
 				} else {
 					$("#forged_blocks_total").html(0).removeClass("loading_dots");
 					$("#blocks_average_fee").html(0).removeClass("loading_dots");
 				}
 			});
-			$("#forged_fees_total").html(NRS.formatStyledAmount(NRS.accountInfo.forgedBalanceATM)).removeClass("loading_dots");
+			$("#forged_fees_total").html(NRS.formatStyledAmount(NRS.accountInfo.forgedBalanceNQT)).removeClass("loading_dots");
 			blocksAverageAmount.removeClass("loading_dots");
 			blocksAverageAmount.parent().parent().css('visibility', 'hidden');
 			$("#blocks_page").find(".ion-stats-bars").parent().css('visibility', 'hidden');
@@ -316,8 +316,8 @@ var NRS = (function(NRS, $) {
 				averageFee = new Big(totalFees.toString()).div(new Big("100000000")).div(new Big(String(blocks.length))).toFixed(2);
 				averageAmount = new Big(totalAmount.toString()).div(new Big("100000000")).div(new Big(String(blocks.length))).toFixed(2);
 			}
-			averageFee = NRS.convertToATM(averageFee);
-			averageAmount = NRS.convertToATM(averageAmount);
+			averageFee = NRS.convertToNQT(averageFee);
+			averageAmount = NRS.convertToNQT(averageAmount);
 			if (time == 0) {
 				$("#blocks_transactions_per_hour").html("0").removeClass("loading_dots");
 			} else {

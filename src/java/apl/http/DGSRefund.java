@@ -38,7 +38,7 @@ public final class DGSRefund extends CreateTransaction {
 
     private DGSRefund() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "purchase", "refundATM");
+                "purchase", "refundNQT");
     }
 
     @Override
@@ -56,22 +56,22 @@ public final class DGSRefund extends CreateTransaction {
             return GOODS_NOT_DELIVERED;
         }
 
-        String refundValueATM = Convert.emptyToNull(req.getParameter("refundATM"));
-        long refundATM = 0;
+        String refundValueNQT = Convert.emptyToNull(req.getParameter("refundNQT"));
+        long refundNQT = 0;
         try {
-            if (refundValueATM != null) {
-                refundATM = Long.parseLong(refundValueATM);
+            if (refundValueNQT != null) {
+                refundNQT = Long.parseLong(refundValueNQT);
             }
         } catch (RuntimeException e) {
             return INCORRECT_DGS_REFUND;
         }
-        if (refundATM < 0 || refundATM > Constants.MAX_BALANCE_ATM) {
+        if (refundNQT < 0 || refundNQT > Constants.MAX_BALANCE_NQT) {
             return INCORRECT_DGS_REFUND;
         }
 
         Account buyerAccount = Account.getAccount(purchase.getBuyerId());
 
-        Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundATM);
+        Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundNQT);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

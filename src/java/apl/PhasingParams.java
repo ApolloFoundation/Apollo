@@ -164,20 +164,20 @@ public final class PhasingParams {
             }
         } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
             Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
-            if (quorum > asset.getInitialQuantityATU()) {
+            if (quorum > asset.getInitialQuantityQNT()) {
                 throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityQNT());
             }
-            if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
+            if (voteWeighting.getMinBalance() > asset.getInitialQuantityQNT()) {
                 throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityQNT());
             }
         } else if (voteWeighting.getMinBalance() > 0) {
             if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
                 Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
-                if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
+                if (voteWeighting.getMinBalance() > asset.getInitialQuantityQNT()) {
                     throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                            + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                            + " exceeds total initial asset quantity " + asset.getInitialQuantityQNT());
                 }
             } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
                 Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());

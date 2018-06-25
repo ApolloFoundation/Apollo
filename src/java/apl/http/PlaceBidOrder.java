@@ -32,18 +32,18 @@ public final class PlaceBidOrder extends CreateTransaction {
     static final PlaceBidOrder instance = new PlaceBidOrder();
 
     private PlaceBidOrder() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityQNT", "priceNQT");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
-        long priceATM = ParameterParser.getPriceATM(req);
-        long quantityATU = ParameterParser.getQuantityATU(req);
+        long priceNQT = ParameterParser.getPriceNQT(req);
+        long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
+        Attachment attachment = new Attachment.ColoredCoinsBidOrderPlacement(asset.getId(), quantityQNT, priceNQT);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

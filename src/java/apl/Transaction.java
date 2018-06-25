@@ -82,9 +82,9 @@ public interface Transaction {
 
     int getExpiration();
 
-    long getAmountATM();
+    long getAmountNQT();
 
-    long getFeeATM();
+    long getFeeNQT();
 
     String getReferencedTransactionFullHash();
 

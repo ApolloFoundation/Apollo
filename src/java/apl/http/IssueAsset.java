@@ -37,7 +37,7 @@ public final class IssueAsset extends CreateTransaction {
     static final IssueAsset instance = new IssueAsset();
 
     private IssueAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityQNT", "decimals");
     }
 
     @Override
@@ -78,9 +78,9 @@ public final class IssueAsset extends CreateTransaction {
             }
         }
 
-        long quantityATU = ParameterParser.getQuantityATU(req);
+        long quantityQNT = ParameterParser.getQuantityQNT(req);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityATU, decimals);
+        Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityQNT, decimals);
         return createTransaction(req, account, attachment);
 
     }

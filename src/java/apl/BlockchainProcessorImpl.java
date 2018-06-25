@@ -1214,7 +1214,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     void shutdown() {
         ThreadPool.shutdownExecutor("networkService", networkService, 5);
-        getMoreBlocks = false;
     }
 
     private void addBlock(BlockImpl block) {
@@ -1429,12 +1428,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             }
-            calculatedTotalAmount += transaction.getAmountATM();
-            calculatedTotalFee += transaction.getFeeATM();
+            calculatedTotalAmount += transaction.getAmountNQT();
+            calculatedTotalFee += transaction.getFeeNQT();
             payloadLength += transaction.getFullSize();
             digest.update(transaction.bytes());
         }
-        if (calculatedTotalAmount != block.getTotalAmountATM() || calculatedTotalFee != block.getTotalFeeATM()) {
+        if (calculatedTotalAmount != block.getTotalAmountNQT() || calculatedTotalFee != block.getTotalFeeNQT()) {
             throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
         }
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
@@ -1718,15 +1717,15 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp);
         List<TransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
-        long totalAmountATM = 0;
-        long totalFeeATM = 0;
+        long totalAmountNQT = 0;
+        long totalFeeNQT = 0;
         int payloadLength = 0;
         for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
             TransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
             digest.update(transaction.bytes());
-            totalAmountATM += transaction.getAmountATM();
-            totalFeeATM += transaction.getFeeATM();
+            totalAmountNQT += transaction.getAmountNQT();
+            totalFeeNQT += transaction.getFeeNQT();
             payloadLength += transaction.getFullSize();
         }
         byte[] payloadHash = digest.digest();
@@ -1735,14 +1734,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
-        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
+        BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountNQT, totalFeeNQT, payloadLength,
                 payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
 
         try {
             pushBlock(block);
             blockListeners.notify(block, Event.BLOCK_GENERATED);
             Logger.logDebugMessage("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeATM())/Constants.ONE_APL);
+                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeNQT())/Constants.ONE_APL);
         } catch (TransactionNotAcceptedException e) {
             Logger.logDebugMessage("Generate block failed: " + e.getMessage());
             TransactionProcessorImpl.getInstance().processWaitingTransactions();

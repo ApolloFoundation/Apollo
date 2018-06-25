@@ -95,11 +95,11 @@ public final class Asset {
         assetTable.insert(new Asset(transaction, attachment));
     }
 
-    static void deleteAsset(Transaction transaction, long assetId, long quantityATU) {
+    static void deleteAsset(Transaction transaction, long assetId, long quantityQNT) {
         Asset asset = getAsset(assetId);
-        asset.quantityATU = Math.max(0, asset.quantityATU - quantityATU);
+        asset.quantityQNT = Math.max(0, asset.quantityQNT - quantityQNT);
         assetTable.insert(asset);
-        AssetDelete.addAssetDelete(transaction, assetId, quantityATU);
+        AssetDelete.addAssetDelete(transaction, assetId, quantityQNT);
     }
 
     static void init() {}
@@ -110,8 +110,8 @@ public final class Asset {
     private final long accountId;
     private final String name;
     private final String description;
-    private final long initialQuantityATU;
-    private long quantityATU;
+    private final long initialQuantityQNT;
+    private long quantityQNT;
     private final byte decimals;
 
     private Asset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
@@ -120,8 +120,8 @@ public final class Asset {
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.description = attachment.getDescription();
-        this.quantityATU = attachment.getQuantityATU();
-        this.initialQuantityATU = this.quantityATU;
+        this.quantityQNT = attachment.getQuantityQNT();
+        this.initialQuantityQNT = this.quantityQNT;
         this.decimals = attachment.getDecimals();
     }
 
@@ -131,8 +131,8 @@ public final class Asset {
         this.accountId = rs.getLong("account_id");
         this.name = rs.getString("name");
         this.description = rs.getString("description");
-        this.initialQuantityATU = rs.getLong("initial_quantity");
-        this.quantityATU = rs.getLong("quantity");
+        this.initialQuantityQNT = rs.getLong("initial_quantity");
+        this.quantityQNT = rs.getLong("quantity");
         this.decimals = rs.getByte("decimals");
     }
 
@@ -146,8 +146,8 @@ public final class Asset {
             pstmt.setLong(++i, this.accountId);
             pstmt.setString(++i, this.name);
             pstmt.setString(++i, this.description);
-            pstmt.setLong(++i, this.initialQuantityATU);
-            pstmt.setLong(++i, this.quantityATU);
+            pstmt.setLong(++i, this.initialQuantityQNT);
+            pstmt.setLong(++i, this.quantityQNT);
             pstmt.setByte(++i, this.decimals);
             pstmt.setInt(++i, Apl.getBlockchain().getHeight());
             pstmt.executeUpdate();
@@ -170,12 +170,12 @@ public final class Asset {
         return description;
     }
 
-    public long getInitialQuantityATU() {
-        return initialQuantityATU;
+    public long getInitialQuantityQNT() {
+        return initialQuantityQNT;
     }
 
-    public long getQuantityATU() {
-        return quantityATU;
+    public long getQuantityQNT() {
+        return quantityQNT;
     }
 
     public byte getDecimals() {

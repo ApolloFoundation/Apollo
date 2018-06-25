@@ -44,9 +44,9 @@ public interface Block {
 
     long getNextBlockId();
 
-    long getTotalAmountATM();
+    long getTotalAmountNQT();
 
-    long getTotalFeeATM();
+    long getTotalFeeNQT();
 
     int getPayloadLength();
 

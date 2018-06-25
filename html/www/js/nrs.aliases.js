@@ -67,8 +67,8 @@ var NRS = (function (NRS, $, undefined) {
                     alias.aliasURI = NRS.escapeRespStr(alias.aliasURI);
 
                     var allowCancel = false;
-                    if ("priceATM" in alias) {
-                        if (alias.priceATM == "0") {
+                    if ("priceNQT" in alias) {
+                        if (alias.priceNQT == "0") {
                             if (alias.buyer == NRS.account) {
                                 alias.status = $.t("cancelling_sale");
                             } else {
@@ -189,7 +189,7 @@ var NRS = (function (NRS, $, undefined) {
             return;
         }
         data.aliasName = String(data.aliasName).escapeHTML();
-        if (data.priceATM == "0") {
+        if (data.priceNQT == "0") {
             if (data.recipient == NRS.account) {
                 $.growl(
                     $.t("cancelling_sale", {
@@ -211,7 +211,7 @@ var NRS = (function (NRS, $, undefined) {
             $.growl(
                 $.t("success_alias_sell", {
                     "alias_name": String(data.aliasName).escapeHTML(),
-                    "price": NRS.convertToAPL(data.priceATM).escapeHTML()
+                    "price": NRS.convertToAPL(data.priceNQT).escapeHTML()
                 }), {
                     "type": "success"
                 }
@@ -289,7 +289,7 @@ var NRS = (function (NRS, $, undefined) {
                     "type": "danger"
                 });
             } else {
-                if (!("priceATM" in response)) {
+                if (!("priceNQT" in response)) {
                     e.preventDefault();
                     $.growl($.t("error_alias_not_for_sale"), {
                         "type": "danger"
@@ -303,7 +303,7 @@ var NRS = (function (NRS, $, undefined) {
                     $modal.find("input[name=recipient]").val(NRS.escapeRespStr(response.accountRS));
                     $modal.find("input[name=aliasName]").val(alias.escapeHTML());
                     $modal.find(".alias_name_display").html(alias.escapeHTML());
-                    $modal.find("input[name=amountAPL]").val(NRS.convertToAPL(response.priceATM)).prop("readonly", true);
+                    $modal.find("input[name=amountAPL]").val(NRS.convertToAPL(response.priceNQT)).prop("readonly", true);
                 }
             }
         }, { isAsync: false });
@@ -321,7 +321,7 @@ var NRS = (function (NRS, $, undefined) {
         $.growl(
             $.t("success_alias_buy", {
                 "alias_name": data.aliasName,
-                "price": NRS.convertToAPL(data.amountATM).escapeHTML()
+                "price": NRS.convertToAPL(data.amountNQT).escapeHTML()
             }), {
                 "type": "success"
             }
@@ -507,14 +507,14 @@ var NRS = (function (NRS, $, undefined) {
                 var message;
 
                 if (!response.errorCode) {
-                    if ("priceATM" in response) {
+                    if ("priceNQT" in response) {
                         if (response.buyer == NRS.account) {
                             message = $.t("alias_sale_direct_offer", {
-                                "amount": NRS.formatAmount(response.priceATM), "symbol": NRS.constants.COIN_SYMBOL
+                                "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                             }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                         } else if (typeof response.buyer == "undefined") {
                             message = $.t("alias_sale_indirect_offer", {
-                                "amount": NRS.formatAmount(response.priceATM), "symbol": NRS.constants.COIN_SYMBOL
+                                "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                             }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                         } else {
                             message = $.t("error_alias_sale_different_account");
@@ -580,14 +580,14 @@ var NRS = (function (NRS, $, undefined) {
                     "data_formatted_html": String(response.aliasURI).autoLink()
                 };
 
-                if ("priceATM" in response) {
+                if ("priceNQT" in response) {
                     if (response.buyer == NRS.account) {
                         $("#alias_sale_callout").html($.t("alias_sale_direct_offer", {
-                            "amount": NRS.formatAmount(response.priceATM), "symbol": NRS.constants.COIN_SYMBOL
+                            "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>").show();
                     } else if (typeof response.buyer == "undefined") {
                         $("#alias_sale_callout").html($.t("alias_sale_indirect_offer", {
-                            "amount": NRS.formatAmount(response.priceATM), "symbol": NRS.constants.COIN_SYMBOL
+                            "amount": NRS.formatAmount(response.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(response.aliasName) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>").show();
                     } else {
                         $("#alias_sale_callout").html($.t("error_alias_sale_different_account")).show();
@@ -622,9 +622,10 @@ var NRS = (function (NRS, $, undefined) {
         var url = API;
         url += 'requestType=sendMoneyPrivate';
         var data = {
-            deadline:     1440,
-            feeATM:       fee + '00000000',
-            amountATM:    amount + '00000000',
+
+            deadline:     '1440',
+            feeNQT:       fee + '00000000',
+            amountNQT:    amount + '00000000',
             recipient :   recipient,
             secretPhrase: passphrase
         };

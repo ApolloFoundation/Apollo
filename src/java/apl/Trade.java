@@ -178,8 +178,8 @@ public final class Trade {
     private final long sellerId;
     private final long buyerId;
     private final DbKey dbKey;
-    private final long quantityATU;
-    private final long priceATM;
+    private final long quantityQNT;
+    private final long priceNQT;
     private final boolean isBuy;
 
     private Trade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
@@ -195,12 +195,12 @@ public final class Trade {
         this.sellerId = askOrder.getAccountId();
         this.buyerId = bidOrder.getAccountId();
         this.dbKey = tradeDbKeyFactory.newKey(this.askOrderId, this.bidOrderId);
-        this.quantityATU = Math.min(askOrder.getQuantityATU(), bidOrder.getQuantityATU());
+        this.quantityQNT = Math.min(askOrder.getQuantityQNT(), bidOrder.getQuantityQNT());
         this.isBuy = askOrderHeight < bidOrderHeight ||
                 askOrderHeight == bidOrderHeight &&
                         (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
                                 (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() && askOrder.getTransactionIndex() < bidOrder.getTransactionIndex()));
-        this.priceATM = isBuy ? askOrder.getPriceATM() : bidOrder.getPriceATM();
+        this.priceNQT = isBuy ? askOrder.getPriceNQT() : bidOrder.getPriceNQT();
     }
 
     private Trade(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -213,8 +213,8 @@ public final class Trade {
         this.sellerId = rs.getLong("seller_id");
         this.buyerId = rs.getLong("buyer_id");
         this.dbKey = dbKey;
-        this.quantityATU = rs.getLong("quantity");
-        this.priceATM = rs.getLong("price");
+        this.quantityQNT = rs.getLong("quantity");
+        this.priceNQT = rs.getLong("price");
         this.timestamp = rs.getInt("timestamp");
         this.height = rs.getInt("height");
         this.isBuy = rs.getBoolean("is_buy");
@@ -233,8 +233,8 @@ public final class Trade {
             pstmt.setInt(++i, this.bidOrderHeight);
             pstmt.setLong(++i, this.sellerId);
             pstmt.setLong(++i, this.buyerId);
-            pstmt.setLong(++i, this.quantityATU);
-            pstmt.setLong(++i, this.priceATM);
+            pstmt.setLong(++i, this.quantityQNT);
+            pstmt.setLong(++i, this.priceNQT);
             pstmt.setBoolean(++i, this.isBuy);
             pstmt.setInt(++i, this.timestamp);
             pstmt.setInt(++i, this.height);
@@ -264,9 +264,9 @@ public final class Trade {
         return buyerId;
     }
 
-    public long getQuantityATU() { return quantityATU; }
+    public long getQuantityQNT() { return quantityQNT; }
 
-    public long getPriceATM() { return priceATM; }
+    public long getPriceNQT() { return priceNQT; }
     
     public long getAssetId() { return assetId; }
     
@@ -283,7 +283,7 @@ public final class Trade {
     @Override
     public String toString() {
         return "Trade asset: " + Long.toUnsignedString(assetId) + " ask: " + Long.toUnsignedString(askOrderId)
-                + " bid: " + Long.toUnsignedString(bidOrderId) + " price: " + priceATM + " quantity: " + quantityATU + " height: " + height;
+                + " bid: " + Long.toUnsignedString(bidOrderId) + " price: " + priceNQT + " quantity: " + quantityQNT + " height: " + height;
     }
 
 }

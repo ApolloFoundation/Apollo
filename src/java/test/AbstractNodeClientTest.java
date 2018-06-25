@@ -65,8 +65,8 @@ public abstract class AbstractNodeClientTest {
         Assert.assertEquals(recipientRS, transaction.getRecipientRS());
         Assert.assertEquals(senderRS, transaction.getSenderRS());
         Assert.assertEquals(60L, transaction.getDeadline().longValue());
-        Assert.assertEquals(100000000L, transaction.getAmountATM().longValue());
-        Assert.assertEquals(100000000L, transaction.getFeeATM().longValue());
+        Assert.assertEquals(100000000L, transaction.getAmountNQT().longValue());
+        Assert.assertEquals(100000000L, transaction.getFeeNQT().longValue());
     }
 
     @Test

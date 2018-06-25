@@ -42,7 +42,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     static final ScheduleCurrencyBuy instance = new ScheduleCurrencyBuy();
 
     private ScheduleCurrencyBuy() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateNQT", "units", "offerIssuer",
                 "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }
 
@@ -62,11 +62,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     return JSONResponses.error("Must use broadcast=false to schedule a future currency buy");
                 }
                 Currency currency = ParameterParser.getCurrency(req);
-                long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
+                long rateNQT = ParameterParser.getLong(req, "rateNQT", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = ParameterParser.getSenderAccount(req);
                 String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
+                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateNQT, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (secretPhrase == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
@@ -88,13 +88,13 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             }
 
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();
-            Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
+            Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateNQT());
 
             Apl.getBlockchain().updateLock();
             try {
                 transaction.validate();
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
-                if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
+                if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateNQT() <= attachment.getRateNQT()) {
                     Logger.logDebugMessage("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
                     Apl.getTransactionProcessor().broadcast(transaction);
                     response.put("broadcasted", true);
@@ -137,12 +137,12 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
 
         private final long senderId;
         private final long currencyId;
-        private final long rateATM;
+        private final long rateNQT;
 
-        private ExchangeOfferFilter(long senderId, long currencyId, long rateATM) {
+        private ExchangeOfferFilter(long senderId, long currencyId, long rateNQT) {
             this.senderId = senderId;
             this.currencyId = currencyId;
-            this.rateATM = rateATM;
+            this.rateNQT = rateNQT;
         }
 
         @Override
@@ -153,7 +153,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 return false;
             }
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
-            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
+            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateNQT() > rateNQT) {
                 return false;
             }
             return true;

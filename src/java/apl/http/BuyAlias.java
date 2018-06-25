@@ -33,19 +33,19 @@ public final class BuyAlias extends CreateTransaction {
     static final BuyAlias instance = new BuyAlias();
 
     private BuyAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "amountATM");
+        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "amountNQT");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Account buyer = ParameterParser.getSenderAccount(req);
         Alias alias = ParameterParser.getAlias(req);
-        long amountATM = ParameterParser.getAmountATM(req);
+        long amountNQT = ParameterParser.getAmountNQT(req);
         if (Alias.getOffer(alias) == null) {
             return INCORRECT_ALIAS_NOTFORSALE;
         }
         long sellerId = alias.getAccountId();
         Attachment attachment = new Attachment.MessagingAliasBuy(alias.getAliasName());
-        return createTransaction(req, buyer, sellerId, amountATM, attachment);
+        return createTransaction(req, buyer, sellerId, amountNQT, attachment);
     }
 }

@@ -4,7 +4,7 @@ import apl.TransactionType;
 
 import java.util.Objects;
 
-import static test.TestUtil.fromATM;
+import static test.TestUtil.fromNqt;
 
 /**
  * Simple DTO object for {@link apl.TransactionImpl}
@@ -12,7 +12,7 @@ import static test.TestUtil.fromATM;
 public class Transaction {
     private String senderPublicKey;
     private String signature;
-    private Long feeATM;
+    private Long feeNQT;
     private Long transactionIndex;
     private Byte type;
     private Long confirmations;
@@ -24,7 +24,7 @@ public class Transaction {
     //attachments should present, but ignoring for now
     private String senderRS;
     private Byte subtype;
-    private Long amountATM;
+    private Long amountNQT;
     private String sender; //senderId
     private Long ecBlockHeight;
     private String block;//blockId
@@ -39,8 +39,8 @@ public class Transaction {
     public String toString() {
         return "Transaction{" +
                 "type=" + TransactionType.findTransactionType(type,subtype) +
-                "amountATM=" + fromATM(amountATM) +
-                ", feeATM=" + fromATM(feeATM) +
+                "amountNQT=" + fromNqt(amountNQT) +
+                ", feeNQT=" + fromNqt(feeNQT) +
                 ", senderRS='" + senderRS + '\'' +
                 ", height=" + height +
                 ", recipientRS='" + recipientRS + '\'' +
@@ -79,12 +79,12 @@ public class Transaction {
         this.signature = signature;
     }
 
-    public Long getFeeATM() {
-        return feeATM;
+    public Long getFeeNQT() {
+        return feeNQT;
     }
 
-    public void setFeeATM(Long feeATM) {
-        this.feeATM = feeATM;
+    public void setFeeNQT(Long feeNQT) {
+        this.feeNQT = feeNQT;
     }
 
     public Long getTransactionIndex() {
@@ -167,12 +167,12 @@ public class Transaction {
         this.subtype = subtype;
     }
 
-    public Long getAmountATM() {
-        return amountATM;
+    public Long getAmountNQT() {
+        return amountNQT;
     }
 
-    public void setAmountATM(Long amountATM) {
-        this.amountATM = amountATM;
+    public void setAmountNQT(Long amountNQT) {
+        this.amountNQT = amountNQT;
     }
 
     public String getSender() {
@@ -235,7 +235,7 @@ public class Transaction {
         Transaction that = (Transaction) o;
         return Objects.equals(getSenderPublicKey(), that.getSenderPublicKey()) &&
                 Objects.equals(getSignature(), that.getSignature()) &&
-                Objects.equals(getFeeATM(), that.getFeeATM()) &&
+                Objects.equals(getFeeNQT(), that.getFeeNQT()) &&
                 Objects.equals(getTransactionIndex(), that.getTransactionIndex()) &&
                 Objects.equals(getType(), that.getType()) &&
                 Objects.equals(getConfirmations(), that.getConfirmations()) &&
@@ -246,7 +246,7 @@ public class Transaction {
                 Objects.equals(getSignatureHash(), that.getSignatureHash()) &&
                 Objects.equals(getSenderRS(), that.getSenderRS()) &&
                 Objects.equals(getSubtype(), that.getSubtype()) &&
-                Objects.equals(getAmountATM(), that.getAmountATM()) &&
+                Objects.equals(getAmountNQT(), that.getAmountNQT()) &&
                 Objects.equals(getSender(), that.getSender()) &&
                 Objects.equals(getEcBlockHeight(), that.getEcBlockHeight()) &&
                 Objects.equals(getBlock(), that.getBlock()) &&
@@ -261,7 +261,7 @@ public class Transaction {
     @Override
     public int hashCode() {
 
-        return Objects.hash(getSenderPublicKey(), getSignature(), getFeeATM(), getTransactionIndex(), getType(), getConfirmations(), getFullHash(), getVersion(), getPhased(), getEcBlockId(), getSignatureHash(), getSenderRS(), getSubtype(), getAmountATM(), getSender(), getEcBlockHeight(), getBlock(), getBlockTimestamp(), getDeadline(), getTransaction(), getTimestamp(), getHeight(), getRecipientRS());
+        return Objects.hash(getSenderPublicKey(), getSignature(), getFeeNQT(), getTransactionIndex(), getType(), getConfirmations(), getFullHash(), getVersion(), getPhased(), getEcBlockId(), getSignatureHash(), getSenderRS(), getSubtype(), getAmountNQT(), getSender(), getEcBlockHeight(), getBlock(), getBlockTimestamp(), getDeadline(), getTransaction(), getTimestamp(), getHeight(), getRecipientRS());
     }
 
     public void setRecipientRS(String recipientRS) {

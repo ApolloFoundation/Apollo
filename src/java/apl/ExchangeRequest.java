@@ -113,7 +113,7 @@ public final class ExchangeRequest {
         this.accountId = transaction.getSenderId();
         this.currencyId = attachment.getCurrencyId();
         this.units = attachment.getUnits();
-        this.rate = attachment.getRateATM();
+        this.rate = attachment.getRateNQT();
         this.isBuy = isBuy;
         Block block = Apl.getBlockchain().getLastBlock();
         this.height = block.getHeight();

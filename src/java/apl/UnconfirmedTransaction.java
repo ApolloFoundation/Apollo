@@ -38,7 +38,7 @@ class UnconfirmedTransaction implements Transaction {
     UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp) {
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
-        this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
+        this.feePerByte = transaction.getFeeNQT() / transaction.getFullSize();
     }
 
     UnconfirmedTransaction(ResultSet rs) throws SQLException {
@@ -168,13 +168,13 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public long getAmountATM() {
-        return transaction.getAmountATM();
+    public long getAmountNQT() {
+        return transaction.getAmountNQT();
     }
 
     @Override
-    public long getFeeATM() {
-        return transaction.getFeeATM();
+    public long getFeeNQT() {
+        return transaction.getFeeNQT();
     }
 
     @Override

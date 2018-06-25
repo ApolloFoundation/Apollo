@@ -5,7 +5,7 @@ import java.util.List;
 public class Block {
     private String previousBlockHash;
     private Long payloadLength;
-    private Long totalAmountATM;
+    private Long totalAmountNQT;
     private String generationSignature;
     private String generator;
     private String generatorPublicKey;
@@ -16,7 +16,7 @@ public class Block {
     private String blockSignature;
     private List<Transaction> transactions;
     private Long version;
-    private Long totalFeeATM;
+    private Long totalFeeNQT;
     private String previousBlock;
     private String cumulativeDifficulty;
     private String block; //block id
@@ -39,12 +39,12 @@ public class Block {
         this.payloadLength = payloadLength;
     }
 
-    public Long getTotalAmountATM() {
-        return totalAmountATM;
+    public Long getTotalAmountNQT() {
+        return totalAmountNQT;
     }
 
-    public void setTotalAmountATM(Long totalAmountATM) {
-        this.totalAmountATM = totalAmountATM;
+    public void setTotalAmountNQT(Long totalAmountNQT) {
+        this.totalAmountNQT = totalAmountNQT;
     }
 
     public String getGenerationSignature() {
@@ -127,13 +127,13 @@ public class Block {
         this.version = version;
     }
 
-    public Long getTotalFeeATM() {
-        return totalFeeATM;
+    public Long getTotalFeeNQT() {
+        return totalFeeNQT;
     }
 
 
-    public void setTotalFeeATM(Long totalFeeATM) {
-        this.totalFeeATM = totalFeeATM;
+    public void setTotalFeeNQT(Long totalFeeNQT) {
+        this.totalFeeNQT = totalFeeNQT;
     }
 
     public String getPreviousBlock() {
@@ -181,12 +181,12 @@ public class Block {
         return "Block{" +
             "height=" + height +
             ", previousBlockHash='" + previousBlockHash + '\'' +
-            ", totalAmountATM=" + totalAmountATM +
+            ", totalAmountNQT=" + totalAmountNQT +
             ", generatorPublicKey='" + generatorPublicKey + '\'' +
             ", blockSignature='" + blockSignature + '\'' +
             ", numberOfTransactions=" + numberOfTransactions +
             ", transactions=" + transactions +
-            ", totalFeeATM=" + totalFeeATM +
+            ", totalFeeNQT=" + totalFeeNQT +
             '}';
     }
 }

@@ -44,22 +44,22 @@ public final class VoteWeighting {
                 return MinBalanceModel.NONE;
             }
         },
-        ATM(1) {
+        NQT(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atmBalance = Account.getAccount(voterId, height).getBalanceATM();
-                return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
+                long nqtBalance = Account.getAccount(voterId, height).getBalanceNQT();
+                return nqtBalance >= voteWeighting.minBalance ? nqtBalance : 0;
             }
             @Override
             public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.ATM;
+                return MinBalanceModel.NQT;
             }
         },
         ASSET(2) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atuBalance = Account.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
-                return atuBalance >= voteWeighting.minBalance ? atuBalance : 0;
+                long qntBalance = Account.getAssetBalanceQNT(voterId, voteWeighting.holdingId, height);
+                return qntBalance >= voteWeighting.minBalance ? qntBalance : 0;
             }
             @Override
             public final MinBalanceModel getMinBalanceModel() {
@@ -137,16 +137,16 @@ public final class VoteWeighting {
                 throw new UnsupportedOperationException();
             }
         },
-        ATM(1) {
+        NQT(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAccount(voterId, height).getBalanceATM();
+                return Account.getAccount(voterId, height).getBalanceNQT();
             }
         },
         ASSET(2) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                return Account.getAssetBalanceQNT(voterId, voteWeighting.holdingId, height);
             }
         },
         CURRENCY(3) {
@@ -246,8 +246,8 @@ public final class VoteWeighting {
         if (minBalance == 0 && votingModel == VotingModel.ACCOUNT && holdingId != 0) {
             throw new AplException.NotValidException("HoldingId cannot be used in by account voting with no min balance");
         }
-        if ((votingModel == VotingModel.ATM || minBalanceModel == MinBalanceModel.ATM) && holdingId != 0) {
-            throw new AplException.NotValidException("HoldingId cannot be used in by balance voting or with min balance in ATM");
+        if ((votingModel == VotingModel.NQT || minBalanceModel == MinBalanceModel.NQT) && holdingId != 0) {
+            throw new AplException.NotValidException("HoldingId cannot be used in by balance voting or with min balance in NQT");
         }
         if ((!votingModel.acceptsVotes() || votingModel == VotingModel.HASH) && (holdingId != 0 || minBalance != 0 || minBalanceModel != MinBalanceModel.NONE)) {
             throw new AplException.NotValidException("With VotingModel " + votingModel + " no holdingId, minBalance, or minBalanceModel should be specified");

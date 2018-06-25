@@ -39,7 +39,7 @@ public final class DGSPurchase extends CreateTransaction {
 
     private DGSPurchase() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
+                "goods", "priceNQT", "quantity", "deliveryDeadlineTimestamp");
     }
 
     @Override
@@ -55,8 +55,8 @@ public final class DGSPurchase extends CreateTransaction {
             return INCORRECT_PURCHASE_QUANTITY;
         }
 
-        long priceATM = ParameterParser.getPriceATM(req);
-        if (priceATM != goods.getPriceATM()) {
+        long priceNQT = ParameterParser.getPriceNQT(req);
+        if (priceNQT != goods.getPriceNQT()) {
             return INCORRECT_PURCHASE_PRICE;
         }
 
@@ -77,7 +77,7 @@ public final class DGSPurchase extends CreateTransaction {
         Account buyerAccount = ParameterParser.getSenderAccount(req);
         Account sellerAccount = Account.getAccount(goods.getSellerId());
 
-        Attachment attachment = new Attachment.DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
+        Attachment attachment = new Attachment.DigitalGoodsPurchase(goods.getId(), quantity, priceNQT,
                 deliveryDeadline);
         try {
             return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);

@@ -101,11 +101,11 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
                     Account.AccountAsset accountAsset = accountAssets.next();
                     JSONObject assetBalance = new JSONObject();
                     assetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
-                    assetBalance.put("balanceATU", String.valueOf(accountAsset.getQuantityATU()));
+                    assetBalance.put("balanceQNT", String.valueOf(accountAsset.getQuantityQNT()));
                     assetBalances.add(assetBalance);
                     JSONObject unconfirmedAssetBalance = new JSONObject();
                     unconfirmedAssetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
-                    unconfirmedAssetBalance.put("unconfirmedBalanceATU", String.valueOf(accountAsset.getUnconfirmedQuantityATU()));
+                    unconfirmedAssetBalance.put("unconfirmedBalanceQNT", String.valueOf(accountAsset.getUnconfirmedQuantityQNT()));
                     unconfirmedAssetBalances.add(unconfirmedAssetBalance);
                 }
                 if (assetBalances.size() > 0) {

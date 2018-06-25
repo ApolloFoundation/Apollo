@@ -112,7 +112,7 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
     private final DbKey dbKey;
 
     private CurrencySellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
-        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
+        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateNQT(),
                 attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                 transaction.getIndex());
         this.dbKey = sellOfferDbKeyFactory.newKey(id);

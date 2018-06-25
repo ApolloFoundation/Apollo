@@ -36,7 +36,7 @@ public final class SellAlias extends CreateTransaction {
     static final SellAlias instance = new SellAlias();
 
     private SellAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceATM");
+        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceNQT");
     }
 
     @Override
@@ -44,7 +44,7 @@ public final class SellAlias extends CreateTransaction {
         Alias alias = ParameterParser.getAlias(req);
         Account owner = ParameterParser.getSenderAccount(req);
 
-        long priceATM = ParameterParser.getLong(req, "priceATM", 0L, Constants.MAX_BALANCE_ATM, true);
+        long priceNQT = ParameterParser.getLong(req, "priceNQT", 0L, Constants.MAX_BALANCE_NQT, true);
 
         String recipientValue = Convert.emptyToNull(req.getParameter("recipient"));
         long recipientId = 0;
@@ -63,7 +63,7 @@ public final class SellAlias extends CreateTransaction {
             return INCORRECT_ALIAS_OWNER;
         }
 
-        Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceATM);
+        Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceNQT);
         return createTransaction(req, owner, recipientId, 0, attachment);
     }
 }

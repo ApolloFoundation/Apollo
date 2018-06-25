@@ -52,11 +52,11 @@ var NRS = (function(NRS, $, undefined) {
 				$("#account_balance_account_rs").html(NRS.getAccountLink(NRS, "account", undefined, undefined, true));
 				$("#account_balance_account").html(NRS.escapeRespStr(NRS.account));
 			} else {
-				$("#account_balance_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.balanceATM)) + " " + NRS.constants.COIN_SYMBOL);
-				$("#account_balance_unconfirmed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.unconfirmedBalanceATM)) + " " + NRS.constants.COIN_SYMBOL);
+				$("#account_balance_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.balanceNQT)) + " " + NRS.constants.COIN_SYMBOL);
+				$("#account_balance_unconfirmed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.unconfirmedBalanceNQT)) + " " + NRS.constants.COIN_SYMBOL);
 				$("#account_balance_effective_balance").html(NRS.formatAmount(NRS.accountInfo.effectiveBalanceAPL) + " " + NRS.constants.COIN_SYMBOL);
-				$("#account_balance_guaranteed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.guaranteedBalanceATM)) + " " + NRS.constants.COIN_SYMBOL);
-				$("#account_balance_forged_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.forgedBalanceATM)) + " " + NRS.constants.COIN_SYMBOL);
+				$("#account_balance_guaranteed_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.guaranteedBalanceNQT)) + " " + NRS.constants.COIN_SYMBOL);
+				$("#account_balance_forged_balance").html(NRS.formatAmount(new BigInteger(NRS.accountInfo.forgedBalanceNQT)) + " " + NRS.constants.COIN_SYMBOL);
 
 				accountBalancePublicKey.html(NRS.escapeRespStr(NRS.accountInfo.publicKey));
 				$("#account_balance_account_rs").html(NRS.getAccountLink(NRS.accountInfo, "account", undefined, undefined, true));

@@ -77,36 +77,36 @@ QUnit.test("formatWeight", function (assert) {
     assert.equal(NRS.formatWeight(12345), "12&#39;345", "number");
 });
 
-QUnit.test("calculateOrderPricePerWholeATU", function (assert) {
-    assert.equal(NRS.calculateOrderPricePerWholeATU(100000000, 0), "1", "no.decimals.one");
-    assert.equal(NRS.calculateOrderPricePerWholeATU(1, 4), "0.0001", "fraction");
-    assert.equal(NRS.calculateOrderPricePerWholeATU(-123400000000, 8), "-123400000000", "eight.decimals");
-    assert.equal(NRS.calculateOrderPricePerWholeATU(-123400000000, 4), "-12340000", "four.decimals");
-    assert.equal(NRS.calculateOrderPricePerWholeATU(-123400000000, 0), "-1234", "no.decimals");
+QUnit.test("calculateOrderPricePerWholeQNT", function (assert) {
+    assert.equal(NRS.calculateOrderPricePerWholeQNT(100000000, 0), "1", "no.decimals.one");
+    assert.equal(NRS.calculateOrderPricePerWholeQNT(1, 4), "0.0001", "fraction");
+    assert.equal(NRS.calculateOrderPricePerWholeQNT(-123400000000, 8), "-123400000000", "eight.decimals");
+    assert.equal(NRS.calculateOrderPricePerWholeQNT(-123400000000, 4), "-12340000", "four.decimals");
+    assert.equal(NRS.calculateOrderPricePerWholeQNT(-123400000000, 0), "-1234", "no.decimals");
 });
 
-QUnit.test("formatOrderPricePerWholeATU", function (assert) {
-    assert.equal(NRS.formatOrderPricePerWholeATU(100000000, 0), "1", "no.decimals.one");
-    assert.equal(NRS.formatOrderPricePerWholeATU(1, 4), "0.0001", "fraction");
-    assert.equal(NRS.formatOrderPricePerWholeATU(-123400000000, 8), Number("-123400000000".escapeHTML()).toLocaleString(), "eight.decimals");
-    assert.equal(NRS.formatOrderPricePerWholeATU(-123400000000, 4), Number("-12340000".escapeHTML()).toLocaleString(), "four.decimals");
-    assert.equal(NRS.formatOrderPricePerWholeATU(-123400000000, 0), Number("-1234".escapeHTML()).toLocaleString(), "no.decimals");
+QUnit.test("formatOrderPricePerWholeQNT", function (assert) {
+    assert.equal(NRS.formatOrderPricePerWholeQNT(100000000, 0), "1", "no.decimals.one");
+    assert.equal(NRS.formatOrderPricePerWholeQNT(1, 4), "0.0001", "fraction");
+    assert.equal(NRS.formatOrderPricePerWholeQNT(-123400000000, 8), Number("-123400000000".escapeHTML()).toLocaleString(), "eight.decimals");
+    assert.equal(NRS.formatOrderPricePerWholeQNT(-123400000000, 4), Number("-12340000".escapeHTML()).toLocaleString(), "four.decimals");
+    assert.equal(NRS.formatOrderPricePerWholeQNT(-123400000000, 0), Number("-1234".escapeHTML()).toLocaleString(), "no.decimals");
 });
 
-QUnit.test("calculatePricePerWholeATU", function (assert) {
-    assert.equal(NRS.calculatePricePerWholeATU(100000000, 0), "100000000", "no.decimals.one");
-    assert.equal(NRS.calculatePricePerWholeATU(100000000, 4), "10000", "four.decimals");
-    assert.equal(NRS.calculatePricePerWholeATU(100000000, 8), "1", "eight.decimals");
-    assert.equal(NRS.calculatePricePerWholeATU(-123400000000, 8), "-1234".escapeHTML(), "eight.decimals");
-    assert.equal(NRS.calculatePricePerWholeATU(-123400000000, 4), "-12340000".escapeHTML(), "four.decimals");
-    assert.equal(NRS.calculatePricePerWholeATU(-123400000000, 0), "-123400000000".escapeHTML(), "no.decimals");
+QUnit.test("calculatePricePerWholeQNT", function (assert) {
+    assert.equal(NRS.calculatePricePerWholeQNT(100000000, 0), "100000000", "no.decimals.one");
+    assert.equal(NRS.calculatePricePerWholeQNT(100000000, 4), "10000", "four.decimals");
+    assert.equal(NRS.calculatePricePerWholeQNT(100000000, 8), "1", "eight.decimals");
+    assert.equal(NRS.calculatePricePerWholeQNT(-123400000000, 8), "-1234".escapeHTML(), "eight.decimals");
+    assert.equal(NRS.calculatePricePerWholeQNT(-123400000000, 4), "-12340000".escapeHTML(), "four.decimals");
+    assert.equal(NRS.calculatePricePerWholeQNT(-123400000000, 0), "-123400000000".escapeHTML(), "no.decimals");
     assert.throws(function () {
-        NRS.calculatePricePerWholeATU(100000001, 8);
+        NRS.calculatePricePerWholeQNT(100000001, 8);
     }, "Invalid input.", "invalid.input");
 });
 
-QUnit.test("calculateOrderTotalATM", function (assert) {
-    assert.equal(NRS.calculateOrderTotalATM(12, 34), "408", "multiplication");
+QUnit.test("calculateOrderTotalNQT", function (assert) {
+    assert.equal(NRS.calculateOrderTotalNQT(12, 34), "408", "multiplication");
 });
 
 QUnit.test("calculateOrderTotal", function (assert) {
@@ -134,33 +134,33 @@ QUnit.test("amountToPrecision", function (assert) {
     assert.equal(NRS.amountToPrecision(12.3006, 2), "12.30", "multiplication");
 });
 
-QUnit.test("convertToATM", function (assert) {
-    assert.equal(NRS.convertToATM(1), "100000000", "one");
-    assert.equal(NRS.convertToATM(1.), "100000000", "one.dot");
-    assert.equal(NRS.convertToATM(1.0), "100000000", "one.dot.zero");
-    assert.equal(NRS.convertToATM(.1), "10000000", "dot.one");
-    assert.equal(NRS.convertToATM(0.1), "10000000", "zero.dot.one");
-    assert.equal(NRS.convertToATM("0.00000001"), "1", "nqt");
+QUnit.test("convertToNQT", function (assert) {
+    assert.equal(NRS.convertToNQT(1), "100000000", "one");
+    assert.equal(NRS.convertToNQT(1.), "100000000", "one.dot");
+    assert.equal(NRS.convertToNQT(1.0), "100000000", "one.dot.zero");
+    assert.equal(NRS.convertToNQT(.1), "10000000", "dot.one");
+    assert.equal(NRS.convertToNQT(0.1), "10000000", "zero.dot.one");
+    assert.equal(NRS.convertToNQT("0.00000001"), "1", "nqt");
     assert.throws(function () {
-        NRS.convertToATM(0.00000001); // since it's passed as 1e-8
+        NRS.convertToNQT(0.00000001); // since it's passed as 1e-8
     }, "Invalid input.", "invalid.input");
 });
 
-QUnit.test("convertToATUf", function (assert) {
-    assert.equal(NRS.convertToATUf(1, 0), "1", "one");
-    assert.equal(NRS.convertToATUf(1, 3), "0.001", "milli");
-    assert.equal(NRS.convertToATUf(1000, 3), "1", "three.decimals");
-    assert.equal(NRS.convertToATUf(1234567, 3), "1234.567", "multi");
-    assert.deepEqual(NRS.convertToATUf(1234567, 3, true), { amount: "1234", mantissa: ".567" }, "object");
+QUnit.test("convertToQNTf", function (assert) {
+    assert.equal(NRS.convertToQNTf(1, 0), "1", "one");
+    assert.equal(NRS.convertToQNTf(1, 3), "0.001", "milli");
+    assert.equal(NRS.convertToQNTf(1000, 3), "1", "three.decimals");
+    assert.equal(NRS.convertToQNTf(1234567, 3), "1234.567", "multi");
+    assert.deepEqual(NRS.convertToQNTf(1234567, 3, true), { amount: "1234", mantissa: ".567" }, "object");
 });
 
-QUnit.test("convertToATU", function (assert) {
-    assert.equal(NRS.convertToATU(1, 0), "1", "one");
-    assert.equal(NRS.convertToATU(1, 3), "1000", "thousand");
-    assert.equal(NRS.convertToATU(1000, 3), "1000000", "million");
-    assert.equal(NRS.convertToATU(1.234, 3), "1234", "multi");
-    assert.equal(NRS.convertToATU(0.1234, 4), "1234", "decimal");
-    assert.throws(function() { NRS.convertToATU(0.12345, 4) }, "Fraction can only have 4 decimals max.", "too.many.decimals");
+QUnit.test("convertToQNT", function (assert) {
+    assert.equal(NRS.convertToQNT(1, 0), "1", "one");
+    assert.equal(NRS.convertToQNT(1, 3), "1000", "thousand");
+    assert.equal(NRS.convertToQNT(1000, 3), "1000000", "million");
+    assert.equal(NRS.convertToQNT(1.234, 3), "1234", "multi");
+    assert.equal(NRS.convertToQNT(0.1234, 4), "1234", "decimal");
+    assert.throws(function() { NRS.convertToQNT(0.12345, 4) }, "Fraction can only have 4 decimals max.", "too.many.decimals");
 });
 
 QUnit.test("formatQuantity", function (assert) {

@@ -32,13 +32,13 @@ public final class Alias {
 
     public static class Offer {
 
-        private long priceATM;
+        private long priceNQT;
         private long buyerId;
         private final long aliasId;
         private final DbKey dbKey;
 
-        private Offer(long aliasId, long priceATM, long buyerId) {
-            this.priceATM = priceATM;
+        private Offer(long aliasId, long priceNQT, long buyerId) {
+            this.priceNQT = priceNQT;
             this.buyerId = buyerId;
             this.aliasId = aliasId;
             this.dbKey = offerDbKeyFactory.newKey(this.aliasId);
@@ -47,7 +47,7 @@ public final class Alias {
         private Offer(ResultSet rs, DbKey dbKey) throws SQLException {
             this.aliasId = rs.getLong("id");
             this.dbKey = dbKey;
-            this.priceATM = rs.getLong("price");
+            this.priceNQT = rs.getLong("price");
             this.buyerId  = rs.getLong("buyer_id");
         }
 
@@ -56,7 +56,7 @@ public final class Alias {
                     + "height) KEY (id, height) VALUES (?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.aliasId);
-                pstmt.setLong(++i, this.priceATM);
+                pstmt.setLong(++i, this.priceNQT);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.buyerId);
                 pstmt.setInt(++i, Apl.getBlockchain().getHeight());
                 pstmt.executeUpdate();
@@ -67,8 +67,8 @@ public final class Alias {
             return aliasId;
         }
 
-        public long getPriceATM() {
-            return priceATM;
+        public long getPriceNQT() {
+            return priceNQT;
         }
 
         public long getBuyerId() {
@@ -160,7 +160,7 @@ public final class Alias {
         final Alias alias = getAlias(aliasName);
         final Offer offer = Alias.getOffer(alias);
         if (offer != null) {
-            offer.priceATM = Long.MAX_VALUE;
+            offer.priceNQT = Long.MAX_VALUE;
             offerTable.delete(offer);
         }
         aliasTable.delete(alias);
@@ -180,15 +180,15 @@ public final class Alias {
 
     static void sellAlias(Transaction transaction, Attachment.MessagingAliasSell attachment) {
         final String aliasName = attachment.getAliasName();
-        final long priceATM = attachment.getPriceATM();
+        final long priceNQT = attachment.getPriceNQT();
         final long buyerId = transaction.getRecipientId();
-        if (priceATM > 0) {
+        if (priceNQT > 0) {
             Alias alias = getAlias(aliasName);
             Offer offer = getOffer(alias);
             if (offer == null) {
-                offerTable.insert(new Offer(alias.id, priceATM, buyerId));
+                offerTable.insert(new Offer(alias.id, priceNQT, buyerId));
             } else {
-                offer.priceATM = priceATM;
+                offer.priceNQT = priceNQT;
                 offer.buyerId = buyerId;
                 offerTable.insert(offer);
             }
@@ -205,7 +205,7 @@ public final class Alias {
         aliasTable.insert(alias);
         Offer offer = getOffer(alias);
         if (offer != null) {
-            offer.priceATM = Long.MAX_VALUE;
+            offer.priceNQT = Long.MAX_VALUE;
             offerTable.delete(offer);
         }
     }

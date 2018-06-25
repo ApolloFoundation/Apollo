@@ -40,8 +40,8 @@ final class TransactionImpl implements Transaction {
 
         private final short deadline;
         private final byte[] senderPublicKey;
-        private final long amountATM;
-        private final long feeATM;
+        private final long amountNQT;
+        private final long feeNQT;
         private final TransactionType type;
         private final byte version;
         private Attachment.AbstractAttachment attachment;
@@ -68,13 +68,13 @@ final class TransactionImpl implements Transaction {
         private long ecBlockId;
         private short index = -1;
 
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
+        BuilderImpl(byte version, byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline,
                     Attachment.AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
-            this.amountATM = amountATM;
-            this.feeATM = feeATM;
+            this.amountNQT = amountNQT;
+            this.feeNQT = feeNQT;
             this.attachment = attachment;
             this.type = attachment.getTransactionType();
         }
@@ -225,8 +225,8 @@ final class TransactionImpl implements Transaction {
     private final short deadline;
     private volatile byte[] senderPublicKey;
     private final long recipientId;
-    private final long amountATM;
-    private final long feeATM;
+    private final long amountNQT;
+    private final long feeNQT;
     private final byte[] referencedTransactionFullHash;
     private final TransactionType type;
     private final int ecBlockHeight;
@@ -265,7 +265,7 @@ final class TransactionImpl implements Transaction {
         this.deadline = builder.deadline;
         this.senderPublicKey = builder.senderPublicKey;
         this.recipientId = builder.recipientId;
-        this.amountATM = builder.amountATM;
+        this.amountNQT = builder.amountNQT;
         this.referencedTransactionFullHash = builder.referencedTransactionFullHash;
         this.type = builder.type;
         this.version = builder.version;
@@ -313,12 +313,12 @@ final class TransactionImpl implements Transaction {
             appendagesSize += appendage.getSize();
         }
         this.appendagesSize = appendagesSize;
-        if (builder.feeATM <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
+        if (builder.feeNQT <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
             int effectiveHeight = (height < Integer.MAX_VALUE ? height : Apl.getBlockchain().getHeight());
-            long minFee = getMinimumFeeATM(effectiveHeight);
-            feeATM = Math.max(minFee, builder.feeATM);
+            long minFee = getMinimumFeeNQT(effectiveHeight);
+            feeNQT = Math.max(minFee, builder.feeNQT);
         } else {
-            feeATM = builder.feeATM;
+            feeNQT = builder.feeNQT;
         }
 
         if (builder.signature != null && secretPhrase != null) {
@@ -356,13 +356,13 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public long getAmountATM() {
-        return amountATM;
+    public long getAmountNQT() {
+        return amountNQT;
     }
 
     @Override
-    public long getFeeATM() {
-        return feeATM;
+    public long getFeeNQT() {
+        return feeNQT;
     }
 
     long[] getBackFees() {
@@ -612,8 +612,8 @@ final class TransactionImpl implements Transaction {
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
                 buffer.putLong(type.canHaveRecipient() ? recipientId : Genesis.CREATOR_ID);
-                buffer.putLong(amountATM);
-                buffer.putLong(feeATM);
+                buffer.putLong(amountNQT);
+                buffer.putLong(feeNQT);
                 if (referencedTransactionFullHash != null) {
                     buffer.put(referencedTransactionFullHash);
                 } else {
@@ -650,8 +650,8 @@ final class TransactionImpl implements Transaction {
             byte[] senderPublicKey = new byte[32];
             buffer.get(senderPublicKey);
             long recipientId = buffer.getLong();
-            long amountATM = buffer.getLong();
-            long feeATM = buffer.getLong();
+            long amountNQT = buffer.getLong();
+            long feeNQT = buffer.getLong();
             byte[] referencedTransactionFullHash = new byte[32];
             buffer.get(referencedTransactionFullHash);
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
@@ -667,7 +667,7 @@ final class TransactionImpl implements Transaction {
                 ecBlockId = buffer.getLong();
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountATM, feeATM,
+            TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountNQT, feeNQT,
                     deadline, transactionType.parseAttachment(buffer))
                     .timestamp(timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
@@ -757,8 +757,8 @@ final class TransactionImpl implements Transaction {
         if (type.canHaveRecipient()) {
             json.put("recipient", Long.toUnsignedString(recipientId));
         }
-        json.put("amountATM", amountATM);
-        json.put("feeATM", feeATM);
+        json.put("amountNQT", amountNQT);
+        json.put("feeNQT", feeNQT);
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
         }
@@ -808,8 +808,8 @@ final class TransactionImpl implements Transaction {
             int timestamp = ((Long) transactionData.get("timestamp")).intValue();
             short deadline = ((Long) transactionData.get("deadline")).shortValue();
             byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
-            long amountATM = Convert.parseLong(transactionData.get("amountATM"));
-            long feeATM = Convert.parseLong(transactionData.get("feeATM"));
+            long amountNQT = Convert.parseLong(transactionData.get("amountNQT"));
+            long feeNQT = Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
             byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
             Long versionValue = (Long) transactionData.get("version");
@@ -827,7 +827,7 @@ final class TransactionImpl implements Transaction {
                 throw new AplException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
             TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
-                    amountATM, feeATM, deadline,
+                    amountNQT, feeNQT, deadline,
                     transactionType.parseAttachment(attachmentData))
                     .timestamp(timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
@@ -948,13 +948,13 @@ final class TransactionImpl implements Transaction {
 
     @Override
     public void validate() throws AplException.ValidationException {
-        if (timestamp == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
-                || feeATM > Constants.MAX_BALANCE_ATM
-                || amountATM < 0
-                || amountATM > Constants.MAX_BALANCE_ATM
+        if (timestamp == 0 ? (deadline != 0 || feeNQT != 0) : (deadline < 1 || feeNQT <= 0)
+                || feeNQT > Constants.MAX_BALANCE_NQT
+                || amountNQT < 0
+                || amountNQT > Constants.MAX_BALANCE_NQT
                 || type == null) {
             throw new AplException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + timestamp
-                    + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM);
+                    + ", deadline: " + deadline + ", fee: " + feeNQT + ", amount: " + amountNQT);
         }
 
         if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
@@ -966,7 +966,7 @@ final class TransactionImpl implements Transaction {
         }
 
         if (! type.canHaveRecipient()) {
-            if (recipientId != 0 || getAmountATM() != 0) {
+            if (recipientId != 0 || getAmountNQT() != 0) {
                 throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
             }
         }
@@ -995,10 +995,10 @@ final class TransactionImpl implements Transaction {
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
         if (!validatingAtFinish) {
-            long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
-            if (feeATM < minimumFeeATM) {
+            long minimumFeeNQT = getMinimumFeeNQT(blockchainHeight);
+            if (feeNQT < minimumFeeNQT) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                        ((double) feeATM) / Constants.ONE_APL, Constants.COIN_SYMBOL, ((double) minimumFeeATM) / Constants.ONE_APL, Constants.COIN_SYMBOL, blockchainHeight));
+                        ((double) feeNQT) / Constants.ONE_APL, Constants.COIN_SYMBOL, ((double) minimumFeeNQT) / Constants.ONE_APL, Constants.COIN_SYMBOL, blockchainHeight));
             }
             if (ecBlockId != 0) {
                 if (blockchainHeight < ecBlockHeight) {
@@ -1032,11 +1032,11 @@ final class TransactionImpl implements Transaction {
             }
         }
         if (referencedTransactionFullHash != null) {
-            senderAccount.addToUnconfirmedBalanceATM(getType().getLedgerEvent(), getId(),
-                    0, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
+            senderAccount.addToUnconfirmedBalanceNQT(getType().getLedgerEvent(), getId(),
+                    0, Constants.UNCONFIRMED_POOL_DEPOSIT_NQT);
         }
         if (attachmentIsPhased()) {
-            senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeATM);
+            senderAccount.addToBalanceNQT(getType().getLedgerEvent(), getId(), 0, -feeNQT);
         }
         for (Appendix.AbstractAppendix appendage : appendages) {
             if (!appendage.isPhased(this)) {
@@ -1077,7 +1077,7 @@ final class TransactionImpl implements Transaction {
         return type.isUnconfirmedDuplicate(this, duplicates);
     }
 
-    private long getMinimumFeeATM(int blockchainHeight) {
+    private long getMinimumFeeNQT(int blockchainHeight) {
         long totalFee = 0;
         for (Appendix.AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
