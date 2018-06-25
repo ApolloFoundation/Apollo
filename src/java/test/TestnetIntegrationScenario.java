@@ -3,6 +3,7 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
+import test.dto.Transaction;
 
 import java.io.IOException;
 import java.util.HashMap;

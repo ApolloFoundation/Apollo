@@ -2,9 +2,15 @@ package test;
 
 
 import apl.AccountLedger;
+import apl.TransactionType;
+import apl.Version;
+import apl.updater.Architecture;
+import apl.updater.Platform;
+import apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
+import test.dto.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -425,6 +431,30 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
                 });
             }
         }
+    }
+
+    @Test
+    public void testSendUpdateTransaction() throws IOException {
+        String updateUrl = "http://apollocurrncy.com/download/linux/desktop-wallet/Apollo-1.10.11.jar";
+        String hash = "0987654321098765432109876543210909876543210987654321098765432109";
+        String signature = "1234567890123456789012345678901212345678901234567890123456789012";
+        Platform platform = Platform.WINDOWS;
+        Architecture architecture = Architecture.AMD64;
+        Version version = Version.from("10000.0.0");
+        UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, signature, 5);
+        UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
+        expectedAttachment.setArchitecture(Architecture.AMD64);
+        expectedAttachment.setHash(Convert.parseHexString(hash));
+        expectedAttachment.setSignature(Convert.parseHexString(signature));
+        expectedAttachment.setPlatform(platform);
+        expectedAttachment.setVersion(version);
+        expectedAttachment.setUrl(updateUrl);
+        Assert.assertEquals(8, updateTransaction.getType().intValue());
+        Assert.assertEquals(0, updateTransaction.getSubtype().intValue());
+        Assert.assertEquals(TransactionType.Update.CRITICAL, TransactionType.findTransactionType(updateTransaction.getType(), updateTransaction.getSubtype()));
+        Assert.assertNull(updateTransaction.getRecipientRS());
+        Assert.assertEquals(100_000_000, updateTransaction.getFeeNQT().intValue());
+        Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
     }
 }
 
