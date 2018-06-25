@@ -6,7 +6,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation *
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -43,12 +43,12 @@ var NRS = (function(NRS, $, undefined) {
 		this.serverKey = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-            if ($(e.target).attr('data-navigate-page') === 'prev') {
+	        console.log(e.target);
+	        if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
-            } else {
-                that.page = that.page + 1;
-            }
-
+            } if ($(e.target).attr('data-navigate-page') === 'next') {
+		        that.page = that.page + 1;
+	        }
 
             that.getItems(that.page);
 
@@ -732,13 +732,13 @@ var NRS = (function(NRS, $, undefined) {
 									if (vm == 2) {
 										$popoverTypeTR.find("td:first").html($.t('asset', 'Asset') + ":");
 										$popoverTypeTR.find("td:last").html(String(phResponse.name));
-										var votesFormatted = NRS.convertToQNTf(responsePoll.result, phResponse.decimals) + " / ";
-										votesFormatted += NRS.convertToQNTf(attachment.phasingQuorum, phResponse.decimals) + " QNT";
+										var votesFormatted = NRS.convertToATUf(responsePoll.result, phResponse.decimals) + " / ";
+										votesFormatted += NRS.convertToATUf(attachment.phasingQuorum, phResponse.decimals) + " ATU";
 										$popoverVotesTR.find("td:last").html(votesFormatted);
 									}
 									if (mbModel == 2) {
 										if (minBalance > 0) {
-											minBalanceFormatted = NRS.convertToQNTf(minBalance, phResponse.decimals) + " QNT (" + phResponse.name + ")";
+											minBalanceFormatted = NRS.convertToATUf(minBalance, phResponse.decimals) + " ATU (" + phResponse.name + ")";
 											$approveBtn.data('minBalanceFormatted', minBalanceFormatted.escapeHTML());
 										}
 									}
@@ -753,13 +753,13 @@ var NRS = (function(NRS, $, undefined) {
 									if (vm == 3) {
 										$popoverTypeTR.find("td:first").html($.t('currency', 'Currency') + ":");
 										$popoverTypeTR.find("td:last").html(String(phResponse.code));
-										var votesFormatted = NRS.convertToQNTf(responsePoll.result, phResponse.decimals) + " / ";
-										votesFormatted += NRS.convertToQNTf(attachment.phasingQuorum, phResponse.decimals) + " Units";
+										var votesFormatted = NRS.convertToATUf(responsePoll.result, phResponse.decimals) + " / ";
+										votesFormatted += NRS.convertToATUf(attachment.phasingQuorum, phResponse.decimals) + " Units";
 										$popoverVotesTR.find("td:last").html(votesFormatted);
 									}
 									if (mbModel == 3) {
 										if (minBalance > 0) {
-											minBalanceFormatted = NRS.convertToQNTf(minBalance, phResponse.decimals) + " Units (" + phResponse.code + ")";
+											minBalanceFormatted = NRS.convertToATUf(minBalance, phResponse.decimals) + " Units (" + phResponse.code + ")";
 											$approveBtn.data('minBalanceFormatted', minBalanceFormatted.escapeHTML());
 										}
 									}
@@ -815,7 +815,8 @@ var NRS = (function(NRS, $, undefined) {
             transactionType = 'Private payment';
         }
 
-        if (t.type == 1 && t.subtype == 6 && t.attachment.priceNQT == "0") {
+
+        if (t.type == 1 && t.subtype == 6 && t.attachment.priceATM == "0") {
             if (t.sender == NRS.account && t.recipient == NRS.account) {
                 transactionType = $.t("alias_sale_cancellation");
             } else {
@@ -825,25 +826,25 @@ var NRS = (function(NRS, $, undefined) {
 
         var amount = "";
         var sign = 0;
-        var fee = new BigInteger(t.feeNQT);
+        var fee = new BigInteger(t.feeATM);
         var feeColor = "";
         var receiving = t.recipient == NRS.account && !(t.sender == NRS.account);
         if (receiving) {
-            if (t.amountNQT != "0") {
-                amount = new BigInteger(t.amountNQT);
+            if (t.amountATM != "0") {
+                amount = new BigInteger(t.amountATM);
                 sign = 1;
             }
             feeColor = "color:black;";
         } else {
             if (t.sender != t.recipient) {
-                if (t.amountNQT != "0") {
-                    amount = new BigInteger(t.amountNQT);
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM);
                     amount = amount.negate();
                     sign = -1;
                 }
             } else {
-                if (t.amountNQT != "0") {
-                    amount = new BigInteger(t.amountNQT); // send to myself
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM); // send to myself
                 }
             }
             feeColor = "color:red;";
@@ -1564,9 +1565,9 @@ var NRS = (function(NRS, $, undefined) {
 
 
         var data = {
-            deadline:     '1440',
-            feeNQT:       fee + '00000000',
-            amountNQT:    amount + '00000000',
+            deadline:     1440,
+            feeATM:       fee + '00000000',
+            amountATM:    amount + '00000000',
             recipient :   recipient,
             secretPhrase: passphrase
         };

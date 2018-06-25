@@ -205,7 +205,7 @@ var NRS = (function(NRS, $, undefined) {
 			labelText: "Asset Quantity",
 			labelI18n: "asset_quantity",
 			helpI18n: "approve_transaction_amount_help",
-			inputName: "phasingQuorumQNTf",
+			inputName: "phasingQuorumATUf",
 			addonText: "Quantity",
 			addonI18n: "quantity"
 		};
@@ -216,7 +216,7 @@ var NRS = (function(NRS, $, undefined) {
 			labelText: "Currency Units",
 			labelI18n: "currency_units",
 			helpI18n: "approve_transaction_amount_help",
-			inputName: "phasingQuorumQNTf",
+			inputName: "phasingQuorumATUf",
 			addonText: "Units",
 			addonI18n: "units"
 		};
@@ -269,14 +269,14 @@ var NRS = (function(NRS, $, undefined) {
 		$elems.find('input').prop("disabled", true);
 		$elems.hide();
 
-		context['inputName'] = 'phasingMinBalanceQNTf';
+		context['inputName'] = 'phasingMinBalanceATUf';
 		context['addonText'] = 'Quantity';
 		context['addonI18n'] = 'quantity';
 		$elems = NRS.initModalUIElement($modal, '.approve_min_balance_asset_quantity', 'simple_input_with_addon_modal_ui_element', context);
 		$elems.find('input').prop("disabled", true);
 		$elems.hide();
 
-		context['inputName'] = 'phasingMinBalanceQNTf';
+		context['inputName'] = 'phasingMinBalanceATUf';
 		context['addonText'] = 'Units';
 		context['addonI18n'] = 'units';
 		$elems = NRS.initModalUIElement($modal, '.approve_min_balance_currency_units', 'simple_input_with_addon_modal_ui_element', context);
