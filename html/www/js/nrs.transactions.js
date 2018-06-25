@@ -1596,14 +1596,8 @@ var NRS = (function(NRS, $, undefined) {
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
 
-            // NRS.myTransactionPagination.setPrivate(formParams[0].value);
-
-
             NRS.accountLedgerPagination.setKeys(formParams[0].value);
             NRS.accountLedgerPagination.setPrivate();
-
-            console.log(NRS.accountLedgerPagination.publicKey);
-            console.log(NRS.accountLedgerPagination.privateKey);
 
             $('#transaction_fill_secret_word_modal').modal('hide');
             $('#incorrect_passphrase_my_transactions').hide();
@@ -1624,9 +1618,6 @@ var NRS = (function(NRS, $, undefined) {
 
             NRS.accountLedgerPagination.setKeys(formParams[0].value);
             NRS.accountLedgerPagination.setPrivate();
-
-            console.log(NRS.accountLedgerPagination.publicKey);
-            console.log(NRS.accountLedgerPagination.privateKey);
 
             $('#transaction_ledger_fill_secret_word_modal').modal('hide');
             $('#incorrect_passphrase_my_ledger').hide();
