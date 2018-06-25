@@ -43,7 +43,7 @@ var NRS = (function(NRS, $, undefined) {
 		this.serverKey = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-	        console.log(e.target);
+
 	        if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
             } if ($(e.target).attr('data-navigate-page') === 'next') {
@@ -1414,32 +1414,10 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     NRS.pages.scheduled_transactions = function(callback, subpage) {
-        NRS.sendRequest("getScheduledTransactions+", {
-        	account: NRS.accountRS,
-			adminPassword: NRS.getAdminPassword()
-		}, function(response) {
-            var errorMessage = $("#scheduled_transactions_error_message");
-            if (response.errorCode) {
-        		errorMessage.text(NRS.unescapeRespStr(response.errorDescription));
-        		errorMessage.show();
-			} else {
-                errorMessage.hide();
-                errorMessage.text("");
-			}
-			var rows = "";
-            if (response.scheduledTransactions && response.scheduledTransactions.length) {
-                if (response.scheduledTransactions.length > NRS.itemsPerPage) {
-                    NRS.hasMorePages = true;
-                    response.scheduledTransactions.pop();
-                }
-                var decimals = NRS.getTransactionsAmountDecimals(response.scheduledTransactions);
-                for (var i = 0; i < response.scheduledTransactions.length; i++) {
-                    var transaction = response.scheduledTransactions[i];
-					rows += NRS.getTransactionRowHTML(transaction, ["delete"], decimals, true);
-                }
-            }
-            NRS.dataLoaded(rows);
-        });
+    	
+    	console.log('scheduled_transactions');
+    	
+     
     };
 
     $("#delete_scheduled_transaction_modal").on("show.bs.modal", function(e) {
@@ -1553,6 +1531,10 @@ var NRS = (function(NRS, $, undefined) {
             "type": "success"
         });
     });
+    
+    $(document).on('click', '#open_scheduled_transactions', function() {
+        $('#admin_password_modal').modal('show');
+    });
 
     $('body').on('click', '#send_money_private', function() {
         var recipient  = $('#send_money_recipient_info').val();
@@ -1562,8 +1544,7 @@ var NRS = (function(NRS, $, undefined) {
 
         var url = API;
         url += 'requestType=sendMoneyPrivate';
-
-
+	    
         var data = {
             deadline:     1440,
             feeATM:       fee + '00000000',
@@ -1627,6 +1608,49 @@ var NRS = (function(NRS, $, undefined) {
             $('#incorrect_passphrase_my_ledger').show();
         }
 
+    });
+    
+    $(document).on('submit', '#get_scheduled_transactions', function(e) {
+    	e.preventDefault();
+    	
+	    var adminPassword = $( this ).serializeArray();
+	        adminPassword = adminPassword[0].value;
+	
+	
+	    NRS.sendRequest("getScheduledTransactions+", {
+		        // account: NRS.accountRS,
+			    adminPassword: adminPassword
+		    }, function(response) {
+		        var errorMessage = $("#scheduled_transactions_error_message");
+		        if (response.errorCode) {
+		            errorMessage.text(NRS.unescapeRespStr(response.errorDescription));
+		            errorMessage.show();
+		            
+			        return;
+		        } else {
+		            errorMessage.hide();
+		            errorMessage.text("");
+		            
+		            return;
+		    }
+		    var rows = "";
+		    
+		    $('#scheduled_transactions_box').addClass('active');
+		
+		    if (response.scheduledTransactions && response.scheduledTransactions.length) {
+	            if (response.scheduledTransactions.length > NRS.itemsPerPage) {
+	                NRS.hasMorePages = true;
+	                response.scheduledTransactions.pop();
+	            }
+	            var decimals = NRS.getTransactionsAmountDecimals(response.scheduledTransactions);
+	            for (var i = 0; i < response.scheduledTransactions.length; i++) {
+	                var transaction = response.scheduledTransactions[i];
+		            rows += NRS.getTransactionRowHTML(transaction, ["delete"], decimals, true);
+	            }
+	        }
+	        NRS.dataLoaded(rows);
+	    });
+	    
     });
 
 	return NRS;
