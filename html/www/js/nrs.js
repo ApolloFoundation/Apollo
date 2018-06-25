@@ -340,6 +340,7 @@ var NRS = (function(NRS, $, undefined) {
 
 				var savedPassphrase = NRS.getStrItem("savedPassphrase");
 				var savedPassphrase = NRS.getStrItem("savedPassphrase");
+
 				
 				if (!savedPassphrase) {
 					NRS.showLockscreen();

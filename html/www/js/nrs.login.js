@@ -365,6 +365,7 @@ var NRS = (function(NRS, $, undefined) {
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
 					
 					NRS.setJSONItem('aplUser', NRS.accountRS);
+
 					
 					if (isPassphraseLogin) {
                         NRS.publicKey = NRS.getPublicKey(converters.stringToHexString(id));
@@ -627,6 +628,7 @@ var NRS = (function(NRS, $, undefined) {
 		
 		NRS.removeAccountLocal();
 		
+
         if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");
             stopForgingModal.find(".show_logout").show();

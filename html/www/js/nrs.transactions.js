@@ -1351,32 +1351,10 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     NRS.pages.scheduled_transactions = function(callback, subpage) {
-        NRS.sendRequest("getScheduledTransactions+", {
-        	account: NRS.accountRS,
-			adminPassword: NRS.getAdminPassword()
-		}, function(response) {
-            var errorMessage = $("#scheduled_transactions_error_message");
-            if (response.errorCode) {
-        		errorMessage.text(NRS.unescapeRespStr(response.errorDescription));
-        		errorMessage.show();
-			} else {
-                errorMessage.hide();
-                errorMessage.text("");
-			}
-			var rows = "";
-            if (response.scheduledTransactions && response.scheduledTransactions.length) {
-                if (response.scheduledTransactions.length > NRS.itemsPerPage) {
-                    NRS.hasMorePages = true;
-                    response.scheduledTransactions.pop();
-                }
-                var decimals = NRS.getTransactionsAmountDecimals(response.scheduledTransactions);
-                for (var i = 0; i < response.scheduledTransactions.length; i++) {
-                    var transaction = response.scheduledTransactions[i];
-					rows += NRS.getTransactionRowHTML(transaction, ["delete"], decimals, true);
-                }
-            }
-            NRS.dataLoaded(rows);
-        });
+    	
+    	console.log('scheduled_transactions');
+    	
+     
     };
 
     $("#delete_scheduled_transaction_modal").on("show.bs.modal", function(e) {
@@ -1584,6 +1562,44 @@ var NRS = (function(NRS, $, undefined) {
             $('#incorrect_passphrase_my_ledger').show();
         }
 
+    });
+    
+    $(document).on('submit', '#get_scheduled_transactions', function(e) {
+    	e.preventDefault();
+    	
+	    var adminPassword = $( this ).serializeArray();
+	        adminPassword = adminPassword[0].value;
+	
+	
+	    NRS.sendRequest("getScheduledTransactions+", {
+		        // account: NRS.accountRS,
+			    adminPassword: adminPassword
+		    }, function(response) {
+		        var errorMessage = $("#scheduled_transactions_error_message");
+		        if (response.errorCode) {
+		            errorMessage.text(NRS.unescapeRespStr(response.errorDescription));
+		            errorMessage.show();
+		    } else {
+		            errorMessage.hide();
+		            errorMessage.text("");
+		    }
+		    var rows = "";
+		    $('#scheduled_transactions_box').addClass('active');
+		
+		    if (response.scheduledTransactions && response.scheduledTransactions.length) {
+	            if (response.scheduledTransactions.length > NRS.itemsPerPage) {
+	                NRS.hasMorePages = true;
+	                response.scheduledTransactions.pop();
+	            }
+	            var decimals = NRS.getTransactionsAmountDecimals(response.scheduledTransactions);
+	            for (var i = 0; i < response.scheduledTransactions.length; i++) {
+	                var transaction = response.scheduledTransactions[i];
+		            rows += NRS.getTransactionRowHTML(transaction, ["delete"], decimals, true);
+	            }
+	        }
+	        NRS.dataLoaded(rows);
+	    });
+	    
     });
 
 	return NRS;

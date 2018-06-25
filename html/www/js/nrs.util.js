@@ -643,6 +643,7 @@ var NRS = (function (NRS, $, undefined) {
         }
         var accountTitle;
         if (accountRef && accountRS == accountRef) {
+
 	        try {
 		        accountTitle = $.t(title);
 	        } catch (err) {

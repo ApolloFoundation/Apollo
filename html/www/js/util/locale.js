@@ -37,6 +37,7 @@ var NRS = (function (NRS) {
 	        } else  {
 		        lang = 'en-US';
 	        }
+
 	    } else {
             lang = window.javaFxLanguage || window.navigator.userLanguage || window.navigator.language;
             if (!LOCALE_DATA[lang]) {
@@ -66,6 +67,7 @@ var NRS = (function (NRS) {
             }
         }
 	
+
 	    if (!currentLocale || !currentLocale.lang || currentLocale.lang != lang) {
             currentLocale = {};
             currentLocale.lang = lang;
