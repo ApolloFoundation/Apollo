@@ -156,7 +156,6 @@ var NRS = (function(NRS, $, undefined) {
     NRS.init = function() {
 	    
 	    var savedAccountRS = NRS.getJSONItem('aplUser');
-	    console.log(savedAccountRS);
 	    if (NRS.getJSONItem('aplUser')) {
 		    $("#remember_me").prop("checked", true);
 			initSpinner();
@@ -341,8 +340,7 @@ var NRS = (function(NRS, $, undefined) {
 
 				var savedPassphrase = NRS.getStrItem("savedPassphrase");
 				var savedPassphrase = NRS.getStrItem("savedPassphrase");
-				console.log('______________________________________________________');
-				console.log(savedPassphrase);
+
 				
 				if (!savedPassphrase) {
 					NRS.showLockscreen();

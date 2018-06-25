@@ -388,6 +388,7 @@ var NRS = (function(NRS, $) {
 			data = NRS.getFormData($form);
 		}
         if ($btn.hasClass("btn-calculate-fee")) {
+
             data.calculateFee = true;
             data.feeAPL = "0";
             $form.find(".error_message").html("").hide();
