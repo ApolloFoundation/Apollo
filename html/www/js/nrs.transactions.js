@@ -1469,6 +1469,10 @@ var NRS = (function(NRS, $, undefined) {
             "type": "success"
         });
     });
+    
+    $(document).on('click', '#open_scheduled_transactions', function() {
+        $('#admin_password_modal').modal('show');
+    });
 
     $('body').on('click', '#send_money_private', function() {
 
@@ -1479,8 +1483,7 @@ var NRS = (function(NRS, $, undefined) {
 
         var url = API;
         url += 'requestType=sendMoneyPrivate';
-
-
+	    
         var data = {
             deadline:     '1440',
             feeNQT:       fee + '00000000',
@@ -1579,11 +1582,16 @@ var NRS = (function(NRS, $, undefined) {
 		        if (response.errorCode) {
 		            errorMessage.text(NRS.unescapeRespStr(response.errorDescription));
 		            errorMessage.show();
-		    } else {
+		            
+			        return;
+		        } else {
 		            errorMessage.hide();
 		            errorMessage.text("");
+		            
+		            return;
 		    }
 		    var rows = "";
+		    
 		    $('#scheduled_transactions_box').addClass('active');
 		
 		    if (response.scheduledTransactions && response.scheduledTransactions.length) {
