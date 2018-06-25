@@ -59,14 +59,7 @@ public class UpdaterCore {
     public void triggerUpdate(Transaction transaction) {
         TransactionType type = transaction.getType();
         Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-        //todo: consider separating mediator and update status holder
-        synchronized (mediator) {
-            mediator.setReceivedUpdateHeight(transaction.getHeight());
-            mediator.setUpdate(true);
-            mediator.setUpdateLevel(type.getName());
-            mediator.setUpdateVersion(attachment.getAppVersion());
-            mediator.setUpdateHeight(getUpdateHeightFromType(type));
-        }
+        mediator.setUpdateData(true, getUpdateHeightFromType(type), transaction.getHeight(), type.getName(), attachment.getAppVersion());
         if (type == TransactionType.Update.CRITICAL) {
             //stop forging and peer server immediately
             stopForgingAndBlockAcceptance();
@@ -114,15 +107,15 @@ public class UpdaterCore {
 
     private int getUpdateHeightFromType(TransactionType type) {
         return
-              //update is NOW on currentBlockchainHeight
-              type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() :
+                //update is NOW on currentBlockchainHeight
+                type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() :
 
-              // update height = currentBlockchainHeight + random number in range [100.1000]
-              type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900)
-                      + 100 + mediator.getBlockchainHeight() :
+                        // update height = currentBlockchainHeight + random number in range [100.1000]
+                        type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900)
+                                + 100 + mediator.getBlockchainHeight() :
 
-              //assume that current update is not mandatory
-              type == TransactionType.Update.MINOR ? -1 : 0;
+                                //assume that current update is not mandatory
+                                type == TransactionType.Update.MINOR ? -1 : 0;
     }
 
     private static class UpdaterCoreHolder {

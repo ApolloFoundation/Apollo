@@ -17,23 +17,42 @@ package apl;
 
 import apl.peer.Peers;
 import apl.util.Listener;
+import apl.util.Logger;
 
 import java.util.List;
-//todo consider UpdaterMediator interface with only get methods
 public class UpdaterMediator {
-    private boolean isUpdate = false;
-    private long updateHeight;
-    private int receivedUpdateHeight;
-    private String updateLevel = "";
-    private Version updateVersion;
+    private final UpdateInfo updateInfo = UpdateInfo.getInstance();
 
-    public synchronized Version getUpdateVersion() {
-        return updateVersion;
+    public UpdateInfo.DownloadStatus getStatus() {return updateInfo.getStatus();}
+
+    public void setStatus(UpdateInfo.DownloadStatus status) {
+        Logger.logInfoMessage("Update download status: " + status);
+        updateInfo.setStatus(status);
     }
 
-    public void setUpdateVersion(Version updateVersion) {
-        this.updateVersion = updateVersion;
+    public UpdateInfo.DownloadState getState() {
+        return updateInfo.getState();
     }
+
+    public void setUpdateData(boolean isUpdate, int updateHeight, int receivedUpdateHeight, String updateLevel, Version newVersion) {
+        synchronized (updateInfo) {
+            updateInfo.setReceivedUpdateHeight(receivedUpdateHeight);
+            updateInfo.setUpdate(isUpdate);
+            updateInfo.setUpdateVersion(newVersion);
+            updateInfo.setUpdateHeight(updateHeight);
+            updateInfo.setUpdateLevel(updateLevel);
+        }
+    }
+
+    public void setState(UpdateInfo.DownloadState state) {
+        Logger.logInfoMessage("Update download state: " + state);
+        updateInfo.setState(state);
+    }
+
+    public boolean isUpdate() {return updateInfo.isUpdate();}
+
+    public void setUpdate(boolean update) {updateInfo.setUpdate(update);}
+
 
     private static class UpdaterMediatorHolder {
         private static final UpdaterMediator HOLDER_INSTANCE = new UpdaterMediator();
@@ -44,30 +63,6 @@ public class UpdaterMediator {
     }
     private UpdaterMediator() {}
 
-    public synchronized long getUpdateHeight() {
-        return updateHeight;
-    }
-
-    public void setUpdateHeight(long updateHeight) {
-        this.updateHeight = updateHeight;
-    }
-
-    public synchronized int getReceivedUpdateHeight() {
-        return receivedUpdateHeight;
-    }
-
-    public void setReceivedUpdateHeight(int receivedUpdateHeight) {
-        this.receivedUpdateHeight = receivedUpdateHeight;
-    }
-
-    public synchronized String getUpdateLevel() {
-
-        return updateLevel;
-    }
-
-    public void setUpdateLevel(String updateLevel) {
-        this.updateLevel = updateLevel;
-    }
 
     public int stopForging() {
         return Generator.stopForging();
@@ -96,59 +91,7 @@ public class UpdaterMediator {
         return Apl.VERSION;
     }
 
-    public synchronized boolean isUpdate() {
-        return isUpdate;
-    }
-
-    public void setUpdate(boolean update) {
-        isUpdate = update;
-    }
-
     public int getBlockchainHeight() {
         return BlockchainImpl.getInstance().getHeight();
-    }
-    public static class UpdateInfo {
-        private boolean isUpdate;
-        private long updateHeight;
-        private int receivedUpdateHeight;
-        private String updateLevel;
-        private Version updateVersion;
-
-        public boolean isUpdate() {
-            return isUpdate;
-        }
-
-        private UpdateInfo(boolean isUpdate, long updateHeight, int receivedUpdateHeight, String updateLevel, Version updateVersion) {
-            this.isUpdate = isUpdate;
-            this.updateHeight = updateHeight;
-            this.receivedUpdateHeight = receivedUpdateHeight;
-            this.updateLevel = updateLevel;
-            this.updateVersion = updateVersion;
-        }
-
-        public void setUpdate(boolean update) {
-            isUpdate = update;
-        }
-
-        public long getUpdateHeight() {
-            return updateHeight;
-        }
-
-        public int getReceivedUpdateHeight() {
-            return receivedUpdateHeight;
-        }
-
-        public String getUpdateLevel() {
-            return updateLevel;
-        }
-
-
-        public Version getUpdateVersion() {
-            return updateVersion;
-        }
-    }
-
-    public synchronized UpdateInfo getUpdateInfo() {
-        return new UpdateInfo(isUpdate(), getUpdateHeight(), getReceivedUpdateHeight(), getUpdateLevel(), getUpdateVersion());
     }
 }
