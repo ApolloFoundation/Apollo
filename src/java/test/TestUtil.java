@@ -65,6 +65,10 @@ public class TestUtil {
         return new ArrayList<>(accounts.keySet()).get(RANDOM.nextInt(accounts.size()));
     }
 
+    public static String getRandomSecretPhrase(Map<String, String> accounts) {
+        return accounts.get(getRandomRS(accounts));
+    }
+
     public static String getRandomRecipientRS(Map<String,String> accounts, String senderRS) {
         return new ArrayList<>(accounts.keySet()).stream().filter(rs -> !senderRS.equalsIgnoreCase(rs)).collect(Collectors.toList()).get(RANDOM.nextInt(accounts.size() - 1));
     }
