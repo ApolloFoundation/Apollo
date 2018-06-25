@@ -2391,9 +2391,20 @@ http://wrapbootstrap.com/preview/WB0907F35 */
 
 
 
+
+#scheduled_transactions_box {
+  display: none;
+}
+
+#scheduled_transactions_box.active {
+  display: block !important;
+}
+
+
 .aliases-pagination {
     display: block !important;
 }
+
 
 
 /* wesley */
