@@ -32,11 +32,11 @@ public class TestUtil {
         }
     }
 
-    public static Long nqt(long amount) {
+    public static Long atm(long amount) {
         return 100_000_000L * amount;
     }
 
-    public static Double fromNqt(long amount) {
+    public static Double fromATM(long amount) {
         return amount / (double) 100_000_000L;
     }
 
@@ -63,10 +63,6 @@ public class TestUtil {
 
     public static String getRandomRS(Map<String,String> accounts) {
         return new ArrayList<>(accounts.keySet()).get(RANDOM.nextInt(accounts.size()));
-    }
-
-    public static String getRandomSecretPhrase(Map<String, String> accounts) {
-        return accounts.get(getRandomRS(accounts));
     }
 
     public static String getRandomRecipientRS(Map<String,String> accounts, String senderRS) {

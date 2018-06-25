@@ -39,7 +39,7 @@ public final class DGSDelivery extends CreateTransaction {
 
     private DGSDelivery() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "purchase", "discountNQT", "goodsToEncrypt", "goodsIsText", "goodsData", "goodsNonce");
+                "purchase", "discountATM", "goodsToEncrypt", "goodsIsText", "goodsData", "goodsNonce");
     }
 
     @Override
@@ -54,18 +54,18 @@ public final class DGSDelivery extends CreateTransaction {
             return ALREADY_DELIVERED;
         }
 
-        String discountValueNQT = Convert.emptyToNull(req.getParameter("discountNQT"));
-        long discountNQT = 0;
+        String discountValueATM = Convert.emptyToNull(req.getParameter("discountATM"));
+        long discountATM = 0;
         try {
-            if (discountValueNQT != null) {
-                discountNQT = Long.parseLong(discountValueNQT);
+            if (discountValueATM != null) {
+                discountATM = Long.parseLong(discountValueATM);
             }
         } catch (RuntimeException e) {
             return INCORRECT_DGS_DISCOUNT;
         }
-        if (discountNQT < 0
-                || discountNQT > Constants.MAX_BALANCE_NQT
-                || discountNQT > Math.multiplyExact(purchase.getPriceNQT(), (long) purchase.getQuantity())) {
+        if (discountATM < 0
+                || discountATM > Constants.MAX_BALANCE_ATM
+                || discountATM > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())) {
             return INCORRECT_DGS_DISCOUNT;
         }
 
@@ -93,9 +93,9 @@ public final class DGSDelivery extends CreateTransaction {
 
         Attachment attachment = encryptedGoods == null ?
                 new Attachment.UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
-                        goodsIsText, discountNQT, Account.getPublicKey(buyerAccount.getId())) :
+                        goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
                 new Attachment.DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
-                        goodsIsText, discountNQT);
+                        goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

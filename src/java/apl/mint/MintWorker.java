@@ -149,7 +149,7 @@ public class MintWorker {
         }
         long hashes = solution - initialNonce;
         float hashesPerDifficulty = BigInteger.valueOf(-1).equals(difficulty) ? 0 : (float) hashes / difficulty.floatValue();
-        Logger.logInfoMessage("solution nonce %d unitsNQT %d counter %d computed hashes %d time [sec] %.2f hash rate [KH/Sec] %d actual time vs. expected %.2f is submitted %b",
+        Logger.logInfoMessage("solution nonce %d unitsATM %d counter %d computed hashes %d time [sec] %.2f hash rate [KH/Sec] %d actual time vs. expected %.2f is submitted %b",
                 solution, units, counter, hashes, (float) computationTime / 1000, hashes / computationTime, hashesPerDifficulty, isSubmitted);
         JSONObject response;
         if (isSubmitted) {

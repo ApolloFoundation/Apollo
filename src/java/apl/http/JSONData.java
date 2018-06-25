@@ -45,7 +45,7 @@ public final class JSONData {
         json.put("alias", Long.toUnsignedString(alias.getId()));
         Alias.Offer offer = Alias.getOffer(alias);
         if (offer != null) {
-            json.put("priceNQT", String.valueOf(offer.getPriceNQT()));
+            json.put("priceATM", String.valueOf(offer.getPriceATM()));
             if (offer.getBuyerId() != 0) {
                 json.put("buyer", Long.toUnsignedString(offer.getBuyerId()));
             }
@@ -60,20 +60,20 @@ public final class JSONData {
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
-            json.put("balanceNQT", "0");
-            json.put("unconfirmedBalanceNQT", "0");
-            json.put("forgedBalanceNQT", "0");
+            json.put("balanceATM", "0");
+            json.put("unconfirmedBalanceATM", "0");
+            json.put("forgedBalanceATM", "0");
             if (includeEffectiveBalance) {
                 json.put("effectiveBalanceAPL", "0");
-                json.put("guaranteedBalanceNQT", "0");
+                json.put("guaranteedBalanceATM", "0");
             }
         } else {
-            json.put("balanceNQT", String.valueOf(account.getBalanceNQT()));
-            json.put("unconfirmedBalanceNQT", String.valueOf(account.getUnconfirmedBalanceNQT()));
-            json.put("forgedBalanceNQT", String.valueOf(account.getForgedBalanceNQT()));
+            json.put("balanceATM", String.valueOf(account.getBalanceATM()));
+            json.put("unconfirmedBalanceATM", String.valueOf(account.getUnconfirmedBalanceATM()));
+            json.put("forgedBalanceATM", String.valueOf(account.getForgedBalanceATM()));
             if (includeEffectiveBalance) {
                 json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height));
-                json.put("guaranteedBalanceNQT", String.valueOf(account.getGuaranteedBalanceNQT(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
+                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
             }
         }
         return json;
@@ -87,7 +87,7 @@ public final class JSONData {
             json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
             json.put("currentHeightTo", String.valueOf(accountLease.getCurrentLeasingHeightTo()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceAPL", String.valueOf(account.getGuaranteedBalanceNQT() / Constants.ONE_APL));
+                json.put("effectiveBalanceAPL", String.valueOf(account.getGuaranteedBalanceATM() / Constants.ONE_APL));
             }
         }
         if (accountLease.getNextLesseeId() != 0) {
@@ -104,8 +104,8 @@ public final class JSONData {
         json.put("name", asset.getName());
         json.put("description", asset.getDescription());
         json.put("decimals", asset.getDecimals());
-        json.put("initialQuantityQNT", String.valueOf(asset.getInitialQuantityQNT()));
-        json.put("quantityQNT", String.valueOf(asset.getQuantityQNT()));
+        json.put("initialQuantityATU", String.valueOf(asset.getInitialQuantityATU()));
+        json.put("quantityATU", String.valueOf(asset.getQuantityATU()));
         json.put("asset", Long.toUnsignedString(asset.getId()));
         if (includeCounts) {
             json.put("numberOfTrades", Trade.getTradeCount(asset.getId()));
@@ -129,8 +129,8 @@ public final class JSONData {
         json.put("maxSupply", String.valueOf(currency.getMaxSupply()));
         json.put("creationHeight", currency.getCreationHeight());
         json.put("issuanceHeight", currency.getIssuanceHeight());
-        json.put("minReservePerUnitNQT", String.valueOf(currency.getMinReservePerUnitNQT()));
-        json.put("currentReservePerUnitNQT", String.valueOf(currency.getCurrentReservePerUnitNQT()));
+        json.put("minReservePerUnitATM", String.valueOf(currency.getMinReservePerUnitATM()));
+        json.put("currentReservePerUnitATM", String.valueOf(currency.getCurrentReservePerUnitATM()));
         json.put("minDifficulty", currency.getMinDifficulty());
         json.put("maxDifficulty", currency.getMaxDifficulty());
         json.put("algorithm", currency.getAlgorithm());
@@ -153,7 +153,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("currency", Long.toUnsignedString(founder.getCurrencyId()));
         putAccount(json, "account", founder.getAccountId());
-        json.put("amountPerUnitNQT", String.valueOf(founder.getAmountPerUnitNQT()));
+        json.put("amountPerUnitATM", String.valueOf(founder.getAmountPerUnitATM()));
         return json;
     }
 
@@ -163,8 +163,8 @@ public final class JSONData {
             putAccount(json, "account", accountAsset.getAccountId());
         }
         json.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
-        json.put("quantityQNT", String.valueOf(accountAsset.getQuantityQNT()));
-        json.put("unconfirmedQuantityQNT", String.valueOf(accountAsset.getUnconfirmedQuantityQNT()));
+        json.put("quantityATU", String.valueOf(accountAsset.getQuantityATU()));
+        json.put("unconfirmedQuantityATU", String.valueOf(accountAsset.getUnconfirmedQuantityATU()));
         if (includeAssetInfo) {
             putAssetInfo(json, accountAsset.getAssetId());
         }
@@ -215,8 +215,8 @@ public final class JSONData {
         json.put("order", Long.toUnsignedString(order.getId()));
         json.put("asset", Long.toUnsignedString(order.getAssetId()));
         putAccount(json, "account", order.getAccountId());
-        json.put("quantityQNT", String.valueOf(order.getQuantityQNT()));
-        json.put("priceNQT", String.valueOf(order.getPriceNQT()));
+        json.put("quantityATU", String.valueOf(order.getQuantityATU()));
+        json.put("priceATM", String.valueOf(order.getPriceATM()));
         json.put("height", order.getHeight());
         json.put("transactionIndex", order.getTransactionIndex());
         json.put("transactionHeight", order.getTransactionHeight());
@@ -241,8 +241,8 @@ public final class JSONData {
         json.put("order", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
-        json.put("quantityQNT", String.valueOf(attachment.getQuantityQNT()));
-        json.put("priceNQT", String.valueOf(attachment.getPriceNQT()));
+        json.put("quantityATU", String.valueOf(attachment.getQuantityATU()));
+        json.put("priceATM", String.valueOf(attachment.getPriceATM()));
         putExpectedTransaction(json, transaction);
         return json;
     }
@@ -263,7 +263,7 @@ public final class JSONData {
         json.put("height", offer.getHeight());
         json.put("expirationHeight", offer.getExpirationHeight());
         json.put("currency", Long.toUnsignedString(offer.getCurrencyId()));
-        json.put("rateNQT", String.valueOf(offer.getRateNQT()));
+        json.put("rateATM", String.valueOf(offer.getRateATM()));
         json.put("limit", String.valueOf(offer.getLimit()));
         json.put("supply", String.valueOf(offer.getSupply()));
         return json;
@@ -272,7 +272,7 @@ public final class JSONData {
     static JSONObject expectedBuyOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
         Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        json.put("rateNQT", String.valueOf(attachment.getBuyRateNQT()));
+        json.put("rateATM", String.valueOf(attachment.getBuyRateATM()));
         json.put("limit", String.valueOf(attachment.getTotalBuyLimit()));
         json.put("supply", String.valueOf(attachment.getInitialBuySupply()));
         return json;
@@ -281,7 +281,7 @@ public final class JSONData {
     static JSONObject expectedSellOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
         Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        json.put("rateNQT", String.valueOf(attachment.getSellRateNQT()));
+        json.put("rateATM", String.valueOf(attachment.getSellRateATM()));
         json.put("limit", String.valueOf(attachment.getTotalSellLimit()));
         json.put("supply", String.valueOf(attachment.getInitialSellSupply()));
         return json;
@@ -300,9 +300,9 @@ public final class JSONData {
 
     static JSONObject availableOffers(CurrencyExchangeOffer.AvailableOffers availableOffers) {
         JSONObject json = new JSONObject();
-        json.put("rateNQT", String.valueOf(availableOffers.getRateNQT()));
+        json.put("rateATM", String.valueOf(availableOffers.getRateATM()));
         json.put("units", String.valueOf(availableOffers.getUnits()));
-        json.put("amountNQT", String.valueOf(availableOffers.getAmountNQT()));
+        json.put("amountATM", String.valueOf(availableOffers.getAmountATM()));
         return json;
     }
 
@@ -377,7 +377,7 @@ public final class JSONData {
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
         json.put("numberOfTransactions", block.getTransactions().size());
-        json.put("totalFeeNQT", String.valueOf(block.getTotalFeeNQT()));
+        json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
         json.put("baseTarget", Long.toUnsignedString(block.getBaseTarget()));
@@ -393,16 +393,16 @@ public final class JSONData {
         json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
-        Long totalAmountNQT = 0L;
+        Long totalAmountATM = 0L;
         for (Transaction transaction: block.getTransactions()) {
                 JSONObject transactionJson = transaction(true, transaction);
-                Long amountNQT = Long.parseLong((String) transactionJson.get("amountNQT"));
-                totalAmountNQT += amountNQT;
+                Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
+                totalAmountATM += amountATM;
                 if (includeTransactions) {
                     transactions.add(transactionJson);
                 }
         }
-        json.put("totalAmountNQT", String.valueOf(totalAmountNQT));
+        json.put("totalAmountATM", String.valueOf(totalAmountATM));
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
@@ -434,7 +434,7 @@ public final class JSONData {
         json.put("name", goods.getName());
         json.put("description", goods.getDescription());
         json.put("quantity", goods.getQuantity());
-        json.put("priceNQT", String.valueOf(goods.getPriceNQT()));
+        json.put("priceATM", String.valueOf(goods.getPriceATM()));
         putAccount(json, "seller", goods.getSellerId());
         json.put("tags", goods.getTags());
         JSONArray tagsJSON = new JSONArray();
@@ -685,7 +685,7 @@ public final class JSONData {
         json.put("name", goods.getName());
         json.put("hasImage", goods.hasImage());
         putAccount(json, "seller", purchase.getSellerId());
-        json.put("priceNQT", String.valueOf(purchase.getPriceNQT()));
+        json.put("priceATM", String.valueOf(purchase.getPriceATM()));
         json.put("quantity", purchase.getQuantity());
         putAccount(json, "buyer", purchase.getBuyerId());
         json.put("timestamp", purchase.getTimestamp());
@@ -715,11 +715,11 @@ public final class JSONData {
         if (purchase.getRefundNote() != null) {
             json.put("refundNote", encryptedData(purchase.getRefundNote()));
         }
-        if (purchase.getDiscountNQT() > 0) {
-            json.put("discountNQT", String.valueOf(purchase.getDiscountNQT()));
+        if (purchase.getDiscountATM() > 0) {
+            json.put("discountATM", String.valueOf(purchase.getDiscountATM()));
         }
-        if (purchase.getRefundNQT() > 0) {
-            json.put("refundNQT", String.valueOf(purchase.getRefundNQT()));
+        if (purchase.getRefundATM() > 0) {
+            json.put("refundATM", String.valueOf(purchase.getRefundATM()));
         }
         return json;
     }
@@ -727,8 +727,8 @@ public final class JSONData {
     static JSONObject trade(Trade trade, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
         json.put("timestamp", trade.getTimestamp());
-        json.put("quantityQNT", String.valueOf(trade.getQuantityQNT()));
-        json.put("priceNQT", String.valueOf(trade.getPriceNQT()));
+        json.put("quantityATU", String.valueOf(trade.getQuantityATU()));
+        json.put("priceATM", String.valueOf(trade.getPriceATM()));
         json.put("asset", Long.toUnsignedString(trade.getAssetId()));
         json.put("askOrder", Long.toUnsignedString(trade.getAskOrderId()));
         json.put("bidOrder", Long.toUnsignedString(trade.getBidOrderId()));
@@ -751,7 +751,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
         putAccount(json, "sender", assetTransfer.getSenderId());
         putAccount(json, "recipient", assetTransfer.getRecipientId());
-        json.put("quantityQNT", String.valueOf(assetTransfer.getQuantityQNT()));
+        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATU()));
         json.put("height", assetTransfer.getHeight());
         json.put("timestamp", assetTransfer.getTimestamp());
         if (includeAssetInfo) {
@@ -767,7 +767,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "sender", transaction.getSenderId());
         putAccount(json, "recipient", transaction.getRecipientId());
-        json.put("quantityQNT", String.valueOf(attachment.getQuantityQNT()));
+        json.put("quantityATU", String.valueOf(attachment.getQuantityATU()));
         if (includeAssetInfo) {
             putAssetInfo(json, attachment.getAssetId());
         }
@@ -780,7 +780,7 @@ public final class JSONData {
         json.put("assetDelete", Long.toUnsignedString(assetDelete.getId()));
         json.put("asset", Long.toUnsignedString(assetDelete.getAssetId()));
         putAccount(json, "account", assetDelete.getAccountId());
-        json.put("quantityQNT", String.valueOf(assetDelete.getQuantityQNT()));
+        json.put("quantityATU", String.valueOf(assetDelete.getQuantityATU()));
         json.put("height", assetDelete.getHeight());
         json.put("timestamp", assetDelete.getTimestamp());
         if (includeAssetInfo) {
@@ -795,7 +795,7 @@ public final class JSONData {
         json.put("assetDelete", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
-        json.put("quantityQNT", String.valueOf(attachment.getQuantityQNT()));
+        json.put("quantityATU", String.valueOf(attachment.getQuantityATU()));
         if (includeAssetInfo) {
             putAssetInfo(json, attachment.getAssetId());
         }
@@ -807,7 +807,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("assetDividend", Long.toUnsignedString(assetDividend.getId()));
         json.put("asset", Long.toUnsignedString(assetDividend.getAssetId()));
-        json.put("amountNQTPerQNT", String.valueOf(assetDividend.getAmountNQTPerQNT()));
+        json.put("amountATMPerATU", String.valueOf(assetDividend.getAmountATMPerATU()));
         json.put("totalDividend", String.valueOf(assetDividend.getTotalDividend()));
         json.put("dividendHeight", assetDividend.getDividendHeight());
         json.put("numberOfAccounts", assetDividend.getNumAccounts());
@@ -851,7 +851,7 @@ public final class JSONData {
         json.put("transaction", Long.toUnsignedString(exchange.getTransactionId()));
         json.put("timestamp", exchange.getTimestamp());
         json.put("units", String.valueOf(exchange.getUnits()));
-        json.put("rateNQT", String.valueOf(exchange.getRate()));
+        json.put("rateATM", String.valueOf(exchange.getRate()));
         json.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
         json.put("offer", Long.toUnsignedString(exchange.getOfferId()));
         putAccount(json, "seller", exchange.getSellerId());
@@ -870,7 +870,7 @@ public final class JSONData {
         json.put("subtype", exchangeRequest.isBuy() ? MonetarySystem.EXCHANGE_BUY.getSubtype() : MonetarySystem.EXCHANGE_SELL.getSubtype());
         json.put("timestamp", exchangeRequest.getTimestamp());
         json.put("units", String.valueOf(exchangeRequest.getUnits()));
-        json.put("rateNQT", String.valueOf(exchangeRequest.getRate()));
+        json.put("rateATM", String.valueOf(exchangeRequest.getRate()));
         json.put("height", exchangeRequest.getHeight());
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, exchangeRequest.getCurrencyId());
@@ -884,7 +884,7 @@ public final class JSONData {
         json.put("subtype", transaction.getType().getSubtype());
         Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange) transaction.getAttachment();
         json.put("units", String.valueOf(attachment.getUnits()));
-        json.put("rateNQT", String.valueOf(attachment.getRateNQT()));
+        json.put("rateATM", String.valueOf(attachment.getRateATM()));
         if (includeCurrencyInfo) {
             putCurrencyInfo(json, attachment.getCurrencyId());
         }
@@ -914,11 +914,11 @@ public final class JSONData {
         }
         if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
             Random random = new Random();
-            json.put("amountNQT", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
+            json.put("amountATM", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
         } else {
-            json.put("amountNQT", String.valueOf(transaction.getAmountNQT()));
+            json.put("amountATM", String.valueOf(transaction.getAmountATM()));
         }
-        json.put("feeNQT", String.valueOf(transaction.getFeeNQT()));
+        json.put("feeATM", String.valueOf(transaction.getFeeATM()));
         String referencedTransactionFullHash = transaction.getReferencedTransactionFullHash();
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", referencedTransactionFullHash);
