@@ -39,7 +39,6 @@ var NRS = (function(NRS, $, undefined) {
 		this.filter = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-	        console.log(e.target);
 	        if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
             } if ($(e.target).attr('data-navigate-page') === 'next') {
