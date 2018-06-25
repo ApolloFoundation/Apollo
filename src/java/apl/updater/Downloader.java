@@ -7,10 +7,14 @@ import apl.util.Logger;
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class Downloader {
@@ -51,9 +55,29 @@ public class Downloader {
         return downloadedFilePath;
     }
 
-    //todo: implement checkConsistency
     private boolean checkConsistency(Path file, byte hash[]) {
-        return true;
+        try {
+            byte[] actualHash = calclulateHash(file);
+            if (Arrays.equals(hash, actualHash)) {
+                return true;
+            }
+        }
+        catch (Exception e) {
+            Logger.logErrorMessage("Cannot calculate checksum for file: " + file, e);
+        }
+        return false;
+    }
+
+    private byte[] calclulateHash(Path file) throws IOException, NoSuchAlgorithmException {
+        try (InputStream in = Files.newInputStream(file)) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] block = new byte[4096];
+            int length;
+            while ((length = in.read(block)) > 0) {
+                digest.update(block, 0, length);
+            }
+            return digest.digest();
+        }
     }
 
     public Path tryDownload(String url, byte[] hash) {
