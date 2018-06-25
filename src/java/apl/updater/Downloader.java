@@ -12,18 +12,21 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 public class Downloader {
+    private static class DownloaderHolder {
+        private static final Downloader HOLDER_INSTANCE = new Downloader();
+    }
+
+    public static Downloader getInstance() {
+        return DownloaderHolder.HOLDER_INSTANCE;
+    }
+
     private static final int ATTEMPTS = 10;
     private static final int TIMEOUT = 60;
     private static final String TEMP_DIR_PREFIX = "Apollo-update";
     private static final String DOWNLOADED_FILE_NAME = "Apollo-newVersion.jar";
-    private static final Downloader INSTANCE = new Downloader();
     private static final StatusHolder HOLDER = new StatusHolder();
 
     private Downloader() {
-    }
-
-    public static Downloader getInstance() {
-        return INSTANCE;
     }
 
     private Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {

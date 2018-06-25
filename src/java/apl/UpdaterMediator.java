@@ -35,8 +35,13 @@ public class UpdaterMediator {
         this.updateVersion = updateVersion;
     }
 
-    private static UpdaterMediator instance = new UpdaterMediator();
+    private static class UpdaterMediatorHolder {
+        private static final UpdaterMediator HOLDER_INSTANCE = new UpdaterMediator();
+    }
 
+    public static UpdaterMediator getInstance() {
+        return UpdaterMediatorHolder.HOLDER_INSTANCE;
+    }
     private UpdaterMediator() {}
 
     public synchronized long getUpdateHeight() {
@@ -97,14 +102,6 @@ public class UpdaterMediator {
 
     public void setUpdate(boolean update) {
         isUpdate = update;
-    }
-
-    public static UpdaterMediator getInstance() {
-        return instance;
-    }
-
-    public static void setInstance(UpdaterMediator instance) {
-        UpdaterMediator.instance = instance;
     }
 
     public int getBlockchainHeight() {

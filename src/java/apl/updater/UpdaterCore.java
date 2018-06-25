@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Random;
 
 public class UpdaterCore {
-    private static UpdaterCore instance = new UpdaterCore();
     private final UpdaterMediator mediator = UpdaterMediator.getInstance();
     private final Downloader downloader = Downloader.getInstance();
     private final SecurityAlertSender alertSender = new SecurityAlertSender();
@@ -41,7 +40,7 @@ public class UpdaterCore {
     }
 
     public static UpdaterCore getInstance() {
-        return instance;
+        return UpdaterCoreHolder.HOLDER_INSTANCE;
     }
 
     //todo: consider using separated Logger
@@ -124,6 +123,10 @@ public class UpdaterCore {
 
               //assume that current update is not mandatory
               type == TransactionType.Update.MINOR ? -1 : 0;
+    }
+
+    private static class UpdaterCoreHolder {
+        private static final UpdaterCore HOLDER_INSTANCE = new UpdaterCore();
     }
 
 }
