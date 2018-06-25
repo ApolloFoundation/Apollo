@@ -227,8 +227,8 @@ final class BlockDb {
             int version = rs.getInt("version");
             int timestamp = rs.getInt("timestamp");
             long previousBlockId = rs.getLong("previous_block_id");
-            long totalAmountNQT = rs.getLong("total_amount");
-            long totalFeeNQT = rs.getLong("total_fee");
+            long totalAmountATM = rs.getLong("total_amount");
+            long totalFeeATM = rs.getLong("total_fee");
             int payloadLength = rs.getInt("payload_length");
             long generatorId = rs.getLong("generator_id");
             byte[] previousBlockHash = rs.getBytes("previous_block_hash");
@@ -243,7 +243,7 @@ final class BlockDb {
             byte[] blockSignature = rs.getBytes("block_signature");
             byte[] payloadHash = rs.getBytes("payload_hash");
             long id = rs.getLong("id");
-            return new BlockImpl(version, timestamp, previousBlockId, totalAmountNQT, totalFeeNQT, payloadLength, payloadHash,
+            return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
                     cumulativeDifficulty, baseTarget, nextBlockId, height, id, loadTransactions ? TransactionDb.findBlockTransactions(con, id) : null);
         } catch (SQLException e) {
@@ -262,8 +262,8 @@ final class BlockDb {
                 pstmt.setInt(++i, block.getVersion());
                 pstmt.setInt(++i, block.getTimestamp());
                 DbUtils.setLongZeroToNull(pstmt, ++i, block.getPreviousBlockId());
-                pstmt.setLong(++i, block.getTotalAmountNQT());
-                pstmt.setLong(++i, block.getTotalFeeNQT());
+                pstmt.setLong(++i, block.getTotalAmountATM());
+                pstmt.setLong(++i, block.getTotalFeeATM());
                 pstmt.setInt(++i, block.getPayloadLength());
                 pstmt.setBytes(++i, block.getPreviousBlockHash());
                 pstmt.setLong(++i, 0L); // next_block_id set to 0 at first

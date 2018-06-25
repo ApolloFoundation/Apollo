@@ -32,11 +32,11 @@ public class TestUtil {
         }
     }
 
-    public static Long nqt(long amount) {
+    public static Long atm(long amount) {
         return 100_000_000L * amount;
     }
 
-    public static Double fromNqt(long amount) {
+    public static Double fromATM(long amount) {
         return amount / (double) 100_000_000L;
     }
 

@@ -608,13 +608,13 @@ public final class FundingMonitor {
     private static void processAplEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        if (targetAccount.getBalanceNQT() < monitoredAccount.threshold) {
+        if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
             Transaction.Builder builder = Apl.newTransactionBuilder(monitor.publicKey,
                     monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (Math.addExact(monitoredAccount.amount, transaction.getFeeNQT()) > fundingAccount.getUnconfirmedBalanceNQT()) {
+            if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
@@ -640,18 +640,18 @@ public final class FundingMonitor {
         FundingMonitor monitor = monitoredAccount.monitor;
         Account.AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
         Account.AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
-        if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityQNT() < monitoredAccount.amount) {
+        if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
             Logger.logWarningMessage(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
-        } else if (targetAsset == null || targetAsset.getQuantityQNT() < monitoredAccount.threshold) {
+        } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
             Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Apl.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (transaction.getFeeNQT() > fundingAccount.getUnconfirmedBalanceNQT()) {
+            if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
@@ -688,7 +688,7 @@ public final class FundingMonitor {
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
-            if (transaction.getFeeNQT() > fundingAccount.getUnconfirmedBalanceNQT()) {
+            if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
@@ -815,7 +815,7 @@ public final class FundingMonitor {
             if (stopped) {
                 return;
             }
-            long balance = account.getBalanceNQT();
+            long balance = account.getBalanceATM();
             //
             // Check the APL balance for monitored accounts
             //
@@ -848,7 +848,7 @@ public final class FundingMonitor {
             if (stopped) {
                 return;
             }
-            long balance = asset.getQuantityQNT();
+            long balance = asset.getQuantityATU();
             long assetId = asset.getAssetId();
             //
             // Check the asset balance for monitored accounts
