@@ -28,14 +28,14 @@ public final class SendMoneyPrivate extends CreateTransaction {
     static final SendMoneyPrivate instance = new SendMoneyPrivate();
 
     private SendMoneyPrivate() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountNQT");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
-        long amountNQT = ParameterParser.getAmountNQT(req);
+        long amountATM = ParameterParser.getAmountATM(req);
         Account account = ParameterParser.getSenderAccount(req);
-        return createPrivateTransaction(req, account, recipient, amountNQT);
+        return createPrivateTransaction(req, account, recipient, amountATM);
     }
 }
