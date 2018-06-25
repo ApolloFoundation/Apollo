@@ -17,7 +17,7 @@
 
     package apl.http;
 
-    import apl.UpdaterUtil;
+    import apl.updater.UpdaterCore;
     import org.json.simple.JSONStreamAware;
 
     import javax.servlet.http.HttpServletRequest;
@@ -33,7 +33,7 @@
         @Override
         protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
             API.verifyPassword(req);
-            UpdaterUtil.stopForgingAndBlockAcceptance();
+            UpdaterCore.getInstance().stopForgingAndBlockAcceptance();
             return null;
         }
 
