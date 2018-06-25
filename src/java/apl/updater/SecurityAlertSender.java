@@ -15,12 +15,11 @@
 
 package apl.updater;
 
-import apl.Attachment;
+import apl.Transaction;
+import apl.util.Logger;
 
-public class AuthorityChecker {
-
-    public boolean checkSignature(Attachment.UpdateAttachment attachment) {
-        return true;
+public class SecurityAlertSender {
+    public void send(Transaction invalidUpdateTransaction) {
+        Logger.logInfoMessage("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
     }
-
 }
