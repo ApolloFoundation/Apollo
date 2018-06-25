@@ -15,10 +15,7 @@
 
 package apl.updater;
 
-import apl.Attachment;
-import apl.Transaction;
-import apl.TransactionType;
-import apl.UpdaterMediator;
+import apl.*;
 import apl.util.Listener;
 import apl.util.Logger;
 
@@ -108,6 +105,7 @@ public class UpdaterCore {
                         Architecture currentArchitecture = Architecture.current();
                         if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
                             new Thread(() -> triggerUpdate(transaction), "Apollo updater thread").start();
+                            mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
                         }
                     }
                 }
@@ -116,8 +114,16 @@ public class UpdaterCore {
     }
 
     private int getUpdateHeightFromType(TransactionType type) {
-        return type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() : type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900) + 100 + mediator.getBlockchainHeight() :
-                type == TransactionType.Update.MINOR ? -1 : 0;//assume not mandatory update
+        return
+              //update is NOW on currentBlockchainHeight
+              type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() :
+
+              // update height = currentBlockchainHeight + random number in range [100.1000]
+              type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900)
+                      + 100 + mediator.getBlockchainHeight() :
+
+              //assume that current update is not mandatory
+              type == TransactionType.Update.MINOR ? -1 : 0;
     }
 
 }
