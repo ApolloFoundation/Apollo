@@ -34,7 +34,11 @@ public class UpdaterMediator {
         return updateInfo.getState();
     }
 
-    public void setUpdateData(boolean isUpdate, int updateHeight, int receivedUpdateHeight, String updateLevel, Version newVersion) {
+    public UpdateInfo.UpdateState getUpdateState() {return updateInfo.getUpdateState();}
+
+    public void setUpdateState(UpdateInfo.UpdateState updateState) {updateInfo.setUpdateState(updateState);}
+
+    public void setUpdateData(boolean isUpdate, int updateHeight, int receivedUpdateHeight, Level updateLevel, Version newVersion) {
         synchronized (updateInfo) {
             updateInfo.setReceivedUpdateHeight(receivedUpdateHeight);
             updateInfo.setUpdate(isUpdate);
@@ -43,6 +47,8 @@ public class UpdaterMediator {
             updateInfo.setUpdateLevel(updateLevel);
         }
     }
+
+    public void setUpdateHeight(int updateHeight) {updateInfo.setUpdateHeight(updateHeight);}
 
     public void setState(UpdateInfo.DownloadState state) {
         Logger.logInfoMessage("Update download state: " + state);

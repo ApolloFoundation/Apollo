@@ -22,6 +22,7 @@ import apl.crypto.EncryptedData;
 import apl.updater.Architecture;
 import apl.updater.Platform;
 import apl.util.Convert;
+import apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -3600,6 +3601,7 @@ public interface Attachment extends Appendix {
             this.signature = signature;
         }
 
+        public abstract Level getLevel();
         @Override
         int getMySize() {
             return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
@@ -3686,6 +3688,11 @@ public interface Attachment extends Appendix {
         }
 
         @Override
+        public Level getLevel() {
+            return Level.CRITICAL;
+        }
+
+        @Override
         public TransactionType getTransactionType() {
             return TransactionType.Update.CRITICAL;
         }
@@ -3705,6 +3712,11 @@ public interface Attachment extends Appendix {
         }
 
         @Override
+        public Level getLevel() {
+            return Level.IMPORTANT;
+        }
+
+        @Override
         public TransactionType getTransactionType() {
             return TransactionType.Update.IMPORTANT;
         }
@@ -3721,6 +3733,11 @@ public interface Attachment extends Appendix {
 
         public MinorUpdate(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature) {
             super(platform, architecture, url, version, hash, signature);
+        }
+
+        @Override
+        public Level getLevel() {
+            return Level.MINOR;
         }
 
         @Override
