@@ -468,7 +468,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(0, updateTransaction.getSubtype().intValue());
         Assert.assertEquals(TransactionType.Update.CRITICAL, TransactionType.findTransactionType(updateTransaction.getType(), updateTransaction.getSubtype()));
         Assert.assertNull(updateTransaction.getRecipientRS());
-        Assert.assertEquals(100_000_000, updateTransaction.getFeeNQT().intValue());
+        Assert.assertEquals(100_000_000, updateTransaction.getFeeATM().intValue());
         Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
     }
 }
