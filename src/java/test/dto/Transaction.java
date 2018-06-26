@@ -1,10 +1,25 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test.dto;
 
 import apl.TransactionType;
 
 import java.util.Objects;
 
-import static test.TestUtil.fromNqt;
+import static test.TestUtil.fromATM;
 
 /**
  * Simple DTO object for {@link apl.TransactionImpl}
@@ -12,7 +27,7 @@ import static test.TestUtil.fromNqt;
 public class Transaction {
     private String senderPublicKey;
     private String signature;
-    private Long feeNQT;
+    private Long feeATM;
     private Long transactionIndex;
     private Byte type;
     private Long confirmations;
@@ -24,7 +39,7 @@ public class Transaction {
     //attachments should present, but ignoring for now
     private String senderRS;
     private Byte subtype;
-    private Long amountNQT;
+    private Long amountATM;
     private String sender; //senderId
     private Long ecBlockHeight;
     private String block;//blockId
@@ -39,8 +54,8 @@ public class Transaction {
     public String toString() {
         return "Transaction{" +
                 "type=" + TransactionType.findTransactionType(type,subtype) +
-                "amountNQT=" + fromNqt(amountNQT) +
-                ", feeNQT=" + fromNqt(feeNQT) +
+                "amountATM=" + fromATM(amountATM) +
+                ", feeATM=" + fromATM(feeATM) +
                 ", senderRS='" + senderRS + '\'' +
                 ", height=" + height +
                 ", recipientRS='" + recipientRS + '\'' +
@@ -79,12 +94,12 @@ public class Transaction {
         this.signature = signature;
     }
 
-    public Long getFeeNQT() {
-        return feeNQT;
+    public Long getFeeATM() {
+        return feeATM;
     }
 
-    public void setFeeNQT(Long feeNQT) {
-        this.feeNQT = feeNQT;
+    public void setFeeATM(Long feeATM) {
+        this.feeATM = feeATM;
     }
 
     public Long getTransactionIndex() {
@@ -167,12 +182,12 @@ public class Transaction {
         this.subtype = subtype;
     }
 
-    public Long getAmountNQT() {
-        return amountNQT;
+    public Long getAmountATM() {
+        return amountATM;
     }
 
-    public void setAmountNQT(Long amountNQT) {
-        this.amountNQT = amountNQT;
+    public void setAmountATM(Long amountATM) {
+        this.amountATM = amountATM;
     }
 
     public String getSender() {
@@ -235,7 +250,7 @@ public class Transaction {
         Transaction that = (Transaction) o;
         return Objects.equals(getSenderPublicKey(), that.getSenderPublicKey()) &&
                 Objects.equals(getSignature(), that.getSignature()) &&
-                Objects.equals(getFeeNQT(), that.getFeeNQT()) &&
+                Objects.equals(getFeeATM(), that.getFeeATM()) &&
                 Objects.equals(getTransactionIndex(), that.getTransactionIndex()) &&
                 Objects.equals(getType(), that.getType()) &&
                 Objects.equals(getConfirmations(), that.getConfirmations()) &&
@@ -246,7 +261,7 @@ public class Transaction {
                 Objects.equals(getSignatureHash(), that.getSignatureHash()) &&
                 Objects.equals(getSenderRS(), that.getSenderRS()) &&
                 Objects.equals(getSubtype(), that.getSubtype()) &&
-                Objects.equals(getAmountNQT(), that.getAmountNQT()) &&
+                Objects.equals(getAmountATM(), that.getAmountATM()) &&
                 Objects.equals(getSender(), that.getSender()) &&
                 Objects.equals(getEcBlockHeight(), that.getEcBlockHeight()) &&
                 Objects.equals(getBlock(), that.getBlock()) &&
@@ -261,7 +276,7 @@ public class Transaction {
     @Override
     public int hashCode() {
 
-        return Objects.hash(getSenderPublicKey(), getSignature(), getFeeNQT(), getTransactionIndex(), getType(), getConfirmations(), getFullHash(), getVersion(), getPhased(), getEcBlockId(), getSignatureHash(), getSenderRS(), getSubtype(), getAmountNQT(), getSender(), getEcBlockHeight(), getBlock(), getBlockTimestamp(), getDeadline(), getTransaction(), getTimestamp(), getHeight(), getRecipientRS());
+        return Objects.hash(getSenderPublicKey(), getSignature(), getFeeATM(), getTransactionIndex(), getType(), getConfirmations(), getFullHash(), getVersion(), getPhased(), getEcBlockId(), getSignatureHash(), getSenderRS(), getSubtype(), getAmountATM(), getSender(), getEcBlockHeight(), getBlock(), getBlockTimestamp(), getDeadline(), getTransaction(), getTimestamp(), getHeight(), getRecipientRS());
     }
 
     public void setRecipientRS(String recipientRS) {

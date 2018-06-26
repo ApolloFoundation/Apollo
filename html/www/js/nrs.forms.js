@@ -281,7 +281,7 @@ var NRS = (function(NRS, $) {
 
             if ($(this).is(":invalid")) {
 				var error = "";
-				var name = String($(this).attr("name")).replace("APL", "").replace("NQT", "").capitalize();
+				var name = String($(this).attr("name")).replace("APL", "").replace("ATM", "").capitalize();
 				var value = $(this).val();
 
 
@@ -388,6 +388,7 @@ var NRS = (function(NRS, $) {
 			data = NRS.getFormData($form);
 		}
         if ($btn.hasClass("btn-calculate-fee")) {
+
             data.calculateFee = true;
             data.feeAPL = "0";
             $form.find(".error_message").html("").hide();
@@ -551,7 +552,7 @@ var NRS = (function(NRS, $) {
         if (!NRS.showedFormWarning) {
 			if ("amountAPL" in data && NRS.settings["amount_warning"] && NRS.settings["amount_warning"] != "0") {
 				try {
-					var amountNQT = NRS.convertToNQT(data.amountAPL);
+					var amountATM = NRS.convertToATM(data.amountAPL);
 				} catch (err) {
 					$form.find(".error_message").html(String(err).escapeHTML() + " (" + $.t("amount") + ")").show();
 					if (formErrorFunction) {
@@ -561,7 +562,7 @@ var NRS = (function(NRS, $) {
 					return;
 				}
 
-				if (new BigInteger(amountNQT).compareTo(new BigInteger(NRS.settings["amount_warning"])) > 0) {
+				if (new BigInteger(amountATM).compareTo(new BigInteger(NRS.settings["amount_warning"])) > 0) {
 					NRS.showedFormWarning = true;
 					$form.find(".error_message").html($.t("error_max_amount_warning", {
 						"amount": NRS.formatAmount(NRS.settings["amount_warning"]), "symbol": NRS.constants.COIN_SYMBOL
@@ -576,7 +577,7 @@ var NRS = (function(NRS, $) {
             if ("feeAPL" in data && NRS.settings["fee_warning"] && NRS.settings["fee_warning"] != "0") {
 
 				try {
-					var feeNQT = NRS.convertToNQT(data.feeAPL);
+					var feeATM = NRS.convertToATM(data.feeAPL);
 				} catch (err) {
 					$form.find(".error_message").html(String(err).escapeHTML() + " (" + $.t("fee") + ")").show();
 					if (formErrorFunction) {
@@ -586,7 +587,7 @@ var NRS = (function(NRS, $) {
 					return;
 				}
 
-				if (new BigInteger(feeNQT).compareTo(new BigInteger(NRS.settings["fee_warning"])) > 0) {
+				if (new BigInteger(feeATM).compareTo(new BigInteger(NRS.settings["fee_warning"])) > 0) {
 					NRS.showedFormWarning = true;
 					$form.find(".error_message").html($.t("error_max_fee_warning", {
 						"amount": NRS.formatAmount(NRS.settings["fee_warning"]), "symbol": NRS.constants.COIN_SYMBOL
@@ -607,7 +608,7 @@ var NRS = (function(NRS, $) {
 				}
 
 				if (decimals < 2 || decimals > 6) {
-					if (requestType == "issueAsset" && data.quantityQNT == "1") {
+					if (requestType == "issueAsset" && data.quantityATU == "1") {
 						// Singleton asset no need to warn
 					} else {
 						NRS.showedFormWarning = true;
@@ -628,7 +629,7 @@ var NRS = (function(NRS, $) {
 			$.each(convertAPLFields, function(key, field) {
 				if (field in data) {
 					try {
-						NRS.convertToNQT(data[field]);
+						NRS.convertToATM(data[field]);
 					} catch (err) {
 						$form.find(".error_message").html(String(err).escapeHTML()).show();
 						if (formErrorFunction) {
@@ -706,7 +707,7 @@ var NRS = (function(NRS, $) {
         if (response.fullHash) {
 			NRS.unlockForm($modal, $btn);
 			if (data.calculateFee) {
-				updateFee($modal, response.transactionJSON.feeNQT);
+				updateFee($modal, response.transactionJSON.feeATM);
 				return;
 			}
 
@@ -763,12 +764,12 @@ var NRS = (function(NRS, $) {
 
                 if (requestType === 'sendMoneyPrivate') {
                     var fee = $('#send_money_fee_info');
-                    fee.val(NRS.convertToAPL(response.transactionJSON.feeNQT));
+                    fee.val(NRS.convertToAPL(response.transactionJSON.feeATM));
                     var recalcIndicator = $("#" + $modal.attr('id').replace('_modal', '') + "_recalc");
                     recalcIndicator.hide();
                     return;
                 } else {
-                	updateFee($modal, response.transactionJSON.feeNQT);
+                	updateFee($modal, response.transactionJSON.feeATM);
                     return;
                 }
 			}
@@ -826,9 +827,9 @@ var NRS = (function(NRS, $) {
 		}
 	};
 
-    function updateFee(modal, feeNQT) {
+    function updateFee(modal, feeATM) {
         var fee = $("#" + modal.attr('id').replace('_modal', '') + "_fee");
-        fee.val(NRS.convertToAPL(feeNQT));
+        fee.val(NRS.convertToAPL(feeATM));
         var recalcIndicator = $("#" + modal.attr('id').replace('_modal', '') + "_recalc");
         recalcIndicator.hide();
     }

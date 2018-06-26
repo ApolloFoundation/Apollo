@@ -58,15 +58,15 @@ var NRS = (function (NRS, $, undefined) {
                 }
             }
         });
-        //convert APL to NQT...
+        //convert APL to ATM...
         var field = "N/A";
         try {
             var aplFields = [
-                ["feeAPL", "feeNQT"],
-                ["amountAPL", "amountNQT"],
-                ["priceAPL", "priceNQT"],
-                ["refundAPL", "refundNQT"],
-                ["discountAPL", "discountNQT"],
+                ["feeAPL", "feeATM"],
+                ["amountAPL", "amountATM"],
+                ["priceAPL", "priceATM"],
+                ["refundAPL", "refundATM"],
+                ["discountAPL", "discountATM"],
                 ["phasingQuorumAPL", "phasingQuorum"],
                 ["phasingMinBalanceAPL", "phasingMinBalance"],
                 ["controlQuorumAPL", "controlQuorum"],
@@ -82,7 +82,7 @@ var NRS = (function (NRS, $, undefined) {
                 var aplField = aplFields[i][0];
                 var nqtField = aplFields[i][1];
                 if (aplField in data) {
-                    data[nqtField] = NRS.convertToNQT(data[aplField]);
+                    data[nqtField] = NRS.convertToATM(data[aplField]);
                     delete data[aplField];
                 }
             }
@@ -96,23 +96,23 @@ var NRS = (function (NRS, $, undefined) {
         // convert asset/currency decimal amount to base unit
         try {
             var currencyFields = [
-                ["phasingQuorumQNTf", "phasingHoldingDecimals"],
-                ["phasingMinBalanceQNTf", "phasingHoldingDecimals"],
-                ["controlQuorumQNTf", "controlHoldingDecimals"],
-                ["controlMinBalanceQNTf", "controlHoldingDecimals"],
-                ["minBalanceQNTf", "create_poll_asset_decimals"],
-                ["minBalanceQNTf", "create_poll_ms_decimals"],
-                ["amountQNTf", "shuffling_asset_decimals"],
-                ["amountQNTf", "shuffling_ms_decimals"]
+                ["phasingQuorumATUf", "phasingHoldingDecimals"],
+                ["phasingMinBalanceATUf", "phasingHoldingDecimals"],
+                ["controlQuorumATUf", "controlHoldingDecimals"],
+                ["controlMinBalanceATUf", "controlHoldingDecimals"],
+                ["minBalanceATUf", "create_poll_asset_decimals"],
+                ["minBalanceATUf", "create_poll_ms_decimals"],
+                ["amountATUf", "shuffling_asset_decimals"],
+                ["amountATUf", "shuffling_ms_decimals"]
             ];
             var toDelete = [];
             for (i = 0; i < currencyFields.length; i++) {
                 var decimalUnitField = currencyFields[i][0];
                 var decimalsField = currencyFields[i][1];
-                field = decimalUnitField.replace("QNTf", "");
+                field = decimalUnitField.replace("ATUf", "");
 
                 if (decimalUnitField in data && decimalsField in data) {
-                    data[field] = NRS.convertToQNT(parseFloat(data[decimalUnitField]), parseInt(data[decimalsField]));
+                    data[field] = NRS.convertToATU(parseFloat(data[decimalUnitField]), parseInt(data[decimalsField]));
                     toDelete.push(decimalUnitField);
                     toDelete.push(decimalsField);
                 }
@@ -136,7 +136,7 @@ var NRS = (function (NRS, $, undefined) {
 
             var phasingControl = NRS.accountInfo.phasingOnly;
             var maxFees = new BigInteger(phasingControl.maxFees);
-            if (maxFees > 0 && new BigInteger(data.feeNQT).compareTo(new BigInteger(phasingControl.maxFees)) > 0) {
+            if (maxFees > 0 && new BigInteger(data.feeATM).compareTo(new BigInteger(phasingControl.maxFees)) > 0) {
                 callback({
                     "errorCode": 1,
                     "errorDescription": $.t("error_fee_exceeds_max_account_control_fee", {
@@ -519,13 +519,13 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyAndSignTransactionBytes = function (transactionBytes, signature, requestType, data, callback, response, extra, isVerifyECBlock) {
         var byteArray = converters.hexStringToByteArray(transactionBytes);
-        if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
-            callback({
-                "errorCode": 1,
-                "errorDescription": $.t("error_bytes_validation_server")
-            }, data);
-            return;
-        }
+        // if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
+        //     callback({
+        //         "errorCode": 1,
+        //         "errorDescription": $.t("error_bytes_validation_server")
+        //     }, data);
+        //     return;
+        // }
 
 
         var isSchedule = false;
@@ -557,8 +557,8 @@ var NRS = (function (NRS, $, undefined) {
         transaction.deadline = String(converters.byteArrayToSignedShort(byteArray, 6));
         transaction.publicKey = converters.byteArrayToHexString(byteArray.slice(8, 40));
         transaction.recipient = String(converters.byteArrayToBigInteger(byteArray, 40));
-        transaction.amountNQT = String(converters.byteArrayToBigInteger(byteArray, 48));
-        transaction.feeNQT = String(converters.byteArrayToBigInteger(byteArray, 56));
+        transaction.amountATM = String(converters.byteArrayToBigInteger(byteArray, 48));
+        transaction.feeATM = String(converters.byteArrayToBigInteger(byteArray, 56));
 
         var refHash = byteArray.slice(64, 96);
         transaction.referencedTransactionFullHash = converters.byteArrayToHexString(refHash);
@@ -599,7 +599,7 @@ var NRS = (function (NRS, $, undefined) {
             }
         }
 
-        if (transaction.amountNQT !== data.amountNQT) {
+        if (transaction.amountATM !== data.amountATM) {
             return false;
         }
 
@@ -758,9 +758,9 @@ var NRS = (function (NRS, $, undefined) {
                 pos++;
                 transaction.alias = converters.byteArrayToString(byteArray, pos, length);
                 pos += length;
-                transaction.priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.priceATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.alias !== data.aliasName || transaction.priceNQT !== data.priceNQT) {
+                if (transaction.alias !== data.aliasName || transaction.priceATM !== data.priceATM) {
                     return false;
                 }
                 break;
@@ -850,11 +850,11 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 2;
                 transaction.description = converters.byteArrayToString(byteArray, pos, length);
                 pos += length;
-                transaction.quantityQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.quantityATU = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.decimals = String(byteArray[pos]);
                 pos++;
-                if (transaction.name !== data.name || transaction.description !== data.description || transaction.quantityQNT !== data.quantityQNT || transaction.decimals !== data.decimals) {
+                if (transaction.name !== data.name || transaction.description !== data.description || transaction.quantityATU !== data.quantityATU || transaction.decimals !== data.decimals) {
                     return false;
                 }
                 break;
@@ -864,9 +864,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.quantityQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.quantityATU = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.asset !== data.asset || transaction.quantityQNT !== data.quantityQNT) {
+                if (transaction.asset !== data.asset || transaction.quantityATU !== data.quantityATU) {
                     return false;
                 }
                 break;
@@ -881,11 +881,11 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.quantityQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.quantityATU = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.priceATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.asset !== data.asset || transaction.quantityQNT !== data.quantityQNT || transaction.priceNQT !== data.priceNQT) {
+                if (transaction.asset !== data.asset || transaction.quantityATU !== data.quantityATU || transaction.priceATM !== data.priceATM) {
                     return false;
                 }
                 break;
@@ -910,9 +910,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.asset = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.quantityQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.quantityATU = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.asset !== data.asset || transaction.quantityQNT !== data.quantityQNT) {
+                if (transaction.asset !== data.asset || transaction.quantityATU !== data.quantityATU) {
                     return false;
                 }
                 break;
@@ -924,11 +924,11 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.height = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                transaction.amountNQTPerQNT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.amountATMPerATU = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 if (transaction.asset !== data.asset ||
                     transaction.height !== data.height ||
-                    transaction.amountNQTPerQNT !== data.amountNQTPerQNT) {
+                    transaction.amountATMPerATU !== data.amountATMPerATU) {
                     return false;
                 }
                 break;
@@ -950,9 +950,9 @@ var NRS = (function (NRS, $, undefined) {
                 pos += length;
                 transaction.quantity = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                transaction.priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.priceATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.name !== data.name || transaction.description !== data.description || transaction.tags !== data.tags || transaction.quantity !== data.quantity || transaction.priceNQT !== data.priceNQT) {
+                if (transaction.name !== data.name || transaction.description !== data.description || transaction.tags !== data.tags || transaction.quantity !== data.quantity || transaction.priceATM !== data.priceATM) {
                     return false;
                 }
                 break;
@@ -972,9 +972,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.goods = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.priceATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.goods !== data.goods || transaction.priceNQT !== data.priceNQT) {
+                if (transaction.goods !== data.goods || transaction.priceATM !== data.priceATM) {
                     return false;
                 }
                 break;
@@ -998,11 +998,11 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.quantity = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                transaction.priceNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.priceATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.deliveryDeadlineTimestamp = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                if (transaction.goods !== data.goods || transaction.quantity !== data.quantity || transaction.priceNQT !== data.priceNQT || transaction.deliveryDeadlineTimestamp !== data.deliveryDeadlineTimestamp) {
+                if (transaction.goods !== data.goods || transaction.quantity !== data.quantity || transaction.priceATM !== data.priceATM || transaction.deliveryDeadlineTimestamp !== data.deliveryDeadlineTimestamp) {
                     return false;
                 }
                 break;
@@ -1023,13 +1023,13 @@ var NRS = (function (NRS, $, undefined) {
                 pos += encryptedGoodsLength;
                 transaction.goodsNonce = converters.byteArrayToHexString(byteArray.slice(pos, pos + 32));
                 pos += 32;
-                transaction.discountNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.discountATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 var goodsIsText = (transaction.goodsIsText ? "true" : "false");
                 if (goodsIsText != data.goodsIsText) {
                     return false;
                 }
-                if (transaction.purchase !== data.purchase || transaction.goodsData !== data.goodsData || transaction.goodsNonce !== data.goodsNonce || transaction.discountNQT !== data.discountNQT) {
+                if (transaction.purchase !== data.purchase || transaction.goodsData !== data.goodsData || transaction.goodsNonce !== data.goodsNonce || transaction.discountATM !== data.discountATM) {
                     return false;
                 }
                 break;
@@ -1049,9 +1049,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.purchase = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.refundNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.refundATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.purchase !== data.purchase || transaction.refundNQT !== data.refundNQT) {
+                if (transaction.purchase !== data.purchase || transaction.refundATM !== data.refundATM) {
                     return false;
                 }
                 break;
@@ -1097,7 +1097,7 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.issuanceHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                transaction.minReservePerUnitNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.minReservePerUnitATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.minDifficulty = String(byteArray[pos]);
                 pos++;
@@ -1115,7 +1115,7 @@ var NRS = (function (NRS, $, undefined) {
                     transaction.ruleset !== data.ruleset || transaction.algorithm !== data.algorithm || transaction.decimals !== data.decimals) {
                     return false;
                 }
-                if (transaction.minReservePerUnitNQT !== "0" && transaction.minReservePerUnitNQT !== data.minReservePerUnitNQT) {
+                if (transaction.minReservePerUnitATM !== "0" && transaction.minReservePerUnitATM !== data.minReservePerUnitATM) {
                     return false;
                 }
                 if (transaction.minDifficulty !== "0" && transaction.minDifficulty !== data.minDifficulty) {
@@ -1131,9 +1131,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.amountPerUnitNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.amountPerUnitATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.amountPerUnitNQT !== data.amountPerUnitNQT) {
+                if (transaction.currency !== data.currency || transaction.amountPerUnitATM !== data.amountPerUnitATM) {
                     return false;
                 }
                 break;
@@ -1167,9 +1167,9 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.buyRateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.buyRateATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.sellRateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.sellRateATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.totalBuyLimit = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
@@ -1181,7 +1181,7 @@ var NRS = (function (NRS, $, undefined) {
                 pos += 8;
                 transaction.expirationHeight = String(converters.byteArrayToSignedInt32(byteArray, pos));
                 pos += 4;
-                if (transaction.currency !== data.currency || transaction.buyRateNQT !== data.buyRateNQT || transaction.sellRateNQT !== data.sellRateNQT ||
+                if (transaction.currency !== data.currency || transaction.buyRateATM !== data.buyRateATM || transaction.sellRateATM !== data.sellRateATM ||
                     transaction.totalBuyLimit !== data.totalBuyLimit || transaction.totalSellLimit !== data.totalSellLimit ||
                     transaction.initialBuySupply !== data.initialBuySupply || transaction.initialSellSupply !== data.initialSellSupply || transaction.expirationHeight !== data.expirationHeight) {
                     return false;
@@ -1193,11 +1193,11 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.rateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.rateATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.units !== data.units) {
+                if (transaction.currency !== data.currency || transaction.rateATM !== data.rateATM || transaction.units !== data.units) {
                     return false;
                 }
                 break;
@@ -1207,11 +1207,11 @@ var NRS = (function (NRS, $, undefined) {
                 }
                 transaction.currency = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                transaction.rateNQT = String(converters.byteArrayToBigInteger(byteArray, pos));
+                transaction.rateATM = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
                 transaction.units = String(converters.byteArrayToBigInteger(byteArray, pos));
                 pos += 8;
-                if (transaction.currency !== data.currency || transaction.rateNQT !== data.rateNQT || transaction.units !== data.units) {
+                if (transaction.currency !== data.currency || transaction.rateATM !== data.rateATM || transaction.units !== data.units) {
                     return false;
                 }
                 break;
@@ -1638,8 +1638,8 @@ var NRS = (function (NRS, $, undefined) {
     }
 
     function addMissingData(data) {
-        if (!("amountNQT" in data)) {
-            data.amountNQT = "0";
+        if (!("amountATM" in data)) {
+            data.amountATM = "0";
         }
         if (!("recipient" in data)) {
             data.recipient = NRS.constants.GENESIS;

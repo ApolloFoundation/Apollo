@@ -120,8 +120,8 @@ extends <a href="../../apl/http/APIServlet.APIRequestHandler.html" title="class 
  Parameters
  <ul>
  <li>currency - currency id of an active currency
- <li>buyRateNQT - APL amount for buying a currency unit specified in NQT
- <li>sellRateNQT - APL amount for selling a currency unit specified in NQT
+ <li>buyRateATM - APL amount for buying a currency unit specified in ATM
+ <li>sellRateATM - APL amount for selling a currency unit specified in ATM
  <li>initialBuySupply - Initial number of currency units offered to buy by the publisher
  <li>initialSellSupply - Initial number of currency units offered for sell by the publisher
  <li>totalBuyLimit - Total number of currency units which can be bought from the offer
@@ -131,7 +131,7 @@ extends <a href="../../apl/http/APIServlet.APIRequestHandler.html" title="class 
 
  <p>
  Publishing an exchange offer internally creates a buy offer and a counter sell offer linked together.
- Typically the buyRateNQT specified would be less than the sellRateNQT thus allowing the publisher to make profit
+ Typically the buyRateATM specified would be less than the sellRateATM thus allowing the publisher to make profit
 
  <p>
  Each <a href="../../apl/http/CurrencyBuy.html" title="class in apl.http"><code>CurrencyBuy</code></a> transaction which matches this offer reduces the sell supply and increases the buy supply

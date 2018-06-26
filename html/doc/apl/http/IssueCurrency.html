@@ -133,7 +133,7 @@ extends <a href="../../apl/http/APIServlet.APIRequestHandler.html" title="class 
  <li>decimals - currency units are divisible to this number of decimals
  <li>issuanceHeight - the blockchain height at which the currency would become active
  For <a href="../../apl/CurrencyType.html#RESERVABLE"><code>CurrencyType.RESERVABLE</code></a> currency
- <li>minReservePerUnitNQT - the minimum APL value per unit to allow the currency to become active
+ <li>minReservePerUnitATM - the minimum APL value per unit to allow the currency to become active
  For <a href="../../apl/CurrencyType.html#RESERVABLE"><code>CurrencyType.RESERVABLE</code></a> currency
  <li>reserveSupply - the number of units that will be distributed to founders when currency becomes active (less initialSupply)
  For <a href="../../apl/CurrencyType.html#RESERVABLE"><code>CurrencyType.RESERVABLE</code></a> currency
@@ -149,7 +149,7 @@ extends <a href="../../apl/http/APIServlet.APIRequestHandler.html" title="class 
  <ul>
  <li>A given currency can not be neither <a href="../../apl/CurrencyType.html#EXCHANGEABLE"><code>CurrencyType.EXCHANGEABLE</code></a> nor <a href="../../apl/CurrencyType.html#CLAIMABLE"><code>CurrencyType.CLAIMABLE</code></a>.<br>
  <li>A <a href="../../apl/CurrencyType.html#RESERVABLE"><code>CurrencyType.RESERVABLE</code></a> currency becomes active once the blockchain height reaches the currency issuance height.<br>
- At this time, if the minReservePerUnitNQT has not been reached the currency issuance is cancelled and
+ At this time, if the minReservePerUnitATM has not been reached the currency issuance is cancelled and
  funds are returned to the founders.<br>
  Otherwise the currency becomes active and remains active until deleted, provided deletion is possible.
  When a <a href="../../apl/CurrencyType.html#RESERVABLE"><code>CurrencyType.RESERVABLE</code></a> becomes active, in case it is <a href="../../apl/CurrencyType.html#CLAIMABLE"><code>CurrencyType.CLAIMABLE</code></a> the APL used for

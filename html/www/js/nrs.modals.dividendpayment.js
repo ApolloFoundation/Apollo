@@ -29,8 +29,8 @@ var NRS = (function(NRS, $) {
                 "error": $.t("error_amount_per_share_required")
             }
         } else {
-            data.amountNQTPerQNT = NRS.calculatePricePerWholeQNT(
-                NRS.convertToNQT(data.amountAPLPerShare),
+            data.amountATMPerATU = NRS.calculatePricePerWholeATU(
+                NRS.convertToATM(data.amountAPLPerShare),
                 NRS.getCurrentAsset().decimals);
         }
         if (!/^\d+$/.test(data.height)) {
@@ -83,18 +83,18 @@ var NRS = (function(NRS, $) {
                             return accountAsset.accountRS !== NRS.getCurrentAsset().accountRS
                                 && accountAsset.accountRS !== NRS.constants.GENESIS_RS;
                         });
-                    var totalQuantityQNT = new BigInteger("0");
+                    var totalQuantityATU = new BigInteger("0");
                     qualifiedDividendRecipients.forEach(
                         function (accountAsset) {
-                            totalQuantityQNT = totalQuantityQNT.add(new BigInteger(accountAsset.quantityQNT));
+                            totalQuantityATU = totalQuantityATU.add(new BigInteger(accountAsset.quantityATU));
                         }
                     );
-                    var priceNQT = new BigInteger(NRS.calculatePricePerWholeQNT(NRS.convertToNQT(amountAPLPerShare), NRS.getCurrentAsset().decimals));
-                    var totalAPL = NRS.calculateOrderTotal(totalQuantityQNT, priceNQT);
+                    var priceATM = new BigInteger(NRS.calculatePricePerWholeATU(NRS.convertToATM(amountAPLPerShare), NRS.getCurrentAsset().decimals));
+                    var totalAPL = NRS.calculateOrderTotal(totalQuantityATU, priceATM);
                     $callout.html($.t("dividend_payment_info_preview_success", {
                         "amount": totalAPL,
                         "symbol": NRS.constants.COIN_SYMBOL,
-                        "totalQuantity": NRS.formatQuantity(totalQuantityQNT, NRS.getCurrentAsset().decimals),
+                        "totalQuantity": NRS.formatQuantity(totalQuantityATU, NRS.getCurrentAsset().decimals),
                         "recipientCount": qualifiedDividendRecipients.length
                     }));
                     $callout.removeClass(classes).addClass("callout-info").show();

@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletRequest;
  * Parameters
  * <ul>
  * <li>currency - currency id
- * <li>rateNQT - exchange rate between APL amount and currency units
+ * <li>rateATM - exchange rate between APL amount and currency units
  * <li>units - number of units to sell
  * </ul>
  *
@@ -48,17 +48,17 @@ public final class CurrencySell extends CreateTransaction {
     static final CurrencySell instance = new CurrencySell();
 
     private CurrencySell() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateNQT", "units");
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
-        long rateNQT = ParameterParser.getLong(req, "rateNQT", 0, Long.MAX_VALUE, true);
+        long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
         long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new Attachment.MonetarySystemExchangeSell(currency.getId(), rateNQT, units);
+        Attachment attachment = new Attachment.MonetarySystemExchangeSell(currency.getId(), rateATM, units);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

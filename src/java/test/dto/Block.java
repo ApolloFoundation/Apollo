@@ -1,11 +1,28 @@
 package test.dto;
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
+
 
 import java.util.List;
+import java.util.Objects;
 
 public class Block {
     private String previousBlockHash;
     private Long payloadLength;
-    private Long totalAmountNQT;
+    private Long totalAmountATM;
     private String generationSignature;
     private String generator;
     private String generatorPublicKey;
@@ -16,12 +33,45 @@ public class Block {
     private String blockSignature;
     private List<Transaction> transactions;
     private Long version;
-    private Long totalFeeNQT;
+    private Long totalFeeATM;
     private String previousBlock;
     private String cumulativeDifficulty;
     private String block; //block id
     private Long height;
     private Long timestamp; //time in seconds since genesis block
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Block)) return false;
+        Block block1 = (Block) o;
+        return Objects.equals(previousBlockHash, block1.previousBlockHash) &&
+                Objects.equals(payloadLength, block1.payloadLength) &&
+                Objects.equals(totalAmountATM, block1.totalAmountATM) &&
+                Objects.equals(generationSignature, block1.generationSignature) &&
+                Objects.equals(generator, block1.generator) &&
+                Objects.equals(generatorPublicKey, block1.generatorPublicKey) &&
+                Objects.equals(baseTarget, block1.baseTarget) &&
+                Objects.equals(payloadHash, block1.payloadHash) &&
+                Objects.equals(generatorRS, block1.generatorRS) &&
+                Objects.equals(numberOfTransactions, block1.numberOfTransactions) &&
+                Objects.equals(blockSignature, block1.blockSignature) &&
+                Objects.equals(transactions, block1.transactions) &&
+                Objects.equals(version, block1.version) &&
+                Objects.equals(totalFeeATM, block1.totalFeeATM) &&
+                Objects.equals(previousBlock, block1.previousBlock) &&
+                Objects.equals(cumulativeDifficulty, block1.cumulativeDifficulty) &&
+                Objects.equals(block, block1.block) &&
+                Objects.equals(height, block1.height) &&
+                Objects.equals(timestamp, block1.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(previousBlockHash, payloadLength, totalAmountATM, generationSignature, generator, generatorPublicKey, baseTarget,
+                payloadHash, generatorRS, numberOfTransactions, blockSignature, transactions, version, totalFeeNQT, previousBlock, cumulativeDifficulty, block, height, timestamp);
+    }
 
     public String getPreviousBlockHash() {
         return previousBlockHash;
@@ -39,12 +89,12 @@ public class Block {
         this.payloadLength = payloadLength;
     }
 
-    public Long getTotalAmountNQT() {
-        return totalAmountNQT;
+    public Long getTotalAmountATM() {
+        return totalAmountATM;
     }
 
-    public void setTotalAmountNQT(Long totalAmountNQT) {
-        this.totalAmountNQT = totalAmountNQT;
+    public void setTotalAmountATM(Long totalAmountATM) {
+        this.totalAmountATM = totalAmountATM;
     }
 
     public String getGenerationSignature() {
@@ -127,13 +177,13 @@ public class Block {
         this.version = version;
     }
 
-    public Long getTotalFeeNQT() {
-        return totalFeeNQT;
+    public Long getTotalFeeATM() {
+        return totalFeeATM;
     }
 
 
-    public void setTotalFeeNQT(Long totalFeeNQT) {
-        this.totalFeeNQT = totalFeeNQT;
+    public void setTotalFeeATM(Long totalFeeATM) {
+        this.totalFeeATM = totalFeeATM;
     }
 
     public String getPreviousBlock() {
@@ -181,12 +231,12 @@ public class Block {
         return "Block{" +
             "height=" + height +
             ", previousBlockHash='" + previousBlockHash + '\'' +
-            ", totalAmountNQT=" + totalAmountNQT +
+            ", totalAmountATM=" + totalAmountATM +
             ", generatorPublicKey='" + generatorPublicKey + '\'' +
             ", blockSignature='" + blockSignature + '\'' +
             ", numberOfTransactions=" + numberOfTransactions +
             ", transactions=" + transactions +
-            ", totalFeeNQT=" + totalFeeNQT +
+            ", totalFeeATM=" + totalFeeATM +
             '}';
     }
 }

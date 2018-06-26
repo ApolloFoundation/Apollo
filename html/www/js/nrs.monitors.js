@@ -209,11 +209,11 @@ var NRS = (function(NRS, $) {
             return;
         }
         var value = {};
-        var amount = NRS.convertToNQT($("#add_monitored_account_amount").val());
+        var amount = NRS.convertToATM($("#add_monitored_account_amount").val());
         if (currentMonitor.amount != amount) {
             value.amount = amount;
         }
-        var threshold = NRS.convertToNQT($("#add_monitored_account_threshold").val());
+        var threshold = NRS.convertToATM($("#add_monitored_account_threshold").val());
         if (currentMonitor.threshold != threshold) {
             value.threshold = threshold;
         }
