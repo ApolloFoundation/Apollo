@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -18,6 +18,7 @@
 package apl.peer;
 
 import apl.Apl;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.JSON;
 import apl.util.Logger;
@@ -79,11 +80,15 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
         }
         peerImpl.setApplication(application.trim());
 
-        String version = (String)request.get("version");
-        if (version == null) {
-            version = "?";
+        Version version = null;
+        try {
+            version = Version.from((String)request.get("version"));
         }
-        peerImpl.setVersion(version.trim());
+        catch (Exception e) {
+            Logger.logErrorMessage("Cannot parse version.", e);
+            version = new Version(1, 0, 0);
+        }
+        peerImpl.setVersion(version);
 
         String platform = (String)request.get("platform");
         if (platform == null) {

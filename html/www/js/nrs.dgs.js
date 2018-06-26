@@ -1,11 +1,12 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -45,7 +46,7 @@ var NRS = (function(NRS, $) {
 							html += "<strong>" + $.t("timestamp_listing") + "</strong>: " + NRS.formatTimestamp(good.timestamp);
         				html += "</div>";
 						html += "<div><h3 class='title'><a href='#' data-goods='" + NRS.escapeRespStr(good.goods) + "' data-toggle='modal' data-target='#dgs_purchase_modal'>" + NRS.escapeRespStr(good.name) + "</a></h3></div>";
-						html += "<div class='price'><strong>" + NRS.formatAmount(good.priceNQT) + " " + NRS.constants.COIN_SYMBOL + "</strong></div>";
+						html += "<div class='price'><strong>" + NRS.formatAmount(good.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</strong></div>";
 						html += "<div class='showmore'><div class='moreblock description'>" + String(good.description).autoLink().nl2br() + "</div>";
 							if (good.numberOfPublicFeedbacks > 0) {
 								html += "<span style='float:right;clear:right;'><a href='#' class='feedback' data-goods='" + NRS.escapeRespStr(good.goods) + "' data-toggle='modal' data-target='#dgs_show_feedback_modal'>" + $.t('show_feedback', 'Show Feedback') + "</a></span>";
@@ -85,7 +86,7 @@ var NRS = (function(NRS, $) {
 		} else if (purchase.pending) {
 			status = $.t("pending");
 			statusHTML = "<span class='label label-warning'>" + $.t("pending") + "</span>";
-		} else if (purchase.refundNQT) {
+		} else if (purchase.refundATM) {
 			status = $.t("refunded");
 			modal = "#dgs_view_refund_modal";
 		} else if (!purchase.goodsData) {
@@ -108,7 +109,7 @@ var NRS = (function(NRS, $) {
 			"<tr><td style='width:150px'><strong>" + $.t("order_date") + "</strong>:</td><td>" + NRS.formatTimestamp(purchase.timestamp) + "</td></tr>" +
 			"<tr><td><strong>" + $.t("order_status") + "</strong>:</td><td><span class='order_status'>" + (statusHTML ? statusHTML : status) + "</span></td></tr>" +
 			(purchase.pending ? "<tr><td><strong>" + $.t("delivery_deadline") + "</strong>:</td><td>" + NRS.formatTimestamp(purchase.deliveryDeadlineTimestamp) + "</td></tr>" : "") +
-			"<tr><td><strong>" + $.t("price") + "</strong>:</td><td>" + NRS.formatAmount(purchase.priceNQT) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>" +
+			"<tr><td><strong>" + $.t("price") + "</strong>:</td><td>" + NRS.formatAmount(purchase.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>" +
 			"<tr><td><strong>" + $.t("quantity") + "</strong>:</td><td>" + NRS.format(purchase.quantity) + "</td></tr>" +
 			(purchase.seller == NRS.account && purchase.feedbackNote ? "<tr><td><strong>" + $.t("feedback") + "</strong>:</td><td>" + $.t("includes_feedback") + "</td></tr>" : "") +
 			"</table></div>" +
@@ -124,7 +125,7 @@ var NRS = (function(NRS, $) {
 			"<table class='purchase' style='margin-bottom:5px'>" +
 			"<tr><td style='width:150px'><strong>Order Date</strong>:</td><td>" + NRS.formatTimestamp(purchase.timestamp) + "</td></tr>" +
 			"<tr><td><strong>" + $.t("delivery_deadline") + "</strong>:</td><td>" + NRS.formatTimestamp(purchase.deliveryDeadlineTimestamp) + "</td></tr>" +
-			"<tr><td><strong>" + $.t("price") + "</strong>:</td><td>" + NRS.formatAmount(purchase.priceNQT) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>" +
+			"<tr><td><strong>" + $.t("price") + "</strong>:</td><td>" + NRS.formatAmount(purchase.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>" +
 			"<tr><td><strong>" + $.t("quantity") + "</strong>:</td><td>" + NRS.format(purchase.quantity) + "</td></tr>" +
 			"</table>" +
 			"<span class='delivery'><button type='button' class='btn btn-default btn-deliver' data-toggle='modal' data-target='#dgs_delivery_modal' data-purchase='" + NRS.escapeRespStr(purchase.purchase) + "'>" + $.t("deliver_goods") + "</button></span>" +
@@ -481,14 +482,14 @@ var NRS = (function(NRS, $) {
 				var quantityDecimals = NRS.getNumberOfDecimals(response.goods, "quantity", function(val) {
 					return NRS.format(val.quantity);
 				});
-				var priceDecimals = NRS.getNumberOfDecimals(response.goods, "priceNQT", function(val) {
-					return NRS.formatAmount(val.priceNQT);
+				var priceDecimals = NRS.getNumberOfDecimals(response.goods, "priceATM", function(val) {
+					return NRS.formatAmount(val.priceATM);
 				});
 				for (var i = 0; i < response.goods.length; i++) {
                		var good = response.goods[i];
                		rows += "<tr class='' data-goods='" + NRS.escapeRespStr(good.goods) + "'><td><a href='#' data-toggle='modal' data-target='#dgs_product_modal' data-goods='" + NRS.escapeRespStr(good.goods) + "'>" + NRS.escapeRespStr(good.name) + "</a></td>";
 					rows += "<td class='quantity numeric'>" + NRS.format(good.quantity, false, quantityDecimals) + "</td>";
-					rows += "<td class='price numeric'>" + NRS.formatAmount(good.priceNQT, false, false, priceDecimals) + " " + NRS.constants.COIN_SYMBOL + "</td>";
+					rows += "<td class='price numeric'>" + NRS.formatAmount(good.priceATM, false, false, priceDecimals) + " " + NRS.constants.COIN_SYMBOL + "</td>";
 					rows += "<td style='white-space:nowrap'><a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_price_change_modal' data-goods='" + NRS.escapeRespStr(good.goods) + "'>" + $.t("change_price") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_quantity_change_modal' data-goods='" + NRS.escapeRespStr(good.goods) + "'>" + $.t("change_qty") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_delisting_modal' data-goods='" + NRS.escapeRespStr(good.goods) + "'>" + $.t("delete") + "</a></td></tr>";
 				}
 			}
@@ -579,7 +580,7 @@ var NRS = (function(NRS, $) {
 			return;
 		}
 		if (NRS.currentPage == "my_dgs_listings") {
-         var rowToAdd = "<tr class='tentative' data-goods='" + NRS.escapeRespStr(response.transaction) + "'><td><a href='#' data-toggle='modal' data-target='#dgs_listing_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + NRS.escapeRespStr(data.name) + "</a></td><td class='quantity'>" + NRS.format(data.quantity) + "</td><td class='price'>" + NRS.formatAmount(data.priceNQT) + " " + NRS.constants.COIN_SYMBOL + "</td><td style='white-space:nowrap'><a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_price_change_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("change_price") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_quantity_change_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("change_qty") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_delisting_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("delete") + "</a></td></tr>";
+         var rowToAdd = "<tr class='tentative' data-goods='" + NRS.escapeRespStr(response.transaction) + "'><td><a href='#' data-toggle='modal' data-target='#dgs_listing_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + NRS.escapeRespStr(data.name) + "</a></td><td class='quantity'>" + NRS.format(data.quantity) + "</td><td class='price'>" + NRS.formatAmount(data.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</td><td style='white-space:nowrap'><a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_price_change_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("change_price") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_quantity_change_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("change_qty") + "</a> <a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#dgs_delisting_modal' data-goods='" + NRS.escapeRespStr(response.transaction) + "'>" + $.t("delete") + "</a></td></tr>";
          var listingsTable = $("#my_dgs_listings_table");
          listingsTable.find("tbody").prepend(rowToAdd);
 			if (listingsTable.parent().hasClass("data-empty")) {
@@ -790,7 +791,7 @@ var NRS = (function(NRS, $) {
 			return;
 		}
 
-		$("#my_dgs_listings_table").find("tr[data-goods=" + String(data.goods).escapeHTML() + "]").addClass("tentative").find(".price").html(NRS.formatAmount(data.priceNQT) + " " + NRS.constants.COIN_SYMBOL);
+		$("#my_dgs_listings_table").find("tr[data-goods=" + String(data.goods).escapeHTML() + "]").addClass("tentative").find(".price").html(NRS.formatAmount(data.priceATM) + " " + NRS.constants.COIN_SYMBOL);
 	};
 
 	NRS.forms.dgsRefundComplete = function(response, data) {
@@ -866,7 +867,7 @@ var NRS = (function(NRS, $) {
 						var output = "<table>";
 						var image = NRS.dgs_get_picture(good);
 						output += "<tr><th style='width:85px;'><strong>" + $.t("product") + "</strong>:</th><td>" + NRS.escapeRespStr(good.name) + '</td><td rowspan = 20 height="100" width="100">' + image + '</td></tr>';
-						output += "<tr><th><strong>" + $.t("price") + "</strong>:</th><td>" + NRS.formatAmount(response.priceNQT) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
+						output += "<tr><th><strong>" + $.t("price") + "</strong>:</th><td>" + NRS.formatAmount(response.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
 						output += "<tr><th><strong>" + $.t("quantity") + "</strong>:</th><td>" + NRS.format(response.quantity) + "</td></tr>";
 						if (good.delisted) {
 							output += "<tr><th><strong>" + $.t("status") + "</strong>:</th><td>" + $.t("no_longer_for_sale") + "</td></tr>";
@@ -879,11 +880,11 @@ var NRS = (function(NRS, $) {
 								$modal.find("input[name=recipient]").val(response.sellerRS);
 							}
 							if (response.quantity != "1") {
-								var orderTotal = NRS.formatAmount(new BigInteger(String(response.quantity)).multiply(new BigInteger(String(response.priceNQT))));
+								var orderTotal = NRS.formatAmount(new BigInteger(String(response.quantity)).multiply(new BigInteger(String(response.priceATM))));
 								output += "<tr><th><strong>" + $.t("total") + "</strong>:</th><td>" + orderTotal + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
 							}
-							if (response.discountNQT && (type == "dgs_refund_modal" || type == "dgs_feedback_modal")) {
-								output += "<tr><th><strong>" + $.t("discount") + "</strong>:</th><td>" + NRS.formatAmount(response.discountNQT) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
+							if (response.discountATM && (type == "dgs_refund_modal" || type == "dgs_feedback_modal")) {
+								output += "<tr><th><strong>" + $.t("discount") + "</strong>:</th><td>" + NRS.formatAmount(response.discountATM) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
 							}
 						}
 
@@ -894,7 +895,7 @@ var NRS = (function(NRS, $) {
 						}
 
 						if (type == "dgs_view_refund_modal") {
-							output += "<tr><th><strong>" + $.t("refund_price") + "</strong>:</th><td>" + NRS.formatAmount(response.refundNQT) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
+							output += "<tr><th><strong>" + $.t("refund_price") + "</strong>:</th><td>" + NRS.formatAmount(response.refundATM) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
 						}
 
 						if (response.note && (type == "dgs_view_purchase_modal" || type == "dgs_delivery_modal")) {
@@ -921,8 +922,8 @@ var NRS = (function(NRS, $) {
 						}
 
 						if (type == "dgs_refund_modal") {
-							var orderTotalBeforeDiscount = new BigInteger(String(response.quantity)).multiply(new BigInteger(String(response.priceNQT)));
-							var refund = orderTotalBeforeDiscount.subtract(new BigInteger(String(response.discountNQT)));
+							var orderTotalBeforeDiscount = new BigInteger(String(response.quantity)).multiply(new BigInteger(String(response.priceATM)));
+							var refund = orderTotalBeforeDiscount.subtract(new BigInteger(String(response.discountATM)));
 
 							$("#dgs_refund_purchase").val(response.purchase);
 							$("#dgs_refund_refund").val(NRS.convertToAPL(refund));
@@ -1060,7 +1061,7 @@ var NRS = (function(NRS, $) {
 					}
 					output += '</td><td rowspan = 20 height="100" width="100">' + image + '</td></tr>';
 					output += "<tr><th><strong>" + $.t("date") + "</strong>:</th><td>" + NRS.formatTimestamp(response.timestamp) + "</td></tr>";
-					output += "<tr><th><strong>" + $.t("price") + "</strong>:</th><td>" + NRS.formatAmount(response.priceNQT) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
+					output += "<tr><th><strong>" + $.t("price") + "</strong>:</th><td>" + NRS.formatAmount(response.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</td></tr>";
 					output += "<tr><th><strong>" + $.t("seller") + "</strong>:</th><td>" + NRS.getAccountLink(response, "seller") + " (" + '<a href="#" data-goto-seller="' + response.sellerRS + '">View Store' + "</a>)</td></tr>";
 					if (response.delisted) {
 						output += "<tr><th><strong>" + $.t("status") + "</strong>:</th><td>" + $.t("no_longer_for_sale") + "</td></tr>";
@@ -1081,16 +1082,16 @@ var NRS = (function(NRS, $) {
 					if (type == "dgs_quantity_change_modal") {
 						$("#dgs_quantity_change_current_quantity, #dgs_quantity_change_quantity").val(NRS.escapeRespStr(response.quantity));
 					} else if (type == "dgs_price_change_modal") {
-						$("#dgs_price_change_current_price, #dgs_price_change_price").val(NRS.convertToAPL(response.priceNQT).escapeHTML());
+						$("#dgs_price_change_current_price, #dgs_price_change_price").val(NRS.convertToAPL(response.priceATM).escapeHTML());
 					} else if (type == "dgs_purchase_modal") {
 						$modal.find("input[name=recipient]").val(response.sellerRS);
 
-						$("#dgs_purchase_price").val(NRS.escapeRespStr(response.priceNQT));
-						$("#dgs_total_purchase_price").html(NRS.formatAmount(response.priceNQT) + " " + NRS.constants.COIN_SYMBOL);
+						$("#dgs_purchase_price").val(NRS.escapeRespStr(response.priceATM));
+						$("#dgs_total_purchase_price").html(NRS.formatAmount(response.priceATM) + " " + NRS.constants.COIN_SYMBOL);
 
 						$("#dgs_purchase_quantity").on("change", function() {
-							var totalNQT = new BigInteger(response.priceNQT).multiply(new BigInteger(String($(this).val()))).toString();
-							$("#dgs_total_purchase_price").html(NRS.formatAmount(totalNQT) + " " + NRS.constants.COIN_SYMBOL);
+							var totalATM = new BigInteger(response.priceATM).multiply(new BigInteger(String($(this).val()))).toString();
+							$("#dgs_total_purchase_price").html(NRS.formatAmount(totalATM) + " " + NRS.constants.COIN_SYMBOL);
 						});
 					}
 				});
@@ -1293,8 +1294,8 @@ var NRS = (function(NRS, $) {
     				NRS.hasMorePages = true;
     				response.pop();
     			}
-				var priceDecimals = NRS.getNumberOfDecimals(response, "priceNQT", function(val) {
-					return NRS.formatAmount(val.priceNQT);
+				var priceDecimals = NRS.getNumberOfDecimals(response, "priceATM", function(val) {
+					return NRS.formatAmount(val.priceATM);
 				});
     			for (var i = 0; i < response.length; i++) {
     				var item = response[i];
@@ -1313,7 +1314,7 @@ var NRS = (function(NRS, $) {
     				view.data.push({
     					"timestamp": NRS.formatTimestamp(item.timestamp),
     					"good": good,
-    					"price": NRS.formatAmount(item.priceNQT, NRS.decimals, false, priceDecimals),
+    					"price": NRS.formatAmount(item.priceATM, NRS.decimals, false, priceDecimals),
     					"account": account,
     					"image": image
     				})

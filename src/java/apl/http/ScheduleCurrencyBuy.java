@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -42,7 +42,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     static final ScheduleCurrencyBuy instance = new ScheduleCurrencyBuy();
 
     private ScheduleCurrencyBuy() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateNQT", "units", "offerIssuer",
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
                 "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }
 
@@ -62,11 +62,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     return JSONResponses.error("Must use broadcast=false to schedule a future currency buy");
                 }
                 Currency currency = ParameterParser.getCurrency(req);
-                long rateNQT = ParameterParser.getLong(req, "rateNQT", 0, Long.MAX_VALUE, true);
+                long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = ParameterParser.getSenderAccount(req);
                 String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateNQT, units);
+                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (secretPhrase == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
@@ -88,13 +88,13 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             }
 
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();
-            Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateNQT());
+            Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
             Apl.getBlockchain().updateLock();
             try {
                 transaction.validate();
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
-                if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateNQT() <= attachment.getRateNQT()) {
+                if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
                     Logger.logDebugMessage("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
                     Apl.getTransactionProcessor().broadcast(transaction);
                     response.put("broadcasted", true);
@@ -137,12 +137,12 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
 
         private final long senderId;
         private final long currencyId;
-        private final long rateNQT;
+        private final long rateATM;
 
-        private ExchangeOfferFilter(long senderId, long currencyId, long rateNQT) {
+        private ExchangeOfferFilter(long senderId, long currencyId, long rateATM) {
             this.senderId = senderId;
             this.currencyId = currencyId;
-            this.rateNQT = rateNQT;
+            this.rateATM = rateATM;
         }
 
         @Override
@@ -153,7 +153,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 return false;
             }
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
-            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateNQT() > rateNQT) {
+            if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
                 return false;
             }
             return true;

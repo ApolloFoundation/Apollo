@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -25,6 +25,7 @@ import apl.Apl;
 import apl.Transaction;
 import apl.http.API;
 import apl.http.APIEnum;
+import apl.Version;
 import apl.util.Convert;
 import apl.util.Filter;
 import apl.util.JSON;
@@ -126,7 +127,6 @@ public final class Peers {
     private static final boolean savePeers;
     static final boolean ignorePeerAnnouncedAddress;
     static final boolean cjdnsOnly;
-    static final int MAX_VERSION_LENGTH = 10;
     static final int MAX_APPLICATION_LENGTH = 20;
     static final int MAX_PLATFORM_LENGTH = 30;
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
@@ -137,6 +137,7 @@ public final class Peers {
     private static volatile Peer.BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
+    private static boolean shutdown;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
 
@@ -258,7 +259,7 @@ public final class Peers {
             servicesList.add(Peer.Service.HALLMARK);
         }
         json.put("application", Apl.APPLICATION);
-        json.put("version", Apl.VERSION);
+        json.put("version", Apl.VERSION.toString());
         json.put("platform", Peers.myPlatform);
         json.put("shareAddress", Peers.shareMyAddress);
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
@@ -411,6 +412,7 @@ public final class Peers {
         private final static Server peerServer;
 
         static {
+            shutdown = false;
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
@@ -500,7 +502,9 @@ public final class Peers {
 
         @Override
         public void run() {
-
+            if (shutdown) {
+                return;
+            }
             try {
                 try {
 
@@ -788,6 +792,7 @@ public final class Peers {
     }
 
     public static void shutdown() {
+        shutdown = true;
         if (Init.peerServer != null) {
             try {
                 Init.peerServer.stop();
@@ -1024,6 +1029,11 @@ public final class Peers {
     }
 
     private static void sendToSomePeers(final JSONObject request) {
+        if (shutdown) {
+            String errorMessage = "Cannot send request to peers. Peer server was already shutdown";
+            Logger.logErrorMessage(errorMessage);
+            throw new RuntimeException(errorMessage);
+        }
         sendingService.submit(() -> {
             final JSONStreamAware jsonRequest = JSON.prepareRequest(request);
 
@@ -1114,63 +1124,20 @@ public final class Peers {
         }
     }
 
-    public static boolean isOldVersion(String version, int[] minVersion) {
+    public static boolean isOldVersion(Version version, Version minVersion) {
         if (version == null) {
             return true;
         }
-        if (version.endsWith("e")) {
-            version = version.substring(0, version.length() - 1);
-        }
-        String[] versions = version.split("\\.");
-        for (int i = 0; i < minVersion.length && i < versions.length; i++) {
-            try {
-                int v = Integer.parseInt(versions[i]);
-                if (v > minVersion[i]) {
-                    return false;
-                } else if (v < minVersion[i]) {
-                    return true;
-                }
-            } catch (NumberFormatException e) {
-                return true;
-            }
-        }
-        return versions.length < minVersion.length;
+        return version.lessThan(minVersion);
     }
 
-    private static final int[] MAX_VERSION;
-    static {
-        String version = Apl.VERSION;
-        if (version.endsWith("e")) {
-            version = version.substring(0, version.length() - 1);
-        }
-        String[] versions = version.split("\\.");
-        MAX_VERSION = new int[versions.length];
-        for (int i = 0; i < versions.length; i++) {
-            MAX_VERSION[i] = Integer.parseInt(versions[i]);
-        }
-    }
+    private static final Version MAX_VERSION = Apl.VERSION;
 
-    public static boolean isNewVersion(String version) {
+    public static boolean isNewVersion(Version version) {
         if (version == null) {
             return true;
         }
-        if (version.endsWith("e")) {
-            version = version.substring(0, version.length() - 1);
-        }
-        String[] versions = version.split("\\.");
-        for (int i = 0; i < MAX_VERSION.length && i < versions.length; i++) {
-            try {
-                int v = Integer.parseInt(versions[i]);
-                if (v > MAX_VERSION[i]) {
-                    return true;
-                } else if (v < MAX_VERSION[i]) {
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                return true;
-            }
-        }
-        return versions.length > MAX_VERSION.length;
+        return version.greaterThan(MAX_VERSION);
     }
 
     public static boolean hasTooFewKnownPeers() {

@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test;
 
 import org.json.simple.JSONObject;
@@ -65,8 +80,8 @@ public abstract class AbstractNodeClientTest {
         Assert.assertEquals(recipientRS, transaction.getRecipientRS());
         Assert.assertEquals(senderRS, transaction.getSenderRS());
         Assert.assertEquals(60L, transaction.getDeadline().longValue());
-        Assert.assertEquals(100000000L, transaction.getAmountNQT().longValue());
-        Assert.assertEquals(100000000L, transaction.getFeeNQT().longValue());
+        Assert.assertEquals(100000000L, transaction.getAmountATM().longValue());
+        Assert.assertEquals(100000000L, transaction.getFeeATM().longValue());
     }
 
     @Test

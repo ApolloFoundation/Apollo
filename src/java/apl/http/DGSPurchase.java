@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -39,7 +39,7 @@ public final class DGSPurchase extends CreateTransaction {
 
     private DGSPurchase() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "goods", "priceNQT", "quantity", "deliveryDeadlineTimestamp");
+                "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
     }
 
     @Override
@@ -55,8 +55,8 @@ public final class DGSPurchase extends CreateTransaction {
             return INCORRECT_PURCHASE_QUANTITY;
         }
 
-        long priceNQT = ParameterParser.getPriceNQT(req);
-        if (priceNQT != goods.getPriceNQT()) {
+        long priceATM = ParameterParser.getPriceATM(req);
+        if (priceATM != goods.getPriceATM()) {
             return INCORRECT_PURCHASE_PRICE;
         }
 
@@ -77,7 +77,7 @@ public final class DGSPurchase extends CreateTransaction {
         Account buyerAccount = ParameterParser.getSenderAccount(req);
         Account sellerAccount = Account.getAccount(goods.getSellerId());
 
-        Attachment attachment = new Attachment.DigitalGoodsPurchase(goods.getId(), quantity, priceNQT,
+        Attachment attachment = new Attachment.DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
                 deliveryDeadline);
         try {
             return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);

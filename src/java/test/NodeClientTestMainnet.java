@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test;
 
 
@@ -41,10 +56,10 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
             .node("numberOfTransactions")
             .isEqualTo("0");
         assertThatJson(json)
-            .node("totalFeeNQT")
+            .node("totalFeeATM")
             .isStringEqualTo("0");
         assertThatJson(json)
-            .node("totalAmountNQT")
+            .node("totalAmountATM")
             .isStringEqualTo("0");
     }
 
@@ -139,13 +154,13 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
             .isPresent()
             .isObject();
         assertThatJson(transaction)
-            .node("transactionJSON.amountNQT")
+            .node("transactionJSON.amountATM")
             .isPresent()
-            .isStringEqualTo(nqt(1).toString());
+            .isStringEqualTo(atm(1).toString());
         assertThatJson(transaction)
-            .node("transactionJSON.feeNQT")
+            .node("transactionJSON.feeATM")
             .isPresent()
-            .isStringEqualTo(nqt(1).toString());
+            .isStringEqualTo(atm(1).toString());
         assertThatJson(transaction)
             .node("transactionJSON.recipientRS")
             .isPresent()
@@ -178,8 +193,8 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
         Transaction transaction = client.getTransaction(url, TRANSACTION_HASH);
         Assert.assertNotNull(transaction);
         Assert.assertEquals(TRANSACTION_HASH, transaction.getFullHash());
-        Assert.assertEquals(nqt(1), transaction.getFeeNQT());
-        Assert.assertEquals(nqt(902000), transaction.getAmountNQT());
+        Assert.assertEquals(atm(1), transaction.getFeeATM());
+        Assert.assertEquals(atm(902000), transaction.getAmountATM());
         Assert.assertEquals(0, transaction.getSubtype().intValue());
         Assert.assertEquals(0, transaction.getType().intValue());
         Assert.assertEquals("APL-NZKH-MZRE-2CTT-98NPZ", transaction.getSenderRS());

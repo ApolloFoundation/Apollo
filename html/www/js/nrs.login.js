@@ -1,11 +1,12 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -18,6 +19,21 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $, undefined) {
+	
+	NRS.saveAccountLocal = function() {
+		localStorage.setItem('aplUser', 'red');
+	};
+	
+	NRS.getAccountLocal = function() {
+		return localStorage.getItem('aplUser');
+	};
+	
+	NRS.removeAccountLocal = function() {
+		localStorage.removeItem('aplUser');
+	};
+	
+	
+	
 	NRS.newlyCreatedAccount = false;
 
 	NRS.allowLoginViaEnter = function() {
@@ -199,6 +215,10 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.switchAccount = function(account) {
+        delete NRS.myTransactionPagination;
+        delete NRS.accountLedgerPagination;
+        delete NRS.blocksPagination;
+
 		// Reset security related state
 		NRS.resetEncryptionState();
 		NRS.setServerPassword(null);
@@ -295,7 +315,7 @@ var NRS = (function(NRS, $, undefined) {
 		console.log("login isPassphraseLogin = " + isPassphraseLogin +
 			", isAccountSwitch = " + isAccountSwitch +
 			", isSavedPassphrase = " + isSavedPassphrase);
-        NRS.spinner.spin($("#center")[0]);
+	    NRS.spinner.spin($("#center")[0]);
         if (isPassphraseLogin && !isSavedPassphrase){
 			var loginCheckPasswordLength = $("#login_check_password_length");
 			if (!id.length) {
@@ -317,7 +337,8 @@ var NRS = (function(NRS, $, undefined) {
 			$("#login_password, #registration_password, #registration_password_repeat").val("");
 			loginCheckPasswordLength.val(1);
 		}
-
+	 
+		
 		console.log("login calling getBlockchainStatus");
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
 			if (response.errorCode) {
@@ -342,6 +363,9 @@ var NRS = (function(NRS, $, undefined) {
 				if (!response.errorCode) {
 					NRS.account = NRS.escapeRespStr(response.account);
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
+					
+					NRS.setJSONItem('aplUser', NRS.accountRS);
+					
 					if (isPassphraseLogin) {
                         NRS.publicKey = NRS.getPublicKey(converters.stringToHexString(id));
                     } else {
@@ -600,6 +624,10 @@ var NRS = (function(NRS, $, undefined) {
         delete NRS.myTransactionPagination;
         delete NRS.accountLedgerPagination;
         delete NRS.blocksPagination;
+		
+
+		NRS.removeAccountLocal();
+		
 
         if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");

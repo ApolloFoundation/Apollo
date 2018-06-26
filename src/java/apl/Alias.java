@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -32,13 +32,13 @@ public final class Alias {
 
     public static class Offer {
 
-        private long priceNQT;
+        private long priceATM;
         private long buyerId;
         private final long aliasId;
         private final DbKey dbKey;
 
-        private Offer(long aliasId, long priceNQT, long buyerId) {
-            this.priceNQT = priceNQT;
+        private Offer(long aliasId, long priceATM, long buyerId) {
+            this.priceATM = priceATM;
             this.buyerId = buyerId;
             this.aliasId = aliasId;
             this.dbKey = offerDbKeyFactory.newKey(this.aliasId);
@@ -47,7 +47,7 @@ public final class Alias {
         private Offer(ResultSet rs, DbKey dbKey) throws SQLException {
             this.aliasId = rs.getLong("id");
             this.dbKey = dbKey;
-            this.priceNQT = rs.getLong("price");
+            this.priceATM = rs.getLong("price");
             this.buyerId  = rs.getLong("buyer_id");
         }
 
@@ -56,7 +56,7 @@ public final class Alias {
                     + "height) KEY (id, height) VALUES (?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.aliasId);
-                pstmt.setLong(++i, this.priceNQT);
+                pstmt.setLong(++i, this.priceATM);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.buyerId);
                 pstmt.setInt(++i, Apl.getBlockchain().getHeight());
                 pstmt.executeUpdate();
@@ -67,8 +67,8 @@ public final class Alias {
             return aliasId;
         }
 
-        public long getPriceNQT() {
-            return priceNQT;
+        public long getPriceATM() {
+            return priceATM;
         }
 
         public long getBuyerId() {
@@ -160,7 +160,7 @@ public final class Alias {
         final Alias alias = getAlias(aliasName);
         final Offer offer = Alias.getOffer(alias);
         if (offer != null) {
-            offer.priceNQT = Long.MAX_VALUE;
+            offer.priceATM = Long.MAX_VALUE;
             offerTable.delete(offer);
         }
         aliasTable.delete(alias);
@@ -180,15 +180,15 @@ public final class Alias {
 
     static void sellAlias(Transaction transaction, Attachment.MessagingAliasSell attachment) {
         final String aliasName = attachment.getAliasName();
-        final long priceNQT = attachment.getPriceNQT();
+        final long priceATM = attachment.getPriceATM();
         final long buyerId = transaction.getRecipientId();
-        if (priceNQT > 0) {
+        if (priceATM > 0) {
             Alias alias = getAlias(aliasName);
             Offer offer = getOffer(alias);
             if (offer == null) {
-                offerTable.insert(new Offer(alias.id, priceNQT, buyerId));
+                offerTable.insert(new Offer(alias.id, priceATM, buyerId));
             } else {
-                offer.priceNQT = priceNQT;
+                offer.priceATM = priceATM;
                 offer.buyerId = buyerId;
                 offerTable.insert(offer);
             }
@@ -205,7 +205,7 @@ public final class Alias {
         aliasTable.insert(alias);
         Offer offer = getOffer(alias);
         if (offer != null) {
-            offer.priceNQT = Long.MAX_VALUE;
+            offer.priceATM = Long.MAX_VALUE;
             offerTable.delete(offer);
         }
     }
