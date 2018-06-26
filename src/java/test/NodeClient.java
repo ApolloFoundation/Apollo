@@ -15,6 +15,9 @@
 
 package test;
 
+import apl.Version;
+import apl.updater.Architecture;
+import apl.updater.Platform;
 import apl.crypto.Crypto;
 import apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -32,6 +35,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+import test.dto.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -509,5 +513,24 @@ public class NodeClient {
         parameters.put("limit", limit.toString());
         String json = getJson(createURI(url), parameters);
         return MAPPER.readValue(json, NextGenerators.class);
+    }
+
+    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, String updateUrl, Version version, Architecture architecture, Platform platform, String hash, String signature, int deadline) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "sendUpdateTransaction");
+        parameters.put("secretPhrase", secretPhrase);
+        parameters.put("feeATM", String.valueOf(feeATM));
+        parameters.put("deadline", String.valueOf(deadline));
+        parameters.put("version", version.toString());
+        parameters.put("architecture", architecture.toString());
+        parameters.put("platform", platform.toString());
+        parameters.put("signature", signature);
+        parameters.put("hash", hash);
+        parameters.put("url", updateUrl);
+        parameters.put("level", String.valueOf(level));
+        String json = postJson(createURI(url), parameters, "");
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionJson = root.get("transactionJSON");
+        return MAPPER.readValue(transactionJson.toString(), UpdateTransaction.class);
     }
 }

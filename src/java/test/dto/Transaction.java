@@ -13,7 +13,7 @@
  *
  */
 
-package test;
+package test.dto;
 
 import apl.TransactionType;
 

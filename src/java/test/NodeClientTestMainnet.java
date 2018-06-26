@@ -19,6 +19,9 @@ package test;
 import org.eclipse.jetty.util.StringUtil;
 import org.junit.Assert;
 import org.junit.Test;
+import test.dto.Block;
+import test.dto.Peer;
+import test.dto.Transaction;
 
 import java.io.IOException;
 import java.util.HashMap;

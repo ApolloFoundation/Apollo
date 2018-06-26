@@ -14,7 +14,7 @@
  */
 
 
-package test;
+package test.dto;
 
 import apl.AccountLedger;
 
