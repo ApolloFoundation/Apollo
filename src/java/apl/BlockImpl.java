@@ -291,6 +291,7 @@ final class BlockImpl implements Block {
             return block;
         } catch (AplException.NotValidException|RuntimeException e) {
             Logger.logDebugMessage("Failed to parse block: " + blockData.toJSONString());
+            Logger.logDebugMessage("Exception: " + e.getMessage());
             throw e;
         }
     }
