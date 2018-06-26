@@ -18,6 +18,7 @@ package test.dto;
 import apl.Version;
 import apl.updater.Architecture;
 import apl.updater.Platform;
+import apl.util.Convert;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -108,16 +109,16 @@ public class UpdateTransaction extends Transaction {
             return hash;
         }
 
-        public void setHash(byte[] hash) {
-            this.hash = hash;
+        public void setHash(String hash) {
+            this.hash = Convert.parseHexString(hash);
         }
 
         public byte[] getSignature() {
             return signature;
         }
 
-        public void setSignature(byte[] signature) {
-            this.signature = signature;
+        public void setSignature(String signature) {
+            this.signature = Convert.parseHexString(signature);
         }
 
         @Override

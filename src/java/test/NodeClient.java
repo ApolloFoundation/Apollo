@@ -483,6 +483,8 @@ public class NodeClient {
         parameters.put("url", updateUrl);
         parameters.put("level", String.valueOf(level));
         String json = postJson(createURI(url), parameters, "");
-        return MAPPER.readValue(json, UpdateTransaction.class);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionJson = root.get("transactionJSON");
+        return MAPPER.readValue(transactionJson.toString(), UpdateTransaction.class);
     }
 }

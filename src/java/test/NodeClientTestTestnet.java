@@ -22,7 +22,6 @@ import apl.TransactionType;
 import apl.Version;
 import apl.updater.Architecture;
 import apl.updater.Platform;
-import apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -459,8 +458,8 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, signature, 5);
         UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
         expectedAttachment.setArchitecture(Architecture.AMD64);
-        expectedAttachment.setHash(Convert.parseHexString(hash));
-        expectedAttachment.setSignature(Convert.parseHexString(signature));
+        expectedAttachment.setHash(hash);
+        expectedAttachment.setSignature(signature);
         expectedAttachment.setPlatform(platform);
         expectedAttachment.setVersion(version);
         expectedAttachment.setUrl(updateUrl);
