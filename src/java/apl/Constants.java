@@ -34,7 +34,7 @@ public final class Constants {
     public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
     public static final long MAX_BALANCE_APL = 30000000000L;
     public static final long ONE_APL = 100000000;
-    public static final long MAX_BALANCE_NQT = MAX_BALANCE_APL * ONE_APL;
+    public static final long MAX_BALANCE_ATM = MAX_BALANCE_APL * ONE_APL;
 
     public static final int BLOCK_TIME = 60;
     public static final long INITIAL_BASE_TARGET = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(BLOCK_TIME * MAX_BALANCE_APL)).longValue(); //153722867;
@@ -46,7 +46,7 @@ public final class Constants {
     public static final int MAX_ROLLBACK = Math.max(Apl.getIntProperty("apl.maxRollback"), 720);
     public static final int GUARANTEED_BALANCE_CONFIRMATIONS = isTestnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
     public static final int LEASING_DELAY = isTestnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
-    public static final long MIN_FORGING_BALANCE_NQT = 1000 * ONE_APL;
+    public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
     public static final int FORGING_DELAY = Apl.getIntProperty("apl.forgingDelay");
@@ -84,7 +84,7 @@ public final class Constants {
     public static final int MAX_ACCOUNT_PROPERTY_NAME_LENGTH = 32;
     public static final int MAX_ACCOUNT_PROPERTY_VALUE_LENGTH = 160;
 
-    public static final long MAX_ASSET_QUANTITY_QNT = 30000000000L * 100000000L;
+    public static final long MAX_ASSET_QUANTITY_ATU = 30000000000L * 100000000L;
     public static final int MIN_ASSET_NAME_LENGTH = 3;
     public static final int MAX_ASSET_NAME_LENGTH = 10;
     public static final int MAX_ASSET_DESCRIPTION_LENGTH = 1000;
@@ -127,6 +127,12 @@ public final class Constants {
     public static final int MAX_TAGGED_DATA_CHANNEL_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_FILENAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DATA_LENGTH = 42 * 1024;
+    public static final int MAX_UPDATE_URL_LENGTH = 200;
+    public static final int MAX_UPDATE_PLATFORM_LENGTH = 10;
+    public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
+    public static final int MAX_UPDATE_VERSION_LENGTH = 10;
+    public static final int MAX_UPDATE_SIGNATURE_LENGTH = 2048;
+    public static final int MAX_UPDATE_HASH_LENGTH = 512;
 
     public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * 1440 * 60;
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
@@ -135,11 +141,11 @@ public final class Constants {
     // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
     public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
-    public static final int[] MIN_VERSION = new int[] {1, 0};
-    public static final int[] MIN_PROXY_VERSION = new int[] {1, 0};
+    public static final Version MIN_VERSION = new Version(1, 0, 0);
+    public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
-    static final long UNCONFIRMED_POOL_DEPOSIT_NQT = (isTestnet ? 50 : 100) * ONE_APL;
-    public static final long SHUFFLING_DEPOSIT_NQT = (isTestnet ? 7 : 1000) * ONE_APL;
+    static final long UNCONFIRMED_POOL_DEPOSIT_ATM = (isTestnet ? 50 : 100) * ONE_APL;
+    public static final long SHUFFLING_DEPOSIT_ATM = (isTestnet ? 7 : 1000) * ONE_APL;
 
     public static final boolean correctInvalidFees = Apl.getBooleanProperty("apl.correctInvalidFees");
 

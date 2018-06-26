@@ -22,14 +22,12 @@ var NRS = (function(NRS) {
     var requestConfirmations = [];
 
     NRS.updateRemoteNodes = function() {
-        console.log("Updating remote nodes");
         var data = {state: "CONNECTED", includePeerInfo: true};
         NRS.sendRequest("getPeers", data, function (response) {
             if (response.peers) {
                 NRS.remoteNodesMgr.nodes = {};
                 NRS.remoteNodesMgr.addRemoteNodes(response.peers);
             }
-            console.log("remote nodes updated");
         });
     };
 

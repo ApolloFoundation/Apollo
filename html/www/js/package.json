@@ -1,6 +1,6 @@
 {
   "name": "apl-blockchain",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Client API library for the APL Blockchain",
   "main": "nrs.node.bridge.js",
   "directories": {
@@ -20,7 +20,7 @@
   ],
   "author": "Apollo Foundation",
   "license": "MIT",
-  "homepage": "https://bitbucket.org/Apollo Foundation/apl#readme",
+  "homepage": "https://apollocurrency.com/",
   "dependencies": {
     "async": "^2.1.4",
     "crypto-js": "^3.1.9-1",

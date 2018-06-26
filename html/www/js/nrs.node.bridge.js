@@ -24,7 +24,6 @@ exports.load = function(callback) {
                 console.error(err);
                 return;
             }
-            console.log("Started");
 
             // Load the necessary node modules and assign them to the global scope
             // the APL client wasn't designed with modularity in mind therefore we need

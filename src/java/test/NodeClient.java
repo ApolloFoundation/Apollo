@@ -1,5 +1,23 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test;
 
+import apl.Version;
+import apl.updater.Architecture;
+import apl.updater.Platform;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +33,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+import test.dto.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -95,7 +114,7 @@ public class NodeClient {
 
     /**
      * curl -X POST -d "requestType=sendMoney&secretPhrase=dont know secret phrase hungry&recipient=APL-R3YT-LZ35-PS5X-3NMHR&amountNQ
-     * T=100000000&feeNQT=100000000&deadline=60" http://localhost:7876/apl
+     * T=100000000&feeATM=100000000&deadline=60" http://localhost:7876/apl
      */
 
     public String getPeers(String url) {
@@ -210,52 +229,59 @@ public class NodeClient {
         return transactions.toJSONString();
     }
 
+    public void stopForgingAndBlockAcceptance(String url, String adminPassword) {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "stopForgingAndBlockAcceptance");
+        params.put("adminPassword", adminPassword);
+        URI uri = createURI(url);
+        postJson(uri, params, "");
+    }
     public List<Transaction> getBlockTransactionsList(String url, Long height) throws ParseException, IOException {
         String blockTransactions = getBlockTransactions(url, height);
         List<Transaction> transactionsList = MAPPER.readValue(blockTransactions, new TypeReference<List<Transaction>>() {});
         return transactionsList;
     }
 
-    public String sendMoney(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) {
+    public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendMoney");
         parameters.put("secretPhrase", secretPhrase);
         parameters.put("recipient", recipient);
-        parameters.put("amountNQT", amountNQT.toString());
-        parameters.put("feeNQT", feeNQT.toString());
+        parameters.put("amountATM", amountATM.toString());
+        parameters.put("feeATM", feeATM.toString());
         parameters.put("deadline", deadline.toString());
         return postJson(createURI(url), parameters, "");
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) throws IOException, ParseException {
-        String json = sendMoney(url, secretPhrase, recipient, amountNQT, feeNQT, deadline);
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+        String json = sendMoney(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
         return MAPPER.readValue(transactionJSON, Transaction.class);
     }
 
-    private String sendMoneyPrivate(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) {
+    private String sendMoneyPrivate(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendMoneyPrivate");
         parameters.put("secretPhrase", secretPhrase);
         parameters.put("recipient", recipient);
-        parameters.put("amountNQT", amountNQT.toString());
-        parameters.put("feeNQT", feeNQT.toString());
+        parameters.put("amountATM", amountATM.toString());
+        parameters.put("feeATM", feeATM.toString());
         parameters.put("deadline", deadline.toString());
         return postJson(createURI(url), parameters, "");
     }
 
-    public Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT, Long deadline) throws IOException, ParseException {
-        String json = sendMoneyPrivate(url, secretPhrase, recipient, amountNQT, feeNQT, deadline);
+    public Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+        String json = sendMoneyPrivate(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
         return MAPPER.readValue(transactionJSON, Transaction.class);
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT) throws IOException, ParseException {
-        return sendMoneyTransaction(url, secretPhrase, recipient, amountNQT, feeNQT, DEFAULT_DEADLINE);
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) throws IOException, ParseException {
+        return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountNQT) throws IOException, ParseException {
-        return sendMoneyTransaction(url, secretPhrase, recipient, amountNQT, DEFAULT_FEE);
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM) throws IOException, ParseException {
+        return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, DEFAULT_FEE);
     }
 
     public List<Block> getBlocksList(String url, boolean includeTransactions, Long timestamp) throws IOException {
@@ -265,12 +291,12 @@ public class NodeClient {
         return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {});
     }
 
-    public String sendMoney(String url, String secretPhrase, String recipient, Long amountNQT) {
-        return sendMoney(url, secretPhrase, recipient, amountNQT, DEFAULT_FEE);
+    public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM) {
+        return sendMoney(url, secretPhrase, recipient, amountATM, DEFAULT_FEE);
     }
 
-    public String sendMoney(String url, String secretPhrase, String recipient, Long amountNQT, Long feeNQT) {
-        return sendMoney(url, secretPhrase, recipient, amountNQT, feeNQT, DEFAULT_DEADLINE);
+    public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) {
+        return sendMoney(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
 
     public String sendMoney(String url, String secretPhrase, String recipient) {
@@ -404,5 +430,61 @@ public class NodeClient {
             parameters.put("includeTransaction", includeTransaction.toString());
             String json = getJson(createURI(url), parameters);
             return MAPPER.readValue(json, LedgerEntry.class);
+    }
+
+
+    public String startForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "startForging", null);
+    }
+
+    private String sendForgingRequest(String url, String secretPhrase, String requestType,String adminPassword) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", requestType);
+        if (secretPhrase != null) {
+            parameters.put("secretPhrase", secretPhrase);
+        }
+        if (adminPassword != null) {
+            parameters.put("adminPassword", adminPassword);
+        }
+        String json = postJson(createURI(url), parameters, "");
+        return json;
+    }
+
+    public List<ForgingDetails> getForging(String url, String secretPhrase, String adminPassword) throws IOException {
+        String json = sendForgingRequest(url, secretPhrase, "getForging", adminPassword);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode gereratorsArray = root.get("generators");
+        return MAPPER.readValue(gereratorsArray.toString(), new TypeReference<List<ForgingDetails>>() {});
+    }
+
+    public String stopForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "stopForging", null);
+    }
+
+    public NextGenerators getNextGenerators(String url, Long limit) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getNextBlockGenerators");
+        parameters.put("limit", limit.toString());
+        String json = getJson(createURI(url), parameters);
+        return MAPPER.readValue(json, NextGenerators.class);
+    }
+
+    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, String updateUrl, Version version, Architecture architecture, Platform platform, String hash, String signature, int deadline) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "sendUpdateTransaction");
+        parameters.put("secretPhrase", secretPhrase);
+        parameters.put("feeATM", String.valueOf(feeATM));
+        parameters.put("deadline", String.valueOf(deadline));
+        parameters.put("version", version.toString());
+        parameters.put("architecture", architecture.toString());
+        parameters.put("platform", platform.toString());
+        parameters.put("signature", signature);
+        parameters.put("hash", hash);
+        parameters.put("url", updateUrl);
+        parameters.put("level", String.valueOf(level));
+        String json = postJson(createURI(url), parameters, "");
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionJson = root.get("transactionJSON");
+        return MAPPER.readValue(transactionJson.toString(), UpdateTransaction.class);
     }
 }

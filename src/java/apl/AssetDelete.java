@@ -81,8 +81,8 @@ public final class AssetDelete {
                 from, to, " ORDER BY height DESC, db_id DESC ");
     }
 
-    static AssetDelete addAssetDelete(Transaction transaction, long assetId, long quantityQNT) {
-        AssetDelete assetDelete = new AssetDelete(transaction, assetId, quantityQNT);
+    static AssetDelete addAssetDelete(Transaction transaction, long assetId, long quantityATU) {
+        AssetDelete assetDelete = new AssetDelete(transaction, assetId, quantityATU);
         assetDeleteTable.insert(assetDelete);
         listeners.notify(assetDelete, Event.ASSET_DELETE);
         return assetDelete;
@@ -96,15 +96,15 @@ public final class AssetDelete {
     private final long assetId;
     private final int height;
     private final long accountId;
-    private final long quantityQNT;
+    private final long quantityATU;
     private final int timestamp;
 
-    private AssetDelete(Transaction transaction, long assetId, long quantityQNT) {
+    private AssetDelete(Transaction transaction, long assetId, long quantityATU) {
         this.id = transaction.getId();
         this.dbKey = deleteDbKeyFactory.newKey(this.id);
         this.assetId = assetId;
         this.accountId = transaction.getSenderId();
-        this.quantityQNT = quantityQNT;
+        this.quantityATU = quantityATU;
         this.timestamp = Apl.getBlockchain().getLastBlockTimestamp();
         this.height = Apl.getBlockchain().getHeight();
     }
@@ -114,7 +114,7 @@ public final class AssetDelete {
         this.dbKey = dbKey;
         this.assetId = rs.getLong("asset_id");
         this.accountId = rs.getLong("account_id");
-        this.quantityQNT = rs.getLong("quantity");
+        this.quantityATU = rs.getLong("quantity");
         this.timestamp = rs.getInt("timestamp");
         this.height = rs.getInt("height");
     }
@@ -127,7 +127,7 @@ public final class AssetDelete {
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.accountId);
-            pstmt.setLong(++i, this.quantityQNT);
+            pstmt.setLong(++i, this.quantityATU);
             pstmt.setInt(++i, this.timestamp);
             pstmt.setInt(++i, this.height);
             pstmt.executeUpdate();
@@ -144,7 +144,7 @@ public final class AssetDelete {
         return accountId;
     }
 
-    public long getQuantityQNT() { return quantityQNT; }
+    public long getQuantityATU() { return quantityATU; }
 
     public int getTimestamp() {
         return timestamp;

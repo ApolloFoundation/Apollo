@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final String VERSION = "1.0.3";
+    public static final Version VERSION = Version.from("1.0.4");
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
@@ -77,7 +77,7 @@ public final class Apl {
         dirProvider = RuntimeEnvironment.getDirProvider();
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         loadProperties(defaultProperties, APL_DEFAULT_PROPERTIES, true);
-        if (!VERSION.equals(Apl.defaultProperties.getProperty("apl.version"))) {
+        if (!VERSION.equals(Version.from(Apl.defaultProperties.getProperty("apl.version")))) {
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
     }
@@ -288,8 +288,8 @@ public final class Apl {
         return TransactionProcessorImpl.getInstance();
     }
 
-    public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountNQT, long feeNQT, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountNQT, feeNQT, deadline, (Attachment.AbstractAttachment)attachment);
+    public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
+        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment)attachment);
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
@@ -400,6 +400,7 @@ public final class Apl {
                 AddOns.init();
                 runtimeMode.updateAppStatus("API initialization...");
                 API.init();
+                initUpdater();
                 DebugTrace.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
@@ -569,4 +570,12 @@ public final class Apl {
 
     private Apl() {} // never
 
+    private static void initUpdater() {
+        try {
+            Class.forName("apl.updater.UpdaterCore");
+        }
+        catch (ClassNotFoundException e) {
+            Logger.logErrorMessage("Cannot load Updater!", e);
+        }
+    }
 }

@@ -98,11 +98,11 @@ public final class JSONResponses {
     public static final JSONStreamAware MISSING_DELIVERY_DEADLINE_TIMESTAMP = missing("deliveryDeadlineTimestamp");
     public static final JSONStreamAware INCORRECT_DELIVERY_DEADLINE_TIMESTAMP = incorrect("deliveryDeadlineTimestamp");
     public static final JSONStreamAware INCORRECT_PURCHASE_QUANTITY = incorrect("quantity", "(quantity exceeds available goods quantity)");
-    public static final JSONStreamAware INCORRECT_PURCHASE_PRICE = incorrect("priceNQT", "(purchase price doesn't match goods price)");
+    public static final JSONStreamAware INCORRECT_PURCHASE_PRICE = incorrect("priceATM", "(purchase price doesn't match goods price)");
     public static final JSONStreamAware INCORRECT_PURCHASE = incorrect("purchase");
     public static final JSONStreamAware INCORRECT_DGS_GOODS = incorrect("goodsToEncrypt");
-    public static final JSONStreamAware INCORRECT_DGS_DISCOUNT = incorrect("discountNQT");
-    public static final JSONStreamAware INCORRECT_DGS_REFUND = incorrect("refundNQT");
+    public static final JSONStreamAware INCORRECT_DGS_DISCOUNT = incorrect("discountATM");
+    public static final JSONStreamAware INCORRECT_DGS_REFUND = incorrect("refundATM");
     public static final JSONStreamAware INCORRECT_ENCRYPTED_MESSAGE = incorrect("encryptedMessageData");
     public static final JSONStreamAware INCORRECT_DGS_ENCRYPTED_GOODS = incorrect("goodsData");
     public static final JSONStreamAware INCORRECT_HEIGHT = incorrect("height");
@@ -150,6 +150,9 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_SECRET = incorrect("secret");
     public static final JSONStreamAware MISSING_RECIPIENT_PUBLIC_KEY = missing("recipientPublicKey");
     public static final JSONStreamAware INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH = incorrect("property", "(length must be > 0 but less than " + Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH + " characters)");
+    public static final JSONStreamAware INCORRECT_UPDATE_URL_LENGTH = incorrectLength("url",Constants.MAX_UPDATE_URL_LENGTH);
+    public static final JSONStreamAware INCORRECT_UPDATE_SIGNATURE_LENGTH = incorrectLength("signature", Constants.MAX_UPDATE_SIGNATURE_LENGTH);
+    public static final JSONStreamAware INCORRECT_UPDATE_HASH_LENGTH = incorrectLength("hash", Constants.MAX_UPDATE_HASH_LENGTH);
     public static final JSONStreamAware INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH = incorrect("value", "(length must be less than " + Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_PROPERTY = incorrect("property", "(cannot be deleted by this account)");
     public static final JSONStreamAware UNKNOWN_PROPERTY = unknown("property");
@@ -464,6 +467,10 @@ public final class JSONResponses {
         response.put("errorCode", 4);
         response.put("errorDescription", "Incorrect \"" + paramName + (details != null ? "\" " + details : "\""));
         return JSON.prepare(response);
+    }
+
+    static JSONStreamAware incorrectLength(String paramName, long maxLength) {
+        return incorrect(paramName, "(length must be > 0 but less than " + maxLength + " characters)");
     }
 
     static JSONStreamAware unknown(String objectName) {
