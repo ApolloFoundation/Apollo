@@ -22,7 +22,6 @@ import apl.AccountLedger.LedgerEvent;
 import apl.AplException.ValidationException;
 import apl.Attachment.AbstractAttachment;
 import apl.VoteWeighting.VotingModel;
-import apl.updater.AuthorityChecker;
 import apl.util.Convert;
 import apl.util.Logger;
 import org.apache.tika.Tika;
@@ -3134,6 +3133,8 @@ public abstract class TransactionType {
 
     public static abstract class Update extends TransactionType {
 
+        private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
+
         private Update() {
         }
 
@@ -3164,17 +3165,24 @@ public abstract class TransactionType {
         @Override
         void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-            if (!AuthorityChecker.checkSignature(attachment)) {
-                throw new AplException.NotValidException("Unauthorized update transaction from account: " + Convert.rsAccount(transaction.getSenderId()));
+            if (attachment.getUrl().length() > Constants.MAX_UPDATE_URL_LENGTH
+                    || attachment.getSignature().length > Constants.MAX_UPDATE_SIGNATURE_LENGTH
+                    || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
+                throw new AplException.NotValidException("Invalid update transaction attachment:" +  attachment.getJSONObject());
             }
-            //check version
-            if (!attachment.getAppVersion().greaterThan(Apl.VERSION)) {
-                throw new AplException.NotValidException("Update version: " + attachment.getAppVersion() + " is not newer than current version: " + Apl.VERSION);
-            }
+        }
+
+        public static boolean isUpdate(TransactionType transactionType) {
+            return transactionType.getType() == TYPE_UPDATE;
         }
 
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+
+        @Override
+        Fee getBaselineFee(Transaction transaction) {
+            return UPDATE_FEE;
+        }
 
         public static final TransactionType CRITICAL = new Update() {
 
