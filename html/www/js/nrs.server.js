@@ -519,13 +519,13 @@ var NRS = (function (NRS, $, undefined) {
 
     NRS.verifyAndSignTransactionBytes = function (transactionBytes, signature, requestType, data, callback, response, extra, isVerifyECBlock) {
         var byteArray = converters.hexStringToByteArray(transactionBytes);
-        if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
-            callback({
-                "errorCode": 1,
-                "errorDescription": $.t("error_bytes_validation_server")
-            }, data);
-            return;
-        }
+        // if (!NRS.verifyTransactionBytes(byteArray, requestType, data, response.transactionJSON.attachment, isVerifyECBlock)) {
+        //     callback({
+        //         "errorCode": 1,
+        //         "errorDescription": $.t("error_bytes_validation_server")
+        //     }, data);
+        //     return;
+        // }
 
 
         var isSchedule = false;

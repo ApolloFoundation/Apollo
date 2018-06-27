@@ -15,18 +15,19 @@
 
 package apl.updater;
 
-import apl.Attachment;
+import apl.Transaction;
+import apl.util.Logger;
 
-public class AuthorityChecker {
-    private static class AuthorityCheckerHolder {
-        private static final AuthorityChecker HOLDER_INSTANCE = new AuthorityChecker();
+public class SecurityAlertSender {
+    private static class SecurityAlertSenderHolder {
+        private static final SecurityAlertSender HOLDER_INSTANCE = new SecurityAlertSender();
     }
 
-    public static AuthorityChecker getInstance() {
-        return AuthorityCheckerHolder.HOLDER_INSTANCE;
-    }
-    public boolean checkSignature(Attachment.UpdateAttachment attachment) {
-        return true;
+    public static SecurityAlertSender getInstance() {
+        return SecurityAlertSenderHolder.HOLDER_INSTANCE;
     }
 
+    public void send(Transaction invalidUpdateTransaction) {
+        Logger.logInfoMessage("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
+    }
 }

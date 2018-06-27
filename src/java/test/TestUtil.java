@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +78,10 @@ public class TestUtil {
 
     public static String getRandomRS(Map<String,String> accounts) {
         return new ArrayList<>(accounts.keySet()).get(RANDOM.nextInt(accounts.size()));
+    }
+
+    public static String getRandomSecretPhrase(Map<String, String> accounts) {
+        return accounts.get(getRandomRS(accounts));
     }
 
     public static String getRandomRecipientRS(Map<String,String> accounts, String senderRS) {

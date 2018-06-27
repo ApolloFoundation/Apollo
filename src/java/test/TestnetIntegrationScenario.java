@@ -1,13 +1,29 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
+import test.dto.Transaction;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -19,7 +35,18 @@ public class TestnetIntegrationScenario {
     private static final NodeClient CLIENT = new NodeClient();
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
     private static final Random RANDOM = new Random();
+    private static String adminPass;
 
+    static {
+        Properties properties = new Properties();
+        try {
+            properties.load(Files.newInputStream(Paths.get("conf/apl.properties")));
+            adminPass = String.valueOf(properties.get("apl.adminPassword"));
+        }
+        catch (IOException e) {
+            LOG.error("Cannot read apl.properties file", e);
+        }
+    }
     @Test
     public void testSendTransaction() throws Exception {
         testIsFork();
@@ -44,6 +71,52 @@ public class TestnetIntegrationScenario {
         testIsFork();
     }
 
+    @Test
+    public void testStopForgingAndBlockAcceptance() throws Exception {
+        testIsFork();
+        testIsAllPeersConnected();
+        LOG.info("Starting forging on {} accounts", ACCOUNTS.size());
+        ACCOUNTS.forEach((accountRS, secretPhrase) -> {
+            try {
+                CLIENT.startForging(TEST_LOCALHOST, secretPhrase);
+            }
+            catch (IOException e) {
+                LOG.error("Cannot start forging for account: " + accountRS + " on " + TEST_LOCALHOST, e);
+            }
+        });
+//        LOG.info("Waiting 2 blocks creation...");
+//        waitBlocks(2);
+        TimeUnit.SECONDS.sleep(5);
+        LOG.info("Verifying forgers on localhost");
+        List<ForgingDetails> forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
+        Assert.assertEquals(5, forgers.size());
+        forgers.forEach( generator -> {
+            if (!ACCOUNTS.containsKey(generator.getAccountRS())) {
+                Assert.fail("Incorrect generator: " + generator.getAccountRS());
+            }
+        });
+//        UpdaterUtil.stopForgingAndBlockAcceptance();
+        LOG.info("Stopping forging and peer server...");
+        long remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
+        CLIENT.stopForgingAndBlockAcceptance(TEST_LOCALHOST, adminPass);
+        long localHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+        LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
+        Assert.assertEquals(localHeight, remoteHeight);
+        Assert.assertEquals(CLIENT.getBlock(randomUrl(), remoteHeight), CLIENT.getBlock(TEST_LOCALHOST, localHeight));
+        LOG.info("Checking forgers on node (Assuming no forgers)");
+        forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
+        Assert.assertEquals(0, forgers.size());
+        LOG.info("Waiting 5 blocks creation...");
+        waitBlocks(5);
+        remoteHeight = CLIENT.getBlockchainHeight(randomUrl());
+        long actualLocalHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+        LOG.info("Comparing blockchain height local/remote: {}/{}", actualLocalHeight, remoteHeight);
+        Assert.assertEquals(localHeight, actualLocalHeight);
+        Assert.assertEquals(remoteHeight, localHeight + 5);
+        testIsFork();
+        testIsAllPeersConnected();
+    }
+
     private boolean waitForConfirmation(Transaction transaction, int seconds) throws InterruptedException, IOException {
         while (seconds > 0) {
             seconds -= 1;
@@ -62,6 +135,7 @@ public class TestnetIntegrationScenario {
         System.out.println("PeerCount=" + CLIENT.getPeersCount(URLS.get(0)));
         System.out.println("BLOCKS=" + CLIENT.getBlocksList(URLS.get(0), false, null));
         System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(URLS.get(0)));
+        System.out.println("Forgers="+ CLIENT.getForging(TEST_LOCALHOST, null, adminPass));
     }
 
     @Test
@@ -90,16 +164,21 @@ public class TestnetIntegrationScenario {
     }
 
     private boolean isAllPeersConnected() throws Exception {
-        int peerQuantity = URLS.size() - 1;
+        int peerQuantity = (int) Math.ceil((double) URLS.size() * 0.51);
+        int maxPeerQuantity = URLS.size();
         int peers = 0;
-        if (CLIENT.getPeersCount(TEST_LOCALHOST) != peerQuantity + 1) {
+        int localHostPeers = CLIENT.getPeersCount(TEST_LOCALHOST);
+        if (localHostPeers < peerQuantity) {
+            LOG.error("Localhost peer has {}/{} peers. Required >= {}", localHostPeers, maxPeerQuantity, peerQuantity);
             return false;
         }
         for (String ip : URLS) {
             peers = CLIENT.getPeersCount(ip);
-            if (peers != peerQuantity) {
+            if (peers < peerQuantity) {
+                LOG.error("Peer with {} has {}/{} peers. Required >= {}", ip, peers, maxPeerQuantity, peerQuantity);
                 return false;
             }
+            LOG.info("Peer with {} has {}/{} peers.", ip, peers, maxPeerQuantity);
         }
         return true;
     }
@@ -120,5 +199,15 @@ public class TestnetIntegrationScenario {
         String secretPhrase = ACCOUNTS.get(sender);
         Long amount = atm(RANDOM.nextInt(10) + 1);
         return CLIENT.sendMoneyPrivateTransaction(host, secretPhrase, recipient, amount, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+    }
+
+    private void waitBlocks(long numberOfBlocks) throws Exception {
+        long startBlockchainHeight = CLIENT.getBlockchainHeight(randomUrl());
+        long currentBlockchainHeight = CLIENT.getBlockchainHeight(randomUrl());
+        while (currentBlockchainHeight != numberOfBlocks + startBlockchainHeight) {
+            TimeUnit.MILLISECONDS.sleep(300);
+            currentBlockchainHeight = CLIENT.getBlockchainHeight(randomUrl());
+        }
+        TimeUnit.MILLISECONDS.sleep(300);
     }
 }
