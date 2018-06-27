@@ -17,11 +17,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import static apl.updater.UpdaterConstants.*;
+
 public class Downloader {
-    private static final int ATTEMPTS = 10;
-    private static final int TIMEOUT = 60;
-    private static final String TEMP_DIR_PREFIX = "Apollo-update";
-    private static final String DOWNLOADED_FILE_NAME = "Apollo-newVersion.jar";
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
 
     private Downloader() {}
@@ -83,7 +81,7 @@ public class Downloader {
     public Path tryDownload(String url, byte[] hash) {
         int attemptsCounter = 0;
         mediator.setStatus(UpdateInfo.DownloadStatus.STARTED);
-        while (attemptsCounter != ATTEMPTS) {
+        while (attemptsCounter != UpdaterConstants.DOWNLOAD_ATTEMPTS) {
             try {
                 attemptsCounter++;
                 mediator.setState(UpdateInfo.DownloadState.IN_PROGRESS);
@@ -97,7 +95,7 @@ public class Downloader {
                     Logger.logErrorMessage("Inconsistent file, downloaded from: " + url);
                 }
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
-                TimeUnit.SECONDS.sleep(TIMEOUT);
+                TimeUnit.SECONDS.sleep(NEXT_ATTEMPT_TIMEOUT);
             }
             catch (IOException e) {
                 Logger.logErrorMessage("Unable to download update from: " + url, e);

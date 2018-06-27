@@ -97,6 +97,10 @@ public class UpdaterMediator {
         return Apl.VERSION;
     }
 
+    public boolean isShutdown() {
+        return Apl.isShutdown();
+    }
+
     public int getBlockchainHeight() {
         return BlockchainImpl.getInstance().getHeight();
     }

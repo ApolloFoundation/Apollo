@@ -118,7 +118,7 @@ public class UpdaterCore {
         if (path != null) {
             try {
                 Path unpackedDirPath = unpacker.unpack(path);
-                platformDependentUpdater.continueUpdate(unpackedDirPath);
+                platformDependentUpdater.continueUpdate(unpackedDirPath, attachment.getPlatform());
                 return true;
             }
             catch (IOException e) {
