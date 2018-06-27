@@ -1417,7 +1417,6 @@
   "coin":"コイン",
   "coins":"コイン",
   "coin_exchange":"コイン取引所",
-  "exchange_using_shape_shift":"Shape Shiftを利用してコインを取引する",
   "exchange_apl_to_coin":"APLをコイン交換",
   "exchange_coin_to_apl":"手持ちのコインをAPLと交換",
   "exchange_apl_to_coin_shift":"APLを __coin__ と交換(shift)",
