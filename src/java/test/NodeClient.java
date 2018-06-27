@@ -1,5 +1,23 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package test;
 
+import apl.Version;
+import apl.updater.Architecture;
+import apl.updater.Platform;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +33,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+import test.dto.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -210,6 +229,13 @@ public class NodeClient {
         return transactions.toJSONString();
     }
 
+    public void stopForgingAndBlockAcceptance(String url, String adminPassword) {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "stopForgingAndBlockAcceptance");
+        params.put("adminPassword", adminPassword);
+        URI uri = createURI(url);
+        postJson(uri, params, "");
+    }
     public List<Transaction> getBlockTransactionsList(String url, Long height) throws ParseException, IOException {
         String blockTransactions = getBlockTransactions(url, height);
         List<Transaction> transactionsList = MAPPER.readValue(blockTransactions, new TypeReference<List<Transaction>>() {});
@@ -404,5 +430,61 @@ public class NodeClient {
             parameters.put("includeTransaction", includeTransaction.toString());
             String json = getJson(createURI(url), parameters);
             return MAPPER.readValue(json, LedgerEntry.class);
+    }
+
+
+    public String startForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "startForging", null);
+    }
+
+    private String sendForgingRequest(String url, String secretPhrase, String requestType,String adminPassword) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", requestType);
+        if (secretPhrase != null) {
+            parameters.put("secretPhrase", secretPhrase);
+        }
+        if (adminPassword != null) {
+            parameters.put("adminPassword", adminPassword);
+        }
+        String json = postJson(createURI(url), parameters, "");
+        return json;
+    }
+
+    public List<ForgingDetails> getForging(String url, String secretPhrase, String adminPassword) throws IOException {
+        String json = sendForgingRequest(url, secretPhrase, "getForging", adminPassword);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode gereratorsArray = root.get("generators");
+        return MAPPER.readValue(gereratorsArray.toString(), new TypeReference<List<ForgingDetails>>() {});
+    }
+
+    public String stopForging(String url, String secretPhrase) throws IOException {
+        return sendForgingRequest(url, secretPhrase, "stopForging", null);
+    }
+
+    public NextGenerators getNextGenerators(String url, Long limit) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getNextBlockGenerators");
+        parameters.put("limit", limit.toString());
+        String json = getJson(createURI(url), parameters);
+        return MAPPER.readValue(json, NextGenerators.class);
+    }
+
+    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, String updateUrl, Version version, Architecture architecture, Platform platform, String hash, String signature, int deadline) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "sendUpdateTransaction");
+        parameters.put("secretPhrase", secretPhrase);
+        parameters.put("feeATM", String.valueOf(feeATM));
+        parameters.put("deadline", String.valueOf(deadline));
+        parameters.put("version", version.toString());
+        parameters.put("architecture", architecture.toString());
+        parameters.put("platform", platform.toString());
+        parameters.put("signature", signature);
+        parameters.put("hash", hash);
+        parameters.put("url", updateUrl);
+        parameters.put("level", String.valueOf(level));
+        String json = postJson(createURI(url), parameters, "");
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionJson = root.get("transactionJSON");
+        return MAPPER.readValue(transactionJson.toString(), UpdateTransaction.class);
     }
 }

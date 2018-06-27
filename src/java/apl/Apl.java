@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final Version VERSION = Version.from("1.0.3");
+    public static final Version VERSION = Version.from("1.0.5");
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
@@ -400,6 +400,7 @@ public final class Apl {
                 AddOns.init();
                 runtimeMode.updateAppStatus("API initialization...");
                 API.init();
+                initUpdater();
                 DebugTrace.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
@@ -569,4 +570,12 @@ public final class Apl {
 
     private Apl() {} // never
 
+    private static void initUpdater() {
+        try {
+            Class.forName("apl.updater.UpdaterCore");
+        }
+        catch (ClassNotFoundException e) {
+            Logger.logErrorMessage("Cannot load Updater!", e);
+        }
+    }
 }

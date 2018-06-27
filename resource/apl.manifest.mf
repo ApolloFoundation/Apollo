@@ -1,18 +1,21 @@
 Manifest-Version: 1.0
 Class-Path: lib/jetty-util-9.3.22.v20171030.jar lib/lucene-core-5.3.2.
  jar lib/json-simple-1.1.1.jar lib/core-3.3.0.jar lib/tika-parsers-1.1
- 3.jar lib/lucene-analyzers-common-5.3.2.jar lib/h2-1.4.196.jar lib/sl
- f4j-api-1.7.22.jar lib/jetty-http-9.3.22.v20171030.jar lib/websocket-
- server-9.3.22.v20171030.jar lib/jetty-client-9.3.22.v20171030.jar lib
- /websocket-client-9.3.22.v20171030.jar lib/lucene-queryparser-5.3.2.j
- ar lib/lucene-queries-5.3.2.jar lib/jetty-proxy-9.3.22.v20171030.jar 
- lib/websocket-servlet-9.3.22.v20171030.jar lib/jetty-security-9.3.22.
- v20171030.jar lib/jetty-io-9.3.22.v20171030.jar lib/jetty-servlet-9.3
- .22.v20171030.jar lib/jetty-servlets-9.3.22.v20171030.jar lib/javax.s
- ervlet-api-3.1.0.jar lib/jetty-server-9.3.22.v20171030.jar lib/websoc
- ket-common-9.3.22.v20171030.jar lib/slf4j-jdk14-1.7.22.jar lib/javase
- -3.3.0.jar lib/bcprov-jdk15on-158.jar lib/jetty-continuation-9.3.22.v
- 20171030.jar lib/weupnp-0.1.4.jar lib/tika-core-1.13.jar lib/websocke
- t-api-9.3.22.v20171030.jar conf/
+ 3.jar lib/commons-lang3-3.7.jar lib/lucene-analyzers-common-5.3.2.jar
+  lib/h2-1.4.196.jar lib/json-unit-core-1.20.0.jar lib/slf4j-api-1.7.2
+ 2.jar lib/jetty-http-9.3.22.v20171030.jar lib/websocket-server-9.3.22
+ .v20171030.jar lib/jetty-client-9.3.22.v20171030.jar lib/junit-4.7.ja
+ r lib/websocket-client-9.3.22.v20171030.jar lib/jackson-databind-2.8.
+ 3.jar lib/json-unit-fluent-1.20.0.jar lib/lucene-queryparser-5.3.2.ja
+ r lib/lucene-queries-5.3.2.jar lib/jetty-proxy-9.3.22.v20171030.jar l
+ ib/websocket-servlet-9.3.22.v20171030.jar lib/jetty-security-9.3.22.v
+ 20171030.jar lib/jetty-io-9.3.22.v20171030.jar lib/jetty-servlet-9.3.
+ 22.v20171030.jar lib/jetty-servlets-9.3.22.v20171030.jar lib/javax.se
+ rvlet-api-3.1.0.jar lib/jetty-server-9.3.22.v20171030.jar lib/websock
+ et-common-9.3.22.v20171030.jar lib/slf4j-jdk14-1.7.22.jar lib/javase-
+ 3.3.0.jar lib/bcprov-jdk15on-158.jar lib/jackson-core-2.8.3.jar lib/j
+ etty-continuation-9.3.22.v20171030.jar lib/weupnp-0.1.4.jar lib/tika-
+ core-1.13.jar lib/websocket-api-9.3.22.v20171030.jar lib/jackson-anno
+ tations-2.8.3.jar conf/
 Main-Class: apl.Apl
 
