@@ -69,7 +69,7 @@ public class DesktopApplication extends Application {
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
     private static final boolean ENABLE_JAVASCRIPT_DEBUGGER = false;
     private static volatile boolean isLaunched;
-    private static volatile boolean isSplashScreenLauched = false;
+    private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
     private static volatile Stage screenStage;
 
@@ -88,7 +88,7 @@ public class DesktopApplication extends Application {
 
     public static void shutdownSplashScreen() {
         SPLASH_SCREEN.shutdown();
-        isSplashScreenLauched = false;
+        isSplashScreenLaunched = false;
     }
 
     public static void updateSplashScreenStatus(String newStatus) {
@@ -112,7 +112,7 @@ public class DesktopApplication extends Application {
     }
 
     public static void startDesktopApplication() {
-        if (isSplashScreenLauched) {
+        if (isSplashScreenLaunched) {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
@@ -120,10 +120,10 @@ public class DesktopApplication extends Application {
 
     //start javaFx splash screen
     public static void showSplashScreen() {
-        if (!isSplashScreenLauched) {
+        if (!isSplashScreenLaunched) {
             Logger.logInfoMessage("Starting splash screen");
             SPLASH_SCREEN.startAndShow();
-            isSplashScreenLauched = true;
+            isSplashScreenLaunched = true;
         } else {
             Logger.logInfoMessage("Splash screen has already started");
         }
@@ -161,7 +161,7 @@ public class DesktopApplication extends Application {
     public static class SplashScreen {
         private static SplashScreen instance = new SplashScreen();
         private AtomicBoolean shutdown = new AtomicBoolean(false);
-        private String lastStatus;
+        private volatile String lastStatus;
 
         private SplashScreen() {}
 
@@ -169,11 +169,11 @@ public class DesktopApplication extends Application {
             return instance;
         }
 
-        public synchronized String getLastStatus() {
+        public String getLastStatus() {
             return lastStatus;
         }
 
-        public synchronized void setLastStatus(String lastStatus) {
+        public void setLastStatus(String lastStatus) {
             this.lastStatus = lastStatus;
         }
 

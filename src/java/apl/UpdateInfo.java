@@ -1,22 +1,37 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package apl;
 
 import org.json.simple.JSONObject;
 
 public class UpdateInfo {
-    private boolean isUpdate = false;
-    private int updateHeight = 0;
-    private int receivedUpdateHeight = 0;
-    private Level updateLevel;
-    private Version updateVersion = Version.from("1.0.0");
-    private DownloadStatus status = DownloadStatus.NONE;
-    private DownloadState state = DownloadState.NOT_STARTED;
-    private UpdateState updateState = UpdateState.NONE;
+    private volatile boolean isUpdate = false;
+    private volatile int estimatedHeight = 0;
+    private volatile int receivedHeight = 0;
+    private volatile Level level;
+    private volatile Version version = Version.from("1.0.0");
+    private volatile DownloadStatus downloadStatus = DownloadStatus.NONE;
+    private volatile DownloadState downloadState = DownloadState.NOT_STARTED;
+    private volatile UpdateState updateState = UpdateState.NONE;
 
-    public synchronized UpdateState getUpdateState() {
+    public UpdateState getUpdateState() {
         return updateState;
     }
 
-    public synchronized void setUpdateState(UpdateState updateState) {
+    public void setUpdateState(UpdateState updateState) {
         this.updateState = updateState;
     }
 
@@ -47,77 +62,78 @@ public class UpdateInfo {
         NONE, IN_PROGRESS, REQUIRED_START, REQUIRED_MANUAL_INSTALL, RE_PLANNING, FINISHED
     }
 
-    public synchronized DownloadStatus getStatus() {
-        return status;
+    public DownloadStatus getDownloadStatus() {
+        return downloadStatus;
     }
 
-    public synchronized void setStatus(DownloadStatus status) {
-        this.status = status;
+    public void setDownloadStatus(DownloadStatus downloadStatus) {
+        this.downloadStatus = downloadStatus;
     }
 
-    public synchronized DownloadState getState() {
-        return state;
+    public DownloadState getDownloadState() {
+        return downloadState;
     }
 
-    public synchronized void setState(DownloadState state) {
-        this.state = state;
+    public void setDownloadState(DownloadState downloadState) {
+        this.downloadState = downloadState;
     }
 
     public synchronized boolean isUpdate() {
         return isUpdate;
     }
 
-    public synchronized void setUpdate(boolean update) {
+    public void setUpdate(boolean update) {
         isUpdate = update;
     }
 
-    public synchronized int getUpdateHeight() {
-        return updateHeight;
+    public int getEstimatedHeight() {
+        return estimatedHeight;
     }
 
-    public synchronized void setUpdateHeight(int updateHeight) {
-        this.updateHeight = updateHeight;
+    public void setEstimatedHeight(int estimatedHeight) {
+        this.estimatedHeight = estimatedHeight;
     }
 
-    public synchronized int getReceivedUpdateHeight() {
-        return receivedUpdateHeight;
+    public int getReceivedHeight() {
+        return receivedHeight;
     }
 
-    public synchronized void setReceivedUpdateHeight(int receivedUpdateHeight) {
-        this.receivedUpdateHeight = receivedUpdateHeight;
+    public void setReceivedHeight(int receivedHeight) {
+        this.receivedHeight = receivedHeight;
     }
 
-    public synchronized Level getUpdateLevel() {
-        return updateLevel;
+    public Level getLevel() {
+        return level;
     }
 
-    public synchronized void setUpdateLevel(Level updateLevel) {
-        this.updateLevel = updateLevel;
+    public void setLevel(Level level) {
+        this.level = level;
     }
 
-    public synchronized Version getUpdateVersion() {
-        return updateVersion;
+    public Version getVersion() {
+        return version;
     }
 
-    public synchronized void setUpdateVersion(Version updateVersion) {
-        this.updateVersion = updateVersion;
+    public void setVersion(Version version) {
+        this.version = version;
     }
 
     public synchronized JSONObject json() {
         JSONObject result = new JSONObject();
-            result.put("isUpdate", isUpdate());
+            result.put("isUpdate", isUpdate);
             if (isUpdate()) {
-                result.put("level", getUpdateLevel());
-                result.put("availableVersion", getUpdateVersion().toString());
-                result.put("estimatedUpdateHeight", getUpdateHeight());
-                result.put("receivedUpdateHeight", getReceivedUpdateHeight());
-                result.put("downloadStatus", getStatus());
-                result.put("downloadState", getState());
+                result.put("level", level);
+                result.put("availableVersion", version.toString());
+                result.put("estimatedUpdateHeight", estimatedHeight);
+                result.put("receivedHeight", receivedHeight);
+                result.put("downloadStatus", downloadStatus);
+                result.put("downloadState", downloadState);
+                result.put("updateState", updateState);
             }
         return result;
     }
 
     public synchronized boolean isStartAllowed() {
-        return updateLevel == Level.MINOR && updateHeight == -1 && updateState == UpdateState.REQUIRED_START;
+        return level == Level.MINOR && estimatedHeight == -1 && updateState == UpdateState.REQUIRED_START;
     }
 }

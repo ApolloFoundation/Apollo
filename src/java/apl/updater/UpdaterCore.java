@@ -58,7 +58,7 @@ public class UpdaterCore {
     }
 
     public void startUpdate() {
-        triggerUpdate(updateTransaction);
+        new Thread(()-> triggerUpdate(updateTransaction), "Apollo updater thread").start();
     }
 
     public void triggerUpdate(Transaction updateTransaction) {
@@ -140,7 +140,7 @@ public class UpdaterCore {
                         Architecture currentArchitecture = Architecture.current();
                         if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
                             this.updateTransaction = transaction;
-                            new Thread(this::startUpdate, "Apollo updater thread").start();
+                            startUpdate();
                             if (attachment.getLevel() != Level.MINOR) {
                                 mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
                             }

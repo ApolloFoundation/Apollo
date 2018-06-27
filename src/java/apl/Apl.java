@@ -81,14 +81,11 @@ public final class Apl {
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
     }
-    private static boolean shutdown = false;
 
-    public synchronized static boolean isShutdown() {
+    private static volatile boolean shutdown = false;
+
+    public static boolean isShutdown() {
         return shutdown;
-    }
-
-    private synchronized static void setShutdown(boolean shutdown) {
-        Apl.shutdown = shutdown;
     }
 
     private static void redirectSystemStreams(String streamName) {
@@ -352,7 +349,7 @@ public final class Apl {
         Logger.logShutdownMessage(Apl.APPLICATION + " server " + VERSION + " stopped.");
         Logger.shutdown();
         runtimeMode.shutdown();
-        setShutdown(true);
+        Apl.shutdown = true;
     }
 
 
