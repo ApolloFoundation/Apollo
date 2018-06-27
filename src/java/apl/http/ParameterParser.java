@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -238,16 +238,16 @@ public final class ParameterParser {
         return alias;
     }
 
-    public static long getAmountNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountNQT", 1L, Constants.MAX_BALANCE_NQT, true);
+    public static long getAmountATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "amountATM", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
-    public static long getFeeNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeNQT", 0L, Constants.MAX_BALANCE_NQT, true);
+    public static long getFeeATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "feeATM", 0L, Constants.MAX_BALANCE_ATM, true);
     }
 
-    public static long getPriceNQT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "priceNQT", 1L, Constants.MAX_BALANCE_NQT, true);
+    public static long getPriceATM(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "priceATM", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
@@ -302,12 +302,12 @@ public final class ParameterParser {
         return shuffling;
     }
 
-    public static long getQuantityQNT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "quantityQNT", 1L, Constants.MAX_ASSET_QUANTITY_QNT, true);
+    public static long getQuantityATU(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "quantityATU", 1L, Constants.MAX_ASSET_QUANTITY_ATU, true);
     }
 
-    public static long getAmountNQTPerQNT(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountNQTPerQNT", 1L, Constants.MAX_BALANCE_NQT, true);
+    public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {
+        return getLong(req, "amountATMPerATU", 1L, Constants.MAX_BALANCE_ATM, true);
     }
 
     public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
@@ -789,7 +789,78 @@ public final class ParameterParser {
         return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
     }
 
+    public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
+        byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
+        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        boolean encrypt;
+        //prefer public key
+        if (secretPhrase != null && publicKey == null) {
+            publicKey = Crypto.getPublicKey(secretPhrase);
+            encrypt = false;
+        } else {
+            encrypt = true;
+        }
+        if (publicKey == null) {
+            return null;
+        }
+        long accountId = Account.getId(publicKey);
+        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
+        return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
+    }
     private ParameterParser() {} // never
+
+    public static class PrivateTransactionsAPIData {
+        private boolean encrypt;
+        private byte[] publicKey;
+        private byte[] sharedKey;
+        private long accountId;
+
+        public PrivateTransactionsAPIData() {
+        }
+
+        public PrivateTransactionsAPIData(boolean encrypt, byte[] publicKey, byte[] sharedKey, long accountId) {
+            this.encrypt = encrypt;
+            this.publicKey = publicKey;
+            this.sharedKey = sharedKey;
+            this.accountId = accountId;
+        }
+
+        public boolean isEncrypt() {
+            return encrypt;
+        }
+
+        public void setEncrypt(boolean encrypt) {
+            this.encrypt = encrypt;
+        }
+
+        public byte[] getPublicKey() {
+            return publicKey;
+        }
+
+        public void setPublicKey(byte[] publicKey) {
+            this.publicKey = publicKey;
+        }
+
+        public byte[] getSharedKey() {
+            return sharedKey;
+        }
+
+        public void setSharedKey(byte[] sharedKey) {
+            this.sharedKey = sharedKey;
+        }
+
+        public long getAccountId() {
+            return accountId;
+        }
+
+        public void setAccountId(long accountId) {
+            this.accountId = accountId;
+        }
+
+        public boolean isValid() {
+            return publicKey != null;
+        }
+    }
 
     public static class FileData {
         private final Part part;

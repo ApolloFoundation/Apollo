@@ -1,11 +1,12 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -101,7 +102,6 @@ var NRS = (function (NRS, $, undefined) {
 
 
             $.get( url, function() {
-                console.log('made request');
             })
                 .then(function (res) {
                     $('#get_private_transaction_type').modal('hide');
@@ -151,14 +151,14 @@ var NRS = (function (NRS, $, undefined) {
         switch (votingModel) {
             case 'ASSET':
                 NRS.sendRequest("getAsset", { "asset": phasingParams.phasingHolding }, function(response) {
-                    phasingDetails.quorum = NRS.convertToQNTf(phasingParams.phasingQuorum, response.decimals);
-                    phasingDetails.minBalance = NRS.convertToQNTf(phasingParams.phasingMinBalance, response.decimals);
+                    phasingDetails.quorum = NRS.convertToATUf(phasingParams.phasingQuorum, response.decimals);
+                    phasingDetails.minBalance = NRS.convertToATUf(phasingParams.phasingMinBalance, response.decimals);
                 }, { isAsync: false });
                 break;
             case 'CURRENCY':
                 NRS.sendRequest("getCurrency", { "currency": phasingParams.phasingHolding }, function(response) {
-                    phasingDetails.quorum = NRS.convertToQNTf(phasingParams.phasingQuorum, response.decimals);
-                    phasingDetails.minBalance = NRS.convertToQNTf(phasingParams.phasingMinBalance, response.decimals);
+                    phasingDetails.quorum = NRS.convertToATUf(phasingParams.phasingQuorum, response.decimals);
+                    phasingDetails.minBalance = NRS.convertToATUf(phasingParams.phasingMinBalance, response.decimals);
                 }, { isAsync: false });
                 break;
             default:
@@ -302,8 +302,8 @@ var NRS = (function (NRS, $, undefined) {
             var i;
             if (transaction.type == 0) {
                 data = {
-                    "amount": transaction.amountNQT,
-                    "fee": transaction.feeNQT,
+                    "amount": transaction.amountATM,
+                    "fee": transaction.feeATM,
                     "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
                     "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
                 };
@@ -495,7 +495,7 @@ var NRS = (function (NRS, $, undefined) {
                         break;
                     case 6:
                         var type = $.t("alias_sale");
-                        if (transaction.attachment.priceNQT == "0") {
+                        if (transaction.attachment.priceATM == "0") {
                             if (transaction.sender == transaction.recipient) {
                                 type = $.t("alias_sale_cancellation");
                             } else {
@@ -509,7 +509,7 @@ var NRS = (function (NRS, $, undefined) {
                         };
 
                         if (type == $.t("alias_sale")) {
-                            data["price"] = transaction.attachment.priceNQT
+                            data["price"] = transaction.attachment.priceATM
                         }
 
                         if (type != $.t("alias_sale_cancellation")) {
@@ -528,19 +528,19 @@ var NRS = (function (NRS, $, undefined) {
                                 NRS.fetchingModalData = false;
 
                                 if (!response.errorCode) {
-                                    if (transaction.recipient != response.buyer || transaction.attachment.priceNQT != response.priceNQT) {
+                                    if (transaction.recipient != response.buyer || transaction.attachment.priceATM != response.priceATM) {
                                         message = $.t("alias_sale_info_outdated");
                                         messageStyle = "danger";
                                     } else if (transaction.recipient == NRS.account) {
                                         message = $.t("alias_sale_direct_offer", {
-                                            "amount": NRS.formatAmount(transaction.attachment.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
+                                            "amount": NRS.formatAmount(transaction.attachment.priceATM), "symbol": NRS.constants.COIN_SYMBOL
                                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                                     } else if (typeof transaction.recipient == "undefined") {
                                         message = $.t("alias_sale_indirect_offer", {
-                                            "amount": NRS.formatAmount(transaction.attachment.priceNQT), "symbol": NRS.constants.COIN_SYMBOL
+                                            "amount": NRS.formatAmount(transaction.attachment.priceATM), "symbol": NRS.constants.COIN_SYMBOL
                                         }) + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#buy_alias_modal'>" + $.t("buy_it_q") + "</a>";
                                     } else if (transaction.senderRS == NRS.accountRS) {
-                                        if (transaction.attachment.priceNQT != "0") {
+                                        if (transaction.attachment.priceATM != "0") {
                                             message = $.t("your_alias_sale_offer") + " <a href='#' data-alias='" + NRS.escapeRespStr(transaction.attachment.alias) + "' data-toggle='modal' data-target='#cancel_alias_sale_modal'>" + $.t("cancel_sale_q") + "</a>";
                                         }
                                     } else {
@@ -562,7 +562,7 @@ var NRS = (function (NRS, $, undefined) {
                         data = {
                             "type": $.t("alias_buy"),
                             "alias_name": transaction.attachment.alias,
-                            "price": transaction.amountNQT,
+                            "price": transaction.amountATM,
                             "recipient": transaction.recipientRS ? transaction.recipientRS : transaction.recipient,
                             "sender": transaction.senderRS ? transaction.senderRS : transaction.sender
                         };
@@ -633,8 +633,8 @@ var NRS = (function (NRS, $, undefined) {
                                 "description": transaction.attachment.description
                             };
                             if (asset) {
-                                data["initial_quantity"] = [asset.initialQuantityQNT, transaction.attachment.decimals];
-                                data["quantity"] = [asset.quantityQNT, transaction.attachment.decimals];
+                                data["initial_quantity"] = [asset.initialQuantityATU, transaction.attachment.decimals];
+                                data["quantity"] = [asset.quantityATU, transaction.attachment.decimals];
                             }
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                             $("#transaction_info_callout").html("<a href='#' data-goto-asset='" + NRS.escapeRespStr(transaction.transaction) + "'>Click here</a> to view this asset in the Asset Exchange.").show();
@@ -654,7 +654,7 @@ var NRS = (function (NRS, $, undefined) {
                                 "type": $.t("asset_transfer"),
                                 "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                 "asset_name": asset.name,
-                                "quantity": [transaction.attachment.quantityQNT, asset.decimals]
+                                "quantity": [transaction.attachment.quantityATU, asset.decimals]
                             };
 
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
@@ -695,9 +695,9 @@ var NRS = (function (NRS, $, undefined) {
                                         "order_formatted_html": NRS.getTransactionLink(transaction.transaction),
                                         "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                         "asset_name": asset.name,
-                                        "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
-                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.constants.COIN_SYMBOL
+                                        "quantity": [transaction.attachment.quantityATU, asset.decimals],
+                                        "price_formatted_html": NRS.formatOrderPricePerWholeATU(transaction.attachment.priceATM, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalATM(transaction.attachment.quantityATU, transaction.attachment.priceATM)) + " " + NRS.constants.COIN_SYMBOL
                                     };
                                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                                     infoTable.find("tbody").append(NRS.createInfoTable(data));
@@ -724,9 +724,9 @@ var NRS = (function (NRS, $, undefined) {
                                         "order_formatted_html": NRS.getTransactionLink(transaction.transaction),
                                         "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                         "asset_name": asset.name,
-                                        "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-                                        "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
-                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.constants.COIN_SYMBOL
+                                        "quantity": [transaction.attachment.quantityATU, asset.decimals],
+                                        "price_formatted_html": NRS.formatOrderPricePerWholeATU(transaction.attachment.priceATM, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+                                        "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalATM(transaction.attachment.quantityATU, transaction.attachment.priceATM)) + " " + NRS.constants.COIN_SYMBOL
                                     };
                                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
                                     infoTable.find("tbody").append(NRS.createInfoTable(data));
@@ -753,7 +753,7 @@ var NRS = (function (NRS, $, undefined) {
                                         "type": $.t("dividend_payment"),
                                         "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                         "asset_name": asset.name,
-                                        "amount_per_share": NRS.formatOrderPricePerWholeQNT(transaction.attachment.amountNQTPerQNT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+                                        "amount_per_share": NRS.formatOrderPricePerWholeATU(transaction.attachment.amountATMPerATU, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
                                         "height": transaction.attachment.height
                                     };
                                     data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
@@ -778,7 +778,7 @@ var NRS = (function (NRS, $, undefined) {
                                 "type": $.t("delete_asset_shares"),
                                 "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
                                 "asset_name": asset.name,
-                                "quantity": [transaction.attachment.quantityQNT, asset.decimals]
+                                "quantity": [transaction.attachment.quantityATU, asset.decimals]
                             };
 
                             data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
@@ -800,7 +800,7 @@ var NRS = (function (NRS, $, undefined) {
                             "type": $.t("marketplace_listing"),
                             "name": transaction.attachment.name,
                             "description": transaction.attachment.description,
-                            "price": transaction.attachment.priceNQT,
+                            "price": transaction.attachment.priceATM,
                             "quantity_formatted_html": NRS.format(transaction.attachment.quantity),
                             "seller": NRS.getAccountFormatted(transaction, "sender")
                         };
@@ -835,7 +835,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("marketplace_item_price_change"),
                                 "item_name": goods.name,
-                                "new_price_formatted_html": NRS.formatAmount(transaction.attachment.priceNQT) + " " + NRS.constants.COIN_SYMBOL,
+                                "new_price_formatted_html": NRS.formatAmount(transaction.attachment.priceATM) + " " + NRS.constants.COIN_SYMBOL,
                                 "seller": NRS.getAccountFormatted(goods, "seller")
                             };
 
@@ -873,7 +873,7 @@ var NRS = (function (NRS, $, undefined) {
                             data = {
                                 "type": $.t("marketplace_purchase"),
                                 "item_name": goods.name,
-                                "price": transaction.attachment.priceNQT,
+                                "price": transaction.attachment.priceATM,
                                 "quantity_formatted_html": NRS.format(transaction.attachment.quantity),
                                 "buyer": NRS.getAccountFormatted(transaction, "sender"),
                                 "seller": NRS.getAccountFormatted(goods, "seller")
@@ -905,7 +905,7 @@ var NRS = (function (NRS, $, undefined) {
                                                 callout = $.t("waiting_on_seller");
                                             }
                                         } else {
-                                            if (purchase.refundNQT) {
+                                            if (purchase.refundATM) {
                                                 callout = $.t("purchase_refunded");
                                             } else {
                                                 callout = $.t("purchase_delivered");
@@ -932,18 +932,18 @@ var NRS = (function (NRS, $, undefined) {
                                 data = {
                                     "type": $.t("marketplace_delivery"),
                                     "item_name": goods.name,
-                                    "price": purchase.priceNQT
+                                    "price": purchase.priceATM
                                 };
 
                                 data["quantity_formatted_html"] = NRS.format(purchase.quantity);
 
                                 if (purchase.quantity != "1") {
-                                    var orderTotal = NRS.formatAmount(new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT))));
+                                    var orderTotal = NRS.formatAmount(new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceATM))));
                                     data["total_formatted_html"] = orderTotal + " " + NRS.constants.COIN_SYMBOL;
                                 }
 
-                                if (transaction.attachment.discountNQT) {
-                                    data["discount"] = transaction.attachment.discountNQT;
+                                if (transaction.attachment.discountATM) {
+                                    data["discount"] = transaction.attachment.discountATM;
                                 }
 
                                 data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
@@ -964,12 +964,12 @@ var NRS = (function (NRS, $, undefined) {
                                 var callout;
 
                                 if (NRS.account == purchase.buyer) {
-                                    if (purchase.refundNQT) {
+                                    if (purchase.refundATM) {
                                         callout = $.t("purchase_refunded");
                                     } else if (!purchase.feedbackNote) {
                                         callout = $.t("goods_received") + " <a href='#' data-toggle='modal' data-target='#dgs_feedback_modal' data-purchase='" + NRS.escapeRespStr(transaction.attachment.purchase) + "'>" + $.t("give_feedback_q") + "</a>";
                                     }
-                                } else if (NRS.account == purchase.seller && purchase.refundNQT) {
+                                } else if (NRS.account == purchase.seller && purchase.refundATM) {
                                     callout = $.t("purchase_refunded");
                                 }
 
@@ -1006,11 +1006,11 @@ var NRS = (function (NRS, $, undefined) {
                                     }, function (purchase) {
                                         var callout;
                                         if (purchase.buyer == NRS.account) {
-                                            if (purchase.refundNQT) {
+                                            if (purchase.refundATM) {
                                                 callout = $.t("purchase_refunded");
                                             }
                                         } else {
-                                            if (!purchase.refundNQT) {
+                                            if (!purchase.refundATM) {
                                                 callout = "<a href='#' data-toggle='modal' data-target='#dgs_refund_modal' data-purchase='" + NRS.escapeRespStr(transaction.attachment.purchase) + "'>" + $.t("refund_this_purchase_q") + "</a>";
                                             } else {
                                                 callout = $.t("purchase_refunded");
@@ -1041,9 +1041,9 @@ var NRS = (function (NRS, $, undefined) {
                                     "type": $.t("marketplace_refund"),
                                     "item_name": goods.name
                                 };
-                                var orderTotal = new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceNQT)));
+                                var orderTotal = new BigInteger(String(purchase.quantity)).multiply(new BigInteger(String(purchase.priceATM)));
                                 data["order_total_formatted_html"] = NRS.formatAmount(orderTotal) + " " + NRS.constants.COIN_SYMBOL;
-                                data["refund"] = transaction.attachment.refundNQT;
+                                data["refund"] = transaction.attachment.refundATM;
                                 data["buyer"] = NRS.getAccountFormatted(purchase, "buyer");
                                 data["seller"] = NRS.getAccountFormatted(purchase, "seller");
                                 infoTable.find("tbody").append(NRS.createInfoTable(data));
@@ -1101,7 +1101,7 @@ var NRS = (function (NRS, $, undefined) {
 
                 switch (transaction.subtype) {
                     case 0:
-                        var minReservePerUnitNQT = new BigInteger(transaction.attachment.minReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, transaction.attachment.decimals)));
+                        var minReservePerUnitATM = new BigInteger(transaction.attachment.minReservePerUnitATM).multiply(new BigInteger("" + Math.pow(10, transaction.attachment.decimals)));
                         var currencyTypes = "";
                         for (var currencyType in NRS.constants.CURRENCY_TYPES) {
                             if (!NRS.constants.CURRENCY_TYPES.hasOwnProperty(currencyType)) {
@@ -1135,29 +1135,29 @@ var NRS = (function (NRS, $, undefined) {
                             "max_units": [transaction.attachment.maxSupply, transaction.attachment.decimals],
                             "decimals": transaction.attachment.decimals,
                             "issuance_height": transaction.attachment.issuanceHeight,
-                            "min_reserve_per_unit_formatted_html": NRS.formatAmount(minReservePerUnitNQT) + " " + NRS.constants.COIN_SYMBOL,
+                            "min_reserve_per_unit_formatted_html": NRS.formatAmount(minReservePerUnitATM) + " " + NRS.constants.COIN_SYMBOL,
                             "minDifficulty": transaction.attachment.minDifficulty,
                             "maxDifficulty": transaction.attachment.maxDifficulty,
                             "algorithm": hashAlgorithm
                         };
                         if (currency) {
-                            data["current_units"] = NRS.convertToQNTf(currency.currentSupply, currency.decimals);
-                            var currentReservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
-                            data["current_reserve_per_unit_formatted_html"] = NRS.formatAmount(currentReservePerUnitNQT) + " " + NRS.constants.COIN_SYMBOL;
+                            data["current_units"] = NRS.convertToATUf(currency.currentSupply, currency.decimals);
+                            var currentReservePerUnitATM = new BigInteger(currency.currentReservePerUnitATM).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
+                            data["current_reserve_per_unit_formatted_html"] = NRS.formatAmount(currentReservePerUnitATM) + " " + NRS.constants.COIN_SYMBOL;
                         } else {
                             data["status"] = "Currency Deleted or not Issued";
                         }
                         break;
                     case 1:
                         if (currency) {
-                            var amountPerUnitNQT = new BigInteger(transaction.attachment.amountPerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
+                            var amountPerUnitATM = new BigInteger(transaction.attachment.amountPerUnitATM).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
                             var resSupply = currency.reserveSupply;
                             data = {
                                 "type": $.t("reserve_increase"),
                                 "code": currency.code,
                                 "reserve_units": [resSupply, currency.decimals],
-                                "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitNQT) + " " + NRS.constants.COIN_SYMBOL,
-                                "reserved_amount_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(amountPerUnitNQT, NRS.convertToQNTf(resSupply, currency.decimals))) + " " + NRS.constants.COIN_SYMBOL
+                                "amount_per_unit_formatted_html": NRS.formatAmount(amountPerUnitATM) + " " + NRS.constants.COIN_SYMBOL,
+                                "reserved_amount_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalATM(amountPerUnitATM, NRS.convertToATUf(resSupply, currency.decimals))) + " " + NRS.constants.COIN_SYMBOL
                             };
                         } else {
                             data = NRS.getUnknownCurrencyData(transaction);
@@ -1165,12 +1165,12 @@ var NRS = (function (NRS, $, undefined) {
                         break;
                     case 2:
                         if (currency) {
-                            var reservePerUnitNQT = new BigInteger(currency.currentReservePerUnitNQT).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
+                            var reservePerUnitATM = new BigInteger(currency.currentReservePerUnitATM).multiply(new BigInteger("" + Math.pow(10, currency.decimals)));
                             data = {
                                 "type": $.t("reserve_claim"),
                                 "code": currency.code,
                                 "units": [transaction.attachment.units, currency.decimals],
-                                "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToQNTf(NRS.calculateOrderTotalNQT(reservePerUnitNQT, transaction.attachment.units), currency.decimals)) + " " + NRS.constants.COIN_SYMBOL
+                                "claimed_amount_formatted_html": NRS.formatAmount(NRS.convertToATUf(NRS.calculateOrderTotalATM(reservePerUnitATM, transaction.attachment.units), currency.decimals)) + " " + NRS.constants.COIN_SYMBOL
                             };
                         } else {
                             data = NRS.getUnknownCurrencyData(transaction);
@@ -1245,7 +1245,7 @@ var NRS = (function (NRS, $, undefined) {
                         infoCallout.append("<a href='#' data-goto-currency='" + NRS.escapeRespStr(currency.code) + "'>" + $.t('exchange_booth') + "</a><br/>");
                     }
                     if (currency != null && NRS.isReservable(currency.type)) {
-                        infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_founders_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-name='" + NRS.escapeRespStr(currency.name) + "' data-code='" + NRS.escapeRespStr(currency.code) + "' data-ressupply='" + NRS.escapeRespStr(currency.reserveSupply) + "' data-initialsupply='" + NRS.escapeRespStr(currency.initialSupply) + "' data-decimals='" + NRS.escapeRespStr(currency.decimals) + "' data-minreserve='" + NRS.escapeRespStr(currency.minReservePerUnitNQT) + "' data-issueheight='" + NRS.escapeRespStr(currency.issuanceHeight) + "'>View Founders</a><br/>");
+                        infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_founders_modal' data-currency='" + NRS.escapeRespStr(currency.currency) + "' data-name='" + NRS.escapeRespStr(currency.name) + "' data-code='" + NRS.escapeRespStr(currency.code) + "' data-ressupply='" + NRS.escapeRespStr(currency.reserveSupply) + "' data-initialsupply='" + NRS.escapeRespStr(currency.initialSupply) + "' data-decimals='" + NRS.escapeRespStr(currency.decimals) + "' data-minreserve='" + NRS.escapeRespStr(currency.minReservePerUnitATM) + "' data-issueheight='" + NRS.escapeRespStr(currency.issuanceHeight) + "'>View Founders</a><br/>");
                     }
                     if (currency != null) {
                         infoCallout.append("<a href='#' data-toggle='modal' data-target='#currency_distribution_modal' data-code='" + NRS.escapeRespStr(currency.code) + "'  data-i18n='Currency Distribution'>Currency Distribution</a>");
@@ -1294,7 +1294,7 @@ var NRS = (function (NRS, $, undefined) {
                     }
                     NRS.sendRequest(requestType, {"currency": transaction.attachment.holding, "asset": transaction.attachment.holding}, function (response) {
                         data.holding_formatted_html = NRS.getTransactionLink(transaction.attachment.holding);
-                        data.amount_formatted_html = NRS.convertToQNTf(transaction.attachment.amount, response.decimals);
+                        data.amount_formatted_html = NRS.convertToATUf(transaction.attachment.amount, response.decimals);
                     }, { isAsync: false });
                 } else {
                     data.amount = transaction.attachment.amount;
@@ -1465,9 +1465,9 @@ var NRS = (function (NRS, $, undefined) {
             "type": (transaction.subtype == 2 ? $.t("ask_order_placement") : $.t("bid_order_placement")),
             "asset_formatted_html": NRS.getTransactionLink(transaction.attachment.asset),
             "asset_name": asset.name,
-            "quantity": [transaction.attachment.quantityQNT, asset.decimals],
-            "price_formatted_html": NRS.formatOrderPricePerWholeQNT(transaction.attachment.priceNQT, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
-            "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalNQT(transaction.attachment.quantityQNT, transaction.attachment.priceNQT)) + " " + NRS.constants.COIN_SYMBOL
+            "quantity": [transaction.attachment.quantityATU, asset.decimals],
+            "price_formatted_html": NRS.formatOrderPricePerWholeATU(transaction.attachment.priceATM, asset.decimals) + " " + NRS.constants.COIN_SYMBOL,
+            "total_formatted_html": NRS.formatAmount(NRS.calculateOrderTotalATM(transaction.attachment.quantityATU, transaction.attachment.priceATM)) + " " + NRS.constants.COIN_SYMBOL
         };
         data["sender"] = transaction.senderRS ? transaction.senderRS : transaction.sender;
         var rows = "";
@@ -1490,13 +1490,13 @@ var NRS = (function (NRS, $, undefined) {
                 "<tr></thead><tbody>";
                 for (var i = 0; i < response.trades.length; i++) {
                     var trade = response.trades[i];
-                    tradeQuantity = tradeQuantity.add(new BigInteger(trade.quantityQNT));
-                    tradeTotal = tradeTotal.add(new BigInteger(trade.quantityQNT).multiply(new BigInteger(trade.priceNQT)));
+                    tradeQuantity = tradeQuantity.add(new BigInteger(trade.quantityATU));
+                    tradeTotal = tradeTotal.add(new BigInteger(trade.quantityATU).multiply(new BigInteger(trade.priceATM)));
                     rows += "<tr>" +
                     "<td>" + NRS.getTransactionLink(trade[transactionField], NRS.formatTimestamp(trade.timestamp)) + "</td>" +
-                    "<td>" + NRS.formatQuantity(trade.quantityQNT, asset.decimals) + "</td>" +
-                    "<td>" + NRS.calculateOrderPricePerWholeQNT(trade.priceNQT, asset.decimals) + "</td>" +
-                    "<td>" + NRS.formatAmount(NRS.calculateOrderTotalNQT(trade.quantityQNT, trade.priceNQT)) +
+                    "<td>" + NRS.formatQuantity(trade.quantityATU, asset.decimals) + "</td>" +
+                    "<td>" + NRS.calculateOrderPricePerWholeATU(trade.priceATM, asset.decimals) + "</td>" +
+                    "<td>" + NRS.formatAmount(NRS.calculateOrderTotalATM(trade.quantityATU, trade.priceATM)) +
                     "</td>" +
                     "</tr>";
                 }
@@ -1524,7 +1524,7 @@ var NRS = (function (NRS, $, undefined) {
             "type": type == "sell" ? $.t("sell_currency") : $.t("buy_currency"),
             "code": currency.code,
             "units": [transaction.attachment.units, currency.decimals],
-            "rate": NRS.calculateOrderPricePerWholeQNT(transaction.attachment.rateNQT, currency.decimals) + rateUnitsStr
+            "rate": NRS.calculateOrderPricePerWholeATU(transaction.attachment.rateATM, currency.decimals) + rateUnitsStr
         };
         var rows = "";
         NRS.sendRequest("getExchangesByExchangeRequest", {
@@ -1542,12 +1542,12 @@ var NRS = (function (NRS, $, undefined) {
                 for (var i = 0; i < response.exchanges.length; i++) {
                     var exchange = response.exchanges[i];
                     exchangedUnits = exchangedUnits.add(new BigInteger(exchange.units));
-                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.units).multiply(new BigInteger(exchange.rateNQT)));
+                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.units).multiply(new BigInteger(exchange.rateATM)));
                     rows += "<tr>" +
                     "<td>" + NRS.getTransactionLink(exchange.offer, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
                     "<td>" + NRS.formatQuantity(exchange.units, currency.decimals) + "</td>" +
-                    "<td>" + NRS.calculateOrderPricePerWholeQNT(exchange.rateNQT, currency.decimals) + "</td>" +
-                    "<td>" + NRS.formatAmount(NRS.calculateOrderTotalNQT(exchange.units, exchange.rateNQT)) +
+                    "<td>" + NRS.calculateOrderPricePerWholeATU(exchange.rateATM, currency.decimals) + "</td>" +
+                    "<td>" + NRS.formatAmount(NRS.calculateOrderTotalATM(exchange.units, exchange.rateATM)) +
                     "</td>" +
                     "</tr>";
                 }
@@ -1580,10 +1580,10 @@ var NRS = (function (NRS, $, undefined) {
         if (buyOffer && sellOffer) {
             data["buy_supply_formatted_html"] = NRS.formatQuantity(buyOffer.supply, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.initialBuySupply, currency.decimals) + ")";
             data["buy_limit_formatted_html"] = NRS.formatQuantity(buyOffer.limit, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.totalBuyLimit, currency.decimals) + ")";
-            data["buy_rate_formatted_html"] = NRS.calculateOrderPricePerWholeQNT(transaction.attachment.buyRateNQT, currency.decimals) + rateUnitsStr;
+            data["buy_rate_formatted_html"] = NRS.calculateOrderPricePerWholeATU(transaction.attachment.buyRateATM, currency.decimals) + rateUnitsStr;
             data["sell_supply_formatted_html"] = NRS.formatQuantity(sellOffer.supply, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.initialSellSupply, currency.decimals) + ")";
             data["sell_limit_formatted_html"] = NRS.formatQuantity(sellOffer.limit, currency.decimals) + " (initial: " + NRS.formatQuantity(transaction.attachment.totalSellLimit, currency.decimals) + ")";
-            data["sell_rate_formatted_html"] = NRS.calculateOrderPricePerWholeQNT(transaction.attachment.sellRateNQT, currency.decimals) + rateUnitsStr;
+            data["sell_rate_formatted_html"] = NRS.calculateOrderPricePerWholeATU(transaction.attachment.sellRateATM, currency.decimals) + rateUnitsStr;
         }
         var rows = "";
         NRS.sendRequest("getExchangesByOffer", {
@@ -1602,7 +1602,7 @@ var NRS = (function (NRS, $, undefined) {
                 for (var i = 0; i < response.exchanges.length; i++) {
                     var exchange = response.exchanges[i];
                     exchangedUnits = exchangedUnits.add(new BigInteger(exchange.units));
-                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.units).multiply(new BigInteger(exchange.rateNQT)));
+                    exchangedTotal = exchangedTotal.add(new BigInteger(exchange.units).multiply(new BigInteger(exchange.rateATM)));
                     var exchangeType = exchange.seller == transaction.sender ? "Buy" : "Sell";
                     if (exchange.seller == exchange.buyer) {
                         exchangeType = "Same";
@@ -1611,8 +1611,8 @@ var NRS = (function (NRS, $, undefined) {
                     "<td>" + NRS.getTransactionLink(exchange.transaction, NRS.formatTimestamp(exchange.timestamp)) + "</td>" +
                     "<td>" + exchangeType + "</td>" +
                     "<td>" + NRS.formatQuantity(exchange.units, currency.decimals) + "</td>" +
-                    "<td>" + NRS.calculateOrderPricePerWholeQNT(exchange.rateNQT, currency.decimals) + "</td>" +
-                    "<td>" + NRS.formatAmount(NRS.calculateOrderTotalNQT(exchange.units, exchange.rateNQT)) +
+                    "<td>" + NRS.calculateOrderPricePerWholeATU(exchange.rateATM, currency.decimals) + "</td>" +
+                    "<td>" + NRS.formatAmount(NRS.calculateOrderTotalATM(exchange.units, exchange.rateATM)) +
                     "</td>" +
                     "</tr>";
                 }

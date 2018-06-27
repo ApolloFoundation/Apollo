@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -164,20 +164,20 @@ public final class PhasingParams {
             }
         } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
             Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
-            if (quorum > asset.getInitialQuantityQNT()) {
+            if (quorum > asset.getInitialQuantityATU()) {
                 throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityQNT());
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
             }
-            if (voteWeighting.getMinBalance() > asset.getInitialQuantityQNT()) {
+            if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
                 throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityQNT());
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
             }
         } else if (voteWeighting.getMinBalance() > 0) {
             if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
                 Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
-                if (voteWeighting.getMinBalance() > asset.getInitialQuantityQNT()) {
+                if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
                     throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                            + " exceeds total initial asset quantity " + asset.getInitialQuantityQNT());
+                            + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
                 }
             } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
                 Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());

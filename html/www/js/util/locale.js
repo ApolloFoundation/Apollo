@@ -1,11 +1,12 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -27,9 +28,16 @@ var NRS = (function (NRS) {
 
     NRS.getLocale = function () {
         var lang;
-        if (NRS.settings && NRS.settings['regional_format'] != "default") {
-            lang = NRS.settings['regional_format'];
-        } else {
+	    var currentLocale;
+	
+	    if (NRS.settings && NRS.settings['regional_format'] != "default") {
+	        if (NRS.settings['regional_format']) {
+		        lang = NRS.settings['regional_format'];
+		
+	        } else  {
+		        lang = 'en-US';
+	        }
+	    } else {
             lang = window.javaFxLanguage || window.navigator.userLanguage || window.navigator.language;
             if (!LOCALE_DATA[lang]) {
                 if (lang && lang.length == 2) {
@@ -57,10 +65,16 @@ var NRS = (function (NRS) {
                 }
             }
         }
-        if (!currentLocale.lang || currentLocale.lang != lang) {
+	
+	    if (!currentLocale || !currentLocale.lang || currentLocale.lang != lang) {
             currentLocale = {};
             currentLocale.lang = lang;
-            currentLocale.dateFormat = LOCALE_DATA[lang].dateFormat;
+            try {
+	            currentLocale.dateFormat = LOCALE_DATA[lang].dateFormat;
+	
+            } catch (err) {
+                console.log(err);
+            }
             currentLocale.decimal = LOCALE_DATA[lang].decimal;
             currentLocale.section = LOCALE_DATA[lang].section;
             currentLocale.displayName = LOCALE_DATA[lang].displayName;

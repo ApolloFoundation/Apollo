@@ -1,11 +1,12 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Apl Core Developers.                             *
- * Copyright © 2016-2017 Apollo Foundation IP B.V.                                     *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -58,7 +59,6 @@ var NRS = (function(NRS, $, undefined) {
     		if (!manifest[mvv] || (manifest[mvv] && manifest[mvv].length == 0)) {
     			plugin['validity'] = NRS.constants.PV_INVALID_MANIFEST_FILE;
     			plugin['validity_msg'] = invalidManifestFileMsg;
-    			console.log("Attribute '" + mvv + "' missing for '" + pluginId + "' plugin manifest file.");
     			return false;
     		}
     	}
@@ -75,7 +75,6 @@ var NRS = (function(NRS, $, undefined) {
     		if (manifest[lengthRestrictions[i][0]].length > lengthRestrictions[i][1]) {
     			plugin['validity'] = NRS.constants.PV_INVALID_MANIFEST_FILE;
     			plugin['validity_msg'] = invalidManifestFileMsg;
-    			console.log("'" + lengthRestrictions[i][0] + "' attribute too long in '" + pluginId + "' plugin manifest file.");
     			return false;
     		}
     	}
@@ -83,21 +82,18 @@ var NRS = (function(NRS, $, undefined) {
     	if (!(manifest["infoUrl"].substr(0, 7) == 'http://' || manifest["infoUrl"].substr(0, 8) == 'https://')) {
     		plugin['validity'] = NRS.constants.PV_INVALID_MANIFEST_FILE;
     		plugin['validity_msg'] = invalidManifestFileMsg;
-    		console.log("'infoUrl' attribute in '" + pluginId + "' plugin manifest file is not a valid URL.");
     		return false;
     	}
 
     	if (manifest["nrsVersion"].split('.').length != 3 || !(/^[\d\.]+$/.test(manifest["nrsVersion"]))) {
     		plugin['validity'] = NRS.constants.PV_INVALID_MANIFEST_FILE;
     		plugin['validity_msg'] = invalidManifestFileMsg;
-    		console.log("'nrsVersion' attribute in '" + pluginId + "' plugin manifest file is not in correct format ('x.y.z', no additions).");
     		return false;
     	}
 
     	if (manifest["deactivated"] != undefined && typeof(manifest["deactivated"]) != "boolean") {
     		plugin['validity'] = NRS.constants.PV_INVALID_MANIFEST_FILE;
     		plugin['validity_msg'] = invalidManifestFileMsg;
-    		console.log("'deactivated' attribute in '" + pluginId + "' plugin manifest file must be boolean type.");
     		return false;
     	}
 

@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -167,8 +167,8 @@ final class TransactionDb {
             byte subtype = rs.getByte("subtype");
             int timestamp = rs.getInt("timestamp");
             short deadline = rs.getShort("deadline");
-            long amountNQT = rs.getLong("amount");
-            long feeNQT = rs.getLong("fee");
+            long amountATM = rs.getLong("amount");
+            long feeATM = rs.getLong("fee");
             byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
             int ecBlockHeight = rs.getInt("ec_block_height");
             long ecBlockId = rs.getLong("ec_block_id");
@@ -190,7 +190,7 @@ final class TransactionDb {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountNQT, feeNQT, deadline, transactionType.parseAttachment(buffer))
+                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer))
                     .timestamp(timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
@@ -316,8 +316,8 @@ final class TransactionDb {
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());
-                    pstmt.setLong(++i, transaction.getAmountNQT());
-                    pstmt.setLong(++i, transaction.getFeeNQT());
+                    pstmt.setLong(++i, transaction.getAmountATM());
+                    pstmt.setLong(++i, transaction.getFeeATM());
                     DbUtils.setBytes(pstmt, ++i, transaction.referencedTransactionFullHash());
                     pstmt.setInt(++i, transaction.getHeight());
                     pstmt.setLong(++i, transaction.getBlockId());

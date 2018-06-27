@@ -1,12 +1,10 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -18,7 +16,6 @@
 package apl.http;
 
 import apl.*;
-import apl.crypto.Crypto;
 import apl.db.DbIterator;
 import apl.util.Convert;
 import org.json.simple.JSONArray;
@@ -27,7 +24,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static apl.http.JSONResponses.missing;
+import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public final class GetPrivateBlockchainTransactions extends APIServlet.APIRequestHandler {
 
@@ -39,21 +36,12 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        boolean encrypt;
-        //prefer public key
-        if (secretPhrase != null && publicKey == null) {
-            publicKey = Crypto.getPublicKey(secretPhrase);
-            encrypt = false;
-        } else {
-            encrypt = true;
+
+        ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
+        if (data == null) {
+            return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }
-        if (publicKey == null) {
-            return missing("Secret phrase", "Public key");
-        }
-        long accountId = Account.getId(publicKey);
-        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
+
         int height = ParameterParser.getHeight(req);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
@@ -76,10 +64,12 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
             Block block = Apl.getBlockchain().getBlockAtHeight(height);
             block.getTransactions().forEach(transaction -> {
                 if (transaction.getType() == TransactionType.Payment.PRIVATE) {
-                    if (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
+
+                    if (transaction.getSenderId() != data.getAccountId() && transaction.getRecipientId() != data.getAccountId()) {
                         transactions.add(JSONData.transaction(true, transaction));
-                    } else if (encrypt){
-                        transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
+                    } else if (data.isEncrypt()){
+                        transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
+
                     } else {
                         transactions.add(JSONData.transaction(false, transaction));
                     }
@@ -89,12 +79,14 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
             });
         } else {
             try (DbIterator<? extends Transaction> iterator = Apl.getBlockchain().getTransactions(
-                    accountId, 0, type, subtype, 0, false, false,
+                    data.getAccountId(), 0, type, subtype, 0, false, false,
                     false, firstIndex, lastIndex, false, false, true)) {
                 while (iterator.hasNext()) {
                     Transaction transaction = iterator.next();
-                    if (TransactionType.Payment.PRIVATE == transaction.getType() && encrypt) {
-                        transactions.add(JSONData.encryptedTransaction(transaction, sharedKey));
+
+                    if (TransactionType.Payment.PRIVATE == transaction.getType() && data.isEncrypt()) {
+                        transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
+
                     } else {
                         transactions.add(JSONData.transaction(false, transaction));
                     }

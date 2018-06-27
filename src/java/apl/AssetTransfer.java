@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -141,7 +141,7 @@ public final class AssetTransfer {
     private final int height;
     private final long senderId;
     private final long recipientId;
-    private final long quantityQNT;
+    private final long quantityATM;
     private final int timestamp;
 
     private AssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
@@ -151,7 +151,7 @@ public final class AssetTransfer {
         this.assetId = attachment.getAssetId();
         this.senderId = transaction.getSenderId();
         this.recipientId = transaction.getRecipientId();
-        this.quantityQNT = attachment.getQuantityQNT();
+        this.quantityATM = attachment.getQuantityATU();
         this.timestamp = Apl.getBlockchain().getLastBlockTimestamp();
     }
 
@@ -161,7 +161,7 @@ public final class AssetTransfer {
         this.assetId = rs.getLong("asset_id");
         this.senderId = rs.getLong("sender_id");
         this.recipientId = rs.getLong("recipient_id");
-        this.quantityQNT = rs.getLong("quantity");
+        this.quantityATM = rs.getLong("quantity");
         this.timestamp = rs.getInt("timestamp");
         this.height = rs.getInt("height");
     }
@@ -175,7 +175,7 @@ public final class AssetTransfer {
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.senderId);
             pstmt.setLong(++i, this.recipientId);
-            pstmt.setLong(++i, this.quantityQNT);
+            pstmt.setLong(++i, this.quantityATM);
             pstmt.setInt(++i, this.timestamp);
             pstmt.setInt(++i, this.height);
             pstmt.executeUpdate();
@@ -196,7 +196,7 @@ public final class AssetTransfer {
         return recipientId;
     }
 
-    public long getQuantityQNT() { return quantityQNT; }
+    public long getQuantityATU() { return quantityATM; }
 
     public int getTimestamp() {
         return timestamp;

@@ -1,12 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
  * no part of the Apl software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
@@ -72,7 +72,7 @@ public final class Currency {
         private final DbKey dbKey;
         private final long currencyId;
         private long currentSupply;
-        private long currentReservePerUnitNQT;
+        private long currentReservePerUnitATM;
 
         private CurrencySupply(Currency currency) {
             this.currencyId = currency.currencyId;
@@ -83,7 +83,9 @@ public final class Currency {
             this.currencyId = rs.getLong("id");
             this.dbKey = dbKey;
             this.currentSupply = rs.getLong("current_supply");
-            this.currentReservePerUnitNQT = rs.getLong("current_reserve_per_unit_nqt");
+            this.currentReservePerUnitATM =
+                    //TODO: remove nqt from database column name
+                    rs.getLong("current_reserve_per_unit_nqt");
         }
 
         private void save(Connection con) throws SQLException {
@@ -93,7 +95,7 @@ public final class Currency {
                 int i = 0;
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
-                pstmt.setLong(++i, this.currentReservePerUnitNQT);
+                pstmt.setLong(++i, this.currentReservePerUnitATM);
                 pstmt.setInt(++i, Apl.getBlockchain().getHeight());
                 pstmt.executeUpdate();
             }
@@ -204,7 +206,7 @@ public final class Currency {
     private final long reserveSupply;
     private final int creationHeight;
     private final int issuanceHeight;
-    private final long minReservePerUnitNQT;
+    private final long minReservePerUnitATM;
     private final int minDifficulty;
     private final int maxDifficulty;
     private final byte ruleset;
@@ -226,7 +228,7 @@ public final class Currency {
         this.maxSupply = attachment.getMaxSupply();
         this.creationHeight = Apl.getBlockchain().getHeight();
         this.issuanceHeight = attachment.getIssuanceHeight();
-        this.minReservePerUnitNQT = attachment.getMinReservePerUnitNQT();
+        this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
         this.minDifficulty = attachment.getMinDifficulty();
         this.maxDifficulty = attachment.getMaxDifficulty();
         this.ruleset = attachment.getRuleset();
@@ -247,7 +249,7 @@ public final class Currency {
         this.maxSupply = rs.getLong("max_supply");
         this.creationHeight = rs.getInt("creation_height");
         this.issuanceHeight = rs.getInt("issuance_height");
-        this.minReservePerUnitNQT = rs.getLong("min_reserve_per_unit_nqt");
+        this.minReservePerUnitATM = rs.getLong("min_reserve_per_unit_nqt");
         this.minDifficulty = rs.getByte("min_difficulty") & 0xFF;
         this.maxDifficulty = rs.getByte("max_difficulty") & 0xFF;
         this.ruleset = rs.getByte("ruleset");
@@ -272,7 +274,7 @@ public final class Currency {
             pstmt.setLong(++i, this.maxSupply);
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setInt(++i, this.issuanceHeight);
-            pstmt.setLong(++i, this.minReservePerUnitNQT);
+            pstmt.setLong(++i, this.minReservePerUnitATM);
             pstmt.setByte(++i, (byte)this.minDifficulty);
             pstmt.setByte(++i, (byte)this.maxDifficulty);
             pstmt.setByte(++i, this.ruleset);
@@ -337,8 +339,8 @@ public final class Currency {
         return issuanceHeight;
     }
 
-    public long getMinReservePerUnitNQT() {
-        return minReservePerUnitNQT;
+    public long getMinReservePerUnitATM() {
+        return minReservePerUnitATM;
     }
 
     public int getMinDifficulty() {
@@ -361,11 +363,11 @@ public final class Currency {
         return decimals;
     }
 
-    public long getCurrentReservePerUnitNQT() {
+    public long getCurrentReservePerUnitATM() {
         if (!is(CurrencyType.RESERVABLE) || getSupplyData() == null) {
             return 0;
         }
-        return currencySupply.currentReservePerUnitNQT;
+        return currencySupply.currentReservePerUnitATM;
     }
 
     public boolean isActive() {
@@ -385,21 +387,21 @@ public final class Currency {
         return currencySupply;
     }
 
-    static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitNQT) {
+    static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM) {
         Currency currency = Currency.getCurrency(currencyId);
-        account.addToBalanceNQT(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitNQT));
+        account.addToBalanceATM(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
         CurrencySupply currencySupply = currency.getSupplyData();
-        currencySupply.currentReservePerUnitNQT += amountPerUnitNQT;
+        currencySupply.currentReservePerUnitATM += amountPerUnitATM;
         currencySupplyTable.insert(currencySupply);
-        CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitNQT);
+        CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
     }
 
     static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {
         account.addToCurrencyUnits(event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
         currency.increaseSupply(- units);
-        account.addToBalanceAndUnconfirmedBalanceNQT(event, eventId,
-                Math.multiplyExact(units, currency.getCurrentReservePerUnitNQT()));
+        account.addToBalanceAndUnconfirmedBalanceATM(event, eventId,
+                Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
     }
 
     static void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
@@ -469,8 +471,8 @@ public final class Currency {
                 try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounder founder : founders) {
                         Account.getAccount(founder.getAccountId())
-                                .addToBalanceAndUnconfirmedBalanceNQT(event, eventId, Math.multiplyExact(reserveSupply,
-                                        founder.getAmountPerUnitNQT()));
+                                .addToBalanceAndUnconfirmedBalanceATM(event, eventId, Math.multiplyExact(reserveSupply,
+                                        founder.getAmountPerUnitATM()));
                     }
                 }
             }
@@ -500,7 +502,7 @@ public final class Currency {
         public void notify(Block block) {
             try (DbIterator<Currency> issuedCurrencies = currencyTable.getManyBy(new DbClause.IntClause("issuance_height", block.getHeight()), 0, -1)) {
                 for (Currency currency : issuedCurrencies) {
-                    if (currency.getCurrentReservePerUnitNQT() < currency.getMinReservePerUnitNQT()) {
+                    if (currency.getCurrentReservePerUnitATM() < currency.getMinReservePerUnitATM()) {
                         listeners.notify(currency, Event.BEFORE_UNDO_CROWDFUNDING);
                         undoCrowdFunding(currency);
                     } else {
@@ -515,9 +517,9 @@ public final class Currency {
             try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounder founder : founders) {
                     Account.getAccount(founder.getAccountId())
-                            .addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
+                            .addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
                                     Math.multiplyExact(currency.getReserveSupply(),
-                                            founder.getAmountPerUnitNQT()));
+                                            founder.getAmountPerUnitATM()));
                 }
             }
             Account.getAccount(currency.getAccountId())
@@ -533,13 +535,13 @@ public final class Currency {
             List<CurrencyFounder> currencyFounders = new ArrayList<>();
             try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounder founder : founders) {
-                    totalAmountPerUnit += founder.getAmountPerUnitNQT();
+                    totalAmountPerUnit += founder.getAmountPerUnitATM();
                     currencyFounders.add(founder);
                 }
             }
             CurrencySupply currencySupply = currency.getSupplyData();
             for (CurrencyFounder founder : currencyFounders) {
-                long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitNQT()) / totalAmountPerUnit;
+                long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitATM()) / totalAmountPerUnit;
                 currencySupply.currentSupply += units;
                 Account.getAccount(founder.getAccountId())
                         .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
@@ -549,7 +551,7 @@ public final class Currency {
             issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                     currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
             if (!currency.is(CurrencyType.CLAIMABLE)) {
-                issuerAccount.addToBalanceAndUnconfirmedBalanceNQT(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                issuerAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                         Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
             }
             currencySupply.currentSupply = currency.getReserveSupply();
