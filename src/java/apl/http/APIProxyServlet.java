@@ -111,7 +111,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
 
     @Override
     protected HttpClient newHttpClient() {
-        return HttpClientFactory.newHttpClient();
+        return HttpUtil.newHttpClient();
     }
 
     @Override
