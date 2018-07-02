@@ -24,7 +24,13 @@ import org.json.simple.JSONStreamAware;
 
 final class AddPeers extends PeerServlet.PeerRequestHandler {
 
-    static final AddPeers instance = new AddPeers();
+    private static class AddPeersHolder {
+        private static final AddPeers INSTANCE = new AddPeers();
+    }
+
+    public static AddPeers getInstance() {
+        return AddPeersHolder.INSTANCE;
+    }
 
     private AddPeers() {}
 

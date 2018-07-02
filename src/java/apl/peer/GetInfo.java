@@ -27,7 +27,13 @@ import org.json.simple.JSONStreamAware;
 
 final class GetInfo extends PeerServlet.PeerRequestHandler {
 
-    static final GetInfo instance = new GetInfo();
+    private static class GetInfoHolder {
+        private static final GetInfo INSTANCE = new GetInfo();
+    }
+
+    public static GetInfo getInstance() {
+        return GetInfoHolder.INSTANCE;
+    }
 
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     static {

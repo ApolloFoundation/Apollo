@@ -30,7 +30,13 @@ import java.util.List;
 
 final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
 
-    static final GetNextBlocks instance = new GetNextBlocks();
+    private static class GetNextBlocksHolder {
+        private static final GetNextBlocks INSTANCE = new GetNextBlocks();
+    }
+
+    public static GetNextBlocks getInstance() {
+        return GetNextBlocksHolder.INSTANCE;
+    }
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
     static {

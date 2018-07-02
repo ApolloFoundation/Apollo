@@ -29,7 +29,13 @@ import java.util.SortedSet;
 
 final class GetUnconfirmedTransactions extends PeerServlet.PeerRequestHandler {
 
-    static final GetUnconfirmedTransactions instance = new GetUnconfirmedTransactions();
+    private static class GetUnconfirmedTransactionsHolder {
+        private static final GetUnconfirmedTransactions INSTANCE = new GetUnconfirmedTransactions();
+    }
+
+    public static GetUnconfirmedTransactions getInstance() {
+        return GetUnconfirmedTransactionsHolder.INSTANCE;
+    }
 
     private GetUnconfirmedTransactions() {}
 
