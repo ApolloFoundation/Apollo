@@ -29,7 +29,7 @@ public class DesktopMode implements RuntimeMode {
 
     private DesktopSystemTray desktopSystemTray;
     private Class desktopAppClass;
-    private volatile boolean initialized = false;
+
     @Override
     public void init() {
         try {
@@ -47,7 +47,6 @@ public class DesktopMode implements RuntimeMode {
             desktopAppThread.start();
             desktopSystemTray = new DesktopSystemTray();
             SwingUtilities.invokeLater(desktopSystemTray::createAndShowGUI);
-            initialized = true;
         }
         catch (ClassNotFoundException e) {
             Logger.logErrorMessage("Cannot find desktop application class", e);
