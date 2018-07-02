@@ -18,24 +18,43 @@
 package apl.env;
 
 import apl.util.Logger;
-import apldesktop.DesktopApplication;
 
 import javax.swing.*;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 
 public class DesktopMode implements RuntimeMode {
 
     private DesktopSystemTray desktopSystemTray;
-    private Thread desktopAppThread;
+    private Class desktopAppClass;
+    private volatile boolean initialized = false;
     @Override
     public void init() {
-        LookAndFeel.init();
-//        desktopApplication = DesktopApplication.getInstance();
-        desktopAppThread = new Thread(DesktopApplication::launch);
-        desktopAppThread.start();
-        desktopSystemTray = new DesktopSystemTray();
-        SwingUtilities.invokeLater(desktopSystemTray::createAndShowGUI);
+        try {
+            LookAndFeel.init();
+            desktopAppClass = Class.forName("apldesktop.DesktopApplication");
+            Method launchDesktopAppMethod = desktopAppClass.getMethod("launch");
+            Thread desktopAppThread = new Thread(() -> {
+                try {
+                    launchDesktopAppMethod.invoke(null);
+                }
+                catch (IllegalAccessException | InvocationTargetException e) {
+                    Logger.logErrorMessage("Unable to launch desktop application", e);
+                }
+            });
+            desktopAppThread.start();
+            desktopSystemTray = new DesktopSystemTray();
+            SwingUtilities.invokeLater(desktopSystemTray::createAndShowGUI);
+            initialized = true;
+        }
+        catch (ClassNotFoundException e) {
+            Logger.logErrorMessage("Cannot find desktop application class", e);
+        }
+        catch (NoSuchMethodException e) {
+            Logger.logErrorMessage("Missing 'launch' method to start desktop application", e);
+        }
     }
 
     @Override
@@ -46,13 +65,25 @@ public class DesktopMode implements RuntimeMode {
     @Override
     public void launchDesktopApplication() {
         Logger.logInfoMessage("Launching desktop wallet");
-        DesktopApplication.startDesktopApplication();
+        try {
+            desktopAppClass.getMethod("startDesktopApplication").invoke(null);
+        }
+        catch (Exception e) {
+            //rethrow
+            throw new RuntimeException("Cannot start desktop application", e);
+        }
     }
 
     @Override
     public void shutdown() {
         desktopSystemTray.shutdown();
-        DesktopApplication.shutdown();
+        try {
+            desktopAppClass.getMethod("shutdown").invoke(null);
+        }
+        catch (Exception e) {
+            //rethrow
+            throw new RuntimeException("Cannot shutdown desktop application", e);
+        }
     }
 
     @Override
@@ -62,11 +93,23 @@ public class DesktopMode implements RuntimeMode {
 
     @Override
     public void recoverDb() {
-        DesktopApplication.recoverDbUI();
+        try {
+            desktopAppClass.getMethod("recoverDbUI").invoke(null);
+        }
+        catch (Exception e) {
+            //rethrow
+            throw new RuntimeException("Unable to show recover db dialog!", e);
+        }
     }
 
     @Override
     public void updateAppStatus(String newStatus) {
-        DesktopApplication.updateSplashScreenStatus(newStatus);
+        try {
+            desktopAppClass.getMethod("updateSplashScreenStatus", String.class).invoke(null, newStatus);
+        }
+        catch (Exception e) {
+            //rethrow
+            throw new RuntimeException("Unable to update status on splash screen!", e);
+        }
     }
 }
