@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountProperties extends APIServlet.APIRequestHandler {
 
-    static final GetAccountProperties instance = new GetAccountProperties();
+    private static class GetAccountPropertiesHolder {
+        private static final GetAccountProperties INSTANCE = new GetAccountProperties();
+    }
+
+    public static GetAccountProperties getInstance() {
+        return GetAccountPropertiesHolder.INSTANCE;
+    }
 
     private GetAccountProperties() {
         super(new APITag[] {APITag.ACCOUNTS}, "recipient", "property", "setter", "firstIndex", "lastIndex");

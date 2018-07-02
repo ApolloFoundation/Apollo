@@ -19,8 +19,8 @@ package apl.http;
 
 import apl.Account;
 import apl.Alias;
-import apl.Attachment;
 import apl.AplException;
+import apl.Attachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +30,13 @@ import static apl.http.JSONResponses.INCORRECT_ALIAS_OWNER;
 
 public final class DeleteAlias extends CreateTransaction {
 
-    static final DeleteAlias instance = new DeleteAlias();
+    private static class DeleteAliasHolder {
+        private static final DeleteAlias INSTANCE = new DeleteAlias();
+    }
+
+    public static DeleteAlias getInstance() {
+        return DeleteAliasHolder.INSTANCE;
+    }
 
     private DeleteAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName");

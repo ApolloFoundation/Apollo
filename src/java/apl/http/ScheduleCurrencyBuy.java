@@ -39,7 +39,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ScheduleCurrencyBuy extends CreateTransaction {
 
-    static final ScheduleCurrencyBuy instance = new ScheduleCurrencyBuy();
+    private static class ScheduleCurrencyBuyHolder {
+        private static final ScheduleCurrencyBuy INSTANCE = new ScheduleCurrencyBuy();
+    }
+
+    public static ScheduleCurrencyBuy getInstance() {
+        return ScheduleCurrencyBuyHolder.INSTANCE;
+    }
 
     private ScheduleCurrencyBuy() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",

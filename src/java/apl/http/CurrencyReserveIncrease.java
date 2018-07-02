@@ -47,7 +47,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class CurrencyReserveIncrease extends CreateTransaction {
 
-    static final CurrencyReserveIncrease instance = new CurrencyReserveIncrease();
+    private static class CurrencyReserveIncreaseHolder {
+        private static final CurrencyReserveIncrease INSTANCE = new CurrencyReserveIncrease();
+    }
+
+    public static CurrencyReserveIncrease getInstance() {
+        return CurrencyReserveIncreaseHolder.INSTANCE;
+    }
 
     private CurrencyReserveIncrease() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "amountPerUnitATM");

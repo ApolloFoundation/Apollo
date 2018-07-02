@@ -27,7 +27,13 @@ import java.math.BigInteger;
 
 public final class LongConvert extends APIServlet.APIRequestHandler {
 
-    static final LongConvert instance = new LongConvert();
+    private static class LongConvertHolder {
+        private static final LongConvert INSTANCE = new LongConvert();
+    }
+
+    public static LongConvert getInstance() {
+        return LongConvertHolder.INSTANCE;
+    }
 
     private LongConvert() {
         super(new APITag[] {APITag.UTILS}, "id");

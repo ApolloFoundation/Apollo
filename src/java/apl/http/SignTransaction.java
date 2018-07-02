@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SignTransaction extends APIServlet.APIRequestHandler {
 
-    static final SignTransaction instance = new SignTransaction();
+    private static class SignTransactionHolder {
+        private static final SignTransaction INSTANCE = new SignTransaction();
+    }
+
+    public static SignTransaction getInstance() {
+        return SignTransactionHolder.INSTANCE;
+    }
 
     private SignTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase", "validate");

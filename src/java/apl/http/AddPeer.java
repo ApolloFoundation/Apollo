@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.MISSING_PEER;
 
 public class AddPeer extends APIRequestHandler {
 
-    static final AddPeer instance = new AddPeer();
+    private static class AddPeerHolder {
+        private static final AddPeer INSTANCE = new AddPeer();
+    }
+
+    public static AddPeer getInstance() {
+        return AddPeerHolder.INSTANCE;
+    }
     
     private AddPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");

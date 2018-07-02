@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class StartForging extends APIServlet.APIRequestHandler {
 
-    static final StartForging instance = new StartForging();
+    private static class StartForgingHolder {
+        private static final StartForging INSTANCE = new StartForging();
+    }
+
+    public static StartForging getInstance() {
+        return StartForgingHolder.INSTANCE;
+    }
 
     private StartForging() {
         super(new APITag[] {APITag.FORGING}, "secretPhrase");

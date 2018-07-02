@@ -32,7 +32,13 @@ import java.util.Map;
 
 public final class GetConstants extends APIServlet.APIRequestHandler {
 
-    static final GetConstants instance = new GetConstants();
+    private static class GetConstantsHolder {
+        private static final GetConstants INSTANCE = new GetConstants();
+    }
+
+    public static GetConstants getInstance() {
+        return GetConstantsHolder.INSTANCE;
+    }
 
     private static final class Holder {
 

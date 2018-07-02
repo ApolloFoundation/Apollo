@@ -62,7 +62,13 @@ import javax.servlet.http.HttpServletRequest;
 public class SetLogging extends APIServlet.APIRequestHandler {
 
     /** SetLogging instance */
-    static final SetLogging instance = new SetLogging();
+    private static class SetLoggingHolder {
+        private static final SetLogging INSTANCE = new SetLogging();
+    }
+
+    public static SetLogging getInstance() {
+        return SetLoggingHolder.INSTANCE;
+    }
 
     /** Logging updated */
     private static final JSONStreamAware LOGGING_UPDATED;

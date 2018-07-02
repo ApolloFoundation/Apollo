@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountBlocks extends APIServlet.APIRequestHandler {
 
-    static final GetAccountBlocks instance = new GetAccountBlocks();
+    private static class GetAccountBlocksHolder {
+        private static final GetAccountBlocks INSTANCE = new GetAccountBlocks();
+    }
+
+    public static GetAccountBlocks getInstance() {
+        return GetAccountBlocksHolder.INSTANCE;
+    }
 
     private GetAccountBlocks() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "timestamp", "firstIndex", "lastIndex", "includeTransactions");

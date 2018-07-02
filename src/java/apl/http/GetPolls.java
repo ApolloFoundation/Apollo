@@ -31,7 +31,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public class GetPolls extends APIServlet.APIRequestHandler {
 
-    static final GetPolls instance = new GetPolls();
+    private static class GetPollsHolder {
+        private static final GetPolls INSTANCE = new GetPolls();
+    }
+
+    public static GetPolls getInstance() {
+        return GetPollsHolder.INSTANCE;
+    }
 
     private GetPolls() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.VS}, "account", "firstIndex", "lastIndex", "timestamp", "includeFinished", "finishedOnly");

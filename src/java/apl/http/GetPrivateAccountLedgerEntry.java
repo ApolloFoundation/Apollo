@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
 
     /** GetPrivateAccountLedgerEntry instance */
-    static final GetPrivateAccountLedgerEntry instance = new GetPrivateAccountLedgerEntry();
+    private static class GetPrivateAccountLedgerEntryHolder {
+        private static final GetPrivateAccountLedgerEntry INSTANCE = new GetPrivateAccountLedgerEntry();
+    }
+
+    public static GetPrivateAccountLedgerEntry getInstance() {
+        return GetPrivateAccountLedgerEntryHolder.INSTANCE;
+    }
 
     /**
      * Create the GetPrivateAccountLedgerEntry instance

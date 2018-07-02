@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllTaggedData extends APIServlet.APIRequestHandler {
 
-    static final GetAllTaggedData instance = new GetAllTaggedData();
+    private static class GetAllTaggedDataHolder {
+        private static final GetAllTaggedData INSTANCE = new GetAllTaggedData();
+    }
+
+    public static GetAllTaggedData getInstance() {
+        return GetAllTaggedDataHolder.INSTANCE;
+    }
 
     private GetAllTaggedData() {
         super(new APITag[] {APITag.DATA}, "firstIndex", "lastIndex", "includeData");

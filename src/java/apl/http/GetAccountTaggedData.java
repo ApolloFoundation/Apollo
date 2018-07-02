@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountTaggedData extends APIServlet.APIRequestHandler {
 
-    static final GetAccountTaggedData instance = new GetAccountTaggedData();
+    private static class GetAccountTaggedDataHolder {
+        private static final GetAccountTaggedData INSTANCE = new GetAccountTaggedData();
+    }
+
+    public static GetAccountTaggedData getInstance() {
+        return GetAccountTaggedDataHolder.INSTANCE;
+    }
 
     private GetAccountTaggedData() {
         super(new APITag[] {APITag.DATA}, "account", "firstIndex", "lastIndex", "includeData");

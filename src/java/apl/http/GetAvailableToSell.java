@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAvailableToSell extends APIServlet.APIRequestHandler {
 
-    static final GetAvailableToSell instance = new GetAvailableToSell();
+    private static class GetAvailableToSellHolder {
+        private static final GetAvailableToSell INSTANCE = new GetAvailableToSell();
+    }
+
+    public static GetAvailableToSell getInstance() {
+        return GetAvailableToSellHolder.INSTANCE;
+    }
 
     private GetAvailableToSell() {
         super(new APITag[] {APITag.MS}, "currency", "units");

@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.UNKNOWN_ORDER;
 
 public final class CancelAskOrder extends CreateTransaction {
 
-    static final CancelAskOrder instance = new CancelAskOrder();
+    private static class CancelAskOrderHolder {
+        private static final CancelAskOrder INSTANCE = new CancelAskOrder();
+    }
+
+    public static CancelAskOrder getInstance() {
+        return CancelAskOrderHolder.INSTANCE;
+    }
 
     private CancelAskOrder() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "order");

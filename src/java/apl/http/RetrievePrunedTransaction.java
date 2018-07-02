@@ -28,7 +28,13 @@ import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public class RetrievePrunedTransaction extends APIServlet.APIRequestHandler {
 
-    static final RetrievePrunedTransaction instance = new RetrievePrunedTransaction();
+    private static class RetrievePrunedTransactionHolder {
+        private static final RetrievePrunedTransaction INSTANCE = new RetrievePrunedTransaction();
+    }
+
+    public static RetrievePrunedTransaction getInstance() {
+        return RetrievePrunedTransactionHolder.INSTANCE;
+    }
 
     private RetrievePrunedTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction");

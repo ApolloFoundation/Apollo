@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.INCORRECT_RECIPIENT;
 
 public final class SellAlias extends CreateTransaction {
 
-    static final SellAlias instance = new SellAlias();
+    private static class SellAliasHolder {
+        private static final SellAlias INSTANCE = new SellAlias();
+    }
+
+    public static SellAlias getInstance() {
+        return SellAliasHolder.INSTANCE;
+    }
 
     private SellAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceATM");

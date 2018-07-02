@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAssignedShufflings extends APIServlet.APIRequestHandler {
 
-    static final GetAssignedShufflings instance = new GetAssignedShufflings();
+    private static class GetAssignedShufflingsHolder {
+        private static final GetAssignedShufflings INSTANCE = new GetAssignedShufflings();
+    }
+
+    public static GetAssignedShufflings getInstance() {
+        return GetAssignedShufflingsHolder.INSTANCE;
+    }
 
     private GetAssignedShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "includeHoldingInfo", "firstIndex", "lastIndex");

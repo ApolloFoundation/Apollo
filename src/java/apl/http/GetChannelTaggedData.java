@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetChannelTaggedData extends APIServlet.APIRequestHandler {
 
-    static final GetChannelTaggedData instance = new GetChannelTaggedData();
+    private static class GetChannelTaggedDataHolder {
+        private static final GetChannelTaggedData INSTANCE = new GetChannelTaggedData();
+    }
+
+    public static GetChannelTaggedData getInstance() {
+        return GetChannelTaggedDataHolder.INSTANCE;
+    }
 
     private GetChannelTaggedData() {
         super(new APITag[] {APITag.DATA}, "channel", "account", "firstIndex", "lastIndex", "includeData");

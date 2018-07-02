@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public class GetLinkedPhasedTransactions extends APIServlet.APIRequestHandler {
-    static final GetLinkedPhasedTransactions instance = new GetLinkedPhasedTransactions();
+    private static class GetLinkedPhasedTransactionsHolder {
+        private static final GetLinkedPhasedTransactions INSTANCE = new GetLinkedPhasedTransactions();
+    }
+
+    public static GetLinkedPhasedTransactions getInstance() {
+        return GetLinkedPhasedTransactionsHolder.INSTANCE;
+    }
 
     private GetLinkedPhasedTransactions() {
         super(new APITag[]{APITag.PHASING}, "linkedFullHash");

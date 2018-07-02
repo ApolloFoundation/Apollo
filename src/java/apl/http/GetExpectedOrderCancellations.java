@@ -31,7 +31,13 @@ import java.util.List;
 
 public final class GetExpectedOrderCancellations extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedOrderCancellations instance = new GetExpectedOrderCancellations();
+    private static class GetExpectedOrderCancellationsHolder {
+        private static final GetExpectedOrderCancellations INSTANCE = new GetExpectedOrderCancellations();
+    }
+
+    public static GetExpectedOrderCancellations getInstance() {
+        return GetExpectedOrderCancellationsHolder.INSTANCE;
+    }
 
     private GetExpectedOrderCancellations() {
         super(new APITag[] {APITag.AE});

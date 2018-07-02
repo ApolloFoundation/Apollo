@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public final class VerifyTaggedData extends APIServlet.APIRequestHandler {
 
-    static final VerifyTaggedData instance = new VerifyTaggedData();
+    private static class VerifyTaggedDataHolder {
+        private static final VerifyTaggedData INSTANCE = new VerifyTaggedData();
+    }
+
+    public static VerifyTaggedData getInstance() {
+        return VerifyTaggedDataHolder.INSTANCE;
+    }
 
     private VerifyTaggedData() {
         super("file", new APITag[]{APITag.DATA}, "transaction",

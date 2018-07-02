@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetOffer extends APIServlet.APIRequestHandler {
 
-    static final GetOffer instance = new GetOffer();
+    private static class GetOfferHolder {
+        private static final GetOffer INSTANCE = new GetOffer();
+    }
+
+    public static GetOffer getInstance() {
+        return GetOfferHolder.INSTANCE;
+    }
 
     private GetOffer() {
         super(new APITag[] {APITag.MS}, "offer");

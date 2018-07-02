@@ -30,7 +30,13 @@ import static apl.http.JSONResponses.INCORRECT_PURCHASE;
 
 public final class DGSFeedback extends CreateTransaction {
 
-    static final DGSFeedback instance = new DGSFeedback();
+    private static class DGSFeedbackHolder {
+        private static final DGSFeedback INSTANCE = new DGSFeedback();
+    }
+
+    public static DGSFeedback getInstance() {
+        return DGSFeedbackHolder.INSTANCE;
+    }
 
     private DGSFeedback() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

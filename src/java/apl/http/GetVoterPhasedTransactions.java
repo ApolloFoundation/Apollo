@@ -30,7 +30,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public class GetVoterPhasedTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetVoterPhasedTransactions instance = new GetVoterPhasedTransactions();
+    private static class GetVoterPhasedTransactionsHolder {
+        private static final GetVoterPhasedTransactions INSTANCE = new GetVoterPhasedTransactions();
+    }
+
+    public static GetVoterPhasedTransactions getInstance() {
+        return GetVoterPhasedTransactionsHolder.INSTANCE;
+    }
 
     private GetVoterPhasedTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING}, "account", "firstIndex", "lastIndex");

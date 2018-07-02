@@ -28,7 +28,13 @@ import java.util.List;
 
 public final class GetScheduledTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetScheduledTransactions instance = new GetScheduledTransactions();
+    private static class GetScheduledTransactionsHolder {
+        private static final GetScheduledTransactions INSTANCE = new GetScheduledTransactions();
+    }
+
+    public static GetScheduledTransactions getInstance() {
+        return GetScheduledTransactionsHolder.INSTANCE;
+    }
 
     private GetScheduledTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");

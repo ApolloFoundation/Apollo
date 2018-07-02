@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.MISSING_OFFER;
 
 public final class GetExchangesByOffer extends APIServlet.APIRequestHandler {
 
-    static final GetExchangesByOffer instance = new GetExchangesByOffer();
+    private static class GetExchangesByOfferHolder {
+        private static final GetExchangesByOffer INSTANCE = new GetExchangesByOffer();
+    }
+
+    public static GetExchangesByOffer getInstance() {
+        return GetExchangesByOfferHolder.INSTANCE;
+    }
 
     private GetExchangesByOffer() {
         super(new APITag[] {APITag.MS}, "offer", "includeCurrencyInfo", "firstIndex", "lastIndex");
