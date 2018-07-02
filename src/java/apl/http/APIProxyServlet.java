@@ -186,17 +186,10 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
 
     private boolean isForwardable(String requestType) {
         APIServlet.APIRequestHandler apiRequestHandler = APIServlet.apiRequestHandlers.get(requestType);
-        if (!apiRequestHandler.requireBlockchain()) {
-            return false;
-        }
-        if (apiRequestHandler.requireFullClient()) {
-            return false;
-        }
-        if (APIProxy.NOT_FORWARDED_REQUESTS.contains(requestType)) {
-            return false;
-        }
-
-        return true;
+        return
+                apiRequestHandler.requireBlockchain()
+                && !apiRequestHandler.requireFullClient()
+                && !APIProxy.NOT_FORWARDED_REQUESTS.contains(requestType);
     }
 
     @Override
@@ -271,7 +264,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
 
     private static class PasswordFilteringContentTransformer implements AsyncMiddleManServlet.ContentTransformer {
 
-        ByteArrayOutputStream os;
+        private ByteArrayOutputStream os;
 
         @Override
         public void transform(ByteBuffer input, boolean finished, List<ByteBuffer> output) throws IOException {
