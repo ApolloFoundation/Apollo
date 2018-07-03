@@ -39,8 +39,7 @@ public class GeneratePublicKey {
         if (console == null) {
             try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in))) {
                 while ((secretPhrase = inputReader.readLine()) != null) {
-                    byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-                    System.out.println(Convert.toHexString(publicKey));
+                    printPublicKey(secretPhrase);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage(), e);
@@ -49,9 +48,13 @@ public class GeneratePublicKey {
             char[] chars;
             while ((chars = console.readPassword("Enter secret phrase: ")) != null && chars.length > 0) {
                 secretPhrase = new String(chars);
-                byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-                System.out.println(Convert.toHexString(publicKey));
+                printPublicKey(secretPhrase);
             }
         }
+    }
+
+    private static void printPublicKey(String secretPhrase) {
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        System.out.println(Convert.toHexString(publicKey));
     }
 }
