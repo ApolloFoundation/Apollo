@@ -18,6 +18,7 @@
 package apl.env;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 public interface DirProvider {
@@ -33,4 +34,8 @@ public interface DirProvider {
     File getConfDir();
 
     String getUserHomeDir();
+
+    default File getBinDirectory() {
+        return Paths.get("").toFile();
+    }
 }

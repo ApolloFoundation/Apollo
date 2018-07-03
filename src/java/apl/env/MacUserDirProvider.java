@@ -17,4 +17,11 @@
 
 package apl.env;
 
-public class MacUserDirProvider extends UnixUserDirProvider {}
+import java.util.Properties;
+
+public class MacUserDirProvider extends UnixUserDirProvider {
+    @Override
+    public void updateLogFileHandler(Properties loggingProperties) {
+        super.updateLogFileHandler(loggingProperties);
+    }
+}
