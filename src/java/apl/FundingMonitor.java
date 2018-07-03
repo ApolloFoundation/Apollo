@@ -414,7 +414,7 @@ public final class FundingMonitor {
         List<FundingMonitor> result = new ArrayList<>();
         synchronized(monitors) {
             monitors.forEach((monitor) -> {
-                if (filter.ok(monitor)) {
+                if (filter.test(monitor)) {
                     result.add(monitor);
                 }
             });

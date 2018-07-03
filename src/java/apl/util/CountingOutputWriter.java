@@ -86,4 +86,9 @@ public class CountingOutputWriter extends FilterWriter {
     public long getCount() {
         return count;
     }
+
+    @Override
+    public Writer append(CharSequence csq) throws IOException {
+        return super.append(csq);
+    }
 }

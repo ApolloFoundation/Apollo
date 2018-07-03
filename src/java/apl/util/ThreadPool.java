@@ -87,13 +87,10 @@ public final class ThreadPool {
         backgroundJobs = null;
 
         Logger.logDebugMessage("Starting " + afterStartJobs.size() + " delayed tasks");
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                runAll(afterStartJobs);
-                afterStartJobs = null;
-            }
-        };
+        Thread thread = new Thread(() -> {
+            runAll(afterStartJobs);
+            afterStartJobs = null;
+        });
         thread.setDaemon(true);
         thread.start();
     }
@@ -125,17 +122,14 @@ public final class ThreadPool {
         List<Thread> threads = new ArrayList<>();
         final StringBuffer errors = new StringBuffer();
         for (final Runnable runnable : jobs) {
-            Thread thread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        runnable.run();
-                    } catch (Throwable t) {
-                        errors.append(t.getMessage()).append('\n');
-                        throw t;
-                    }
+            Thread thread = new Thread(() -> {
+                try {
+                    runnable.run();
+                } catch (Throwable t) {
+                    errors.append(t.getMessage()).append('\n');
+                    throw t;
                 }
-            };
+            });
             thread.setDaemon(true);
             thread.start();
             threads.add(thread);

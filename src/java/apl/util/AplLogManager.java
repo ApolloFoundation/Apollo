@@ -19,6 +19,7 @@ package apl.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.logging.LogManager;
 
 /**
@@ -74,5 +75,10 @@ public class AplLogManager extends LogManager {
      */
     void aplShutdown() {
         super.reset();
+    }
+
+    @Override
+    public Enumeration<String> getLoggerNames() {
+        return super.getLoggerNames();
     }
 }

@@ -102,7 +102,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 }
                 try (DbIterator<? extends Transaction> unconfirmedTransactions = Apl.getTransactionProcessor().getAllUnconfirmedTransactions()) {
                     while (unconfirmedTransactions.hasNext()) {
-                        if (filter.ok(unconfirmedTransactions.next())) {
+                        if (filter.test(unconfirmedTransactions.next())) {
                             Logger.logDebugMessage("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
                             Apl.getTransactionProcessor().broadcast(transaction);
                             response.put("broadcasted", true);
@@ -146,7 +146,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         }
 
         @Override
-        public boolean ok(Transaction transaction) {
+        public boolean test(Transaction transaction) {
             if (transaction.getSenderId() != senderId
                     || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
                     || transaction.getPhasing() != null) {
