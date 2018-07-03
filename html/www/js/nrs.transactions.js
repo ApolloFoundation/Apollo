@@ -131,6 +131,8 @@ var NRS = (function(NRS, $, undefined) {
             url += 'firstIndex=' + parseInt((this.page) * 14 - 14) + '&';
             url += 'lastIndex='  + (this.page) * 14 + '&';
 
+            console.log(url);
+
             var that = this;
             var $el = $("#" + NRS.currentPage + "_contents");
             $el = $el.selector;
@@ -151,9 +153,10 @@ var NRS = (function(NRS, $, undefined) {
 
                          that.serverKey = JSON.parse(data).serverPublicKey;
 
+
                          if (that.items.length < 15 && that.page == 1) {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
-					               } else {
+					 } else {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
                          }
 
@@ -164,7 +167,7 @@ var NRS = (function(NRS, $, undefined) {
                          }
                          if ($el === '#transactions_contents') {
                              NRS.dataLoaded(rows);
-					               }
+					 }
 
                          NRS.addPhasingInfoToTransactionRows(that.items);
                      }
@@ -197,7 +200,7 @@ var NRS = (function(NRS, $, undefined) {
 
                                  rows += NRS.getLedgerEntryRow(entry, decimalParams);
                              }
-						 }
+		 }
 
 
                          if ($el === '#ledger_contents') {
@@ -212,7 +215,6 @@ var NRS = (function(NRS, $, undefined) {
 
                          }
                      }
-
                 },
                 error: function(data) {
                     console.log('err: ', data);
@@ -424,7 +426,6 @@ var NRS = (function(NRS, $, undefined) {
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
 
         NRS.sendRequest("getBlockchainTransactions", {
-
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -1018,15 +1019,11 @@ var NRS = (function(NRS, $, undefined) {
         $('#send_money_amount_info').val($(this).val())
 
     });
+
     $('#send_money_fee').keyup(function() {
         $('#send_money_fee_info').val($(this).val())
 
 	});
-
-    // $('#send_money_password').keyup(function() {
-    //     $('#send_money_password_info').val($(this).val())
-    //
-    // });
 
 	NRS.buildTransactionsTypeNavi = function() {
 		var html = '';
@@ -1509,7 +1506,6 @@ var NRS = (function(NRS, $, undefined) {
 			$(this).text($.t('hide_type_menu', 'Hide Type Menu'));
 		}
 	});
-
 
     var secretLedgerWor = $('#transaction_ledger_fill_secret_word_modal');
     $(document).on('submit', '#get_ledger_private_transactions', function(e){
