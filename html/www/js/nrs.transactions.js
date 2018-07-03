@@ -6,7 +6,7 @@
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation *
  * no part of the Apl software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
@@ -37,9 +37,13 @@ var NRS = (function(NRS, $, undefined) {
         this.target = target;
 		this.itemsFiltration = $(this.target).parent().parent();
 		this.filter = null;
+		this.publicKey  = null;
+		this.privateKey = null;
+		this.sharedKey = null;
+		this.serverKey = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
-	        console.log(e.target);
+
 	        if ($(e.target).attr('data-navigate-page') === 'prev') {
                 that.page = that.page - 1;
             } if ($(e.target).attr('data-navigate-page') === 'next') {
@@ -52,6 +56,11 @@ var NRS = (function(NRS, $, undefined) {
 
         this.itemsFiltration.click(function(){});
 
+        this.setKeys = function(passphrase) {
+            this.privateKey = NRS.getPrivateKey(passphrase);
+            this.publicKey  = NRS.getPublicKey(converters.stringToHexString(passphrase));
+
+		};
         this.setFiltration = function(filter) {
             this.filter = filter;
             this.filter = parseInt(this.filter);
@@ -88,11 +97,11 @@ var NRS = (function(NRS, $, undefined) {
             if (this.isPrivate) {
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
                     url += 'requestType=getPrivateBlockchainTransactions&';
-                    url += 'secretPhrase=' + this.passPhrase + '&';
+                    url += 'publicKey=' + this.publicKey + '&';
                 }
                 if (this.transactionType === 'getAccountLedger' || this.transactionType === 'getPrivateAccountLedger') {
                     url += 'requestType=getPrivateAccountLedger&';
-                    url += 'secretPhrase=' + this.passPhrase + '&';
+                    url += 'publicKey=' + this.publicKey + '&';
 				}
             } else {
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
@@ -135,48 +144,75 @@ var NRS = (function(NRS, $, undefined) {
                 	that.validatePagimation(nextPageUrl, 'next');
 
                     var rows = "";
+                    that.items = JSON.parse(data);
 
-                    if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
-                        that.items = JSON.parse(data).transactions;
+                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
+                         that.items = JSON.parse(data).transactions;
 
-                        if (that.items.length < 15 && that.page == 1) {
-                            $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
-						} else {
-                            $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
-                        }
+                         that.serverKey = JSON.parse(data).serverPublicKey;
 
-                        for (var i = 0; i < that.items.length; i++) {
-                            var transaction = that.items[i];
-                            transaction.confirmed = true;
-                            rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
-                        }
-                        if ($el === '#transactions_contents') {
-                            NRS.dataLoaded(rows);
-						}
+                         if (that.items.length < 15 && that.page == 1) {
+                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
+					               } else {
+                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
+                         }
 
-                        NRS.addPhasingInfoToTransactionRows(that.items);
-					}
-                    if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
-                        that.items = JSON.parse(data).entries;
+                         for (var i = 0; i < that.items.length; i++) {
+                             var transaction = that.items[i];
+                             transaction.confirmed = true;
+                             rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+                         }
+                         if ($el === '#transactions_contents') {
+                             NRS.dataLoaded(rows);
+					               }
 
-                        var decimalParams = NRS.getLedgerNumberOfDecimals(that.items);
-                        for (var i = 0; i < that.items.length; i++) {
-                            var entry = that.items[i];
-                            rows += NRS.getLedgerEntryRow(entry, decimalParams);
-                        }
+                         NRS.addPhasingInfoToTransactionRows(that.items);
+                     }
+                     if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
+                         that.items = JSON.parse(data).entries;
 
-                        if ($el === '#ledger_contents') {
-                            NRS.dataLoaded(rows);
-                        }
-                    }
-                    if (that.transactionType === 'getBlocks') {
-                        that.items = JSON.parse(data).blocks;
+                         that.serverKey = JSON.parse(data).serverPublicKey;
 
-                        if ($el === '#blocks_contents') {
-                            NRS.blocksPageLoaded(that.items);
+                         if (that.items) {
+                             var decimalParams = NRS.getLedgerNumberOfDecimals(that.items);
+                             for (var i = 0; i < that.items.length; i++) {
+                                 var entry = that.items[i];
 
-                        }
-                    }
+                                 if ('encryptedLedgerEntry' in entry) {
+                                     var options = {
+                                         publicKey  :  converters.hexStringToInt8ByteArray(that.serverKey),
+                                         privateKey :  converters.hexStringToInt8ByteArray(that.privateKey),
+                                     };
+
+                                     options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
+
+                                     var decrypted =  NRS.decryptData(entry.encryptedLedgerEntry, options);
+                                     decrypted = decrypted.message;
+                                     decrypted = converters.hexStringToString(decrypted);
+                                     decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
+                                     decrypted = JSON.parse(decrypted);
+
+                                     entry = decrypted;
+                                 }
+
+                                 rows += NRS.getLedgerEntryRow(entry, decimalParams);
+                             }
+						 }
+
+
+                         if ($el === '#ledger_contents') {
+                             NRS.dataLoaded(rows);
+                         }
+                     }
+                     if (that.transactionType === 'getBlocks') {
+                         that.items = JSON.parse(data).blocks;
+
+                         if ($el === '#blocks_contents') {
+                             NRS.blocksPageLoaded(that.items);
+
+                         }
+                     }
+
                 },
                 error: function(data) {
                     console.log('err: ', data);
@@ -264,15 +300,14 @@ var NRS = (function(NRS, $, undefined) {
 
 		// initialisation
         this.renderItems();
-		    this.initPaginations();
+		this.initPaginations();
         this.renderItems();
         this.logPulling();
     };
-  
+
     NRS.myTransactionPagination;
     NRS.accountLedgerPagination;
     NRS.blocksPagination;
-  
 
     NRS.handleIncomingTransactions = function(transactions, confirmedTransactionIds) {
 		var oldBlock = (confirmedTransactionIds === false); //we pass false instead of an [] in case there is no new block..
@@ -387,8 +422,9 @@ var NRS = (function(NRS, $, undefined) {
         NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
         NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
         NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
-    
-		NRS.sendRequest("getBlockchainTransactions", {
+
+        NRS.sendRequest("getBlockchainTransactions", {
+
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -748,81 +784,107 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
-		var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
 
-		if (transactionType === 'Unknown') {
+		if ('encryptedTransaction' in t) {
+            var options = {
+
+                publicKey  :  converters.hexStringToInt8ByteArray(NRS.myTransactionPagination.serverKey),
+                privateKey :  converters.hexStringToInt8ByteArray(NRS.myTransactionPagination.privateKey),
+            };
+
+
+            options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
+
+
+            var decrypted =  NRS.decryptData(t.encryptedTransaction, options);
+            decrypted = decrypted.message;
+            decrypted = converters.hexStringToString(decrypted);
+            decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
+            decrypted = JSON.parse(decrypted);
+
+            t = decrypted;
+        }
+
+
+        var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
+
+
+        if (transactionType === 'Unknown') {
+
+
             transactionType = 'Private payment';
-		}
+        }
+
 
         if (t.type == 1 && t.subtype == 6 && t.attachment.priceATM == "0") {
-			if (t.sender == NRS.account && t.recipient == NRS.account) {
-				transactionType = $.t("alias_sale_cancellation");
-			} else {
-				transactionType = $.t("alias_transfer");
-			}
-		}
+            if (t.sender == NRS.account && t.recipient == NRS.account) {
+                transactionType = $.t("alias_sale_cancellation");
+            } else {
+                transactionType = $.t("alias_transfer");
+            }
+        }
 
-		var amount = "";
-		var sign = 0;
-		var fee = new BigInteger(t.feeATM);
-		var feeColor = "";
-		var receiving = t.recipient == NRS.account && !(t.sender == NRS.account);
-		if (receiving) {
-			if (t.amountATM != "0") {
-				amount = new BigInteger(t.amountATM);
-				sign = 1;
-			}
-			feeColor = "color:black;";
-		} else {
-			if (t.sender != t.recipient) {
-				if (t.amountATM != "0") {
-					amount = new BigInteger(t.amountATM);
-					amount = amount.negate();
-					sign = -1;
-				}
-			} else {
-				if (t.amountATM != "0") {
-					amount = new BigInteger(t.amountATM); // send to myself
-				}
-			}
-			feeColor = "color:red;";
-		}
-		var formattedAmount = "";
-		if (amount != "") {
-			formattedAmount = NRS.formatAmount(amount, false, false, decimals.amount);
-		}
-		var formattedFee = NRS.formatAmount(fee, false, false, decimals.fee);
-		var amountColor = (sign == 1 ? "color:green;" : (sign == -1 ? "color:red;" : "color:black;"));
-		var hasMessage = false;
+        var amount = "";
+        var sign = 0;
+        var fee = new BigInteger(t.feeATM);
+        var feeColor = "";
+        var receiving = t.recipient == NRS.account && !(t.sender == NRS.account);
+        if (receiving) {
+            if (t.amountATM != "0") {
+                amount = new BigInteger(t.amountATM);
+                sign = 1;
+            }
+            feeColor = "color:black;";
+        } else {
+            if (t.sender != t.recipient) {
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM);
+                    amount = amount.negate();
+                    sign = -1;
+                }
+            } else {
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM); // send to myself
+                }
+            }
+            feeColor = "color:red;";
+        }
+        var formattedAmount = "";
+        if (amount != "") {
+            formattedAmount = NRS.formatAmount(amount, false, false, decimals.amount);
+        }
+        var formattedFee = NRS.formatAmount(fee, false, false, decimals.fee);
+        var amountColor = (sign == 1 ? "color:green;" : (sign == -1 ? "color:red;" : "color:black;"));
+        var hasMessage = false;
 
-		if (t.attachment) {
-			if (t.attachment.encryptedMessage || t.attachment.message) {
-				hasMessage = true;
-			} else if (t.sender == NRS.account && t.attachment.encryptToSelfMessage) {
-				hasMessage = true;
-			}
-		}
-		var html = "";
-		html += "<tr class='tr_transaction_" + t.transaction + "'>";
-		html += "<td style='vertical-align:middle;'>";
-		if (isScheduled) {
+        if (t.attachment) {
+            if (t.attachment.encryptedMessage || t.attachment.message) {
+                hasMessage = true;
+            } else if (t.sender == NRS.account && t.attachment.encryptToSelfMessage) {
+                hasMessage = true;
+            }
+        }
+        var html = "";
+        html += "<tr class='tr_transaction_" + t.transaction + "'>";
+        html += "<td style='vertical-align:middle;'>";
+        if (isScheduled) {
             html += "<a href='#' onclick='NRS.showTransactionModal(" + JSON.stringify(t) + ");'>" + NRS.formatTimestamp(t.timestamp) + "</a>";
-		}  else {
+        }  else {
             html += "<a class='show_transaction_modal_action' href='#' data-id='" + t.transaction + "' data-hash='" + t.fullHash + "' data-type='" + transactionType + "' data-timestamp='" + NRS.escapeRespStr(t.timestamp) + "' ";
             html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>";
             html += NRS.formatTimestamp(t.timestamp) + "</a>";
-		}
+        }
 
         html += "</td>";
-  		html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
-		html += '<td style="vertical-align:middle;">';
-		html += '<span class="label label-danger label-rouded">' + transactionType + '</span>';
-		html += '</td>';
+        html += "<td style='vertical-align:middle;text-align:center;'>" + (hasMessage ? "&nbsp; <i class='fa fa-envelope-o'></i>&nbsp;" : "&nbsp;") + "</td>";
+        html += '<td style="vertical-align:middle;">';
+        html += '<span class="label label-danger label-rouded">' + transactionType + '</span>';
+        html += '</td>';
         html += "<td style='vertical-align:middle;text-align:right;" + amountColor + "'>" + formattedAmount + "</td>";
         html += "<td style='vertical-align:middle;text-align:right;" + feeColor + "'>" + formattedFee + "</td>";
-		html += "<td style='vertical-align:middle;'>" + ((NRS.getAccountLink(t, "sender") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "sender")) + " ";
-		html += "<i class='fa fa-arrow-circle-right' style='color:#777;'></i> " + ((NRS.getAccountLink(t, "recipient") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "recipient")) + "</td>";
-		if (!isScheduled) {
+        html += "<td style='vertical-align:middle;'>" + ((NRS.getAccountLink(t, "sender") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "sender")) + " ";
+        html += "<i class='fa fa-arrow-circle-right' style='color:#777;'></i> " + ((NRS.getAccountLink(t, "recipient") == "/" && t.type == 2) ? "Asset Exchange" : NRS.getAccountLink(t, "recipient")) + "</td>";
+        if (!isScheduled) {
             html += "<td class='td_transaction_phasing' style='min-width:100px;vertical-align:middle;text-align:center;'></td>";
             html += "<td style='vertical-align:middle;text-align:center;'>" + (t.confirmed ? NRS.getBlockLink(t.height, null, true) : "-") + "</td>";
             html += "<td class='confirmations' style='vertical-align:middle;text-align:center;font-size:12px;'>";
@@ -830,22 +892,22 @@ var NRS = (function(NRS, $, undefined) {
             html += "data-container='body' data-placement='left'>";
             html += (!t.confirmed ? "-" : (t.confirmations > 1440 ? (NRS.formatAmount('144000000000') + "+") : NRS.formatAmount(t.confirmations))) + "</span></td>";
         }
-		if (actions && actions.length != undefined) {
-			html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
-			if (actions.indexOf('approve') > -1) {
+        if (actions && actions.length != undefined) {
+            html += '<td class="td_transaction_actions" style="vertical-align:middle;text-align:right;">';
+            if (actions.indexOf('approve') > -1) {
                 html += "<a class='btn btn-xs btn-default approve_transaction_btn' href='#' data-toggle='modal' data-target='#approve_transaction_modal' ";
-				html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "' data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
-				html += "data-timestamp='" + t.timestamp + "' " + "data-votingmodel='" + t.attachment.phasingVotingModel + "' ";
-				html += "data-fee='1' data-min-balance-formatted=''>" + $.t('approve') + "</a>";
-			}
-			if (actions.indexOf('delete') > -1) {
+                html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "' data-fullhash='" + NRS.escapeRespStr(t.fullHash) + "' ";
+                html += "data-timestamp='" + t.timestamp + "' " + "data-votingmodel='" + t.attachment.phasingVotingModel + "' ";
+                html += "data-fee='1' data-min-balance-formatted=''>" + $.t('approve') + "</a>";
+            }
+            if (actions.indexOf('delete') > -1) {
                 html += "<a class='btn btn-xs btn-default' href='#' data-toggle='modal' data-target='#delete_scheduled_transaction_modal' ";
-				html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>" + $.t("delete") + "</a>";
-			}
-			html += "</td>";
-		}
-		html += "</tr>";
-		return html;
+                html += "data-transaction='" + NRS.escapeRespStr(t.transaction) + "'>" + $.t("delete") + "</a>";
+            }
+            html += "</td>";
+        }
+        html += "</tr>";
+        return html;
 	};
 
     NRS.getLedgerEntryRow = function(entry, decimalParams) {
@@ -1044,6 +1106,7 @@ var NRS = (function(NRS, $, undefined) {
 			"firstIndex": NRS.pageNumber * NRS.itemsPerPage - NRS.itemsPerPage,
 			"lastIndex": NRS.pageNumber * NRS.itemsPerPage
 		};
+
         if (transactions) {
             if (transactions && transactions.length) {
                 var decimals = NRS.getTransactionsAmountDecimals(transactions);
@@ -1455,7 +1518,6 @@ var NRS = (function(NRS, $, undefined) {
         var API = '/apl?requestType=getPrivateBlockchainTransactions&secretPhrase=' + formParams[0].value;
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
-
             NRS.accountLedgerPagination.setPrivate(formParams[0].value);
         } else {
             $('#incorrect_passphrase_my_transactions').show();
@@ -1469,9 +1531,12 @@ var NRS = (function(NRS, $, undefined) {
             "type": "success"
         });
     });
+    
+    $(document).on('click', '#open_scheduled_transactions', function() {
+        $('#admin_password_modal').modal('show');
+    });
 
     $('body').on('click', '#send_money_private', function() {
-
         var recipient  = $('#send_money_recipient_info').val();
         var amount     = $('#send_money_amount_info').val();
         var fee        = $('#send_money_fee_info').val();
@@ -1479,8 +1544,7 @@ var NRS = (function(NRS, $, undefined) {
 
         var url = API;
         url += 'requestType=sendMoneyPrivate';
-
-
+	    
         var data = {
             deadline:     1440,
             feeATM:       fee + '00000000',
@@ -1506,10 +1570,7 @@ var NRS = (function(NRS, $, undefined) {
         }
     });
 
-
-    // pagination
-
-
+    var that = this;
     $(document).on('submit', '#get_private_transactions', function(e) {
         e.preventDefault();
         var formParams = $( this ).serializeArray();
@@ -1517,22 +1578,13 @@ var NRS = (function(NRS, $, undefined) {
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
 
-            NRS.myTransactionPagination.setPrivate(formParams[0].value);
+            NRS.accountLedgerPagination.setKeys(formParams[0].value);
+            NRS.accountLedgerPagination.setPrivate();
+
+            $('#transaction_fill_secret_word_modal').modal('hide');
+            $('#incorrect_passphrase_my_transactions').hide();
 
 
-            $.ajax({
-                url: API,
-                type: 'GET',
-                cache: false,
-                success: function(data) {
-
-                    $('#transaction_fill_secret_word_modal').modal('hide');
-                    $('#incorrect_passphrase_my_transactions').hide();
-                },
-                error: function(data) {
-                    console.log('err: ', data);
-                }
-            });
 		} else {
             $('#incorrect_passphrase_my_transactions').show();
         }
@@ -1545,19 +1597,13 @@ var NRS = (function(NRS, $, undefined) {
         var API = '/apl?requestType=getPrivateAccountLedger&secretPhrase=' + formParams[0].value;
 
         if (NRS.validatePassphrase(formParams[0].value, true)) {
-            $.ajax({
-                url: API,
-                type: 'GET',
-                cache: false,
-                success: function(data) {
-                    $('#incorrect_passphrase_my_ledger').hide();
-                    $('#transaction_ledger_fill_secret_word_modal').modal('hide');
-                },
-                error: function(data) {
-                    $('#incorrect_passphrase_my_ledger').show();
 
-                }
-            });
+            NRS.accountLedgerPagination.setKeys(formParams[0].value);
+            NRS.accountLedgerPagination.setPrivate();
+
+            $('#transaction_ledger_fill_secret_word_modal').modal('hide');
+            $('#incorrect_passphrase_my_ledger').hide();
+
         } else {
             $('#incorrect_passphrase_my_ledger').show();
         }
@@ -1579,11 +1625,16 @@ var NRS = (function(NRS, $, undefined) {
 		        if (response.errorCode) {
 		            errorMessage.text(NRS.unescapeRespStr(response.errorDescription));
 		            errorMessage.show();
-		    } else {
+		            
+			        return;
+		        } else {
 		            errorMessage.hide();
 		            errorMessage.text("");
+		            
+		            return;
 		    }
 		    var rows = "";
+		    
 		    $('#scheduled_transactions_box').addClass('active');
 		
 		    if (response.scheduledTransactions && response.scheduledTransactions.length) {

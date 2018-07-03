@@ -16,7 +16,7 @@
 package apl.http;
 
 import apl.AplException;
-import apl.UpdaterMediator;
+import apl.UpdateInfo;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -27,19 +27,23 @@ public class GetUpdateStatus extends APIServlet.APIRequestHandler {
     static final GetUpdateStatus instance = new GetUpdateStatus();
 
     private GetUpdateStatus() {
-        super(new APITag[]{APITag.UPDATE});
+        super(new APITag[] {APITag.UPDATE});
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         JSONObject result = new JSONObject();
-        UpdaterMediator.UpdateInfo info = UpdaterMediator.getInstance().getUpdateInfo();
-        result.put("isUpdate", info.isUpdate());
-        if (info.isUpdate()) {
-            result.put("level", info.getUpdateLevel());
-            result.put("availableVersion", info.getUpdateVersion().toString());
-            result.put("estimatedUpdateHeight", info.getUpdateHeight());
-            result.put("receivedUpdateHeight", info.getReceivedUpdateHeight());
+        final UpdateInfo info = UpdateInfo.getInstance();
+        synchronized (info) {
+            result.put("isUpdate", info.isUpdate());
+            if (info.isUpdate()) {
+                result.put("level", info.getUpdateLevel());
+                result.put("availableVersion", info.getUpdateVersion().toString());
+                result.put("estimatedUpdateHeight", info.getUpdateHeight());
+                result.put("receivedUpdateHeight", info.getReceivedUpdateHeight());
+                result.put("downloadStatus", info.getStatus());
+                result.put("downloadState", info.getState());
+            }
         }
         return result;
     }

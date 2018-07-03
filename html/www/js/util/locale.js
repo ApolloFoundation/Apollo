@@ -28,17 +28,11 @@ var NRS = (function (NRS) {
 
     NRS.getLocale = function () {
         var lang;
-	    var currentLocale;
-	
-	    if (NRS.settings && NRS.settings['regional_format'] != "default") {
-	        if (NRS.settings['regional_format']) {
-		        lang = NRS.settings['regional_format'];
-		
-	        } else  {
-		        lang = 'en-US';
-	        }
 
-	    } else {
+        if (NRS.settings && NRS.settings['regional_format'] != "default") {
+             lang = NRS.settings['regional_format'];
+         } else {
+
             lang = window.javaFxLanguage || window.navigator.userLanguage || window.navigator.language;
             if (!LOCALE_DATA[lang]) {
                 if (lang && lang.length == 2) {
@@ -71,12 +65,8 @@ var NRS = (function (NRS) {
 	    if (!currentLocale || !currentLocale.lang || currentLocale.lang != lang) {
             currentLocale = {};
             currentLocale.lang = lang;
-            try {
-	            currentLocale.dateFormat = LOCALE_DATA[lang].dateFormat;
+            currentLocale.dateFormat = LOCALE_DATA[lang].dateFormat;
 	
-            } catch (err) {
-                console.log(err);
-            }
             currentLocale.decimal = LOCALE_DATA[lang].decimal;
             currentLocale.section = LOCALE_DATA[lang].section;
             currentLocale.displayName = LOCALE_DATA[lang].displayName;

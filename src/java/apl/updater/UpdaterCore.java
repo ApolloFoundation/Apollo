@@ -15,10 +15,7 @@
 
 package apl.updater;
 
-import apl.Attachment;
-import apl.Transaction;
-import apl.TransactionType;
-import apl.UpdaterMediator;
+import apl.*;
 import apl.util.Listener;
 import apl.util.Logger;
 
@@ -28,7 +25,6 @@ import java.util.List;
 import java.util.Random;
 
 public class UpdaterCore {
-    private static UpdaterCore instance = new UpdaterCore();
     private final UpdaterMediator mediator = UpdaterMediator.getInstance();
     private final Downloader downloader = Downloader.getInstance();
     private final SecurityAlertSender alertSender = new SecurityAlertSender();
@@ -44,7 +40,7 @@ public class UpdaterCore {
     }
 
     public static UpdaterCore getInstance() {
-        return instance;
+        return UpdaterCoreHolder.HOLDER_INSTANCE;
     }
 
     //todo: consider using separated Logger
@@ -63,14 +59,7 @@ public class UpdaterCore {
     public void triggerUpdate(Transaction transaction) {
         TransactionType type = transaction.getType();
         Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-        //todo: consider separating mediator and update status holder
-        synchronized (mediator) {
-            mediator.setReceivedUpdateHeight(transaction.getHeight());
-            mediator.setUpdate(true);
-            mediator.setUpdateLevel(type.getName());
-            mediator.setUpdateVersion(attachment.getAppVersion());
-            mediator.setUpdateHeight(getUpdateHeightFromType(type));
-        }
+        mediator.setUpdateData(true, getUpdateHeightFromType(type), transaction.getHeight(), type.getName(), attachment.getAppVersion());
         if (type == TransactionType.Update.CRITICAL) {
             //stop forging and peer server immediately
             stopForgingAndBlockAcceptance();
@@ -108,6 +97,7 @@ public class UpdaterCore {
                         Architecture currentArchitecture = Architecture.current();
                         if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
                             new Thread(() -> triggerUpdate(transaction), "Apollo updater thread").start();
+                            mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
                         }
                     }
                 }
@@ -116,8 +106,20 @@ public class UpdaterCore {
     }
 
     private int getUpdateHeightFromType(TransactionType type) {
-        return type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() : type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900) + 100 + mediator.getBlockchainHeight() :
-                type == TransactionType.Update.MINOR ? -1 : 0;//assume not mandatory update
+        return
+                //update is NOW on currentBlockchainHeight
+                type == TransactionType.Update.CRITICAL ? mediator.getBlockchainHeight() :
+
+                        // update height = currentBlockchainHeight + random number in range [100.1000]
+                        type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900)
+                                + 100 + mediator.getBlockchainHeight() :
+
+                                //assume that current update is not mandatory
+                                type == TransactionType.Update.MINOR ? -1 : 0;
+    }
+
+    private static class UpdaterCoreHolder {
+        private static final UpdaterCore HOLDER_INSTANCE = new UpdaterCore();
     }
 
 }

@@ -18,7 +18,13 @@ package apl.updater;
 import apl.Attachment;
 
 public class AuthorityChecker {
+    private static class AuthorityCheckerHolder {
+        private static final AuthorityChecker HOLDER_INSTANCE = new AuthorityChecker();
+    }
 
+    public static AuthorityChecker getInstance() {
+        return AuthorityCheckerHolder.HOLDER_INSTANCE;
+    }
     public boolean checkSignature(Attachment.UpdateAttachment attachment) {
         return true;
     }

@@ -626,6 +626,7 @@ var NRS = (function(NRS, $, undefined) {
         delete NRS.accountLedgerPagination;
         delete NRS.blocksPagination;
 		
+
 		NRS.removeAccountLocal();
 		
 

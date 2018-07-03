@@ -162,20 +162,10 @@
     </section>
 
     <section class="content">
-        <div id="scheduled_transactions_error_message" class="callout callout-danger" style="display:none"></div>
-    
-        <form class="tabbable" id="get_scheduled_transactions">
-            <div class="form-group">
-                <label for="send_send_admin_password">Administrator Password</label>
-                <div class="input-group" id="send_send_admin_password">
-                    <input type="password" name="secretWord" class="form-control">
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary" style="margin-bottom: 20px;">Enter</button>
-        </form>
+        <button class="btn btn-primary" id="open_scheduled_transactions">Enter Password</button>
         
         <div class="panel panel-default panel-box" id="scheduled_transactions_box">
-            <div class="data-container data-loading">
+            <div class="data-container data-loading" style="margin-top: 30px">
                 <table class="table table-striped" id="scheduled_transactions_table">
                     <thead>
                     <tr>

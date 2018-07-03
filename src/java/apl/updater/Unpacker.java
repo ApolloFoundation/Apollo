@@ -8,6 +8,14 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class Unpacker {
+
+    private static class UnpackerHolder {
+        private static final Unpacker HOLDER_INSTANCE = new Unpacker();
+    }
+
+    public static Unpacker getInstance() {
+        return UnpackerHolder.HOLDER_INSTANCE;
+    }
     public Path unpack(Path jarFilePath) throws IOException {
         Path destDirPath = Files.createTempDirectory("apollo-unpacked");
         JarFile jar = new JarFile(jarFilePath.toString());

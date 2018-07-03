@@ -757,8 +757,8 @@ final class TransactionImpl implements Transaction {
         if (type.canHaveRecipient()) {
             json.put("recipient", Long.toUnsignedString(recipientId));
         }
-        json.put("amountATM", amountATM);
-        json.put("feeATM", feeATM);
+        json.put("amountNQT", amountATM);
+        json.put("feeNQT", feeATM);
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
         }
@@ -808,8 +808,8 @@ final class TransactionImpl implements Transaction {
             int timestamp = ((Long) transactionData.get("timestamp")).intValue();
             short deadline = ((Long) transactionData.get("deadline")).shortValue();
             byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
-            long amountATM = Convert.parseLong(transactionData.get("amountATM"));
-            long feeATM = Convert.parseLong(transactionData.get("feeATM"));
+            long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
+            long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
             byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
             Long versionValue = (Long) transactionData.get("version");

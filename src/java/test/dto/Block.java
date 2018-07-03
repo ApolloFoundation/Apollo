@@ -1,4 +1,20 @@
-package test;
+package test.dto;
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
+
 
 import java.util.List;
 import java.util.Objects;
@@ -53,7 +69,9 @@ public class Block {
     @Override
     public int hashCode() {
 
-        return Objects.hash(previousBlockHash, payloadLength, totalAmountATM, generationSignature, generator, generatorPublicKey, baseTarget, payloadHash, generatorRS, numberOfTransactions, blockSignature, transactions, version, totalFeeATM, previousBlock, cumulativeDifficulty, block, height, timestamp);
+        return Objects.hash(previousBlockHash, payloadLength, totalAmountATM, generationSignature, generator, generatorPublicKey, baseTarget,
+                payloadHash, generatorRS, numberOfTransactions, blockSignature, transactions, version, totalFeeATM, previousBlock, cumulativeDifficulty, block, height, timestamp);
+
     }
 
     public String getPreviousBlockHash() {

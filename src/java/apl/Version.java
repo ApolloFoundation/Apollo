@@ -16,6 +16,9 @@ public class Version implements Comparable<Version> {
     public Version() {
     }
 
+    public Version(String versionString) {
+        parseVersion(this, versionString);
+    }
     @Override
     public String toString() {
         return majorVersion +"."+ intermediateVersion + "." + minorVersion;
@@ -62,12 +65,15 @@ public class Version implements Comparable<Version> {
     }
 
     public static Version from(String versionString) {
+        return parseVersion(new Version(), versionString);
+    }
+
+    private static Version parseVersion(Version v, String versionString) {
         Objects.requireNonNull(versionString);
         if (!versionString.matches("\\d+\\.\\d+\\.\\d+")) {
             throw new RuntimeException("Incorrect versionString :  " + versionString);
         }
         String[] versionNumbers = versionString.split("\\.");
-        Version v = new Version();
         v.setMajorVersion(Integer.parseInt(versionNumbers[0]));
         v.setIntermediateVersion(Integer.parseInt(versionNumbers[1]));
         v.setMinorVersion(Integer.parseInt(versionNumbers[2]));
