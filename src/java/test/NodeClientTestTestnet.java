@@ -18,6 +18,8 @@ package test;
 
 
 import apl.AccountLedger;
+import apl.crypto.Crypto;
+import apl.util.Convert;
 import apl.TransactionType;
 import apl.Version;
 import apl.updater.Architecture;
@@ -247,7 +249,52 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     }
 
     @Test
-    public void testGetPrivateBlockTransactionsWithPagination() throws Exception {
+    public void testGetEncryptedPrivateBlockTransactions() throws Exception {
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        List<Transaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(publicKey));
+        checkList(transactionsList);
+        Assert.assertEquals(4, transactionsList.size());
+        transactionsList.forEach(transaction -> {
+            Assert.assertEquals(PRIVATE_BLOCK_HEIGHT, transaction.getHeight());
+            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
+        });
+        List<Transaction> publicTransactions = client.getBlockTransactionsList(url, PRIVATE_BLOCK_HEIGHT);
+        Assert.assertEquals(4, publicTransactions.size());
+        publicTransactions.forEach(transactionsList::remove);
+        Assert.assertEquals(2, transactionsList.size());
+        transactionsList.forEach(transaction -> Assert.assertTrue(transaction.isPrivate()));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testGetEncryptedTransactionWithoutPublicKeyAndSecretPhrase() throws Exception {
+        client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, null, null);
+    }
+
+    @Test
+    public void testGetEncryptedPrivateBlockchainTransactionsWithPagination() throws Exception {
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        List<Transaction> transactionsList1 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, 9L, secretPhrase, Convert.toHexString(publicKey));
+        checkList(transactionsList1);
+        Assert.assertEquals(5, transactionsList1.size());
+        checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
+
+        List<Transaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, null, 10L, secretPhrase,  Convert.toHexString(publicKey));
+        checkList(transactionsList2);
+        Assert.assertEquals(11, transactionsList2.size());
+        Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
+        checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
+
+        List<Transaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, null, secretPhrase,  Convert.toHexString(publicKey));
+        checkList(transactionsList3);
+        Assert.assertTrue(transactionsList3.size() > 5);
+        Assert.assertTrue(transactionsList3.containsAll(transactionsList1));
+        checkAddress(transactionsList3, PRIVATE_TRANSACTION_SENDER);
+    }
+
+    @Test
+    public void testGetEncryptedPrivateBlockTransactionsWithPagination() throws Exception {
         List<Transaction> transactionsList1 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), null, 5L, 9L);
         checkList(transactionsList1);
         Assert.assertEquals(5, transactionsList1.size());
@@ -290,7 +337,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         checkList(accountTransactions);
         Assert.assertEquals(15, accountTransactions.size());
         accountTransactions.forEach(transaction -> {
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
+            transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER);
             Assert.assertFalse(transaction.isPrivate());
         });
     }
