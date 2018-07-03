@@ -17,8 +17,8 @@
 
 package apl.db;
 
-import apl.Constants;
 import apl.Apl;
+import apl.Constants;
 import apl.util.Logger;
 
 import java.sql.Connection;
@@ -47,6 +47,14 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         this.multiversion = multiversion;
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
         this.fullTextSearchColumns = fullTextSearchColumns;
+    }
+
+     protected EntityDbTable(String table, boolean multiversion, DbKey.Factory<T> dbKeyFactory) {
+         super(table);
+         this.multiversion = multiversion;
+         this.dbKeyFactory = dbKeyFactory;
+         this.defaultSort = "";
+         this.fullTextSearchColumns = "";
     }
 
     protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;

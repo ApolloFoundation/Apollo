@@ -63,6 +63,10 @@ public abstract class DbVersion {
 
     }
 
+    protected DbVersion(BasicDb db) {
+        init(db);
+    }
+
     protected void apply(String sql) {
         Connection con = null;
         Statement stmt = null;

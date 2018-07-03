@@ -52,10 +52,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -663,13 +660,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     public void rollback() {
         Thread thread = Thread.currentThread();
         synchronized(tableUpdates) {
-            Iterator<TableUpdate> it = tableUpdates.iterator();
-            while (it.hasNext()) {
-                TableUpdate update = it.next();
-                if (update.getThread() == thread) {
-                    it.remove();
-                }
-            }
+            tableUpdates.removeIf(update -> update.getThread() == thread);
         }
     }
 
@@ -741,7 +732,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     private void indexRow(Object[] row) throws SQLException {
         indexLock.readLock().lock();
         try {
-            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (Long)row[dbColumn];
+            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + row[dbColumn];
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = System.currentTimeMillis();
@@ -770,7 +761,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * @throws  SQLException            Unable to delete row
      */
     private void deleteRow(Object[] row) throws SQLException {
-        String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (Long)row[dbColumn];
+        String query = tableName + ";" + columnNames.get(dbColumn) + ";" + row[dbColumn];
         indexLock.readLock().lock();
         try {
             indexWriter.deleteDocuments(new Term("_QUERY", query));
@@ -968,6 +959,12 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             this.oldRow = oldRow;
             this.newRow = newRow;
         }
+        protected TableUpdate(Thread thread) {
+            this.thread = thread;
+            this.oldRow = new Object[]{};
+            this.newRow = new Object[] {};
+        }
+
 
         /**
          * Return the transaction thread
