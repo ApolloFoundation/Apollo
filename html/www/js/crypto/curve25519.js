@@ -212,7 +212,6 @@ var curve25519 = function () {
     function unpack (x, m) {
         for (var i = 0; i < KEY_SIZE; i += 2)
             x[i / 2] = m[i] & 0xFF | ((m[i + 1] & 0xFF) << 8);
-        debugger;
     }
 
     // TODO : migrate to bigInt
