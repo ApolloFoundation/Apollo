@@ -82,6 +82,12 @@ public final class Apl {
         }
     }
 
+    private static volatile boolean shutdown = false;
+
+    public static boolean isShutdown() {
+        return shutdown;
+    }
+
     private static void redirectSystemStreams(String streamName) {
         String isStandardRedirect = System.getProperty("apl.redirect.system." + streamName);
         Path path = null;
@@ -343,6 +349,7 @@ public final class Apl {
         Logger.logShutdownMessage(Apl.APPLICATION + " server " + VERSION + " stopped.");
         Logger.shutdown();
         runtimeMode.shutdown();
+        Apl.shutdown = true;
     }
 
 
