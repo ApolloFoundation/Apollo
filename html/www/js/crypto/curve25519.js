@@ -212,7 +212,6 @@ var curve25519 = function () {
     function unpack (x, m) {
         for (var i = 0; i < KEY_SIZE; i += 2)
             x[i / 2] = m[i] & 0xFF | ((m[i + 1] & 0xFF) << 8);
-        debugger;
     }
 
     // TODO : migrate to bigInt
@@ -514,80 +513,78 @@ var curve25519 = function () {
             mul(y, t1, t0); /* 2^255 - 21	*/
         }
     }
-
-    function recipJava (y, x, sqrtassist) {
-        var t0 = createUnpackedArray();
-        var t1 = createUnpackedArray();
-        var t2 = createUnpackedArray();
-        var t3 = createUnpackedArray();
-        var t4 = createUnpackedArray();
-
-        /* the chain for x^(2^255-21) is straight from djb's implementation */
-        var i;
-
-        /* zaplatka ot Andreq Boyarskiy i Hreihorii Chaikovskyi, enjoy */
-        mulJava(t1, x , x ); /*  2 === 2 * 1	*/
-        mulJava(t2, t1, t1); /*  4 === 2 * 2	*/
-        mulJava(t0, t2, t2); /*  8 === 2 * 4	*/
-        mulJava(t2, t0, x); /*  9 === 8 + 1	*/
-        mulJava(t0, t2, t1); /* 11 === 9 + 2	*/
-        mulJava(t1, t0, t0); /* 22 === 2 * 11	*/
-        mulJava(t3, t1, t2); /* 31 === 22 + 9 === 2^5   - 2^0	*/
-        mulJava(t1, t3, t3); /* 2^6   - 2^1	*/
-        mulJava(t2, t1, t1); /* 2^7   - 2^2	*/
-        mulJava(t1, t2, t2); /* 2^8   - 2^3	*/
-        mulJava(t2, t1, t1); /* 2^9   - 2^4	*/
-        mulJava(t1, t2, t2); /* 2^10  - 2^5	*/
-        mulJava(t2, t1, t3); /* 2^10  - 2^0	*/
-        mulJava(t1, t2, t2); /* 2^11  - 2^1	*/
-        mulJava(t3, t1, t1); /* 2^12  - 2^2	*/
-        for (i = 1; i < 5; i++) {
-            mulJava(t1, t3, t3);
-            mulJava(t3, t1, t1);
-        } /* t3 */ /* 2^20  - 2^10	*/
-        mulJava(t1, t3, t2); /* 2^20  - 2^0	*/
-        mulJava(t3, t1, t1); /* 2^21  - 2^1	*/
-        mulJava(t4, t3, t3); /* 2^22  - 2^2	*/
-        for (i = 1; i < 10; i++) {
-            mulJava(t3, t4, t4);
-            mulJava(t4, t3, t3);
-        } /* t4 */ /* 2^40  - 2^20	*/
-        mulJava(t3, t4, t1); /* 2^40  - 2^0	*/
-        for (i = 0; i < 5; i++) {
-            mulJava(t1, t3, t3);
-            mulJava(t3, t1, t1);
-        } /* t3 */ /* 2^50  - 2^10	*/
-        mulJava(t1, t3, t2); /* 2^50  - 2^0	*/
-        mulJava(t2, t1, t1); /* 2^51  - 2^1	*/
-        mulJava(t3, t2, t2); /* 2^52  - 2^2	*/
-        for (i = 1; i < 25; i++) {
-            mulJava(t2, t3, t3);
-            mulJava(t3, t2, t2);
-        } /* t3 */ /* 2^100 - 2^50 */
-        mulJava(t2, t3, t1); /* 2^100 - 2^0	*/
-        mulJava(t3, t2, t2); /* 2^101 - 2^1	*/
-        mulJava(t4, t3, t3); /* 2^102 - 2^2	*/
-        for (i = 1; i < 50; i++) {
-            mulJava(t3, t4, t4);
-            mulJava(t4, t3, t3);
-        } /* t4 */ /* 2^200 - 2^100 */
-        mulJava(t3, t4, t2); /* 2^200 - 2^0	*/
-        for (i = 0; i < 25; i++) {
-            mulJava(t4, t3, t3);
-            mulJava(t3, t4, t4);
-        } /* t3 */ /* 2^250 - 2^50	*/
-        mulJava(t2, t3, t1); /* 2^250 - 2^0	*/
-        mulJava(t1, t2, t2); /* 2^251 - 2^1	*/
-        mulJava(t2, t1, t1); /* 2^252 - 2^2	*/
-        if (sqrtassist !== 0) {
-            mulJava(y, x, t2); /* 2^252 - 3 */
-        } else {
-            mulJava(t1, t2, t2); /* 2^253 - 2^3	*/
-            mulJava(t2, t1, t1); /* 2^254 - 2^4	*/
-            mulJava(t1, t2, t2); /* 2^255 - 2^5	*/
-            mulJava(y, t1, t0); /* 2^255 - 21	*/
-        }
-    }
+	
+	function recipJava (y, x, sqrtassist) {
+		var t0 = createUnpackedArray();
+		var t1 = createUnpackedArray();
+		var t2 = createUnpackedArray();
+		var t3 = createUnpackedArray();
+		var t4 = createUnpackedArray();
+		
+		/* the chain for x^(2^255-21) is straight from djb's implementation */
+		var i;
+		sqrJava(t1, x); /*  2 === 2 * 1	*/
+		sqrJava(t2, t1); /*  4 === 2 * 2	*/
+		sqrJava(t0, t2); /*  8 === 2 * 4	*/
+		mulJava(t2, t0, x); /*  9 === 8 + 1	*/
+		mulJava(t0, t2, t1); /* 11 === 9 + 2	*/
+		sqrJava(t1, t0); /* 22 === 2 * 11	*/
+		mulJava(t3, t1, t2); /* 31 === 22 + 9 === 2^5   - 2^0	*/
+		sqrJava(t1, t3); /* 2^6   - 2^1	*/
+		sqrJava(t2, t1); /* 2^7   - 2^2	*/
+		sqrJava(t1, t2); /* 2^8   - 2^3	*/
+		sqrJava(t2, t1); /* 2^9   - 2^4	*/
+		sqrJava(t1, t2); /* 2^10  - 2^5	*/
+		mulJava(t2, t1, t3); /* 2^10  - 2^0	*/
+		sqrJava(t1, t2); /* 2^11  - 2^1	*/
+		sqrJava(t3, t1); /* 2^12  - 2^2	*/
+		for (i = 1; i < 5; i++) {
+			sqrJava(t1, t3);
+			sqrJava(t3, t1);
+		} /* t3 */ /* 2^20  - 2^10	*/
+		mulJava(t1, t3, t2); /* 2^20  - 2^0	*/
+		sqrJava(t3, t1); /* 2^21  - 2^1	*/
+		sqrJava(t4, t3); /* 2^22  - 2^2	*/
+		for (i = 1; i < 10; i++) {
+			sqrJava(t3, t4);
+			sqrJava(t4, t3);
+		} /* t4 */ /* 2^40  - 2^20	*/
+		mulJava(t3, t4, t1); /* 2^40  - 2^0	*/
+		for (i = 0; i < 5; i++) {
+			sqrJava(t1, t3);
+			sqrJava(t3, t1);
+		} /* t3 */ /* 2^50  - 2^10	*/
+		mulJava(t1, t3, t2); /* 2^50  - 2^0	*/
+		sqrJava(t2, t1); /* 2^51  - 2^1	*/
+		sqrJava(t3, t2); /* 2^52  - 2^2	*/
+		for (i = 1; i < 25; i++) {
+			sqrJava(t2, t3);
+			sqrJava(t3, t2);
+		} /* t3 */ /* 2^100 - 2^50 */
+		mulJava(t2, t3, t1); /* 2^100 - 2^0	*/
+		sqrJava(t3, t2); /* 2^101 - 2^1	*/
+		sqrJava(t4, t3); /* 2^102 - 2^2	*/
+		for (i = 1; i < 50; i++) {
+			sqrJava(t3, t4);
+			sqrJava(t4, t3);
+		} /* t4 */ /* 2^200 - 2^100 */
+		mulJava(t3, t4, t2); /* 2^200 - 2^0	*/
+		for (i = 0; i < 25; i++) {
+			sqrJava(t4, t3);
+			sqrJava(t3, t4);
+		} /* t3 */ /* 2^250 - 2^50	*/
+		mulJava(t2, t3, t1); /* 2^250 - 2^0	*/
+		sqrJava(t1, t2); /* 2^251 - 2^1	*/
+		sqrJava(t2, t1); /* 2^252 - 2^2	*/
+		if (sqrtassist !== 0) {
+			mulJava(y, x, t2); /* 2^252 - 3 */
+		} else {
+			sqrJava(t1, t2); /* 2^253 - 2^3	*/
+			sqrJava(t2, t1); /* 2^254 - 2^4	*/
+			sqrJava(t1, t2); /* 2^255 - 2^5	*/
+			mulJava(y, t1, t0); /* 2^255 - 21	*/
+		}
+	}
 
     /* checks if x is "negative", requires reduced input */
     function is_negative (x) {
@@ -618,7 +615,7 @@ var curve25519 = function () {
         var t;
         t = (x_4.multiply(x_4))
             .add((bigInt(2).multiply((x_0.multiply(x_8)).add(x_2.multiply(x_6)))))
-            .add((bigInt(38).multiply(x_9*x_9)))
+            .add((bigInt(38).multiply(x_9.multiply(x_9))))
             .add((bigInt(4).multiply((x_1.multiply(x_7)).add(x_3.multiply(x_5)))));
 
 
@@ -641,9 +638,9 @@ var curve25519 = function () {
         x2._1 = (t.and((bigInt(1).shiftLeft(25).minus(1))));
         t = (t.shiftRight(25))
             .add((bigInt(19).multiply((x_6.multiply(x_6)))))
-            .add((bigInt(2 ).multiply((x_0.multiply(x_2)) + (x_1.multiply(x_1)))))
+            .add((bigInt(2 ).multiply((x_0.multiply(x_2)).add(x_1.multiply(x_1)))))
             .add((bigInt(38).multiply( x_4.multiply(x_8))))
-            .add((bigInt(76).multiply((x_3.multiply(x_9)) + (x_5.multiply(x_7)))));
+            .add((bigInt(76).multiply((x_3.multiply(x_9)).add(x_5.multiply(x_7)))));
 
         x2._2 = (t.and((bigInt(1).shiftLeft(26).minus(1))));
         t = (t.shiftRight(26))
@@ -1602,6 +1599,8 @@ var curve25519 = function () {
         sign: sign,
         verify: verify,
         keygen: keygen,
+	    long10 : long10,
+	    sqrJava : sqrJava,
         coreJava: coreJava,
         generateSharedKey : generateSharedKey
 
@@ -1609,8 +1608,5 @@ var curve25519 = function () {
 }();
 
 if (isNode) {
-    module.exports = curve25519;
-
+	module.exports = curve25519;
 }
-
-

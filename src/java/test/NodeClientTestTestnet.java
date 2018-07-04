@@ -18,12 +18,12 @@ package test;
 
 
 import apl.AccountLedger;
+import apl.crypto.Crypto;
+import apl.util.Convert;
 import apl.TransactionType;
 import apl.Version;
 import apl.updater.Architecture;
 import apl.updater.Platform;
-import apl.crypto.Crypto;
-import apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;

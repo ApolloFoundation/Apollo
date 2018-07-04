@@ -179,11 +179,9 @@ var NRS = (function(NRS, $, undefined) {
                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
                         }
 
-
-
                          if (that.items.length < 15 && that.page == 1) {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
-					 } else {
+					               } else {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
                          }
 
@@ -900,7 +898,6 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
-
 		if ('encryptedTransaction' in t) {
             var options = {
 
