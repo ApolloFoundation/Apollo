@@ -15,14 +15,11 @@
 
 package test;
 
-<<<<<<< HEAD
 import apl.Version;
 import apl.updater.Architecture;
 import apl.updater.Platform;
-=======
 import apl.crypto.Crypto;
 import apl.util.Convert;
->>>>>>> APL-25
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
