@@ -20,6 +20,8 @@ package apl.addons;
 import apl.Apl;
 import apl.util.Logger;
 
+import java.util.Map;
+
 public final class BeforeShutdown implements AddOn {
 
     final String beforeShutdownScript = Apl.getStringProperty("apl.beforeShutdownScript");
@@ -30,9 +32,13 @@ public final class BeforeShutdown implements AddOn {
             try {
                 Runtime.getRuntime().exec(beforeShutdownScript);
             } catch (Exception e) {
-                Logger.logShutdownMessage("Failed to run after start script: " + beforeShutdownScript, e);
+                Logger.logShutdownMessage("Failed to run before shutdown script: " + beforeShutdownScript, e);
             }
         }
     }
 
+    @Override
+    public void processRequest(Map<String, String> params) {
+        Logger.logInfoMessage("Shutdown:", params.get("shutdownMessage"));
+    }
 }

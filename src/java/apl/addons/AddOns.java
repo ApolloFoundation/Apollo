@@ -52,6 +52,10 @@ public final class AddOns {
                 public void checkConnect(String host, int port, Object context) {
                     // Allow all connections
                 }
+                @Override
+                public Object getSecurityContext() {
+                    return super.getSecurityContext();
+                }
             });
         }
         addOns.forEach(addOn -> {
