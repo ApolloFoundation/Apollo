@@ -1662,6 +1662,11 @@ var NRS = (function(NRS, $, undefined) {
 	    });
 	    
     });
+    
+    $(document).on('click',  '#open_send_modal_footer', function() {
+        $("#send_modal_footer_alert").hide();
+        $("#send_money_private_modal").find('.modal-footer').removeClass('disabled');
+    });
 
 	return NRS;
 }(NRS || {}, jQuery));

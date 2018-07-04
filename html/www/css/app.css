@@ -70,6 +70,16 @@ a:focus {
 .wrapper {
   min-height: 100%;
 }
+.alert.alert-info {
+  background-color: #3498db;
+}
+
+*.disabled {
+  filter: grayscale(100%);
+  pointer-events: none;
+  
+}
+
 /* Header */
 body > .header {
   position: absolute;
