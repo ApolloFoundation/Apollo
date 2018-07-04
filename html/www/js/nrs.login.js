@@ -215,10 +215,6 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.switchAccount = function(account) {
-        delete NRS.myTransactionPagination;
-        delete NRS.accountLedgerPagination;
-        delete NRS.blocksPagination;
-
 		// Reset security related state
 		NRS.resetEncryptionState();
 		NRS.setServerPassword(null);
@@ -242,18 +238,18 @@ var NRS = (function(NRS, $, undefined) {
 		NRS.forgingStatus = NRS.constants.UNKNOWN;
 		NRS.isAccountForging = false;
 		NRS.selectedContext = null;
-
+		
 		// Reset plugins state
 		NRS.activePlugins = false;
 		NRS.numRunningPlugins = 0;
 		$.each(NRS.plugins, function(pluginId) {
 			NRS.determinePluginLaunchStatus(pluginId);
 		});
-
+		
 		// Return to the dashboard and notify the user
 		NRS.goToPage("dashboard");
         NRS.login(false, account, function() {
-            $.growl($.t("switched_to_account", { account: account }))
+            $.growl($.t("switched_to_account", { account: account }));
         }, true);
 	};
 
@@ -340,6 +336,7 @@ var NRS = (function(NRS, $, undefined) {
 	 
 		
 		console.log("login calling getBlockchainStatus");
+  
 		NRS.sendRequest("getBlockchainStatus", {}, function(response) {
 			if (response.errorCode) {
 			    NRS.connectionError(response.errorDescription);
@@ -376,6 +373,8 @@ var NRS = (function(NRS, $, undefined) {
 				if (!isPassphraseLogin && response.errorCode == 5) {
 					NRS.account = NRS.escapeRespStr(response.account);
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
+					
+					
 				}
 				if (!NRS.account) {
 					$.growl($.t("error_find_account_id", { accountRS: (data && data.account ? String(data.account).escapeHTML() : "") }), {
@@ -392,7 +391,8 @@ var NRS = (function(NRS, $, undefined) {
                     NRS.spinner.stop();
 					return;
 				}
-
+				
+				
 				NRS.sendRequest("getAccountPublicKey", {
 					"account": NRS.account
 				}, function(response) {
@@ -538,8 +538,37 @@ var NRS = (function(NRS, $, undefined) {
 
 					NRS.updateApprovalRequests();
 				});
+				
+				if (NRS.myTransactionPagination && NRS.accountLedgerPagination && NRS.blocksPagination) {
+					NRS.myTransactionPagination.unsetPrivate();
+					NRS.accountLedgerPagination.unsetPrivate();
+					NRS.blocksPagination       .unsetPrivate();
+					
+					NRS.myTransactionPagination.getItems(1, NRS.account);
+					NRS.accountLedgerPagination.getItems(1, NRS.account);
+					NRS.blocksPagination       .getItems(1, NRS.account);
+					
+					NRS.myTransactionPagination.getItems(0, NRS.account);
+					NRS.accountLedgerPagination.getItems(0, NRS.account);
+					NRS.blocksPagination       .getItems(0, NRS.account);
+					
+				}
 			});
 		});
+	
+	    if (NRS.myTransactionPagination && NRS.accountLedgerPagination && NRS.blocksPagination) {
+		    NRS.myTransactionPagination.unsetPrivate();
+		    NRS.accountLedgerPagination.unsetPrivate();
+		    NRS.blocksPagination       .unsetPrivate();
+		
+		    NRS.myTransactionPagination.getItems(1, NRS.account);
+		    NRS.accountLedgerPagination.getItems(1, NRS.account);
+		    NRS.blocksPagination       .getItems(1, NRS.account);
+		
+		    NRS.myTransactionPagination.getItems(0, NRS.account);
+		    NRS.accountLedgerPagination.getItems(0, NRS.account);
+		    NRS.blocksPagination       .getItems(0, NRS.account);
+	    }
 	};
 
 	$("#logout_button_container").on("show.bs.dropdown", function() {
@@ -549,6 +578,7 @@ var NRS = (function(NRS, $, undefined) {
 	});
 
 	NRS.initPluginWarning = function() {
+		
 		if (NRS.activePlugins) {
 			var html = "";
 			html += "<div style='font-size:13px;'>";
@@ -622,13 +652,21 @@ var NRS = (function(NRS, $, undefined) {
     };
 
 	NRS.logout = function(stopForging) {
-        delete NRS.myTransactionPagination;
-        delete NRS.accountLedgerPagination;
-        delete NRS.blocksPagination;
-		
 
-		NRS.removeAccountLocal();
+		NRS.myTransactionPagination.unsetPrivate();
+		NRS.accountLedgerPagination.unsetPrivate();
+		NRS.blocksPagination       .unsetPrivate();
 		
+		NRS.myTransactionPagination.getItems();
+		NRS.accountLedgerPagination.getItems();
+		NRS.blocksPagination       .getItems();
+
+    delete NRS.myTransactionPagination;
+    delete NRS.accountLedgerPagination;
+    delete NRS.blocksPagination;
+	
+		NRS.removeAccountLocal();
+	
 
         if (stopForging && NRS.forgingStatus == NRS.constants.FORGING) {
 			var stopForgingModal = $("#stop_forging_modal");

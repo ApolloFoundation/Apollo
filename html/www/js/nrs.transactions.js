@@ -35,12 +35,15 @@ var NRS = (function(NRS, $, undefined) {
         this.passPhrase = '';
         this.items = null;
         this.target = target;
-		this.itemsFiltration = $(this.target).parent().parent();
-		this.filter = null;
-		this.publicKey  = null;
-		this.privateKey = null;
-		this.sharedKey = null;
-		this.serverKey = null;
+		    this.itemsFiltration = $(this.target).parent().parent();
+		    this.filter = null;
+
+		    this.account = null;
+
+		    this.publicKey  = null;
+		    this.privateKey = null;
+		    this.sharedKey = null;
+		    this.serverKey = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
@@ -67,6 +70,7 @@ var NRS = (function(NRS, $, undefined) {
 
             this.getItems();
 		};
+        
         this.initPaginations = function() {
             var html = '';
 
@@ -76,25 +80,43 @@ var NRS = (function(NRS, $, undefined) {
 
             $('[data-transactions-pagination]').html(html);
         };
+        
         this.setPrivate = function(passphrase) {
             this.isPrivate = true;
             this.passPhrase = passphrase;
             this.getItems();
         };
-        this.getItems = function(page) {
+        
+        this.unsetPrivate = function() {
+	        this.isPrivate  = false;
+	        this.passPhrase = '';
+	        this.getItems();
+	
+        };
+        
+        this.getItems = function(page, place) {
         	if (page) {
                 this.page = page;
             }
 
+            if (place) {
+	            this.account = place;
+            }
+            
             var indicator = '';
             indicator += parseInt(this.page * 15 - 14) + ' &hellip; ' + parseInt(this.page * 15);
             $(this.target).parent().find('[data-transactions-pagination]').find('.page-nav').html(indicator);
 
             var url = API;
-
-            url += 'account=' + NRS.account + '&';
-
-            if (this.isPrivate) {
+			
+            if (place) {
+	            url += 'account=' + place + '&';
+	
+            } else {
+	            url += 'account=' + NRS.account + '&';
+            }
+	
+	        if (this.isPrivate) {
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
                     url += 'requestType=getPrivateBlockchainTransactions&';
                     url += 'publicKey=' + this.publicKey + '&';
@@ -130,9 +152,8 @@ var NRS = (function(NRS, $, undefined) {
 
             url += 'firstIndex=' + parseInt((this.page) * 14 - 14) + '&';
             url += 'lastIndex='  + (this.page) * 14 + '&';
-
-            console.log(url);
-
+	
+	        
             var that = this;
             var $el = $("#" + NRS.currentPage + "_contents");
             $el = $el.selector;
@@ -148,10 +169,16 @@ var NRS = (function(NRS, $, undefined) {
                     var rows = "";
                     that.items = JSON.parse(data);
 
-                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
-                         that.items = JSON.parse(data).transactions;
 
-                         that.serverKey = JSON.parse(data).serverPublicKey;
+                    if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
+                        that.items = JSON.parse(data).transactions;
+	
+	                    if (that.items.length < 15 && that.page == 1) {
+                            $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
+						        } else {
+                            $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
+                        }
+
 
 
                          if (that.items.length < 15 && that.page == 1) {
@@ -168,8 +195,8 @@ var NRS = (function(NRS, $, undefined) {
                          if ($el === '#transactions_contents') {
                              NRS.dataLoaded(rows);
 					 }
-
                          NRS.addPhasingInfoToTransactionRows(that.items);
+                         return that.items;
                      }
                      if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
                          that.items = JSON.parse(data).entries;
@@ -221,6 +248,7 @@ var NRS = (function(NRS, $, undefined) {
                 }
             });
         };
+        
         this.validatePagimation = function(url, action) {
         	if (action === 'prev') {
                 $.ajax({
@@ -283,6 +311,7 @@ var NRS = (function(NRS, $, undefined) {
                 }
 			}
 		};
+        
         this.renderItems = function() {
             var indicator = '';
 
@@ -293,16 +322,83 @@ var NRS = (function(NRS, $, undefined) {
 
             this.getItems();
 		};
+  
 		this.logPulling = function() {
 			var that = this;
         	setInterval(function() {
                 that.getItems();
             }, 60000)
 		};
+		
+		this.destroyTable = function() {
+			$('#transactions_table').find('tbody').empty();
+			
+			var $el = $("#" + NRS.currentPage + "_contents");
+			$el = $el.selector;
+			
+			$.ajax({
+				url: '/apl?account=' + NRS.account + '&requestType=getBlockchainTransactions&type=null&firstIndex=0&lastIndex=14&',
+				type: 'GET',
+				cache: false,
+				success: function(data) {
+					
+					var rows = "";
+					
+					if (that.items.length < 15 && that.page == 1) {
+						$(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
+					} else {
+						$(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
+					}
+					
+					for (var i = 0; i < that.items.length; i++) {
+						var transaction = that.items[i];
+						transaction.confirmed = true;
+						rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+					}
+					
+					if ($el === '#transactions_contents') {
+						NRS.dataLoaded(rows);
+					}
+					
+					NRS.addPhasingInfoToTransactionRows(that.items);
+					
+					$('#transactions_table').find('tbody').html(rows);
+					
+					if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
+						that.items = JSON.parse(data).transactions;
+					}
+					if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
+						that.items = JSON.parse(data).entries;
+						
+						var decimalParams = NRS.getLedgerNumberOfDecimals(that.items);
+						for (var i = 0; i < that.items.length; i++) {
+							var entry = that.items[i];
+							rows += NRS.getLedgerEntryRow(entry, decimalParams);
+						}
+						
+						if ($el === '#ledger_contents') {
+							NRS.dataLoaded(rows);
+						}
+					}
+					if (that.transactionType === 'getBlocks') {
+						that.items = JSON.parse(data).blocks;
+						
+						if ($el === '#blocks_contents') {
+							NRS.blocksPageLoaded(that.items);
+							
+						}
+					}
+				},
+				error: function(data) {
+					console.log('err: ', data);
+				}
+			});
+		};
 
 		// initialisation
         this.renderItems();
-		this.initPaginations();
+	      this.initPaginations();
+      
         this.renderItems();
         this.logPulling();
     };
@@ -421,11 +517,28 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
 	NRS.getInitialTransactions = function(decimals) {
-        NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
-        NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
-        NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
 
-        NRS.sendRequest("getBlockchainTransactions", {
+		NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
+		NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
+		NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
+		
+		
+		if (NRS.myTransactionPagination && NRS.accountLedgerPagination && NRS.blocksPagination) {
+			console.log('made switch ');
+			
+			NRS.myTransactionPagination.destroyTable();
+			
+			NRS.myTransactionPagination.unsetPrivate();
+			NRS.accountLedgerPagination.unsetPrivate();
+			NRS.blocksPagination       .unsetPrivate();
+			
+			NRS.myTransactionPagination.getItems(1, NRS.account);
+			NRS.accountLedgerPagination.getItems(1, NRS.account);
+			NRS.blocksPagination       .getItems(1, NRS.account);
+		}
+		
+		NRS.sendRequest("getBlockchainTransactions", {
+
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -440,10 +553,12 @@ var NRS = (function(NRS, $, undefined) {
 					transactions.push(transaction);
 					transactionIds.push(transaction.transaction);
 				}
+				
 				NRS.getUnconfirmedTransactions(function() {
 					NRS.loadPage('dashboard');
 				});
 			} else {
+				
 				NRS.getUnconfirmedTransactions(function() {
 					NRS.loadPage('dashboard');
 				});
@@ -1105,35 +1220,35 @@ var NRS = (function(NRS, $, undefined) {
 		};
 
         if (transactions) {
-            if (transactions && transactions.length) {
-                var decimals = NRS.getTransactionsAmountDecimals(transactions);
-                for (var i = 0; i < transactions.length; i++) {
-                    var transaction = transactions[i];
-                    transaction.confirmed = true;
-                    rows += NRS.getTransactionRowHTML(transaction, false, decimals);
-                }
-
-                NRS.dataLoaded(rows);
-                NRS.addPhasingInfoToTransactionRows(transactions);
-            } else {
-                NRS.dataLoaded(rows);
-            }
+            // if (transactions && transactions.length) {
+            //     var decimals = NRS.getTransactionsAmountDecimals(transactions);
+            //     for (var i = 0; i < transactions.length; i++) {
+            //         var transaction = transactions[i];
+            //         transaction.confirmed = true;
+            //         rows += NRS.getTransactionRowHTML(transaction, false, decimals);
+            //     }
+            //
+            //     NRS.dataLoaded(rows);
+            //     NRS.addPhasingInfoToTransactionRows(transactions);
+            // } else {
+            //     NRS.dataLoaded(rows);
+            // }
         } else {
-            NRS.sendRequest("getBlockchainTransactions+", params, function(response) {
-                if (response.transactions && response.transactions.length) {
-                    var decimals = NRS.getTransactionsAmountDecimals(response.transactions);
-                    for (var i = 0; i < response.transactions.length; i++) {
-                        var transaction = response.transactions[i];
-                        transaction.confirmed = true;
-                        rows += NRS.getTransactionRowHTML(transaction, false, decimals);
-                    }
-
-                    NRS.dataLoaded(rows);
-                    NRS.addPhasingInfoToTransactionRows(response.transactions);
-                } else {
-                    NRS.dataLoaded(rows);
-                }
-            });
+            // NRS.sendRequest("getBlockchainTransactions+", params, function(response) {
+            //     if (response.transactions && response.transactions.length) {
+            //         var decimals = NRS.getTransactionsAmountDecimals(response.transactions);
+            //         for (var i = 0; i < response.transactions.length; i++) {
+            //             var transaction = response.transactions[i];
+            //             transaction.confirmed = true;
+            //             rows += NRS.getTransactionRowHTML(transaction, false, decimals);
+            //         }
+            //
+            //         NRS.dataLoaded(rows);
+            //         NRS.addPhasingInfoToTransactionRows(response.transactions);
+            //     } else {
+            //         NRS.dataLoaded(rows);
+            //     }
+            // });
         }
 	};
 
