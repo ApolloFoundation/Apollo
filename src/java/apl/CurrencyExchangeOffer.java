@@ -317,4 +317,20 @@ public abstract class CurrencyExchangeOffer {
         limit -= delta;
         supply -= delta;
     }
+
+    @Override
+    public String toString() {
+        return "CurrencyExchangeOffer{" +
+                "id=" + id +
+                ", currencyId=" + currencyId +
+                ", accountId=" + accountId +
+                ", rateATM=" + rateATM +
+                ", limit=" + limit +
+                ", supply=" + supply +
+                ", expirationHeight=" + expirationHeight +
+                ", creationHeight=" + creationHeight +
+                ", transactionIndex=" + transactionIndex +
+                ", transactionHeight=" + transactionHeight +
+                '}';
+    }
 }

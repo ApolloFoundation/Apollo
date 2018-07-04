@@ -413,4 +413,7 @@ final class BlockDb {
         }
     }
 
+    public static void deleteLastBlock() {
+        deleteBlocksFromHeight(BlockchainImpl.getInstance().getHeight());
+    }
 }

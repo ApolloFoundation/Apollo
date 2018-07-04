@@ -257,6 +257,27 @@ public final class Currency {
         this.decimals = rs.getByte("decimals");
     }
 
+    private Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description, int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
+        this.currencyId = currencyId;
+        this.dbKey = dbKey;
+        this.accountId = accountId;
+        this.name = name;
+        this.code = code;
+        this.description = description;
+        this.type = type;
+        this.maxSupply = maxSupply;
+        this.reserveSupply = reserveSupply;
+        this.creationHeight = creationHeight;
+        this.issuanceHeight = issuanceHeight;
+        this.minReservePerUnitATM = minReservePerUnitATM;
+        this.minDifficulty = minDifficulty;
+        this.maxDifficulty = maxDifficulty;
+        this.ruleset = ruleset;
+        this.algorithm = algorithm;
+        this.decimals = decimals;
+        this.initialSupply = initialSupply;
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
                 + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "

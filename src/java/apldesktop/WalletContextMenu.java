@@ -39,7 +39,7 @@ class WalletContextMenu implements EventHandler<ContextMenuEvent> {
 
     @Override
     public void handle(ContextMenuEvent event) {
-        @SuppressWarnings("deprecation")
+//        @SuppressWarnings("deprecation")
         final Iterator<Window> windows = Window.impl_getWindows(); // May not work in Java 9
         while (windows.hasNext()) {
             // access the context menu window
@@ -68,5 +68,9 @@ class WalletContextMenu implements EventHandler<ContextMenuEvent> {
                 return;
             }
         }
+    }
+
+    public WalletContextMenu() {
+        super();
     }
 }

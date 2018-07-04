@@ -1678,16 +1678,7 @@ public final class Account {
         checkBalance(this.id, this.balanceATM, this.unconfirmedBalanceATM);
         save();
         listeners.notify(this, Event.BALANCE);
-        if (AccountLedger.mustLogEntry(this.id, false)) {
-            if (feeATM != 0) {
-                AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.APL_BALANCE, null, feeATM, this.balanceATM - amountATM));
-            }
-            if (amountATM != 0) {
-                AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.APL_BALANCE, null, amountATM, this.balanceATM));
-            }
-        }
+        logEntryConfirmed(event, eventId, amountATM, feeATM);
     }
 
     void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
@@ -1706,6 +1697,10 @@ public final class Account {
         if (event == null) {
             return;
         }
+        logEntryUnconfirmed(event, eventId, amountATM, feeATM);
+    }
+
+    private void logEntryUnconfirmed(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (AccountLedger.mustLogEntry(this.id, true)) {
             if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
@@ -1737,16 +1732,11 @@ public final class Account {
         if (event == null) {
             return;
         }
-        if (AccountLedger.mustLogEntry(this.id, true)) {
-            if (feeATM != 0) {
-                AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, this.unconfirmedBalanceATM - amountATM));
-            }
-            if (amountATM != 0) {
-                AccountLedger.logEntry(new LedgerEntry(event, eventId, this.id,
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, this.unconfirmedBalanceATM));
-            }
-        }
+        logEntryUnconfirmed(event, eventId, amountATM, feeATM);
+        logEntryConfirmed(event, eventId, amountATM, feeATM);
+    }
+
+    private void logEntryConfirmed(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (AccountLedger.mustLogEntry(this.id, false)) {
             if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, this.id,

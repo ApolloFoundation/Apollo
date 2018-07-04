@@ -329,15 +329,7 @@ public final class DebugTrace {
     }
 
     private void undoCrowdfunding(Currency currency) {
-        try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-            for (CurrencyFounder founder : founders) {
-                Map<String,String> founderMap = getValues(founder.getAccountId(), false);
-                founderMap.put("currency", Long.toUnsignedString(currency.getId()));
-                founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM())));
-                founderMap.put("event", "undo distribution");
-                log(founderMap);
-            }
-        }
+        logFounders(currency);
         Map<String,String> map = getValues(currency.getAccountId(), false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
         map.put("currency units", String.valueOf(-currency.getInitialSupply()));
@@ -346,8 +338,8 @@ public final class DebugTrace {
     }
 
     private void delete(Currency currency) {
-        long accountId = 0;
-        long units = 0;
+        long accountId;
+        long units;
         if (!currency.isActive()) {
             accountId = currency.getAccountId();
             units = currency.getCurrentSupply();
@@ -369,20 +361,24 @@ public final class DebugTrace {
                 map.put("currency cost", String.valueOf(Math.multiplyExact(units, currency.getCurrentReservePerUnitATM())));
             }
             if (!currency.isActive()) {
-                try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-                    for (CurrencyFounder founder : founders) {
-                        Map<String,String> founderMap = getValues(founder.getAccountId(), false);
-                        founderMap.put("currency", Long.toUnsignedString(currency.getId()));
-                        founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM())));
-                        founderMap.put("event", "undo distribution");
-                        log(founderMap);
-                    }
-                }
+                logFounders(currency);
             }
         }
         map.put("currency units", String.valueOf(-units));
         map.put("event", "currency delete");
         log(map);
+    }
+
+    private void logFounders(Currency currency) {
+        try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
+            for (CurrencyFounder founder : founders) {
+                Map<String,String> founderMap = getValues(founder.getAccountId(), false);
+                founderMap.put("currency", Long.toUnsignedString(currency.getId()));
+                founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM())));
+                founderMap.put("event", "undo distribution");
+                log(founderMap);
+            }
+        }
     }
 
     private void currencyMint(CurrencyMint.Mint mint) {

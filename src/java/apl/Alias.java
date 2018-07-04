@@ -75,6 +75,15 @@ public final class Alias {
             return buyerId;
         }
 
+        @Override
+        public String toString() {
+            return "Offer{" +
+                    "priceATM=" + priceATM +
+                    ", buyerId=" + buyerId +
+                    ", aliasId=" + aliasId +
+                    ", dbKey=" + dbKey +
+                    '}';
+        }
     }
 
     private static final DbKey.LongKeyFactory<Alias> aliasDbKeyFactory = new DbKey.LongKeyFactory<Alias>("id") {
@@ -273,4 +282,15 @@ public final class Alias {
         return accountId;
     }
 
+    @Override
+    public String toString() {
+        return "Alias{" +
+                "accountId=" + accountId +
+                ", id=" + id +
+                ", dbKey=" + dbKey +
+                ", aliasName='" + aliasName + '\'' +
+                ", aliasURI='" + aliasURI + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }

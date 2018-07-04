@@ -68,6 +68,15 @@ public final class AssetDividend {
         return listeners.removeListener(listener, eventType);
     }
 
+    public static boolean addListener(Listener<AssetDividend> listener) {
+        return addListener(listener, Event.ASSET_DIVIDEND);
+    }
+
+    public static boolean removeListener(Listener<AssetDividend> listener) {
+        return removeListener(listener, Event.ASSET_DIVIDEND);
+    }
+
+
     public static DbIterator<AssetDividend> getAssetDividends(long assetId, int from, int to) {
         return assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }

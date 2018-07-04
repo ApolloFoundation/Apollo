@@ -651,4 +651,9 @@ class AplDbVersion extends DbVersion {
                         + ", probably trying to run older code on newer database");
         }
     }
+
+    @Override
+    protected void apply(String sql) {
+        super.apply(sql);
+    }
 }
