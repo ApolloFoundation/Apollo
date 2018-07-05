@@ -17,6 +17,10 @@
 
 var NRS = (function (NRS) {
 
+    NRS.QRCOdeLoader = function() {
+        console.log('loaded QR');
+    };
+
     NRS.scanQRCode = function(readerId, callback) {
         if (!NRS.isScanningAllowed()) {
             $.growl($.t("scanning_not_allowed"));

@@ -15,6 +15,11 @@
  *                                                                            *
  ******************************************************************************/
 
+function addressLoader() {
+    console.log('address loaded');
+}
+
+
 var converters = function() {
 	var charToNibble = {};
 	var nibbleToChar = [];

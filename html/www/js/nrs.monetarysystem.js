@@ -21,6 +21,10 @@
  */
 var NRS = (function (NRS, $, undefined) {
 
+    NRS.monetarSsytemLoader = function() {
+        console.log('loaded monetar system');
+    };
+
     NRS.isExchangeable = function (type) {
         return type & NRS.constants.CURRENCY_TYPES["EXCHANGEABLE"];
     };

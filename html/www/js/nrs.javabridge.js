@@ -24,6 +24,9 @@ var NRS = (function (NRS) {
     NRS.growl = function(msg) {
         $.growl(msg);
     };
+    NRS.javabridgeLoader = function() {
+        console.log('loaded javabridge loader');
+    };
 
     return NRS;
 }(NRS || {}, jQuery));

@@ -40,6 +40,10 @@
                 var context = canvas.getContext('2d');
                 var localMediaStream;
 
+                function htmlQRLoader() {
+                    console.log('QR loader');
+                }
+
                 var scan = function() {
                     if (!currentElem.is(":visible")) {
                         return; // This stops the scan

@@ -31,6 +31,9 @@ var NRS = (function(NRS, $) {
 		$("#hallmark_modal_button").text($.t("generate")).data("form", "generate_hallmark_form");
 	});
 
+    NRS.modasHalmarkLoader = function() {
+        console.log('loaded modsals Halmark');
+    };
 	NRS.forms.markHost = function() {
         return {};
 	};

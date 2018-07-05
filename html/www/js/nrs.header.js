@@ -20,6 +20,10 @@
  */
 var NRS = (function(NRS, $) {
 
+    NRS.headerLoader = function() {
+        console.log('loaded header');
+    };
+
     function widgetVisibility(widget, depends) {
         if (NRS.isApiEnabled(depends)) {
             widget.show();

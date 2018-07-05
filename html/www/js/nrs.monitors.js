@@ -27,8 +27,10 @@ var NRS = (function(NRS, $) {
 
     function getErrorMessage(response) {
         return response.errorDescription || response.errorMessage || response.error;
-    } 
-
+    }
+    NRS.monitorsLoader = function() {
+        console.log('loaded monitors');
+    };
     NRS.jsondata = NRS.jsondata||{};
 
     NRS.jsondata.monitors = function (response) {

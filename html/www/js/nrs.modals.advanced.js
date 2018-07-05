@@ -25,7 +25,9 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.setAdvancedModalPassword = function (password) {
 		_password = password;
 	};
-
+    NRS.modalAdvanced = function() {
+        console.log('loaded modal Advanced');
+    };
 	NRS.showRawTransactionModal = function(transaction) {
         if (transaction.unsignedTransactionBytes && !transaction.transactionBytes) {
             $("#raw_transaction_modal_unsigned_transaction_bytes").val(transaction.unsignedTransactionBytes);

@@ -20,6 +20,9 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function(NRS, $) {
+    NRS.modalsForgingLoader = function() {
+        console.log('loaded modals forging');
+    };
 	NRS.forms.startForgingComplete = function(response, data) {
 		if ("deadline" in response) {
             setForgingIndicatorStatus(NRS.constants.FORGING);

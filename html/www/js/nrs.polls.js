@@ -23,6 +23,10 @@ var NRS = (function(NRS, $, undefined) {
 	var requestedPoll;
 	var viewingPollBookmark;
 
+    NRS.poolsLoader = function() {
+        console.log('loaded pools');
+    };
+
 	NRS.resetPollsState = function () {
 		_voteCache = {};
 		requestedPoll = "";
