@@ -21,3 +21,7 @@ RemoteNodesManager.prototype.REMOTE_NODES_BOOTSTRAP =
     "peers": [
     ]
 };
+
+function remoteDashboradLoader() {
+    console.log('loaded remote dashboard');
+}

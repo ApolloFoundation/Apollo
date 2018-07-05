@@ -21,6 +21,9 @@
 var NRS = (function(NRS, $, undefined) {
 	NRS.fetchingModalData = false;
 	NRS.modalStack = [];
+    NRS.modalsLoader = function() {
+        console.log('loaded modals');
+    };
 	var isFakeWarningDisplayed;
 
 	// save the original function object

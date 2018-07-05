@@ -25,7 +25,9 @@ var NRS = (function (NRS) {
     var isLocalHost = false;
     var remoteNode = null;
     var isLoadedOverHttps = ("https:" == window.location.protocol);
-
+    NRS.featureDescriptionLoader = function() {
+        console.log('loaded feature description');
+    };
     NRS.isPrivateIP = function (ip) {
         if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
             return false;

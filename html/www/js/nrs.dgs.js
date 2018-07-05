@@ -26,7 +26,9 @@ var NRS = (function(NRS, $) {
 		"searchStr": ""
 	};
     var missingImage = "img/no_image_available.png";
-
+    NRS.dgsLoader = function() {
+        console.log('loaded dgs');
+    };
 	NRS.getMarketplaceItemHTML = function(good) {
 		var html = "";
 		var id = 'good_'+ NRS.escapeRespStr(good.goods);

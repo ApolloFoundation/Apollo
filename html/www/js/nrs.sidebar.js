@@ -25,8 +25,11 @@ var NRS = (function(NRS, $) {
 		if ($(this).hasClass("no-context")) {
 			return;
 		}
+        NRS.sidebarLoader = function() {
+            console.log('loaded sidebar');
+        };
 
-		NRS.selectedContext = $(this);
+        NRS.selectedContext = $(this);
 		NRS.selectedContext.addClass("context");
 		$(document).on("click.contextmenu", NRS.closeContextMenu);
 		var contextMenu = $(this).data("context");

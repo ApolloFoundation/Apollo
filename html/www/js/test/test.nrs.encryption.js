@@ -15,6 +15,10 @@
  *                                                                            *
  ******************************************************************************/
 
+function appicationtestLoader() {
+    console.log('test loaded');
+}
+
 QUnit.module("nrs.encryption");
 
 QUnit.test("generatePublicKey", function (assert) {

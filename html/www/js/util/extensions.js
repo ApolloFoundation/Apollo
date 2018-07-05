@@ -23,6 +23,11 @@ var __entityMap = {
 	"'": '&#39;'
 };
 
+function extensionsLoader() {
+    console.log('address loaded');
+}
+
+
 String.prototype.escapeHTML = function() {
 	return String(this).replace(/[&<>"']/g, function(s) {
 		return __entityMap[s];

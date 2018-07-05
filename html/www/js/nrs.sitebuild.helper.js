@@ -34,7 +34,10 @@
             NRS[action]();
         }
     }
-
+    var testSiteBuilderHelper = 'testSiteBuilderHelper';
+    function testSiteBuilderHelperController() {
+        console.log(testSiteBuilderHelper);
+    }
 
     var total = parseInt(progress.attr('data-total'));
     var done = parseInt(progress.attr('data-done')) + 1;

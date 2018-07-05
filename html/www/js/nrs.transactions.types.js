@@ -21,6 +21,10 @@
 var NRS = (function(NRS, $, undefined) {
     // If you add new mandatory attributes, please make sure to add them to
     // NRS.loadTransactionTypeConstants as well (below)
+    NRS.transactionsTypesLoader = function() {
+        console.log('loaded transaction types');
+    };
+
     NRS.transactionTypes = {
         0: {
             'title': "Payment",

@@ -31,7 +31,9 @@ var NRS = (function(NRS, $) {
 			NRS.showPeerModal(peer);
 		});
 	});
-
+    NRS.modalsPeersLoader = function() {
+        console.log('loaded modals peers');
+    };
     NRS.showPeerModal = function(peer) {
         try {
             var peerDetails = $.extend({}, peer);

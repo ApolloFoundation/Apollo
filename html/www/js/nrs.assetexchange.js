@@ -28,7 +28,9 @@ var NRS = (function (NRS, $, undefined) {
     var assetTradeHistoryType;
     var currentAssetID;
     var selectedApprovalAsset;
-
+    NRS.assetexchangeLoader = function() {
+        console.log('loaded assetexchange');
+    };
     NRS.resetAssetExchangeState = function () {
         assets = [];
         assetIds = [];

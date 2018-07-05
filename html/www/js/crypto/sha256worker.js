@@ -29,6 +29,9 @@ function fileSlice(file, start, length) {
   }
 }
 
+function sha256loader() {
+	consolo.log('sha256 loaded');
+}
 self.onmessage = function(event) {
   var file = event.data.file;
   var reader = new FileReaderSync();

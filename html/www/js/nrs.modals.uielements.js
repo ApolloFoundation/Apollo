@@ -20,6 +20,10 @@
  */
 var NRS = (function(NRS, $, undefined) {
 
+    NRS.modalsTransactionsLoader = function() {
+        console.log('loaded modals');
+    };
+
 	var _delay = (function(){
   		var timer = 0;
   		return function(callback, ms){

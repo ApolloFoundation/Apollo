@@ -22,7 +22,9 @@ var NRS = (function(NRS, $) {
     function isErrorResponse(response) {
         return response.errorCode || response.errorDescription || response.errorMessage || response.error;
     }
-
+    NRS.shuffingLoader = function() {
+        console.log('loaded shuffing');
+    };
     NRS.jsondata = NRS.jsondata||{};
 
     NRS.jsondata.shuffling = function (response, shufflers, amountDecimals) {

@@ -20,6 +20,9 @@
  */
 var NRS = (function(NRS, $) {
 
+    NRS.accountcontrolLoader = function() {
+        console.log('loaded accountcontrol');
+    };
     NRS.forms.setPhasingOnlyControlComplete = function(response, data) {
         //NRS.getAccountInfo();
     };

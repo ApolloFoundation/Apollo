@@ -19,6 +19,10 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $) {
+    NRS.recipmentLoader = function() {
+        console.log('loaded recipment');
+    };
+
 	NRS.automaticallyCheckRecipient = function() {
         var $recipientFields = $("#send_money_recipient, #transfer_asset_recipient, #transfer_currency_recipient, " +
         "#send_message_recipient, #add_contact_account_id, #update_contact_account_id, #lease_balance_recipient, " +

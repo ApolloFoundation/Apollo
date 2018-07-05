@@ -25,6 +25,10 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.activePlugins = false;
     NRS.numRunningPlugins = 0;
 
+    NRS.poolingsLoader = function() {
+        console.log('loaded poolings');
+    };
+
 	NRS.checkForPluginManifest = function(pluginId) {
 		var manifest = undefined;
 		jQuery.ajaxSetup({ async: false });
