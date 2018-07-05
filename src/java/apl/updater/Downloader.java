@@ -40,10 +40,10 @@ public class Downloader {
     private Downloader() {}
 
     public static Downloader getInstance() {
-        return DownloaderHolder.HOLDER_INSTANCE;
+        return DownloaderHolder.INSTANCE;
     }
 
-    private Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
+    Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
         Path tempDir = Files.createTempDirectory(tempDirPrefix);
         Path downloadedFilePath = tempDir.resolve(Paths.get(downloadedFileName));
         try {
@@ -127,6 +127,6 @@ public class Downloader {
     }
 
     private static class DownloaderHolder {
-        private static final Downloader HOLDER_INSTANCE = new Downloader();
+        private static final Downloader INSTANCE = new Downloader();
     }
 }

@@ -579,9 +579,12 @@ public final class Apl {
 
     private static void initUpdater() {
         try {
-            Class.forName("apl.updater.UpdaterCore");
+            Class<?> aClass = Class.forName("apl.updater.UpdaterCore");
+            //force load lazy updater instance
+            aClass.getMethod("getInstance").invoke(null);
+
         }
-        catch (ClassNotFoundException e) {
+        catch (Exception e) {
             Logger.logErrorMessage("Cannot load Updater!", e);
         }
     }

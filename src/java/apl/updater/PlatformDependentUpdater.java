@@ -32,7 +32,7 @@ public class PlatformDependentUpdater {
 
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
     public static PlatformDependentUpdater getInstance() {
-        return PlatformDpendentUpdaterHolder.HOLDER_INSTANCE;
+        return PlatformDpendentUpdaterHolder.INSTANCE;
     }
 
     public void continueUpdate(Path updateDirectory, Platform platform) {
@@ -86,6 +86,6 @@ public class PlatformDependentUpdater {
     }
 
     private static class PlatformDpendentUpdaterHolder {
-        private static final PlatformDependentUpdater HOLDER_INSTANCE = new PlatformDependentUpdater();
+        private static final PlatformDependentUpdater INSTANCE = new PlatformDependentUpdater();
     }
 }
