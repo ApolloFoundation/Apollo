@@ -177,10 +177,6 @@ var NRS = (function (NRS) {
         return NRS.settings.shape_shift_url;
     };
 
-    NRS.getChangellyUrl = function() {
-        return NRS.settings.changelly_url;
-    };
-
     NRS.isForgingSupported = function() {
         return !NRS.isMobileApp() && !(NRS.state && NRS.state.apiProxy);
     };
