@@ -1213,10 +1213,13 @@ public final class JSONData {
     public static JSONObject encryptedTransaction(Transaction transaction, byte[] sharedKey) {
         JSONObject encryptedTransaction = new JSONObject();
         JSONObject transactionJson = JSONData.transaction(false, transaction);
+
         byte[] encrypted = prepareToAesDecryption(Crypto.aesEncrypt(transactionJson.toJSONString().getBytes(), sharedKey));
+
         encryptedTransaction.put("encryptedTransaction", Convert.toHexString(encrypted));
         return encryptedTransaction;
     }
+
 
     public static JSONObject encryptedLedgerEntry(JSONObject ledgerEntryJson, byte[] sharedKey) {
         JSONObject encryptedLedgerEntry = new JSONObject();

@@ -66,6 +66,7 @@ curve25519_clamp = function(curve) {
   return curve;
 }
 
+/* return 1 or 0 */
 curve25519_getbit = function(curve, c) {
   return ~~(curve[~~(c / 16)] / Math.pow(2, c % 16)) % 2;
 }
@@ -661,10 +662,17 @@ function curve25519_sum(r, s, t1, t2, t3, t4, x_1) {
   curve25519_mulmodp(s, r1, x_1);								//  s = (t2 * t3 - t1 * t4)^2 * x_1
 }
 
+
+/*
+* FOR SHARED SECRET
+* f -> private key <bytes>
+* c -> public key  <bytes>
+* s -> null ???
+* */
 function curve25519_(f, c, s) {
-  var j, a, x_1, q, fb, counter=0; 
-  var t = new Array(16), t1 = new Array(16), t2 = new Array(16), t3 = new Array(16), t4 = new Array(16);
-  var sb = new Int8Array(32);
+  var j, a, x_1, q, fb, counter = 0;
+  var t =     new Array(16), t1 = new Array(16), t2 = new Array(16), t3 = new Array(16), t4 = new Array(16);
+  var sb =    new Int8Array(32);
   var temp1 = new Int8Array(32);
   var temp2 = new Int8Array(64);
   var temp3 = new Int8Array(64);
@@ -696,10 +704,12 @@ function curve25519_(f, c, s) {
   var t1 = new Array(16), t2 = new Array(16);
   var t3 = new Array(16), t4 = new Array(16);
   var fi;
-  while (n >= 0) 
+  while (n >= 0)
   {
     fi = curve25519_getbit(f, n);
-    if (fi == 0) 
+
+    // if fi == 0
+    if (fi == 0)
     {
        curve25519_prep(t1, t2, a[0], a[1]); 
        curve25519_prep(t3, t4, q[0], q[1]); 
@@ -779,6 +789,137 @@ function curve25519_(f, c, s) {
   }
 
   return q[0];
+}
+
+function curve25519_java(f, c, s) {
+
+    console.log(c);
+
+    var j, a, x_1, q, fb, counter = 0;
+    var t =     new Array(16), t1 = new Array(16), t2 = new Array(16), t3 = new Array(16), t4 = new Array(16);
+    var sb =    new Int8Array(32);
+    var temp1 = new Int8Array(32);
+    var temp2 = new Int8Array(64);
+    var temp3 = new Int8Array(64);
+
+    x_1 = c;
+    q = [ curve25519_one(), curve25519_zero() ];
+    a = [ x_1, curve25519_one() ];
+
+    var n = 255;
+
+    console.log();
+    console.log();
+    console.log();
+    console.log();
+    console.log();
+    console.log();
+    console.log();
+
+    /**********************************************************************
+     * BloodyRookie:                                                      *
+     * Given f = f0*2^0 + f1*2^1 + ... + f255*2^255 and Basepoint a=9/1   *
+     * calculate f*a by applying the Montgomery ladder (const time algo): *
+     * r0 := 0 (point at infinity)                                        *
+     * r1 := a                                                            *
+     * for i from 255 to 0 do                                             *
+     *   if fi = 0 then                                                   *
+     *      r1 := r0 + r1                                                 *
+     *      r0 := 2r0                                                     *
+     *   else                                                             *
+     *      r0 := r0 + r1                                                 *
+     *      r1 := 2r1                                                     *
+     *                                                                    *
+     * Result: r0 = x-coordinate of f*a                                   *
+     **********************************************************************/
+    var r0 = new Array(new Array(16), new Array(16));
+    var r1 = new Array(new Array(16), new Array(16));
+    var t1 = new Array(16), t2 = new Array(16);
+    var t3 = new Array(16), t4 = new Array(16);
+    var fi;
+    while (n >= 0)
+    {
+        fi = curve25519_getbit(f, n);
+        if (fi == 0)
+        {
+            curve25519_prep(t1, t2, a[0], a[1]);
+            curve25519_prep(t3, t4, q[0], q[1]);
+            curve25519_sum(r1[0], r1[1], t1, t2, t3, t4, x_1);
+            curve25519_dbl(r0[0], r0[1], t3, t4);
+        }
+        else
+        {
+            curve25519_prep(t1, t2, q[0], q[1]);
+            curve25519_prep(t3, t4, a[0], a[1]);
+            curve25519_sum(r0[0], r0[1], t1, t2, t3, t4, x_1);
+            curve25519_dbl(r1[0], r1[1], t3, t4);
+        }
+        q = r0; a = r1;
+        n--;
+    }
+    curve25519_invmodp(t, q[1], 0);
+    curve25519_mulmodp(t1, q[0], t);
+    q[0] = curve25519_cpy16(t1);
+
+    // q[0]=x-coordinate of k*G=:Px
+    // q[1]=z-coordinate of k*G=:Pz
+    // a = q + G = P + G
+    if (s != null)
+    {
+        /*************************************************************************
+         * BloodyRookie: Recovery of the y-coordinate of point P:                *
+         *                                                                       *
+         * If P=(x,y), P1=(x1, y1), P2=(x2,y2) and P2 = P1 + P then              *
+         *                                                                       *
+         * y1 = ((x1 * x + 1)(x1 + x + 2A) - 2A - (x1 - x)^2 * x2)/2y            *
+         *                                                                       *
+         * Setting P2=Q, P1=P and P=G in the above formula we get                *
+         *                                                                       *
+         * Py =  ((Px * Gx + 1) * (Px + Gx + 2A) - 2A - (Px - Gx)^2 * Qx)/(2*Gy) *
+         *    = -((Qx + Px + Gx + A) * (Px - Gx)^2 - Py^2 - Gy^2)/(2*Gy)         *
+         *************************************************************************/
+        t = curve25519_cpy16(q[0]);
+        curve25519_x_to_y2(t1, t);								// t1 = Py^2
+        curve25519_invmodp(t3, a[1], 0);
+        curve25519_mulmodp(t2, a[0], t3);							// t2 = (P+G)x = Qx
+        curve25519_addmodp(t4, t2, t);							// t4 =  Qx + Px
+        curve25519_addmodp(t2, t4, curve25519_486671());			// t2 = Qx + Px + Gx + A
+        curve25519_submodp(t4, t, curve25519_nine());				// t4 = Px - Gx
+        curve25519_sqrmodp(t3, t4);								// t3 = (Px - Gx)^2
+        curve25519_mulmodp(t4, t2, t3);							// t4 = (Qx + Px + Gx + A) * (Px - Gx)^2
+        curve25519_submodp(t, t4, t1);							//  t = (Qx + Px + Gx + A) * (Px - Gx)^2 - Py^2
+        curve25519_submodp(t4, t, curve25519_39420360());			// t4 = (Qx + Px + Gx + A) * (Px - Gx)^2 - Py^2 - Gy^2
+        curve25519_mulmodp(t1, t4, curve25519_r2y())				// t1 = ((Qx + Px + Gx + A) * (Px - Gx)^2 - Py^2 - Gy^2)/(2Gy) = -Py
+        fb = curve25519_convertToByteArray(f);
+        j = curve25519_isNegative(t1);
+        if (j != 0)
+        {
+            /***
+             * Py is positiv, so just copy
+             */
+            sb = curve25519_cpy32(fb);
+        }
+        else
+        {
+            /***
+             * Py is negative:
+             * We will take s = -f^-1 mod q instead of s=f^-1 mod q
+             */
+            curve25519_mula_small(sb, curve25519_order_times_8, 0, fb, 32, -1);
+        }
+
+        temp1 = curve25519_cpy32(curve25519_order);
+        temp1 = curve25519_egcd32(temp2, temp3, sb, temp1);
+        sb = curve25519_cpy32(temp1);
+        if ((sb[31] & 0x80)!=0)
+        {
+            curve25519_mula_small(sb, sb, 0, curve25519_order, 32, 1);
+        }
+        var stmp = curve25519_convertToShortArray(sb);
+        curve25519_fillShortArray(stmp, s);
+    }
+
+    return q[0];
 }
 
 curve25519_keygen = function(s, curve) {

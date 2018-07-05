@@ -36,10 +36,12 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+
         ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
         if (data == null) {
             return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }
+
         int height = ParameterParser.getHeight(req);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
@@ -62,10 +64,12 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
             Block block = Apl.getBlockchain().getBlockAtHeight(height);
             block.getTransactions().forEach(transaction -> {
                 if (transaction.getType() == TransactionType.Payment.PRIVATE) {
+
                     if (transaction.getSenderId() != data.getAccountId() && transaction.getRecipientId() != data.getAccountId()) {
                         transactions.add(JSONData.transaction(true, transaction));
                     } else if (data.isEncrypt()){
                         transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
+
                     } else {
                         transactions.add(JSONData.transaction(false, transaction));
                     }
@@ -79,8 +83,10 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
                     false, firstIndex, lastIndex, false, false, true)) {
                 while (iterator.hasNext()) {
                     Transaction transaction = iterator.next();
+
                     if (TransactionType.Payment.PRIVATE == transaction.getType() && data.isEncrypt()) {
                         transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
+
                     } else {
                         transactions.add(JSONData.transaction(false, transaction));
                     }
