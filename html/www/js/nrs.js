@@ -476,7 +476,7 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			NRS.getBlock(lastBlock, NRS.handleNewBlocks);
 			if (NRS.account) {
-				NRS.getNewTransactions();
+				// NRS.getNewTransactions();
 				NRS.updateApprovalRequests();
 			}
 		} else {
