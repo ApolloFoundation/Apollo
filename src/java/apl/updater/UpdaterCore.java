@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class UpdaterCore {
     private final UpdaterMediator mediator = UpdaterMediator.getInstance();
@@ -31,7 +32,7 @@ public class UpdaterCore {
     private final AuthorityChecker checker = new AuthorityChecker();
     private final Unpacker unpacker = new Unpacker();
     private final PlatformDependentUpdater platformDependentUpdater = new PlatformDependentUpdater();
-
+    private Transaction updateTransaction;
     //todo: consider opportunity to move listener to UpdaterMediator
     private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
 
@@ -56,33 +57,75 @@ public class UpdaterCore {
         Logger.logInfoMessage("Blockchain processor was shutdown");
     }
 
-    public void triggerUpdate(Transaction transaction) {
-        TransactionType type = transaction.getType();
-        Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-        mediator.setUpdateData(true, getUpdateHeightFromType(type), transaction.getHeight(), type.getName(), attachment.getAppVersion());
+    public void startUpdate() {
+        new Thread(()-> triggerUpdate(updateTransaction), "Apollo updater thread").start();
+    }
+
+    public void triggerUpdate(Transaction updateTransaction) {
+        TransactionType type = updateTransaction.getType();
+        Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) updateTransaction.getAttachment();
+        int updateHeight = getUpdateHeightFromType(type);
+        mediator.setUpdateData(true, updateHeight, updateTransaction.getHeight(), attachment.getLevel(), attachment.getAppVersion());
+        mediator.setUpdateState(UpdateInfo.UpdateState.IN_PROGRESS);
         if (type == TransactionType.Update.CRITICAL) {
             //stop forging and peer server immediately
-            stopForgingAndBlockAcceptance();
-            //Downloader downloads update package
-            Path path = downloader.tryDownload(attachment.getUrl(), attachment.getHash());
-            if (path != null) {
-                try {
-                    Path unpackedDirPath = unpacker.unpack(path);
-                    platformDependentUpdater.continueUpdate(unpackedDirPath);
-                }
-                catch (IOException e) {
-                    Logger.logErrorMessage("Cannot unpack file: " + path.toString());
-                }
+            Logger.logWarningMessage("Starting critical update now!");
+            if (tryUpdate(attachment)) {
+                Logger.logInfoMessage("Critical update was successfully installed");
+                mediator.setUpdateState(UpdateInfo.UpdateState.FINISHED);
             } else {
-                Logger.logErrorMessage("FAILURE! Update file was not downloaded");
-                //some important actions (notify user, update state, etc.)
+                Logger.logErrorMessage("FAILURE! Cannot install critical update.");
+                mediator.setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
             }
         } else if (type == TransactionType.Update.IMPORTANT) {
-            //stop forging and peer server at random block (100...1000)
+            boolean updated = false;
+            while (!updated) {
+                updated = scheduleUpdate(updateHeight, attachment);
+                updateHeight = getUpdateHeightFromType(type);
+                if (!updated) {
+                    Logger.logErrorMessage("Cannot install scheduled important update. Trying to schedule new update attempt at " + updateHeight + " height");
+                    mediator.setUpdateHeight(updateHeight);
+                    mediator.setUpdateState(UpdateInfo.UpdateState.RE_PLANNING);
+                }
+            }
+            Logger.logInfoMessage("Important update was installed successfully!");
+            mediator.setUpdateState(UpdateInfo.UpdateState.FINISHED);
         } else if (type == TransactionType.Update.MINOR) {
-            //dont stop forging and peer server. Show user notification, which represents that minor update is available  now
+            Logger.logInfoMessage("Minor update is available. Required start by user");
+            mediator.setUpdateState(UpdateInfo.UpdateState.REQUIRED_START);
         }
-        Logger.logInfoMessage("Starting update to version: " + attachment.getAppVersion());
+    }
+
+    private boolean scheduleUpdate(int updateHeight, Attachment.UpdateAttachment attachment) {
+        Logger.logInfoMessage("Update estimated height: ", updateHeight);
+        while (mediator.getBlockchainHeight() < updateHeight) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+            }
+            catch (InterruptedException e) {
+                Logger.logErrorMessage("Update thread was awakened");
+            }
+        }
+        Logger.logInfoMessage("Starting scheduled update. CurrentHeight: " + mediator.getBlockchainHeight() + " updateHeight: " + updateHeight);
+        return tryUpdate(attachment);
+              }
+
+    private boolean tryUpdate(Attachment.UpdateAttachment attachment) {
+        Logger.logInfoMessage("Update to version: " + attachment.getAppVersion());
+        stopForgingAndBlockAcceptance();
+        //Downloader downloads update package
+        Path path = downloader.tryDownload(attachment.getUrl(), attachment.getHash());
+        if (path != null) {
+            try {
+                Path unpackedDirPath = unpacker.unpack(path);
+                platformDependentUpdater.continueUpdate(unpackedDirPath, attachment.getPlatform());
+                return true;
+            }
+            catch (IOException e) {
+                Logger.logErrorMessage("Cannot unpack file: " + path.toString());
+            }
+        }
+        return false;
     }
 
     private void processTransactions(List<? extends Transaction> transactions) {
@@ -96,8 +139,11 @@ public class UpdaterCore {
                         Platform currentPlatform = Platform.current();
                         Architecture currentArchitecture = Architecture.current();
                         if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                            new Thread(() -> triggerUpdate(transaction), "Apollo updater thread").start();
-                            mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+                            this.updateTransaction = transaction;
+                            startUpdate();
+                            if (attachment.getLevel() != Level.MINOR) {
+                                mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+                            }
                         }
                     }
                 }

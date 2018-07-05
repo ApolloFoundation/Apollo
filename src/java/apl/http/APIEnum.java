@@ -293,7 +293,8 @@ public enum APIEnum {
     GET_PRIVATE_UNCONFIRMED_TRANSACTIONS("getPrivateUnconfirmedTransactions", GetPrivateUnconfirmedTransactions.instance),
     GET_PRIVATE_ACCOUNT_LEDGER_ENTRY("getPrivateAccountLedgerEntry", GetPrivateAccountLedgerEntry.instance),
     SEND_UPDATE_TRANSACTION("sendUpdateTransaction", SendUpdateTransaction.instance),
-    GET_UPDATE_STATUS("getUpdateStatus", GetUpdateStatus.instance);
+    GET_UPDATE_STATUS("getUpdateStatus", GetUpdateStatus.instance),
+    START_MINOR_UPDATE("startMinorUpdate", StartMinorUpdate.instance);
 
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
