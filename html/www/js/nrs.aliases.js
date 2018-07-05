@@ -20,7 +20,9 @@
  */
 var NRS = (function (NRS, $, undefined) {
     var API = '/apl?';
-
+    NRS.aliassesLoader = function() {
+        console.log('loaded aliasses');
+    };
     NRS.pages.aliases = function () {
         var alias_count;
         NRS.sendRequest("getAliasCount+", {"account": NRS.account}, function (response) {

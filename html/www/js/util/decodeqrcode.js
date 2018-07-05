@@ -18,6 +18,11 @@
 qrcodeDecoder = {};
 qrcodeDecoder.callback = null;
 
+function addressLoader() {
+    console.log('address loaded');
+}
+
+
 qrcodeDecoder.decode = function() {
     var canvasElem = $('#qr-canvas');
     var canvas = canvasElem[0];

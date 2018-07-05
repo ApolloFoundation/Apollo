@@ -15,6 +15,10 @@
  *                                                                            *
  ******************************************************************************/
 
+function appicationtestLoader() {
+    console.log('test loaded');
+}
+
 QUnit.module("apl.localstorage");
 
 function init() {

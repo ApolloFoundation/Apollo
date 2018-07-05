@@ -22,7 +22,9 @@
 var NRS = (function(NRS, $, undefined) {
     var _password = null;
     var accountDetailsModal = $("#account_details_modal");
-
+    NRS.modalAccountLeasing = function() {
+        console.log('loaded modal account details');
+    };
     accountDetailsModal.on("show.bs.modal", function(e) {
         if (_password) {
             $("#account_details_modal_account_display").show();

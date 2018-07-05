@@ -56,7 +56,9 @@ var NRS = (function(NRS, $) {
 			NRS.fetchingModalData = false;
 		});
 	});
-
+	function nrsModalsLoader(){
+		console.log('loaded modals');
+	}
 	nrsModal.on("hide.bs.modal", function() {
 		$("body").off("dragover.nrs, drop.nrs");
 

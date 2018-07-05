@@ -15,6 +15,10 @@
  *                                                                            *
  ******************************************************************************/
 
+function appicationtestLoader() {
+    console.log('test loaded');
+}
+
 QUnit.module("extensions");
 
 QUnit.test("escapeHtml", function (assert) {

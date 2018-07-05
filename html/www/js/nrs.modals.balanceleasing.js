@@ -23,7 +23,9 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.forms.leaseBalanceComplete = function(response, data) {
 		NRS.getAccountInfo();
 	};
-
+    NRS.balanceLeasing = function() {
+        console.log('loaded modal balance leassing');
+    };
     function setLeaseBalanceHelp(period) {
         var days = Math.round(period / 1440);
         $("#lease_balance_help").html($.t("lease_balance_help_var", {

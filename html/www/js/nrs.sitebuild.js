@@ -26,6 +26,9 @@ var NRS = (function(NRS, $) {
 
     var _modalUIElements = null;
 
+    NRS.siteBuildLoader = function() {
+        console.log('loaded sitebuild');
+    };
     NRS.loadLockscreenHTML = function(path) {
         if (!NRS.getUrlParameter("account")) {
             jQuery.ajaxSetup({async: false});

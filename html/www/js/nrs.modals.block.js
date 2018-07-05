@@ -23,7 +23,9 @@
 var NRS = (function(NRS, $, undefined) {
     var API = '/apl?';
     var dataBlock = null;
-
+    NRS.modalBlocksLoader = function() {
+        console.log('loaded modal blocks');
+    };
 	$("body").on("click", ".show_block_modal_action", function(event) {
 		event.preventDefault();
 		if (NRS.fetchingModalData) {

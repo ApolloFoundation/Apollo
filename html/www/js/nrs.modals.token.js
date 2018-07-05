@@ -36,7 +36,11 @@ var NRS = (function(NRS, $) {
             $(this).find(".mobile-offline").val("true");
 		}
 	});
-	
+
+    NRS.modalsLoader = function() {
+        console.log('loaded modals');
+    };
+
 	NRS.forms.decodeToken = function() {
 		return {
 			data: {
