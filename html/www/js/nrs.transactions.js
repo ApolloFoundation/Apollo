@@ -152,9 +152,7 @@ var NRS = (function(NRS, $, undefined) {
 
             url += 'firstIndex=' + parseInt((this.page) * 14 - 14) + '&';
             url += 'lastIndex='  + (this.page) * 14 + '&';
-	
-	        
-	        var that = this;
+	          var that = this;
             var $el = $("#" + NRS.currentPage + "_contents");
             $el = $el.selector;
 
@@ -186,12 +184,15 @@ var NRS = (function(NRS, $, undefined) {
                              $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
                          }
 
-                        NRS.addPhasingInfoToTransactionRows(that.items);
-	                    return that.items;
-					          }
-                    if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
-                        that.items = JSON.parse(data).entries;
+                         for (var i = 0; i < that.items.length; i++) {
+                             var transaction = that.items[i];
+                             transaction.confirmed = true;
+                             rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+                         }
+                         if ($el === '#transactions_contents') {
+                             NRS.dataLoaded(rows);
 
+					               }
 
                          NRS.addPhasingInfoToTransactionRows(that.items);
                      }
@@ -226,7 +227,6 @@ var NRS = (function(NRS, $, undefined) {
                              }
 						            }
 
-
                          if ($el === '#ledger_contents') {
                              NRS.dataLoaded(rows);
                          }
@@ -239,7 +239,6 @@ var NRS = (function(NRS, $, undefined) {
 
                          }
                      }
-
                 },
                 error: function(data) {
                     console.log('err: ', data);
@@ -536,6 +535,7 @@ var NRS = (function(NRS, $, undefined) {
 		}
 		
 		NRS.sendRequest("getBlockchainTransactions", {
+
 
 			"account": NRS.account,
 			"firstIndex": 0,
@@ -898,7 +898,6 @@ var NRS = (function(NRS, $, undefined) {
 	};
 
     NRS.getTransactionRowHTML = function(t, actions, decimals, isScheduled) {
-
 		if ('encryptedTransaction' in t) {
             var options = {
 
@@ -951,14 +950,15 @@ var NRS = (function(NRS, $, undefined) {
             feeColor = "color:black;";
         } else {
             if (t.sender != t.recipient) {
-                if (t.amountATM != "0") {
-                    amount = new BigInteger(t.amountATM);
+                if (t.amountNQT != "0") {
+                    amount = new BigInteger(t.amountNQT);
+
                     amount = amount.negate();
                     sign = -1;
                 }
             } else {
-                if (t.amountATM != "0") {
-                    amount = new BigInteger(t.amountATM); // send to myself
+                if (t.amountNQT != "0") {
+                    amount = new BigInteger(t.amountNQT); // send to myself
                 }
             }
             feeColor = "color:red;";
@@ -1132,15 +1132,11 @@ var NRS = (function(NRS, $, undefined) {
         $('#send_money_amount_info').val($(this).val())
 
     });
+
     $('#send_money_fee').keyup(function() {
         $('#send_money_fee_info').val($(this).val())
 
 	});
-
-    // $('#send_money_password').keyup(function() {
-    //     $('#send_money_password_info').val($(this).val())
-    //
-    // });
 
 	NRS.buildTransactionsTypeNavi = function() {
 		var html = '';
@@ -1624,7 +1620,6 @@ var NRS = (function(NRS, $, undefined) {
 		}
 	});
 
-
     var secretLedgerWor = $('#transaction_ledger_fill_secret_word_modal');
     $(document).on('submit', '#get_ledger_private_transactions', function(e){
         e.preventDefault();
@@ -1694,6 +1689,13 @@ var NRS = (function(NRS, $, undefined) {
 
             NRS.accountLedgerPagination.setKeys(formParams[0].value);
             NRS.accountLedgerPagination.setPrivate();
+
+
+            $('#transaction_fill_secret_word_modal').modal('hide');
+            $('#incorrect_passphrase_my_transactions').hide();
+
+            NRS.myTransactionPagination.setKeys(formParams[0].value);
+            NRS.myTransactionPagination.setPrivate();
 
             $('#transaction_fill_secret_word_modal').modal('hide');
             $('#incorrect_passphrase_my_transactions').hide();
