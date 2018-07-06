@@ -27,6 +27,10 @@ public abstract class VersionedPersistentDbTable<T> extends VersionedPrunableDbT
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
+    protected VersionedPersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
+    }
+
     @Override
     protected final void prune() {}
 

@@ -107,4 +107,11 @@ public final class FilteringIterator<T> implements Iterator<T>, Iterable<T>, Aut
         return this;
     }
 
+    protected T prev() {
+        return null;
+    }
+
+    protected boolean hasPrev() {
+        return false;
+    }
 }

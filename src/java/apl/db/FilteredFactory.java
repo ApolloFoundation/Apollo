@@ -41,4 +41,12 @@ public interface FilteredFactory {
      * @return                      Wrapped prepared statement
      */
     PreparedStatement createPreparedStatement(PreparedStatement stmt, String sql);
+
+    default Statement createStatement(Statement stmt, String sql) {
+        if (sql != null && !sql.isEmpty()) {
+            return createPreparedStatement((PreparedStatement) stmt, sql);
+        } else {
+            return createStatement(stmt);
+        }
+    }
 }

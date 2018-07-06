@@ -34,6 +34,10 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         super(table, dbKeyFactory, true, null);
     }
 
+    protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
+    }
+
     protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
