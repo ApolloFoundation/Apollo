@@ -790,9 +790,9 @@ var NRS = (function(NRS, $) {
 					if (!$modal.hasClass("modal-no-hide")) {
 
                         $modal.modal("hide");
-//                        $.growl($.t("send_money_submitted"), {
+/*                        $.growl($.t("send_money_submitted"), {
                             "type": "success"
-                        });
+                        });*/
 					}
 					formCompleteFunction(response, data);
 				} else {
