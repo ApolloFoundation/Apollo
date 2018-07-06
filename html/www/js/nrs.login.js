@@ -497,8 +497,6 @@ var NRS = (function(NRS, $, undefined) {
 						callback();
 					}
 
-                    console.log(NRS.setup);
-                    console.log(NRS.pages);
                     $.each(NRS.pages, function(key) {
                         if(key in NRS.setup) {
                             try {
