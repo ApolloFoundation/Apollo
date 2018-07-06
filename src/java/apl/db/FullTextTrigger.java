@@ -732,7 +732,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     private void indexRow(Object[] row) throws SQLException {
         indexLock.readLock().lock();
         try {
-            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + row[dbColumn];
+            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = System.currentTimeMillis();
@@ -761,7 +761,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * @throws  SQLException            Unable to delete row
      */
     private void deleteRow(Object[] row) throws SQLException {
-        String query = tableName + ";" + columnNames.get(dbColumn) + ";" + row[dbColumn];
+        String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
         indexLock.readLock().lock();
         try {
             indexWriter.deleteDocuments(new Term("_QUERY", query));
