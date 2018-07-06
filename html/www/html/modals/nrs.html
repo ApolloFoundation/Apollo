@@ -17,6 +17,7 @@
 
 <div class="modal fade in" id="send_money_private_modal" data-transaction-type="0" data-transaction-subtype="0" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
     <div class="modal-dialog modal-dialog-700">
+        
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -25,6 +26,10 @@
                 </h4>
             </div>
             <div class="modal-body">
+                <div class="alert alert-no-icon alert-info" id="send_modal_footer_alert">
+                    <p>Private transactions currently protect down the the API level. Database level protection will start with Olympus 2.0</p>
+                    <a id="open_send_modal_footer" class="btn btn-default">I agree</a>
+                </div>
                 <form role="form" autocomplete="off">
                     <!--<div class="callout callout-danger error_message" id="incorrect_passphrase_message" style="display: none">Passphrase is incorrect.</div>-->
                     <div class="callout callout-danger error_message"  style="display:none;">Passphrase is incorrect.</div>
@@ -86,7 +91,7 @@
 
                 </form>
             </div>
-            <div class="modal-footer" style="margin-top:0;">
+            <div class="modal-footer disabled" style="margin-top:0;">
                 <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="cancel">Cancel</button>
                 <button type="button" class="btn btn-primary" data-loading-text="Submitting..." data-i18n="submit;[data-loading-text]submitting">Submit</button>
                 <!--<a type="button" class="btn btn-primary" id="send_money_private" data-loading-text="Submitting..." data-i18n="submit;[data-loading-text]submitting">Submit</a>-->
