@@ -427,7 +427,7 @@ public final class Apl {
                 runtimeMode.updateAppStatus(message);
                 Logger.logMessage("Copyright © 2013-2016 The NXT Core Developers.");
                 Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V..");
-                Logger.logMessage("Copyright © 2016-2017 Apollo Foundation.");
+                Logger.logMessage("Copyright © 2017-2018 Apollo Foundation.");
                 Logger.logMessage("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
                 if (API.getWelcomePageUri() != null) {
                     Logger.logMessage("Client UI is at " + API.getWelcomePageUri());
