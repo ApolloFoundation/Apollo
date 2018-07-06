@@ -18,15 +18,15 @@ package test;
 
 
 import apl.AccountLedger;
-import apl.crypto.Crypto;
-import apl.util.Convert;
 import apl.TransactionType;
 import apl.Version;
 import apl.updater.Architecture;
 import apl.updater.Platform;
+import apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
+import test.crypto.Crypto;
 import test.dto.*;
 
 import java.io.IOException;
@@ -195,7 +195,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     @Test
     public void testGetPrivateAccountLedger() throws Exception {
         String accountRs = getRandomRS(accounts);
-        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true);
+        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 49);
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
             Transaction transaction = entry.getTransaction();
@@ -403,12 +403,12 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test
     public void testGetAccountLedgerEntry() throws Exception {
-        LedgerEntry ledgerEntry = client.getAccountLedgerEntry(url, LEDGER_ENTRY_ID, true);
-        Assert.assertEquals(AccountLedger.LedgerEvent.ORDINARY_PAYMENT, ledgerEntry.getEventType());
-        Assert.assertEquals(PRIVATE_TRANSACTION_SENDER_ID.toString(), ledgerEntry.getAccount());
-        Assert.assertEquals(atm(100_000).longValue(), ledgerEntry.getChange().longValue());
-        Assert.assertEquals(164L, ledgerEntry.getLedgerId().longValue());
-        Assert.assertEquals(MAIN_RS, ledgerEntry.getTransaction().getSenderRS());
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getAccountLedger(url, accountRs, true, 0, 500);
+        LedgerEntry expectedLedgerEntry = accountLedger.stream().filter(LedgerEntry::isPublic).findFirst().get();
+        LedgerEntry actualLedgerEntry = client.getAccountLedgerEntry(url, expectedLedgerEntry.getLedgerId(), true);
+        Assert.assertEquals(AccountLedger.LedgerEvent.ORDINARY_PAYMENT, actualLedgerEntry.getEventType());
+        Assert.assertEquals(expectedLedgerEntry, actualLedgerEntry);
     }
 
     @Test
@@ -419,13 +419,13 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateAccountLedgerEntry() throws Exception {
-        LedgerEntry ledgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_LEDGER_ENTRY_ID, true);
-        Assert.assertFalse(ledgerEntry.isNull());
-        Assert.assertEquals(PRIVATE_LEDGER_ENTRY_ID, ledgerEntry.getLedgerId());
-        Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, ledgerEntry.getEventType());
-        Assert.assertEquals(atm(-2), ledgerEntry.getChange());
-        Assert.assertEquals(12150L, ledgerEntry.getHeight().longValue());
-        Assert.assertEquals(9584301L, ledgerEntry.getTimestamp().longValue());
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 500);
+        LedgerEntry expectedPrivateLedgerEntry = accountLedger.stream().filter(LedgerEntry::isPrivate).findFirst().get();
+        LedgerEntry actualLedgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(accountRs), expectedPrivateLedgerEntry.getLedgerId(), true);
+        Assert.assertFalse(actualLedgerEntry.isNull());
+        Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, actualLedgerEntry.getEventType());
+        Assert.assertEquals(expectedPrivateLedgerEntry, actualLedgerEntry);
     }
 
     @Test
@@ -496,17 +496,15 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test
     public void testSendUpdateTransaction() throws IOException {
-        String updateUrl = "http://apollocurrncy.com/download/linux/desktop-wallet/Apollo-1.10.11.jar";
+        String updateUrl = Convert.toHexString("http://apollocurrncy.com/download/linux/desktop-wallet/Apollo-1.10.11.jar".getBytes());
         String hash = "0987654321098765432109876543210909876543210987654321098765432109";
-        String signature = "1234567890123456789012345678901212345678901234567890123456789012";
         Platform platform = Platform.WINDOWS;
         Architecture architecture = Architecture.AMD64;
         Version version = Version.from("10000.0.0");
-        UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, signature, 5);
+        UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, 5);
         UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
         expectedAttachment.setArchitecture(Architecture.AMD64);
         expectedAttachment.setHash(hash);
-        expectedAttachment.setSignature(signature);
         expectedAttachment.setPlatform(platform);
         expectedAttachment.setVersion(version);
         expectedAttachment.setUrl(updateUrl);
@@ -523,7 +521,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         List<LedgerEntry> accountLedger = client.getAccountLedger(url, "", false, 0, 4);
         checkList(accountLedger);
         Assert.assertEquals(5, accountLedger.size());
-        accountLedger.forEach(LedgerEntry::isNotPrivate);
+        accountLedger.forEach(LedgerEntry::isPublic);
     }
 }
 
