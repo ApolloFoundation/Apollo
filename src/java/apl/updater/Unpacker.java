@@ -10,11 +10,13 @@ import java.util.jar.JarFile;
 public class Unpacker {
 
     private static class UnpackerHolder {
-        private static final Unpacker HOLDER_INSTANCE = new Unpacker();
+        private static final Unpacker INSTANCE = new Unpacker();
     }
 
+    private Unpacker() {}
+
     public static Unpacker getInstance() {
-        return UnpackerHolder.HOLDER_INSTANCE;
+        return UnpackerHolder.INSTANCE;
     }
     public Path unpack(Path jarFilePath) throws IOException {
         Path destDirPath = Files.createTempDirectory("apollo-unpacked");

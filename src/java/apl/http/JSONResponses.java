@@ -151,7 +151,6 @@ public final class JSONResponses {
     public static final JSONStreamAware MISSING_RECIPIENT_PUBLIC_KEY = missing("recipientPublicKey");
     public static final JSONStreamAware INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH = incorrect("property", "(length must be > 0 but less than " + Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_UPDATE_URL_LENGTH = incorrectLength("url",Constants.MAX_UPDATE_URL_LENGTH);
-    public static final JSONStreamAware INCORRECT_UPDATE_SIGNATURE_LENGTH = incorrectLength("signature", Constants.MAX_UPDATE_SIGNATURE_LENGTH);
     public static final JSONStreamAware INCORRECT_UPDATE_HASH_LENGTH = incorrectLength("hash", Constants.MAX_UPDATE_HASH_LENGTH);
     public static final JSONStreamAware INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH = incorrect("value", "(length must be less than " + Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_PROPERTY = incorrect("property", "(cannot be deleted by this account)");

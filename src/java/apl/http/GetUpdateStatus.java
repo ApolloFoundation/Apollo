@@ -17,7 +17,6 @@ package apl.http;
 
 import apl.AplException;
 import apl.UpdateInfo;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,19 +37,6 @@ public class GetUpdateStatus extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        JSONObject result = new JSONObject();
-        final UpdateInfo info = UpdateInfo.getInstance();
-        synchronized (info) {
-            result.put("isUpdate", info.isUpdate());
-            if (info.isUpdate()) {
-                result.put("level", info.getUpdateLevel());
-                result.put("availableVersion", info.getUpdateVersion().toString());
-                result.put("estimatedUpdateHeight", info.getUpdateHeight());
-                result.put("receivedUpdateHeight", info.getReceivedUpdateHeight());
-                result.put("downloadStatus", info.getStatus());
-                result.put("downloadState", info.getState());
-            }
-        }
-        return result;
+        return UpdateInfo.getInstance().json();
     }
 }
