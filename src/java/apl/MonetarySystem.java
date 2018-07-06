@@ -604,6 +604,10 @@ public abstract class MonetarySystem extends TransactionType {
             return new Attachment.MonetarySystemExchangeBuy(attachmentData);
         }
 
+        @Override
+        boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            return super.isDuplicate(transaction, duplicates);
+        }
 
         @Override
         boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {

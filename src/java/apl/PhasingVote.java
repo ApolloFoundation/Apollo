@@ -92,6 +92,12 @@ public class PhasingVote {
         this.voteId = rs.getLong("vote_id");
     }
 
+    private PhasingVote(long phasedTransactionId, long voterId, DbKey dbKey) {
+        this.phasedTransactionId = phasedTransactionId;
+        this.voterId = voterId;
+        this.dbKey = dbKey;
+    }
+
     public long getPhasedTransactionId() {
         return phasedTransactionId;
     }

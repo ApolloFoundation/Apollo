@@ -409,6 +409,21 @@ public class TaggedData {
         this.height = rs.getInt("height");
     }
 
+    private TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
+        this.id = id;
+        this.dbKey = dbKey;
+        this.accountId = accountId;
+        this.name = name;
+        this.description = description;
+        this.tags = tags;
+        this.parsedTags = parsedTags;
+        this.data = data;
+        this.type = type;
+        this.channel = channel;
+        this.isText = isText;
+        this.filename = filename;
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
                 + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "

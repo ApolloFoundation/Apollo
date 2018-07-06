@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
 package apl.updater;
 
 import apl.UpdateInfo;
@@ -17,20 +32,18 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import static apl.updater.UpdaterConstants.*;
+
 public class Downloader {
-    private static final int ATTEMPTS = 10;
-    private static final int TIMEOUT = 60;
-    private static final String TEMP_DIR_PREFIX = "Apollo-update";
-    private static final String DOWNLOADED_FILE_NAME = "Apollo-newVersion.jar";
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
 
     private Downloader() {}
 
     public static Downloader getInstance() {
-        return DownloaderHolder.HOLDER_INSTANCE;
+        return DownloaderHolder.INSTANCE;
     }
 
-    private Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
+    Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
         Path tempDir = Files.createTempDirectory(tempDirPrefix);
         Path downloadedFilePath = tempDir.resolve(Paths.get(downloadedFileName));
         try {
@@ -83,7 +96,7 @@ public class Downloader {
     public Path tryDownload(String url, byte[] hash) {
         int attemptsCounter = 0;
         mediator.setStatus(UpdateInfo.DownloadStatus.STARTED);
-        while (attemptsCounter != ATTEMPTS) {
+        while (attemptsCounter != UpdaterConstants.DOWNLOAD_ATTEMPTS) {
             try {
                 attemptsCounter++;
                 mediator.setState(UpdateInfo.DownloadState.IN_PROGRESS);
@@ -97,7 +110,7 @@ public class Downloader {
                     Logger.logErrorMessage("Inconsistent file, downloaded from: " + url);
                 }
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
-                TimeUnit.SECONDS.sleep(TIMEOUT);
+                TimeUnit.SECONDS.sleep(NEXT_ATTEMPT_TIMEOUT);
             }
             catch (IOException e) {
                 Logger.logErrorMessage("Unable to download update from: " + url, e);
@@ -114,6 +127,6 @@ public class Downloader {
     }
 
     private static class DownloaderHolder {
-        private static final Downloader HOLDER_INSTANCE = new Downloader();
+        private static final Downloader INSTANCE = new Downloader();
     }
 }

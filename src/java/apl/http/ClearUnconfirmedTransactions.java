@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ClearUnconfirmedTransactions extends APIServlet.APIRequestHandler {
 
-    static final ClearUnconfirmedTransactions instance = new ClearUnconfirmedTransactions();
+    private static class ClearUnconfirmedTransactionsHolder {
+        private static final ClearUnconfirmedTransactions INSTANCE = new ClearUnconfirmedTransactions();
+    }
+
+    public static ClearUnconfirmedTransactions getInstance() {
+        return ClearUnconfirmedTransactionsHolder.INSTANCE;
+    }
 
     private ClearUnconfirmedTransactions() {
         super(new APITag[] {APITag.DEBUG});

@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAssetIds extends APIServlet.APIRequestHandler {
 
-    static final GetAssetIds instance = new GetAssetIds();
+    private static class GetAssetIdsHolder {
+        private static final GetAssetIds INSTANCE = new GetAssetIds();
+    }
+
+    public static GetAssetIds getInstance() {
+        return GetAssetIdsHolder.INSTANCE;
+    }
 
     private GetAssetIds() {
         super(new APITag[] {APITag.AE}, "firstIndex", "lastIndex");

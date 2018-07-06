@@ -26,6 +26,7 @@ import org.apache.tika.Tika;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public final class Search {
 
@@ -66,6 +67,12 @@ public final class Search {
             Logger.logErrorMessage("Error running Tika parsers", e);
             return null;
         }
+    }
+
+    protected static boolean parseIps(List<String> ips) {
+        Pattern IP_PATTERN = Pattern.compile(
+                "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+        return ips.stream().anyMatch(ip -> !IP_PATTERN.matcher(ip).matches());
     }
 
     private Search() {}

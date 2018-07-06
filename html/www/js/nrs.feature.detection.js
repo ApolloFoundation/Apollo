@@ -173,10 +173,6 @@ var NRS = (function (NRS) {
         return device && device.platform == "Android" && device.version >= "6.0.0";
     };
 
-    NRS.getShapeShiftUrl = function() {
-        return NRS.settings.shape_shift_url;
-    };
-
     NRS.isForgingSupported = function() {
         return !NRS.isMobileApp() && !(NRS.state && NRS.state.apiProxy);
     };

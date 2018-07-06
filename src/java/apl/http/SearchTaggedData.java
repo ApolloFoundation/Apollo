@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SearchTaggedData extends APIServlet.APIRequestHandler {
 
-    static final SearchTaggedData instance = new SearchTaggedData();
+    private static class SearchTaggedDataHolder {
+        private static final SearchTaggedData INSTANCE = new SearchTaggedData();
+    }
+
+    public static SearchTaggedData getInstance() {
+        return SearchTaggedDataHolder.INSTANCE;
+    }
 
     private SearchTaggedData() {
         super(new APITag[] {APITag.DATA, APITag.SEARCH}, "query", "tag", "channel", "account", "firstIndex", "lastIndex", "includeData");

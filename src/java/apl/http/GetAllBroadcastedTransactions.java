@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllBroadcastedTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetAllBroadcastedTransactions instance = new GetAllBroadcastedTransactions();
+    private static class GetAllBroadcastedTransactionsHolder {
+        private static final GetAllBroadcastedTransactions INSTANCE = new GetAllBroadcastedTransactions();
+    }
+
+    public static GetAllBroadcastedTransactions getInstance() {
+        return GetAllBroadcastedTransactionsHolder.INSTANCE;
+    }
 
     private GetAllBroadcastedTransactions() {
         super(new APITag[] {APITag.DEBUG});

@@ -55,4 +55,10 @@ public final class Listeners<T,E extends Enum<E>> {
         }
     }
 
+    @Override
+    public String toString() {
+        return "Listeners{" +
+                "listenersMap=" + listenersMap +
+                '}';
+    }
 }

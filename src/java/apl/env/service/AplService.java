@@ -20,6 +20,9 @@ package apl.env.service;
 public class AplService {
 
     public static void main(String[] args) {
+        System.out.println("Starting apl service");
         AplService_ServiceManagement.serviceInit();
+        System.out.println("Apl service was started");
     }
+
 }

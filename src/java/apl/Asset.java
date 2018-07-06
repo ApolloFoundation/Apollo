@@ -65,6 +65,10 @@ public final class Asset {
             }
         }
 
+        @Override
+        protected String defaultSort() {
+            return super.defaultSort();
+        }
     };
 
     public static DbIterator<Asset> getAllAssets(int from, int to) {

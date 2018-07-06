@@ -31,7 +31,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SearchDGSGoods extends APIServlet.APIRequestHandler {
 
-    static final SearchDGSGoods instance = new SearchDGSGoods();
+    private static class SearchDGSGoodsHolder {
+        private static final SearchDGSGoods INSTANCE = new SearchDGSGoods();
+    }
+
+    public static SearchDGSGoods getInstance() {
+        return SearchDGSGoodsHolder.INSTANCE;
+    }
 
     private SearchDGSGoods() {
         super(new APITag[] {APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");

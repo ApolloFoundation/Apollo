@@ -80,4 +80,12 @@ public final class CompareTraceFiles {
         }
     }
 
+    private static void assertEquals(Long defaultHeight, String testHeight) {
+        if (!defaultHeight.equals(testHeight)) {
+            System.out.println("Heights don't match:");
+            System.out.println("default:\n" + defaultHeight);
+            System.out.println("test:\n" + testHeight);
+        }
+    }
+
 }

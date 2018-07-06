@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public abstract class DbVersion {
+    public DbVersion() {
+    }
 
     protected BasicDb db;
 
@@ -61,6 +63,10 @@ public abstract class DbVersion {
             DbUtils.close(stmt, con);
         }
 
+    }
+
+    protected DbVersion(BasicDb db) {
+        init(db);
     }
 
     protected void apply(String sql) {

@@ -39,7 +39,13 @@ import java.math.BigInteger;
  */
 public final class GetMintingTarget extends APIServlet.APIRequestHandler {
 
-    static final GetMintingTarget instance = new GetMintingTarget();
+    private static class GetMintingTargetHolder {
+        private static final GetMintingTarget INSTANCE = new GetMintingTarget();
+    }
+
+    public static GetMintingTarget getInstance() {
+        return GetMintingTargetHolder.INSTANCE;
+    }
 
     private GetMintingTarget() {
         super(new APITag[] {APITag.MS}, "currency", "account", "units");

@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.PRUNED_TRANSACTION;
 
 public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler {
 
-    static final DownloadPrunableMessage instance = new DownloadPrunableMessage();
+    private static class DownloadPrunableMessageHolder {
+        private static final DownloadPrunableMessage INSTANCE = new DownloadPrunableMessage();
+    }
+
+    public static DownloadPrunableMessage getInstance() {
+        return DownloadPrunableMessageHolder.INSTANCE;
+    }
 
     private DownloadPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save");

@@ -1417,7 +1417,6 @@
   "coin":"Pièce",
   "coins":"Pièces",
   "coin_exchange":"Échange de pièces de monnaie",
-  "exchange_using_shape_shift":"Échangez des coins en utilisant Shape Shift",
   "exchange_apl_to_coin":"Échanger des APL contre des coins",
   "exchange_coin_to_apl":"Échanger des Coins pour des APL",
   "exchange_apl_to_coin_shift":"Échanger des APL pour des __coin__ (Maj)",

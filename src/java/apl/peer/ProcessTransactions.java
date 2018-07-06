@@ -25,7 +25,13 @@ import org.json.simple.JSONStreamAware;
 
 final class ProcessTransactions extends PeerServlet.PeerRequestHandler {
 
-    static final ProcessTransactions instance = new ProcessTransactions();
+    private static class ProcessTransactionsHolder {
+        private static final ProcessTransactions INSTANCE = new ProcessTransactions();
+    }
+
+    public static ProcessTransactions getInstance() {
+        return ProcessTransactionsHolder.INSTANCE;
+    }
 
     private ProcessTransactions() {}
 

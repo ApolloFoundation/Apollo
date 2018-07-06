@@ -23,6 +23,8 @@ import apl.Apl;
 import apl.util.Convert;
 import apl.util.Logger;
 
+import java.util.Map;
+
 public final class Demo implements AddOn {
 
     @Override
@@ -38,4 +40,8 @@ public final class Demo implements AddOn {
         Logger.logInfoMessage("Goodbye!");
     }
 
+    @Override
+    public void processRequest(Map<String, String> params) {
+        Logger.logInfoMessage(params.get("demoMessage"));
+    }
 }

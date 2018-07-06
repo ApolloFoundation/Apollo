@@ -48,7 +48,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class BroadcastTransaction extends APIServlet.APIRequestHandler {
 
-    static final BroadcastTransaction instance = new BroadcastTransaction();
+    private static class BroadcastTransactionHolder {
+        private static final BroadcastTransaction INSTANCE = new BroadcastTransaction();
+    }
+
+    public static BroadcastTransaction getInstance() {
+        return BroadcastTransactionHolder.INSTANCE;
+    }
 
     private BroadcastTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");

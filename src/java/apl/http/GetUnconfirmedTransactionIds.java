@@ -31,7 +31,13 @@ import java.util.Set;
 
 public final class GetUnconfirmedTransactionIds extends APIServlet.APIRequestHandler {
 
-    static final GetUnconfirmedTransactionIds instance = new GetUnconfirmedTransactionIds();
+    private static class GetUnconfirmedTransactionIdsHolder {
+        private static final GetUnconfirmedTransactionIds INSTANCE = new GetUnconfirmedTransactionIds();
+    }
+
+    public static GetUnconfirmedTransactionIds getInstance() {
+        return GetUnconfirmedTransactionIdsHolder.INSTANCE;
+    }
 
     private GetUnconfirmedTransactionIds() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");

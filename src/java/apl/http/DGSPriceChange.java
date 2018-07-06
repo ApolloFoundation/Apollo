@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.UNKNOWN_GOODS;
 
 public final class DGSPriceChange extends CreateTransaction {
 
-    static final DGSPriceChange instance = new DGSPriceChange();
+    private static class DGSPriceChangeHolder {
+        private static final DGSPriceChange INSTANCE = new DGSPriceChange();
+    }
+
+    public static DGSPriceChange getInstance() {
+        return DGSPriceChangeHolder.INSTANCE;
+    }
 
     private DGSPriceChange() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

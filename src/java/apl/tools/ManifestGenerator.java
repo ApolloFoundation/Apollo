@@ -29,7 +29,9 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -90,6 +92,33 @@ public class ManifestGenerator {
 
         public StringBuilder getClasspath() {
             return classpath;
+        }
+    }
+
+    private static class JavaFilesVisitor extends SimpleFileVisitor<Path> {
+
+        private List<Path> javaFiles = new ArrayList<>();
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
+            if (file.getFileName().toString().endsWith(".java")) {
+                javaFiles.add(file);
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException e) {
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException e) {
+            return FileVisitResult.CONTINUE;
+        }
+
+        public List<Path> getJavaFiles() {
+            return javaFiles;
         }
     }
 }

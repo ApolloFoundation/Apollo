@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountId extends APIServlet.APIRequestHandler {
 
-    static final GetAccountId instance = new GetAccountId();
+    private static class GetAccountIdHolder {
+        private static final GetAccountId INSTANCE = new GetAccountId();
+    }
+
+    public static GetAccountId getInstance() {
+        return GetAccountIdHolder.INSTANCE;
+    }
 
     private GetAccountId() {
         super(new APITag[] {APITag.ACCOUNTS}, "secretPhrase", "publicKey");

@@ -28,7 +28,13 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetCurrencyPhasedTransactions extends APIServlet.APIRequestHandler {
-    static final GetCurrencyPhasedTransactions instance = new GetCurrencyPhasedTransactions();
+    private static class GetCurrencyPhasedTransactionsHolder {
+        private static final GetCurrencyPhasedTransactions INSTANCE = new GetCurrencyPhasedTransactions();
+    }
+
+    public static GetCurrencyPhasedTransactions getInstance() {
+        return GetCurrencyPhasedTransactionsHolder.INSTANCE;
+    }
 
     private GetCurrencyPhasedTransactions() {
         super(new APITag[]{APITag.MS, APITag.PHASING}, "currency", "account", "withoutWhitelist", "firstIndex", "lastIndex");

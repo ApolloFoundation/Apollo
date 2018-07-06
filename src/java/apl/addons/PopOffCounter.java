@@ -22,10 +22,12 @@ import apl.Apl;
 import apl.AplException;
 import apl.http.APIServlet;
 import apl.http.APITag;
+import apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 public final class PopOffCounter implements AddOn {
 
@@ -57,4 +59,8 @@ public final class PopOffCounter implements AddOn {
         return "getNumberOfPopOffs";
     }
 
+    @Override
+    public void processRequest(Map<String, String> params) {
+        Logger.logInfoMessage(params.get("popOffMessage"));
+    }
 }

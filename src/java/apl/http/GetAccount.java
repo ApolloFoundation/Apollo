@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccount extends APIServlet.APIRequestHandler {
 
-    static final GetAccount instance = new GetAccount();
+    private static class GetAccountHolder {
+        private static final GetAccount INSTANCE = new GetAccount();
+    }
+
+    public static GetAccount getInstance() {
+        return GetAccountHolder.INSTANCE;
+    }
 
     private GetAccount() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");

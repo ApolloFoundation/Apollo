@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.PRUNED_TRANSACTION;
 
 public final class DownloadTaggedData extends APIServlet.APIRequestHandler {
 
-    static final DownloadTaggedData instance = new DownloadTaggedData();
+    private static class DownloadTaggedDataHolder {
+        private static final DownloadTaggedData INSTANCE = new DownloadTaggedData();
+    }
+
+    public static DownloadTaggedData getInstance() {
+        return DownloadTaggedDataHolder.INSTANCE;
+    }
 
     private DownloadTaggedData() {
         super(new APITag[] {APITag.DATA}, "transaction", "retrieve");

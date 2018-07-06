@@ -17,6 +17,9 @@
 
 package apl.util;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public interface Time {
@@ -78,6 +81,20 @@ public interface Time {
             return counter.incrementAndGet();
         }
 
+    }
+
+    final class LocalTime implements Time {
+        private final LocalDateTime time;
+
+        public LocalTime(LocalDateTime time) {
+            this.time = time;
+        }
+
+        @Override
+        public int getTime() {
+            ZonedDateTime zonedDateTime = time.atZone(ZoneId.systemDefault());
+            return (int) zonedDateTime.toInstant().getEpochSecond();
+        }
     }
 
 }

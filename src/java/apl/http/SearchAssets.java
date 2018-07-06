@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SearchAssets extends APIServlet.APIRequestHandler {
 
-    static final SearchAssets instance = new SearchAssets();
+    private static class SearchAssetsHolder {
+        private static final SearchAssets INSTANCE = new SearchAssets();
+    }
+
+    public static SearchAssets getInstance() {
+        return SearchAssetsHolder.INSTANCE;
+    }
 
     private SearchAssets() {
         super(new APITag[] {APITag.AE, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");

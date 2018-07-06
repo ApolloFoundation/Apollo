@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
 
 public final class EncryptTo extends APIServlet.APIRequestHandler {
 
-    static final EncryptTo instance = new EncryptTo();
+    private static class EncryptToHolder {
+        private static final EncryptTo INSTANCE = new EncryptTo();
+    }
+
+    public static EncryptTo getInstance() {
+        return EncryptToHolder.INSTANCE;
+    }
 
     private EncryptTo() {
         super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase");

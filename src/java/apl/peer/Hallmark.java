@@ -135,6 +135,11 @@ public final class Hallmark {
         this.isValid = isValid;
     }
 
+    //valid
+    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date) throws URISyntaxException {
+        this(hallmarkString, publicKey, signature, host, weight, date, true);
+    }
+
     public String getHallmarkString() {
         return hallmarkString;
     }

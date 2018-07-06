@@ -96,6 +96,22 @@ public class BasicDb {
             return this;
         }
 
+        @Override
+        public String toString() {
+            return "DbProperties{" +
+                    "maxCacheSize=" + maxCacheSize +
+                    ", dbUrl='" + dbUrl + '\'' +
+                    ", dbType='" + dbType + '\'' +
+                    ", dbDir='" + dbDir + '\'' +
+                    ", dbParams='" + dbParams + '\'' +
+                    ", dbUsername='" + dbUsername + '\'' +
+                    ", dbPassword='" + dbPassword + '\'' +
+                    ", maxConnections=" + maxConnections +
+                    ", loginTimeout=" + loginTimeout +
+                    ", defaultLockTimeout=" + defaultLockTimeout +
+                    ", maxMemoryRows=" + maxMemoryRows +
+                    '}';
+        }
     }
 
     private JdbcConnectionPool cp;

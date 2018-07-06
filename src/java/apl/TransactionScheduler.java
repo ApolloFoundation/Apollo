@@ -90,7 +90,7 @@ public class TransactionScheduler {
             Logger.logInfoMessage("Expired transaction in transaction scheduler " + transaction.getSenderId());
             return true;
         }
-        if (!filter.ok(unconfirmedTransaction)) {
+        if (!filter.test(unconfirmedTransaction)) {
             return false;
         }
         try {

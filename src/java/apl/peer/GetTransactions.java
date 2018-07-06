@@ -30,7 +30,13 @@ import org.json.simple.JSONStreamAware;
  */
 public class GetTransactions extends PeerServlet.PeerRequestHandler {
 
-    static final GetTransactions instance = new GetTransactions();
+    private static class GetTransactionsHolder {
+        private static final GetTransactions INSTANCE = new GetTransactions();
+    }
+
+    public static GetTransactions getInstance() {
+        return GetTransactionsHolder.INSTANCE;
+    }
 
     private GetTransactions() {}
 

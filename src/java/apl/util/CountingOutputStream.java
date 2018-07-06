@@ -39,4 +39,8 @@ public class CountingOutputStream extends FilterOutputStream {
         return count;
     }
 
+    @Override
+    public void write(byte[] b) throws IOException {
+        super.write(b);
+    }
 }

@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class RebroadcastUnconfirmedTransactions extends APIServlet.APIRequestHandler {
 
-    static final RebroadcastUnconfirmedTransactions instance = new RebroadcastUnconfirmedTransactions();
+    private static class RebroadcastUnconfirmedTransactionsHolder {
+        private static final RebroadcastUnconfirmedTransactions INSTANCE = new RebroadcastUnconfirmedTransactions();
+    }
+
+    public static RebroadcastUnconfirmedTransactions getInstance() {
+        return RebroadcastUnconfirmedTransactionsHolder.INSTANCE;
+    }
 
     private RebroadcastUnconfirmedTransactions() {
         super(new APITag[] {APITag.DEBUG});

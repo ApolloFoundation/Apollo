@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class Hash extends APIServlet.APIRequestHandler {
 
-    static final Hash instance = new Hash();
+    private static class HashHolder {
+        private static final Hash INSTANCE = new Hash();
+    }
+
+    public static Hash getInstance() {
+        return HashHolder.INSTANCE;
+    }
 
     private Hash() {
         super(new APITag[] {APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");

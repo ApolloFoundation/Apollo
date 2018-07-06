@@ -18,6 +18,7 @@
 package apl.tools;
 
 import apl.Apl;
+import apl.AplException;
 import apl.Transaction;
 import apl.crypto.Crypto;
 import apl.util.Convert;
@@ -25,13 +26,9 @@ import apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.Console;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 
 public final class SignTransactionJSON {
 
@@ -59,8 +56,7 @@ public final class SignTransactionJSON {
                 System.out.println("File already exists: " + signed.getAbsolutePath());
                 System.exit(1);
             }
-            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned));
-                 BufferedWriter writer = new BufferedWriter(new FileWriter(signed))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))){
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
                 byte[] publicKeyHash = Crypto.sha256().digest(Convert.parseHexString((String) json.get("senderPublicKey")));
                 String senderRS = Convert.rsAccount(Convert.fullHashToId(publicKeyHash));
@@ -73,15 +69,18 @@ public final class SignTransactionJSON {
                 } else {
                     secretPhrase = new String(console.readPassword("Secret phrase for account " + senderRS + ": "));
                 }
-                Transaction.Builder builder = Apl.newTransactionBuilder(json);
-                Transaction transaction = builder.build(secretPhrase);
-                writer.write(transaction.getJSONObject().toJSONString());
-                writer.newLine();
+                Files.write(signed.toPath(), signTransaction(json, secretPhrase).getBytes(), StandardOpenOption.CREATE);
                 System.out.println("Signed transaction JSON saved as: " + signed.getAbsolutePath());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static String signTransaction(JSONObject transactionJson, String secretPhrase) throws AplException.NotValidException {
+        Transaction.Builder builder = Apl.newTransactionBuilder(transactionJson);
+        Transaction transaction = builder.build(secretPhrase);
+        return transaction.getJSONObject().toJSONString();
     }
 
 }

@@ -940,15 +940,15 @@ var NRS = (function(NRS, $, undefined) {
             feeColor = "color:black;";
         } else {
             if (t.sender != t.recipient) {
-                if (t.amountNQT != "0") {
-                    amount = new BigInteger(t.amountNQT);
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM);
 
                     amount = amount.negate();
                     sign = -1;
                 }
             } else {
-                if (t.amountNQT != "0") {
-                    amount = new BigInteger(t.amountNQT); // send to myself
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM); // send to myself
                 }
             }
             feeColor = "color:red;";
@@ -1757,6 +1757,11 @@ var NRS = (function(NRS, $, undefined) {
 	        NRS.dataLoaded(rows);
 	    });
 	    
+    });
+    
+    $(document).on('click',  '#open_send_modal_footer', function() {
+        $("#send_modal_footer_alert").hide();
+        $("#send_money_private_modal").find('.modal-footer').removeClass('disabled');
     });
 
 	return NRS;

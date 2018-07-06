@@ -27,7 +27,13 @@ import org.json.simple.JSONStreamAware;
 
 final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
 
-    static final GetMilestoneBlockIds instance = new GetMilestoneBlockIds();
+    private static class GetMilestoneBlockIdsHolder {
+        private static final GetMilestoneBlockIds INSTANCE = new GetMilestoneBlockIds();
+    }
+
+    public static GetMilestoneBlockIds getInstance() {
+        return GetMilestoneBlockIdsHolder.INSTANCE;
+    }
 
     private GetMilestoneBlockIds() {}
 

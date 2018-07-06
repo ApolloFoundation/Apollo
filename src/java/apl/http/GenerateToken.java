@@ -30,7 +30,13 @@ import static apl.http.JSONResponses.MISSING_WEBSITE;
 
 public final class GenerateToken extends APIServlet.APIRequestHandler {
 
-    static final GenerateToken instance = new GenerateToken();
+    private static class GenerateTokenHolder {
+        private static final GenerateToken INSTANCE = new GenerateToken();
+    }
+
+    public static GenerateToken getInstance() {
+        return GenerateTokenHolder.INSTANCE;
+    }
 
     private GenerateToken() {
         super(new APITag[] {APITag.TOKENS}, "website", "secretPhrase");

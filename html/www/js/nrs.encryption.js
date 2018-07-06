@@ -770,9 +770,11 @@ var NRS = (function (NRS, $) {
         }
 
 
+
         options.sharedKey = new Uint8Array(options.sharedKey);
 
         data = converters.hexStringToByteArray(data);
+
         var result = aesDecrypt(data, options);
 
         var binData = new Uint8Array(result.decrypted);

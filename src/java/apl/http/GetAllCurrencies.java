@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllCurrencies extends APIServlet.APIRequestHandler {
 
-    static final GetAllCurrencies instance = new GetAllCurrencies();
+    private static class GetAllCurrenciesHolder {
+        private static final GetAllCurrencies INSTANCE = new GetAllCurrencies();
+    }
+
+    public static GetAllCurrencies getInstance() {
+        return GetAllCurrenciesHolder.INSTANCE;
+    }
 
     private GetAllCurrencies() {
         super(new APITag[] {APITag.MS}, "firstIndex", "lastIndex", "includeCounts");

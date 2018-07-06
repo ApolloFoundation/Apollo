@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountShufflings extends APIServlet.APIRequestHandler {
 
-    static final GetAccountShufflings instance = new GetAccountShufflings();
+    private static class GetAccountShufflingsHolder {
+        private static final GetAccountShufflings INSTANCE = new GetAccountShufflings();
+    }
+
+    public static GetAccountShufflings getInstance() {
+        return GetAccountShufflingsHolder.INSTANCE;
+    }
 
     private GetAccountShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "includeFinished", "includeHoldingInfo", "firstIndex", "lastIndex");

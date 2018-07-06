@@ -78,4 +78,7 @@ public abstract class DerivedDbTable {
         return table;
     }
 
+    protected void trimTables() {
+        Apl.getBlockchainProcessor().trimDerivedTables();
+    }
 }

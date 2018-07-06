@@ -30,44 +30,6 @@ import java.sql.SQLException;
 
 public abstract class Order {
 
-    private static void matchOrders(long assetId) {
-
-        Order.Ask askOrder;
-        Order.Bid bidOrder;
-
-        while ((askOrder = Ask.getNextOrder(assetId)) != null
-                && (bidOrder = Bid.getNextOrder(assetId)) != null) {
-
-            if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
-                break;
-            }
-
-            Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
-
-            askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account askAccount = Account.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
-                            Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
-
-            bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            assetId, trade.getQuantityATU());
-            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                            Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
-        }
-
-    }
-
-    static void init() {
-        Ask.init();
-        Bid.init();
-    }
-
-
     private final long id;
     private final long accountId;
     private final long assetId;
@@ -75,9 +37,7 @@ public abstract class Order {
     private final int creationHeight;
     private final short transactionIndex;
     private final int transactionHeight;
-
     private long quantityATU;
-
     private Order(Transaction transaction, Attachment.ColoredCoinsOrderPlacement attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
@@ -98,6 +58,72 @@ public abstract class Order {
         this.creationHeight = rs.getInt("creation_height");
         this.transactionIndex = rs.getShort("transaction_index");
         this.transactionHeight = rs.getInt("transaction_height");
+    }
+
+    private static void matchOrders(long assetId) {
+
+        Order.Ask askOrder;
+        Order.Bid bidOrder;
+
+        while ((askOrder = Ask.getNextOrder(assetId)) != null
+                && (bidOrder = Bid.getNextOrder(assetId)) != null) {
+
+            if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
+                break;
+            }
+
+            Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
+
+            askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
+            Account askAccount = Account.getAccount(askOrder.getAccountId());
+            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+                    Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
+
+            bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
+            Account bidAccount = Account.getAccount(bidOrder.getAccountId());
+            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+                    assetId, trade.getQuantityATU());
+            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+                    -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+                    Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
+        }
+
+    }
+
+    static void init() {
+        Ask.init();
+        Bid.init();
+    }
+
+    /*
+    private int compareTo(Order o) {
+        if (height < o.height) {
+            return -1;
+        } else if (height > o.height) {
+            return 1;
+        } else {
+            if (id < o.id) {
+                return -1;
+            } else if (id > o.id) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+    */
+    static <T extends Order> void insertOrDeleteOrder(VersionedEntityDbTable<T> table, long quantityATU, T order) {
+        if (quantityATU > 0) {
+            table.insert(order);
+        } else if (quantityATU == 0) {
+            table.delete(order);
+        } else {
+            throw new IllegalArgumentException("Negative quantity: " + quantityATU
+                    + " for order: " + Long.toUnsignedString(order.getId()));
+        }
     }
 
     private void save(Connection con, String table) throws SQLException {
@@ -137,6 +163,10 @@ public abstract class Order {
         return quantityATU;
     }
 
+    private void setQuantityATU(long quantityATU) {
+        this.quantityATU = quantityATU;
+    }
+
     public final int getHeight() {
         return creationHeight;
     }
@@ -155,29 +185,6 @@ public abstract class Order {
                 + " asset: " + Long.toUnsignedString(assetId) + " price: " + priceATM + " quantity: " + quantityATU
                 + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
     }
-
-    private void setQuantityATU(long quantityATU) {
-        this.quantityATU = quantityATU;
-    }
-
-    /*
-    private int compareTo(Order o) {
-        if (height < o.height) {
-            return -1;
-        } else if (height > o.height) {
-            return 1;
-        } else {
-            if (id < o.id) {
-                return -1;
-            } else if (id > o.id) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-    }
-    */
 
     public static final class Ask extends Order {
 
@@ -207,6 +214,17 @@ public abstract class Order {
             }
 
         };
+        private final DbKey dbKey;
+
+        private Ask(Transaction transaction, Attachment.ColoredCoinsAskOrderPlacement attachment) {
+            super(transaction, attachment);
+            this.dbKey = askOrderDbKeyFactory.newKey(super.id);
+        }
+
+        private Ask(ResultSet rs, DbKey dbKey) throws SQLException {
+            super(rs);
+            this.dbKey = dbKey;
+        }
 
         public static int getCount() {
             return askOrderTable.getCount();
@@ -246,7 +264,8 @@ public abstract class Order {
                 try (DbIterator<Ask> askOrders = askOrderTable.getManyBy(con, pstmt, true)) {
                     return askOrders.hasNext() ? askOrders.next() : null;
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -263,33 +282,13 @@ public abstract class Order {
 
         static void init() {}
 
-
-        private final DbKey dbKey;
-
-        private Ask(Transaction transaction, Attachment.ColoredCoinsAskOrderPlacement attachment) {
-            super(transaction, attachment);
-            this.dbKey = askOrderDbKeyFactory.newKey(super.id);
-        }
-
-        private Ask(ResultSet rs, DbKey dbKey) throws SQLException {
-            super(rs);
-            this.dbKey = dbKey;
-        }
-
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);
         }
 
         private void updateQuantityATU(long quantityATU) {
             super.setQuantityATU(quantityATU);
-            if (quantityATU > 0) {
-                askOrderTable.insert(this);
-            } else if (quantityATU == 0) {
-                askOrderTable.delete(this);
-            } else {
-                throw new IllegalArgumentException("Negative quantity: " + quantityATU
-                        + " for order: " + Long.toUnsignedString(getId()));
-            }
+            insertOrDeleteOrder(askOrderTable, quantityATU, this);
         }
 
         /*
@@ -336,6 +335,17 @@ public abstract class Order {
             }
 
         };
+        private final DbKey dbKey;
+
+        private Bid(Transaction transaction, Attachment.ColoredCoinsBidOrderPlacement attachment) {
+            super(transaction, attachment);
+            this.dbKey = bidOrderDbKeyFactory.newKey(super.id);
+        }
+
+        private Bid(ResultSet rs, DbKey dbKey) throws SQLException {
+            super(rs);
+            this.dbKey = dbKey;
+        }
 
         public static int getCount() {
             return bidOrderTable.getCount();
@@ -375,7 +385,8 @@ public abstract class Order {
                 try (DbIterator<Bid> bidOrders = bidOrderTable.getManyBy(con, pstmt, true)) {
                     return bidOrders.hasNext() ? bidOrders.next() : null;
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -392,33 +403,13 @@ public abstract class Order {
 
         static void init() {}
 
-
-        private final DbKey dbKey;
-
-        private Bid(Transaction transaction, Attachment.ColoredCoinsBidOrderPlacement attachment) {
-            super(transaction, attachment);
-            this.dbKey = bidOrderDbKeyFactory.newKey(super.id);
-        }
-
-        private Bid(ResultSet rs, DbKey dbKey) throws SQLException {
-            super(rs);
-            this.dbKey = dbKey;
-        }
-
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);
         }
 
         private void updateQuantityATU(long quantityATU) {
             super.setQuantityATU(quantityATU);
-            if (quantityATU > 0) {
-                bidOrderTable.insert(this);
-            } else if (quantityATU == 0) {
-                bidOrderTable.delete(this);
-            } else {
-                throw new IllegalArgumentException("Negative quantity: " + quantityATU
-                        + " for order: " + Long.toUnsignedString(getId()));
-            }
+            insertOrDeleteOrder(bidOrderTable, quantityATU, this);
         }
 
         /*

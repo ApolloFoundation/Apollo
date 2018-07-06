@@ -32,4 +32,8 @@ public final class ParameterException extends AplException {
         return errorResponse;
     }
 
+    public ParameterException(String message, Throwable cause, JSONStreamAware errorResponse) {
+        super(message, cause);
+        this.errorResponse = errorResponse;
+    }
 }

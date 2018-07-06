@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDataTags extends APIServlet.APIRequestHandler {
 
-    static final GetDataTags instance = new GetDataTags();
+    private static class GetDataTagsHolder {
+        private static final GetDataTags INSTANCE = new GetDataTags();
+    }
+
+    public static GetDataTags getInstance() {
+        return GetDataTagsHolder.INSTANCE;
+    }
 
     private GetDataTags() {
         super(new APITag[] {APITag.DATA}, "firstIndex", "lastIndex");

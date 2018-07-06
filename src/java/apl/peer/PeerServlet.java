@@ -57,17 +57,17 @@ public final class PeerServlet extends WebSocketServlet {
 
     static {
         Map<String,PeerRequestHandler> map = new HashMap<>();
-        map.put("addPeers", AddPeers.instance);
-        map.put("getCumulativeDifficulty", GetCumulativeDifficulty.instance);
-        map.put("getInfo", GetInfo.instance);
-        map.put("getMilestoneBlockIds", GetMilestoneBlockIds.instance);
-        map.put("getNextBlockIds", GetNextBlockIds.instance);
-        map.put("getNextBlocks", GetNextBlocks.instance);
-        map.put("getPeers", GetPeers.instance);
-        map.put("getTransactions", GetTransactions.instance);
-        map.put("getUnconfirmedTransactions", GetUnconfirmedTransactions.instance);
-        map.put("processBlock", ProcessBlock.instance);
-        map.put("processTransactions", ProcessTransactions.instance);
+        map.put("addPeers", AddPeers.getInstance());
+        map.put("getCumulativeDifficulty", GetCumulativeDifficulty.getInstance());
+        map.put("getInfo", GetInfo.getInstance());
+        map.put("getMilestoneBlockIds", GetMilestoneBlockIds.getInstance());
+        map.put("getNextBlockIds", GetNextBlockIds.getInstance());
+        map.put("getNextBlocks", GetNextBlocks.getInstance());
+        map.put("getPeers", GetPeers.getInstance());
+        map.put("getTransactions", GetTransactions.getInstance());
+        map.put("getUnconfirmedTransactions", GetUnconfirmedTransactions.getInstance());
+        map.put("processBlock", ProcessBlock.getInstance());
+        map.put("processTransactions", ProcessTransactions.getInstance());
         peerRequestHandlers = Collections.unmodifiableMap(map);
     }
 
@@ -76,6 +76,12 @@ public final class PeerServlet extends WebSocketServlet {
         JSONObject response = new JSONObject();
         response.put("error", Errors.UNSUPPORTED_REQUEST_TYPE);
         UNSUPPORTED_REQUEST_TYPE = JSON.prepare(response);
+    }
+    private static final JSONStreamAware CONNECTION_TIMEOUT;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("error", Errors.CONNECTION_TIMEOUT);
+        CONNECTION_TIMEOUT = JSON.prepare(response);
     }
 
     private static final JSONStreamAware UNSUPPORTED_PROTOCOL;
@@ -149,7 +155,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @throws  IOException         I/O error
      */
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
@@ -170,18 +176,22 @@ public final class PeerServlet extends WebSocketServlet {
                 peer.updateUploadedVolume(writer.getCount());
             }
         } catch (RuntimeException | IOException e) {
-            if (peer != null) {
-                if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                    if (e instanceof RuntimeException) {
-                        Logger.logDebugMessage("Error sending response to peer " + peer.getHost(), e);
-                    } else {
-                        Logger.logDebugMessage(String.format("Error sending response to peer %s: %s",
-                            peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-                    }
-                }
-                peer.blacklist(e);
-            }
+            processException(peer, e);
             throw e;
+        }
+    }
+
+    private void processException(PeerImpl peer, Exception e) {
+        if (peer != null) {
+            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
+                if (e instanceof RuntimeException) {
+                    Logger.logDebugMessage("Error sending response to peer " + peer.getHost(), e);
+                } else {
+                    Logger.logDebugMessage(String.format("Error sending response to peer %s: %s",
+                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
+                }
+            }
+            peer.blacklist(e);
         }
     }
 
@@ -221,17 +231,7 @@ public final class PeerServlet extends WebSocketServlet {
                 peer.updateUploadedVolume(response.length());
             }
         } catch (RuntimeException | IOException e) {
-            if (peer != null) {
-                if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                    if (e instanceof RuntimeException) {
-                        Logger.logDebugMessage("Error sending response to peer " + peer.getHost(), e);
-                    } else {
-                        Logger.logDebugMessage(String.format("Error sending response to peer %s: %s",
-                            peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-                    }
-                }
-                peer.blacklist(e);
-            }
+            processException(peer, e);
         }
     }
 

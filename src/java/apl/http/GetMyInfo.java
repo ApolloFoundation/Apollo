@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetMyInfo extends APIServlet.APIRequestHandler {
 
-    static final GetMyInfo instance = new GetMyInfo();
+    private static class GetMyInfoHolder {
+        private static final GetMyInfo INSTANCE = new GetMyInfo();
+    }
+
+    public static GetMyInfo getInstance() {
+        return GetMyInfoHolder.INSTANCE;
+    }
 
     private GetMyInfo() {
         super(new APITag[] {APITag.NETWORK});

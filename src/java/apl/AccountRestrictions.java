@@ -33,6 +33,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import static apl.TransactionType.AccountControl.*;
 
 public final class AccountRestrictions {
 
@@ -219,15 +220,12 @@ public final class AccountRestrictions {
 
     static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
-        if (!senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {
-            return false;
-        }
-        if (PhasingOnly.get(transaction.getSenderId()).getMaxFees() == 0) {
-            return false;
-        }
-        return transaction.getType() != TransactionType.AccountControl.SET_PHASING_ONLY &&
-                TransactionType.isDuplicate(TransactionType.AccountControl.SET_PHASING_ONLY, Long.toUnsignedString(senderAccount.getId()),
-                        duplicates, true);
+        return
+                senderAccount.getControls().contains(ControlType.PHASING_ONLY)
+                && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
+                && transaction.getType() != SET_PHASING_ONLY
+                && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                        Long.toUnsignedString(senderAccount.getId()), duplicates, true);
     }
 
 }

@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDGSExpiredPurchases extends APIServlet.APIRequestHandler {
 
-    static final GetDGSExpiredPurchases instance = new GetDGSExpiredPurchases();
+    private static class GetDGSExpiredPurchasesHolder {
+        private static final GetDGSExpiredPurchases INSTANCE = new GetDGSExpiredPurchases();
+    }
+
+    public static GetDGSExpiredPurchases getInstance() {
+        return GetDGSExpiredPurchasesHolder.INSTANCE;
+    }
 
     private GetDGSExpiredPurchases() {
         super(new APITag[] {APITag.DGS}, "seller", "firstIndex", "lastIndex");

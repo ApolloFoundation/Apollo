@@ -435,6 +435,15 @@ public final class PhasingPoll extends AbstractPoll {
         algorithm = rs.getByte("algorithm");
     }
 
+    private PhasingPoll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting, DbKey dbKey, long[] whitelist, long quorum, byte[] hashedSecret, byte algorithm) {
+        super(id, accountId, finishHeight, voteWeighting);
+        this.dbKey = dbKey;
+        this.whitelist = whitelist;
+        this.quorum = quorum;
+        this.hashedSecret = hashedSecret;
+        this.algorithm = algorithm;
+    }
+
     void finish(long result) {
         PhasingPollResult phasingPollResult = new PhasingPollResult(this, result);
         resultTable.insert(phasingPollResult);

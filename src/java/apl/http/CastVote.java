@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.POLL_FINISHED;
 
 public final class CastVote extends CreateTransaction {
 
-    static final CastVote instance = new CastVote();
+    private static class CastVoteHolder {
+        private static final CastVote INSTANCE = new CastVote();
+    }
+
+    public static CastVote getInstance() {
+        return CastVoteHolder.INSTANCE;
+    }
 
     private CastVote() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION}, "poll", "vote00", "vote01", "vote02");

@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
 
-    static final GetGuaranteedBalance instance = new GetGuaranteedBalance();
+    private static class GetGuaranteedBalanceHolder {
+        private static final GetGuaranteedBalance INSTANCE = new GetGuaranteedBalance();
+    }
+
+    public static GetGuaranteedBalance getInstance() {
+        return GetGuaranteedBalanceHolder.INSTANCE;
+    }
 
     private GetGuaranteedBalance() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");

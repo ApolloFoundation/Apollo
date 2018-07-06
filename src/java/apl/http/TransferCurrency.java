@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.NOT_ENOUGH_CURRENCY;
 
 public final class TransferCurrency extends CreateTransaction {
 
-    static final TransferCurrency instance = new TransferCurrency();
+    private static class TransferCurrencyHolder {
+        private static final TransferCurrency INSTANCE = new TransferCurrency();
+    }
+
+    public static TransferCurrency getInstance() {
+        return TransferCurrencyHolder.INSTANCE;
+    }
 
     private TransferCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "units");

@@ -18,16 +18,17 @@
 package apl.tools;
 
 import apl.Apl;
+import apl.AplException;
 import apl.Transaction;
 import apl.util.Convert;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.Console;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public final class SignTransactions {
 
@@ -57,22 +58,26 @@ public final class SignTransactions {
                 secretPhrase = new String(console.readPassword("Secret phrase: "));
             }
             int n = 0;
-            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned));
-                 BufferedWriter writer = new BufferedWriter(new FileWriter(signed))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    byte[] transactionBytes = Convert.parseHexString(line);
-                    Transaction.Builder builder = Apl.newTransactionBuilder(transactionBytes);
-                    Transaction transaction = builder.build(secretPhrase);
-                    writer.write(Convert.toHexString(transaction.getBytes()));
-                    writer.newLine();
+            if (Files.exists(signed.toPath())) {
+                Files.delete(signed.toPath());
+            }
+                Files.createFile(signed.toPath());
+                List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
+                for (String unsignedTransaction : unsignedTransactions) {
+                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, secretPhrase).getBytes(), StandardOpenOption.APPEND);
+                    Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
                     n += 1;
                 }
-            }
-            System.out.println("Signed " + n + " transactions");
+                System.out.println("Signed " + n + " transactions");
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    private static String signTransaction(String transactionBytesHexString, String secretPhrase) throws AplException.NotValidException {
+        byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
+        Transaction.Builder builder = Apl.newTransactionBuilder(transactionBytes);
+        Transaction transaction = builder.build(secretPhrase);
+        return Convert.toHexString(transaction.getBytes());
     }
 
 }
