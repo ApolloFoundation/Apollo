@@ -40,7 +40,6 @@ var NRS = (function(NRS, $) {
         "changelly_api_secret": "76021037dd6358c33de88810fa4093852bf278a683843c37ea9913acc2746ee0",
         "changelly_coin0": "BTC",
         "changelly_coin1": "ARDR",
-        "changelly_coin2": "ETH",
 		"max_apl_decimals": "2",
 		"fake_entity_warning": "1"
 	};
