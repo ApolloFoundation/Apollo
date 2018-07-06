@@ -497,9 +497,18 @@ var NRS = (function(NRS, $, undefined) {
 						callback();
 					}
 
-					$.each(NRS.pages, function(key) {
-						if(key in NRS.setup) {
-							NRS.setup[key]();
+                    console.log(NRS.setup);
+                    console.log(NRS.pages);
+                    $.each(NRS.pages, function(key) {
+                        if(key in NRS.setup) {
+                            try {
+                                NRS.setup[key]();
+
+                            } catch(err) {
+                                setTimeout(function() {
+                                    NRS.setup[key]();
+                                }, 1500)
+                            }
 						}
 					});
 
