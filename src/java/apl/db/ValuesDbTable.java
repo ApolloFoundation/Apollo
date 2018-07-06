@@ -126,4 +126,8 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
         }
     }
 
+    @Override
+    public void createSearchIndex(Connection con) throws SQLException {
+        super.createSearchIndex(con);
+    }
 }

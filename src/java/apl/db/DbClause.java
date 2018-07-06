@@ -19,6 +19,7 @@ package apl.db;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 public abstract class DbClause {
 
@@ -214,6 +215,26 @@ public abstract class DbClause {
             return index + 1;
         }
 
+    }
+    public static final class TimestampClause extends DbClause {
+
+        private final Timestamp value;
+
+        public TimestampClause(String columnName, long value) {
+            super(" " + columnName + " = ? ");
+            this.value = new Timestamp(value);
+        }
+
+        public TimestampClause(String columnName, Op operator, long value) {
+            super(" " + columnName + operator.operator() + "? ");
+            this.value = new Timestamp(value);
+        }
+
+        @Override
+        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setTimestamp(index, value);
+            return index + 1;
+        }
     }
 
 }

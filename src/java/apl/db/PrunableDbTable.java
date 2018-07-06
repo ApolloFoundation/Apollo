@@ -39,6 +39,10 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
+    protected PrunableDbTable(DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        super("", dbKeyFactory, multiversion, fullTextSearchColumns);
+    }
+
     @Override
     public final void trim(int height) {
         prune();

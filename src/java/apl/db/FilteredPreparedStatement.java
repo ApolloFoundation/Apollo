@@ -345,4 +345,9 @@ public class FilteredPreparedStatement extends FilteredStatement implements Prep
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         stmt.setUnicodeStream(parameterIndex, x, length);
     }
+
+    @Override
+    protected void cancelAndLogError() {
+        super.cancelAndLogError();
+    }
 }

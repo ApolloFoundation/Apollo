@@ -44,4 +44,8 @@ public abstract class PersistentDbTable<T> extends EntityDbTable<T> {
         return true;
     }
 
+    @Override
+    protected void clearCache() {
+        super.clearCache();
+    }
 }

@@ -31,6 +31,10 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         super(table, dbKeyFactory, true);
     }
 
+    protected VersionedValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion) {
+        super(table, dbKeyFactory, multiversion);
+    }
+
     public final boolean delete(T t) {
         if (t == null) {
             return false;
