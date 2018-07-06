@@ -846,7 +846,7 @@ public final class Peers {
     public static List<Peer> getPeers(Filter<Peer> filter, int limit) {
         List<Peer> result = new ArrayList<>();
         for (Peer peer : peers.values()) {
-            if (filter.ok(peer)) {
+            if (filter.test(peer)) {
                 result.add(peer);
                 if (result.size() >= limit) {
                     break;

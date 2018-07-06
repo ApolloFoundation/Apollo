@@ -481,7 +481,7 @@ final class TransactionImpl implements Transaction {
     public List<Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
         List<Appendix> result = new ArrayList<>();
         appendages.forEach(appendix -> {
-            if (filter.ok(appendix)) {
+            if (filter.test(appendix)) {
                 appendix.loadPrunable(this, includeExpiredPrunable);
                 result.add(appendix);
             }

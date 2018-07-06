@@ -32,6 +32,8 @@ public class UPnP {
     /** Initialization done */
     private static boolean initDone = false;
 
+    private static boolean isShutdown = false;
+
     /** UPnP gateway device */
     private static GatewayDevice gateway = null;
 

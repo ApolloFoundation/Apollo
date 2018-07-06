@@ -45,6 +45,11 @@ public class CountingInputReader extends FilterReader {
         this.limit = limit;
     }
 
+    public CountingInputReader(Reader in) {
+        super(in);
+        limit = Long.MAX_VALUE;
+    }
+
     /**
      * Read a single character
      *
@@ -110,5 +115,10 @@ public class CountingInputReader extends FilterReader {
         count += c;
         if (count > limit)
             throw new AplIOException("Maximum size exceeded: " + count);
+    }
+
+    @Override
+    public boolean markSupported() {
+        return super.markSupported();
     }
 }
