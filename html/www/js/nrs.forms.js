@@ -787,13 +787,13 @@ var NRS = (function(NRS, $) {
 
 					NRS.unlockForm($modal, $btn);
 
-/*					if (!$modal.hasClass("modal-no-hide")) {
+					if (!$modal.hasClass("modal-no-hide")) {
 
                         $modal.modal("hide");
-                        $.growl($.t("send_money_submitted"), {
+//                        $.growl($.t("send_money_submitted"), {
                             "type": "success"
                         });
-					}*/
+					}
 					formCompleteFunction(response, data);
 				} else {
 					errorMessage = $.t("error_unknown");
