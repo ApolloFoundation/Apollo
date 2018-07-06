@@ -20,6 +20,10 @@
  */
 
 var NRS = (function (NRS, $, undefined) {
+    NRS.utilLoader = function() {
+        console.log('loaded utils');
+    };
+
     NRS.formatVolume = function (volume) {
 		var sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
 		if (volume == 0) return '0 B';

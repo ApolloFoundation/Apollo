@@ -23,7 +23,9 @@ var NRS = (function(NRS, $) {
 	NRS.tempBlocks = [];
 	var trackBlockchain = false;
 	NRS.averageBlockGenerationTime = 60;
-
+    NRS.blocksLoader = function() {
+        console.log('loaded blocks');
+    };
 	NRS.getBlock = function(id, callback, pageRequest) {
 		NRS.sendRequest("getBlock" + (pageRequest ? "+" : ""), {
 			"block": id

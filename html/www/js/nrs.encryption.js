@@ -31,7 +31,9 @@ var NRS = (function (NRS, $) {
 		_encryptedNote = null;
 	};
 	NRS.resetEncryptionState();
-
+    NRS.encryptioLoader = function() {
+        console.log('loaded encryption');
+    };
 	NRS.generatePublicKey = function(secretPhrase) {
 		if (!secretPhrase) {
 			if (NRS.rememberPassword) {

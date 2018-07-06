@@ -23,7 +23,9 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.saveAccountLocal = function() {
 		localStorage.setItem('aplUser', 'red');
 	};
-	
+    NRS.loginLoader = function() {
+        console.log('loaded login loader');
+    };
 	NRS.getAccountLocal = function() {
 		return localStorage.getItem('aplUser');
 	};

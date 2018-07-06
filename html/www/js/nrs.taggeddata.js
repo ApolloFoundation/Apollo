@@ -24,6 +24,9 @@ var NRS = (function(NRS, $) {
 		"page": "",
 		"searchStr": ""
 	};
+    NRS.taggeddataLoader = function() {
+        console.log('loaded taggeddata');
+    };
 
     NRS.jsondata.data = function(response) {
         return {

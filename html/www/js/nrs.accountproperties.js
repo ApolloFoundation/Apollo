@@ -20,7 +20,9 @@
  */
 var NRS = (function(NRS, $) {
 	var INCOMING = "incoming";
-
+    NRS.accountpropertiesLoader = function() {
+        console.log('loaded accountproperties');
+    };
 	NRS.pages.account_properties = function() {
         NRS.renderAccountProperties($("#account_properties_page_type").find(".active").data("type"));
 	};

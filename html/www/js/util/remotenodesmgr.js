@@ -25,6 +25,10 @@ function RemoteNode(peerData, useAnnouncedAddress) {
     this.connectionTime = new Date();
 }
 
+var remoteNodeSMGR = function() {
+    console.log('loaded remoteNodeSMGR');
+};
+
 RemoteNode.prototype.getUrl = function () {
     return (this.isSsl ? "https://" : "http://") + (this.useAnnouncedAddress ? this.announcedAddress : this.address) + ":" + this.port;
 };

@@ -31,7 +31,9 @@ var NRS = (function(NRS) {
     NRS.pages.generators = function() {
         NRS.renderGenerators(false);
 	};
-
+    NRS.generatorsLoader = function() {
+        console.log('loaded generators');
+    };
     NRS.renderGenerators = function(isRefresh) {
         var view;
         if (isRefresh) {

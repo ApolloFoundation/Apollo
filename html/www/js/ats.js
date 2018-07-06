@@ -27,6 +27,9 @@ var ATS = (function(ATS, $, undefined) {
     ATS.apiCalls = [];
     ATS.selectedApiCalls = [];
 
+    ATS.mainMathodLoader = function() {
+        console.log('loaded mainMathodLoader');
+    };
     ATS.init = function() {
         hljs.initHighlightingOnLoad();
         

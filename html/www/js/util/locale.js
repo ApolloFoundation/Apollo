@@ -18,6 +18,9 @@
 var NRS = (function (NRS) {
     var currentLocale = {};
 
+    NRS.localeLoader = function() {
+        console.log('loaded locales');
+    };
     NRS.getLocaleList = function() {
         return SORTED_LOCALE_DATE;
     };
