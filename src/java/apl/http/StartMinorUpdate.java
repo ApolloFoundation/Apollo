@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class StartMinorUpdate extends APIServlet.APIRequestHandler {
 
-    static final StartMinorUpdate instance = new StartMinorUpdate();
+    private static class StartMinorUpdateHolder {
+        private static final StartMinorUpdate INSTANCE = new StartMinorUpdate();
+    }
+
+    public static StartMinorUpdate getInstance() {
+        return StartMinorUpdateHolder.INSTANCE;
+    }
 
     private StartMinorUpdate() {
         super(new APITag[] {APITag.UPDATE});
