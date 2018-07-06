@@ -145,6 +145,11 @@ public class MemoryHandler extends Handler {
         }
     }
 
+    @Override
+    public Formatter getFormatter() {
+        return super.getFormatter();
+    }
+
     /**
      * Close the handler
      */

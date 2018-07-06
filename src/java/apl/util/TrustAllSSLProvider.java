@@ -57,6 +57,10 @@ public class TrustAllSSLProvider {
         sslSocketFactory = sc.getSocketFactory();
     }
 
+    protected static boolean isTrusted() {
+        return false;
+    }
+
     public static HostnameVerifier getHostNameVerifier() {
         return hostNameVerifier;
     }

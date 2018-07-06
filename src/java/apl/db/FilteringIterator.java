@@ -55,7 +55,7 @@ public final class FilteringIterator<T> implements Iterator<T>, Iterable<T>, Aut
         }
         while (dbIterator.hasNext() && count <= to) {
             next = dbIterator.next();
-            if (filter.ok(next)) {
+            if (filter.test(next)) {
                 if (count >= from) {
                     count += 1;
                     hasNext = true;
@@ -76,7 +76,7 @@ public final class FilteringIterator<T> implements Iterator<T>, Iterable<T>, Aut
         }
         while (dbIterator.hasNext() && count <= to) {
             next = dbIterator.next();
-            if (filter.ok(next)) {
+            if (filter.test(next)) {
                 if (count >= from) {
                     count += 1;
                     hasNext = false;
