@@ -236,6 +236,13 @@ public final class PassphraseRecovery {
             this.rsAccount = rsAccount;
         }
 
+        public Solution(String passphrase, byte[] publicKey, long accountId) {
+            this.passphrase = passphrase;
+            this.publicKey = publicKey;
+            this.accountId = accountId;
+            this.rsAccount = Convert.rsAccount(accountId);
+        }
+
         @Override
         public String toString() {
             if (this == NO_SOLUTION) {

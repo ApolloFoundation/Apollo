@@ -51,4 +51,8 @@ public class DefaultDirProvider implements DirProvider {
         return Paths.get(".").toAbsolutePath().getParent().toString();
     }
 
+    @Override
+    public File getBinDirectory() {
+        return Paths.get(getUserHomeDir()).resolve("classes").toFile();
+    }
 }

@@ -84,16 +84,8 @@ public final class VerifyTraceFile {
                     valueMap.put(headers[i], values[i]);
                 }
                 String accountId = valueMap.get("account");
-                Map<String,Long> accountTotals = totals.get(accountId);
-                if (accountTotals == null) {
-                    accountTotals = new HashMap<>();
-                    totals.put(accountId, accountTotals);
-                }
-                Map<String,Map<String,Long>> accountAssetMap = accountAssetTotals.get(accountId);
-                if (accountAssetMap == null) {
-                    accountAssetMap = new HashMap<>();
-                    accountAssetTotals.put(accountId, accountAssetMap);
-                }
+                Map<String, Long> accountTotals = totals.computeIfAbsent(accountId, k -> new HashMap<>());
+                Map<String, Map<String, Long>> accountAssetMap = accountAssetTotals.computeIfAbsent(accountId, k -> new HashMap<>());
                 String event = valueMap.get("event");
                 if ("asset issuance".equals(event)) {
                     String assetId = valueMap.get("asset");
@@ -111,11 +103,7 @@ public final class VerifyTraceFile {
                     long currentQuantity = issuedAssetQuantities.get(assetId);
                     issuedAssetQuantities.put(assetId, currentQuantity - deletedQuantity);
                 }
-                Map<String,Map<String,Long>> accountCurrencyMap = accountCurrencyTotals.get(accountId);
-                if (accountCurrencyMap == null) {
-                    accountCurrencyMap = new HashMap<>();
-                    accountCurrencyTotals.put(accountId, accountCurrencyMap);
-                }
+                Map<String, Map<String, Long>> accountCurrencyMap = accountCurrencyTotals.computeIfAbsent(accountId, k -> new HashMap<>());
                 if ("currency issuance".equals(event)) {
                     String currencyId = valueMap.get("currency");
                     issuedCurrencyUnits.put(currencyId, Long.parseLong(valueMap.get("currency units")));
@@ -149,36 +137,20 @@ public final class VerifyTraceFile {
                         accountTotals.put(header, Math.addExact(previousValue, Long.parseLong(value)));
                     } else if (isAssetQuantity(header)) {
                         String assetId = valueMap.get("asset");
-                        Map<String,Long> assetTotals = accountAssetMap.get(assetId);
-                        if (assetTotals == null) {
-                            assetTotals = new HashMap<>();
-                            accountAssetMap.put(assetId, assetTotals);
-                        }
+                        Map<String, Long> assetTotals = accountAssetMap.computeIfAbsent(assetId, k -> new HashMap<>());
                         assetTotals.put(header, Long.parseLong(value));
                     } else if (isDeltaAssetQuantity(header)) {
                         String assetId = valueMap.get("asset");
-                        Map<String,Long> assetTotals = accountAssetMap.get(assetId);
-                        if (assetTotals == null) {
-                            assetTotals = new HashMap<>();
-                            accountAssetMap.put(assetId, assetTotals);
-                        }
+                        Map<String, Long> assetTotals = accountAssetMap.computeIfAbsent(assetId, k -> new HashMap<>());
                         long previousValue = nullToZero(assetTotals.get(header));
                         assetTotals.put(header, Math.addExact(previousValue, Long.parseLong(value)));
                     } else if (isCurrencyBalance(header)) {
                         String currencyId = valueMap.get("currency");
-                        Map<String,Long> currencyTotals = accountCurrencyMap.get(currencyId);
-                        if (currencyTotals == null) {
-                            currencyTotals = new HashMap<>();
-                            accountCurrencyMap.put(currencyId, currencyTotals);
-                        }
+                        Map<String, Long> currencyTotals = accountCurrencyMap.computeIfAbsent(currencyId, k -> new HashMap<>());
                         currencyTotals.put(header, Long.parseLong(value));
                     } else if (isDeltaCurrencyUnits(header)) {
                         String currencyId = valueMap.get("currency");
-                        Map<String,Long> currencyTotals = accountCurrencyMap.get(currencyId);
-                        if (currencyTotals == null) {
-                            currencyTotals = new HashMap<>();
-                            accountCurrencyMap.put(currencyId, currencyTotals);
-                        }
+                        Map<String, Long> currencyTotals = accountCurrencyMap.computeIfAbsent(currencyId, k -> new HashMap<>());
                         long previousValue = nullToZero(currencyTotals.get(header));
                         currencyTotals.put(header, Math.addExact(previousValue, Long.parseLong(value)));
                     }

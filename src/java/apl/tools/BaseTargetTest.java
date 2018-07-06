@@ -40,11 +40,14 @@ public final class BaseTargetTest {
     private static final int GAMMA = 64;
 
     private static final int START_HEIGHT = 20;
+    private static final int MAX_HEIGHT = 1_000;
 
     private static final boolean USE_EWMA = false;
     private static final int EWMA_N = 8;
     private static final int SMA_N = 3;
     private static final int FREQUENCY = 2;
+    private static final int HEIGHT = 47;
+
 
     private static long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
@@ -173,6 +176,8 @@ public final class BaseTargetTest {
                     totalTestBlocktime += testBlocktime;
                     count += 1;
 
+                    checkHeight(height);
+
                     double tmp = M;
                     M += (blocktime - tmp) / count;
                     S += (blocktime - tmp) * (blocktime - M);
@@ -209,6 +214,10 @@ public final class BaseTargetTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static boolean checkHeight(int currentHeight) {
+        return currentHeight != HEIGHT;
     }
 
 }

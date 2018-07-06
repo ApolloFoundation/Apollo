@@ -20,10 +20,11 @@ package apl.tools;
 import apl.http.GetConstants;
 import apl.util.JSON;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 public class ConstantsExporter {
     public static void main(String[] args) {
@@ -32,20 +33,18 @@ public class ConstantsExporter {
             System.exit(1);
         }
 
-        Writer writer;
         try {
-            writer = new FileWriter(new File(args[0]));
-            writer.write("if (!NRS) {\n" +
-                    "    var NRS = {};\n" +
-                    "    NRS.constants = {};\n" +
-                    "}\n\n");
-            writer.write("NRS.constants.SERVER = ");
-            JSON.writeJSONString(GetConstants.getConstants(), writer);
-            writer.write("\n\n" +
-                    "if (isNode) {\n" +
-                    "    module.exports = NRS.constants.SERVER;\n" +
-                    "}\n");
-            writer.close();
+            Path filePath = Paths.get(args[0]);
+            Files.write(filePath, (String.format("if (!NRS) {%1$s" +
+                    "    var NRS = {};%1$s" +
+                    "    NRS.constants = {};%1$s" +
+                    "}%1$s%1$s",System.lineSeparator())).getBytes());
+            Files.write(filePath, ("NRS.constants.SERVER = ").getBytes(), StandardOpenOption.APPEND);
+            JSON.writeJSONString(GetConstants.getConstants(), filePath);
+            Files.write(filePath, String.format("%1$s%1$s" +
+                    "if (isNode) {%1$s" +
+                    "    module.exports = NRS.constants.SERVER;%1$s" +
+                    "}%1$s", System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
         }

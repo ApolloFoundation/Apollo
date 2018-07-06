@@ -18,12 +18,16 @@
 package apl.env;
 
 public enum ServerStatus {
-    BEFORE_DATABASE("Loading Database"), AFTER_DATABASE("Loading Resources"), STARTED("Online");
+    BEFORE_DATABASE("Loading Database"), AFTER_DATABASE("Loading Resources"), STARTED("Online"), SHUTDOWN("Offline");
 
     private final String message;
 
     ServerStatus(String message) {
         this.message = message;
+    }
+
+    ServerStatus() {
+        message= "";
     }
 
     public String getMessage() {
