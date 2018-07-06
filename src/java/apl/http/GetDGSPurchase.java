@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.DECRYPTION_FAILED;
 
 public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
 
-    static final GetDGSPurchase instance = new GetDGSPurchase();
+    private static class GetDGSPurchaseHolder {
+        private static final GetDGSPurchase INSTANCE = new GetDGSPurchase();
+    }
+
+    public static GetDGSPurchase getInstance() {
+        return GetDGSPurchaseHolder.INSTANCE;
+    }
 
     private GetDGSPurchase() {
         super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey");

@@ -1417,7 +1417,6 @@
   "coin":"Munt",
   "coins":"Munten",
   "coin_exchange":"Munten Exchange",
-  "exchange_using_shape_shift":"Exchange munten met behulp van Shape Shift",
   "exchange_apl_to_coin":"Verwissel APL naar Munt",
   "exchange_coin_to_apl":"Verwissel Munt naar APL",
   "exchange_apl_to_coin_shift":"Verwissel APL naar __coin__ (shift)",

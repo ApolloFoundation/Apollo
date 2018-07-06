@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.MISSING_SIGNATURE_HASH;
 
 public final class CalculateFullHash extends APIServlet.APIRequestHandler {
 
-    static final CalculateFullHash instance = new CalculateFullHash();
+    private static class CalculateFullHashHolder {
+        private static final CalculateFullHash INSTANCE = new CalculateFullHash();
+    }
+
+    public static CalculateFullHash getInstance() {
+        return CalculateFullHashHolder.INSTANCE;
+    }
 
     private CalculateFullHash() {
         super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionBytes", "unsignedTransactionJSON", "signatureHash");

@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.UNKNOWN_GOODS;
 
 public final class DGSQuantityChange extends CreateTransaction {
 
-    static final DGSQuantityChange instance = new DGSQuantityChange();
+    private static class DGSQuantityChangeHolder {
+        private static final DGSQuantityChange INSTANCE = new DGSQuantityChange();
+    }
+
+    public static DGSQuantityChange getInstance() {
+        return DGSQuantityChangeHolder.INSTANCE;
+    }
 
     private DGSQuantityChange() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

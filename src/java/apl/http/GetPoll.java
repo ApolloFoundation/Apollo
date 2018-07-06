@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetPoll extends APIServlet.APIRequestHandler {
 
-    static final GetPoll instance = new GetPoll();
+    private static class GetPollHolder {
+        private static final GetPoll INSTANCE = new GetPoll();
+    }
+
+    public static GetPoll getInstance() {
+        return GetPollHolder.INSTANCE;
+    }
 
     private GetPoll() {
         super(new APITag[] {APITag.VS}, "poll");

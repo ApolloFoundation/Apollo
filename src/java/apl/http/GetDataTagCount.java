@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDataTagCount extends APIServlet.APIRequestHandler {
 
-    static final GetDataTagCount instance = new GetDataTagCount();
+    private static class GetDataTagCountHolder {
+        private static final GetDataTagCount INSTANCE = new GetDataTagCount();
+    }
+
+    public static GetDataTagCount getInstance() {
+        return GetDataTagCountHolder.INSTANCE;
+    }
 
     private GetDataTagCount() {
         super(new APITag[] {APITag.DATA});

@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class Shutdown extends APIServlet.APIRequestHandler {
 
-    static final Shutdown instance = new Shutdown();
+    private static class ShutdownHolder {
+        private static final Shutdown INSTANCE = new Shutdown();
+    }
+
+    public static Shutdown getInstance() {
+        return ShutdownHolder.INSTANCE;
+    }
 
     private Shutdown() {
         super(new APITag[] {APITag.DEBUG}, "scan");

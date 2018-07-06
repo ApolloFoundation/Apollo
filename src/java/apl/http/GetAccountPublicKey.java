@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountPublicKey extends APIServlet.APIRequestHandler {
 
-    static final GetAccountPublicKey instance = new GetAccountPublicKey();
+    private static class GetAccountPublicKeyHolder {
+        private static final GetAccountPublicKey INSTANCE = new GetAccountPublicKey();
+    }
+
+    public static GetAccountPublicKey getInstance() {
+        return GetAccountPublicKeyHolder.INSTANCE;
+    }
 
     private GetAccountPublicKey() {
         super(new APITag[] {APITag.ACCOUNTS}, "account");

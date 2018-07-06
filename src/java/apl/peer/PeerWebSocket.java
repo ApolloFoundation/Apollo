@@ -61,6 +61,8 @@ public class PeerWebSocket {
     /** Compressed message flag */
     private static final int FLAG_COMPRESSED = 1;
 
+    private static final int FLAG_NOT_COMPRESSED = 0;
+
     /** Our WebSocket message version */
     private static final int VERSION = 1;
 

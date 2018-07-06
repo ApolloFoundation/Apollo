@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SendUpdateTransaction extends CreateTransaction {
 
-    static final SendUpdateTransaction instance = new SendUpdateTransaction();
+    private static class SendUpdateTransactionHolder {
+        private static final SendUpdateTransaction INSTANCE = new SendUpdateTransaction();
+    }
+
+    public static SendUpdateTransaction getInstance() {
+        return SendUpdateTransactionHolder.INSTANCE;
+    }
 
     private SendUpdateTransaction() {
         super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "signature", "hash", "version", "url", "level");

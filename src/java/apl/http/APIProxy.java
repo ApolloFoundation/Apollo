@@ -37,7 +37,13 @@ import java.util.concurrent.ThreadLocalRandom;
 public class APIProxy {
     public static final Set<String> NOT_FORWARDED_REQUESTS;
 
-    private static final APIProxy instance = new APIProxy();
+    private static class APIProxyHolder {
+        private static final APIProxy INSTANCE = new APIProxy();
+    }
+
+    public static APIProxy getInstance() {
+        return APIProxyHolder.INSTANCE;
+    }
 
     static final boolean enableAPIProxy = Constants.isLightClient ||
             (Apl.getBooleanProperty("apl.enableAPIProxy") && ! API.isOpenAPI);
@@ -69,14 +75,14 @@ public class APIProxy {
 
     private static final Runnable peersUpdateThread = () -> {
         int curTime = Apl.getEpochTime();
-        instance.blacklistedPeers.entrySet().removeIf((entry) -> {
+        getInstance().blacklistedPeers.entrySet().removeIf((entry) -> {
             if (entry.getValue() < curTime) {
                 Logger.logDebugMessage("Unblacklisting API peer " + entry.getKey());
                 return true;
             }
             return false;
         });
-        List<String> currentPeersHosts = instance.peersHosts;
+        List<String> currentPeersHosts = getInstance().peersHosts;
         if (currentPeersHosts != null) {
             for (String host : currentPeersHosts) {
                 Peer peer = Peers.getPeer(host);
@@ -98,10 +104,6 @@ public class APIProxy {
     }
 
     public static void init() {}
-
-    public static APIProxy getInstance() {
-        return instance;
-    }
 
     Peer getServingPeer(String requestType) {
         if (forcedPeerHost != null) {

@@ -80,7 +80,13 @@ import java.util.Map;
 
 public final class EncodeQRCode extends APIServlet.APIRequestHandler {
 
-    static final EncodeQRCode instance = new EncodeQRCode();
+    private static class EncodeQRCodeHolder {
+        private static final EncodeQRCode INSTANCE = new EncodeQRCode();
+    }
+
+    public static EncodeQRCode getInstance() {
+        return EncodeQRCodeHolder.INSTANCE;
+    }
 
     private EncodeQRCode() {
         super(new APITag[] {APITag.UTILS}, "qrCodeData", "width", "height");

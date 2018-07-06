@@ -23,7 +23,13 @@ import org.json.simple.JSONStreamAware;
 
 final class GetPeers extends PeerServlet.PeerRequestHandler {
 
-    static final GetPeers instance = new GetPeers();
+    private static class GetPeersHolder {
+        private static final GetPeers INSTANCE = new GetPeers();
+    }
+
+    public static GetPeers getInstance() {
+        return GetPeersHolder.INSTANCE;
+    }
 
     private GetPeers() {}
 

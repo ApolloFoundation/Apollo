@@ -61,7 +61,13 @@ import static apl.http.JSONResponses.incorrect;
  */
 public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
 
-    static final StartFundingMonitor instance = new StartFundingMonitor();
+    private static class StartFundingMonitorHolder {
+        private static final StartFundingMonitor INSTANCE = new StartFundingMonitor();
+    }
+
+    public static StartFundingMonitor getInstance() {
+        return StartFundingMonitorHolder.INSTANCE;
+    }
 
     private StartFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",

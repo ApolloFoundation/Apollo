@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class StartShuffler extends APIServlet.APIRequestHandler {
 
-    static final StartShuffler instance = new StartShuffler();
+    private static class StartShufflerHolder {
+        private static final StartShuffler INSTANCE = new StartShuffler();
+    }
+
+    public static StartShuffler getInstance() {
+        return StartShufflerHolder.INSTANCE;
+    }
 
     private StartShuffler() {
         super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey");

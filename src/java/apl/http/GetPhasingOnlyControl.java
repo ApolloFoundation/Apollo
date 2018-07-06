@@ -47,7 +47,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class GetPhasingOnlyControl extends APIServlet.APIRequestHandler {
 
-    static final GetPhasingOnlyControl instance = new GetPhasingOnlyControl();
+    private static class GetPhasingOnlyControlHolder {
+        private static final GetPhasingOnlyControl INSTANCE = new GetPhasingOnlyControl();
+    }
+
+    public static GetPhasingOnlyControl getInstance() {
+        return GetPhasingOnlyControlHolder.INSTANCE;
+    }
     
     private GetPhasingOnlyControl() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account");

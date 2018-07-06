@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.*;
 
 public final class GetTransaction extends APIServlet.APIRequestHandler {
 
-    static final GetTransaction instance = new GetTransaction();
+    private static class GetTransactionHolder {
+        private static final GetTransaction INSTANCE = new GetTransaction();
+    }
+
+    public static GetTransaction getInstance() {
+        return GetTransactionHolder.INSTANCE;
+    }
 
     private GetTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "includePhasingResult");

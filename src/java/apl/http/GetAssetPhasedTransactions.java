@@ -28,7 +28,13 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetAssetPhasedTransactions extends APIServlet.APIRequestHandler {
-    static final GetAssetPhasedTransactions instance = new GetAssetPhasedTransactions();
+    private static class GetAssetPhasedTransactionsHolder {
+        private static final GetAssetPhasedTransactions INSTANCE = new GetAssetPhasedTransactions();
+    }
+
+    public static GetAssetPhasedTransactions getInstance() {
+        return GetAssetPhasedTransactionsHolder.INSTANCE;
+    }
 
     private GetAssetPhasedTransactions() {
         super(new APITag[]{APITag.AE, APITag.PHASING}, "asset", "account", "withoutWhitelist", "firstIndex", "lastIndex");

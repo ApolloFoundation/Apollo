@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class HexConvert extends APIServlet.APIRequestHandler {
 
-    static final HexConvert instance = new HexConvert();
+    private static class HexConvertHolder {
+        private static final HexConvert INSTANCE = new HexConvert();
+    }
+
+    public static HexConvert getInstance() {
+        return HexConvertHolder.INSTANCE;
+    }
 
     private HexConvert() {
         super(new APITag[] {APITag.UTILS}, "string");

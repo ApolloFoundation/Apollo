@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountAssets extends APIServlet.APIRequestHandler {
 
-    static final GetAccountAssets instance = new GetAccountAssets();
+    private static class GetAccountAssetsHolder {
+        private static final GetAccountAssets INSTANCE = new GetAccountAssets();
+    }
+
+    public static GetAccountAssets getInstance() {
+        return GetAccountAssetsHolder.INSTANCE;
+    }
 
     private GetAccountAssets() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "asset", "height", "includeAssetInfo");

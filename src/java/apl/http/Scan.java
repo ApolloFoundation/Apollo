@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class Scan extends APIServlet.APIRequestHandler {
 
-    static final Scan instance = new Scan();
+    private static class ScanHolder {
+        private static final Scan INSTANCE = new Scan();
+    }
+
+    public static Scan getInstance() {
+        return ScanHolder.INSTANCE;
+    }
 
     private Scan() {
         super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "validate");

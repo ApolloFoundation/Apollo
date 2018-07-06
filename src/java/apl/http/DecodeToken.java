@@ -28,7 +28,13 @@ import static apl.http.JSONResponses.MISSING_WEBSITE;
 
 public final class DecodeToken extends APIServlet.APIRequestHandler {
 
-    static final DecodeToken instance = new DecodeToken();
+    private static class DecodeTokenHolder {
+        private static final DecodeToken INSTANCE = new DecodeToken();
+    }
+
+    public static DecodeToken getInstance() {
+        return DecodeTokenHolder.INSTANCE;
+    }
 
     private DecodeToken() {
         super(new APITag[] {APITag.TOKENS}, "website", "token");

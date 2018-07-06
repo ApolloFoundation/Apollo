@@ -54,7 +54,13 @@ import java.util.Collections;
  */
 public final class SendTransaction extends APIServlet.APIRequestHandler {
 
-    static final SendTransaction instance = new SendTransaction();
+    private static class SendTransactionHolder {
+        private static final SendTransaction INSTANCE = new SendTransaction();
+    }
+
+    public static SendTransaction getInstance() {
+        return SendTransactionHolder.INSTANCE;
+    }
 
     private SendTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");

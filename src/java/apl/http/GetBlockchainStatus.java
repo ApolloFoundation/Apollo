@@ -31,7 +31,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
 
-    static final GetBlockchainStatus instance = new GetBlockchainStatus();
+    private static class GetBlockchainStatusHolder {
+        private static final GetBlockchainStatus INSTANCE = new GetBlockchainStatus();
+    }
+
+    public static GetBlockchainStatus getInstance() {
+        return GetBlockchainStatusHolder.INSTANCE;
+    }
 
     private GetBlockchainStatus() {
         super(new APITag[] {APITag.BLOCKS, APITag.INFO});

@@ -27,7 +27,13 @@ import java.util.List;
 
 public final class GetLastTrades extends APIServlet.APIRequestHandler {
 
-    static final GetLastTrades instance = new GetLastTrades();
+    private static class GetLastTradesHolder {
+        private static final GetLastTrades INSTANCE = new GetLastTrades();
+    }
+
+    public static GetLastTrades getInstance() {
+        return GetLastTradesHolder.INSTANCE;
+    }
 
     private GetLastTrades() {
         super(new APITag[] {APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing

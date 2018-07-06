@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ParseTransaction extends APIServlet.APIRequestHandler {
 
-    static final ParseTransaction instance = new ParseTransaction();
+    private static class ParseTransactionHolder {
+        private static final ParseTransaction INSTANCE = new ParseTransaction();
+    }
+
+    public static ParseTransaction getInstance() {
+        return ParseTransactionHolder.INSTANCE;
+    }
 
     private ParseTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");

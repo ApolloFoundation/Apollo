@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAssetDeletes extends APIServlet.APIRequestHandler {
 
-    static final GetAssetDeletes instance = new GetAssetDeletes();
+    private static class GetAssetDeletesHolder {
+        private static final GetAssetDeletes INSTANCE = new GetAssetDeletes();
+    }
+
+    public static GetAssetDeletes getInstance() {
+        return GetAssetDeletesHolder.INSTANCE;
+    }
 
     private GetAssetDeletes() {
         super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");

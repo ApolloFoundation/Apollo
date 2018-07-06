@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAliasCount extends APIServlet.APIRequestHandler {
 
-    static final GetAliasCount instance = new GetAliasCount();
+    private static class GetAliasCountHolder {
+        private static final GetAliasCount INSTANCE = new GetAliasCount();
+    }
+
+    public static GetAliasCount getInstance() {
+        return GetAliasCountHolder.INSTANCE;
+    }
 
     private GetAliasCount() {
         super(new APITag[] {APITag.ALIASES}, "account");

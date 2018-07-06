@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetTrades extends APIServlet.APIRequestHandler {
 
-    static final GetTrades instance = new GetTrades();
+    private static class GetTradesHolder {
+        private static final GetTrades INSTANCE = new GetTrades();
+    }
+
+    public static GetTrades getInstance() {
+        return GetTradesHolder.INSTANCE;
+    }
 
     private GetTrades() {
         super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");

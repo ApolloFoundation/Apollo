@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAliasesLike extends APIServlet.APIRequestHandler {
 
-    static final GetAliasesLike instance = new GetAliasesLike();
+    private static class GetAliasesLikeHolder {
+        private static final GetAliasesLike INSTANCE = new GetAliasesLike();
+    }
+
+    public static GetAliasesLike getInstance() {
+        return GetAliasesLikeHolder.INSTANCE;
+    }
 
     private GetAliasesLike() {
         super(new APITag[] {APITag.ALIASES, APITag.SEARCH}, "aliasPrefix", "firstIndex", "lastIndex");

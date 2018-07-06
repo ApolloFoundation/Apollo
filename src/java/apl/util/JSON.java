@@ -21,9 +21,13 @@ import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +115,26 @@ public final class JSON {
             return;
         }
         json.writeJSONString(writer);
+    }
+
+    public static void writeJSONString(JSONStreamAware json, Path filePath) throws IOException {
+        if (json == null) {
+            Files.write(filePath, "null".getBytes(), StandardOpenOption.APPEND);
+            return;
+        }
+        if (json instanceof Map) {
+            StringBuilder sb = new StringBuilder(1024);
+            encodeObject((Map)json, sb);
+            Files.write(filePath, sb.toString().getBytes(), StandardOpenOption.APPEND);
+            return;
+        }
+        if (json instanceof List) {
+            StringBuilder sb = new StringBuilder(1024);
+            encodeArray((List)json, sb);
+            Files.write(filePath, sb.toString().getBytes(), StandardOpenOption.APPEND);
+            return;
+        }
+        json.writeJSONString(new FileWriter((filePath.toAbsolutePath().toString()), true));
     }
 
     /**

@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetSharedKey extends APIServlet.APIRequestHandler {
 
-    static final GetSharedKey instance = new GetSharedKey();
+    private static class GetSharedKeyHolder {
+        private static final GetSharedKey INSTANCE = new GetSharedKey();
+    }
+
+    public static GetSharedKey getInstance() {
+        return GetSharedKeyHolder.INSTANCE;
+    }
 
     private GetSharedKey() {
         super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce");

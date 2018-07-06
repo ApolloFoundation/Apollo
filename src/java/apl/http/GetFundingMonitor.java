@@ -47,7 +47,13 @@ import java.util.List;
  */
 public class GetFundingMonitor extends APIServlet.APIRequestHandler {
 
-    static final GetFundingMonitor instance = new GetFundingMonitor();
+    private static class GetFundingMonitorHolder {
+        private static final GetFundingMonitor INSTANCE = new GetFundingMonitor();
+    }
+
+    public static GetFundingMonitor getInstance() {
+        return GetFundingMonitorHolder.INSTANCE;
+    }
 
     private GetFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",

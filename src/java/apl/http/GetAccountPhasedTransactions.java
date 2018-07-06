@@ -28,7 +28,13 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetAccountPhasedTransactions extends APIServlet.APIRequestHandler {
-    static final GetAccountPhasedTransactions instance = new GetAccountPhasedTransactions();
+    private static class GetAccountPhasedTransactionsHolder {
+        private static final GetAccountPhasedTransactions INSTANCE = new GetAccountPhasedTransactions();
+    }
+
+    public static GetAccountPhasedTransactions getInstance() {
+        return GetAccountPhasedTransactionsHolder.INSTANCE;
+    }
 
     private GetAccountPhasedTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING},

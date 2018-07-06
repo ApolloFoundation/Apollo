@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class RequeueUnconfirmedTransactions extends APIServlet.APIRequestHandler {
 
-    static final RequeueUnconfirmedTransactions instance = new RequeueUnconfirmedTransactions();
+    private static class RequeueUnconfirmedTransactionsHolder {
+        private static final RequeueUnconfirmedTransactions INSTANCE = new RequeueUnconfirmedTransactions();
+    }
+
+    public static RequeueUnconfirmedTransactions getInstance() {
+        return RequeueUnconfirmedTransactionsHolder.INSTANCE;
+    }
 
     private RequeueUnconfirmedTransactions() {
         super(new APITag[] {APITag.DEBUG});

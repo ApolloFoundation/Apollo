@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAssetDividends extends APIServlet.APIRequestHandler {
 
-    static final GetAssetDividends instance = new GetAssetDividends();
+    private static class GetAssetDividendsHolder {
+        private static final GetAssetDividends INSTANCE = new GetAssetDividends();
+    }
+
+    public static GetAssetDividends getInstance() {
+        return GetAssetDividendsHolder.INSTANCE;
+    }
 
     private GetAssetDividends() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "timestamp");

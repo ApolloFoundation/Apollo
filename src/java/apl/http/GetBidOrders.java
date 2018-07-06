@@ -35,7 +35,13 @@ import java.util.List;
 
 public final class GetBidOrders extends APIServlet.APIRequestHandler {
 
-    static final GetBidOrders instance = new GetBidOrders();
+    private static class GetBidOrdersHolder {
+        private static final GetBidOrders INSTANCE = new GetBidOrders();
+    }
+
+    public static GetBidOrders getInstance() {
+        return GetBidOrdersHolder.INSTANCE;
+    }
 
     private GetBidOrders() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");

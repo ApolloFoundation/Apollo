@@ -27,7 +27,13 @@ import static apl.http.JSONResponses.UNKNOWN_ORDER;
 
 public final class GetAskOrder extends APIServlet.APIRequestHandler {
 
-    static final GetAskOrder instance = new GetAskOrder();
+    private static class GetAskOrderHolder {
+        private static final GetAskOrder INSTANCE = new GetAskOrder();
+    }
+
+    public static GetAskOrder getInstance() {
+        return GetAskOrderHolder.INSTANCE;
+    }
 
     private GetAskOrder() {
         super(new APITag[] {APITag.AE}, "order");

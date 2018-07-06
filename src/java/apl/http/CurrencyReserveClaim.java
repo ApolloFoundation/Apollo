@@ -40,7 +40,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class CurrencyReserveClaim extends CreateTransaction {
 
-    static final CurrencyReserveClaim instance = new CurrencyReserveClaim();
+    private static class CurrencyReserveClaimHolder {
+        private static final CurrencyReserveClaim INSTANCE = new CurrencyReserveClaim();
+    }
+
+    public static CurrencyReserveClaim getInstance() {
+        return CurrencyReserveClaimHolder.INSTANCE;
+    }
 
     private CurrencyReserveClaim() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");

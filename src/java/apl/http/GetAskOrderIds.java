@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAskOrderIds extends APIServlet.APIRequestHandler {
 
-    static final GetAskOrderIds instance = new GetAskOrderIds();
+    private static class GetAskOrderIdsHolder {
+        private static final GetAskOrderIds INSTANCE = new GetAskOrderIds();
+    }
+
+    public static GetAskOrderIds getInstance() {
+        return GetAskOrderIdsHolder.INSTANCE;
+    }
 
     private GetAskOrderIds() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex");

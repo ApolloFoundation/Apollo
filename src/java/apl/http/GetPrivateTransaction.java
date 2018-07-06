@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.*;
 
 public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
 
-    static final GetPrivateTransaction instance = new GetPrivateTransaction();
+    private static class GetPrivateTransactionHolder {
+        private static final GetPrivateTransaction INSTANCE = new GetPrivateTransaction();
+    }
+
+    public static GetPrivateTransaction getInstance() {
+        return GetPrivateTransactionHolder.INSTANCE;
+    }
 
     private GetPrivateTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");

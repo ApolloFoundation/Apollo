@@ -26,10 +26,15 @@ public class LookAndFeel {
             try {
                 UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
             } catch (UnsupportedLookAndFeelException | IllegalAccessException | InstantiationException | ClassNotFoundException e) {
-                e.printStackTrace();
+                logException(e);
             }
             UIManager.put("swing.boldMetal", Boolean.FALSE);
         }
+    }
+
+    private static void logException(Exception e) {
+        System.out.println(e.getLocalizedMessage());
+        e.printStackTrace();
     }
 
 }

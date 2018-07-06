@@ -35,17 +35,11 @@ var NRS = (function(NRS, $) {
 		"enable_plugins": "0",
 		"items_page": "15",
 		"admin_password": "",
-        "shape_shift_url": "https://cors.shapeshift.io/",
-        "shape_shift_api_key": "773ecd081abd54e760a45b3551bbd4d725cf788590619e3f4bdeb81d01994d1dcad8a1d35771f669cfa47742af38e2207e297bc0eeeaea733853c2235548fba3",
-        "shape_shift_coin0": "BTC",
-        "shape_shift_coin1": "LTC",
-        "shape_shift_coin2": "ETH",
         "changelly_url": "https://api.changelly.com",
         "changelly_api_key": "77c34bb4f2bc40519df33a474097936f",
         "changelly_api_secret": "76021037dd6358c33de88810fa4093852bf278a683843c37ea9913acc2746ee0",
         "changelly_coin0": "BTC",
         "changelly_coin1": "ARDR",
-        "changelly_coin2": "ETH",
 		"max_apl_decimals": "2",
 		"fake_entity_warning": "1"
 	};

@@ -23,7 +23,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public class GetUpdateStatus extends APIServlet.APIRequestHandler {
 
-    static final GetUpdateStatus instance = new GetUpdateStatus();
+    private static class GetUpdateStatusHolder {
+        private static final GetUpdateStatus INSTANCE = new GetUpdateStatus();
+    }
+
+    public static GetUpdateStatus getInstance() {
+        return GetUpdateStatusHolder.INSTANCE;
+    }
 
     private GetUpdateStatus() {
         super(new APITag[] {APITag.UPDATE});

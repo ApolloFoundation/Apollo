@@ -89,6 +89,13 @@ public final class DbUtils {
             pstmt.setNull(index, Types.INTEGER);
         }
     }
+    public static void setByteZeroToNull(PreparedStatement pstmt, int index, byte n) throws SQLException {
+        if (n != 0) {
+            pstmt.setByte(index, n);
+        } else {
+            pstmt.setNull(index, Types.TINYINT);
+        }
+    }
 
     public static void setLongZeroToNull(PreparedStatement pstmt, int index, long l) throws SQLException {
         if (l != 0) {

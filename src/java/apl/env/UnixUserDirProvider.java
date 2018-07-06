@@ -19,6 +19,7 @@ package apl.env;
 
 import apl.Apl;
 
+import java.io.File;
 import java.nio.file.Paths;
 
 public class UnixUserDirProvider extends DesktopUserDirProvider {
@@ -28,5 +29,10 @@ public class UnixUserDirProvider extends DesktopUserDirProvider {
     @Override
     public String getUserHomeDir() {
         return APL_USER_HOME;
+    }
+
+    @Override
+    public File getLogFileDir() {
+        return super.getLogFileDir();
     }
 }

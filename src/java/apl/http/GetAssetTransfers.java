@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAssetTransfers extends APIServlet.APIRequestHandler {
 
-    static final GetAssetTransfers instance = new GetAssetTransfers();
+    private static class GetAssetTransfersHolder {
+        private static final GetAssetTransfers INSTANCE = new GetAssetTransfers();
+    }
+
+    public static GetAssetTransfers getInstance() {
+        return GetAssetTransfersHolder.INSTANCE;
+    }
 
     private GetAssetTransfers() {
         super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");

@@ -45,7 +45,13 @@ import java.util.logging.Logger;
 public final class GetLog extends APIServlet.APIRequestHandler {
 
     /** GetLog instance */
-    static final GetLog instance = new GetLog();
+    private static class GetLogHolder {
+        private static final GetLog INSTANCE = new GetLog();
+    }
+
+    public static GetLog getInstance() {
+        return GetLogHolder.INSTANCE;
+    }
 
     /**
      * Create the GetLog instance

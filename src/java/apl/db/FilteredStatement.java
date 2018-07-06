@@ -17,6 +17,8 @@
 
 package apl.db;
 
+import apl.util.Logger;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -294,5 +296,14 @@ public class FilteredStatement implements Statement {
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return stmt.unwrap(iface);
+    }
+
+    protected void cancelAndLogError() {
+        try {
+            cancel();
+        }
+        catch (SQLException e) {
+            Logger.logDebugMessage("Cannot cancel filtered statement", e);
+        }
     }
 }
