@@ -75,4 +75,8 @@ abstract class DesktopUserDirProvider implements DirProvider {
     @Override
     public abstract String getUserHomeDir();
 
+    @Override
+    public File getBinDirectory() {
+        return Paths.get(getUserHomeDir()).resolve("classes").toFile();
+    }
 }

@@ -43,4 +43,13 @@ public class SystemTrayDataProvider {
     public File getLogFile() {
         return logFile;
     }
+
+    @Override
+    public String toString() {
+        return "SystemTrayDataProvider{" +
+                "toolTip='" + toolTip + '\'' +
+                ", wallet=" + wallet +
+                ", logFile=" + logFile +
+                '}';
+    }
 }
