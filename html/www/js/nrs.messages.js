@@ -27,7 +27,9 @@ var NRS = (function(NRS, $) {
         _latestMessages = {};
 	};
 	NRS.resetMessagesState();
-
+    NRS.messageLoader = function() {
+        console.log('loaded message loader');
+    };
 	NRS.pages.messages = function(callback) {
 		_messages = {};
         $("#inline_message_form").hide();

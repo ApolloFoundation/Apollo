@@ -19,6 +19,10 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $) {
+    NRS.settingsLoader = function() {
+        console.log('loaded settings');
+    };
+
 	NRS.defaultSettings = {
 		"submit_on_enter": "0",
 		"animate_forging": "1",

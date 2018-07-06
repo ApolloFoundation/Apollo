@@ -25,7 +25,9 @@ var NRS = (function(NRS, $) {
 	};
 
     var target = document.getElementById('user_info_modal_transactions_table');
-
+    NRS.modalAccountLoader = function() {
+        console.log('loaded modal account ');
+    };
 
 	var body = $("body");
     body.on("click", ".show_account_modal_action, a[data-user].user_info", function(e) {

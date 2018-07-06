@@ -19,7 +19,9 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $) {
-
+    NRS.mobileLoader = function() {
+        console.log('loaded mobile loader');
+    };
     $("#mobile_settings_modal").on("show.bs.modal", function() {
         var isOffline = !!$("#mobile_settings_modal").find("input[name=is_offline]").val();
         if (isOffline) {

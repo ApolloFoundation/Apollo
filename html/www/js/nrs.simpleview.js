@@ -74,6 +74,10 @@ var NRS = (function(NRS, $, undefined) {
     /* Compiled HandleBars templates */
     var templates = {};
 
+    NRS.simpleViewLoader = function() {
+        console.log('loaded simple view');
+    };
+
     NRS.simpleview = {
 
         /* Contains callback closures for use with HandleBars 'callback' helper */

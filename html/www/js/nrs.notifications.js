@@ -20,6 +20,10 @@
  */
 var NRS = (function(NRS, $, undefined) {
 
+    NRS.notificationsLoader = function() {
+        console.log('loaded notifications');
+    };
+
 	NRS.updateNotificationUI = function() {
 		let ul = document.createElement('ul');
 		let li = document.createElement('li');

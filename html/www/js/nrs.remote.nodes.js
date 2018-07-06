@@ -21,6 +21,10 @@
 var NRS = (function(NRS) {
     var requestConfirmations = [];
 
+    NRS.remoteLoader = function() {
+        console.log('loaded remote');
+    };
+
     NRS.updateRemoteNodes = function() {
         var data = {state: "CONNECTED", includePeerInfo: true};
         NRS.sendRequest("getPeers", data, function (response) {

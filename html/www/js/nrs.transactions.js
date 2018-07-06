@@ -27,6 +27,10 @@ var NRS = (function(NRS, $, undefined) {
 	NRS.unconfirmedTransactionIds = "";
 	NRS.unconfirmedTransactionsChange = true;
 
+    NRS.transactionsLoader = function() {
+        console.log('loaded transactions');
+    };
+
     NRS.paginate = function(transactionType, target) {
     	var that = this;
         this.page = 1;
