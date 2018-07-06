@@ -61,6 +61,15 @@ final class PeerDb {
         public boolean equals(Object obj) {
             return (obj != null && (obj instanceof Entry) && address.equals(((Entry)obj).address));
         }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                    "address='" + address + '\'' +
+                    ", services=" + services +
+                    ", lastUpdated=" + lastUpdated +
+                    '}';
+        }
     }
 
     static List<Entry> loadPeers() {

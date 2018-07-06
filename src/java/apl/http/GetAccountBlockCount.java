@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountBlockCount extends APIServlet.APIRequestHandler {
 
-    static final GetAccountBlockCount instance = new GetAccountBlockCount();
+    private static class GetAccountBlockCountHolder {
+        private static final GetAccountBlockCount INSTANCE = new GetAccountBlockCount();
+    }
+
+    public static GetAccountBlockCount getInstance() {
+        return GetAccountBlockCountHolder.INSTANCE;
+    }
 
     private GetAccountBlockCount() {
         super(new APITag[] {APITag.ACCOUNTS}, "account");

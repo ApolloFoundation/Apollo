@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllPhasingOnlyControls extends APIServlet.APIRequestHandler {
 
-    static final GetAllPhasingOnlyControls instance = new GetAllPhasingOnlyControls();
+    private static class GetAllPhasingOnlyControlsHolder {
+        private static final GetAllPhasingOnlyControls INSTANCE = new GetAllPhasingOnlyControls();
+    }
+
+    public static GetAllPhasingOnlyControls getInstance() {
+        return GetAllPhasingOnlyControlsHolder.INSTANCE;
+    }
 
     private GetAllPhasingOnlyControls() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL}, "firstIndex", "lastIndex");

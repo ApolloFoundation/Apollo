@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class TrimDerivedTables extends APIServlet.APIRequestHandler {
 
-    static final TrimDerivedTables instance = new TrimDerivedTables();
+    private static class TrimDerivedTablesHolder {
+        private static final TrimDerivedTables INSTANCE = new TrimDerivedTables();
+    }
+
+    public static TrimDerivedTables getInstance() {
+        return TrimDerivedTablesHolder.INSTANCE;
+    }
 
     private TrimDerivedTables() {
         super(new APITag[] {APITag.DEBUG});

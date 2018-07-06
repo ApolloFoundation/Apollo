@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.UNKNOWN_GOODS;
 
 public final class DGSDelisting extends CreateTransaction {
 
-    static final DGSDelisting instance = new DGSDelisting();
+    private static class DGSDelistingHolder {
+        private static final DGSDelisting INSTANCE = new DGSDelisting();
+    }
+
+    public static DGSDelisting getInstance() {
+        return DGSDelistingHolder.INSTANCE;
+    }
 
     private DGSDelisting() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION}, "goods");

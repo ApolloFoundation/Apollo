@@ -103,7 +103,13 @@ import java.util.List;
 public class EventRegister extends APIServlet.APIRequestHandler {
 
     /** EventRegister instance */
-    static final EventRegister instance = new EventRegister();
+    private static class EventRegisterHolder {
+        private static final EventRegister INSTANCE = new EventRegister();
+    }
+
+    public static EventRegister getInstance() {
+        return EventRegisterHolder.INSTANCE;
+    }
 
     /** Events registers */
     private static final JSONObject eventsRegistered = new JSONObject();

@@ -83,7 +83,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class IssueCurrency extends CreateTransaction {
 
-    static final IssueCurrency instance = new IssueCurrency();
+    private static class IssueCurrencyHolder {
+        private static final IssueCurrency INSTANCE = new IssueCurrency();
+    }
+
+    public static IssueCurrency getInstance() {
+        return IssueCurrencyHolder.INSTANCE;
+    }
 
     private IssueCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION},

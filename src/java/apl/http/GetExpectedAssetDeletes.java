@@ -32,7 +32,13 @@ import java.util.List;
 
 public final class GetExpectedAssetDeletes extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedAssetDeletes instance = new GetExpectedAssetDeletes();
+    private static class GetExpectedAssetDeletesHolder {
+        private static final GetExpectedAssetDeletes INSTANCE = new GetExpectedAssetDeletes();
+    }
+
+    public static GetExpectedAssetDeletes getInstance() {
+        return GetExpectedAssetDeletesHolder.INSTANCE;
+    }
 
     private GetExpectedAssetDeletes() {
         super(new APITag[] {APITag.AE}, "asset", "account", "includeAssetInfo");

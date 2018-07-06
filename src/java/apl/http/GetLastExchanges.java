@@ -27,7 +27,13 @@ import java.util.List;
 
 public final class GetLastExchanges extends APIServlet.APIRequestHandler {
 
-    static final GetLastExchanges instance = new GetLastExchanges();
+    private static class GetLastExchangesHolder {
+        private static final GetLastExchanges INSTANCE = new GetLastExchanges();
+    }
+
+    public static GetLastExchanges getInstance() {
+        return GetLastExchangesHolder.INSTANCE;
+    }
 
     private GetLastExchanges() {
         super(new APITag[] {APITag.MS}, "currencies", "currencies", "currencies"); // limit to 3 for testing

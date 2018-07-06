@@ -169,7 +169,13 @@ import javax.servlet.http.HttpServletRequest;
 public class GetAccountLedgerEntry extends APIServlet.APIRequestHandler {
 
     /** GetAccountLedgerEntry instance */
-    static final GetAccountLedgerEntry instance = new GetAccountLedgerEntry();
+    private static class GetAccountLedgerEntryHolder {
+        private static final GetAccountLedgerEntry INSTANCE = new GetAccountLedgerEntry();
+    }
+
+    public static GetAccountLedgerEntry getInstance() {
+        return GetAccountLedgerEntryHolder.INSTANCE;
+    }
 
     /**
      * Create the GetAccountLedgerEntry instance

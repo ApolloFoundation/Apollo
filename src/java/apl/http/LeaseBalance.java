@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class LeaseBalance extends CreateTransaction {
 
-    static final LeaseBalance instance = new LeaseBalance();
+    private static class LeaseBalanceHolder {
+        private static final LeaseBalance INSTANCE = new LeaseBalance();
+    }
+
+    public static LeaseBalance getInstance() {
+        return LeaseBalanceHolder.INSTANCE;
+    }
 
     private LeaseBalance() {
         super(new APITag[] {APITag.FORGING, APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "period", "recipient");

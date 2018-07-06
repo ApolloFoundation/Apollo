@@ -34,7 +34,13 @@ import static apl.http.JSONResponses.INCORRECT_PURCHASE;
 
 public final class DGSRefund extends CreateTransaction {
 
-    static final DGSRefund instance = new DGSRefund();
+    private static class DGSRefundHolder {
+        private static final DGSRefund INSTANCE = new DGSRefund();
+    }
+
+    public static DGSRefund getInstance() {
+        return DGSRefundHolder.INSTANCE;
+    }
 
     private DGSRefund() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

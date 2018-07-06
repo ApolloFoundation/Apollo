@@ -36,7 +36,13 @@ import java.util.List;
 
 public final class GetPlugins extends APIServlet.APIRequestHandler {
 
-    static final GetPlugins instance = new GetPlugins();
+    private static class GetPluginsHolder {
+        private static final GetPlugins INSTANCE = new GetPlugins();
+    }
+
+    public static GetPlugins getInstance() {
+        return GetPluginsHolder.INSTANCE;
+    }
 
     private GetPlugins() {
         super(new APITag[] {APITag.INFO});

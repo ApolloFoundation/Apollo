@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.UNKNOWN_PEER;
 
 public class BlacklistAPIProxyPeer extends APIServlet.APIRequestHandler {
 
-    static final BlacklistAPIProxyPeer instance = new BlacklistAPIProxyPeer();
+    private static class BlacklistAPIProxyPeerHolder {
+        private static final BlacklistAPIProxyPeer INSTANCE = new BlacklistAPIProxyPeer();
+    }
+
+    public static BlacklistAPIProxyPeer getInstance() {
+        return BlacklistAPIProxyPeerHolder.INSTANCE;
+    }
 
     private BlacklistAPIProxyPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");

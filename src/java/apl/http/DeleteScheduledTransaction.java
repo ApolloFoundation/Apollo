@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class DeleteScheduledTransaction extends APIServlet.APIRequestHandler {
 
-    static final DeleteScheduledTransaction instance = new DeleteScheduledTransaction();
+    private static class DeleteScheduledTransactionHolder {
+        private static final DeleteScheduledTransaction INSTANCE = new DeleteScheduledTransaction();
+    }
+
+    public static DeleteScheduledTransaction getInstance() {
+        return DeleteScheduledTransactionHolder.INSTANCE;
+    }
 
     private DeleteScheduledTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "transaction");

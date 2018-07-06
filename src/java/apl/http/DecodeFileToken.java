@@ -31,7 +31,14 @@ import static apl.http.JSONResponses.MISSING_TOKEN;
 
 public final class DecodeFileToken extends APIServlet.APIRequestHandler {
 
-    static final DecodeFileToken instance = new DecodeFileToken();
+
+    private static class DecodeFileTokenHolder {
+        private static final DecodeFileToken INSTANCE = new DecodeFileToken();
+    }
+
+    public static DecodeFileToken getInstance() {
+        return DecodeFileTokenHolder.INSTANCE;
+    }
 
     private DecodeFileToken() {
         super("file", new APITag[] {APITag.TOKENS}, "token");

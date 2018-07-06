@@ -32,7 +32,13 @@ import java.util.List;
 
 public final class GetExpectedCurrencyTransfers extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedCurrencyTransfers instance = new GetExpectedCurrencyTransfers();
+    private static class GetExpectedCurrencyTransfersHolder {
+        private static final GetExpectedCurrencyTransfers INSTANCE = new GetExpectedCurrencyTransfers();
+    }
+
+    public static GetExpectedCurrencyTransfers getInstance() {
+        return GetExpectedCurrencyTransfersHolder.INSTANCE;
+    }
 
     private GetExpectedCurrencyTransfers() {
         super(new APITag[]{APITag.MS}, "currency", "account", "includeCurrencyInfo");

@@ -24,7 +24,13 @@ import org.json.simple.JSONStreamAware;
 
 final class GetCumulativeDifficulty extends PeerServlet.PeerRequestHandler {
 
-    static final GetCumulativeDifficulty instance = new GetCumulativeDifficulty();
+    private static class GetCumulativeDifficultyHolder {
+        private static final GetCumulativeDifficulty INSTANCE = new GetCumulativeDifficulty();
+    }
+
+    public static GetCumulativeDifficulty getInstance() {
+        return GetCumulativeDifficultyHolder.INSTANCE;
+    }
 
     private GetCumulativeDifficulty() {}
 

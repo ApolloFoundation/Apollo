@@ -39,7 +39,13 @@ import static apl.http.JSONResponses.MISSING_NAME;
 
 public final class CreatePoll extends CreateTransaction {
 
-    static final CreatePoll instance = new CreatePoll();
+    private static class CreatePollHolder {
+        private static final CreatePoll INSTANCE = new CreatePoll();
+    }
+
+    public static CreatePoll getInstance() {
+        return CreatePollHolder.INSTANCE;
+    }
 
     private CreatePoll() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION},

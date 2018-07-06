@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public class DividendPayment extends CreateTransaction {
 
-    static final DividendPayment instance = new DividendPayment();
+    private static class DividendPaymentHolder {
+        private static final DividendPayment INSTANCE = new DividendPayment();
+    }
+
+    public static DividendPayment getInstance() {
+        return DividendPaymentHolder.INSTANCE;
+    }
 
     private DividendPayment() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountATMPerATU");

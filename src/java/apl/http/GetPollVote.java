@@ -28,7 +28,13 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetPollVote extends APIServlet.APIRequestHandler  {
-    static final GetPollVote instance = new GetPollVote();
+    private static class GetPollVoteHolder {
+        private static final GetPollVote INSTANCE = new GetPollVote();
+    }
+
+    public static GetPollVote getInstance() {
+        return GetPollVoteHolder.INSTANCE;
+    }
 
     private GetPollVote() {
         super(new APITag[] {APITag.VS}, "poll", "account", "includeWeights");

@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.NOT_ENOUGH_ASSETS;
 
 public final class TransferAsset extends CreateTransaction {
 
-    static final TransferAsset instance = new TransferAsset();
+    private static class TransferAssetHolder {
+        private static final TransferAsset INSTANCE = new TransferAsset();
+    }
+
+    public static TransferAsset getInstance() {
+        return TransferAssetHolder.INSTANCE;
+    }
 
     private TransferAsset() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");

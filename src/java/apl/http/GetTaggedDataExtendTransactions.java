@@ -33,7 +33,13 @@ import java.util.List;
 
 public final class GetTaggedDataExtendTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetTaggedDataExtendTransactions instance = new GetTaggedDataExtendTransactions();
+    private static class GetTaggedDataExtendTransactionsHolder {
+        private static final GetTaggedDataExtendTransactions INSTANCE = new GetTaggedDataExtendTransactions();
+    }
+
+    public static GetTaggedDataExtendTransactions getInstance() {
+        return GetTaggedDataExtendTransactionsHolder.INSTANCE;
+    }
 
     private GetTaggedDataExtendTransactions() {
         super(new APITag[] {APITag.DATA}, "transaction");

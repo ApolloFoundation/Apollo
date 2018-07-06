@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDGSGood extends APIServlet.APIRequestHandler {
 
-    static final GetDGSGood instance = new GetDGSGood();
+    private static class GetDGSGoodHolder {
+        private static final GetDGSGood INSTANCE = new GetDGSGood();
+    }
+
+    public static GetDGSGood getInstance() {
+        return GetDGSGoodHolder.INSTANCE;
+    }
 
     private GetDGSGood() {
         super(new APITag[] {APITag.DGS}, "goods", "includeCounts");

@@ -18,16 +18,22 @@
 package apl.http;
 
 import apl.Account;
+import apl.AplException;
 import apl.Attachment;
 import apl.Currency;
-import apl.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
 public final class DeleteCurrency extends CreateTransaction {
 
-    static final DeleteCurrency instance = new DeleteCurrency();
+    private static class DeleteCurrencyHolder {
+        private static final DeleteCurrency INSTANCE = new DeleteCurrency();
+    }
+
+    public static DeleteCurrency getInstance() {
+        return DeleteCurrencyHolder.INSTANCE;
+    }
 
     private DeleteCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency");

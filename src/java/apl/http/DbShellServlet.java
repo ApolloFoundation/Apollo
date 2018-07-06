@@ -24,7 +24,6 @@ import org.h2.tools.Shell;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,46 +34,47 @@ import java.sql.SQLException;
 
 public final class DbShellServlet extends HttpServlet {
 
-    private static final String header =
+    private static final String JAVASCRIPT_SECTION = "    <script type=\"text/javascript\">\n" +
+            "        function submitForm(form, adminPassword) {\n" +
+            "            var url = '/dbshell';\n" +
+            "            var params = '';\n" +
+            "            for (i = 0; i < form.elements.length; i++) {\n" +
+            "                if (! form.elements[i].name) {\n" +
+            "                    continue;\n" +
+            "                }\n" +
+            "                if (i > 0) {\n" +
+            "                    params += '&';\n" +
+            "                }\n" +
+            "                params += encodeURIComponent(form.elements[i].name);\n" +
+            "                params += '=';\n" +
+            "                params += encodeURIComponent(form.elements[i].value);\n" +
+            "            }\n" +
+            "            if (adminPassword && form.elements.length > 0) {\n" +
+            "                params += '&adminPassword=' + adminPassword;\n" +
+            "            }\n" +
+            "            var request = new XMLHttpRequest();\n" +
+            "            request.open(\"POST\", url, false);\n" +
+            "            request.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\n" +
+            "            request.send(params);\n" +
+            "            form.getElementsByClassName(\"result\")[0].textContent += request.responseText;\n" +
+            "            return false;\n" +
+            "        }\n" +
+            "    </script>\n";
+    private static final String HEADER =
             "<!DOCTYPE html>\n" +
                     "<html>\n" +
                     "<head>\n" +
                     "    <meta charset=\"UTF-8\"/>\n" +
                     "    <title>Apl H2 Database Shell</title>\n" +
-                    "    <script type=\"text/javascript\">\n" +
-                    "        function submitForm(form, adminPassword) {\n" +
-                    "            var url = '/dbshell';\n" +
-                    "            var params = '';\n" +
-                    "            for (i = 0; i < form.elements.length; i++) {\n" +
-                    "                if (! form.elements[i].name) {\n" +
-                    "                    continue;\n" +
-                    "                }\n" +
-                    "                if (i > 0) {\n" +
-                    "                    params += '&';\n" +
-                    "                }\n" +
-                    "                params += encodeURIComponent(form.elements[i].name);\n" +
-                    "                params += '=';\n" +
-                    "                params += encodeURIComponent(form.elements[i].value);\n" +
-                    "            }\n" +
-                    "            if (adminPassword && form.elements.length > 0) {\n" +
-                    "                params += '&adminPassword=' + adminPassword;\n" +
-                    "            }\n" +
-                    "            var request = new XMLHttpRequest();\n" +
-                    "            request.open(\"POST\", url, false);\n" +
-                    "            request.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\n" +
-                    "            request.send(params);\n" +
-                    "            form.getElementsByClassName(\"result\")[0].textContent += request.responseText;\n" +
-                    "            return false;\n" +
-                    "        }\n" +
-                    "    </script>\n" +
+                    JAVASCRIPT_SECTION +
                     "</head>\n" +
                     "<body>\n";
 
-    private static final String footer =
+    private static final String FOOTER =
                     "</body>\n" +
                     "</html>\n";
 
-    private static final String form =
+    private static final String FORM =
             "<form action=\"/dbshell\" method=\"POST\" onsubmit=\"return submitForm(this" +
                     (API.disableAdminPassword ? "" : ", '{adminPassword}'") + ");\">" +
                     "<table class=\"table\" style=\"width:90%;\">" +
@@ -85,11 +85,11 @@ public final class DbShellServlet extends HttpServlet {
                     "</table>" +
                     "</form>";
 
-    private static final String errorNoPasswordIsConfigured =
+    private static final String ERROR_NO_PASSWORD_IS_CONFIGURED =
             "This page is password-protected, but no password is configured in apl.properties. " +
                     "Please set apl.adminPassword or disable the password protection with apl.disableAdminPassword";
 
-    private static final String passwordFormTemplate =
+    private static final String PASSWORD_FORM_TEMPLATE =
             "<form action=\"/dbshell\" method=\"POST\">" +
                     "<table class=\"table\">" +
                     "<tr><td colspan=\"3\">%s</td></tr>" +
@@ -102,12 +102,12 @@ public final class DbShellServlet extends HttpServlet {
                     "<input type=\"hidden\" name=\"showShell\" value=\"true\"/>" +
                     "</form>";
 
-    private static final String passwordForm = String.format(passwordFormTemplate,
+    private static final String PASSWORD_FORM = String.format(PASSWORD_FORM_TEMPLATE,
             "<p>This page is password-protected. Please enter the administrator's password</p>");
 
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
@@ -118,24 +118,24 @@ public final class DbShellServlet extends HttpServlet {
 
         String body;
         if (API.disableAdminPassword) {
-            body = form;
+            body = FORM;
         } else {
             if (API.adminPassword.isEmpty()) {
-                body = errorNoPasswordIsConfigured;
+                body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
-                body = passwordForm;
+                body = PASSWORD_FORM;
             }
         }
 
         try (PrintStream out = new PrintStream(resp.getOutputStream())) {
-            out.print(header);
+            out.print(HEADER);
             out.print(body);
-            out.print(footer);
+            out.print(FOOTER);
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
@@ -147,25 +147,25 @@ public final class DbShellServlet extends HttpServlet {
         String body = null;
         if (!API.disableAdminPassword) {
             if (API.adminPassword.isEmpty()) {
-                body = errorNoPasswordIsConfigured;
+                body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 try {
                     API.verifyPassword(req);
                     if ("true".equals(req.getParameter("showShell"))) {
-                        body = form.replace("{adminPassword}", URLEncoder.encode(req.getParameter("adminPassword"), "UTF-8") );
+                        body = FORM.replace("{adminPassword}", URLEncoder.encode(req.getParameter("adminPassword"), "UTF-8") );
                     }
                 } catch (ParameterException exc) {
                     String desc = (String)((JSONObject)JSONValue.parse(JSON.toString(exc.getErrorResponse()))).get("errorDescription");
-                    body = String.format(passwordFormTemplate, "<p style=\"color:red\">" + desc + "</p>");
+                    body = String.format(PASSWORD_FORM_TEMPLATE, "<p style=\"color:red\">" + desc + "</p>");
                 }
             }
         }
 
         if (body != null) {
             try (PrintStream out = new PrintStream(resp.getOutputStream())) {
-                out.print(header);
+                out.print(HEADER);
                 out.print(body);
-                out.print(footer);
+                out.print(FOOTER);
             }
             return;
         }

@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetShuffling extends APIServlet.APIRequestHandler {
 
-    static final GetShuffling instance = new GetShuffling();
+    private static class GetShufflingHolder {
+        private static final GetShuffling INSTANCE = new GetShuffling();
+    }
+
+    public static GetShuffling getInstance() {
+        return GetShufflingHolder.INSTANCE;
+    }
 
     private GetShuffling() {
         super(new APITag[] {APITag.SHUFFLING}, "shuffling", "includeHoldingInfo");

@@ -18,11 +18,7 @@
 package apl.http;
 
 
-import apl.Account;
-import apl.Attachment;
-import apl.Constants;
-import apl.AplException;
-import apl.PhasingPoll;
+import apl.*;
 import apl.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -30,13 +26,16 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
-import static apl.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
-import static apl.http.JSONResponses.TOO_MANY_PHASING_VOTES;
-import static apl.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
+import static apl.http.JSONResponses.*;
 
 public class ApproveTransaction extends CreateTransaction {
-    static final ApproveTransaction instance = new ApproveTransaction();
+    public static ApproveTransaction getInstance() {
+        return ApproveTransactionHolder.INSTANCE;
+    }
 
+    private static class ApproveTransactionHolder {
+        private static final ApproveTransaction INSTANCE = new ApproveTransaction();
+    }
     private ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
                 "revealedSecret", "revealedSecretIsText");

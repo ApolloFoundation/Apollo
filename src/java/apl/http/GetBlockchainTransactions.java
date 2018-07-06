@@ -32,7 +32,13 @@ import static apl.http.JSONResponses.*;
 
 public final class GetBlockchainTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetBlockchainTransactions instance = new GetBlockchainTransactions();
+    private static class GetBlockchainTransactionsHolder {
+        private static final GetBlockchainTransactions INSTANCE = new GetBlockchainTransactions();
+    }
+
+    public static GetBlockchainTransactions getInstance() {
+        return GetBlockchainTransactionsHolder.INSTANCE;
+    }
 
     private GetBlockchainTransactions() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",

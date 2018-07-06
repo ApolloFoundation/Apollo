@@ -37,7 +37,13 @@ import static apl.http.JSONResponses.MISSING_NAME;
 
 public final class DGSListing extends CreateTransaction {
 
-    static final DGSListing instance = new DGSListing();
+    private static class DGSListingHolder {
+        private static final DGSListing INSTANCE = new DGSListing();
+    }
+
+    public static DGSListing getInstance() {
+        return DGSListingHolder.INSTANCE;
+    }
 
     private DGSListing() {
         super("messageFile", new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

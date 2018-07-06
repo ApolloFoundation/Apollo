@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDGSTagsLike extends APIServlet.APIRequestHandler {
 
-    static final GetDGSTagsLike instance = new GetDGSTagsLike();
+    private static class GetDGSTagsLikeHolder {
+        private static final GetDGSTagsLike INSTANCE = new GetDGSTagsLike();
+    }
+
+    public static GetDGSTagsLike getInstance() {
+        return GetDGSTagsLikeHolder.INSTANCE;
+    }
 
     private GetDGSTagsLike() {
         super(new APITag[] {APITag.DGS, APITag.SEARCH}, "tagPrefix", "inStockOnly", "firstIndex", "lastIndex");

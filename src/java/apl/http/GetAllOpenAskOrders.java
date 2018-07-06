@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllOpenAskOrders extends APIServlet.APIRequestHandler {
 
-    static final GetAllOpenAskOrders instance = new GetAllOpenAskOrders();
+    private static class GetAllOpenAskOrdersHolder {
+        private static final GetAllOpenAskOrders INSTANCE = new GetAllOpenAskOrders();
+    }
+
+    public static GetAllOpenAskOrders getInstance() {
+        return GetAllOpenAskOrdersHolder.INSTANCE;
+    }
 
     private GetAllOpenAskOrders() {
         super(new APITag[] {APITag.AE}, "firstIndex", "lastIndex");

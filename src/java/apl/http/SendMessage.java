@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SendMessage extends CreateTransaction {
 
-    static final SendMessage instance = new SendMessage();
+    private static class SendMessageHolder {
+        private static final SendMessage INSTANCE = new SendMessage();
+    }
+
+    public static SendMessage getInstance() {
+        return SendMessageHolder.INSTANCE;
+    }
 
     private SendMessage() {
         super(new APITag[] {APITag.MESSAGES, APITag.CREATE_TRANSACTION}, "recipient");

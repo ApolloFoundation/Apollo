@@ -30,7 +30,13 @@ import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public final class GetPrivateUnconfirmedTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetPrivateUnconfirmedTransactions instance = new GetPrivateUnconfirmedTransactions();
+    private static class GetPrivateUnconfirmedTransactionsHolder {
+        private static final GetPrivateUnconfirmedTransactions INSTANCE = new GetPrivateUnconfirmedTransactions();
+    }
+
+    public static GetPrivateUnconfirmedTransactions getInstance() {
+        return GetPrivateUnconfirmedTransactionsHolder.INSTANCE;
+    }
 
     private GetPrivateUnconfirmedTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "firstIndex", "lastIndex", "secretPhrase", "publicKey");

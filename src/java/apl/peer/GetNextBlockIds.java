@@ -27,7 +27,13 @@ import java.util.List;
 
 final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
 
-    static final GetNextBlockIds instance = new GetNextBlockIds();
+    private static class GetNextBlockIdsHolder {
+        private static final GetNextBlockIds INSTANCE = new GetNextBlockIds();
+    }
+
+    public static GetNextBlockIds getInstance() {
+        return GetNextBlockIdsHolder.INSTANCE;
+    }
 
     private GetNextBlockIds() {}
 

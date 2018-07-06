@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetPhasingPolls extends APIServlet.APIRequestHandler {
 
-    static final GetPhasingPolls instance = new GetPhasingPolls();
+    private static class GetPhasingPollsHolder {
+        private static final GetPhasingPolls INSTANCE = new GetPhasingPolls();
+    }
+
+    public static GetPhasingPolls getInstance() {
+        return GetPhasingPollsHolder.INSTANCE;
+    }
 
     private GetPhasingPolls() {
         super(new APITag[] {APITag.PHASING}, "transaction", "transaction", "transaction", "countVotes"); // limit to 3 for testing

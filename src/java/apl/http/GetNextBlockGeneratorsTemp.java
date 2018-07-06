@@ -62,7 +62,13 @@ import java.util.List;
  */
 public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandler {
 
-    static final GetNextBlockGeneratorsTemp instance = new GetNextBlockGeneratorsTemp();
+    private static class GetNextBlockGeneratorsTempHolder {
+        private static final GetNextBlockGeneratorsTemp INSTANCE = new GetNextBlockGeneratorsTemp();
+    }
+
+    public static GetNextBlockGeneratorsTemp getInstance() {
+        return GetNextBlockGeneratorsTempHolder.INSTANCE;
+    }
 
     private GetNextBlockGeneratorsTemp() {
         super(new APITag[] {APITag.FORGING}, "limit");

@@ -30,7 +30,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountLessors extends APIServlet.APIRequestHandler {
 
-    static final GetAccountLessors instance = new GetAccountLessors();
+    private static class GetAccountLessorsHolder {
+        private static final GetAccountLessors INSTANCE = new GetAccountLessors();
+    }
+
+    public static GetAccountLessors getInstance() {
+        return GetAccountLessorsHolder.INSTANCE;
+    }
 
     private GetAccountLessors() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "height");

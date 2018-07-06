@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ShufflingCancel extends CreateTransaction {
 
-    static final ShufflingCancel instance = new ShufflingCancel();
+    private static class ShufflingCancelHolder {
+        private static final ShufflingCancel INSTANCE = new ShufflingCancel();
+    }
+
+    public static ShufflingCancel getInstance() {
+        return ShufflingCancelHolder.INSTANCE;
+    }
 
     private ShufflingCancel() {
         super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "cancellingAccount", "shufflingStateHash");

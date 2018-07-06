@@ -28,7 +28,13 @@ import static apl.http.JSONResponses.UNKNOWN_PEER;
 
 public final class GetPeer extends APIServlet.APIRequestHandler {
 
-    static final GetPeer instance = new GetPeer();
+    private static class GetPeerHolder {
+        private static final GetPeer INSTANCE = new GetPeer();
+    }
+
+    public static GetPeer getInstance() {
+        return GetPeerHolder.INSTANCE;
+    }
 
     private GetPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");

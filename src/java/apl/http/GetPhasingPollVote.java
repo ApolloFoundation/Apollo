@@ -25,7 +25,13 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetPhasingPollVote extends APIServlet.APIRequestHandler  {
-    static final GetPhasingPollVote instance = new GetPhasingPollVote();
+    private static class GetPhasingPollVoteHolder {
+        private static final GetPhasingPollVote INSTANCE = new GetPhasingPollVote();
+    }
+
+    public static GetPhasingPollVote getInstance() {
+        return GetPhasingPollVoteHolder.INSTANCE;
+    }
 
     private GetPhasingPollVote() {
         super(new APITag[] {APITag.PHASING}, "transaction", "account");

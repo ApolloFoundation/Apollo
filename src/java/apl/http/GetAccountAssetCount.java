@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountAssetCount extends APIServlet.APIRequestHandler {
 
-    static final GetAccountAssetCount instance = new GetAccountAssetCount();
+    private static class GetAccountAssetCountHolder {
+        private static final GetAccountAssetCount INSTANCE = new GetAccountAssetCount();
+    }
+
+    public static GetAccountAssetCount getInstance() {
+        return GetAccountAssetCountHolder.INSTANCE;
+    }
 
     private GetAccountAssetCount() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "height");

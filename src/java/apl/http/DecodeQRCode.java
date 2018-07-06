@@ -65,7 +65,13 @@ import java.util.Map;
 
 public final class DecodeQRCode extends APIServlet.APIRequestHandler {
 
-    static final DecodeQRCode instance = new DecodeQRCode();
+    private static class DecodeQRCodeHolder {
+        private static final DecodeQRCode INSTANCE = new DecodeQRCode();
+    }
+
+    public static DecodeQRCode getInstance() {
+        return DecodeQRCodeHolder.INSTANCE;
+    }
 
     private DecodeQRCode() {
         super(new APITag[] {APITag.UTILS}, "qrCodeBase64");

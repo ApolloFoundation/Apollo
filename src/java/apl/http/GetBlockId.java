@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.MISSING_HEIGHT;
 
 public final class GetBlockId extends APIServlet.APIRequestHandler {
 
-    static final GetBlockId instance = new GetBlockId();
+    private static class GetBlockIdHolder {
+        private static final GetBlockId INSTANCE = new GetBlockId();
+    }
+
+    public static GetBlockId getInstance() {
+        return GetBlockIdHolder.INSTANCE;
+    }
 
     private GetBlockId() {
         super(new APITag[] {APITag.BLOCKS}, "height");

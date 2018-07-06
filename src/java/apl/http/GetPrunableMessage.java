@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.PRUNED_TRANSACTION;
 
 public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
 
-    static final GetPrunableMessage instance = new GetPrunableMessage();
+    private static class GetPrunableMessageHolder {
+        private static final GetPrunableMessage INSTANCE = new GetPrunableMessage();
+    }
+
+    public static GetPrunableMessage getInstance() {
+        return GetPrunableMessageHolder.INSTANCE;
+    }
 
     private GetPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");

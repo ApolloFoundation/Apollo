@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetBalance extends APIServlet.APIRequestHandler {
 
-    static final GetBalance instance = new GetBalance();
+    private static class GetBalanceHolder {
+        private static final GetBalance INSTANCE = new GetBalance();
+    }
+
+    public static GetBalance getInstance() {
+        return GetBalanceHolder.INSTANCE;
+    }
 
     private GetBalance() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeEffectiveBalance", "height");

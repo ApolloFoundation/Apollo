@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetECBlock extends APIServlet.APIRequestHandler {
 
-    static final GetECBlock instance = new GetECBlock();
+    private static class GetECBlockHolder {
+        private static final GetECBlock INSTANCE = new GetECBlock();
+    }
+
+    public static GetECBlock getInstance() {
+        return GetECBlockHolder.INSTANCE;
+    }
 
     private GetECBlock() {
         super(new APITag[] {APITag.BLOCKS}, "timestamp");

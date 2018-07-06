@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
 
 public final class DetectMimeType extends APIServlet.APIRequestHandler {
 
-    static final DetectMimeType instance = new DetectMimeType();
+    private static class DetectMimeTypeHolder {
+        private static final DetectMimeType INSTANCE = new DetectMimeType();
+    }
+
+    public static DetectMimeType getInstance() {
+        return DetectMimeTypeHolder.INSTANCE;
+    }
 
     private DetectMimeType() {
         super("file", new APITag[] {APITag.DATA, APITag.UTILS}, "data", "filename", "isText");
