@@ -68,6 +68,15 @@ public final class AssetDelete {
         return listeners.removeListener(listener, eventType);
     }
 
+    public static boolean addListener(Listener<AssetDelete> listener) {
+        return addListener(listener, Event.ASSET_DELETE);
+    }
+
+    public static boolean removeListener(Listener<AssetDelete> listener) {
+        return removeListener(listener, Event.ASSET_DELETE);
+    }
+
+
     public static DbIterator<AssetDelete> getAssetDeletes(long assetId, int from, int to) {
         return assetDeleteTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }

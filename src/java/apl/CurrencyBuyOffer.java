@@ -139,4 +139,8 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
         buyOfferTable.insert(this);
     }
 
+    @Override
+    public long getId() {
+        return super.getId();
+    }
 }

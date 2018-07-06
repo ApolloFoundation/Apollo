@@ -85,6 +85,16 @@ public class CurrencyFounder {
         this.amountPerUnitATM = rs.getLong("amount");
     }
 
+    @Override
+    public String toString() {
+        return "CurrencyFounder{" +
+                "dbKey=" + dbKey +
+                ", currencyId=" + currencyId +
+                ", accountId=" + accountId +
+                ", amountPerUnitATM=" + amountPerUnitATM +
+                '}';
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest) "
                 + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {

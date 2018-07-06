@@ -77,6 +77,16 @@ public final class CurrencyTransfer {
         return listeners.removeListener(listener, eventType);
     }
 
+    public static boolean addListener(Listener<CurrencyTransfer> listener) {
+        return addListener(listener, Event.TRANSFER);
+    }
+
+    public static boolean removeListener(Listener<CurrencyTransfer> listener) {
+        return removeListener(listener, Event.TRANSFER);
+    }
+
+
+
     public static DbIterator<CurrencyTransfer> getCurrencyTransfers(long currencyId, int from, int to) {
         return currencyTransferTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }

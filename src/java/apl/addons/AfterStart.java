@@ -21,6 +21,8 @@ import apl.Apl;
 import apl.util.Logger;
 import apl.util.ThreadPool;
 
+import java.util.Map;
+
 public final class AfterStart implements AddOn {
 
     @Override
@@ -37,4 +39,8 @@ public final class AfterStart implements AddOn {
         }
     }
 
+    @Override
+    public void processRequest(Map<String, String> map) {
+        Logger.logInfoMessage(map.get("afterStartMessage"));
+    }
 }

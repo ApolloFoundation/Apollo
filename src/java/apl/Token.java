@@ -132,4 +132,12 @@ public final class Token {
         return isValid;
     }
 
+    @Override
+    public String toString() {
+        return "Token{" +
+                "publicKey=" + Convert.toHexString(publicKey) +
+                ", timestamp=" + timestamp +
+                ", isValid=" + isValid +
+                '}';
+    }
 }

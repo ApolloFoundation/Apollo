@@ -78,7 +78,13 @@ public final class PhasingParams {
         }
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
+    private PhasingParams(long quorum, long[] whitelist, VoteWeighting voteWeighting) {
+        this.quorum = quorum;
+        this.whitelist = whitelist;
+        this.voteWeighting = voteWeighting;
+    }
+
     int getMySize() {
         return 1 + 8 + 8 + 1 + 8 * whitelist.length + 8 + 1;
     }

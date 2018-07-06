@@ -32,6 +32,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Manages currency proof of work minting
@@ -54,6 +55,21 @@ public final class CurrencyMint {
             this.units = units;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Mint)) return false;
+            Mint mint = (Mint) o;
+            return accountId == mint.accountId &&
+                    currencyId == mint.currencyId &&
+                    units == mint.units;
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(accountId, currencyId, units);
+        }
     }
 
     private static final DbKey.LinkKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new DbKey.LinkKeyFactory<CurrencyMint>("currency_id", "account_id") {

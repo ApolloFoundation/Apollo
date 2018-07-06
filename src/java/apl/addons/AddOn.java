@@ -19,6 +19,8 @@ package apl.addons;
 
 import apl.http.APIServlet;
 
+import java.util.Map;
+
 public interface AddOn {
 
     default void init() {}
@@ -32,5 +34,7 @@ public interface AddOn {
     default String getAPIRequestType() {
         return null;
     }
+
+    default void processRequest(Map<String, String> params) {}
 
 }

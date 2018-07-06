@@ -231,6 +231,10 @@ public enum CurrencyType {
         this.code = code;
     }
 
+    CurrencyType() {
+        code = 0;
+    }
+
     public int getCode() {
         return code;
     }
