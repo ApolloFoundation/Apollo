@@ -82,6 +82,12 @@ public final class Apl {
         }
     }
 
+    private static volatile boolean shutdown = false;
+
+    public static boolean isShutdown() {
+        return shutdown;
+    }
+
     private static void redirectSystemStreams(String streamName) {
         String isStandardRedirect = System.getProperty("apl.redirect.system." + streamName);
         Path path = null;
@@ -343,6 +349,7 @@ public final class Apl {
         Logger.logShutdownMessage(Apl.APPLICATION + " server " + VERSION + " stopped.");
         Logger.shutdown();
         runtimeMode.shutdown();
+        Apl.shutdown = true;
     }
 
 
@@ -572,9 +579,12 @@ public final class Apl {
 
     private static void initUpdater() {
         try {
-            Class.forName("apl.updater.UpdaterCore");
+            Class<?> aClass = Class.forName("apl.updater.UpdaterCore");
+            //force load lazy updater instance
+            aClass.getMethod("getInstance").invoke(null);
+
         }
-        catch (ClassNotFoundException e) {
+        catch (Exception e) {
             Logger.logErrorMessage("Cannot load Updater!", e);
         }
     }
