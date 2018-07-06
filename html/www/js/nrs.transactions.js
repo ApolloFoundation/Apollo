@@ -35,15 +35,13 @@ var NRS = (function(NRS, $, undefined) {
         this.passPhrase = '';
         this.items = null;
         this.target = target;
-		    this.itemsFiltration = $(this.target).parent().parent();
-		    this.filter = null;
-
-		    this.account = null;
-
-		    this.publicKey  = null;
-		    this.privateKey = null;
-		    this.sharedKey = null;
-		    this.serverKey = null;
+		this.itemsFiltration = $(this.target).parent().parent();
+		this.filter = null;
+		this.account = null;
+		this.publicKey  = null;
+		this.privateKey = null;
+		this.sharedKey = null;
+		this.serverKey = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
@@ -152,9 +150,7 @@ var NRS = (function(NRS, $, undefined) {
 
             url += 'firstIndex=' + parseInt((this.page) * 14 - 14) + '&';
             url += 'lastIndex='  + (this.page) * 14 + '&';
-	
-	        
-            var that = this;
+          var that = this;
             var $el = $("#" + NRS.currentPage + "_contents");
             $el = $el.selector;
 
@@ -168,22 +164,17 @@ var NRS = (function(NRS, $, undefined) {
 
                     var rows = "";
                     that.items = JSON.parse(data);
-
+					that.serverKey = that.items.serverPublicKey;
 
                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
                         that.items = JSON.parse(data).transactions;
 	
 	                    if (that.items.length < 15 && that.page == 1) {
                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
-						        } else {
+						} else {
                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
                         }
 
-                         if (that.items.length < 15 && that.page == 1) {
-                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
-					               } else {
-                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
-                         }
 
                          for (var i = 0; i < that.items.length; i++) {
                              var transaction = that.items[i];
@@ -395,7 +386,7 @@ var NRS = (function(NRS, $, undefined) {
 
 		// initialisation
         this.renderItems();
-	      this.initPaginations();
+	    this.initPaginations();
       
         this.renderItems();
         this.logPulling();
