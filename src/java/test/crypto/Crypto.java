@@ -38,7 +38,7 @@ import java.util.Arrays;
 
 public final class Crypto {
 
-    private static final boolean useStrongSecureRandom = true;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
+    private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
     private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
         @Override
