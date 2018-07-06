@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAvailableToBuy extends APIServlet.APIRequestHandler {
 
-    static final GetAvailableToBuy instance = new GetAvailableToBuy();
+    private static class GetAvailableToBuyHolder {
+        private static final GetAvailableToBuy INSTANCE = new GetAvailableToBuy();
+    }
+
+    public static GetAvailableToBuy getInstance() {
+        return GetAvailableToBuyHolder.INSTANCE;
+    }
 
     private GetAvailableToBuy() {
         super(new APITag[] {APITag.MS}, "currency", "units");

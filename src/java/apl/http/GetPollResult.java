@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.POLL_RESULTS_NOT_AVAILABLE;
 
 public class GetPollResult extends APIServlet.APIRequestHandler {
 
-    static final GetPollResult instance = new GetPollResult();
+    private static class GetPollResultHolder {
+        private static final GetPollResult INSTANCE = new GetPollResult();
+    }
+
+    public static GetPollResult getInstance() {
+        return GetPollResultHolder.INSTANCE;
+    }
 
     private GetPollResult() {
         super(new APITag[]{APITag.VS}, "poll", "votingModel", "holding", "minBalance", "minBalanceModel");

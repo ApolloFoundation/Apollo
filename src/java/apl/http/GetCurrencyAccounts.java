@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetCurrencyAccounts extends APIServlet.APIRequestHandler {
 
-    static final GetCurrencyAccounts instance = new GetCurrencyAccounts();
+    private static class GetCurrencyAccountsHolder {
+        private static final GetCurrencyAccounts INSTANCE = new GetCurrencyAccounts();
+    }
+
+    public static GetCurrencyAccounts getInstance() {
+        return GetCurrencyAccountsHolder.INSTANCE;
+    }
 
     private GetCurrencyAccounts() {
         super(new APITag[] {APITag.MS}, "currency", "height", "firstIndex", "lastIndex");

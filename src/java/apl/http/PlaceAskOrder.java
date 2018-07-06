@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.NOT_ENOUGH_ASSETS;
 
 public final class PlaceAskOrder extends CreateTransaction {
 
-    static final PlaceAskOrder instance = new PlaceAskOrder();
+    private static class PlaceAskOrderHolder {
+        private static final PlaceAskOrder INSTANCE = new PlaceAskOrder();
+    }
+
+    public static PlaceAskOrder getInstance() {
+        return PlaceAskOrderHolder.INSTANCE;
+    }
 
     private PlaceAskOrder() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");

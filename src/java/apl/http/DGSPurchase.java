@@ -35,7 +35,13 @@ import static apl.http.JSONResponses.UNKNOWN_GOODS;
 
 public final class DGSPurchase extends CreateTransaction {
 
-    static final DGSPurchase instance = new DGSPurchase();
+    private static class DGSPurchaseHolder {
+        private static final DGSPurchase INSTANCE = new DGSPurchase();
+    }
+
+    public static DGSPurchase getInstance() {
+        return DGSPurchaseHolder.INSTANCE;
+    }
 
     private DGSPurchase() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

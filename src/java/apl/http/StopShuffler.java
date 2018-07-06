@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class StopShuffler extends APIServlet.APIRequestHandler {
 
-    static final StopShuffler instance = new StopShuffler();
+    private static class StopShufflerHolder {
+        private static final StopShuffler INSTANCE = new StopShuffler();
+    }
+
+    public static StopShuffler getInstance() {
+        return StopShufflerHolder.INSTANCE;
+    }
 
     private StopShuffler() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword");

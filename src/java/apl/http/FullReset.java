@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class FullReset extends APIServlet.APIRequestHandler {
 
-    static final FullReset instance = new FullReset();
+    private static class FullResetHolder {
+        private static final FullReset INSTANCE = new FullReset();
+    }
+
+    public static FullReset getInstance() {
+        return FullResetHolder.INSTANCE;
+    }
 
     private FullReset() {
         super(new APITag[] {APITag.DEBUG});

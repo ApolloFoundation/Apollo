@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetTime extends APIServlet.APIRequestHandler {
 
-    static final GetTime instance = new GetTime();
+    private static class GetTimeHolder {
+        private static final GetTime INSTANCE = new GetTime();
+    }
+
+    public static GetTime getInstance() {
+        return GetTimeHolder.INSTANCE;
+    }
 
     private GetTime() {
         super(new APITag[] {APITag.INFO});

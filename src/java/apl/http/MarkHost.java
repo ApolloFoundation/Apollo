@@ -35,7 +35,13 @@ import static apl.http.JSONResponses.MISSING_WEIGHT;
 
 public final class MarkHost extends APIServlet.APIRequestHandler {
 
-    static final MarkHost instance = new MarkHost();
+    private static class MarkHostHolder {
+        private static final MarkHost INSTANCE = new MarkHost();
+    }
+
+    public static MarkHost getInstance() {
+        return MarkHostHolder.INSTANCE;
+    }
 
     private MarkHost() {
         super(new APITag[] {APITag.TOKENS}, "secretPhrase", "host", "weight", "date");

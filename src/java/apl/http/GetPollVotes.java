@@ -30,7 +30,13 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetPollVotes extends APIServlet.APIRequestHandler  {
-    static final GetPollVotes instance = new GetPollVotes();
+    private static class GetPollVotesHolder {
+        private static final GetPollVotes INSTANCE = new GetPollVotes();
+    }
+
+    public static GetPollVotes getInstance() {
+        return GetPollVotesHolder.INSTANCE;
+    }
 
     private GetPollVotes() {
         super(new APITag[] {APITag.VS}, "poll", "firstIndex", "lastIndex", "includeWeights");

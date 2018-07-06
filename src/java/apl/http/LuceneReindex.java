@@ -28,7 +28,13 @@ import java.sql.SQLException;
 
 public final class LuceneReindex extends APIServlet.APIRequestHandler {
 
-    static final LuceneReindex instance = new LuceneReindex();
+    private static class LuceneReindexHolder {
+        private static final LuceneReindex INSTANCE = new LuceneReindex();
+    }
+
+    public static LuceneReindex getInstance() {
+        return LuceneReindexHolder.INSTANCE;
+    }
 
     private LuceneReindex() {
         super(new APITag[] {APITag.DEBUG});

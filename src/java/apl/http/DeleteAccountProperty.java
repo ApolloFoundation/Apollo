@@ -18,8 +18,8 @@
 package apl.http;
 
 import apl.Account;
-import apl.Attachment;
 import apl.AplException;
+import apl.Attachment;
 import apl.util.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class DeleteAccountProperty extends CreateTransaction {
 
-    static final DeleteAccountProperty instance = new DeleteAccountProperty();
+    private static class DeleteAccountPropertyHolder {
+        private static final DeleteAccountProperty INSTANCE = new DeleteAccountProperty();
+    }
+
+    public static DeleteAccountProperty getInstance() {
+        return DeleteAccountPropertyHolder.INSTANCE;
+    }
 
     private DeleteAccountProperty() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "setter");

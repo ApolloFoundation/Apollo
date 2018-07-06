@@ -28,7 +28,13 @@ import static apl.http.JSONResponses.UNKNOWN_ASSET;
 
 public final class GetAssets extends APIServlet.APIRequestHandler {
 
-    static final GetAssets instance = new GetAssets();
+    private static class GetAssetsHolder {
+        private static final GetAssets INSTANCE = new GetAssets();
+    }
+
+    public static GetAssets getInstance() {
+        return GetAssetsHolder.INSTANCE;
+    }
 
     private GetAssets() {
         super(new APITag[] {APITag.AE}, "assets", "assets", "assets", "includeCounts"); // limit to 3 for testing

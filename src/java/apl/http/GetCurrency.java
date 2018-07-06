@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.UNKNOWN_CURRENCY;
 
 public final class GetCurrency extends APIServlet.APIRequestHandler {
 
-    static final GetCurrency instance = new GetCurrency();
+    private static class GetCurrencyHolder {
+        private static final GetCurrency INSTANCE = new GetCurrency();
+    }
+
+    public static GetCurrency getInstance() {
+        return GetCurrencyHolder.INSTANCE;
+    }
 
     private GetCurrency() {
         super(new APITag[] {APITag.MS}, "currency", "code", "includeCounts");

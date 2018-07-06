@@ -36,7 +36,13 @@ import static apl.http.JSONResponses.MISSING_ALIAS_NAME;
 
 public final class SetAlias extends CreateTransaction {
 
-    static final SetAlias instance = new SetAlias();
+    private static class SetAliasHolder {
+        private static final SetAlias INSTANCE = new SetAlias();
+    }
+
+    public static SetAlias getInstance() {
+        return SetAliasHolder.INSTANCE;
+    }
 
     private SetAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");

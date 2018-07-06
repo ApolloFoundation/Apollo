@@ -46,7 +46,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class CurrencyMint extends CreateTransaction {
 
-    static final CurrencyMint instance = new CurrencyMint();
+    private static class CurrencyMintHolder {
+        private static final CurrencyMint INSTANCE = new CurrencyMint();
+    }
+
+    public static CurrencyMint getInstance() {
+        return CurrencyMintHolder.INSTANCE;
+    }
 
     private CurrencyMint() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");

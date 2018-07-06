@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAssetsByIssuer extends APIServlet.APIRequestHandler {
 
-    static final GetAssetsByIssuer instance = new GetAssetsByIssuer();
+    private static class GetAssetsByIssuerHolder {
+        private static final GetAssetsByIssuer INSTANCE = new GetAssetsByIssuer();
+    }
+
+    public static GetAssetsByIssuer getInstance() {
+        return GetAssetsByIssuerHolder.INSTANCE;
+    }
 
     private GetAssetsByIssuer() {
         super(new APITag[] {APITag.AE, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex", "includeCounts");

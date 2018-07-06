@@ -35,7 +35,13 @@ import java.util.List;
 
 public final class GetAskOrders extends APIServlet.APIRequestHandler {
 
-    static final GetAskOrders instance = new GetAskOrders();
+    private static class GetAskOrdersHolder {
+        private static final GetAskOrders INSTANCE = new GetAskOrders();
+    }
+
+    public static GetAskOrders getInstance() {
+        return GetAskOrdersHolder.INSTANCE;
+    }
 
     private GetAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");

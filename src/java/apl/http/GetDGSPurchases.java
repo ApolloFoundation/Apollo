@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDGSPurchases extends APIServlet.APIRequestHandler {
 
-    static final GetDGSPurchases instance = new GetDGSPurchases();
+    private static class GetDGSPurchasesHolder {
+        private static final GetDGSPurchases INSTANCE = new GetDGSPurchases();
+    }
+
+    public static GetDGSPurchases getInstance() {
+        return GetDGSPurchasesHolder.INSTANCE;
+    }
 
     private GetDGSPurchases() {
         super(new APITag[] {APITag.DGS}, "seller", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");

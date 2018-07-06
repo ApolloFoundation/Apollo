@@ -38,7 +38,13 @@ import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public final class ReadMessage extends APIServlet.APIRequestHandler {
 
-    static final ReadMessage instance = new ReadMessage();
+    private static class ReadMessageHolder {
+        private static final ReadMessage INSTANCE = new ReadMessage();
+    }
+
+    public static ReadMessage getInstance() {
+        return ReadMessageHolder.INSTANCE;
+    }
 
     private ReadMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");

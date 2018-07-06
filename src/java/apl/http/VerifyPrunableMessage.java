@@ -34,7 +34,13 @@ import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
 
-    static final VerifyPrunableMessage instance = new VerifyPrunableMessage();
+    private static class VerifyPrunableMessageHolder {
+        private static final VerifyPrunableMessage INSTANCE = new VerifyPrunableMessage();
+    }
+
+    public static VerifyPrunableMessage getInstance() {
+        return VerifyPrunableMessageHolder.INSTANCE;
+    }
 
     private static final JSONStreamAware NO_SUCH_PLAIN_MESSAGE;
     static {

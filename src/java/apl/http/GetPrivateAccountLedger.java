@@ -37,7 +37,13 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
     /**
      * GetPrivateAccountLedger instance
      */
-    static final GetPrivateAccountLedger instance = new GetPrivateAccountLedger();
+    private static class GetPrivateAccountLedgerHolder {
+        private static final GetPrivateAccountLedger INSTANCE = new GetPrivateAccountLedger();
+    }
+
+    public static GetPrivateAccountLedger getInstance() {
+        return GetPrivateAccountLedgerHolder.INSTANCE;
+    }
 
     /**
      * Create the GetPrivateAccountLedger instance

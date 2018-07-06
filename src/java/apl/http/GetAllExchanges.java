@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllExchanges extends APIServlet.APIRequestHandler {
 
-    static final GetAllExchanges instance = new GetAllExchanges();
+    private static class GetAllExchangesHolder {
+        private static final GetAllExchanges INSTANCE = new GetAllExchanges();
+    }
+
+    public static GetAllExchanges getInstance() {
+        return GetAllExchangesHolder.INSTANCE;
+    }
 
     private GetAllExchanges() {
         super(new APITag[] {APITag.MS}, "timestamp", "firstIndex", "lastIndex", "includeCurrencyInfo");

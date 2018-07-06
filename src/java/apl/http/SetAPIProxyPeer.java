@@ -32,7 +32,13 @@ import static apl.http.JSONResponses.UNKNOWN_PEER;
 
 public class SetAPIProxyPeer extends APIServlet.APIRequestHandler {
 
-    static final SetAPIProxyPeer instance = new SetAPIProxyPeer();
+    private static class SetAPIProxyPeerHolder {
+        private static final SetAPIProxyPeer INSTANCE = new SetAPIProxyPeer();
+    }
+
+    public static SetAPIProxyPeer getInstance() {
+        return SetAPIProxyPeerHolder.INSTANCE;
+    }
 
     private SetAPIProxyPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");

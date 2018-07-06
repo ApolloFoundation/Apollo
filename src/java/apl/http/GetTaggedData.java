@@ -29,7 +29,13 @@ import static apl.http.JSONResponses.PRUNED_TRANSACTION;
 
 public final class GetTaggedData extends APIServlet.APIRequestHandler {
 
-    static final GetTaggedData instance = new GetTaggedData();
+    private static class GetTaggedDataHolder {
+        private static final GetTaggedData INSTANCE = new GetTaggedData();
+    }
+
+    public static GetTaggedData getInstance() {
+        return GetTaggedDataHolder.INSTANCE;
+    }
 
     private GetTaggedData() {
         super(new APITag[] {APITag.DATA}, "transaction", "includeData", "retrieve");

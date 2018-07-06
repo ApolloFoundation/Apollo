@@ -51,7 +51,13 @@ import java.util.List;
 public final class GetInboundPeers extends APIServlet.APIRequestHandler {
 
     /** GetInboundPeers instance */
-    static final GetInboundPeers instance = new GetInboundPeers();
+    private static class GetInboundPeersHolder {
+        private static final GetInboundPeers INSTANCE = new GetInboundPeers();
+    }
+
+    public static GetInboundPeers getInstance() {
+        return GetInboundPeersHolder.INSTANCE;
+    }
 
     /**
      * Create the GetInboundPeers instance

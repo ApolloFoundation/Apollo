@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDataTagsLike extends APIServlet.APIRequestHandler {
 
-    static final GetDataTagsLike instance = new GetDataTagsLike();
+    private static class GetDataTagsLikeHolder {
+        private static final GetDataTagsLike INSTANCE = new GetDataTagsLike();
+    }
+
+    public static GetDataTagsLike getInstance() {
+        return GetDataTagsLikeHolder.INSTANCE;
+    }
 
     private GetDataTagsLike() {
         super(new APITag[] {APITag.DATA, APITag.SEARCH}, "tagPrefix", "firstIndex", "lastIndex");

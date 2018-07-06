@@ -32,7 +32,13 @@ import java.util.Set;
 
 public final class GetExpectedTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedTransactions instance = new GetExpectedTransactions();
+    private static class GetExpectedTransactionsHolder {
+        private static final GetExpectedTransactions INSTANCE = new GetExpectedTransactions();
+    }
+
+    public static GetExpectedTransactions getInstance() {
+        return GetExpectedTransactionsHolder.INSTANCE;
+    }
 
     private GetExpectedTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS}, "account", "account", "account");

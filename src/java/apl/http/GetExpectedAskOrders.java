@@ -34,7 +34,13 @@ import java.util.List;
 
 public final class GetExpectedAskOrders extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedAskOrders instance = new GetExpectedAskOrders();
+    private static class GetExpectedAskOrdersHolder {
+        private static final GetExpectedAskOrders INSTANCE = new GetExpectedAskOrders();
+    }
+
+    public static GetExpectedAskOrders getInstance() {
+        return GetExpectedAskOrdersHolder.INSTANCE;
+    }
 
     private GetExpectedAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "sortByPrice");

@@ -57,7 +57,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class PublishExchangeOffer extends CreateTransaction {
 
-    static final PublishExchangeOffer instance = new PublishExchangeOffer();
+    private static class PublishExchangeOfferHolder {
+        private static final PublishExchangeOffer INSTANCE = new PublishExchangeOffer();
+    }
+
+    public static PublishExchangeOffer getInstance() {
+        return PublishExchangeOfferHolder.INSTANCE;
+    }
 
     private PublishExchangeOffer() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",

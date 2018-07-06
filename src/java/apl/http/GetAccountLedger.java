@@ -225,7 +225,13 @@ import static apl.http.JSONResponses.ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_
 public class GetAccountLedger extends APIServlet.APIRequestHandler {
 
     /** GetAccountLedger instance */
-    static final GetAccountLedger instance = new GetAccountLedger();
+    private static class GetAccountLedgerHolder {
+        private static final GetAccountLedger INSTANCE = new GetAccountLedger();
+    }
+
+    public static GetAccountLedger getInstance() {
+        return GetAccountLedgerHolder.INSTANCE;
+    }
 
     /**
      * Create the GetAccountLedger instance

@@ -71,7 +71,13 @@ import java.lang.management.ThreadMXBean;
 public class GetStackTraces extends APIServlet.APIRequestHandler {
 
     /** GetLog instance */
-    static final GetStackTraces instance = new GetStackTraces();
+    private static class GetStackTracesHolder {
+        private static final GetStackTraces INSTANCE = new GetStackTraces();
+    }
+
+    public static GetStackTraces getInstance() {
+        return GetStackTracesHolder.INSTANCE;
+    }
 
     /**
      * Create the GetStackTraces instance

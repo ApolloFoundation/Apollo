@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SearchAccounts extends APIServlet.APIRequestHandler {
 
-    static final SearchAccounts instance = new SearchAccounts();
+    private static class SearchAccountsHolder {
+        private static final SearchAccounts INSTANCE = new SearchAccounts();
+    }
+
+    public static SearchAccounts getInstance() {
+        return SearchAccountsHolder.INSTANCE;
+    }
 
     private SearchAccounts() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.SEARCH}, "query", "firstIndex", "lastIndex");

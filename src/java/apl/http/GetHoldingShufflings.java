@@ -30,7 +30,13 @@ import static apl.http.JSONResponses.incorrect;
 
 public final class GetHoldingShufflings extends APIServlet.APIRequestHandler {
 
-    static final GetHoldingShufflings instance = new GetHoldingShufflings();
+    private static class GetHoldingShufflingsHolder {
+        private static final GetHoldingShufflings INSTANCE = new GetHoldingShufflings();
+    }
+
+    public static GetHoldingShufflings getInstance() {
+        return GetHoldingShufflingsHolder.INSTANCE;
+    }
 
     private GetHoldingShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");

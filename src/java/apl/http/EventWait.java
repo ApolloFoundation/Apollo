@@ -96,7 +96,13 @@ import java.util.List;
 public class EventWait extends APIServlet.APIRequestHandler {
 
     /** EventWait instance */
-    static final EventWait instance = new EventWait();
+    private static class EventWaitHolder {
+        private static final EventWait INSTANCE = new EventWait();
+    }
+
+    public static EventWait getInstance() {
+        return EventWaitHolder.INSTANCE;
+    }
 
     /** Incorrect timeout */
     private static final JSONObject incorrectTimeout = new JSONObject();

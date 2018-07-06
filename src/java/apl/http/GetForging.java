@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.UNKNOWN_ACCOUNT;
 
 public final class GetForging extends APIServlet.APIRequestHandler {
 
-    static final GetForging instance = new GetForging();
+    private static class GetForgingHolder {
+        private static final GetForging INSTANCE = new GetForging();
+    }
+
+    public static GetForging getInstance() {
+        return GetForgingHolder.INSTANCE;
+    }
 
     private GetForging() {
         super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword");

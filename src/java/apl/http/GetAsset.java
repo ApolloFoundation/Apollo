@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAsset extends APIServlet.APIRequestHandler {
 
-    static final GetAsset instance = new GetAsset();
+    private static class GetAssetHolder {
+        private static final GetAsset INSTANCE = new GetAsset();
+    }
+
+    public static GetAsset getInstance() {
+        return GetAssetHolder.INSTANCE;
+    }
 
     private GetAsset() {
         super(new APITag[] {APITag.AE}, "asset", "includeCounts");

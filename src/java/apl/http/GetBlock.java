@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.UNKNOWN_BLOCK;
 
 public final class GetBlock extends APIServlet.APIRequestHandler {
 
-    static final GetBlock instance = new GetBlock();
+    private static class GetBlockHolder {
+        private static final GetBlock INSTANCE = new GetBlock();
+    }
+
+    public static GetBlock getInstance() {
+        return GetBlockHolder.INSTANCE;
+    }
 
     private GetBlock() {
         super(new APITag[] {APITag.BLOCKS}, "block", "height", "timestamp", "includeTransactions", "includeExecutedPhased");

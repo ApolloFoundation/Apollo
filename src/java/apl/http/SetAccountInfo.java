@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.INCORRECT_ACCOUNT_NAME_LENGTH;
 
 public final class SetAccountInfo extends CreateTransaction {
 
-    static final SetAccountInfo instance = new SetAccountInfo();
+    private static class SetAccountInfoHolder {
+        private static final SetAccountInfo INSTANCE = new SetAccountInfo();
+    }
+
+    public static SetAccountInfo getInstance() {
+        return SetAccountInfoHolder.INSTANCE;
+    }
 
     private SetAccountInfo() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");

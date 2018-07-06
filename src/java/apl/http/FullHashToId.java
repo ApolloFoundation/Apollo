@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class FullHashToId extends APIServlet.APIRequestHandler {
 
-    static final FullHashToId instance = new FullHashToId();
+    private static class FullHashToIdHolder {
+        private static final FullHashToId INSTANCE = new FullHashToId();
+    }
+
+    public static FullHashToId getInstance() {
+        return FullHashToIdHolder.INSTANCE;
+    }
 
     private FullHashToId() {
         super(new APITag[] {APITag.UTILS}, "fullHash");

@@ -24,7 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAlias extends APIServlet.APIRequestHandler {
 
-    static final GetAlias instance = new GetAlias();
+    private static class GetAliasHolder {
+        private static final GetAlias INSTANCE = new GetAlias();
+    }
+
+    public static GetAlias getInstance() {
+        return GetAliasHolder.INSTANCE;
+    }
 
     private GetAlias() {
         super(new APITag[] {APITag.ALIASES}, "alias", "aliasName");

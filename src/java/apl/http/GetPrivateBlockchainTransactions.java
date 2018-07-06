@@ -28,7 +28,13 @@ import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public final class GetPrivateBlockchainTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetPrivateBlockchainTransactions instance = new GetPrivateBlockchainTransactions();
+    private static class GetPrivateBlockchainTransactionsHolder {
+        private static final GetPrivateBlockchainTransactions INSTANCE = new GetPrivateBlockchainTransactions();
+    }
+
+    public static GetPrivateBlockchainTransactions getInstance() {
+        return GetPrivateBlockchainTransactionsHolder.INSTANCE;
+    }
 
     private GetPrivateBlockchainTransactions() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "publicKey", "secretPhrase");

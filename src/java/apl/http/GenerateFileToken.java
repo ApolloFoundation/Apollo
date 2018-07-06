@@ -32,7 +32,13 @@ import static apl.http.JSONResponses.INCORRECT_TOKEN;
 
 public final class GenerateFileToken extends APIServlet.APIRequestHandler {
 
-    static final GenerateFileToken instance = new GenerateFileToken();
+    private static class GenerateFileTokenHolder {
+        private static final GenerateFileToken INSTANCE = new GenerateFileToken();
+    }
+
+    public static GenerateFileToken getInstance() {
+        return GenerateFileTokenHolder.INSTANCE;
+    }
 
     private GenerateFileToken() {
         super("file", new APITag[] {APITag.TOKENS}, "secretPhrase");

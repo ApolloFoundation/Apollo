@@ -32,7 +32,13 @@ import java.util.List;
 
 public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedAssetTransfers instance = new GetExpectedAssetTransfers();
+    private static class GetExpectedAssetTransfersHolder {
+        private static final GetExpectedAssetTransfers INSTANCE = new GetExpectedAssetTransfers();
+    }
+
+    public static GetExpectedAssetTransfers getInstance() {
+        return GetExpectedAssetTransfersHolder.INSTANCE;
+    }
 
     private GetExpectedAssetTransfers() {
         super(new APITag[] {APITag.AE}, "asset", "account", "includeAssetInfo");

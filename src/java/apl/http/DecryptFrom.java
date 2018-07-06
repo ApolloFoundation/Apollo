@@ -32,7 +32,13 @@ import static apl.http.JSONResponses.INCORRECT_ACCOUNT;
 
 public final class DecryptFrom extends APIServlet.APIRequestHandler {
 
-    static final DecryptFrom instance = new DecryptFrom();
+    private static class DecryptFromHolder {
+        private static final DecryptFrom INSTANCE = new DecryptFrom();
+    }
+
+    public static DecryptFrom getInstance() {
+        return DecryptFromHolder.INSTANCE;
+    }
 
     private DecryptFrom() {
         super(new APITag[] {APITag.MESSAGES}, "account", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage", "secretPhrase");

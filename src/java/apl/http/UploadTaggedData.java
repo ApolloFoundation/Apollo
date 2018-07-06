@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class UploadTaggedData extends CreateTransaction {
 
-    static final UploadTaggedData instance = new UploadTaggedData();
+    private static class UploadTaggedDataHolder {
+        private static final UploadTaggedData INSTANCE = new UploadTaggedData();
+    }
+
+    public static UploadTaggedData getInstance() {
+        return UploadTaggedDataHolder.INSTANCE;
+    }
 
     private UploadTaggedData() {
         super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION},
