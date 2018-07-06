@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public abstract class DbVersion {
+    public DbVersion() {
+    }
 
     protected BasicDb db;
 
