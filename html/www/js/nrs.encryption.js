@@ -769,6 +769,8 @@ var NRS = (function (NRS, $) {
             options.sharedKey = sharedKey;
         }
 
+
+
         options.sharedKey = new Uint8Array(options.sharedKey);
 
         data = converters.hexStringToByteArray(data);
