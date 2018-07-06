@@ -715,13 +715,13 @@ var NRS = (function(NRS, $) {
 				return;
 			}
 
-			if (!$modal.hasClass("modal-no-hide")) {
+/*			if (!$modal.hasClass("modal-no-hide")) {
 				$modal.modal("hide");
                 $.growl($.t("send_money_submitted"), {
                     "type": "success"
                 });
 			}
-
+*/
 			if (successMessage) {
 				$.growl(successMessage.escapeHTML(), {
 					type: "success"
