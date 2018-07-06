@@ -149,22 +149,14 @@ public class Scrypt {
             x14 ^= Integer.rotateLeft(x13 + x12, 13);
             x15 ^= Integer.rotateLeft(x14 + x13, 18);
         }
-        X[di + 0] += x00;
-        X[di + 1] += x01;
-        X[di + 2] += x02;
-        X[di + 3] += x03;
-        X[di + 4] += x04;
-        X[di + 5] += x05;
-        X[di + 6] += x06;
-        X[di + 7] += x07;
-        X[di + 8] += x08;
-        X[di + 9] += x09;
-        X[di + 10] += x10;
-        X[di + 11] += x11;
-        X[di + 12] += x12;
-        X[di + 13] += x13;
-        X[di + 14] += x14;
-        X[di + 15] += x15;
+        addAllToArray(di, X,
+                x00, x01, x02, x03, x04, x05, x06, x07,
+                x08, x09, x10, x11, x12, x13, x14, x15);
     }
 
+    private static void addAllToArray(int di, int[] arr, int... elements) {
+        for (int i = 0; i < 16; i++) {
+            arr[di + i] += elements[i];
+        }
+    }
 }
