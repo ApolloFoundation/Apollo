@@ -220,6 +220,23 @@ public final class Trade {
         this.isBuy = rs.getBoolean("is_buy");
     }
 
+    public Trade(int timestamp, long assetId, long blockId, int height, long askOrderId, long bidOrderId, int askOrderHeight, int bidOrderHeight, long sellerId, long buyerId, DbKey dbKey, long quantityATU, long priceATM, boolean isBuy) {
+        this.timestamp = timestamp;
+        this.assetId = assetId;
+        this.blockId = blockId;
+        this.height = height;
+        this.askOrderId = askOrderId;
+        this.bidOrderId = bidOrderId;
+        this.askOrderHeight = askOrderHeight;
+        this.bidOrderHeight = bidOrderHeight;
+        this.sellerId = sellerId;
+        this.buyerId = buyerId;
+        this.dbKey = dbKey;
+        this.quantityATU = quantityATU;
+        this.priceATM = priceATM;
+        this.isBuy = isBuy;
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO trade (asset_id, block_id, "
                 + "ask_order_id, bid_order_id, ask_order_height, bid_order_height, seller_id, buyer_id, quantity, price, is_buy, timestamp, height) "

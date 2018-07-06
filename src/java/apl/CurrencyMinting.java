@@ -105,6 +105,15 @@ public final class CurrencyMinting {
         return b;
     }
 
+    private static byte[] reverseXor(byte[] b) {
+        for(int i=0; i < b.length/2; i++) {
+            b[i]^=b[b.length-i-1];
+            b[b.length-i-1]^=b[i];
+            b[i]^=b[b.length-i-1];
+        }
+        return b;
+    }
+
     private CurrencyMinting() {} // never
 
 }

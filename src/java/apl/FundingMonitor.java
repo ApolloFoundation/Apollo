@@ -132,6 +132,19 @@ public final class FundingMonitor {
         this.publicKey = Crypto.getPublicKey(secretPhrase);
     }
 
+    private FundingMonitor(HoldingType holdingType, long holdingId, String property, long amount, long threshold, int interval, long accountId, String accountName, String secretPhrase, byte[] publicKey) {
+        this.holdingType = holdingType;
+        this.holdingId = holdingId;
+        this.property = property;
+        this.amount = amount;
+        this.threshold = threshold;
+        this.interval = interval;
+        this.accountId = accountId;
+        this.accountName = accountName;
+        this.secretPhrase = secretPhrase;
+        this.publicKey = publicKey;
+    }
+
     /**
      * Return the monitor holding type
      *

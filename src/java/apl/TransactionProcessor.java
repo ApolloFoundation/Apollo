@@ -18,6 +18,7 @@
 package apl;
 
 import apl.db.DbIterator;
+import apl.util.Listener;
 import apl.util.Observable;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -65,4 +66,10 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
     SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude);
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
+
+    @Override
+    boolean addListener(Listener<List<? extends Transaction>> listener, Event eventType);
+
+    @Override
+    boolean removeListener(Listener<List<? extends Transaction>> listener, Event eventType);
 }

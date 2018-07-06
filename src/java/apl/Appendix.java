@@ -291,6 +291,13 @@ public interface Appendix {
             return false;
         }
 
+        @Override
+        public String toString() {
+            return "Message{" +
+                    "message=" + new String(message) +
+                    ", isText=" + isText +
+                    '}';
+        }
     }
 
     class PrunablePlainMessage extends Appendix.AbstractAppendix implements Prunable {

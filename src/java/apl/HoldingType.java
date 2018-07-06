@@ -136,6 +136,10 @@ public enum HoldingType {
         this.code = code;
     }
 
+    HoldingType() {
+        this.code = 0;
+    }
+
     public byte getCode() {
         return code;
     }

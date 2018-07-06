@@ -305,6 +305,13 @@ public final class Shuffler {
         this.shufflingFullHash = shufflingFullHash;
     }
 
+    private Shuffler(long accountId, String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) {
+        this.accountId = accountId;
+        this.secretPhrase = secretPhrase;
+        this.recipientPublicKey = recipientPublicKey;
+        this.shufflingFullHash = shufflingFullHash;
+    }
+
     public long getAccountId() {
         return accountId;
     }

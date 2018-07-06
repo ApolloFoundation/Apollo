@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Map;
 
 public final class DownloadTimer implements AddOn {
 
@@ -92,4 +93,8 @@ public final class DownloadTimer implements AddOn {
         }
     }
 
+    @Override
+    public void processRequest(Map<String, String> params) {
+        Logger.logInfoMessage(params.get("downloadTimerMessage"));
+    }
 }

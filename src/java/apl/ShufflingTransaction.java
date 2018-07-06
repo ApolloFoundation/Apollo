@@ -730,6 +730,10 @@ public abstract class ShufflingTransaction extends TransactionType {
             return false;
         }
 
+        @Override
+        boolean isPruned(long transactionId) {
+            return super.isPruned(transactionId);
+        }
     };
 
 }

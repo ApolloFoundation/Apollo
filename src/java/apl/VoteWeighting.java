@@ -191,6 +191,13 @@ public final class VoteWeighting {
         this.minBalanceModel = MinBalanceModel.get(minBalanceModel);
     }
 
+    public VoteWeighting(VotingModel votingModel, long holdingId, long minBalance, MinBalanceModel minBalanceModel) {
+        this.votingModel = votingModel;
+        this.holdingId = holdingId;
+        this.minBalance = minBalance;
+        this.minBalanceModel = minBalanceModel;
+    }
+
     public VotingModel getVotingModel() {
         return votingModel;
     }

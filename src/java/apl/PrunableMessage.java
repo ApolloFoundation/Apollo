@@ -168,6 +168,16 @@ public final class PrunableMessage {
         this.height = rs.getInt("height");
     }
 
+    private PrunableMessage(long id, DbKey dbKey, long senderId, long recipientId, int transactionTimestamp, int blockTimestamp, int height) {
+        this.id = id;
+        this.dbKey = dbKey;
+        this.senderId = senderId;
+        this.recipientId = recipientId;
+        this.transactionTimestamp = transactionTimestamp;
+        this.blockTimestamp = blockTimestamp;
+        this.height = height;
+    }
+
     private void save(Connection con) throws SQLException {
         if (message == null && encryptedData == null) {
             throw new IllegalStateException("Prunable message not fully initialized");

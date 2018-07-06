@@ -124,6 +124,16 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
     }
 
     @Override
+    public long getSupply() {
+        return super.getSupply();
+    }
+
+    @Override
+    public long getCurrencyId() {
+        return super.getCurrencyId();
+    }
+
+    @Override
     public CurrencyBuyOffer getCounterOffer() {
         return CurrencyBuyOffer.getOffer(id);
     }
