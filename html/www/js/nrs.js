@@ -154,14 +154,7 @@ var NRS = (function(NRS, $, undefined) {
     }
 
     NRS.init = function() {
-	    
-	    var savedAccountRS = NRS.getJSONItem('aplUser');
-	    if (NRS.getJSONItem('aplUser')) {
-		    $("#remember_me").prop("checked", true);
-			initSpinner();
-		    NRS.login(false, savedAccountRS, null, false, false);
-	    }
-	
+
 	    i18next.use(i18nextXHRBackend)
             .use(i18nextLocalStorageCache)
             .use(i18nextBrowserLanguageDetector)
@@ -196,6 +189,13 @@ var NRS = (function(NRS, $, undefined) {
                 NRS.initClipboard();
                 hljs.initHighlightingOnLoad();
             });
+
+	    var savedAccountRS = NRS.getJSONItem('aplUser');
+        if (NRS.getJSONItem('aplUser')) {
+            $("#remember_me").prop("checked", true);
+            initSpinner();
+            NRS.login(false, savedAccountRS, null, false, false);
+        }
     };
 
     function initMobile() {
