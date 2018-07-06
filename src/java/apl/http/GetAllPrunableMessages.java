@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllPrunableMessages extends APIServlet.APIRequestHandler {
 
-    static final GetAllPrunableMessages instance = new GetAllPrunableMessages();
+    private static class GetAllPrunableMessagesHolder {
+        private static final GetAllPrunableMessages INSTANCE = new GetAllPrunableMessages();
+    }
+
+    public static GetAllPrunableMessages getInstance() {
+        return GetAllPrunableMessagesHolder.INSTANCE;
+    }
 
     private GetAllPrunableMessages() {
         super(new APITag[] {APITag.MESSAGES}, "firstIndex", "lastIndex", "timestamp");

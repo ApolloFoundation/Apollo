@@ -79,6 +79,14 @@ public final class Exchange {
         return listeners.removeListener(listener, eventType);
     }
 
+    public static boolean addListener(Listener<Exchange> listener) {
+        return listeners.addListener(listener, Event.EXCHANGE);
+    }
+
+    public static boolean removeListener(Listener<Exchange> listener) {
+        return listeners.removeListener(listener, Event.EXCHANGE);
+    }
+
     public static DbIterator<Exchange> getCurrencyExchanges(long currencyId, int from, int to) {
         return exchangeTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }

@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SearchPolls extends APIServlet.APIRequestHandler {
 
-    static final SearchPolls instance = new SearchPolls();
+    private static class SearchPollsHolder {
+        private static final SearchPolls INSTANCE = new SearchPolls();
+    }
+
+    public static SearchPolls getInstance() {
+        return SearchPollsHolder.INSTANCE;
+    }
 
     private SearchPolls() {
         super(new APITag[] {APITag.VS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeFinished");

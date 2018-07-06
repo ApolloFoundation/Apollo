@@ -45,7 +45,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class CurrencyBuy extends CreateTransaction {
 
-    static final CurrencyBuy instance = new CurrencyBuy();
+    private static class CurrencyBuyHolder {
+        private static final CurrencyBuy INSTANCE = new CurrencyBuy();
+    }
+
+    public static CurrencyBuy getInstance() {
+        return CurrencyBuyHolder.INSTANCE;
+    }
 
     private CurrencyBuy() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units");

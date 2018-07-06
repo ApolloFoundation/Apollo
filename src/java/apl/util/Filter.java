@@ -17,8 +17,10 @@
 
 package apl.util;
 
-public interface Filter<T> {
+import java.util.function.Predicate;
 
-    boolean ok(T t);
+public interface Filter<T> extends Predicate<T>{
+
+    boolean test(T t);
 
 }

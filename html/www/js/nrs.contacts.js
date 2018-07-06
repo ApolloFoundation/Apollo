@@ -30,7 +30,9 @@ var NRS = (function(NRS, $) {
 			}
 		});
 	};
-
+    NRS.contactsLoader = function() {
+        console.log('loaded contacts');
+    };
 	NRS.pages.contacts = function() {
 		$("#contacts_table_container").show();
 		$("#contact_page_database_error").hide();

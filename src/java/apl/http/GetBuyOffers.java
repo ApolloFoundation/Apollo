@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetBuyOffers extends APIServlet.APIRequestHandler {
 
-    static final GetBuyOffers instance = new GetBuyOffers();
+    private static class GetBuyOffersHolder {
+        private static final GetBuyOffers INSTANCE = new GetBuyOffers();
+    }
+
+    public static GetBuyOffers getInstance() {
+        return GetBuyOffersHolder.INSTANCE;
+    }
 
     private GetBuyOffers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");

@@ -20,7 +20,9 @@
  * @depends {nrs.modals.js}
  */
 var NRS = (function(NRS, $) {
-
+    NRS.modalsDevidenLoader = function() {
+        console.log('loaded modals deviden');
+    };
     NRS.forms.dividendPayment = function($modal) {
         var data = NRS.getFormData($modal.find("form:first"));
         data.asset = NRS.getCurrentAsset().asset;

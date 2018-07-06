@@ -28,7 +28,13 @@ import java.util.List;
 
 public final class PopOff extends APIServlet.APIRequestHandler {
 
-    static final PopOff instance = new PopOff();
+    private static class PopOffHolder {
+        private static final PopOff INSTANCE = new PopOff();
+    }
+
+    public static PopOff getInstance() {
+        return PopOffHolder.INSTANCE;
+    }
 
     private PopOff() {
         super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "keepTransactions");

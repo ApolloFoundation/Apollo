@@ -34,6 +34,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Comparator.*;
+
 final class TransactionProcessorImpl implements TransactionProcessor {
 
     private static final boolean enableTransactionRebroadcasting = Apl.getBooleanProperty("apl.enableTransactionRebroadcasting");
@@ -710,23 +712,11 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    private static final Comparator<UnconfirmedTransaction> cachedUnconfirmedTransactionComparator = (UnconfirmedTransaction t1, UnconfirmedTransaction t2) -> {
-        int compare;
-        // Sort by transaction_height ASC
-        compare = Integer.compare(t1.getHeight(), t2.getHeight());
-        if (compare != 0)
-            return compare;
-        // Sort by fee_per_byte DESC
-        compare = Long.compare(t1.getFeePerByte(), t2.getFeePerByte());
-        if (compare != 0)
-            return -compare;
-        // Sort by arrival_timestamp ASC
-        compare = Long.compare(t1.getArrivalTimestamp(), t2.getArrivalTimestamp());
-        if (compare != 0)
-            return compare;
-        // Sort by transaction ID ASC
-        return Long.compare(t1.getId(), t2.getId());
-    };
+    private static final Comparator<UnconfirmedTransaction> cachedUnconfirmedTransactionComparator =
+                    comparingInt(UnconfirmedTransaction::getHeight) // Sort by transaction_height ASC
+                    .thenComparing(comparingLong(UnconfirmedTransaction::getFeePerByte).reversed()) // Sort by fee_per_byte DESC
+                    .thenComparingLong(UnconfirmedTransaction::getArrivalTimestamp) // Sort by arrival_timestamp ASC
+                    .thenComparingLong(UnconfirmedTransaction::getId); // Sort by transaction ID ASC
 
     /**
      * Get the cached unconfirmed transactions

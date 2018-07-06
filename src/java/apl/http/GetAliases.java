@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAliases extends APIServlet.APIRequestHandler {
 
-    static final GetAliases instance = new GetAliases();
+    private static class GetAliasesHolder {
+        private static final GetAliases INSTANCE = new GetAliases();
+    }
+
+    public static GetAliases getInstance() {
+        return GetAliasesHolder.INSTANCE;
+    }
 
     private GetAliases() {
         super(new APITag[] {APITag.ALIASES}, "timestamp", "account", "firstIndex", "lastIndex");

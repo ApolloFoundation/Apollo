@@ -25,6 +25,10 @@ var NRS = (function(NRS, $, undefined) {
 		$("#account_info_description").val(NRS.accountInfo.description);
 	});
 
+    NRS.loadedModalAccountInfo = function() {
+        console.log('loaded modal accountInfo');
+    };
+
 	NRS.forms.setAccountInfoComplete = function(response, data) {
 		var name = $.trim(String(data.name));
 		if (name) {

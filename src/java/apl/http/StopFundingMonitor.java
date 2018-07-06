@@ -43,7 +43,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class StopFundingMonitor extends APIServlet.APIRequestHandler {
 
-    static final StopFundingMonitor instance = new StopFundingMonitor();
+    private static class StopFundingMonitorHolder {
+        private static final StopFundingMonitor INSTANCE = new StopFundingMonitor();
+    }
+
+    public static StopFundingMonitor getInstance() {
+        return StopFundingMonitorHolder.INSTANCE;
+    }
 
     private StopFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",

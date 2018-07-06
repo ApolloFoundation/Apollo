@@ -24,7 +24,9 @@ var NRS = (function(NRS, $, undefined) {
 		$("#hash_calculation_output").html("").hide();
 		$("#hash_modal_button").data("form", "calculate_hash_form");
 	});
-
+    NRS.modalsHash = function() {
+        console.log('loaded modals hash');
+    };
 	NRS.forms.hash = function($modal) {
 		var data = $.trim($("#calculate_hash_data").val());
 		if (!data) {

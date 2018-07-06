@@ -19,6 +19,9 @@
  * @depends {nrs.js}
  */
 var NRS = (function (NRS, $) {
+    NRS.constantsLoader = function() {
+        console.log('loaded constants');
+    };
     NRS.constants = {
         'DB_VERSION': 2,
 

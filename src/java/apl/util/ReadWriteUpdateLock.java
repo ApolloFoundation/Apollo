@@ -17,6 +17,7 @@
 
 package apl.util;
 
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -255,5 +256,21 @@ public class ReadWriteUpdateLock {
 
         /** Write lock count */
         private int writeCount;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof LockCount)) return false;
+            LockCount lockCount = (LockCount) o;
+            return readCount == lockCount.readCount &&
+                    updateCount == lockCount.updateCount &&
+                    writeCount == lockCount.writeCount;
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(readCount, updateCount, writeCount);
+        }
     }
 }

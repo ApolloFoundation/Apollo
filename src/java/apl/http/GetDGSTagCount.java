@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDGSTagCount extends APIServlet.APIRequestHandler {
 
-    static final GetDGSTagCount instance = new GetDGSTagCount();
+    private static class GetDGSTagCountHolder {
+        private static final GetDGSTagCount INSTANCE = new GetDGSTagCount();
+    }
+
+    public static GetDGSTagCount getInstance() {
+        return GetDGSTagCountHolder.INSTANCE;
+    }
 
     private GetDGSTagCount() {
         super(new APITag[] {APITag.DGS}, "inStockOnly");

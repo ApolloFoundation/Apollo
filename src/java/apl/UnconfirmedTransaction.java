@@ -300,4 +300,13 @@ class UnconfirmedTransaction implements Transaction {
     public short getIndex() {
         return transaction.getIndex();
     }
+
+    @Override
+    public String toString() {
+        return "UnconfirmedTransaction{" +
+                "transaction=" + transaction +
+                ", arrivalTimestamp=" + arrivalTimestamp +
+                ", feePerByte=" + feePerByte +
+                '}';
+    }
 }

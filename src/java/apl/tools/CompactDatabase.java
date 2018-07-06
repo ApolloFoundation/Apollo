@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
@@ -157,8 +158,8 @@ public class CompactDatabase {
                     throw new IOException(String.format("Unable to delete '%s'", sqlFile.getPath()));
                 }
             }
-            try (Connection conn = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-                    Statement s = conn.createStatement()) {
+            try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
+                 Statement s = conn.createStatement()) {
                 s.execute("SCRIPT TO '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
             }
             //
@@ -170,8 +171,8 @@ public class CompactDatabase {
                                                     dbFile.getPath(), oldFile.getPath()));
             }
             phase = 1;
-            try (Connection conn = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-                    Statement s = conn.createStatement()) {
+            try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
+                 Statement s = conn.createStatement()) {
                 s.execute("RUNSCRIPT FROM '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
                 s.execute("ANALYZE");
             }
@@ -231,5 +232,15 @@ public class CompactDatabase {
             }
         }
         return exitCode;
+    }
+
+    public static Connection getConnection(String url, String user, String password) {
+        try {
+            return DriverManager.getConnection(url, user, password);
+        }
+        catch (SQLException e) {
+            Logger.logErrorMessage("Unable to connect to database", e);
+        }
+        return null;
     }
 }

@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
 
 public final class SetAccountProperty extends CreateTransaction {
 
-    static final SetAccountProperty instance = new SetAccountProperty();
+    private static class SetAccountPropertyHolder {
+        private static final SetAccountProperty INSTANCE = new SetAccountProperty();
+    }
+
+    public static SetAccountProperty getInstance() {
+        return SetAccountPropertyHolder.INSTANCE;
+    }
 
     private SetAccountProperty() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");

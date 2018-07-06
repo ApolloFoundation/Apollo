@@ -29,7 +29,13 @@ import java.util.Collection;
 
 public final class GetPeers extends APIServlet.APIRequestHandler {
 
-    static final GetPeers instance = new GetPeers();
+    private static class GetPeersHolder {
+        private static final GetPeers INSTANCE = new GetPeers();
+    }
+
+    public static GetPeers getInstance() {
+        return GetPeersHolder.INSTANCE;
+    }
 
     private GetPeers() {
         super(new APITag[] {APITag.NETWORK}, "active", "state", "service", "service", "service", "includePeerInfo");

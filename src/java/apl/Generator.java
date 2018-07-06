@@ -275,6 +275,12 @@ public final class Generator implements Comparable<Generator> {
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
+    private Generator(long accountId, String secretPhrase, byte[] publicKey) {
+        this.accountId = accountId;
+        this.secretPhrase = secretPhrase;
+        this.publicKey = publicKey;
+    }
+
     private Generator(String secretPhrase) {
         this.secretPhrase = secretPhrase;
         this.publicKey = Crypto.getPublicKey(secretPhrase);

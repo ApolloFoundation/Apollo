@@ -31,7 +31,13 @@ import java.util.List;
 
 public final class GetShufflers extends APIServlet.APIRequestHandler {
 
-    static final GetShufflers instance = new GetShufflers();
+    private static class GetShufflersHolder {
+        private static final GetShufflers INSTANCE = new GetShufflers();
+    }
+
+    public static GetShufflers getInstance() {
+        return GetShufflersHolder.INSTANCE;
+    }
 
     private GetShufflers() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState");

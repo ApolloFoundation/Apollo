@@ -27,7 +27,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAllWaitingTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetAllWaitingTransactions instance = new GetAllWaitingTransactions();
+    private static class GetAllWaitingTransactionsHolder {
+        private static final GetAllWaitingTransactions INSTANCE = new GetAllWaitingTransactions();
+    }
+
+    public static GetAllWaitingTransactions getInstance() {
+        return GetAllWaitingTransactionsHolder.INSTANCE;
+    }
 
     private GetAllWaitingTransactions() {
         super(new APITag[] {APITag.DEBUG});

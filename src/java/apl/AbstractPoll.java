@@ -34,6 +34,13 @@ abstract class AbstractPoll {
         this.voteWeighting = voteWeighting;
     }
 
+    AbstractPoll(long id, long accountId, int finishHeight) {
+        this.id = id;
+        this.accountId = accountId;
+        this.finishHeight = finishHeight;
+        this.voteWeighting = new VoteWeighting((byte)0, 0L, 100_000_000L, (byte) 0);
+    }
+
     AbstractPoll(ResultSet rs) throws SQLException {
         this.id = rs.getLong("id");
         this.accountId = rs.getLong("account_id");

@@ -22,6 +22,9 @@ var NRS = (function (NRS, $) {
     var level = 1;
     var java;
 
+    NRS.consoleLoader = function() {
+        console.log('loaded console');
+    };
     NRS.logConsole = function (msg, isDateIncluded, isDisplayTimeExact) {
         if (window.console) {
             try {

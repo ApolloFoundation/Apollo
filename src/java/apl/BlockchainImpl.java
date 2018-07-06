@@ -567,7 +567,7 @@ final class BlockchainImpl implements Blockchain {
                 for (TransactionImpl phasedTransaction : phasedTransactions) {
                     try {
                         phasedTransaction.validate();
-                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.ok(phasedTransaction)) {
+                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
                             result.add(phasedTransaction);
                         }
                     } catch (AplException.ValidationException ignore) {
@@ -577,7 +577,7 @@ final class BlockchainImpl implements Blockchain {
             blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
                         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
-                        if (transaction.getPhasing() == null && filter.ok(transaction)) {
+                        if (transaction.getPhasing() == null && filter.test(transaction)) {
                             result.add(transaction);
                         }
                     }

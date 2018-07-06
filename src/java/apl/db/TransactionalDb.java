@@ -20,11 +20,7 @@ package apl.db;
 import apl.Apl;
 import apl.util.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,10 +33,9 @@ public class TransactionalDb extends BasicDb {
     private static final long txThreshold;
     private static final long txInterval;
     static {
-        long temp;
-        stmtThreshold = (temp=Apl.getIntProperty("apl.statementLogThreshold")) != 0 ? temp : 1000;
-        txThreshold = (temp=Apl.getIntProperty("apl.transactionLogThreshold")) != 0 ? temp : 5000;
-        txInterval = (temp=Apl.getIntProperty("apl.transactionLogInterval")) != 0 ? temp*60*1000 : 15*60*1000;
+        stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
+        txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
+        txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
     }
 
     private final ThreadLocal<DbConnection> localConnection = new ThreadLocal<>();
@@ -361,5 +356,10 @@ public class TransactionalDb extends BasicDb {
          * Transaction has been rolled back
          */
         void rollback();
+    }
+
+    private static long getPropertyOrDefault(String propertyName, long defaultValue) {
+        long temp;
+        return (temp=Apl.getIntProperty(propertyName)) != 0 ? temp : defaultValue;
     }
 }

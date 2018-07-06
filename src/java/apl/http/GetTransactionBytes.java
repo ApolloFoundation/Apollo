@@ -31,7 +31,13 @@ import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
 
-    static final GetTransactionBytes instance = new GetTransactionBytes();
+    private static class GetTransactionBytesHolder {
+        private static final GetTransactionBytes INSTANCE = new GetTransactionBytes();
+    }
+
+    public static GetTransactionBytes getInstance() {
+        return GetTransactionBytesHolder.INSTANCE;
+    }
 
     private GetTransactionBytes() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction");

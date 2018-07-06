@@ -77,6 +77,14 @@ public final class AssetTransfer {
         return listeners.removeListener(listener, eventType);
     }
 
+    public static boolean addListener(Listener<AssetTransfer> listener) {
+        return addListener(listener, Event.ASSET_TRANSFER);
+    }
+
+    public static boolean removeListener(Listener<AssetTransfer> listener) {
+        return removeListener(listener, Event.ASSET_TRANSFER);
+    }
+
     public static DbIterator<AssetTransfer> getAssetTransfers(long assetId, int from, int to) {
         return assetTransferTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }

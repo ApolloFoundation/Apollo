@@ -349,7 +349,7 @@ public final class Logger {
             int index = className.lastIndexOf('.');
             if (index != -1)
                 className = className.substring(index+1);
-            logMessage = className + "." + caller.getMethodName() + ": " + logMessage;
+            logMessage = className + "." + caller.getMethodName() + ":" + caller.getLineNumber() + ":" + logMessage;
         }
         //
         // Format the stack trace if enabled

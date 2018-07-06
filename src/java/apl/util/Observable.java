@@ -23,4 +23,5 @@ public interface Observable<T,E extends Enum<E>> {
 
     boolean removeListener(Listener<T> listener, E eventType);
 
+    default void ignoreListener(Listener<T> listener, E eventType){}
 }

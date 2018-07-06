@@ -66,4 +66,7 @@ public interface Block {
 
     JSONObject getJSONObject();
 
+    default String toJsonString() {
+        return getJSONObject().toJSONString();
+    }
 }

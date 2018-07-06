@@ -1957,4 +1957,17 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             blockchain.writeUnlock();
         }
     }
+
+    public boolean validateUpdateTransaction(Transaction transaction) throws InvalidTransactionException {
+        if (!TransactionType.Update.isUpdate(transaction.getType())) {
+            throw new InvalidTransactionException("Not an update transaction", (BlockImpl) transaction.getBlock());
+        }
+        if (transaction.getRecipientId() != 0) {
+            throw new InvalidTransactionException("Update transaction should has no recipient", (BlockImpl) transaction.getBlock());
+        }
+        if (transaction.getAmountATM() != 0) {
+            throw new InvalidTransactionException("Update transaction should has no amount");
+        }
+        return true;
+    }
 }

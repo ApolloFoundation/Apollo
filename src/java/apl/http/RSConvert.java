@@ -28,7 +28,13 @@ import static apl.http.JSONResponses.MISSING_ACCOUNT;
 
 public final class RSConvert extends APIServlet.APIRequestHandler {
 
-    static final RSConvert instance = new RSConvert();
+    private static class RSConvertHolder {
+        private static final RSConvert INSTANCE = new RSConvert();
+    }
+
+    public static RSConvert getInstance() {
+        return RSConvertHolder.INSTANCE;
+    }
 
     private RSConvert() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.UTILS}, "account");

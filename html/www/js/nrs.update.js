@@ -19,6 +19,10 @@
  * @depends {nrs.js}
  */
 var NRS = (function(NRS, $) {
+    NRS.updateLoader = function() {
+        console.log('loaded update');
+    };
+
 	var DOWNLOAD_REPOSITORY_URL = "https://bitbucket.org/Apollo Foundation/apl/downloads/";
 	var index = 0;
 	var bundles = [

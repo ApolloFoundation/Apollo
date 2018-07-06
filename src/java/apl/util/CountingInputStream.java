@@ -33,6 +33,11 @@ public class CountingInputStream extends FilterInputStream {
         this.limit = limit;
     }
 
+    public CountingInputStream(InputStream in) {
+        super(in);
+        limit = Long.MAX_VALUE;
+    }
+
     @Override
     public int read() throws IOException {
         int read = super.read();
@@ -69,5 +74,10 @@ public class CountingInputStream extends FilterInputStream {
         if (count > limit) {
             throw new AplException.AplIOException("Maximum size exceeded: " + count);
         }
+    }
+
+    @Override
+    public int available() throws IOException {
+        return super.available();
     }
 }

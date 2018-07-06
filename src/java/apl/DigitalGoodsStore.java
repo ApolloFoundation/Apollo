@@ -99,6 +99,11 @@ public final class DigitalGoodsStore {
             public DbKey newKey(Tag tag) {
                 return tag.dbKey;
             }
+
+            @Override
+            public DbKey newKey(String id) {
+                return super.newKey(id);
+            }
         };
 
         private static final VersionedEntityDbTable<Tag> tagTable = new VersionedEntityDbTable<Tag>("tag", tagDbKeyFactory) {

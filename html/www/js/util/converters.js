@@ -15,6 +15,11 @@
  *                                                                            *
  ******************************************************************************/
 
+function addressLoader() {
+    console.log('address loaded');
+}
+
+
 var converters = function() {
 	var charToNibble = {};
 	var nibbleToChar = [];
@@ -66,8 +71,23 @@ var converters = function() {
 			for (; i < str.length - 1; i += 2)
 				bytes.push((charToNibble[str.charAt(i)] << 4) + charToNibble[str.charAt(i + 1)]);
 
-			return bytes;
+            return bytes;
 		},
+        hexStringToInt8ByteArray: function(str) {
+            var bytes = [];
+            var i = 0;
+            if (0 !== str.length % 2) {
+                bytes.push(charToNibble[str.charAt(0)]);
+                ++i;
+            }
+
+            for (; i < str.length - 1; i += 2)
+                bytes.push((charToNibble[str.charAt(i)] << 4) + charToNibble[str.charAt(i + 1)]);
+
+            var bytes = new Int8Array(bytes);
+
+            return bytes;
+        },
 		stringToHexString: function(str) {
 			return this.byteArrayToHexString(this.stringToByteArray(str));
 		},
@@ -221,6 +241,18 @@ var converters = function() {
 
 			return byteArray;
 		},
+        shortArrayToInt8ByteArray: function(shortArray) {
+            var byteArray = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            var i;
+            for (i = 0; i < 16; i++) {
+                byteArray[2 * i] = shortArray[i] & 0xff;
+                byteArray[2 * i + 1] = shortArray[i] >> 8;
+            }
+
+            byteArray = new Int8Array(byteArray);
+
+            return byteArray;
+        },
 		shortArrayToHexString: function(ary) {
 			var res = "";
 			for (var i = 0; i < ary.length; i++) {

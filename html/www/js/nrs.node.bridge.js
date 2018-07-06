@@ -5,6 +5,10 @@ const options = {
     adminPassword: "" // Node admin password
 };
 
+function nrsNodeBridgeLoader() {
+    console.log('loaded nrsNodeBridgeLoader');
+}
+
 exports.init = function(params) {
     if (!params) {
         return this;

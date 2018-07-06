@@ -229,6 +229,13 @@ public final class ShufflingParticipant {
         this.dataTransactionFullHash = rs.getBytes("data_transaction_full_hash");
     }
 
+    private ShufflingParticipant(long shufflingId, long accountId, DbKey dbKey, int index) {
+        this.shufflingId = shufflingId;
+        this.accountId = accountId;
+        this.dbKey = dbKey;
+        this.index = index;
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
                 + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, height, latest) "

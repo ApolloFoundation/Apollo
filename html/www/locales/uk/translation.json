@@ -1417,7 +1417,6 @@
   "coin":"Монета",
   "coins":"Монети",
   "coin_exchange":"Обмін монет",
-  "exchange_using_shape_shift":"Обмін монет, використовуючи Shape Shift",
   "exchange_apl_to_coin":"Обмін APL на монету",
   "exchange_coin_to_apl":"Обмін монети на APL",
   "exchange_apl_to_coin_shift":"Обмін APL на __coin__ (shift)",

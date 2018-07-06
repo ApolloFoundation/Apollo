@@ -32,7 +32,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class RetrievePrunedData extends APIServlet.APIRequestHandler {
 
-    static final RetrievePrunedData instance = new RetrievePrunedData();
+    private static class RetrievePrunedDataHolder {
+        private static final RetrievePrunedData INSTANCE = new RetrievePrunedData();
+    }
+
+    public static RetrievePrunedData getInstance() {
+        return RetrievePrunedDataHolder.INSTANCE;
+    }
 
     private RetrievePrunedData() {
         super(new APITag[] {APITag.DEBUG});

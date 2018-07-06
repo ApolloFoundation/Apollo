@@ -19,7 +19,9 @@
  * @depends {nrs.js}
  */
 var NRS = (function (NRS) {
-
+    NRS.localstorage = function() {
+        console.log('loaded localstorage loader');
+    };
     function isIndexedDBSupported() {
         return NRS.databaseSupport;
     }

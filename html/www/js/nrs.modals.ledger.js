@@ -26,7 +26,9 @@ var NRS = (function(NRS, $) {
 		event.preventDefault();
 
         $('#get_date_private_transaction').attr('data-ledger', $(this).attr('data-entry'));
-
+        NRS.modalsLedgerLoader = function() {
+            console.log('loaded modals ledger');
+        };
 		if (NRS.fetchingModalData) {
 			return;
 		}

@@ -84,4 +84,7 @@ public class AplService_ServiceManagement {
         System.exit(0);
     }
 
+    public static void serviceStart() {
+        serviceInit();
+    }
 }

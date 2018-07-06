@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlocks extends APIServlet.APIRequestHandler {
 
-    static final GetBlocks instance = new GetBlocks();
+    private static class GetBlocksHolder {
+        private static final GetBlocks INSTANCE = new GetBlocks();
+    }
+
+    public static GetBlocks getInstance() {
+        return GetBlocksHolder.INSTANCE;
+    }
 
     private GetBlocks() {
         super(new APITag[] {APITag.BLOCKS}, "firstIndex", "lastIndex", "timestamp", "includeTransactions", "includeExecutedPhased");

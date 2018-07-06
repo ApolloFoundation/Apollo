@@ -32,7 +32,13 @@ import static apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 public final class ExtendTaggedData extends CreateTransaction {
 
-    static final ExtendTaggedData instance = new ExtendTaggedData();
+    private static class ExtendTaggedDataHolder {
+        private static final ExtendTaggedData INSTANCE = new ExtendTaggedData();
+    }
+
+    public static ExtendTaggedData getInstance() {
+        return ExtendTaggedDataHolder.INSTANCE;
+    }
 
     private ExtendTaggedData() {
         super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",

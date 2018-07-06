@@ -35,7 +35,13 @@ import static apl.http.JSONResponses.INCORRECT_PURCHASE;
 
 public final class DGSDelivery extends CreateTransaction {
 
-    static final DGSDelivery instance = new DGSDelivery();
+    private static class DGSDeliveryHolder {
+        private static final DGSDelivery INSTANCE = new DGSDelivery();
+    }
+
+    public static DGSDelivery getInstance() {
+        return DGSDeliveryHolder.INSTANCE;
+    }
 
     private DGSDelivery() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},

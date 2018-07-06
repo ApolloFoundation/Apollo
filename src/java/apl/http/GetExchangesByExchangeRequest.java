@@ -30,7 +30,13 @@ import static apl.http.JSONResponses.MISSING_TRANSACTION;
 
 public final class GetExchangesByExchangeRequest extends APIServlet.APIRequestHandler {
 
-    static final GetExchangesByExchangeRequest instance = new GetExchangesByExchangeRequest();
+    private static class GetExchangesByExchangeRequestHolder {
+        private static final GetExchangesByExchangeRequest INSTANCE = new GetExchangesByExchangeRequest();
+    }
+
+    public static GetExchangesByExchangeRequest getInstance() {
+        return GetExchangesByExchangeRequestHolder.INSTANCE;
+    }
 
     private GetExchangesByExchangeRequest() {
         super(new APITag[] {APITag.MS}, "transaction", "includeCurrencyInfo");

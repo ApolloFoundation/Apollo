@@ -26,7 +26,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountCurrencyCount extends APIServlet.APIRequestHandler {
 
-    static final GetAccountCurrencyCount instance = new GetAccountCurrencyCount();
+    private static class GetAccountCurrencyCountHolder {
+        private static final GetAccountCurrencyCount INSTANCE = new GetAccountCurrencyCount();
+    }
+
+    public static GetAccountCurrencyCount getInstance() {
+        return GetAccountCurrencyCountHolder.INSTANCE;
+    }
 
     private GetAccountCurrencyCount() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.MS}, "account", "height");

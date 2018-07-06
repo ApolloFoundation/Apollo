@@ -20,6 +20,10 @@
  */
 var NRS = (function(NRS, $) {
 
+    NRS.peersLoader = function() {
+        console.log('loaded peers');
+    };
+
 	NRS.connectPeer = function(peer) {
 		NRS.sendRequest("addPeer", {"peer": peer}, function(response) {
 			if (response.errorCode || response.error || response.state != 1) {

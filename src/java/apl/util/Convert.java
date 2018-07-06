@@ -168,11 +168,7 @@ public final class Convert {
     }
 
     public static long[] toArray(List<Long> list) {
-        long[] result = new long[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            result[i] = list.get(i);
-        }
-        return result;
+        return list.stream().mapToLong(x->x).toArray();
     }
 
     public static List<Long> toList(long[] array) {

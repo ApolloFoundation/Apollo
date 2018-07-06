@@ -25,7 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SendMoney extends CreateTransaction {
 
-    static final SendMoney instance = new SendMoney();
+    private static class SendMoneyHolder {
+        private static final SendMoney INSTANCE = new SendMoney();
+    }
+
+    public static SendMoney getInstance() {
+        return SendMoneyHolder.INSTANCE;
+    }
 
     private SendMoney() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");

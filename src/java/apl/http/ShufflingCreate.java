@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ShufflingCreate extends CreateTransaction {
 
-    static final ShufflingCreate instance = new ShufflingCreate();
+    private static class ShufflingCreateHolder {
+        private static final ShufflingCreate INSTANCE = new ShufflingCreate();
+    }
+
+    public static ShufflingCreate getInstance() {
+        return ShufflingCreateHolder.INSTANCE;
+    }
 
     private ShufflingCreate() {
         super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION},

@@ -27,7 +27,13 @@ import org.json.simple.JSONStreamAware;
 
 final class ProcessBlock extends PeerServlet.PeerRequestHandler {
 
-    static final ProcessBlock instance = new ProcessBlock();
+    private static class ProcessBlockHolder {
+        private static final ProcessBlock INSTANCE = new ProcessBlock();
+    }
+
+    public static ProcessBlock getInstance() {
+        return ProcessBlockHolder.INSTANCE;
+    }
 
     private ProcessBlock() {}
 

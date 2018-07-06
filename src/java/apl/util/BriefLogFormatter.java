@@ -82,4 +82,8 @@ public class BriefLogFormatter extends Formatter {
 
     private BriefLogFormatter() {}
 
+    @Override
+    public String getTail(Handler h) {
+        return super.getTail(h);
+    }
 }

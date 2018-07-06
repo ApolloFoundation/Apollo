@@ -1417,7 +1417,6 @@
   "coin":"Moneta",
   "coins":"Monetos",
   "coin_exchange":"Monetų keitykla",
-  "exchange_using_shape_shift":"Keiskite monetas naudodami Shapeshift",
   "exchange_apl_to_coin":"Keisti APL į kitą valiutą",
   "exchange_coin_to_apl":"Keisti kitą valiutą į APL",
   "exchange_apl_to_coin_shift":"Keisti APL į __coin__ (perkelti)",

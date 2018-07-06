@@ -28,7 +28,13 @@ import java.util.Arrays;
 
 public final class ShufflingVerify extends CreateTransaction {
 
-    static final ShufflingVerify instance = new ShufflingVerify();
+    private static class ShufflingVerifyHolder {
+        private static final ShufflingVerify INSTANCE = new ShufflingVerify();
+    }
+
+    public static ShufflingVerify getInstance() {
+        return ShufflingVerifyHolder.INSTANCE;
+    }
 
     private ShufflingVerify() {
         super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "shufflingStateHash");

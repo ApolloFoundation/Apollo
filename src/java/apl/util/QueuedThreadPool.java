@@ -181,4 +181,9 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
         if (newTask != null)
             super.execute(newTask);
     }
+
+    @Override
+    public boolean isShutdown() {
+        return super.isShutdown();
+    }
 }

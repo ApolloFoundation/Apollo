@@ -153,4 +153,31 @@ public abstract class AplException extends Exception {
 
     }
 
+    public static final class PrivateTransactionAccessDenied extends RuntimeException {
+        public PrivateTransactionAccessDenied() {
+            super();
+        }
+
+        public PrivateTransactionAccessDenied(String message) {
+            super(message);
+        }
+
+        public PrivateTransactionAccessDenied(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+ public static final class PrivateLedgerEntryAccessDenied extends RuntimeException {
+        public PrivateLedgerEntryAccessDenied() {
+            super();
+        }
+
+        public PrivateLedgerEntryAccessDenied(String message) {
+            super(message);
+        }
+
+        public PrivateLedgerEntryAccessDenied(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }

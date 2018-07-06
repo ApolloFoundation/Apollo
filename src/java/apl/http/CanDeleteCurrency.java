@@ -26,7 +26,14 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class CanDeleteCurrency extends APIServlet.APIRequestHandler {
 
-    static final CanDeleteCurrency instance = new CanDeleteCurrency();
+
+    private static class CanDeleteCurrencyHolder {
+        private static final CanDeleteCurrency INSTANCE = new CanDeleteCurrency();
+    }
+
+    public static CanDeleteCurrency getInstance() {
+        return CanDeleteCurrencyHolder.INSTANCE;
+    }
 
     private CanDeleteCurrency() {
         super(new APITag[] {APITag.MS}, "account", "currency");

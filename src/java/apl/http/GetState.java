@@ -48,7 +48,13 @@ import java.net.InetAddress;
 
 public final class GetState extends APIServlet.APIRequestHandler {
 
-    static final GetState instance = new GetState();
+    private static class GetStateHolder {
+        private static final GetState INSTANCE = new GetState();
+    }
+
+    public static GetState getInstance() {
+        return GetStateHolder.INSTANCE;
+    }
 
     private GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
@@ -57,7 +63,7 @@ public final class GetState extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
 
-        JSONObject response = GetBlockchainStatus.instance.processRequest(req);
+        JSONObject response = GetBlockchainStatus.getInstance().processRequest(req);
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
             response.put("numberOfTransactions", Apl.getBlockchain().getTransactionCount());

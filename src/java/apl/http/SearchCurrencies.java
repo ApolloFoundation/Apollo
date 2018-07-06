@@ -28,7 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class SearchCurrencies extends APIServlet.APIRequestHandler {
 
-    static final SearchCurrencies instance = new SearchCurrencies();
+    private static class SearchCurrenciesHolder {
+        private static final SearchCurrencies INSTANCE = new SearchCurrencies();
+    }
+
+    public static SearchCurrencies getInstance() {
+        return SearchCurrenciesHolder.INSTANCE;
+    }
 
     private SearchCurrencies() {
         super(new APITag[] {APITag.MS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");

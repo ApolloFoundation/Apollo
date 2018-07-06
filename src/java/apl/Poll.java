@@ -221,6 +221,19 @@ public final class Poll extends AbstractPoll {
         this.timestamp = rs.getInt("timestamp");
     }
 
+    private Poll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting, DbKey dbKey, String name, String description, String[] options, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue, int timestamp) {
+        super(id, accountId, finishHeight, voteWeighting);
+        this.dbKey = dbKey;
+        this.name = name;
+        this.description = description;
+        this.options = options;
+        this.minNumberOfOptions = minNumberOfOptions;
+        this.maxNumberOfOptions = maxNumberOfOptions;
+        this.minRangeValue = minRangeValue;
+        this.maxRangeValue = maxRangeValue;
+        this.timestamp = timestamp;
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
                 + "name, description, options, finish_height, voting_model, min_balance, min_balance_model, "

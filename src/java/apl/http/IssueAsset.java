@@ -34,7 +34,13 @@ import static apl.http.JSONResponses.MISSING_NAME;
 
 public final class IssueAsset extends CreateTransaction {
 
-    static final IssueAsset instance = new IssueAsset();
+    private static class IssueAssetHolder {
+        private static final IssueAsset INSTANCE = new IssueAsset();
+    }
+
+    public static IssueAsset getInstance() {
+        return IssueAssetHolder.INSTANCE;
+    }
 
     private IssueAsset() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");

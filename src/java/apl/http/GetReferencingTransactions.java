@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetReferencingTransactions extends APIServlet.APIRequestHandler {
 
-    static final GetReferencingTransactions instance = new GetReferencingTransactions();
+    private static class GetReferencingTransactionsHolder {
+        private static final GetReferencingTransactions INSTANCE = new GetReferencingTransactions();
+    }
+
+    public static GetReferencingTransactions getInstance() {
+        return GetReferencingTransactionsHolder.INSTANCE;
+    }
 
     private GetReferencingTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");

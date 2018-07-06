@@ -29,7 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetCurrencyTransfers extends APIServlet.APIRequestHandler {
 
-    static final GetCurrencyTransfers instance = new GetCurrencyTransfers();
+    private static class GetCurrencyTransfersHolder {
+        private static final GetCurrencyTransfers INSTANCE = new GetCurrencyTransfers();
+    }
+
+    public static GetCurrencyTransfers getInstance() {
+        return GetCurrencyTransfersHolder.INSTANCE;
+    }
 
     private GetCurrencyTransfers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "firstIndex", "lastIndex", "timestamp", "includeCurrencyInfo");

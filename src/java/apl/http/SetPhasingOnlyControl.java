@@ -61,7 +61,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class SetPhasingOnlyControl extends CreateTransaction {
 
-    static final SetPhasingOnlyControl instance = new SetPhasingOnlyControl();
+    private static class SetPhasingOnlyControlHolder {
+        private static final SetPhasingOnlyControl INSTANCE = new SetPhasingOnlyControl();
+    }
+
+    public static SetPhasingOnlyControl getInstance() {
+        return SetPhasingOnlyControlHolder.INSTANCE;
+    }
 
     private SetPhasingOnlyControl() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "controlVotingModel", "controlQuorum", "controlMinBalance",

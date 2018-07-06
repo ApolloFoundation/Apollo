@@ -33,7 +33,13 @@ import static apl.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
 public final class ShufflingProcess extends CreateTransaction {
 
-    static final ShufflingProcess instance = new ShufflingProcess();
+    private static class ShufflingProcessHolder {
+        private static final ShufflingProcess INSTANCE = new ShufflingProcess();
+    }
+
+    public static ShufflingProcess getInstance() {
+        return ShufflingProcessHolder.INSTANCE;
+    }
 
     private ShufflingProcess() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},

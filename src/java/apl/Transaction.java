@@ -17,6 +17,7 @@
 
 package apl;
 
+import apl.util.Convert;
 import apl.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -27,6 +28,8 @@ public interface Transaction {
     interface Builder {
 
         Builder recipientId(long recipientId);
+
+        default Builder recipientRs(String recipientRS) {return recipientId(Convert.parseAccountId(recipientRS));}
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 

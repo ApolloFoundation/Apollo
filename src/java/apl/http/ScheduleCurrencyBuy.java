@@ -39,7 +39,13 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ScheduleCurrencyBuy extends CreateTransaction {
 
-    static final ScheduleCurrencyBuy instance = new ScheduleCurrencyBuy();
+    private static class ScheduleCurrencyBuyHolder {
+        private static final ScheduleCurrencyBuy INSTANCE = new ScheduleCurrencyBuy();
+    }
+
+    public static ScheduleCurrencyBuy getInstance() {
+        return ScheduleCurrencyBuyHolder.INSTANCE;
+    }
 
     private ScheduleCurrencyBuy() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
@@ -102,7 +108,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 }
                 try (DbIterator<? extends Transaction> unconfirmedTransactions = Apl.getTransactionProcessor().getAllUnconfirmedTransactions()) {
                     while (unconfirmedTransactions.hasNext()) {
-                        if (filter.ok(unconfirmedTransactions.next())) {
+                        if (filter.test(unconfirmedTransactions.next())) {
                             Logger.logDebugMessage("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
                             Apl.getTransactionProcessor().broadcast(transaction);
                             response.put("broadcasted", true);
@@ -146,7 +152,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         }
 
         @Override
-        public boolean ok(Transaction transaction) {
+        public boolean test(Transaction transaction) {
             if (transaction.getSenderId() != senderId
                     || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
                     || transaction.getPhasing() != null) {

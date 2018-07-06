@@ -386,6 +386,14 @@ final class TransactionDb {
             this.prunableEncryptedMessage = prunableEncryptedMessage;
         }
 
+        public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment, boolean prunablePlainMessage) {
+            this.id = id;
+            this.transactionType = transactionType;
+            this.prunableAttachment = prunableAttachment;
+            this.prunablePlainMessage = prunablePlainMessage;
+            this.prunableEncryptedMessage = false;
+        }
+
         public long getId() {
             return id;
         }

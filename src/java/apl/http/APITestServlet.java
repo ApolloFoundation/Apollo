@@ -20,26 +20,16 @@ package apl.http;
 import apl.Constants;
 import apl.util.Convert;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 public class APITestServlet extends HttpServlet {
 
-    private static final String header1 =
+    private static final String HEADER1 =
             "<!DOCTYPE html>\n" +
             "<html>\n" +
             "<head>\n" +
@@ -98,13 +88,13 @@ public class APITestServlet extends HttpServlet {
             "<div class='row' style='margin-bottom:15px;'>\n" +
             "<div class='col-xs-4 col-sm-3 col-md-2'>\n" +
             "<ul class='nav nav-pills nav-stacked'>\n";
-    private static final String header2 =
+    private static final String HEADER2 =
             "</ul>\n" +
             "</div> <!-- col -->" +
             "<div  class='col-xs-8 col-sm-9 col-md-10'>\n" +
             "<div class='panel-group' id='accordion'>\n";
 
-    private static final String footer1 =
+    private static final String FOOTER1 =
             "</div> <!-- panel-group -->\n" +
             "</div> <!-- col -->\n" +
             "</div> <!-- row -->\n" +
@@ -117,7 +107,7 @@ public class APITestServlet extends HttpServlet {
             "<script>\n" +
             "$(document).ready(function() {";
 
-    private static final String footer2 =
+    private static final String FOOTER2 =
             "});\n" +
             "</script>\n" +
             "</body>\n" +
@@ -134,11 +124,7 @@ public class APITestServlet extends HttpServlet {
             String requestType = entry.getKey();
             Set<APITag> apiTags = entry.getValue().getAPITags();
             for (APITag apiTag : apiTags) {
-                SortedSet<String> set = requestTags.get(apiTag.name());
-                if (set == null) {
-                    set = new TreeSet<>();
-                    requestTags.put(apiTag.name(), set);
-                }
+                SortedSet<String> set = requestTags.computeIfAbsent(apiTag.name(), k -> new TreeSet<>());
                 set.add(requestType);
             }
         }
@@ -172,7 +158,7 @@ public class APITestServlet extends HttpServlet {
         return buf.toString();
     }
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
         resp.setHeader("Pragma", "no-cache");
@@ -185,9 +171,9 @@ public class APITestServlet extends HttpServlet {
         }
 
         try (PrintWriter writer = resp.getWriter()) {
-            writer.print(header1);
+            writer.print(HEADER1);
             writer.print(buildLinks(req));
-            writer.print(header2);
+            writer.print(HEADER2);
             String requestType = Convert.nullToEmpty(req.getParameter("requestType"));
             APIServlet.APIRequestHandler requestHandler = APIServlet.apiRequestHandlers.get(requestType);
             StringBuilder bufJSCalls = new StringBuilder();
@@ -223,9 +209,9 @@ public class APITestServlet extends HttpServlet {
                     writer.print(fullTextMessage("No API calls selected.", "info"));
                 }
             }
-            writer.print(footer1);
+            writer.print(FOOTER1);
             writer.print(bufJSCalls.toString());
-            writer.print(footer2);
+            writer.print(FOOTER2);
         }
 
     }

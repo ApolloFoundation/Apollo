@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final Version VERSION = Version.from("1.0.5");
+    public static final Version VERSION = Version.from("1.0.6");
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
@@ -80,6 +80,12 @@ public final class Apl {
         if (!VERSION.equals(Version.from(Apl.defaultProperties.getProperty("apl.version")))) {
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
+    }
+
+    private static volatile boolean shutdown = false;
+
+    public static boolean isShutdown() {
+        return shutdown;
     }
 
     private static void redirectSystemStreams(String streamName) {
@@ -343,6 +349,7 @@ public final class Apl {
         Logger.logShutdownMessage(Apl.APPLICATION + " server " + VERSION + " stopped.");
         Logger.shutdown();
         runtimeMode.shutdown();
+        Apl.shutdown = true;
     }
 
 
@@ -572,9 +579,12 @@ public final class Apl {
 
     private static void initUpdater() {
         try {
-            Class.forName("apl.updater.UpdaterCore");
+            Class<?> aClass = Class.forName("apl.updater.UpdaterCore");
+            //force load lazy updater instance
+            aClass.getMethod("getInstance").invoke(null);
+
         }
-        catch (ClassNotFoundException e) {
+        catch (Exception e) {
             Logger.logErrorMessage("Cannot load Updater!", e);
         }
     }

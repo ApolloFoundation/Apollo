@@ -37,7 +37,13 @@ import java.util.concurrent.Executors;
 
 public final class DumpPeers extends APIServlet.APIRequestHandler {
 
-    static final DumpPeers instance = new DumpPeers();
+    private static class DumpPeersHolder {
+        private static final DumpPeers INSTANCE = new DumpPeers();
+    }
+
+    public static DumpPeers getInstance() {
+        return DumpPeersHolder.INSTANCE;
+    }
 
     private DumpPeers() {
         super(new APITag[] {APITag.DEBUG}, "version", "weight", "connect", "adminPassword");

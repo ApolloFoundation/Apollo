@@ -23,7 +23,7 @@ public interface Fee {
 
     Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_APL);
 
-    Fee NONE = new Fee.ConstantFee(0L);
+    Fee NONE = new Fee.ConstantFee();
 
     final class ConstantFee implements Fee {
 
@@ -31,6 +31,10 @@ public interface Fee {
 
         public ConstantFee(long fee) {
             this.fee = fee;
+        }
+
+        public ConstantFee() {
+            this.fee = 0;
         }
 
         @Override

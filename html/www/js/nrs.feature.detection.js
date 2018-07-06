@@ -25,7 +25,9 @@ var NRS = (function (NRS) {
     var isLocalHost = false;
     var remoteNode = null;
     var isLoadedOverHttps = ("https:" == window.location.protocol);
-
+    NRS.featureDescriptionLoader = function() {
+        console.log('loaded feature description');
+    };
     NRS.isPrivateIP = function (ip) {
         if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
             return false;
@@ -171,14 +173,6 @@ var NRS = (function (NRS) {
 
     NRS.isCameraPermissionRequired = function () {
         return device && device.platform == "Android" && device.version >= "6.0.0";
-    };
-
-    NRS.getShapeShiftUrl = function() {
-        return NRS.settings.shape_shift_url;
-    };
-
-    NRS.getChangellyUrl = function() {
-        return NRS.settings.changelly_url;
     };
 
     NRS.isForgingSupported = function() {

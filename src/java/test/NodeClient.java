@@ -18,6 +18,8 @@ package test;
 import apl.Version;
 import apl.updater.Architecture;
 import apl.updater.Platform;
+import apl.crypto.Crypto;
+import apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,10 +40,7 @@ import test.dto.*;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -318,11 +317,58 @@ public class NodeClient {
         return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
     }
 
+    public List<Transaction> getEncryptedPrivateBlockchainTransactionsList(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) throws Exception {
+        String json = getEncryptedPrivateBlockchainTransactionsJson(url, height, firstIndex, lastIndex, null, publicKey);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionsArray = root.get("transactions");
+        JsonNode serverPublicKey = root.get("serverPublicKey");
+        if (transactionsArray == null || serverPublicKey == null) {
+            throw new RuntimeException("Cannot find transactions or serverPublic key in json: " + root.toString());
+        }
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), Convert.parseHexString(serverPublicKey.textValue()));
+        List<Transaction> transactions = new ArrayList<>();
+        for (final JsonNode transactionJson: transactionsArray) {
+            if (transactionJson.get("encryptedTransaction") != null) {
+                JsonNode encryptedTransaction = transactionJson.get("encryptedTransaction");
+                byte[] encryptedBytes = Convert.parseHexString(encryptedTransaction.textValue());
+                byte[] decryptedData = Crypto.aesDecrypt(encryptedBytes, sharedKey);
+                String decryptedJson = Convert.toString(decryptedData);
+                Transaction transaction = MAPPER.readValue(decryptedJson, Transaction.class);
+                transactions.add(transaction);
+            } else {
+                transactions.add(MAPPER.readValue(transactionJson.toString(), Transaction.class));
+            }
+        }
+        return transactions;
+    }
+
     public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
         params.put("secretPhrase", secretPhrase);
+        if (height != null) {
+            params.put("height", height.toString());
+        }
+        if (firstIndex != null) {
+            params.put("firstIndex", firstIndex.toString());
+        }
+        if (lastIndex != null) {
+            params.put("lastIndex", lastIndex.toString());
+        }
+        return getJson(uri, params);
+    }
+
+    public String getEncryptedPrivateBlockchainTransactionsJson(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) {
+        Map<String, String> params = new HashMap<>();
+        URI uri = createURI(url);
+        params.put("requestType", "getPrivateBlockchainTransactions");
+
+        if (publicKey != null) {
+            params.put("publicKey", publicKey);
+        } else if (secretPhrase != null) {
+            params.put("secretPhrase", secretPhrase);
+        }
         if (height != null) {
             params.put("height", height.toString());
         }

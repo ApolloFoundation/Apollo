@@ -112,6 +112,14 @@ public final class Vote {
         this.voteBytes = rs.getBytes("vote_bytes");
     }
 
+    private Vote(long id, DbKey dbKey, long pollId, long voterId, byte[] voteBytes) {
+        this.id = id;
+        this.dbKey = dbKey;
+        this.pollId = pollId;
+        this.voterId = voterId;
+        this.voteBytes = voteBytes;
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO vote (id, poll_id, voter_id, "
                 + "vote_bytes, height) VALUES (?, ?, ?, ?, ?)")) {

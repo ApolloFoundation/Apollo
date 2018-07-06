@@ -322,4 +322,8 @@ public class FilteredConnection implements Connection {
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return con.isWrapperFor(iface);
     }
+
+    protected Statement getFileteredStatement(Statement stmt) {
+        return factory.createStatement(stmt);
+    }
 }

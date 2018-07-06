@@ -33,7 +33,13 @@ import java.util.List;
 
 public final class GetExpectedBuyOffers extends APIServlet.APIRequestHandler {
 
-    static final GetExpectedBuyOffers instance = new GetExpectedBuyOffers();
+    private static class GetExpectedBuyOffersHolder {
+        private static final GetExpectedBuyOffers INSTANCE = new GetExpectedBuyOffers();
+    }
+
+    public static GetExpectedBuyOffers getInstance() {
+        return GetExpectedBuyOffersHolder.INSTANCE;
+    }
 
     private GetExpectedBuyOffers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "sortByRate");
