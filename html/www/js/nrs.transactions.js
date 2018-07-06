@@ -950,15 +950,15 @@ var NRS = (function(NRS, $, undefined) {
             feeColor = "color:black;";
         } else {
             if (t.sender != t.recipient) {
-                if (t.amountNQT != "0") {
-                    amount = new BigInteger(t.amountNQT);
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM);
 
                     amount = amount.negate();
                     sign = -1;
                 }
             } else {
-                if (t.amountNQT != "0") {
-                    amount = new BigInteger(t.amountNQT); // send to myself
+                if (t.amountATM != "0") {
+                    amount = new BigInteger(t.amountATM); // send to myself
                 }
             }
             feeColor = "color:red;";
