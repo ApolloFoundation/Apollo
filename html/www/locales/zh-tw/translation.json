@@ -1417,7 +1417,6 @@
   "coin":"幣種",
   "coins":"幣種",
   "coin_exchange":"幣種交易",
-  "exchange_using_shape_shift":"使用 Shape Shift 交易幣種",
   "exchange_apl_to_coin":"APL 交易為其它幣種",
   "exchange_coin_to_apl":"其它幣種交易為 APL",
   "exchange_apl_to_coin_shift":"APL 交易為 __coin__ (轉換)",

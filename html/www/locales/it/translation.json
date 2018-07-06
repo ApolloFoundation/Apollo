@@ -1417,7 +1417,6 @@
   "coin":"Moneta",
   "coins":"Monete",
   "coin_exchange":"Cambio moneta",
-  "exchange_using_shape_shift":"Scambia monete usando Shape Shift",
   "exchange_apl_to_coin":"Scambia APL in Moneta",
   "exchange_coin_to_apl":"Scambia Moneta in APL",
   "exchange_apl_to_coin_shift":"Scambia APL in __coin__ (shift)",

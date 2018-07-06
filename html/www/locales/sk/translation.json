@@ -1417,7 +1417,6 @@
   "coin":"Minca",
   "coins":"Mince",
   "coin_exchange":"Zmenáreň mincí",
-  "exchange_using_shape_shift":"Zameňte mince použitím ShapeShift",
   "exchange_apl_to_coin":"Zameniť APL za Mince",
   "exchange_coin_to_apl":"Zameniť Mince za APL",
   "exchange_apl_to_coin_shift":"Zameniť APL na __coin__ (prevod)",
