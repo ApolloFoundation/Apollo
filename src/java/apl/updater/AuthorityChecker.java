@@ -26,7 +26,9 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Set;
+import java.util.jar.JarFile;
 
 import static apl.updater.UpdaterUtil.readCertificate;
 import static apl.updater.UpdaterUtil.readCertificates;
@@ -68,4 +70,17 @@ public class AuthorityChecker {
     private Path downloadCACertificate() throws IOException {
         return downloader.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
     }
+
+    boolean verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {
+        JarFile jar = new JarFile(jarFilePath.toFile(), true);
+        JarVerifier verifier = new JarVerifier(jar);
+        verifier.verify((X509Certificate) certificate);
+        return true;
+    }
+//uncomment for tests
+//    public static void main(String[] args) throws CertificateException, IOException {
+//        Path jar = Paths.get("E:/fb/signed1.jar");
+//        Certificate certificate = UpdaterUtil.readCertificate(Paths.get("conf/certs/1_1.cert.pem"));
+//        AuthorityChecker.getInstance().verifyJarSignature(certificate, jar);
+//    }
 }
