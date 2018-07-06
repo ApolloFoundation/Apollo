@@ -25,8 +25,10 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Random;
@@ -36,16 +38,15 @@ import java.util.concurrent.TimeUnit;
 import static apl.updater.UpdaterUtil.CertificatePair;
 
 public class UpdaterCore {
+    private static final String URL_TEMPLATE = "(http)|(https)//:.+/ApolloWallet-%s.jar";
     private final UpdaterMediator mediator = UpdaterMediator.getInstance();
     private final Downloader downloader = Downloader.getInstance();
     private final SecurityAlertSender alertSender = SecurityAlertSender.getInstance();
     private final AuthorityChecker checker = AuthorityChecker.getInstance();
     private final Unpacker unpacker = Unpacker.getInstance();
     private final PlatformDependentUpdater platformDependentUpdater = new PlatformDependentUpdater();
-    private static final String URL_TEMPLATE = "(http)|(https)//:.+/ApolloWallet-%s.jar";
-    private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
-
     private volatile UpdateDataHolder updateDataHolder;
+    private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
 
     private UpdaterCore() {
         mediator.addUpdateListener(updateListener);
@@ -68,7 +69,7 @@ public class UpdaterCore {
     }
 
     public void startUpdate() {
-        new Thread(()-> triggerUpdate(updateDataHolder), "Updater thread").start();
+        new Thread(() -> triggerUpdate(updateDataHolder), "Updater thread").start();
     }
 
     public void triggerUpdate(UpdateDataHolder holder) {
@@ -119,7 +120,7 @@ public class UpdaterCore {
         }
         Logger.logInfoMessage("Starting scheduled update. CurrentHeight: " + mediator.getBlockchainHeight() + " updateHeight: " + updateHeight);
         return tryUpdate(attachment, decryptedUrl);
-              }
+    }
 
     private boolean tryUpdate(Attachment.UpdateAttachment attachment, String decryptedUrl) {
         Logger.logInfoMessage("Update to version: " + attachment.getAppVersion());
@@ -127,13 +128,17 @@ public class UpdaterCore {
         //Downloader downloads update package
         Path path = downloader.tryDownload(decryptedUrl, attachment.getHash());
         if (path != null) {
-            try {
-                Path unpackedDirPath = unpacker.unpack(path);
-                platformDependentUpdater.continueUpdate(unpackedDirPath, attachment.getPlatform());
-                return true;
-            }
-            catch (IOException e) {
-                Logger.logErrorMessage("Cannot unpack file: " + path.toString());
+            if (verifyJar(path)) {
+                try {
+                    Path unpackedDirPath = unpacker.unpack(path);
+                    platformDependentUpdater.continueUpdate(unpackedDirPath, attachment.getPlatform());
+                    return true;
+                }
+                catch (IOException e) {
+                    Logger.logErrorMessage("Cannot unpack file: " + path.toString());
+                }
+            } else {
+                Logger.logErrorMessage("Cannot verify jar signature!");
             }
         }
         return false;
@@ -144,29 +149,48 @@ public class UpdaterCore {
             if (mediator.isUpdateTransaction(transaction)) {
                 Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
                 if (attachment.getAppVersion().greaterThan(mediator.getWalletVersion())) {
-                        Platform currentPlatform = Platform.current();
-                        Architecture currentArchitecture = Architecture.current();
-                        if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                            String url = tryDecryptUrl(attachment.getUrl(), attachment.getAppVersion());
-                            if (url != null && !url.isEmpty()) {
-                                if (checker.verifyCertificates(UpdaterConstants.CERTIFICATE_DIRECTORY)) {
-                                    startUpdate();
-                                    if (attachment.getLevel() != Level.MINOR) {
-                                        mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
-                                    }
-                                } else {
-                                    Logger.logErrorMessage("Cannot verify certificates!");
-                                    alertSender.send("Certificate verification error"+ transaction.getJSONObject().toJSONString());
+                    Platform currentPlatform = Platform.current();
+                    Architecture currentArchitecture = Architecture.current();
+                    if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
+                        String url = tryDecryptUrl(attachment.getUrl(), attachment.getAppVersion());
+                        if (url != null && !url.isEmpty()) {
+                            if (checker.verifyCertificates(UpdaterConstants.CERTIFICATE_DIRECTORY)) {
+                                startUpdate();
+                                if (attachment.getLevel() != Level.MINOR) {
+                                    mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
                                 }
                             } else {
-                                Logger.logErrorMessage("Cannot decrypt url for update transaction:" + transaction.getId());
-                                alertSender.send("Cannot decrypt url for update transaction:" + transaction.getId());
+                                Logger.logErrorMessage("Cannot verify certificates!");
+                                alertSender.send("Certificate verification error" + transaction.getJSONObject().toJSONString());
                             }
-                            this.updateDataHolder = new UpdateDataHolder(transaction, url);
+                        } else {
+                            Logger.logErrorMessage("Cannot decrypt url for update transaction:" + transaction.getId());
+                            alertSender.send("Cannot decrypt url for update transaction:" + transaction.getId());
                         }
+                        this.updateDataHolder = new UpdateDataHolder(transaction, url);
                     }
                 }
+            }
         });
+    }
+
+    private boolean verifyJar(Path jarFilePath) {
+        try {
+            Set<Certificate> certificates = UpdaterUtil.readCertificates(Paths.get(UpdaterConstants.CERTIFICATE_DIRECTORY), UpdaterConstants.CERTIFICATE_SUFFIX, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX);
+            for (Certificate certificate : certificates) {
+                try {
+                    checker.verifyJarSignature(certificate, jarFilePath);
+                }
+                catch (SecurityException e) {
+                    Logger.logWarningMessage("Certificate is not appropriate." + certificate.toString());
+                }
+                return true;
+            }
+        }
+        catch (CertificateException | IOException e) {
+            Logger.logErrorMessage("Unable to load certificates");
+        }
+        return false;
     }
 
     private String tryDecryptUrl(byte[] encryptedUrl, Version updateVersion) {
