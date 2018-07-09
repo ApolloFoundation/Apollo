@@ -176,6 +176,9 @@ public class LedgerEntry {
         return AccountLedger.LedgerEvent.PRIVATE_PAYMENT == eventType;
     }
 
+    public boolean isNotPrivate() {
+        return !isPrivate();
+    }
     public boolean isNull() {
         return ledgerId == null && account == null && block == null && timestamp == null;
     }
