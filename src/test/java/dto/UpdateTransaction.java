@@ -15,10 +15,10 @@
 
 package dto;
 
-import apl.Version;
-import apl.updater.Architecture;
-import apl.updater.Platform;
-import apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.updater.Architecture;
+import com.apollocurrency.aplwallet.apl.updater.Platform;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 import java.util.Arrays;
 import java.util.Objects;

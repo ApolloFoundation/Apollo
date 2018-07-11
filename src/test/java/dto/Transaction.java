@@ -15,14 +15,14 @@
 
 package dto;
 
-import apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.TransactionType;
 
 import java.util.Objects;
 
-import static apl.TestUtil.fromATM;
+import static com.apollocurrency.aplwallet.apl.TestUtil.fromATM;
 
 /**
- * Simple DTO object for {@link apl.TransactionImpl}
+ * Simple DTO object for {@link com.apollocurrency.aplwallet.apl.TransactionImpl}
  */
 public class Transaction {
     private String senderPublicKey;

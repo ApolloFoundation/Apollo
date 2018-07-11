@@ -21,10 +21,10 @@ public class Peer {
     private Long downloadedVolume;
     private String address; //ip
     private Boolean inbound;
-    private apl.peer.Peer.BlockchainState blockchainState;
+    private com.apollocurrency.aplwallet.apl.peer.Peer.BlockchainState blockchainState;
     private Long weight;
     private Long uploadedVolume;
-    private List<apl.peer.Peer.Service> services;
+    private List<com.apollocurrency.aplwallet.apl.peer.Peer.Service> services;
     private String version;
     private String platform;
     private Boolean inboundWebSocket;
@@ -63,11 +63,11 @@ public class Peer {
         this.inbound = inbound;
     }
 
-    public apl.peer.Peer.BlockchainState getBlockchainState() {
+    public com.apollocurrency.aplwallet.apl.peer.Peer.BlockchainState getBlockchainState() {
         return blockchainState;
     }
 
-    public void setBlockchainState(apl.peer.Peer.BlockchainState blockchainState) {
+    public void setBlockchainState(com.apollocurrency.aplwallet.apl.peer.Peer.BlockchainState blockchainState) {
         this.blockchainState = blockchainState;
     }
 
@@ -87,11 +87,11 @@ public class Peer {
         this.uploadedVolume = uploadedVolume;
     }
 
-    public List<apl.peer.Peer.Service> getServices() {
+    public List<com.apollocurrency.aplwallet.apl.peer.Peer.Service> getServices() {
         return services;
     }
 
-    public void setServices(List<apl.peer.Peer.Service> services) {
+    public void setServices(List<com.apollocurrency.aplwallet.apl.peer.Peer.Service> services) {
         this.services = services;
     }
 

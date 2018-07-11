@@ -1,0 +1,83 @@
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
+ * Copyright © 2017-2018 Apollo Foundation
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
+ * no part of the Apl software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
+package com.apollocurrency.aplwallet.apl.tools;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
+
+public final class SignTransactions {
+
+    public static void main(String[] args) {
+        try {
+            if (args.length != 2) {
+                System.out.println("Usage: SignTransactions <unsigned transaction bytes file> <signed transaction bytes file>");
+                System.exit(1);
+            }
+            File unsigned = new File(args[0]);
+            if (!unsigned.exists()) {
+                System.out.println("File not found: " + unsigned.getAbsolutePath());
+                System.exit(1);
+            }
+            File signed = new File(args[1]);
+            if (signed.exists()) {
+                System.out.println("File already exists: " + signed.getAbsolutePath());
+                System.exit(1);
+            }
+            String secretPhrase;
+            Console console = System.console();
+            if (console == null) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+                    secretPhrase = reader.readLine();
+                }
+            } else {
+                secretPhrase = new String(console.readPassword("Secret phrase: "));
+            }
+            int n = 0;
+            if (Files.exists(signed.toPath())) {
+                Files.delete(signed.toPath());
+            }
+                Files.createFile(signed.toPath());
+                List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
+                for (String unsignedTransaction : unsignedTransactions) {
+                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, secretPhrase).getBytes(), StandardOpenOption.APPEND);
+                    Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
+                    n += 1;
+                }
+                System.out.println("Signed " + n + " transactions");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private static String signTransaction(String transactionBytesHexString, String secretPhrase) throws AplException.NotValidException {
+        byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
+        Transaction.Builder builder = Apl.newTransactionBuilder(transactionBytes);
+        Transaction transaction = builder.build(secretPhrase);
+        return Convert.toHexString(transaction.getBytes());
+    }
+
+}

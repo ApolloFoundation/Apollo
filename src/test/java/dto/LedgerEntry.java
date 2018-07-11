@@ -16,7 +16,7 @@
 
 package dto;
 
-import apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.AccountLedger;
 
 import java.util.Objects;
 
