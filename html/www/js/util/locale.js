@@ -64,7 +64,6 @@ var NRS = (function (NRS) {
             }
         }
 	
-
 	    if (!currentLocale || !currentLocale.lang || currentLocale.lang != lang) {
             currentLocale = {};
             currentLocale.lang = lang;

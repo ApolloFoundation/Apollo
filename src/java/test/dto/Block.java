@@ -71,7 +71,6 @@ public class Block {
 
         return Objects.hash(previousBlockHash, payloadLength, totalAmountATM, generationSignature, generator, generatorPublicKey, baseTarget,
                 payloadHash, generatorRS, numberOfTransactions, blockSignature, transactions, version, totalFeeATM, previousBlock, cumulativeDifficulty, block, height, timestamp);
-
     }
 
     public String getPreviousBlockHash() {

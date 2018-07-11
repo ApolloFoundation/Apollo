@@ -364,7 +364,6 @@ var NRS = (function(NRS, $, undefined) {
 					NRS.accountRS = NRS.escapeRespStr(response.accountRS);
 					
 					NRS.setJSONItem('aplUser', NRS.accountRS);
-
 					
 					if (isPassphraseLogin) {
                         NRS.publicKey = NRS.getPublicKey(converters.stringToHexString(id));
