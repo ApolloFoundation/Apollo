@@ -33,7 +33,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
@@ -43,7 +44,6 @@ import netscape.javascript.JSObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -132,12 +132,14 @@ public class DesktopApplication extends Application {
     @SuppressWarnings("unused")
     public static void shutdown() {
         System.out.println("shutting down JavaFX platform");
-        if (screenStage.isShowing()) {
-            screenStage.close();
-        }
-        if (mainStage.isShowing()) {
-            mainStage.close();
-        }
+        Platform.runLater(()-> {
+            if (screenStage.isShowing()) {
+                screenStage.close();
+            }
+            if (mainStage.isShowing()) {
+                mainStage.close();
+            }
+        });
         Platform.exit();
         if (ENABLE_JAVASCRIPT_DEBUGGER) {
             try {
@@ -178,26 +180,62 @@ public class DesktopApplication extends Application {
         }
 
         public void startAndShow() {
+            /**
+             #status-text {
+             -fx-text-fill: white;
+             -fx-font-size: 15;
+             }
+             */
             screenStage.setTitle("Apollo wallet");
             AnchorPane pane = new AnchorPane();
+            try {
+                BackgroundImage myBI= new BackgroundImage(new Image(Files.newInputStream(Paths.get("html/www/img/apollo_logo_splash-screen.png")),400,250,false,true),
+                        BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
+                        new BackgroundSize(400, 250, false, false, true, true));
+                Background background = new Background(myBI);
+                pane.setBackground(background);
+            }
+            catch (IOException e) {
+                Logger.logErrorMessage("Cannot load image", e);
+            }
+            pane.setStyle("-fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0)");
             pane.setId("main-pane");
             ProgressIndicator indicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
             indicator.setId("progress-indicator");
-            AnchorPane.setTopAnchor(indicator, 135.0);
-            AnchorPane.setLeftAnchor(indicator, 160.0);
+            indicator.setStyle(
+                    "-fx-max-height: 50; " +
+                    "-fx-max-width: 50;" +
+                    "-fx-min-height: 50;" +
+                    "-fx-min-width: 50;" +
+                    "-fx-progress-color: white");
+            AnchorPane.setTopAnchor(indicator, 130.0);
+            AnchorPane.setLeftAnchor(indicator, 175.0);
             pane.getChildren().add(indicator);
-
             Label statusText = new Label();
             statusText.setId("status-text");
+            statusText.setTextFill(Color.WHITE);
+            statusText.setStyle("-fx-font-size: 15");
             statusText.setText("Apollo wallet is loading. Please, wait");
             AnchorPane.setTopAnchor(statusText, 228.0);
-            AnchorPane.setLeftAnchor(statusText, 50.0);
+            AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
             Scene scene = new Scene(pane);
-            scene.getStylesheets().add("file:///" + new File("html\\www\\css\\java\\splash-screen.css").getAbsolutePath().replace("\\", "/"));
+//            Path path = Paths.get("html/www/css/java/splash-screen.css");
+//            Logger.logInfoMessage("DEBUG: css path: " + path.toString());
+//            try {
+//                String e = new URL("file:///" + path.toAbsolutePath().toString()).toExternalForm();
+//                Logger.logInfoMessage("DEBUG: " + e);
+//                scene.getStylesheets().add(e);
+//                scene.setUserAgentStylesheet(e);
+//            }
+//            catch (MalformedURLException e) {
+//                e.printStackTrace();
+//            }
+//            System.out.println("DEBUG: splash " + path.toAbsolutePath().toString());
+//            System.out.println("DEBUG: splash " + path.toString());
             screenStage.setScene(scene);
             screenStage.setHeight(250);
-            screenStage.setWidth(350);
+            screenStage.setWidth(400);
             screenStage.initStyle(StageStyle.UNDECORATED);
             screenStage.show();
             Runnable statusUpdater = () -> {
