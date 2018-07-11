@@ -517,6 +517,14 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(100_000_000, updateTransaction.getFeeATM().intValue());
         Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
     }
+
+    @Test
+    public void testGetAccountLedgerWithoutParameters() throws Exception {
+        List<LedgerEntry> accountLedger = client.getAccountLedger(url, "", false, 0, 4);
+        checkList(accountLedger);
+        Assert.assertEquals(5, accountLedger.size());
+        accountLedger.forEach(LedgerEntry::isNotPrivate);
+    }
 }
 
 
