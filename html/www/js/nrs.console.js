@@ -21,12 +21,13 @@
 var NRS = (function (NRS, $) {
     var level = 1;
     var java;
+    var isLogEnabled = false;
 
     NRS.consoleLoader = function() {
         console.log('loaded console');
     };
     NRS.logConsole = function (msg, isDateIncluded, isDisplayTimeExact) {
-        if (window.console) {
+        if (window.console && isLogEnabled) {
             try {
                 var prefix = "";
                 if (!isDateIncluded) {
