@@ -132,12 +132,14 @@ public class DesktopApplication extends Application {
     @SuppressWarnings("unused")
     public static void shutdown() {
         System.out.println("shutting down JavaFX platform");
-        if (screenStage.isShowing()) {
-            screenStage.close();
-        }
-        if (mainStage.isShowing()) {
-            mainStage.close();
-        }
+        Platform.runLater(()-> {
+            if (screenStage.isShowing()) {
+                screenStage.close();
+            }
+            if (mainStage.isShowing()) {
+                mainStage.close();
+            }
+        });
         Platform.exit();
         if (ENABLE_JAVASCRIPT_DEBUGGER) {
             try {
