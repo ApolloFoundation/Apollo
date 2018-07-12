@@ -496,14 +496,15 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
 
     @Test
     public void testSendUpdateTransaction() throws IOException {
-        String updateUrl = Convert.toHexString("http://apollocurrncy.com/download/linux/desktop-wallet/Apollo-1.10.11.jar".getBytes());
-        String hash = "0987654321098765432109876543210909876543210987654321098765432109";
-        Platform platform = Platform.WINDOWS;
+        //todo url requires encryption
+        String updateUrl = Convert.toHexString("http://93.175.202.255:8080/ApolloPackages/Updates/ApolloWallet-1.0.7-update.jar".getBytes());
+        String hash = "7999a5388cba90dfc0d955ec4c60bdbc874f4a72c289ba51fdec8c71fe2aa207";
+        Platform platform = Platform.LINUX;
         Architecture architecture = Architecture.AMD64;
-        Version version = Version.from("10000.0.0");
+        Version version = Version.from("1.0.7");
         UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, 5);
         UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
-        expectedAttachment.setArchitecture(Architecture.AMD64);
+        expectedAttachment.setArchitecture(architecture);
         expectedAttachment.setHash(hash);
         expectedAttachment.setPlatform(platform);
         expectedAttachment.setVersion(version);
