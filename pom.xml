@@ -14,6 +14,7 @@
         <url>https://www.apollocurrency.com/</url>
     </organization>
     <properties>
+        <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
         <java.version>1.8</java.version>
@@ -28,7 +29,7 @@
         <websocket.version>9.3.22.v20171030</websocket.version>
 
         <!--Crypto-->
-        <bcprov.version>1.58</bcprov.version>
+        <bcprov.version>1.54</bcprov.version>
 
         <!--QR-code-->
         <zxing.version>3.3.0</zxing.version>
@@ -86,7 +87,6 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>${servlet-api.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!--Jackson-->
@@ -230,7 +230,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
             <version>${slf4j.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <!--Tika-->
@@ -288,8 +287,13 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <classpathLayoutType>simple</classpathLayoutType>
                             <mainClass>com.apollocurrency.aplwallet.apl.Apl</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Class-Path>conf/</Class-Path>
+                            </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
