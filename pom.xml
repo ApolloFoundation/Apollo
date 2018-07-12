@@ -306,8 +306,9 @@
                     <arguments>
                         <argument>-Dapl.runtime.mode=desktop</argument>
                         <argument>-Djava.library.path=${project.build.directory}/lib</argument>
+                        <!--<argument>-Djava.util.logging.manager=com.apollocurrency.aplwallet.apl.util.AplLogManager</argument>-->
                         <argument>-classpath</argument>
-                        <argument>conf;${project.build.directory}/classes;${project.build.directory}/lib/*</argument>
+                        <argument>${project.basedir}/conf;${project.build.directory}/classes;${project.build.directory}/lib/*;${project.basedir}/conf/logging.properties;${project.basedir}/conf/logging-default.properties</argument>
                         <argument>com.apollocurrency.aplwallet.apl.Apl</argument>
                     </arguments>
                 </configuration>

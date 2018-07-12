@@ -18,6 +18,7 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
+import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 
 class AplDbVersion extends DbVersion {
 
@@ -645,6 +646,9 @@ class AplDbVersion extends DbVersion {
             case 237:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
             case 238:
+                FullTextTrigger.init();
+                apply(null);
+            case 239:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
