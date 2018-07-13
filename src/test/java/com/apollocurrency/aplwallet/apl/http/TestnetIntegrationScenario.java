@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.http;/*
+/*
  * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
@@ -12,14 +12,14 @@ package com.apollocurrency.aplwallet.apl.http;/*
  * Removal or modification of this copyright notice is prohibited.
  *
  */
+package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
 import com.apollocurrency.aplwallet.apl.TestUtil;
 import dto.ForgingDetails;
 import dto.Transaction;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -36,6 +36,7 @@ public class TestnetIntegrationScenario {
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
     private static final Random RANDOM = new Random();
     private static String adminPass;
+    private static WalletRunner runner = new WalletRunner();
 
     static {
         Properties properties = new Properties();
@@ -47,6 +48,18 @@ public class TestnetIntegrationScenario {
             LOG.error("Cannot read apl.properties file", e);
         }
     }
+
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        runner.shutdown();
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+        runner.run();
+    }
+
     @Test
     public void testSendTransaction() throws Exception {
         testIsFork();
@@ -72,6 +85,7 @@ public class TestnetIntegrationScenario {
     }
 
     @Test
+    @Ignore
     public void testStopForgingAndBlockAcceptance() throws Exception {
         testIsFork();
         testIsAllPeersConnected();
@@ -84,8 +98,6 @@ public class TestnetIntegrationScenario {
                 LOG.error("Cannot start forging for account: " + accountRS + " on " + TestData.TEST_LOCALHOST, e);
             }
         });
-//        LOG.info("Waiting 2 blocks creation...");
-//        waitBlocks(2);
         TimeUnit.SECONDS.sleep(5);
         LOG.info("Verifying forgers on localhost");
         List<ForgingDetails> forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, adminPass);
@@ -95,20 +107,19 @@ public class TestnetIntegrationScenario {
                 Assert.fail("Incorrect generator: " + generator.getAccountRS());
             }
         });
-//        UpdaterUtil.stopForgingAndBlockAcceptance();
         LOG.info("Stopping forging and peer server...");
-        long remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl());
+        long remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
         CLIENT.stopForgingAndBlockAcceptance(TestData.TEST_LOCALHOST, adminPass);
         long localHeight = CLIENT.getBlockchainHeight(TestData.TEST_LOCALHOST);
         LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
         Assert.assertEquals(localHeight, remoteHeight);
-        Assert.assertEquals(CLIENT.getBlock(TestUtil.randomUrl(), remoteHeight), CLIENT.getBlock(TestData.TEST_LOCALHOST, localHeight));
+        Assert.assertEquals(CLIENT.getBlock(TestUtil.randomUrl(runner.getUrls()), remoteHeight), CLIENT.getBlock(TestData.TEST_LOCALHOST, localHeight));
         LOG.info("Checking forgers on node (Assuming no forgers)");
         forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, adminPass);
         Assert.assertEquals(0, forgers.size());
         LOG.info("Waiting 5 blocks creation...");
         waitBlocks(5);
-        remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl());
+        remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
         long actualLocalHeight = CLIENT.getBlockchainHeight(TestData.TEST_LOCALHOST);
         LOG.info("Comparing blockchain height local/remote: {}/{}", actualLocalHeight, remoteHeight);
         Assert.assertEquals(localHeight, actualLocalHeight);
@@ -120,7 +131,12 @@ public class TestnetIntegrationScenario {
     private boolean waitForConfirmation(Transaction transaction, int seconds) throws InterruptedException, IOException {
         while (seconds > 0) {
             seconds -= 1;
-            Transaction receivedTransaction = CLIENT.getTransaction(TestUtil.randomUrl(), transaction.getFullHash());
+            Transaction receivedTransaction;
+            if (transaction.isPrivate()) {
+                receivedTransaction = CLIENT.getPrivateTransaction(TestUtil.randomUrl(runner.getUrls()), ACCOUNTS.get(transaction.getSenderRS()), transaction.getFullHash(), null);
+            } else {
+                receivedTransaction = CLIENT.getTransaction(TestUtil.randomUrl(runner.getUrls()), transaction.getFullHash());
+            }
             if (receivedTransaction.getConfirmations() != null && receivedTransaction.getConfirmations() > 0) {
                 return true;
             }
@@ -131,29 +147,30 @@ public class TestnetIntegrationScenario {
 
 
     @Test
+    @Ignore
     public void test() throws Exception {
-        System.out.println("PeerCount=" + CLIENT.getPeersCount(TestData.URLS.get(0)));
-        System.out.println("BLOCKS=" + CLIENT.getBlocksList(TestData.URLS.get(0), false, null));
-        System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(TestData.URLS.get(0)));
+        System.out.println("PeerCount=" + CLIENT.getPeersCount(runner.getUrls().get(0)));
+        System.out.println("BLOCKS=" + CLIENT.getBlocksList(runner.getUrls().get(0), false, null));
+        System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(runner.getUrls().get(0)));
         System.out.println("Forgers="+ CLIENT.getForging(TestData.TEST_LOCALHOST, null, adminPass));
     }
 
     @Test
     public void testIsFork() throws Exception {
         Assert.assertFalse("Fork was occurred!",isFork());
-        LOG.info("Fork is not detected. Current height {}", CLIENT.getBlockchainHeight(TestUtil.randomUrl()));
+        LOG.info("Fork is not detected. Current height {}", CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls())));
     }
     @Test
     public void testIsAllPeersConnected() throws Exception {
         Assert.assertTrue("All peers are NOT connected!", isAllPeersConnected());
-        LOG.info("All peers are connected. Total peers: {}", CLIENT.getPeersCount(TestUtil.randomUrl()));
+        LOG.info("All peers are connected. Total peers: {}", CLIENT.getPeersCount(TestUtil.randomUrl(runner.getUrls())));
     }
 
 
     private boolean isFork() throws Exception {
         Long currentBlockchainHeight;
         Long prevBlockchainHeight = null;
-        for (String url : TestData.URLS) {
+        for (String url : runner.getUrls()) {
             currentBlockchainHeight = CLIENT.getBlockchainHeight(url);
             if (prevBlockchainHeight != null && !currentBlockchainHeight.equals(prevBlockchainHeight)) {
                 return true;
@@ -164,15 +181,15 @@ public class TestnetIntegrationScenario {
     }
 
     private boolean isAllPeersConnected() throws Exception {
-        int peerQuantity = (int) Math.ceil((double) TestData.URLS.size() * 0.51);
-        int maxPeerQuantity = TestData.URLS.size();
+        int peerQuantity = (int) Math.ceil((double) runner.getUrls().size() * 0.51);
+        int maxPeerQuantity = runner.getUrls().size();
         int peers = 0;
         int localHostPeers = CLIENT.getPeersCount(TestData.TEST_LOCALHOST);
         if (localHostPeers < peerQuantity) {
             LOG.error("Localhost peer has {}/{} peers. Required >= {}", localHostPeers, maxPeerQuantity, peerQuantity);
             return false;
         }
-        for (String ip : TestData.URLS) {
+        for (String ip : runner.getUrls()) {
             peers = CLIENT.getPeersCount(ip);
             if (peers < peerQuantity) {
                 LOG.error("Peer with {} has {}/{} peers. Required >= {}", ip, peers, maxPeerQuantity, peerQuantity);
@@ -184,7 +201,7 @@ public class TestnetIntegrationScenario {
     }
 
     private Transaction sendRandomTransaction() throws Exception {
-        String host = TestUtil.randomUrl();
+        String host = TestUtil.randomUrl(runner.getUrls());
         String sender = TestUtil.getRandomRS(ACCOUNTS);
         String recipient = TestUtil.getRandomRecipientRS(ACCOUNTS, sender);
         String secretPhrase = ACCOUNTS.get(sender);
@@ -193,7 +210,7 @@ public class TestnetIntegrationScenario {
     }
 
     private Transaction sendRandomPrivateTransaction() throws Exception {
-        String host = TestUtil.randomUrl();
+        String host = TestUtil.randomUrl(runner.getUrls());
         String sender = TestUtil.getRandomRS(ACCOUNTS);
         String recipient = TestUtil.getRandomRecipientRS(ACCOUNTS, sender);
         String secretPhrase = ACCOUNTS.get(sender);
@@ -202,11 +219,12 @@ public class TestnetIntegrationScenario {
     }
 
     private void waitBlocks(long numberOfBlocks) throws Exception {
-        long startBlockchainHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl());
-        long currentBlockchainHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl());
+        List<String> urls = runner.getUrls();
+        long startBlockchainHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(urls));
+        long currentBlockchainHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(urls));
         while (currentBlockchainHeight != numberOfBlocks + startBlockchainHeight) {
             TimeUnit.MILLISECONDS.sleep(300);
-            currentBlockchainHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl());
+            currentBlockchainHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(urls));
         }
         TimeUnit.MILLISECONDS.sleep(300);
     }

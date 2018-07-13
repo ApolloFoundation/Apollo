@@ -19,10 +19,12 @@ import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.*;
 import dto.Block;
+import dto.*;
 import dto.Transaction;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -46,9 +48,20 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     public static final String PRIVATE_TRANSACTION_RECIPIENT = "APL-4QN7-PNGP-SZFV-59XZL";
     public static final Long PRIVATE_LEDGER_ENTRY_ID = 194L;
     public static final Long LEDGER_ENTRY_ID = 164L;
+    private static WalletRunner runner = new WalletRunner();
 
     public NodeClientTestTestnet() {
         super(TestData.TEST_LOCALHOST, TestData.TEST_FILE);
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+        runner.run();
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        runner.shutdown();
     }
 
     @Test
@@ -139,7 +152,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         peersIPs.forEach(ip -> Assert.assertTrue(IP_PATTERN.matcher(ip).matches()));
         peersIPs.forEach(ip -> {
                     boolean found = false;
-                    for (String aip : TestData.URLS) {
+                    for (String aip : runner.getUrls()) {
                         String tmp = aip.substring(aip.indexOf("//") + 2, aip.lastIndexOf(":"));
                         if (tmp.equals(ip)) {
                             found = true;

@@ -72,6 +72,7 @@ public abstract class AbstractNodeClientTest {
             }
         });
     }
+
     @Test
     public void testSendMoneyTransaction() throws Exception {
         String senderRS = getRandomRS(accounts);

@@ -21,8 +21,7 @@ import dto.Block;
 import dto.Peer;
 import dto.Transaction;
 import org.eclipse.jetty.util.StringUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -36,9 +35,32 @@ import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
  */
 public class NodeClientTestMainnet extends AbstractNodeClientTest {
     private static final String TRANSACTION_HASH = "5e359e83f4591433bd1e6b59b06ceecd0a4731ea8b50bc76df2a9dc6c16c5f3a";
+    private static WalletRunner runner = new WalletRunner(false);
 
     public NodeClientTestMainnet() {
         super(TestData.MAIN_LOCALHOST, TestData.MAIN_FILE);
+    }
+
+    @Override
+    @Ignore
+    public void testSendMoneyTransaction() throws Exception {
+        super.testSendMoneyTransaction();
+    }
+
+    @Override
+    @Ignore
+    public void testSendMoneyPrivate() throws Exception {
+        super.testSendMoneyPrivate();
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        runner.shutdown();
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+        runner.run();
     }
 
     @Test
@@ -141,6 +163,7 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
     }
 
     @Test
+    @Ignore
     public void testSendMoney() {
         String senderRS = TestUtil.getRandomRS(accounts);
         String recipientRS = TestUtil.getRandomRecipientRS(accounts, senderRS);

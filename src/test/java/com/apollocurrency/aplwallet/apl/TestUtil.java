@@ -69,8 +69,8 @@ public class TestUtil {
         return accounts;
     }
 
-    public static String randomUrl() {
-        return TestData.URLS.get(RANDOM.nextInt(TestData.URLS.size()));
+    public static String randomUrl(List<String> urls) {
+        return urls.get(RANDOM.nextInt(urls.size()));
     }
 
     public static String getRandomRS(Map<String,String> accounts) {
