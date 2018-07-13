@@ -18,6 +18,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import com.apollocurrency.aplwallet.apl.Apl;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -95,7 +96,7 @@ public final class Logger {
                 throw new RuntimeException("Error loading logging properties", e);
             }
         }
-        log = org.slf4j.LoggerFactory.getLogger(com.apollocurrency.aplwallet.apl.Apl.class);
+        log = LoggerFactory.getLogger(Apl.class);
         enableStackTraces = Apl.getBooleanProperty("apl.enableStackTraces");
         enableLogTraceback = Apl.getBooleanProperty("apl.enableLogTraceback");
         logInfoMessage("logging enabled");
