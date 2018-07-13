@@ -57,7 +57,7 @@
 	)
 
 :startJava	
-	start "APL NRS from %~dp0" "%javaDir%"\bin\java.exe -cp classes;lib\*;conf;addons\classes;addons\lib\* -Dapl.runtime.mode=desktop apl.Apl
+	start "APL NRS from %~dp0" "%javaDir%"\bin\java.exe -cp classes;lib\*;conf;addons\classes;addons\lib\* -Dapl.runtime.mode=desktop com.apollocurrency.aplwallet.apl.Apl
 
 :endProcess 
 	endlocal
