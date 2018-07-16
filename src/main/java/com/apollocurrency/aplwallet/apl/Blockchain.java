@@ -95,4 +95,6 @@ public interface Blockchain {
 
     DbIterator<? extends Transaction> getReferencingTransactions(long transactionId, int from, int to);
 
+    DbIterator<? extends Transaction> getTransactions(byte type, byte subtype, int from, int to);
+
 }

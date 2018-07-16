@@ -57,13 +57,13 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
 
 public final class ParameterParser {
 
-    public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory) throws ParameterException {
+    public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
                 throw new ParameterException(missing(name));
             }
-            return 0;
+            return defaultValue;
         }
         try {
             byte value = Byte.parseByte(paramValue);
@@ -74,6 +74,10 @@ public final class ParameterParser {
         } catch (RuntimeException e) {
             throw new ParameterException(incorrect(name, String.format("value %s is not numeric", paramValue)));
         }
+    }
+
+    public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory) throws ParameterException {
+        return getByte(req, name, min, max, isMandatory, (byte) 0);
     }
 
     public static int getInt(HttpServletRequest req, String name, int min, int max, boolean isMandatory) throws ParameterException {
@@ -166,6 +170,10 @@ public final class ParameterParser {
         }
         return Convert.parseHexString(paramValue);
     }
+    public static byte getByteOrNegative(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+        return getByte(req, name, Byte.MIN_VALUE, Byte.MAX_VALUE, isMandatory, (byte) -1);
+    }
+
 
     public static long getAccountId(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getAccountId(req, "account", isMandatory);

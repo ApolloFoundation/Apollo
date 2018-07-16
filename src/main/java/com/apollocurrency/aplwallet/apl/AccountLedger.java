@@ -332,7 +332,7 @@ public class AccountLedger {
         // Build the SELECT statement to search the entries
         StringBuilder sb = new StringBuilder(128);
         sb.append("SELECT * FROM account_ledger ");
-        if (accountId != 0 || event != null || holding != null) {
+        if (accountId != 0 || event != null || holding != null || !includePrivate) {
             sb.append("WHERE ");
         }
         if (accountId != 0) {

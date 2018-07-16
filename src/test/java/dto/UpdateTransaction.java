@@ -68,10 +68,9 @@ public class UpdateTransaction extends Transaction {
     public static class UpdateAttachment {
         private Platform platform;
         private Architecture architecture;
-        private String url;
+        private byte[] url;
         private Version version;
         private byte[] hash;
-        private byte[] signature;
 
         public Platform getPlatform() {
             return platform;
@@ -89,12 +88,12 @@ public class UpdateTransaction extends Transaction {
             this.architecture = architecture;
         }
 
-        public String getUrl() {
+        public byte[] getUrl() {
             return url;
         }
 
         public void setUrl(String url) {
-            this.url = url;
+            this.url = Convert.parseHexString(url);
         }
 
         public Version getVersion() {
@@ -113,26 +112,6 @@ public class UpdateTransaction extends Transaction {
             this.hash = Convert.parseHexString(hash);
         }
 
-        public byte[] getSignature() {
-            return signature;
-        }
-
-        public void setSignature(String signature) {
-            this.signature = Convert.parseHexString(signature);
-        }
-
-        @Override
-        public String toString() {
-            return "UpdateAttachment{" +
-                    "platform=" + platform +
-                    ", architecture=" + architecture +
-                    ", url='" + url + '\'' +
-                    ", version=" + version +
-                    ", hash=" + Arrays.toString(hash) +
-                    ", signature=" + Arrays.toString(signature) +
-                    '}';
-        }
-
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -140,19 +119,29 @@ public class UpdateTransaction extends Transaction {
             UpdateAttachment that = (UpdateAttachment) o;
             return platform == that.platform &&
                     architecture == that.architecture &&
-                    Objects.equals(url, that.url) &&
+                    Arrays.equals(url, that.url) &&
                     Objects.equals(version, that.version) &&
-                    Arrays.equals(hash, that.hash) &&
-                    Arrays.equals(signature, that.signature);
+                    Arrays.equals(hash, that.hash);
         }
 
         @Override
         public int hashCode() {
 
-            int result = Objects.hash(platform, architecture, url, version);
+            int result = Objects.hash(platform, architecture, version);
+            result = 31 * result + Arrays.hashCode(url);
             result = 31 * result + Arrays.hashCode(hash);
-            result = 31 * result + Arrays.hashCode(signature);
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "UpdateAttachment{" +
+                    "platform=" + platform +
+                    ", architecture=" + architecture +
+                    ", url=" + Convert.toHexString(url) +
+                    ", version=" + version +
+                    ", hash=" + Convert.toHexString(hash) +
+                    '}';
         }
 
         public UpdateAttachment() {
@@ -161,10 +150,9 @@ public class UpdateTransaction extends Transaction {
         public UpdateAttachment(Platform platform, Architecture architecture, String url, Version version, byte[] hash, byte[] signature) {
             this.platform = platform;
             this.architecture = architecture;
-            this.url = url;
+            this.url = Convert.parseHexString(url);
             this.version = version;
             this.hash = hash;
-            this.signature = signature;
         }
     }
 }

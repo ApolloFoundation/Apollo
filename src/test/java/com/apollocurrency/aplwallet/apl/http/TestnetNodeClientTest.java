@@ -16,7 +16,6 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -28,12 +27,16 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import test.crypto.Crypto;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static com.apollocurrency.aplwallet.apl.TestUtil.atm;
+import static com.apollocurrency.aplwallet.apl.TestUtil.getRandomRS;
 
 /**
  * Test scenarios on testnet for {@link NodeClient}
@@ -79,8 +82,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(BLOCK_HEIGHT.longValue(), block.getHeight().longValue());
         Assert.assertEquals(TestData.MAIN_RS, block.getGeneratorRS());
         Assert.assertEquals(3, block.getNumberOfTransactions().intValue());
-        Assert.assertEquals(TestUtil.atm(3).longValue(), block.getTotalFeeATM().longValue());
-        Assert.assertEquals(TestUtil.atm(58_000).longValue(), block.getTotalAmountATM().longValue());
+        Assert.assertEquals(atm(3).longValue(), block.getTotalFeeATM().longValue());
+        Assert.assertEquals(atm(58_000).longValue(), block.getTotalAmountATM().longValue());
     }
 
 
@@ -115,7 +118,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(block1.getTransactions().size(), block2.getTransactions().size());
         Assert.assertEquals(4, block1.getTransactions().size());
         Assert.assertFalse(block1.getTotalAmountATM().equals(block2.getTotalAmountATM()));
-        Assert.assertFalse(block1.getTotalAmountATM() <= TestUtil.atm(2));
+        Assert.assertFalse(block1.getTotalAmountATM() <= atm(2));
         Assert.assertEquals(block1.getTotalAmountATM().longValue(), block1.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
         Assert.assertEquals(block2.getTotalAmountATM().longValue(), block2.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
     }
@@ -123,8 +126,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     public void testGetBlockWithPublicTransactions() throws IOException {
         Block block = client.getBlock(url, BLOCK_HEIGHT);
-        Assert.assertEquals(TestUtil.atm(58_000), block.getTotalAmountATM());
-        Assert.assertEquals(TestUtil.atm(58_000).longValue(), block.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
+        Assert.assertEquals(atm(58_000), block.getTotalAmountATM());
+        Assert.assertEquals(atm(58_000).longValue(), block.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum());
     }
 
     @Test
@@ -173,8 +176,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Transaction transaction = client.getTransaction(url, TRANSACTION_HASH);
         Assert.assertNotNull(transaction);
         Assert.assertEquals(TRANSACTION_HASH, transaction.getFullHash());
-        Assert.assertEquals(TestUtil.atm(1), transaction.getFeeATM());
-        Assert.assertEquals(TestUtil.atm(20_000), transaction.getAmountATM());
+        Assert.assertEquals(atm(1), transaction.getFeeATM());
+        Assert.assertEquals(atm(20_000), transaction.getAmountATM());
         Assert.assertFalse(transaction.isPrivate());
         Assert.assertEquals(0, transaction.getSubtype().intValue());
         Assert.assertEquals(0, transaction.getType().intValue());
@@ -184,7 +187,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetAccountLedger() throws Exception {
-        String accountRs = TestUtil.getRandomRS(accounts);
+        String accountRs = getRandomRS(accounts);
         List<LedgerEntry> accountLedger = client.getAccountLedger(url, accountRs, true);
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
@@ -200,8 +203,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateAccountLedger() throws Exception {
-        String accountRs = TestUtil.getRandomRS(accounts);
-        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true);
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 49);
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
             Transaction transaction = entry.getTransaction();
@@ -227,8 +230,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(privateTransaction1.getSenderRS(), PRIVATE_TRANSACTION_SENDER);
         Assert.assertEquals(privateTransaction1.getFullHash(), PRIVATE_TRANSACTION_HASH);
         Assert.assertEquals(privateTransaction1.getRecipientRS(), "APL-8BNS-LMPW-3KHL-3B7JM");
-        Assert.assertEquals(privateTransaction1.getAmountATM(), TestUtil.atm(2));
-        Assert.assertEquals(privateTransaction1.getFeeATM(), TestUtil.atm(1));
+        Assert.assertEquals(privateTransaction1.getAmountATM(), atm(2));
+        Assert.assertEquals(privateTransaction1.getFeeATM(), atm(1));
         Assert.assertTrue(privateTransaction1.isPrivate());
     }
 
@@ -362,9 +365,9 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     public void testGetUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, TestUtil.atm(i));
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i));
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, TestUtil.atm(i) * 2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i) * 2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
@@ -375,7 +378,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
             Transaction transaction = unconfirmedTransactions.get(i - 1);
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
-            Assert.assertEquals(TestUtil.atm(i), transaction.getAmountATM());
+            Assert.assertEquals(atm(i), transaction.getAmountATM());
             Assert.assertFalse(transaction.isPrivate());
         }
     }
@@ -383,9 +386,9 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     public void testGetPrivateUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, TestUtil.atm(i), NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i), NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, TestUtil.atm(i) * 2,
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i) * 2,
                     NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
@@ -398,10 +401,10 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
             Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
             Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
             if (i % 2 != 0) {
-                Assert.assertEquals(TestUtil.atm(i / 2 + 1), transaction.getAmountATM());
+                Assert.assertEquals(atm(i / 2 + 1), transaction.getAmountATM());
                 Assert.assertFalse(transaction.isPrivate());
             } else {
-                Assert.assertEquals(TestUtil.atm(i), transaction.getAmountATM());
+                Assert.assertEquals(atm(i), transaction.getAmountATM());
                 Assert.assertTrue(transaction.isPrivate());
             }
         }
@@ -409,12 +412,12 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetAccountLedgerEntry() throws Exception {
-        LedgerEntry ledgerEntry = client.getAccountLedgerEntry(url, LEDGER_ENTRY_ID, true);
-        Assert.assertEquals(AccountLedger.LedgerEvent.ORDINARY_PAYMENT, ledgerEntry.getEventType());
-        Assert.assertEquals(PRIVATE_TRANSACTION_SENDER_ID.toString(), ledgerEntry.getAccount());
-        Assert.assertEquals(TestUtil.atm(100_000).longValue(), ledgerEntry.getChange().longValue());
-        Assert.assertEquals(164L, ledgerEntry.getLedgerId().longValue());
-        Assert.assertEquals(TestData.MAIN_RS, ledgerEntry.getTransaction().getSenderRS());
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getAccountLedger(url, accountRs, true, 0, 500);
+        LedgerEntry expectedLedgerEntry = accountLedger.stream().filter(LedgerEntry::isPublic).findFirst().get();
+        LedgerEntry actualLedgerEntry = client.getAccountLedgerEntry(url, expectedLedgerEntry.getLedgerId(), true);
+        Assert.assertEquals(AccountLedger.LedgerEvent.ORDINARY_PAYMENT, actualLedgerEntry.getEventType());
+        Assert.assertEquals(expectedLedgerEntry, actualLedgerEntry);
     }
 
     @Test
@@ -425,13 +428,13 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateAccountLedgerEntry() throws Exception {
-        LedgerEntry ledgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_LEDGER_ENTRY_ID, true);
-        Assert.assertFalse(ledgerEntry.isNull());
-        Assert.assertEquals(PRIVATE_LEDGER_ENTRY_ID, ledgerEntry.getLedgerId());
-        Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, ledgerEntry.getEventType());
-        Assert.assertEquals(TestUtil.atm(-2), ledgerEntry.getChange());
-        Assert.assertEquals(12150L, ledgerEntry.getHeight().longValue());
-        Assert.assertEquals(9584301L, ledgerEntry.getTimestamp().longValue());
+        String accountRs = getRandomRS(accounts);
+        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 500);
+        LedgerEntry expectedPrivateLedgerEntry = accountLedger.stream().filter(LedgerEntry::isPrivate).findFirst().get();
+        LedgerEntry actualLedgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(accountRs), expectedPrivateLedgerEntry.getLedgerId(), true);
+        Assert.assertFalse(actualLedgerEntry.isNull());
+        Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, actualLedgerEntry.getEventType());
+        Assert.assertEquals(expectedPrivateLedgerEntry, actualLedgerEntry);
     }
 
     @Test
@@ -502,17 +505,16 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testSendUpdateTransaction() throws IOException {
-        String updateUrl = "http://apollocurrncy.com/download/linux/desktop-wallet/Apollo-1.10.11.jar";
-        String hash = "0987654321098765432109876543210909876543210987654321098765432109";
-        String signature = "1234567890123456789012345678901212345678901234567890123456789012";
-        Platform platform = Platform.WINDOWS;
+        //todo url requires encryption
+        String updateUrl = Convert.toHexString("http://93.175.202.255:8080/ApolloPackages/Updates/ApolloWallet-1.0.7-update.jar".getBytes());
+        String hash = "7999a5388cba90dfc0d955ec4c60bdbc874f4a72c289ba51fdec8c71fe2aa207";
+        Platform platform = Platform.LINUX;
         Architecture architecture = Architecture.AMD64;
-        Version version = Version.from("10000.0.0");
-        UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, signature, 5);
+        Version version = Version.from("1.0.7");
+        UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, 5);
         UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
-        expectedAttachment.setArchitecture(Architecture.AMD64);
+        expectedAttachment.setArchitecture(architecture);
         expectedAttachment.setHash(hash);
-        expectedAttachment.setSignature(signature);
         expectedAttachment.setPlatform(platform);
         expectedAttachment.setVersion(version);
         expectedAttachment.setUrl(updateUrl);
@@ -522,6 +524,14 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertNull(updateTransaction.getRecipientRS());
         Assert.assertEquals(100_000_000, updateTransaction.getFeeATM().intValue());
         Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
+    }
+
+    @Test
+    public void testGetAccountLedgerWithoutParameters() throws Exception {
+        List<LedgerEntry> accountLedger = client.getAccountLedger(url, "", false, 0, 4);
+        checkList(accountLedger);
+        Assert.assertEquals(5, accountLedger.size());
+        accountLedger.forEach(LedgerEntry::isPublic);
     }
 }
 

@@ -550,6 +550,38 @@ final class BlockchainImpl implements Blockchain {
             throw new RuntimeException(e.toString(), e);
         }
     }
+    @Override
+    public DbIterator<TransactionImpl> getTransactions(byte type, byte subtype, int from, int to) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
+        if (type >= 0) {
+            sqlQuery.append("AND type = ? ");
+            if (subtype >= 0) {
+                sqlQuery.append("AND subtype = ? ");
+            }
+        }
+        sqlQuery.append(DbUtils.limitsClause(from, to));
+        Connection con = null;
+        try {
+            con = Db.db.getConnection();
+            PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
+            int i = 0;
+            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
+            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            if (type >= 0) {
+                statement.setByte(++i, type);
+                if (subtype >= 0) {
+                    statement.setByte(++i, subtype);
+                }
+            }
+            DbUtils.setLimits(++i, statement, from, to);
+            System.out.println(sqlQuery.toString());
+            return getTransactions(con, statement);
+        }
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
     @Override
     public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt) {

@@ -36,6 +36,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+import test.crypto.Crypto;
 
 import java.io.IOException;
 import java.net.URI;
@@ -165,7 +166,7 @@ public class NodeClient {
         return getJson(uri, params);
     }
 
-    public List<dto.Transaction> getAccountTransactions(String url, String rsAddress, int from, int to, int type, int subtype) throws IOException {
+    public List<Transaction> getAccountTransactions(String url, String rsAddress, int from, int to, int type, int subtype) throws IOException {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getBlockchainTransactions");
@@ -183,18 +184,18 @@ public class NodeClient {
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
         try {
-            return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<dto.Transaction>>() {});
+            return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
         }
         catch (Throwable e) {
             return Collections.emptyList();
         }
     }
 
-    public List<dto.Transaction> getAccountTransactionsList(String url, String rsAddress) throws ParseException, IOException {
+    public List<Transaction> getAccountTransactionsList(String url, String rsAddress) throws ParseException, IOException {
         String accountTransactions = getAccountTransactions(url, rsAddress);
         JsonNode root = MAPPER.readTree(accountTransactions);
         JsonNode transactionsArray = root.get("transactions");
-        List<dto.Transaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<dto.Transaction>>() {});
+        List<Transaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
         return transactionsList;
     }
 
@@ -234,9 +235,9 @@ public class NodeClient {
         URI uri = createURI(url);
         postJson(uri, params, "");
     }
-    public List<dto.Transaction> getBlockTransactionsList(String url, Long height) throws ParseException, IOException {
+    public List<Transaction> getBlockTransactionsList(String url, Long height) throws ParseException, IOException {
         String blockTransactions = getBlockTransactions(url, height);
-        List<dto.Transaction> transactionsList = MAPPER.readValue(blockTransactions, new TypeReference<List<dto.Transaction>>() {});
+        List<Transaction> transactionsList = MAPPER.readValue(blockTransactions, new TypeReference<List<Transaction>>() {});
         return transactionsList;
     }
 
@@ -251,10 +252,10 @@ public class NodeClient {
         return postJson(createURI(url), parameters, "");
     }
 
-    public dto.Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
         String json = sendMoney(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
-        return MAPPER.readValue(transactionJSON, dto.Transaction.class);
+        return MAPPER.readValue(transactionJSON, Transaction.class);
     }
 
     private String sendMoneyPrivate(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
@@ -268,25 +269,25 @@ public class NodeClient {
         return postJson(createURI(url), parameters, "");
     }
 
-    public dto.Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+    public Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
         String json = sendMoneyPrivate(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
-        return MAPPER.readValue(transactionJSON, dto.Transaction.class);
+        return MAPPER.readValue(transactionJSON, Transaction.class);
     }
 
-    public dto.Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) throws IOException, ParseException {
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) throws IOException, ParseException {
         return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
 
-    public dto.Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM) throws IOException, ParseException {
+    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM) throws IOException, ParseException {
         return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, DEFAULT_FEE);
     }
 
-    public List<dto.Block> getBlocksList(String url, boolean includeTransactions, Long timestamp) throws IOException {
+    public List<Block> getBlocksList(String url, boolean includeTransactions, Long timestamp) throws IOException {
         String json = getBlocks(url, 0, 4, includeTransactions, timestamp);
         JsonNode root = MAPPER.readTree(json);
         JsonNode blocksArray = root.get("blocks");
-        return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<dto.Block>>() {});
+        return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {});
     }
 
     public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM) {
@@ -301,22 +302,22 @@ public class NodeClient {
         return sendMoney(url, secretPhrase, recipient, DEFAULT_AMOUNT);
     }
 
-    public dto.Transaction getTransaction(String url, String fullHash) throws IOException {
+    public Transaction getTransaction(String url, String fullHash) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getTransaction");
         parameters.put("fullHash", fullHash);
         String json = getJson(createURI(url), parameters);
-        return MAPPER.readValue(json, dto.Transaction.class);
+        return MAPPER.readValue(json, Transaction.class);
     }
 
-    public List<dto.Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) throws Exception {
+    public List<Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) throws Exception {
         String json = getPrivateBlockchainTransactionsJson(url, secretPhrase, height, firstIndex, lastIndex);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
-        return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<dto.Transaction>>() {});
+        return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
     }
 
-    public List<dto.Transaction> getEncryptedPrivateBlockchainTransactionsList(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) throws Exception {
+    public List<Transaction> getEncryptedPrivateBlockchainTransactionsList(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) throws Exception {
         String json = getEncryptedPrivateBlockchainTransactionsJson(url, height, firstIndex, lastIndex, null, publicKey);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
@@ -325,17 +326,17 @@ public class NodeClient {
             throw new RuntimeException("Cannot find transactions or serverPublic key in json: " + root.toString());
         }
         byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), Convert.parseHexString(serverPublicKey.textValue()));
-        List<dto.Transaction> transactions = new ArrayList<>();
+        List<Transaction> transactions = new ArrayList<>();
         for (final JsonNode transactionJson: transactionsArray) {
             if (transactionJson.get("encryptedTransaction") != null) {
                 JsonNode encryptedTransaction = transactionJson.get("encryptedTransaction");
                 byte[] encryptedBytes = Convert.parseHexString(encryptedTransaction.textValue());
                 byte[] decryptedData = Crypto.aesDecrypt(encryptedBytes, sharedKey);
                 String decryptedJson = Convert.toString(decryptedData);
-                dto.Transaction transaction = MAPPER.readValue(decryptedJson, dto.Transaction.class);
+                Transaction transaction = MAPPER.readValue(decryptedJson, Transaction.class);
                 transactions.add(transaction);
             } else {
-                transactions.add(MAPPER.readValue(transactionJson.toString(), dto.Transaction.class));
+                transactions.add(MAPPER.readValue(transactionJson.toString(), Transaction.class));
             }
         }
         return transactions;
@@ -397,7 +398,7 @@ public class NodeClient {
         return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
     }
 
-    public List<dto.Transaction> getUnconfirmedTransactions(String url, String rsAddress, int from, int to) throws
+    public List<Transaction> getUnconfirmedTransactions(String url, String rsAddress, int from, int to) throws
             Exception {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getUnconfirmedTransactions");
@@ -407,9 +408,9 @@ public class NodeClient {
         String json = getJson(createURI(url), parameters);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("unconfirmedTransactions");
-        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<dto.Transaction>>() {});
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<Transaction>>() {});
     }
-    public List<dto.Transaction> getPrivateUnconfirmedTransactions(String url, String secretPhrase, int from, int to) throws
+    public List<Transaction> getPrivateUnconfirmedTransactions(String url, String secretPhrase, int from, int to) throws
             Exception {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getPrivateUnconfirmedTransactions");
@@ -419,21 +420,23 @@ public class NodeClient {
         String json = getJson(createURI(url), parameters);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("unconfirmedTransactions");
-        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<dto.Transaction>>() {});
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<Transaction>>() {});
     }
 
-    public List<LedgerEntry> getPrivateAccountLedger(String url, String secretPhrase, boolean includeTransactions) throws Exception {
+    public List<LedgerEntry> getPrivateAccountLedger(String url, String secretPhrase, boolean includeTransactions, int from, int to) throws Exception {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getPrivateAccountLedger");
         parameters.put("secretPhrase", secretPhrase);
         parameters.put("includeTransactions", String.valueOf(includeTransactions));
+        parameters.put("firstIndex", String.valueOf(from));
+        parameters.put("lastIndex", String.valueOf(to));
         String json = getJson(createURI(url), parameters);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("entries");
         return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
     }
 
-    public dto.Transaction getPrivateTransaction(String url, String secretPhrase, String fullHash, String transactionId) throws IOException {
+    public Transaction getPrivateTransaction(String url, String secretPhrase, String fullHash, String transactionId) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getPrivateTransaction");
         parameters.put("secretPhrase", secretPhrase);
@@ -448,7 +451,7 @@ public class NodeClient {
         return MAPPER.readValue(json, Transaction.class);
     }
 
-    public dto.Block getBlock(String url, Long height) throws IOException {
+    public Block getBlock(String url, Long height) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getBlock");
         params.put("height", height.toString());
@@ -514,7 +517,7 @@ public class NodeClient {
         return MAPPER.readValue(json, NextGenerators.class);
     }
 
-    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, String updateUrl, Version version, Architecture architecture, Platform platform, String hash, String signature, int deadline) throws IOException {
+    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, String updateUrl, Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendUpdateTransaction");
         parameters.put("secretPhrase", secretPhrase);
@@ -523,7 +526,6 @@ public class NodeClient {
         parameters.put("version", version.toString());
         parameters.put("architecture", architecture.toString());
         parameters.put("platform", platform.toString());
-        parameters.put("signature", signature);
         parameters.put("hash", hash);
         parameters.put("url", updateUrl);
         parameters.put("level", String.valueOf(level));
