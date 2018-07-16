@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.http;
+package util;
 
 import org.junit.Assert;
 import org.junit.Test;

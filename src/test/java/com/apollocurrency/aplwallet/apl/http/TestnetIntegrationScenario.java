@@ -16,11 +16,12 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
-import com.apollocurrency.aplwallet.apl.TestUtil;
+import util.TestUtil;
 import dto.ForgingDetails;
 import dto.Transaction;
 import org.junit.*;
 import org.slf4j.Logger;
+import util.WalletRunner;
 
 import java.io.IOException;
 import java.nio.file.Files;

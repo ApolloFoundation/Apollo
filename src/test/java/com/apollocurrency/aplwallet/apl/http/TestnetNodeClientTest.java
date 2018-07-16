@@ -16,6 +16,7 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.*;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -27,7 +28,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import test.crypto.Crypto;
+import util.TestUtil;
+import util.WalletRunner;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.TestUtil.atm;
-import static com.apollocurrency.aplwallet.apl.TestUtil.getRandomRS;
+import static util.TestUtil.atm;
+import static util.TestUtil.getRandomRS;
 
 /**
  * Test scenarios on testnet for {@link NodeClient}
@@ -100,7 +102,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     public void testGetPeersList() throws Exception {
         List<Peer> peersList = client.getPeersList(url);
         checkList(peersList);
-        Assert.assertEquals(5, peersList.size());
+        Assert.assertTrue(peersList.size() > Math.ceil(0.51 * runner.getUrls().size()));
     }
 
     @Test

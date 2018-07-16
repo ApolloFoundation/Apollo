@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl;/*
+package util;/*
  * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution

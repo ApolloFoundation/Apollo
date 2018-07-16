@@ -1,17 +1,18 @@
-package apl.http;
+package com.apollocurrency.aplwallet.apl.http;
 
-import apl.Apl;
-import apl.AplException;
-import apl.Transaction;
-import apl.TransactionType;
-import apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static apl.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+
 
 public class GetAllTransactions extends APIServlet.APIRequestHandler{
 

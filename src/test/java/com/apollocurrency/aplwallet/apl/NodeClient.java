@@ -21,8 +21,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.*;
 import dto.Block;
+import dto.*;
 import dto.Transaction;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -36,7 +36,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-import test.crypto.Crypto;
+import util.TestUtil;
 
 import java.io.IOException;
 import java.net.URI;
@@ -44,8 +44,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.TestUtil.createURI;
 import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.createURI;
 
 public class NodeClient {
     public static final Long DEFAULT_FEE = 100_000_000L; //1 APL

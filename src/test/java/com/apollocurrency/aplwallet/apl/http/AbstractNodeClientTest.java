@@ -15,7 +15,7 @@ package com.apollocurrency.aplwallet.apl.http;/*
 
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
-import com.apollocurrency.aplwallet.apl.TestUtil;
+import util.TestUtil;
 import dto.Transaction;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.apollocurrency.aplwallet.apl.NodeClient.DEFAULT_AMOUNT;
-import static com.apollocurrency.aplwallet.apl.TestUtil.getRandomRS;
-import static com.apollocurrency.aplwallet.apl.TestUtil.getRandomRecipientRS;
+import static util.TestUtil.getRandomRS;
+import static util.TestUtil.getRandomRecipientRS;
 
 public abstract class AbstractNodeClientTest {
     protected static final Pattern IP_PATTERN = Pattern.compile(

@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.TransactionType;
 
 import java.util.Objects;
 
-import static com.apollocurrency.aplwallet.apl.TestUtil.fromATM;
+import static util.TestUtil.fromATM;
 
 /**
  * Simple DTO object for {@link com.apollocurrency.aplwallet.apl.TransactionImpl}
