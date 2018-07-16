@@ -20,7 +20,6 @@ import dto.Transaction;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.Assert;
-import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +43,6 @@ public abstract class AbstractNodeClientTest {
         accounts.putAll(TestUtil.loadKeys(fileName));
     }
 
-    @Test
     public void testPost() throws Exception {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getAccountId");
@@ -58,7 +56,6 @@ public abstract class AbstractNodeClientTest {
         Assert.assertEquals(randomRS, result.get("accountRS"));
     }
 
-    @Test
     public void testGetAccountTransactionsList() throws Exception {
         String randomRS = getRandomRS(accounts);
         List<Transaction> accountTransactionsList = client.getAccountTransactionsList(url, randomRS);
@@ -73,7 +70,6 @@ public abstract class AbstractNodeClientTest {
         });
     }
 
-    @Test
     public void testSendMoneyTransaction() throws Exception {
         String senderRS = getRandomRS(accounts);
         String recipientRS = getRandomRecipientRS(accounts, senderRS);
@@ -88,7 +84,6 @@ public abstract class AbstractNodeClientTest {
         Assert.assertEquals(100000000L, transaction.getFeeATM().longValue());
     }
 
-    @Test
     public void testGetPrivateBlockchainTransactions() throws Exception {
         String account = getRandomRS(accounts);
         List<Transaction> allTransactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(account), null, null, null);
@@ -102,7 +97,6 @@ public abstract class AbstractNodeClientTest {
         });
     }
 
-    @Test
     public void testSendMoneyPrivate() throws Exception {
         String sender = getRandomRS(accounts);
         String secretPhrase = accounts.get(sender);
@@ -125,25 +119,19 @@ public abstract class AbstractNodeClientTest {
         });
     }
 
-    @Test
     public abstract void testGet() throws Exception;
 
-    @Test
     public abstract void testGetBlockchainHeight() throws Exception;
 
-    @Test
     public abstract void testGetPeersList() throws Exception;
 
-    @Test
     public abstract void testGetBlocksList() throws Exception;
 
-    @Test
     public abstract void testGetBlockTransactionsList() throws Exception;
 
-    @Test
     public abstract void testGetPeersCount() throws Exception;
-    @Test
+
     public abstract void testGetPeersIPs() throws Exception;
-    @Test
+
     public abstract void testGetTransaction() throws Exception;
 }

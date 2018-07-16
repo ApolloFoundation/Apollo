@@ -14,7 +14,7 @@ package com.apollocurrency.aplwallet.apl;/*
  */
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.http.NodeClientTestMainnet;
+import com.apollocurrency.aplwallet.apl.http.MainnetNodeClientTest;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -50,7 +50,7 @@ public class NodeClient {
     public static final Long DEFAULT_FEE = 100_000_000L; //1 APL
     public static final Long DEFAULT_AMOUNT = 100_000_000L; //1 APL
     public static final Long DEFAULT_DEADLINE = 60L; //1 hour
-    private static final Logger LOG = getLogger(NodeClientTestMainnet.class);
+    private static final Logger LOG = getLogger(MainnetNodeClientTest.class);
     private static final int REQUEST_TIMEOUT = 15;
     private static final HttpClient CLIENT = new HttpClient(new SslContextFactory());
     private static final ObjectMapper MAPPER = TestUtil.getMAPPER();

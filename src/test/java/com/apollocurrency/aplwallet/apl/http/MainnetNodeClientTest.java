@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.http;/*
+/*
  * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
@@ -13,6 +13,7 @@ package com.apollocurrency.aplwallet.apl.http;/*
  *
  */
 
+package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
@@ -33,11 +34,11 @@ import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 /**
  * Test scenarios on mainnet for {@link NodeClient}
  */
-public class NodeClientTestMainnet extends AbstractNodeClientTest {
+public class MainnetNodeClientTest extends AbstractNodeClientTest {
     private static final String TRANSACTION_HASH = "5e359e83f4591433bd1e6b59b06ceecd0a4731ea8b50bc76df2a9dc6c16c5f3a";
     private static WalletRunner runner = new WalletRunner(false);
 
-    public NodeClientTestMainnet() {
+    public MainnetNodeClientTest() {
         super(TestData.MAIN_LOCALHOST, TestData.MAIN_FILE);
     }
 

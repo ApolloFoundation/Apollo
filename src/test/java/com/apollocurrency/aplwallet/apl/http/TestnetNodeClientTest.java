@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.http;/*
+/*
  * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
@@ -12,6 +12,8 @@ package com.apollocurrency.aplwallet.apl.http;/*
  * Removal or modification of this copyright notice is prohibited.
  *
  */
+
+package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -36,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test scenarios on testnet for {@link NodeClient}
  */
-public class NodeClientTestTestnet extends AbstractNodeClientTest {
+public class TestnetNodeClientTest extends AbstractNodeClientTest {
     //transaction hash from 7446 block 20_000 APL to RS4
     public static final String TRANSACTION_HASH = "0619d7f4e0f8d2dab76f28e320c5ca819b2a08dc2294e53151bf14d318d5cefa";
     public static final String PRIVATE_TRANSACTION_HASH = "6c55253438130d20e70834ed67d7fcfc11c79528d1cdfbff3d6398bf67357fad";
@@ -50,7 +52,7 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
     public static final Long LEDGER_ENTRY_ID = 164L;
     private static WalletRunner runner = new WalletRunner();
 
-    public NodeClientTestTestnet() {
+    public TestnetNodeClientTest() {
         super(TestData.TEST_LOCALHOST, TestData.TEST_FILE);
     }
 

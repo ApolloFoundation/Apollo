@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Apl;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -31,9 +30,12 @@ public class WalletRunner {
     private Properties defaultProperties;
     private boolean isTestnet;
     private final List<String> urls;
+    private TestClassLoader loader;
+    private Class mainClass;
 
     public WalletRunner(boolean isTestnet) {
         this.isTestnet = isTestnet;
+        this.loader = new TestClassLoader();
         this.standartProperties = readProperties(PROPERTIES_PATH);
         this.defaultProperties = readProperties(DEFAULT_PROPERTIES_PATH);
         this.urls = Collections.unmodifiableList(loadUrls());
@@ -64,7 +66,7 @@ public class WalletRunner {
         this(true);
     }
 
-    public void run() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void run() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
         Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
         method.setAccessible(true);
         method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
@@ -77,7 +79,13 @@ public class WalletRunner {
             aplProperties.setProperty("apl.isTestnet", "true");
             writeProperties(aplProperties, PROPERTIES_PATH);
         }
-        Apl.main(null);
+
+        String[] parameters ={""};
+        mainClass = loader.loadClass("com.apollocurrency.aplwallet.apl.Apl");
+        Object[] param = {parameters};
+        Method main = mainClass.getMethod("main", parameters.getClass());
+        main.invoke(null, param);
+
         if (isTestnet) {
             Path changedPropertiesPath = Paths.get(PROPERTIES_PATH).toAbsolutePath();
             InputStream inputStream = Files.newInputStream(propertiesFilePath);
@@ -93,12 +101,12 @@ public class WalletRunner {
         }
     }
 
-    public void shutdown() throws IOException {
+    public void shutdown() {
         try {
-            Apl.shutdown();
+            mainClass.getMethod("shutdown").invoke(null);
         }
         catch (Throwable e) {
-            LOG.error("Shutdown error", e);
+            LOG.error("Shutdown error! " + e.getLocalizedMessage());
         }
     }
 

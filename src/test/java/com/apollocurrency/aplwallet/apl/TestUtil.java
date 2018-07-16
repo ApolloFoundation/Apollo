@@ -14,21 +14,24 @@ package com.apollocurrency.aplwallet.apl;/*
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class TestUtil {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
+    private static final Logger LOG = getLogger(TestUtil.class);
+
     static {
         MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -63,8 +66,8 @@ public class TestUtil {
             keys.load(new BufferedReader(new FileReader(new File(fileName))));
             keys.forEach((rs, pk) -> accounts.put((String) rs, (String) pk));
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
+        catch (Exception e) {
+            LOG.error("Cannot load keys!");
         }
         return accounts;
     }
