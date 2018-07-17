@@ -63,7 +63,7 @@ if exist addons\classes (
 )
 echo Creating directory 'addons\classes\'
 md addons\classes\
-dir /S src\java\*.java /B > sources.tmp
+dir /S src\*.java /B > sources.tmp
 echo Compiling main sources... 'src\java\*'
 "%javaDir%javac.exe" -encoding utf8 -sourcepath %SP% -classpath %CP% -d classes\ @sources.tmp && ( echo Main Apl class files compiled successfully ) || ( goto error )
 del /Q /F sources.tmp

@@ -3,9 +3,10 @@ classes
 classes*
 classes/*.*
 .idea/
-addons/
+addons/classes
 apl_db/
 classes/
+target/
 .DS_Store
 sources.tmp
 Apollo.jar
