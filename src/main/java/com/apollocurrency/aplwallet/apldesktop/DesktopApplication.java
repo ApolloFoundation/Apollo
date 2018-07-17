@@ -180,12 +180,6 @@ public class DesktopApplication extends Application {
         }
 
         public void startAndShow() {
-            /**
-             #status-text {
-             -fx-text-fill: white;
-             -fx-font-size: 15;
-             }
-             */
             screenStage.setTitle("Apollo wallet");
             AnchorPane pane = new AnchorPane();
             try {
