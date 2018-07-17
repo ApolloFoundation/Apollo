@@ -15,9 +15,9 @@
      *
      */
 
-    package apl.http;
+    package com.apollocurrency.aplwallet.apl.http;
 
-    import apl.updater.UpdaterCore;
+    import com.apollocurrency.aplwallet.apl.updater.UpdaterCore;
     import org.json.simple.JSONStreamAware;
 
     import javax.servlet.http.HttpServletRequest;
