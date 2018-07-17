@@ -16,6 +16,7 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
 import java.io.IOException;
@@ -68,7 +69,7 @@ public class PlatformDependentUpdater {
             }
             try {
                 LOG.debug("Starting platform dependent script");
-                Runtime.getRuntime().exec(String.format("%s %s", runTool, scriptPath.toString()).trim());
+                Runtime.getRuntime().exec(String.format("%s %s %s %s %s", runTool, scriptPath.toString(), Paths.get("").toAbsolutePath().toString(), workingDirectory.toAbsolutePath().toString(), RuntimeEnvironment.isDesktopApplicationEnabled()).trim());
                 LOG.debug("Platform dependent script was started");
             }
             catch (IOException e) {
