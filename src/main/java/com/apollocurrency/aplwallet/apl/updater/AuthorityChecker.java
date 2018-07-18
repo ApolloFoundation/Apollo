@@ -15,11 +15,11 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -32,8 +32,11 @@ import java.util.jar.JarFile;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificate;
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificates;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class AuthorityChecker {
+        private static final Logger LOG = getLogger(AuthorityChecker.class);
+
     private Downloader downloader = Downloader.getInstance();
 
     private static class AuthorityCheckerHolder {
@@ -47,7 +50,14 @@ public class AuthorityChecker {
     }
 
     public boolean verifyCertificates(String certificateDirectory) {
-        Path directoryPath = Paths.get(certificateDirectory);
+        Path directoryPath;
+        try {
+            directoryPath = RSAUtil.loadResource(certificateDirectory).toPath();
+        }
+        catch (URISyntaxException e) {
+            LOG.error("Cannot find directory " + certificateDirectory);
+            return false;
+        }
         try {
             Set<Certificate> ordinaryCertificates = readCertificates(directoryPath, UpdaterConstants.CERTIFICATE_SUFFIX, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX);
             Certificate intermediateCertificate = readCertificate(directoryPath.resolve(UpdaterConstants.INTERMEDIATE_CERTIFICATE_NAME));
@@ -60,10 +70,10 @@ public class AuthorityChecker {
             return true;
         }
         catch (CertificateException |IOException e) {
-            Logger.logErrorMessage("Unable to read or load certificate", e);
+            LOG.error("Unable to read or load certificate", e);
         }
         catch (NoSuchAlgorithmException | SignatureException | NoSuchProviderException | InvalidKeyException e) {
-            Logger.logErrorMessage("Unable to verify certificate signature", e);
+            LOG.error("Unable to verify certificate signature", e);
         }
         return false;
     }

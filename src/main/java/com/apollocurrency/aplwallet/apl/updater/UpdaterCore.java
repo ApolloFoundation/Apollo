@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
+import javax.crypto.Cipher;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -192,9 +193,10 @@ public class UpdaterCore {
         Set<CertificatePair> certificatePairs;
         try {
             certificatePairs = UpdaterUtil.buildCertificatePairs(UpdaterConstants.CERTIFICATE_DIRECTORY);
+            Cipher cipher = Cipher.getInstance("RSA");
             for (CertificatePair pair : certificatePairs) {
                 String urlString = new String(RSAUtil.doubleDecrypt(pair.getFirstCertificate().getPublicKey(), pair.getSecondCertificate().getPublicKey
-                        (), encryptedUrl), "UTF-8");
+                        (), encryptedUrl));
                 if (urlString.matches(String.format(URL_TEMPLATE, updateVersion.toString()))) {
                     return urlString;
                 }

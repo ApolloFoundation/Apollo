@@ -15,6 +15,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,27 +27,32 @@ import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.*;
 public class RSAUtilTest {
     @Test
     public void testEncryptAndDecrypt() throws Exception {
-        PublicKey pubKey = getPublicKeyFromCertificate("1_self_signed.cert");
-        PrivateKey privateKey = getPrivateKey("1_private.key");
+        PublicKey pubKey = getPublicKeyFromCertificate("certs/1_1.crt");
+        PrivateKey privateKey = getPrivateKey("certs/1_1.key");
 
         // encrypt the message
         String expectedMessage = "This is a secret message";
         byte[] encrypted = encrypt(privateKey, expectedMessage.getBytes());
         System.out.println("Encrypted message in hex:");
-
+        System.out.println(Convert.toHexString(encrypted));
         // decrypt the message
-        System.out.println("Decrypted message:");
+
         byte[] secret = decrypt(pubKey, encrypted);
-        Assert.assertEquals(expectedMessage, new String(secret));
+        String actual = new String(secret);
+
+        System.out.println("Decrypted message:");
+        System.out.println(actual);
+
+        Assert.assertEquals(expectedMessage, actual);
     }
 
     @Test
     public void doubleEncryptAndDecrypt() throws Exception {
-        PublicKey pubKey1 = getPublicKeyFromCertificate("1_self_signed.cert");
-        PrivateKey privateKey1 = getPrivateKey("1_private.key");
+        PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
+        PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
 
-        PublicKey pubKey2 = getPublicKeyFromCertificate("2_self_signed.cert");
-        PrivateKey privateKey2 = getPrivateKey("2_private.key");
+        PublicKey pubKey2 = getPublicKeyFromCertificate("certs/2_2.crt");
+        PrivateKey privateKey2 = getPrivateKey("certs/2_2.key");
 
         String expectedMessage = "This is a secret message!";
 
