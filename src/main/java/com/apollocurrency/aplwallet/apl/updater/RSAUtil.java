@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -18,6 +19,35 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 
 public class RSAUtil {
+
+    public static DoubleByteArrayTuple doubleEncrypt(PrivateKey privateKey1, PrivateKey privateKey2, byte[] message) throws Exception {
+        byte[] firstEncryptedBytes = encrypt(privateKey1, message);
+        int firstPartLength = firstEncryptedBytes.length - 12;
+        byte[] firstEncPart1 = new byte[firstPartLength];
+        byte[] firstEncPart2 = new byte[12];
+
+        System.arraycopy(firstEncryptedBytes, 0, firstEncPart1, 0, firstPartLength);
+        System.arraycopy(firstEncryptedBytes, firstPartLength, firstEncPart2, 0, 12);
+
+        byte[] secEncPart1 = encrypt(privateKey2, firstEncPart1);
+        byte[] secEncPart2 = encrypt(privateKey2, firstEncPart2);
+
+        return new DoubleByteArrayTuple(secEncPart1, secEncPart2);
+    }
+
+    public static byte[] doubleDecrypt(PublicKey publicKey1, PublicKey publicKey2, DoubleByteArrayTuple encryptedBytes) throws Exception {
+        byte[] firstDecryptedPart1 = decrypt(publicKey1, encryptedBytes.getFirst());
+        byte[] firstDecryptedPart2 = decrypt(publicKey1, encryptedBytes.getSecond());
+
+        byte[] result = new byte[firstDecryptedPart1.length + firstDecryptedPart2.length];
+
+        System.arraycopy(firstDecryptedPart1, 0, result, 0, firstDecryptedPart1.length);
+        System.arraycopy(firstDecryptedPart2, 0, result, firstDecryptedPart1.length, firstDecryptedPart2.length);
+
+        return decrypt(publicKey2, result);
+    }
+
+
 
     public static byte[] encrypt(PrivateKey privateKey, byte[] message) throws Exception {
         Cipher cipher = Cipher.getInstance("RSA");
@@ -32,15 +62,21 @@ public class RSAUtil {
         return cipher.doFinal(encrypted);
     }
 
-    public static PrivateKey getPrivateKey(String filename) throws IOException, GeneralSecurityException, URISyntaxException {
-        return getPrivateKeyFromPath(filename);
+    public static byte[] encrypt(String privateKeyPath, byte[] message) throws Exception {
+        PrivateKey privateKey = getPrivateKey(privateKeyPath);
+        return encrypt(privateKey, message);
     }
 
-    public static PrivateKey getPrivateKeyFromPath(String path) throws IOException, GeneralSecurityException, URISyntaxException {
+    public static byte[] decrypt(String certificatePath, byte [] encrypted) throws Exception {
+        PublicKey publicKey = getPublicKeyFromCertificate(certificatePath);
+        return decrypt(publicKey, encrypted);
+    }
+
+    public static PrivateKey getPrivateKey(String path) throws IOException, GeneralSecurityException, URISyntaxException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
         PEMParser pem = new PEMParser(new FileReader(loadResource(path)));
-        PrivateKeyInfo bcKeyPair = (PrivateKeyInfo ) pem.readObject();
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bcKeyPair.getEncoded());
+        PrivateKeyInfo pkInfo = (PrivateKeyInfo ) pem.readObject();
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(pkInfo.getEncoded());
 
         return kf.generatePrivate(spec);
     }
@@ -52,6 +88,16 @@ public class RSAUtil {
     }
 
     public static File loadResource(String fileName) throws URISyntaxException {
-        return new File(RSAUtil.class.getClassLoader().getResource(fileName).toURI());
+        try {
+            return new File(RSAUtil.class.getClassLoader().getResource(fileName).toURI());
+        }
+        catch (NullPointerException e) {
+            File file = Paths.get(fileName).toFile();
+            if (file.exists()) {
+                return file;
+            } else {
+                throw new RuntimeException("Cannot load resource " + fileName, e);
+            }
+        }
     }
 }
