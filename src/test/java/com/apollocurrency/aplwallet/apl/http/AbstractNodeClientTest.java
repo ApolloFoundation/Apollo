@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.http;/*
+/*
  * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
@@ -13,6 +13,7 @@ package com.apollocurrency.aplwallet.apl.http;/*
  *
  */
 
+package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import util.TestUtil;
