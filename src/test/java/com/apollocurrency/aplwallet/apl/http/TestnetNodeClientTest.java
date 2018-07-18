@@ -18,16 +18,14 @@ package com.apollocurrency.aplwallet.apl.http;
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.Block;
 import dto.*;
 import dto.Transaction;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import util.TestUtil;
 import util.WalletRunner;
 
@@ -506,9 +504,15 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
+    @Ignore
     public void testSendUpdateTransaction() throws IOException {
+        if (true) {
+            return;
+        }
         //todo url requires encryption
-        String updateUrl = Convert.toHexString("http://93.175.202.255:8080/ApolloPackages/Updates/ApolloWallet-1.0.7-update.jar".getBytes());
+        DoubleByteArrayTuple updateUrl = new DoubleByteArrayTuple(
+                "http://93.175.202.255:8080/ApolloPackages/Updates/ApolloWallet-1.0.7-update.jar".getBytes(), new byte[0]);
+
         String hash = "7999a5388cba90dfc0d955ec4c60bdbc874f4a72c289ba51fdec8c71fe2aa207";
         Platform platform = Platform.LINUX;
         Architecture architecture = Architecture.AMD64;

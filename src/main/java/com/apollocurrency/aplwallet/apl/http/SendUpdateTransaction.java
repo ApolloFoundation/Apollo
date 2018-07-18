@@ -16,6 +16,7 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONStreamAware;
@@ -33,23 +34,30 @@ public final class SendUpdateTransaction extends CreateTransaction {
     }
 
     private SendUpdateTransaction() {
-        super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "signature", "hash", "version", "url", "level");
+        super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "signature", "hash", "version", "urlFirstPart",
+                "urlSecondPart",
+                "level");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Architecture architecture = Architecture.valueOf(Convert.nullToEmpty(req.getParameter("architecture")).trim());
         Platform platform = Platform.valueOf(Convert.nullToEmpty(req.getParameter("platform")).trim());
-        byte[] url = ParameterParser.getBytes(req, "url", true);
+        byte[] urlFirstPart = ParameterParser.getBytes(req, "urlFirstPart", true);
+        byte[] urlSecondPart = ParameterParser.getBytes(req, "urlSecondPart", true);
         Version version = Version.from(Convert.nullToEmpty(req.getParameter("version")).trim());
         byte[] hash = ParameterParser.getBytes(req, "hash", true);
         byte level = ParameterParser.getByte(req, "level", (byte)0, Byte.MAX_VALUE, true);
-        if (url.length > Constants.MAX_UPDATE_URL_LENGTH) {
-            return JSONResponses.INCORRECT_UPDATE_URL_LENGTH;
+        if (urlFirstPart.length != Constants.UPDATE_URL_PART_LENGTH) {
+            return JSONResponses.INCORRECT_UPDATE_URL_FIRST_PART_LENGTH;
+        }
+        if (urlSecondPart.length != Constants.UPDATE_URL_PART_LENGTH) {
+            return JSONResponses.INCORRECT_UPDATE_URL_SECOND_PART_LENGTH;
         }
         if (hash.length > Constants.MAX_UPDATE_HASH_LENGTH) {
             return JSONResponses.INCORRECT_UPDATE_HASH_LENGTH;
         }
+        DoubleByteArrayTuple url = new DoubleByteArrayTuple(urlFirstPart, urlSecondPart);
         Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = Attachment.UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
         return createTransaction(req, account, attachment);

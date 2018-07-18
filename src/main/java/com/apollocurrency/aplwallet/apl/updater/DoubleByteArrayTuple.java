@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.util.Convert;
+
 import java.util.Arrays;
 
 public class DoubleByteArrayTuple {
@@ -9,6 +11,10 @@ public class DoubleByteArrayTuple {
     public DoubleByteArrayTuple(byte[] first, byte[] second) {
         this.first = first;
         this.second = second;
+    }
+    public DoubleByteArrayTuple(String firstUrlPart, String secondUrlPart) {
+        this.first = Convert.parseHexString(firstUrlPart);
+        this.second = Convert.parseHexString(secondUrlPart);
     }
 
     public byte[] getFirst() {

@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl;/*
+/*
  * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
@@ -13,9 +13,12 @@ package com.apollocurrency.aplwallet.apl;/*
  *
  */
 
+package com.apollocurrency.aplwallet.apl;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.http.MainnetNodeClientTest;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -517,7 +520,7 @@ public class NodeClient {
         return MAPPER.readValue(json, NextGenerators.class);
     }
 
-    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, String updateUrl, Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException {
+    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, DoubleByteArrayTuple updateUrl, Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendUpdateTransaction");
         parameters.put("secretPhrase", secretPhrase);
@@ -527,7 +530,8 @@ public class NodeClient {
         parameters.put("architecture", architecture.toString());
         parameters.put("platform", platform.toString());
         parameters.put("hash", hash);
-        parameters.put("url", updateUrl);
+        parameters.put("urlFirstPart", Convert.toHexString(updateUrl.getFirst()));
+        parameters.put("urlSecondPart", Convert.toHexString(updateUrl.getSecond()));
         parameters.put("level", String.valueOf(level));
         String json = postJson(createURI(url), parameters, "");
         JsonNode root = MAPPER.readTree(json);

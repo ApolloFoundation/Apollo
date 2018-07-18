@@ -19,15 +19,10 @@ import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.List;
@@ -193,17 +188,13 @@ public class UpdaterCore {
         return false;
     }
 
-    private String tryDecryptUrl(byte[] encryptedUrl, Version updateVersion) {
+    private String tryDecryptUrl(DoubleByteArrayTuple encryptedUrl, Version updateVersion) {
         Set<CertificatePair> certificatePairs;
         try {
             certificatePairs = UpdaterUtil.buildCertificatePairs(UpdaterConstants.CERTIFICATE_DIRECTORY);
-            Cipher cipher = Cipher.getInstance("RSA");
             for (CertificatePair pair : certificatePairs) {
-                cipher.init(Cipher.DECRYPT_MODE, pair.getFirstCertificate().getPublicKey());
-                byte[] firstDecryptedUrlBytes = cipher.doFinal(encryptedUrl);
-                cipher.init(Cipher.DECRYPT_MODE, pair.getSecondCertificate().getPublicKey());
-                byte[] secondDecryptedUrlBytes = cipher.doFinal(firstDecryptedUrlBytes);
-                String urlString = new String(secondDecryptedUrlBytes, "UTF-8");
+                String urlString = new String(RSAUtil.doubleDecrypt(pair.getFirstCertificate().getPublicKey(), pair.getSecondCertificate().getPublicKey
+                        (), encryptedUrl), "UTF-8");
                 if (urlString.matches(String.format(URL_TEMPLATE, updateVersion.toString()))) {
                     return urlString;
                 }
@@ -212,7 +203,7 @@ public class UpdaterCore {
         catch (IOException | CertificateException e) {
             Logger.logErrorMessage("Cannot read or load certificate", e);
         }
-        catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+        catch (GeneralSecurityException e) {
             Logger.logErrorMessage("Cannot decrypt url", e);
         }
         return null;

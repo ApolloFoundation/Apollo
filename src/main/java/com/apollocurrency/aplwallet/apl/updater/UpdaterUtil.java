@@ -29,8 +29,8 @@ public class UpdaterUtil {
     static Set<CertificatePair> buildCertificatePairs(String certificateDirectory) throws IOException, CertificateException {
         Set<CertificatePair> certificatePairs = new HashSet<>();
         Path directory = Paths.get(certificateDirectory);
-        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(directory, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.CERTIFICATE_SUFFIX));
-        Set<Certificate> secondDecryptionCertificates = readCertificates(findFiles(directory, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.CERTIFICATE_SUFFIX));
+        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(directory, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.CERTIFICATE_SUFFIX));
+        Set<Certificate> secondDecryptionCertificates = readCertificates(findFiles(directory, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.CERTIFICATE_SUFFIX));
         for (Certificate firstCertificate : firstDecryptionCertificates) {
             for (Certificate secondCertificate : secondDecryptionCertificates) {
                 certificatePairs.add(new CertificatePair(firstCertificate, secondCertificate));

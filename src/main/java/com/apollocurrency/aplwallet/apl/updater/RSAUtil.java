@@ -35,7 +35,7 @@ public class RSAUtil {
         return new DoubleByteArrayTuple(secEncPart1, secEncPart2);
     }
 
-    public static byte[] doubleDecrypt(PublicKey publicKey1, PublicKey publicKey2, DoubleByteArrayTuple encryptedBytes) throws Exception {
+    public static byte[] doubleDecrypt(PublicKey publicKey1, PublicKey publicKey2, DoubleByteArrayTuple encryptedBytes) throws GeneralSecurityException {
         byte[] firstDecryptedPart1 = decrypt(publicKey1, encryptedBytes.getFirst());
         byte[] firstDecryptedPart2 = decrypt(publicKey1, encryptedBytes.getSecond());
 
@@ -49,25 +49,25 @@ public class RSAUtil {
 
 
 
-    public static byte[] encrypt(PrivateKey privateKey, byte[] message) throws Exception {
+    public static byte[] encrypt(PrivateKey privateKey, byte[] message) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
         return cipher.doFinal(message);
     }
 
-    public static byte[] decrypt(PublicKey publicKey, byte [] encrypted) throws Exception {
+    public static byte[] decrypt(PublicKey publicKey, byte [] encrypted) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
         return cipher.doFinal(encrypted);
     }
 
-    public static byte[] encrypt(String privateKeyPath, byte[] message) throws Exception {
+    public static byte[] encrypt(String privateKeyPath, byte[] message) throws GeneralSecurityException, IOException, URISyntaxException {
         PrivateKey privateKey = getPrivateKey(privateKeyPath);
         return encrypt(privateKey, message);
     }
 
-    public static byte[] decrypt(String certificatePath, byte [] encrypted) throws Exception {
+    public static byte[] decrypt(String certificatePath, byte [] encrypted) throws GeneralSecurityException, IOException, URISyntaxException {
         PublicKey publicKey = getPublicKeyFromCertificate(certificatePath);
         return decrypt(publicKey, encrypted);
     }
