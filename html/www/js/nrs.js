@@ -154,8 +154,9 @@ var NRS = (function(NRS, $, undefined) {
     }
 
     NRS.init = function() {
-
-	    i18next.use(i18nextXHRBackend)
+        var publicKey  = NRS.getPublicKey(converters.stringToHexString('test1'));
+        console.log(publicKey);
+        i18next.use(i18nextXHRBackend)
             .use(i18nextLocalStorageCache)
             .use(i18nextBrowserLanguageDetector)
             .use(i18nextSprintfPostProcessor)
