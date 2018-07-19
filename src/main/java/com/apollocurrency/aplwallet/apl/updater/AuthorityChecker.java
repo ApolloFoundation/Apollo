@@ -30,6 +30,7 @@ import java.security.cert.X509Certificate;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificate;
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificates;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -50,17 +51,9 @@ public class AuthorityChecker {
     }
 
     public boolean verifyCertificates(String certificateDirectory) {
-        Path directoryPath;
         try {
-            directoryPath = RSAUtil.loadResource(certificateDirectory).toPath();
-        }
-        catch (URISyntaxException e) {
-            LOG.error("Cannot find directory " + certificateDirectory);
-            return false;
-        }
-        try {
-            Set<Certificate> ordinaryCertificates = readCertificates(directoryPath, UpdaterConstants.CERTIFICATE_SUFFIX, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX);
-            Certificate intermediateCertificate = readCertificate(directoryPath.resolve(UpdaterConstants.INTERMEDIATE_CERTIFICATE_NAME));
+            Set<Certificate> ordinaryCertificates = readCertificates(certificateDirectory, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX);
+            Certificate intermediateCertificate = readCertificate(certificateDirectory + "/" + INTERMEDIATE_CERTIFICATE_NAME);
             for (Certificate certificate : ordinaryCertificates) {
                 certificate.verify(intermediateCertificate.getPublicKey());
             }
@@ -69,7 +62,7 @@ public class AuthorityChecker {
             intermediateCertificate.verify(caCertificate.getPublicKey());
             return true;
         }
-        catch (CertificateException |IOException e) {
+        catch (CertificateException |IOException | URISyntaxException e) {
             LOG.error("Unable to read or load certificate", e);
         }
         catch (NoSuchAlgorithmException | SignatureException | NoSuchProviderException | InvalidKeyException e) {
@@ -81,16 +74,10 @@ public class AuthorityChecker {
         return downloader.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
     }
 
-    boolean verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {
-        JarFile jar = new JarFile(jarFilePath.toFile(), true);
-        JarVerifier verifier = new JarVerifier(jar);
-        verifier.verify((X509Certificate) certificate);
-        return true;
+    void verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {
+        try(JarFile jar = new JarFile(jarFilePath.toFile())) {
+            JarVerifier verifier = new JarVerifier(jar);
+            verifier.verify((X509Certificate) certificate);
+        }
     }
-//uncomment for tests
-//    public static void main(String[] args) throws CertificateException, IOException {
-//        Path jar = Paths.get("E:/fb/signed1.jar");
-//        Certificate certificate = UpdaterUtil.readCertificate(Paths.get("conf/certs/1_1.cert.pem"));
-//        AuthorityChecker.getInstance().verifyJarSignature(certificate, jar);
-//    }
 }

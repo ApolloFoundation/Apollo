@@ -19,10 +19,9 @@ import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
-import javax.crypto.Cipher;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -31,6 +30,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.CertificatePair;
 
 public class UpdaterCore {
@@ -150,7 +150,7 @@ public class UpdaterCore {
                     if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
                         String url = tryDecryptUrl(attachment.getUrl(), attachment.getAppVersion());
                         if (url != null && !url.isEmpty()) {
-                            if (checker.verifyCertificates(UpdaterConstants.CERTIFICATE_DIRECTORY)) {
+                            if (checker.verifyCertificates(CERTIFICATE_DIRECTORY)) {
                                 startUpdate();
                                 if (attachment.getLevel() != Level.MINOR) {
                                     mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
@@ -172,7 +172,7 @@ public class UpdaterCore {
 
     private boolean verifyJar(Path jarFilePath) {
         try {
-            Set<Certificate> certificates = UpdaterUtil.readCertificates(Paths.get(UpdaterConstants.CERTIFICATE_DIRECTORY), UpdaterConstants.CERTIFICATE_SUFFIX, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX);
+            Set<Certificate> certificates = UpdaterUtil.readCertificates(CERTIFICATE_DIRECTORY, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX);
             for (Certificate certificate : certificates) {
                 try {
                     checker.verifyJarSignature(certificate, jarFilePath);
@@ -183,7 +183,7 @@ public class UpdaterCore {
                 return true;
             }
         }
-        catch (CertificateException | IOException e) {
+        catch (CertificateException | IOException | URISyntaxException e) {
             Logger.logErrorMessage("Unable to load certificates");
         }
         return false;
@@ -192,8 +192,7 @@ public class UpdaterCore {
     private String tryDecryptUrl(DoubleByteArrayTuple encryptedUrl, Version updateVersion) {
         Set<CertificatePair> certificatePairs;
         try {
-            certificatePairs = UpdaterUtil.buildCertificatePairs(UpdaterConstants.CERTIFICATE_DIRECTORY);
-            Cipher cipher = Cipher.getInstance("RSA");
+            certificatePairs = UpdaterUtil.buildCertificatePairs(CERTIFICATE_DIRECTORY);
             for (CertificatePair pair : certificatePairs) {
                 String urlString = new String(RSAUtil.doubleDecrypt(pair.getFirstCertificate().getPublicKey(), pair.getSecondCertificate().getPublicKey
                         (), encryptedUrl));
@@ -202,7 +201,7 @@ public class UpdaterCore {
                 }
             }
         }
-        catch (IOException | CertificateException e) {
+        catch (IOException | CertificateException | URISyntaxException e) {
             Logger.logErrorMessage("Cannot read or load certificate", e);
         }
         catch (GeneralSecurityException e) {

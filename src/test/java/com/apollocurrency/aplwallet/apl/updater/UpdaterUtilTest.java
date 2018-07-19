@@ -2,6 +2,12 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,13 +23,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(UpdaterUtil.class)
 public class UpdaterUtilTest {
@@ -31,14 +30,14 @@ public class UpdaterUtilTest {
     private final static String CERTIFICATE_MOCK_PREFIX = "CERTIFICATE_MOCK_";
 
     @Mock
-    CertificateFactory certificateFactoryMock;
+    private CertificateFactory certificateFactoryMock;
 
     /**
      * Test UpdaterUtil.buildCertificatePairs(String certificateDirectory) method
      * @throws Exception
      */
     @Test
-    public void buildCertificatePairs() throws Exception {
+    public void testBuildCertificatePairs() throws Exception {
 
         String directory = "test-dir";
         String[] files = new String[]{"1_1.crt", "1_2.crt", "1_3.crt", "2_1.crt", "2_2.crt"};
@@ -79,7 +78,7 @@ public class UpdaterUtilTest {
      * @throws IOException
      */
     @Test
-    public void readCertificatesTest() throws CertificateException, IOException {
+    public void testReadCertificates() throws Exception {
 
         String[] files = new String[]{"cert1", "cert2", "cert3"};
 

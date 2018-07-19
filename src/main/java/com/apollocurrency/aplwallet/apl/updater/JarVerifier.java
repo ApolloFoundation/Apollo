@@ -71,7 +71,7 @@ public class JarVerifier {
         }
 
         /**
-         * Retrive the jar file from the specified url.
+         * Retrieve the jar file from the specified url.
          */
         private JarFile retrieveJarFileFromURL(URL url)
                 throws PrivilegedActionException, MalformedURLException {

@@ -19,11 +19,9 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 
 import javax.crypto.Cipher;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -31,6 +29,8 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.spec.PKCS8EncodedKeySpec;
+
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResource;
 
 
 public class RSAUtil {
@@ -102,17 +102,4 @@ public class RSAUtil {
         return certificate.getPublicKey();
     }
 
-    public static File loadResource(String fileName) throws URISyntaxException {
-        try {
-            return new File(RSAUtil.class.getClassLoader().getResource(fileName).toURI());
-        }
-        catch (NullPointerException e) {
-            File file = Paths.get(fileName).toFile();
-            if (file.exists()) {
-                return file;
-            } else {
-                throw new RuntimeException("Cannot load resource " + fileName, e);
-            }
-        }
-    }
 }
