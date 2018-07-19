@@ -64,15 +64,14 @@ public class AuthorityCheckerTest {
         }
     }
 
-    @Test
+    @Test(expected = SecurityException.class)
     public void testVerifyNotSignedJar() throws Exception {
         AuthorityChecker checker = PowerMockito.spy(AuthorityChecker.getInstance());
         Path jarFilePath = Files.createTempFile("apl-test", ".jar");
         try {
             OutputStream jarOutputStream = Files.newOutputStream(jarFilePath);
             Certificate certificate = UpdaterUtil.readCertificate(loadResourcePath("certs/1_2.crt"));
-            PrivateKey key = RSAUtil.getPrivateKey("certs/1_2.key");
-            JarGenerator generator = new JarGenerator(jarOutputStream, certificate, key);
+            JarGenerator generator = new JarGenerator(jarOutputStream);
             generator.generate();
             generator.close();
             jarOutputStream.close();

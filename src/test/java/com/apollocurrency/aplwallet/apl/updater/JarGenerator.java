@@ -9,18 +9,18 @@ import java.security.cert.Certificate;
 import java.util.Random;
 
 public class JarGenerator {
-    private SimpleSignedJar signedJar;
+    private SimpleJar jar;
     private static final String KEY_ALIAS = "test";
     private static final String KEY_PASSWORD = "test";
 
 
     public JarGenerator(OutputStream outputStream, Certificate certificate, PrivateKey privateKey) throws GeneralSecurityException, IOException {
         KeyStore keyStore = initKeyStore(certificate, privateKey);
-        this.signedJar = new SimpleSignedJar(outputStream, keyStore, KEY_ALIAS,  KEY_PASSWORD);
+        this.jar = new SimpleSignedJar(outputStream, keyStore, KEY_ALIAS,  KEY_PASSWORD);
     }
 
     public JarGenerator(OutputStream outputStream) {
-//        this.signedJar = new SimpleJar(outputStream);
+        this.jar = new SimpleJar(outputStream);
     }
 
 
@@ -32,16 +32,16 @@ public class JarGenerator {
     }
 
     public void generate() throws IOException {
-        signedJar.addManifestAttribute("Main-Class", "com.test.MainClass");
-        signedJar.addManifestAttribute("Application-Name", "Test-app");
-        signedJar.addManifestAttribute("Permissions", "all-permissions");
-        signedJar.addFileContents("com/test/MainClass.class", randomBytes(4096));
-        signedJar.addFileContents("com/test/AnotherClass.class", randomBytes(2123));
-        signedJar.addFileContents("com/test/AnotherClass2.class", randomBytes(7654));
+        jar.addManifestAttribute("Main-Class", "com.test.MainClass");
+        jar.addManifestAttribute("Application-Name", "Test-app");
+        jar.addManifestAttribute("Permissions", "all-permissions");
+        jar.addFileContents("com/test/MainClass.class", randomBytes(4096));
+        jar.addFileContents("com/test/AnotherClass.class", randomBytes(2123));
+        jar.addFileContents("com/test/AnotherClass2.class", randomBytes(7654));
     }
 
     public void close() throws IOException {
-        signedJar.close();
+        jar.close();
     }
 
     private byte[] randomBytes(int size) {

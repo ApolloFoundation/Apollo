@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -57,20 +56,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @see <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#Signed_JAR_File">JAR format
  *      specification</a>
  */
-public class SimpleSignedJar {
-    private static final int MANIFEST_ATTR_MAX_LEN = 70;
-
-    private static final String CREATED_BY = "APOLLO FOUNDATION";
+public class SimpleSignedJar extends SimpleJar {
     private static final String MANIFEST_FN = "META-INF/MANIFEST.MF";
     private static final String SIG_FN = "META-INF/SIGNUMO.SF";
     private static final String SIG_RSA_FN = "META-INF/SIGNUMO.RSA";
 
-    private final ZipOutputStream zos;
     private final KeyStore keyStore;
     private final String keyAlias;
     private final String password;
-
-    private final Map<String, String> manifestAttributes;
 
     private final HashFunction hashFunction;
     private final String hashFunctionName;
@@ -89,12 +82,11 @@ public class SimpleSignedJar {
      * @param keyPassword the password to access the key
      */
     public SimpleSignedJar(OutputStream out, KeyStore keyStore,  String keyAlias, String keyPassword) {
-        this.zos = new ZipOutputStream(checkNotNull(out, "out"));
+        super(out);
         this.keyStore = checkNotNull(keyStore, "keyStore");
         this.keyAlias = checkNotNull(keyAlias, "keyAlias");
         this.password = checkNotNull(keyPassword, "keyPassword");
 
-        this.manifestAttributes = Maps.newLinkedHashMap();
         this.fileDigests = Maps.newLinkedHashMap();
         this.sectionDigests = Maps.newLinkedHashMap();
 
@@ -126,12 +118,7 @@ public class SimpleSignedJar {
      * @throws NullPointerException if any of the arguments is {@code null}
      */
     public void addFileContents(String filename, byte[] contents) throws IOException {
-        checkNotNull(filename, "filename");
-        checkNotNull(contents, "contents");
-
-        zos.putNextEntry(new ZipEntry(filename));
-        zos.write(contents);
-        zos.closeEntry();
+        super.addFileContents(filename, contents);
 
         HashCode hashCode = hashFunction.hashBytes(contents);
 
@@ -151,18 +138,6 @@ public class SimpleSignedJar {
         byte sig[] = writeSigFile();
         writeSignature(sig);
         zos.finish();
-    }
-
-    /**
-     * Closes the JAR file by writing the manifest and signature data to it and finishing the ZIP entries. It closes the
-     * underlying stream.
-     *
-     * @throws java.io.IOException
-     * @throws RuntimeException    if the signing goes wrong
-     */
-    public void close() throws IOException {
-        finish();
-        zos.close();
     }
 
 
@@ -273,7 +248,8 @@ public class SimpleSignedJar {
      *
      * @throws java.io.IOException
      */
-    private void writeManifest() throws IOException {
+    @Override
+    protected void writeManifest() throws IOException {
         zos.putNextEntry(new ZipEntry(MANIFEST_FN));
         Manifest man = new Manifest();
 
