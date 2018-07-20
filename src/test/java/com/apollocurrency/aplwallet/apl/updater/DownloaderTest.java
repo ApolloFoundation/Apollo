@@ -2,6 +2,8 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
+import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -70,7 +72,7 @@ public class DownloaderTest {
 
     }
 
-    private static class ThrowingDownloadExecutor implements Downloader.DownloadExecutor {
+    private static class ThrowingDownloadExecutor implements DownloadExecutor {
 
         @Override
         public Path download(String uri) throws IOException {
@@ -79,7 +81,7 @@ public class DownloaderTest {
 
     }
 
-    private static class ResourceDownloadExecutor implements Downloader.DownloadExecutor {
+    private static class ResourceDownloadExecutor implements DownloadExecutor {
 
         @Override
         public Path download(String uri) throws IOException {

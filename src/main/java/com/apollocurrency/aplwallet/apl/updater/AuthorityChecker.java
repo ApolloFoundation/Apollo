@@ -15,6 +15,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.updater.downloader.DefaultDownloadExecutor;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -69,7 +70,7 @@ public class AuthorityChecker {
         return false;
     }
     private Path downloadCACertificate() throws IOException {
-        return Downloader.DefaultDownloadExecutor.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
+        return DefaultDownloadExecutor.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
     }
 
     void verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {

@@ -13,20 +13,17 @@
  *
  */
 
-package com.apollocurrency.aplwallet.apl.updater;
+package com.apollocurrency.aplwallet.apl.updater.downloader;
 
 import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -122,51 +119,6 @@ public class Downloader {
 
     private static class DownloaderHolder {
         private static final Downloader INSTANCE = new Downloader();
-    }
-
-    public interface DownloadExecutor {
-        Path download(String uri) throws IOException;
-    }
-
-    public static class DefaultDownloadExecutor implements DownloadExecutor {
-
-        private String tempDirPrefix;
-        private String downloadedFileName;
-
-        public DefaultDownloadExecutor(String tempDirPrefix, String downloadedFileName) {
-            this.tempDirPrefix = tempDirPrefix;
-            this.downloadedFileName = downloadedFileName;
-        }
-
-        public Path download(String uri) throws IOException {
-            return downloadAttempt(uri, tempDirPrefix, downloadedFileName);
-        }
-
-        public static Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
-            Path tempDir = Files.createTempDirectory(tempDirPrefix);
-            Path downloadedFilePath = tempDir.resolve(Paths.get(downloadedFileName));
-            try {
-                URL webUrl = new URL(url);
-                BufferedInputStream bis = new BufferedInputStream(webUrl.openStream());
-                FileOutputStream fos = new FileOutputStream(downloadedFilePath.toFile());
-                byte[] buffer = new byte[1024];
-                int count;
-                while ((count = bis.read(buffer, 0, 1024)) != -1) {
-                    fos.write(buffer, 0, count);
-                }
-                fos.close();
-                bis.close();
-            }
-            catch (Exception e) {
-                //delete failed file and directory
-                Files.deleteIfExists(downloadedFilePath);
-                Files.deleteIfExists(tempDir);
-                //rethrow exception
-                throw e;
-            }
-            return downloadedFilePath;
-        }
-
     }
 
 }
