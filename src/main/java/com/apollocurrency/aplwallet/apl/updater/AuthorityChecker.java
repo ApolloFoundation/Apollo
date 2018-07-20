@@ -37,7 +37,8 @@ import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertifica
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class AuthorityChecker {
-        private static final Logger LOG = getLogger(AuthorityChecker.class);
+    private static final Logger LOG = getLogger(AuthorityChecker.class);
+    private static final DefaultDownloadExecutor downloader = new DefaultDownloadExecutor("ca", "caCertificate");
 
     private static class AuthorityCheckerHolder {
         private static final AuthorityChecker INSTANCE = new AuthorityChecker();
@@ -70,7 +71,7 @@ public class AuthorityChecker {
         return false;
     }
     private Path downloadCACertificate() throws IOException {
-        return DefaultDownloadExecutor.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
+        return downloader.download(UpdaterConstants.CA_CERTIFICATE_URL);
     }
 
     void verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {

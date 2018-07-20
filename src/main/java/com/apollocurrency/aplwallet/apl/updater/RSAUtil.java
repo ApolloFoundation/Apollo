@@ -15,6 +15,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import sun.security.rsa.RSACore;
@@ -100,8 +101,17 @@ public class RSAUtil {
     public static PrivateKey getPrivateKey(String path) throws IOException, GeneralSecurityException, URISyntaxException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
         PEMParser pem = new PEMParser(new FileReader(loadResource(path)));
-        PEMKeyPair pair = (PEMKeyPair) pem.readObject();
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(pair.getPrivateKeyInfo().getEncoded());
+        Object keyObject = pem.readObject();
+        byte[] privateKeyEncoded;
+        if (keyObject instanceof PEMKeyPair) {
+            PEMKeyPair pair = (PEMKeyPair) keyObject;
+            privateKeyEncoded = pair.getPrivateKeyInfo().getEncoded();
+        } else if (keyObject instanceof PrivateKeyInfo) {
+            privateKeyEncoded = ((PrivateKeyInfo) keyObject).getEncoded();
+        } else {
+            throw new SecurityException("Unable to get rsa privateKey");
+        }
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privateKeyEncoded);
 
         return kf.generatePrivate(spec);
     }

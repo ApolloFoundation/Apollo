@@ -81,11 +81,6 @@ public class PlatformDependentUpdater {
         scriptRunner.start();
     }
 
-    public static void main(String[] args) {
-        PlatformDependentUpdater instance = getInstance();
-        instance.continueUpdate(Paths.get(""), Platform.WINDOWS);
-    }
-
     private static class PlatformDpendentUpdaterHolder {
         private static final PlatformDependentUpdater INSTANCE = new PlatformDependentUpdater();
     }

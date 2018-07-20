@@ -49,7 +49,7 @@ public class RSAEncryption {
             isHexadecimalString = sc.nextLine();
 
             System.out.println("Enter message: ");
-            messageString = sc.nextLine();
+            messageString = sc.nextLine().trim();
 
             System.out.println("Enter private key path: ");
             pkPathString = sc.nextLine();

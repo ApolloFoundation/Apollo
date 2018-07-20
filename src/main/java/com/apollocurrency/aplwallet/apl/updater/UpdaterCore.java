@@ -173,7 +173,7 @@ public class UpdaterCore {
 
     private boolean verifyJar(Path jarFilePath) {
         try {
-            Set<Certificate> certificates = UpdaterUtil.readCertificates(CERTIFICATE_DIRECTORY, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX);
+            Set<Certificate> certificates = UpdaterUtil.readCertificates(CERTIFICATE_DIRECTORY, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX);
             for (Certificate certificate : certificates) {
                 try {
                     checker.verifyJarSignature(certificate, jarFilePath);

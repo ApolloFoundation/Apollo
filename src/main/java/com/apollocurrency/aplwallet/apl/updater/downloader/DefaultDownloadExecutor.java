@@ -22,7 +22,7 @@ public class DefaultDownloadExecutor implements DownloadExecutor {
         return downloadAttempt(uri, tempDirPrefix, downloadedFileName);
     }
 
-    public static Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
+    private static Path downloadAttempt(String url, String tempDirPrefix, String downloadedFileName) throws IOException {
         Path tempDir = Files.createTempDirectory(tempDirPrefix);
         Path downloadedFilePath = tempDir.resolve(Paths.get(downloadedFileName));
         try {
