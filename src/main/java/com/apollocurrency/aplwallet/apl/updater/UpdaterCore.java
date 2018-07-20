@@ -16,6 +16,7 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.*;
+import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
