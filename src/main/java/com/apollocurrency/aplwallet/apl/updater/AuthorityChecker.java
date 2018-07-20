@@ -38,8 +38,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class AuthorityChecker {
         private static final Logger LOG = getLogger(AuthorityChecker.class);
 
-    private Downloader downloader = Downloader.getInstance();
-
     private static class AuthorityCheckerHolder {
         private static final AuthorityChecker INSTANCE = new AuthorityChecker();
     }
@@ -71,7 +69,7 @@ public class AuthorityChecker {
         return false;
     }
     private Path downloadCACertificate() throws IOException {
-        return downloader.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
+        return Downloader.DefaultDownloadExecutor.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
     }
 
     void verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {
