@@ -15,9 +15,11 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.RSAUtil;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -29,16 +31,17 @@ import java.util.Scanner;
  * 2. With parameters - run class with parameters
  * For running with parameters you should pass 3 parameters in following order:
  * a) isHexadecimal - boolean flag that indicates that you want to pass to encryption not the ordinary string, but hexadecimal
- * a) private key path (absolute path is better)
  * b) hexadecimal string of message bytes or just message depending on option isHexadecimal
- * Example: java com.apollocurrency.aplwallet.apl.tools.RSAEncryption false C:/user/admin/private.key SecretMessage
+ * c) private key path (absolute path is better)
+ * Example: java com.apollocurrency.aplwallet.apl.tools.RSAEncryption false SecretMessage C:/user/admin/private.key
  */
 
 public class RSAEncryption {
-    public static void main(String [] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         String pkPathString = "";
         String messageString = "";
         String isHexadecimalString = "";
+        boolean isSecondEncryption = false;
         if (args == null || args.length == 0) {
             Scanner sc = new Scanner(System.in);
 
@@ -54,8 +57,8 @@ public class RSAEncryption {
 
         } else if (args.length == 3) {
             isHexadecimalString = args[0];
-            pkPathString = args[1];
-            messageString = args[2];
+            messageString = args[1];
+            pkPathString = args[2];
             Objects.requireNonNull(pkPathString);
             Objects.requireNonNull(messageString);
         } else {
@@ -76,14 +79,31 @@ public class RSAEncryption {
         byte[] messageBytes;
         if (isHexadecimal) {
             messageBytes = Convert.parseHexString(messageString);
-        }  else {
+        } else {
             messageBytes = messageString.getBytes();
         }
-        byte[] encryptedBytes = RSAUtil.encrypt(pkPathString, messageBytes);
+        RSAPrivateKey privateKey = (RSAPrivateKey) RSAUtil.getPrivateKey(pkPathString);
+        if (messageBytes.length > RSAUtil.keyLength(privateKey)) {
+            System.out.println("Cannot encrypt message with size: " + messageBytes.length);
+            System.exit(1);
+        }
+        if (messageBytes.length == RSAUtil.keyLength(privateKey)) {
+            isSecondEncryption = true;
+            System.out.println("Second encryption will be performed");
+        } else if (messageBytes.length > RSAUtil.maxEncryptionLength(privateKey)) {
+            System.out.println("Message size is greater than " + RSAUtil.maxEncryptionLength(privateKey) + " bytes. Cannot encrypt.");
+        }
+        String result;
+        if (isSecondEncryption) {
+            DoubleByteArrayTuple splittedEncryptedBytes = RSAUtil.secondEncrypt(privateKey, messageBytes);
+            result = splittedEncryptedBytes.toString();
+        } else {
+            byte[] encryptedBytes = RSAUtil.encrypt(privateKey, messageBytes);
+            result = Convert.toHexString(encryptedBytes);
+        }
 
-        System.out.println("Your encrypted message in hexadecimal format: ");
-        System.out.println(Convert.toHexString(encryptedBytes));
-
+        System.out.println("Your encrypted message in hexadecimal format:");
+        System.out.print(result);
     }
 
 }

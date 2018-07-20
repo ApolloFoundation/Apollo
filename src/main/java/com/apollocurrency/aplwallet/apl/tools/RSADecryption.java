@@ -15,9 +15,11 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.RSAUtil;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
+import java.security.PublicKey;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -42,10 +44,10 @@ public class RSADecryption {
         if (args == null || args.length == 0) {
             Scanner sc = new Scanner(System.in);
 
-            System.out.println("Enter encrypted message in hexadecimal format");
+            System.out.println("Enter encrypted message in hexadecimal format. If you want to decrypt double encrypted message separate 512 byte messages with coma, space, tab, colon, semicolon");
             encryptedMessageString = sc.nextLine();
 
-            System.out.println("Enter certificate path");
+            System.out.println("Enter certificate path. If you want to decrypt double encrypted message completely - separate certificate paths with coma, space, tab, colon, semicolon");
             certificatePathString = sc.nextLine();
 
             System.out.println("Do you want to convert bytes to UTF-8 string ('true' or 'false')");
@@ -54,8 +56,8 @@ public class RSADecryption {
             sc.close();
 
         } else if (args.length == 3) {
-            certificatePathString = args[0];
-            encryptedMessageString = args[1];
+            encryptedMessageString = args[0];
+            certificatePathString = args[1];
             convertToString = args[2];
             Objects.requireNonNull(certificatePathString);
             Objects.requireNonNull(encryptedMessageString);
@@ -67,7 +69,18 @@ public class RSADecryption {
         System.out.println("Got public key path " + certificatePathString);
         System.out.println("Got encrypted message: \'" + encryptedMessageString + "\'");
         System.out.println("Convert to string: " + convertToString);
+        String[] split = encryptedMessageString.split("([;,:]+)|(\\s+)");
+        boolean isSplittedMessage = split.length == 2;
+        if (split.length > 2 || split.length == 0) {
+            System.out.println("Invalid message string.");
+            return;
+        }
+        String[] split1 = certificatePathString.split("([;,:]+)|(\\s+)");
+        if (split1.length > 2 || split1.length == 0) {
+            System.out.println("Invalid certificate string");
+        }
 
+        boolean isDoubleDecryptionRequired = split1.length == 2;
         boolean isConvert;
         try {
             isConvert = Boolean.parseBoolean(convertToString);
@@ -75,16 +88,27 @@ public class RSADecryption {
         catch (Exception e) {
             isConvert = false;
         }
-        byte[] encryptedMessageBytes = Convert.parseHexString(encryptedMessageString);
-
-        byte[] decryptedBytes = RSAUtil.decrypt(certificatePathString, encryptedMessageBytes);
-
-        System.out.println("Your decrypted message in hexadecimal format: ");
-        System.out.println(Convert.toHexString(decryptedBytes));
+        byte[] result;
+        PublicKey publicKey1 = RSAUtil.getPublicKeyFromCertificate(split1[0]);
+        if (isSplittedMessage) {
+            byte[] firstMessagePart = Convert.parseHexString(split[0]);
+            byte[] secondMessagePart = Convert.parseHexString(split[1]);
+            DoubleByteArrayTuple encryptedBytes = new DoubleByteArrayTuple(firstMessagePart, secondMessagePart);
+            if (isDoubleDecryptionRequired) {
+                PublicKey publicKey2 = RSAUtil.getPublicKeyFromCertificate(split1[1]);
+                result = RSAUtil.doubleDecrypt(publicKey1, publicKey2, encryptedBytes);
+            } else {
+                result = RSAUtil.firstDecrypt(publicKey1, encryptedBytes);
+            }
+        } else {
+            result = RSAUtil.decrypt(publicKey1, Convert.parseHexString(split[0]));
+        }
+        System.out.println("Your decrypted message in hexadecimal format:");
+        System.out.println(Convert.toHexString(result));
 
         if (isConvert) {
             System.out.println("Result message is:");
-            System.out.println(new String(decryptedBytes, "UTF-8"));
+            System.out.println(new String(result, "UTF-8"));
         }
     }
 }

@@ -42,10 +42,7 @@ public class DoubleByteArrayTuple {
 
     @Override
     public String toString() {
-        return "DoubleByteArrayTuple{" +
-                "first=" + Arrays.toString(first) +
-                ", second=" + Arrays.toString(second) +
-                '}';
+        return Convert.toHexString(first) + System.lineSeparator() + Convert.toHexString(second);
     }
 
     @Override
