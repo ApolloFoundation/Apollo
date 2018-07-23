@@ -44,7 +44,7 @@ if not defined javaDir (
 )
 set APPLICATION=Apollo
 echo Running manifest generator
-"%javaDir%java.exe" -cp classes apl.tools.ManifestGenerator && ( echo OK )|| ( goto error )
+"%javaDir%java.exe" -cp classes com.apollocurrency.aplwallet.apl.tools.ManifestGenerator && ( echo OK )|| ( goto error )
 if exist "%APPLICATION%.jar" (
     echo Removing '%APPLICATION%.jar'
     del /f /q %APPLICATION%.jar
