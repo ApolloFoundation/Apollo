@@ -15,27 +15,68 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.util.HashSet;
+import java.util.Set;
+
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(UpdaterCore.class)
+@SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
+@PrepareForTest(UpdaterUtil.class)
 public class UpdaterCoreTest {
     @Test
-    public void testTriggerUpdate() {
-
+    public void testTriggerUpdate() throws Exception {
     }
 
     @Test
     public void testTryDecryptUrl() {
-
     }
 
-    @Test
-    public void testVerifyJar() {
+    @Mock
+    private UpdaterMediator fakeMediatorInstance;
 
+    @Test
+    public void testVerifyJar() throws Exception {
+        Class<?> clazz = Class.forName("com.apollocurrency.aplwallet.apl.UpdaterMediator$UpdaterMediatorHolder");
+        Whitebox.setInternalState(clazz, "INSTANCE", fakeMediatorInstance);
+        Path signedJar = Files.createTempFile("test-verifyjar", ".jar");
+        try {
+            Set<Certificate> certificates = new HashSet<>();
+            certificates.add(UpdaterUtil.readCertificate("certs/1_1.crt"));
+            certificates.add(UpdaterUtil.readCertificate("certs/1_2.crt"));
+            certificates.add(UpdaterUtil.readCertificate("certs/2_1.crt"));
+            certificates.add(UpdaterUtil.readCertificate("certs/2_2.crt"));
+            PrivateKey privateKey = RSAUtil.getPrivateKey("certs/2_2.key");
+            JarGenerator generator = new JarGenerator(Files.newOutputStream(signedJar), UpdaterUtil.readCertificate("certs/2_2.crt"), privateKey);
+            generator.generate();
+            generator.close();
+
+            PowerMockito.mockStatic(UpdaterUtil.class);
+            when(UpdaterUtil.readCertificates(CERTIFICATE_DIRECTORY, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX)).thenReturn(certificates);
+            PowerMockito.mockStatic(Logger.class);
+            Object result = Whitebox.invokeMethod(UpdaterCore.getInstance(), "verifyJar", signedJar);
+            Assert.assertTrue(Boolean.parseBoolean(result.toString()));
+        }
+        finally {
+            Files.deleteIfExists(signedJar);
+        }
     }
 
     @Test

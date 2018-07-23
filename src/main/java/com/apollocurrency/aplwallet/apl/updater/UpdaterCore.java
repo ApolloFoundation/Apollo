@@ -177,11 +177,11 @@ public class UpdaterCore {
             for (Certificate certificate : certificates) {
                 try {
                     checker.verifyJarSignature(certificate, jarFilePath);
+                    return true;
                 }
                 catch (SecurityException e) {
                     Logger.logWarningMessage("Certificate is not appropriate." + certificate.toString());
                 }
-                return true;
             }
         }
         catch (CertificateException | IOException | URISyntaxException e) {

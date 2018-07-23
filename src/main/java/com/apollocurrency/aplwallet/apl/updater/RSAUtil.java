@@ -21,6 +21,7 @@ import org.bouncycastle.openssl.PEMParser;
 import sun.security.rsa.RSACore;
 
 import javax.crypto.Cipher;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -100,7 +101,8 @@ public class RSAUtil {
 
     public static PrivateKey getPrivateKey(String path) throws IOException, GeneralSecurityException, URISyntaxException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
-        PEMParser pem = new PEMParser(new FileReader(loadResource(path)));
+        File file = loadResource(path);
+        PEMParser pem = new PEMParser(new FileReader(file));
         Object keyObject = pem.readObject();
         byte[] privateKeyEncoded;
         if (keyObject instanceof PEMKeyPair) {
