@@ -20,6 +20,7 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONArray;
@@ -3562,33 +3563,41 @@ public interface Attachment extends Appendix {
 
         private final Platform platform;
         private final Architecture architecture;
-        private final byte[] url;
+        private final DoubleByteArrayTuple url;
         private final Version version;
         private final byte[] hash;
 
         UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
-            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
-            int urlLength = buffer.getShort();
-            url = new byte[urlLength];
-            buffer.get(url);
-            version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
-            int hashLength = buffer.getShort();
-            hash = new byte[hashLength];
-            buffer.get(hash);
+                platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
+                architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
+                int firstUrlPartLength = buffer.getShort();
+                byte[] firstUrlPart = new byte[firstUrlPartLength];
+                buffer.get(firstUrlPart);
+                int secondUrlPartLength = buffer.getShort();
+                byte[] secondUrlPart = new byte[secondUrlPartLength];
+                buffer.get(secondUrlPart);
+                url = new DoubleByteArrayTuple(firstUrlPart, secondUrlPart);
+                version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
+                int hashLength = buffer.getShort();
+                hash = new byte[hashLength];
+                buffer.get(hash);
+
         }
 
         UpdateAttachment(JSONObject attachmentData) {
             super(attachmentData);
             platform = Platform.valueOf(Convert.nullToEmpty((String) attachmentData.get("platform")).trim());
             architecture = Architecture.valueOf(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
-            url = Convert.parseHexString(Convert.nullToEmpty(((String)attachmentData.get("url")).trim()));
+            JSONObject urlJson = (JSONObject) attachmentData.get("url");
+            byte[] firstUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("first")).trim()));
+            byte[] secondUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("second")).trim()));
+            url = new DoubleByteArrayTuple(firstUrlPart, secondUrlPart);
             version = Version.from(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
             hash = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("hash")).trim());
         }
 
-        public UpdateAttachment(Platform platform, Architecture architecture, byte[] url, Version version, byte[] hash) {
+        public UpdateAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
             this.platform = platform;
             this.architecture = architecture;
             this.url = url;
@@ -3600,7 +3609,7 @@ public interface Attachment extends Appendix {
         @Override
         int getMySize() {
             return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
-                    + 2 + url.length + 1 + Convert.toBytes(version.toString()).length + 2+ hash.length;
+                    + 2 + url.getFirst().length + 2 + url.getSecond().length + 1 + Convert.toBytes(version.toString()).length + 2+ hash.length;
         }
 
         @Override
@@ -3612,8 +3621,10 @@ public interface Attachment extends Appendix {
             buffer.put(platform);
             buffer.put((byte) architecture.length);
             buffer.put(architecture);
-            buffer.putShort((short) url.length);
-            buffer.put(url);
+            buffer.putShort((short) url.getFirst().length);
+            buffer.put(url.getFirst());
+            buffer.putShort((short) url.getSecond().length);
+            buffer.put(url.getSecond());
             buffer.put((byte) version.length);
             buffer.put(version);
             buffer.putShort((short) hash.length);
@@ -3624,7 +3635,10 @@ public interface Attachment extends Appendix {
         void putMyJSON(JSONObject attachment) {
             attachment.put("platform", platform.toString());
             attachment.put("architecture", architecture.toString());
-            attachment.put("url", Convert.toHexString(url));
+            JSONObject urlJson = new JSONObject();
+            urlJson.put("first", Convert.toHexString(url.getFirst()));
+            urlJson.put("second", Convert.toHexString(url.getSecond()));
+            attachment.put("url", urlJson);
             attachment.put("version", version.toString());
             attachment.put("hash", Convert.toHexString(hash));
         }
@@ -3637,7 +3651,7 @@ public interface Attachment extends Appendix {
             return architecture;
         }
 
-        public byte[] getUrl() {
+        public DoubleByteArrayTuple getUrl() {
             return url;
         }
 
@@ -3649,7 +3663,8 @@ public interface Attachment extends Appendix {
             return hash;
         }
 
-        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, byte[] url, Version version, byte[] hash, byte level) {
+        public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[]
+                hash, byte level) {
             if (level == TransactionType.Update.CRITICAL.getSubtype()) {
                 return new Attachment.CriticalUpdate(platform, architecture, url, version, hash);
             } else if (level == TransactionType.Update.IMPORTANT.getSubtype()) {
@@ -3670,7 +3685,7 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public CriticalUpdate(Platform platform, Architecture architecture, byte[] url, Version version, byte[] hash) {
+        public CriticalUpdate(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
             super(platform, architecture, url, version, hash);
         }
 
@@ -3694,7 +3709,7 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public ImportantUpdate(Platform platform, Architecture architecture, byte[] url, Version version, byte[] hash) {
+        public ImportantUpdate(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
             super(platform, architecture, url, version, hash);
         }
 
@@ -3718,7 +3733,7 @@ public interface Attachment extends Appendix {
             super(attachmentData);
         }
 
-        public MinorUpdate(Platform platform, Architecture architecture, byte[] url, Version version, byte[] hash) {
+        public MinorUpdate(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
             super(platform, architecture, url, version, hash);
         }
 

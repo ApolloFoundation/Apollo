@@ -127,7 +127,7 @@ public final class Constants {
     public static final int MAX_TAGGED_DATA_CHANNEL_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_FILENAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DATA_LENGTH = 42 * 1024;
-    public static final int MAX_UPDATE_URL_LENGTH = 512;
+    public static final int UPDATE_URL_PART_LENGTH = 512;
     public static final int MAX_UPDATE_PLATFORM_LENGTH = 10;
     public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
     public static final int MAX_UPDATE_VERSION_LENGTH = 10;

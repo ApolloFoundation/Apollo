@@ -3165,7 +3165,8 @@ public abstract class TransactionType {
         @Override
         void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-            if (attachment.getUrl().length > Constants.MAX_UPDATE_URL_LENGTH
+            if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH
+                    || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH
                     || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
                 throw new AplException.NotValidException("Invalid update transaction attachment:" +  attachment.getJSONObject());
             }

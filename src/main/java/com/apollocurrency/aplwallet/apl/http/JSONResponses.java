@@ -150,7 +150,8 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_SECRET = incorrect("secret");
     public static final JSONStreamAware MISSING_RECIPIENT_PUBLIC_KEY = missing("recipientPublicKey");
     public static final JSONStreamAware INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH = incorrect("property", "(length must be > 0 but less than " + Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH + " characters)");
-    public static final JSONStreamAware INCORRECT_UPDATE_URL_LENGTH = incorrectLength("url",Constants.MAX_UPDATE_URL_LENGTH);
+    public static final JSONStreamAware INCORRECT_UPDATE_URL_FIRST_PART_LENGTH = incorrectSize("urlFirstPart", Constants.UPDATE_URL_PART_LENGTH);
+    public static final JSONStreamAware INCORRECT_UPDATE_URL_SECOND_PART_LENGTH = incorrectSize("urlSecondPart", Constants.UPDATE_URL_PART_LENGTH);
     public static final JSONStreamAware INCORRECT_UPDATE_HASH_LENGTH = incorrectLength("hash", Constants.MAX_UPDATE_HASH_LENGTH);
     public static final JSONStreamAware INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH = incorrect("value", "(length must be less than " + Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_PROPERTY = incorrect("property", "(cannot be deleted by this account)");
@@ -470,6 +471,10 @@ public final class JSONResponses {
 
     static JSONStreamAware incorrectLength(String paramName, long maxLength) {
         return incorrect(paramName, "(length must be > 0 but less than " + maxLength + " characters)");
+    }
+
+    static JSONStreamAware incorrectSize(String paramName, long requiredSize) {
+        return incorrect(paramName, "(size must be exactly " + requiredSize + " bytes)");
     }
 
     static JSONStreamAware unknown(String objectName) {
