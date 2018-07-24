@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.util.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.List;
@@ -32,10 +31,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.CertificatePair;
 
 public class UpdaterCore {
-    private static final String URL_TEMPLATE = "(http)|(https)//:.+/ApolloWallet-%s.jar";
+    private static final String URL_TEMPLATE = "(http)|(https)://.+/ApolloWallet-%s.jar";
     private final UpdaterMediator mediator = UpdaterMediator.getInstance();
     private final Downloader downloader = Downloader.getInstance();
     private final SecurityAlertSender alertSender = SecurityAlertSender.getInstance();
@@ -149,9 +147,10 @@ public class UpdaterCore {
                     Platform currentPlatform = Platform.current();
                     Architecture currentArchitecture = Architecture.current();
                     if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                        String url = tryDecryptUrl(attachment.getUrl(), attachment.getAppVersion());
+                        String url = RSAUtil.tryDecryptUrl(attachment.getUrl(), attachment.getAppVersion(), URL_TEMPLATE);
                         if (url != null && !url.isEmpty()) {
                             if (checker.verifyCertificates(CERTIFICATE_DIRECTORY)) {
+                                this.updateDataHolder = new UpdateDataHolder(transaction, url);
                                 startUpdate();
                                 if (attachment.getLevel() != Level.MINOR) {
                                     mediator.removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
@@ -164,7 +163,6 @@ public class UpdaterCore {
                             Logger.logErrorMessage("Cannot decrypt url for update transaction:" + transaction.getId());
                             alertSender.send("Cannot decrypt url for update transaction:" + transaction.getId());
                         }
-                        this.updateDataHolder = new UpdateDataHolder(transaction, url);
                     }
                 }
             }
@@ -190,26 +188,6 @@ public class UpdaterCore {
         return false;
     }
 
-    private String tryDecryptUrl(DoubleByteArrayTuple encryptedUrl, Version updateVersion) {
-        Set<CertificatePair> certificatePairs;
-        try {
-            certificatePairs = UpdaterUtil.buildCertificatePairs(CERTIFICATE_DIRECTORY);
-            for (CertificatePair pair : certificatePairs) {
-                String urlString = new String(RSAUtil.doubleDecrypt(pair.getFirstCertificate().getPublicKey(), pair.getSecondCertificate().getPublicKey
-                        (), encryptedUrl));
-                if (urlString.matches(String.format(URL_TEMPLATE, updateVersion.toString()))) {
-                    return urlString;
-                }
-            }
-        }
-        catch (IOException | CertificateException | URISyntaxException e) {
-            Logger.logErrorMessage("Cannot read or load certificate", e);
-        }
-        catch (GeneralSecurityException e) {
-            Logger.logErrorMessage("Cannot decrypt url", e);
-        }
-        return null;
-    }
 
     private int getUpdateHeightFromType(TransactionType type) {
         return
