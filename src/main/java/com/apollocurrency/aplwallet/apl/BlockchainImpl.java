@@ -559,6 +559,7 @@ final class BlockchainImpl implements Blockchain {
                 sqlQuery.append("AND subtype = ? ");
             }
         }
+        sqlQuery.append("ORDER BY height desc, timestamp desc ");
         sqlQuery.append(DbUtils.limitsClause(from, to));
         Connection con = null;
         try {

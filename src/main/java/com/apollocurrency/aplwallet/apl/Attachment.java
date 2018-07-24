@@ -28,10 +28,7 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public interface Attachment extends Appendix {
 
@@ -3661,6 +3658,26 @@ public interface Attachment extends Appendix {
 
         public byte[] getHash() {
             return hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof UpdateAttachment)) return false;
+            UpdateAttachment that = (UpdateAttachment) o;
+            return platform == that.platform &&
+                    architecture == that.architecture &&
+                    Objects.equals(url, that.url) &&
+                    Objects.equals(version, that.version) &&
+                    Arrays.equals(hash, that.hash);
+        }
+
+        @Override
+        public int hashCode() {
+
+            int result = Objects.hash(platform, architecture, url, version);
+            result = 31 * result + Arrays.hashCode(hash);
+            return result;
         }
 
         public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[]

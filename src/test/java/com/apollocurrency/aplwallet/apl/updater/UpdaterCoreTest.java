@@ -16,14 +16,15 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.*;
+import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -32,34 +33,99 @@ import util.TestUtil;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.util.*;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
+import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
-@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class})
+@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class})
 public class UpdaterCoreTest {
     @Mock
     private UpdaterMediator fakeMediatorInstance;
     @Mock
-    private AuthorityChecker checker;
+    private AuthorityChecker fakeCheckerInstance;
+
+    @Mock
+    private Downloader fakeDownloaderInstance;
+
+    @Mock
+    private Unpacker fakeUnpackerInstance;
+
+    @Mock
+    private PlatformDependentUpdater fakePlatformDependentUpdaterInstance;
+
+
     @Test
     public void testTriggerUpdate() throws Exception {
+        //Prepare testdata
+        Version testVersion = Version.from("1.0.8");
+        Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
+                Platform.current(),
+                Architecture.current(),
+                new DoubleByteArrayTuple(new byte[0], new byte[0]),
+                testVersion,
+                new byte[0],
+                (byte) 0);
+        String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
+        UpdaterCore.UpdateDataHolder holder = new UpdaterCore.UpdateDataHolder(new UpdateTransaction(TransactionType.Update.CRITICAL, 0L, 0L, TestUtil.atm(1L), 0L, 9, attachment), decryptedUrl);
+
+        //Mock dependent classes
+
+        mockStatic(UpdaterMediator.class);
+        BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
+        Whitebox.setInternalState(fakeMediatorInstance, "updateInfo", UpdateInfo.getInstance());
+
+        mockStatic(Downloader.class);
+        BDDMockito.given(Downloader.getInstance()).willReturn(fakeDownloaderInstance);
+
+
+        mockStatic(Unpacker.class);
+        BDDMockito.given(Unpacker.getInstance()).willReturn(fakeUnpackerInstance);
+
+        mockStatic(PlatformDependentUpdater.class);
+        BDDMockito.given(PlatformDependentUpdater.getInstance()).willReturn(fakePlatformDependentUpdaterInstance);
+
+        //mock external methods
+
+        doReturn(10).when(fakeMediatorInstance, "getBlockchainHeight");
+        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(true, 10, holder.getTransaction().getHeight(),Level.CRITICAL, testVersion);
+        doCallRealMethod().when(fakeMediatorInstance).setUpdateState(any(UpdateInfo.UpdateState.class));
+
+        //spy target class
+        UpdaterCore updaterCore = spy(UpdaterCore.getInstance());
+
+        //mock inner private methods
+        doReturn(true).when(updaterCore, "tryUpdate", attachment, decryptedUrl);
+
+        //call target method
+        updaterCore.triggerUpdate(holder);
+
+        //verify methods invocations
+        verifyPrivate(updaterCore).invoke("tryUpdate", attachment, decryptedUrl);
+        UpdateInfo info = UpdateInfo.getInstance();
+        Assert.assertEquals(testVersion, info.getVersion());
+        Assert.assertEquals(9, info.getReceivedHeight());
+        Assert.assertEquals(10, info.getEstimatedHeight());
+        Assert.assertEquals(Level.CRITICAL, info.getLevel());
+        Assert.assertEquals(UpdateInfo.UpdateState.FINISHED, info.getUpdateState());
+
     }
 
-    @Test
-    public void testTryDecryptUrl() {
+    @BeforeClass
+    public static void init() {
+        mockStatic(Logger.class);
     }
-
 
     @Test
     public void testVerifyJar() throws Exception {
-        Class<?> clazz = Class.forName("com.apollocurrency.aplwallet.apl.UpdaterMediator$UpdaterMediatorHolder");
-        Whitebox.setInternalState(clazz, "INSTANCE", fakeMediatorInstance);
+        mockStatic(UpdaterMediator.class);
+        BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
         Path signedJar = Files.createTempFile("test-verifyjar", ".jar");
         try {
             Set<Certificate> certificates = new HashSet<>();
@@ -72,9 +138,8 @@ public class UpdaterCoreTest {
             generator.generate();
             generator.close();
 
-            PowerMockito.mockStatic(UpdaterUtil.class);
+            mockStatic(UpdaterUtil.class);
             when(UpdaterUtil.readCertificates(CERTIFICATE_DIRECTORY, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX)).thenReturn(certificates);
-            PowerMockito.mockStatic(Logger.class);
             Object result = Whitebox.invokeMethod(UpdaterCore.getInstance(), "verifyJar", signedJar);
             Assert.assertTrue(Boolean.parseBoolean(result.toString()));
         }
@@ -88,15 +153,16 @@ public class UpdaterCoreTest {
 
     }
 
+    //TODO create few tests
     @Test
     public void testProcessTransactions() throws Exception {
         mockStatic(AuthorityChecker.class);
-        BDDMockito.given(AuthorityChecker.getInstance()).willReturn(checker);
-        doReturn(true).when(checker, "verifyCertificates", CERTIFICATE_DIRECTORY);
+        BDDMockito.given(AuthorityChecker.getInstance()).willReturn(fakeCheckerInstance);
+        doReturn(true).when(fakeCheckerInstance, "verifyCertificates", CERTIFICATE_DIRECTORY);
 
         Version testVersion = Version.from("1.0.7");
-        Class<?> clazz = Class.forName("com.apollocurrency.aplwallet.apl.UpdaterMediator$UpdaterMediatorHolder");
-        Whitebox.setInternalState(clazz, "INSTANCE", fakeMediatorInstance);
+        mockStatic(UpdaterMediator.class);
+        BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
         when(fakeMediatorInstance, "getWalletVersion").thenReturn(testVersion);
 
         Platform currentPlatform = Platform.current();
@@ -110,22 +176,26 @@ public class UpdaterCoreTest {
                 (byte) 0);
 
         mockStatic(RSAUtil.class);
-        doReturn("http://apollocurrency/ApolloWallet-" + testVersion + ".jar").when(RSAUtil.class, "tryDecryptUrl", attachment.getUrl(), attachment
+        String fakeWalletUrl = "http://apollocurrency/ApolloWallet-" + testVersion + ".jar";
+        doReturn(fakeWalletUrl).when(RSAUtil.class, "tryDecryptUrl", attachment.getUrl(), attachment
                 .getAppVersion(), "(http)|(https)://.+/ApolloWallet-%s.jar");
         Thread mock = mock(Thread.class);
         doNothing().when(mock, "start");
         whenNew(Thread.class).withAnyArguments().thenReturn(mock);
-        List<Transaction> randomTransactions = mockRandomTransaction(6);
-        UpdateTransaction e = new UpdateTransaction(TransactionType.Update.CRITICAL, 0, 0, TestUtil.atm
+        List<Transaction> randomTransactions = getRandomTransactions(6);
+        UpdateTransaction updateTransaction = new UpdateTransaction(TransactionType.Update.CRITICAL, 0, 0, TestUtil.atm
                 (1L), 0, attachment);
-        randomTransactions.add(e);
+        randomTransactions.add(updateTransaction);
 
-        when(fakeMediatorInstance, "isUpdateTransaction", e).thenReturn(true);
+        when(fakeMediatorInstance, "isUpdateTransaction", updateTransaction).thenReturn(true);
         Whitebox.invokeMethod(UpdaterCore.getInstance(), "processTransactions", randomTransactions);
         Mockito.verify(mock, Mockito.times(1)).start();
+        UpdaterCore.UpdateDataHolder updateDataHolder = Whitebox.getInternalState(UpdaterCore.getInstance(), "updateDataHolder");
+        Assert.assertEquals(updateTransaction, updateDataHolder.getTransaction());
+        Assert.assertEquals(fakeWalletUrl, updateDataHolder.getDecryptedUrl());
     }
 
-    List<Transaction> mockRandomTransaction(int numberOfTransactions) {
+    private List<Transaction> getRandomTransactions(int numberOfTransactions) {
         List<Transaction> transactions = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < numberOfTransactions; i++) {
@@ -135,8 +205,54 @@ public class UpdaterCoreTest {
         return transactions;
     }
 
+    //TODO make public method calls mocking via when...return
     @Test
-    public void testTryUpdate() {
+    public void testTryUpdate() throws Exception {
+        //Prepare testdata
+        Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
+                Platform.current(),
+                Architecture.current(),
+                new DoubleByteArrayTuple(new byte[0], new byte[0]),
+                Version.from("1.0.8"),
+                new byte[0],
+                (byte) 0);
+        String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
+        Path fakeJarPath = Paths.get("");
+        Path fakeUnpackedDirPath = Paths.get("");
 
+        //Mock dependent classes
+
+        mockStatic(UpdaterMediator.class);
+        BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
+
+        mockStatic(Downloader.class);
+        BDDMockito.given(Downloader.getInstance()).willReturn(fakeDownloaderInstance);
+
+        mockStatic(Unpacker.class);
+        BDDMockito.given(Unpacker.getInstance()).willReturn(fakeUnpackerInstance);
+
+        mockStatic(PlatformDependentUpdater.class);
+        BDDMockito.given(PlatformDependentUpdater.getInstance()).willReturn(fakePlatformDependentUpdaterInstance);
+
+        //mock external methods
+        doReturn(fakeJarPath).when(fakeDownloaderInstance, "tryDownload", decryptedUrl, attachment.getHash());
+        doReturn(fakeUnpackedDirPath).when(fakeUnpackerInstance, "unpack", fakeJarPath);
+        doNothing().when(fakePlatformDependentUpdaterInstance, "continueUpdate", fakeUnpackedDirPath, attachment.getPlatform());
+
+        //spy target class
+        UpdaterCore updaterCore = spy(UpdaterCore.getInstance());
+
+        //mock inner private methods
+        doReturn(true).when(updaterCore, "verifyJar", fakeJarPath);
+        doNothing().when(updaterCore, "stopForgingAndBlockAcceptance");
+
+
+        //call target method
+        Object result = Whitebox.invokeMethod(updaterCore, "tryUpdate", attachment, decryptedUrl);
+        Assert.assertTrue((Boolean) result);
+
+        //verify methods invocations
+        verifyPrivate(updaterCore).invoke("verifyJar", fakeJarPath);
+        Mockito.verify(fakePlatformDependentUpdaterInstance, Mockito.times(1)).continueUpdate(fakeUnpackedDirPath, attachment.getPlatform());
     }
 }

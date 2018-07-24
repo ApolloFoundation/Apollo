@@ -39,7 +39,7 @@ public class UpdaterCore {
     private final SecurityAlertSender alertSender = SecurityAlertSender.getInstance();
     private final AuthorityChecker checker = AuthorityChecker.getInstance();
     private final Unpacker unpacker = Unpacker.getInstance();
-    private final PlatformDependentUpdater platformDependentUpdater = new PlatformDependentUpdater();
+    private final PlatformDependentUpdater platformDependentUpdater = PlatformDependentUpdater.getInstance();
     private volatile UpdateDataHolder updateDataHolder;
     private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
 
@@ -49,18 +49,6 @@ public class UpdaterCore {
 
     public static UpdaterCore getInstance() {
         return UpdaterCoreHolder.HOLDER_INSTANCE;
-    }
-
-    public void stopForgingAndBlockAcceptance() {
-        Logger.logDebugMessage("Stopping forging...");
-        int numberOfGenerators = mediator.stopForging();
-        Logger.logInfoMessage("Forging was stopped, total generators: " + numberOfGenerators);
-        Logger.logDebugMessage("Shutdown peer server...");
-        mediator.shutdownPeerServer();
-        Logger.logInfoMessage("Peer server was shutdown");
-        Logger.logDebugMessage("Shutdown blockchain processor...");
-        mediator.shutdownBlockchainProcessor();
-        Logger.logInfoMessage("Blockchain processor was shutdown");
     }
 
     public void startUpdate() {
@@ -186,6 +174,18 @@ public class UpdaterCore {
             Logger.logErrorMessage("Unable to load certificates");
         }
         return false;
+    }
+
+    private void stopForgingAndBlockAcceptance() {
+        Logger.logDebugMessage("Stopping forging...");
+        int numberOfGenerators = mediator.stopForging();
+        Logger.logInfoMessage("Forging was stopped, total generators: " + numberOfGenerators);
+        Logger.logDebugMessage("Shutdown peer server...");
+        mediator.shutdownPeerServer();
+        Logger.logInfoMessage("Peer server was shutdown");
+        Logger.logDebugMessage("Shutdown blockchain processor...");
+        mediator.shutdownBlockchainProcessor();
+        Logger.logInfoMessage("Blockchain processor was shutdown");
     }
 
 
