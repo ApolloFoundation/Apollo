@@ -32,10 +32,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
 
+
 public class UpdaterCore {
     private volatile UpdateDataHolder updateDataHolder;
     private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
-
     private UpdaterCore() {
         UpdaterMediator.getInstance().addUpdateListener(updateListener);
     }
@@ -48,12 +48,36 @@ public class UpdaterCore {
         new Thread(() -> triggerUpdate(updateDataHolder), "Updater thread").start();
     }
 
-    public void triggerUpdate(UpdateDataHolder holder) {
+    public void startMinorUpdate() {
+        Runnable minorUpdaTask = () -> {
+            if (updateDataHolder.getTransaction().getType() == TransactionType.Update.MINOR) {
+                Logger.logInfoMessage("Starting minor update...");
+                Transaction updateTransaction = updateDataHolder.getTransaction();
+                TransactionType.Update type = (TransactionType.Update) updateTransaction.getType();
+                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) updateTransaction.getAttachment();
+                int updateHeight = getUpdateHeightFromType(type);
+                UpdaterMediator.getInstance().setUpdateData(true, updateHeight, updateTransaction.getHeight(), type.getLevel(), attachment.getAppVersion());
+                UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.IN_PROGRESS);
+                if (tryUpdate((Attachment.UpdateAttachment) updateDataHolder.getTransaction().getAttachment(), updateDataHolder.getDecryptedUrl())) {
+                    Logger.logInfoMessage("Minor update was successfully installed ");
+                    UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.FINISHED);
+                } else {
+                    Logger.logErrorMessage("Error! Cannot install minor update.");
+                    UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                }
+            } else {
+                throw new RuntimeException("Cannot start manually minor update for transaction type: " + updateDataHolder.getTransaction().getType());
+            }
+        };
+        new Thread(minorUpdaTask, "Minor update thread").start();
+    }
+
+    private void triggerUpdate(UpdateDataHolder holder) {
         Transaction updateTransaction = holder.getTransaction();
-        TransactionType type = updateTransaction.getType();
+        TransactionType.Update type = (TransactionType.Update) updateTransaction.getType();
         Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) updateTransaction.getAttachment();
         int updateHeight = getUpdateHeightFromType(type);
-        UpdaterMediator.getInstance().setUpdateData(true, updateHeight, updateTransaction.getHeight(), attachment.getLevel(), attachment.getAppVersion());
+        UpdaterMediator.getInstance().setUpdateData(true, updateHeight, updateTransaction.getHeight(), type.getLevel(), attachment.getAppVersion());
         UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.IN_PROGRESS);
         if (type == TransactionType.Update.CRITICAL) {
             //stop forging and peer server immediately
@@ -69,11 +93,17 @@ public class UpdaterCore {
             boolean updated = false;
             while (!updated) {
                 updated = scheduleUpdate(updateHeight, attachment, holder.getDecryptedUrl());
-                updateHeight = getUpdateHeightFromType(type);
                 if (!updated) {
+                    updateHeight = getUpdateHeightFromType(type);
                     Logger.logErrorMessage("Cannot install scheduled important update. Trying to schedule new update attempt at " + updateHeight + " height");
                     UpdaterMediator.getInstance().setUpdateHeight(updateHeight);
                     UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.RE_PLANNING);
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    }
+                    catch (InterruptedException e) {
+                        Logger.logErrorMessage("Important update exception", e);
+                    }
                 }
             }
             Logger.logInfoMessage("Important update was installed successfully!");
@@ -133,7 +163,7 @@ public class UpdaterCore {
                             if (AuthorityChecker.getInstance().verifyCertificates(CERTIFICATE_DIRECTORY)) {
                                 this.updateDataHolder = new UpdateDataHolder(transaction, url);
                                 startUpdate();
-                                if (attachment.getLevel() != Level.MINOR) {
+                                if (((TransactionType.Update) transaction.getType()).getLevel() != Level.MINOR) {
                                     UpdaterMediator.getInstance().removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
                                 }
                             } else {
@@ -181,7 +211,6 @@ public class UpdaterCore {
         Logger.logInfoMessage("Blockchain processor was shutdown");
     }
 
-
     private int getUpdateHeightFromType(TransactionType type) {
         return
                 //update is NOW on currentBlockchainHeight
@@ -193,10 +222,6 @@ public class UpdaterCore {
 
                                 //assume that current update is not mandatory
                                 type == TransactionType.Update.MINOR ? -1 : 0;
-    }
-
-    private static class UpdaterCoreHolder {
-        private static final UpdaterCore HOLDER_INSTANCE = new UpdaterCore();
     }
 
     public static class UpdateDataHolder {
@@ -231,5 +256,9 @@ public class UpdaterCore {
         private void setDecryptedUrl(String decryptedUrl) {
             this.decryptedUrl = decryptedUrl;
         }
+    }
+
+    private static class UpdaterCoreHolder {
+        private static final UpdaterCore HOLDER_INSTANCE = new UpdaterCore();
     }
 }

@@ -43,7 +43,7 @@ public final class StartMinorUpdate extends APIServlet.APIRequestHandler {
         if (info.isStartAllowed()) {
             object.put("updateStarted", "true");
             object.put("updateInfo:", info.json());
-            UpdaterCore.getInstance().startUpdate();
+            UpdaterCore.getInstance().startMinorUpdate();
         } else {
             object.put("updateStarted", "false");
         }

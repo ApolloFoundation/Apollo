@@ -3602,7 +3602,6 @@ public interface Attachment extends Appendix {
             this.hash = hash;
         }
 
-        public abstract Level getLevel();
         @Override
         int getMySize() {
             return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length
@@ -3707,11 +3706,6 @@ public interface Attachment extends Appendix {
         }
 
         @Override
-        public Level getLevel() {
-            return Level.CRITICAL;
-        }
-
-        @Override
         public TransactionType getTransactionType() {
             return TransactionType.Update.CRITICAL;
         }
@@ -3731,11 +3725,6 @@ public interface Attachment extends Appendix {
         }
 
         @Override
-        public Level getLevel() {
-            return Level.IMPORTANT;
-        }
-
-        @Override
         public TransactionType getTransactionType() {
             return TransactionType.Update.IMPORTANT;
         }
@@ -3752,11 +3741,6 @@ public interface Attachment extends Appendix {
 
         public MinorUpdate(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
             super(platform, architecture, url, version, hash);
-        }
-
-        @Override
-        public Level getLevel() {
-            return Level.MINOR;
         }
 
         @Override
