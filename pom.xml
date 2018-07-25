@@ -53,7 +53,7 @@
         <json-unit.version>1.20.0</json-unit.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <powermock.version>1.6.5</powermock.version>
+        <powermock.version>1.7.4</powermock.version>
     </properties>
 
 
@@ -195,6 +195,12 @@
             <artifactId>mockito-all</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
         </dependency>
 
         <dependency>

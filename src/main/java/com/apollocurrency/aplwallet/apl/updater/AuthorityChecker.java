@@ -74,7 +74,7 @@ public class AuthorityChecker {
         return downloader.download(UpdaterConstants.CA_CERTIFICATE_URL);
     }
 
-    void verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {
+    public void verifyJarSignature(Certificate certificate, Path jarFilePath) throws IOException {
         try(JarFile jar = new JarFile(jarFilePath.toFile())) {
             JarVerifier verifier = new JarVerifier(jar);
             verifier.verify((X509Certificate) certificate);

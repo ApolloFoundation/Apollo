@@ -15,12 +15,15 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import sun.security.rsa.RSACore;
 
 import javax.crypto.Cipher;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -32,11 +35,13 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResource;
 
 
 public class RSAUtil {
+    private static final String URL_TEMPLATE = "((http)|(https))://.+/ApolloWallet-%s.jar";
 
     public static DoubleByteArrayTuple doubleEncrypt(PrivateKey privateKey1, PrivateKey privateKey2, byte[] message) throws Exception {
         byte[] firstEncryptedBytes = encrypt(privateKey1, message);
@@ -74,7 +79,6 @@ public class RSAUtil {
     }
 
 
-
     public static byte[] encrypt(PrivateKey privateKey, byte[] message) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
@@ -82,7 +86,7 @@ public class RSAUtil {
         return cipher.doFinal(message);
     }
 
-    public static byte[] decrypt(PublicKey publicKey, byte [] encrypted) throws GeneralSecurityException {
+    public static byte[] decrypt(PublicKey publicKey, byte[] encrypted) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
         return cipher.doFinal(encrypted);
@@ -93,14 +97,15 @@ public class RSAUtil {
         return encrypt(privateKey, message);
     }
 
-    public static byte[] decrypt(String certificatePath, byte [] encrypted) throws GeneralSecurityException, IOException, URISyntaxException {
+    public static byte[] decrypt(String certificatePath, byte[] encrypted) throws GeneralSecurityException, IOException, URISyntaxException {
         PublicKey publicKey = getPublicKeyFromCertificate(certificatePath);
         return decrypt(publicKey, encrypted);
     }
 
     public static PrivateKey getPrivateKey(String path) throws IOException, GeneralSecurityException, URISyntaxException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
-        PEMParser pem = new PEMParser(new FileReader(loadResource(path)));
+        File file = loadResource(path);
+        PEMParser pem = new PEMParser(new FileReader(file));
         Object keyObject = pem.readObject();
         byte[] privateKeyEncoded;
         if (keyObject instanceof PEMKeyPair) {
@@ -125,8 +130,33 @@ public class RSAUtil {
     public static int maxEncryptionLength(RSAKey key) {
         return RSACore.getByteLength(key) - 11;
     }
+
     public static int keyLength(RSAKey key) {
         return RSACore.getByteLength(key);
+    }
+
+    public static String tryDecryptUrl(String certificateDirectory, DoubleByteArrayTuple encryptedUrl, Version updateVersion) {
+        Set<UpdaterUtil.CertificatePair> certificatePairs;
+        try {
+            certificatePairs = UpdaterUtil.buildCertificatePairs(certificateDirectory);
+            for (UpdaterUtil.CertificatePair pair : certificatePairs) {
+                try {
+
+                    String urlString = new String(RSAUtil.doubleDecrypt(pair.getFirstCertificate().getPublicKey(), pair.getSecondCertificate().getPublicKey
+                            (), encryptedUrl));
+                    if (urlString.matches(String.format(URL_TEMPLATE, updateVersion.toString()))) {
+                        return urlString;
+                    }
+                }
+                catch (Exception e) {
+                    Logger.logErrorMessage("Cannot decrypt url", e);
+                }
+            }
+        }
+        catch (IOException | CertificateException | URISyntaxException e) {
+            Logger.logErrorMessage("Cannot read or load certificate", e);
+        }
+        return null;
     }
 
 }

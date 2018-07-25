@@ -3176,6 +3176,8 @@ public abstract class TransactionType {
             return transactionType.getType() == TYPE_UPDATE;
         }
 
+        public abstract Level getLevel();
+
         @Override
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
 
@@ -3185,6 +3187,10 @@ public abstract class TransactionType {
         }
 
         public static final TransactionType CRITICAL = new Update() {
+            @Override
+            public Level getLevel() {
+                return Level.CRITICAL;
+            }
 
             @Override
             public final byte getSubtype() {
@@ -3214,6 +3220,10 @@ public abstract class TransactionType {
         };
 
         public static final TransactionType IMPORTANT = new Update() {
+            @Override
+            public Level getLevel() {
+                return Level.IMPORTANT;
+            }
 
             @Override
             public final byte getSubtype() {
@@ -3242,6 +3252,10 @@ public abstract class TransactionType {
         };
 
         public static final TransactionType MINOR = new Update() {
+            @Override
+            public Level getLevel() {
+                return Level.MINOR;
+            }
 
             @Override
             public final byte getSubtype() {

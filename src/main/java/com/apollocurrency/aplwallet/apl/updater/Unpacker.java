@@ -24,29 +24,33 @@ import java.util.jar.JarFile;
 
 public class Unpacker {
 
-    private static class UnpackerHolder {
-        private static final Unpacker INSTANCE = new Unpacker();
-    }
-
     private Unpacker() {}
 
     public static Unpacker getInstance() {
         return UnpackerHolder.INSTANCE;
     }
+
     public Path unpack(Path jarFilePath) throws IOException {
         Path destDirPath = Files.createTempDirectory("apollo-unpacked");
-        JarFile jar = new JarFile(jarFilePath.toString());
-        Enumeration enumEntries = jar.entries();
-        while (enumEntries.hasMoreElements()) {
-            JarEntry file = (JarEntry) enumEntries.nextElement();
-            Path f = destDirPath.resolve(file.getName());
-            if (file.isDirectory()) {
-                Files.createDirectory(f);
-                continue;
+        try (JarFile jar = new JarFile(jarFilePath.toString())) {
+            Enumeration directoryEntries = jar.entries();
+            while (directoryEntries.hasMoreElements()) {
+                JarEntry file = (JarEntry) directoryEntries.nextElement();
+                Path f = destDirPath.resolve(file.getName());
+                if (file.isDirectory()) {
+                    Files.createDirectory(f);
+                } else {
+                    if (!Files.exists(f)) {
+                        Files.createDirectories(f.getParent());
+                    }
+                    Files.copy(jar.getInputStream(file), f);
+                }
             }
-            Files.copy(jar.getInputStream(file), f);
+            return destDirPath;
         }
-        jar.close();
-        return destDirPath;
+    }
+
+    private static class UnpackerHolder {
+        private static final Unpacker INSTANCE = new Unpacker();
     }
 }

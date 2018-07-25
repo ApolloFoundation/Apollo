@@ -65,11 +65,11 @@ public class UpdaterMediator {
 
 
     private static class UpdaterMediatorHolder {
-        private static final UpdaterMediator HOLDER_INSTANCE = new UpdaterMediator();
+        private static final UpdaterMediator INSTANCE = new UpdaterMediator();
     }
 
     public static UpdaterMediator getInstance() {
-        return UpdaterMediatorHolder.HOLDER_INSTANCE;
+        return UpdaterMediatorHolder.INSTANCE;
     }
     private UpdaterMediator() {}
 

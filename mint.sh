@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp classes:lib/*:conf apl.mint.MintWorker
+java -cp target/classes:target/lib/*:conf com.apollocurrency.aplwallet.apl.mint.MintWorker
