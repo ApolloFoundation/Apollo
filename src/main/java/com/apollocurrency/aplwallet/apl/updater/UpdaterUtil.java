@@ -142,11 +142,11 @@ public class UpdaterUtil {
         }
     }
 
-    public static File loadResource(String fileName) throws URISyntaxException {
+    public static File loadResource(String fileName) {
         try {
             return new File(RSAUtil.class.getClassLoader().getResource(fileName).toURI());
         }
-        catch (NullPointerException e) {
+        catch (Exception e) {
             File file = Paths.get(fileName).toFile();
             if (file.exists()) {
                 return file;

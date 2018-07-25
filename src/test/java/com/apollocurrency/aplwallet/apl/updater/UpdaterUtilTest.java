@@ -53,15 +53,15 @@ public class UpdaterUtilTest {
      */
     @Test
     public void testBuildCertificatePairs() throws Exception {
-
         String directory = "test-dir";
         String[] files = new String[]{"1_1.crt", "1_2.crt", "1_3.crt", "2_1.crt", "2_2.crt"};
 
         Path directoryPath = Paths.get(directory);
 
+        PowerMockito.spy(UpdaterUtil.class);
+        PowerMockito.doReturn(directoryPath).when(UpdaterUtil.class, "loadResourcePath", directory) ;
         PowerMockito.mockStatic(Files.class);
         PowerMockito.when(Files.walk(directoryPath, 1)).thenReturn(createPathStream(files), createPathStream(files));
-
         PowerMockito.mockStatic(CertificateFactory.class);
         PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
 

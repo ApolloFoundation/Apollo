@@ -19,11 +19,9 @@ import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
@@ -44,25 +42,16 @@ import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
-@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class})
+@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, Logger.class})
 public class UpdaterCoreTest {
-    @Mock
-    private UpdaterMediator fakeMediatorInstance;
-    @Mock
-    private AuthorityChecker fakeCheckerInstance;
-
-    @Mock
-    private Downloader fakeDownloaderInstance;
-
-    @Mock
-    private Unpacker fakeUnpackerInstance;
-
-    @Mock
-    private PlatformDependentUpdater fakePlatformDependentUpdaterInstance;
-
 
     @Test
     public void testTriggerUpdate() throws Exception {
+        UpdaterMediator fakeMediatorInstance = mock(UpdaterMediator.class);
+        Downloader fakeDownloaderInstance = mock(Downloader.class);
+        Unpacker fakeUnpackerInstance = mock(Unpacker.class);
+        PlatformDependentUpdater fakePlatformDependentUpdaterInstance = mock(PlatformDependentUpdater.class);
+
         //Prepare testdata
         Version testVersion = Version.from("1.0.8");
         Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
@@ -77,6 +66,7 @@ public class UpdaterCoreTest {
 
         //Mock dependent classes
 
+        mockStatic(Logger.class);
         mockStatic(UpdaterMediator.class);
         BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
         Whitebox.setInternalState(fakeMediatorInstance, "updateInfo", UpdateInfo.getInstance());
@@ -117,13 +107,12 @@ public class UpdaterCoreTest {
 
     }
 
-    @BeforeClass
-    public static void init() {
-        mockStatic(Logger.class);
-    }
+
 
     @Test
     public void testVerifyJar() throws Exception {
+        mockStatic(Logger.class);
+        UpdaterMediator fakeMediatorInstance = mock(UpdaterMediator.class);
         mockStatic(UpdaterMediator.class);
         BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
         Path signedJar = Files.createTempFile("test-verifyjar", ".jar");
@@ -140,6 +129,7 @@ public class UpdaterCoreTest {
 
             mockStatic(UpdaterUtil.class);
             when(UpdaterUtil.readCertificates(CERTIFICATE_DIRECTORY, CERTIFICATE_SUFFIX, FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX)).thenReturn(certificates);
+
             Object result = Whitebox.invokeMethod(UpdaterCore.getInstance(), "verifyJar", signedJar);
             Assert.assertTrue(Boolean.parseBoolean(result.toString()));
         }
@@ -156,6 +146,9 @@ public class UpdaterCoreTest {
     //TODO create few tests
     @Test
     public void testProcessTransactions() throws Exception {
+        mockStatic(Logger.class);
+        UpdaterMediator fakeMediatorInstance = mock(UpdaterMediator.class);
+        AuthorityChecker fakeCheckerInstance = mock(AuthorityChecker.class);
         mockStatic(AuthorityChecker.class);
         BDDMockito.given(AuthorityChecker.getInstance()).willReturn(fakeCheckerInstance);
         doReturn(true).when(fakeCheckerInstance, "verifyCertificates", CERTIFICATE_DIRECTORY);
@@ -177,8 +170,8 @@ public class UpdaterCoreTest {
 
         mockStatic(RSAUtil.class);
         String fakeWalletUrl = "http://apollocurrency/ApolloWallet-" + testVersion + ".jar";
-        doReturn(fakeWalletUrl).when(RSAUtil.class, "tryDecryptUrl", attachment.getUrl(), attachment
-                .getAppVersion(), "(http)|(https)://.+/ApolloWallet-%s.jar");
+        doReturn(fakeWalletUrl).when(RSAUtil.class, "tryDecryptUrl", CERTIFICATE_DIRECTORY, attachment.getUrl(), attachment
+                .getAppVersion());
         Thread mock = mock(Thread.class);
         doNothing().when(mock, "start");
         whenNew(Thread.class).withAnyArguments().thenReturn(mock);
@@ -209,6 +202,11 @@ public class UpdaterCoreTest {
     @Test
     public void testTryUpdate() throws Exception {
         //Prepare testdata
+        mockStatic(Logger.class);
+        UpdaterMediator fakeMediatorInstance = mock(UpdaterMediator.class);
+        Downloader fakeDownloaderInstance = mock(Downloader.class);
+        Unpacker fakeUnpackerInstance = mock(Unpacker.class);
+        PlatformDependentUpdater fakePlatformDependentUpdaterInstance = mock(PlatformDependentUpdater.class);
         Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
                 Platform.current(),
                 Architecture.current(),
