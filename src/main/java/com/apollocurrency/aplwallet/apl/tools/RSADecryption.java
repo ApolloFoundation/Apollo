@@ -44,10 +44,10 @@ public class RSADecryption {
         if (args == null || args.length == 0) {
             Scanner sc = new Scanner(System.in);
 
-            System.out.println("Enter encrypted message in hexadecimal format. If you want to decrypt double encrypted message separate 512 byte messages with coma, space, tab, colon, semicolon");
+            System.out.println("Enter encrypted message in hexadecimal format. If you want to decrypt double encrypted message separate 512 byte messages with coma or semicolon");
             encryptedMessageString = sc.nextLine();
 
-            System.out.println("Enter certificate path. If you want to decrypt double encrypted message completely - separate certificate paths with coma, space, tab, colon, semicolon");
+            System.out.println("Enter certificate path. If you want to decrypt double encrypted message completely - separate certificate paths with coma or semicolon");
             certificatePathString = sc.nextLine();
 
             System.out.println("Do you want to convert bytes to UTF-8 string ('true' or 'false')");
@@ -69,13 +69,13 @@ public class RSADecryption {
         System.out.println("Got public key path " + certificatePathString);
         System.out.println("Got encrypted message: \'" + encryptedMessageString + "\'");
         System.out.println("Convert to string: " + convertToString);
-        String[] split = encryptedMessageString.split("([;,:]+)|(\\s+)");
+        String[] split = encryptedMessageString.split("([;,]+)|(\\s+)");
         boolean isSplittedMessage = split.length == 2;
         if (split.length > 2 || split.length == 0) {
             System.out.println("Invalid message string.");
             return;
         }
-        String[] split1 = certificatePathString.split("([;,:]+)|(\\s+)");
+        String[] split1 = certificatePathString.split("([;,]+)|(\\s+)");
         if (split1.length > 2 || split1.length == 0) {
             System.out.println("Invalid certificate string");
         }
