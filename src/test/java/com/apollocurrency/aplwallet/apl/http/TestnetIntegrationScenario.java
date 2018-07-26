@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import dto.Block;
 import dto.ForgingDetails;
 import dto.Transaction;
 import dto.UpdateTransaction;
@@ -32,14 +33,12 @@ import util.TestUtil;
 import util.WalletRunner;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
+import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
 import static org.slf4j.LoggerFactory.getLogger;
 import static util.TestUtil.atm;
 
@@ -95,10 +94,12 @@ public class TestnetIntegrationScenario {
         String secretPhrase = ACCOUNTS.get(TestUtil.getRandomRS(ACCOUNTS));
         long feeATM = atm(1L);
         DoubleByteArrayTuple updateUrl = new DoubleByteArrayTuple(new byte[0], new byte[0]);
+        Assert.fail("Encrypted url is required");
         Version peerWalletVersion = CLIENT.getRemoteVersion(randomUrl());
         Version newWalletVersion = peerWalletVersion.incrementVersion();
-        byte[] hash = new byte[] {123, 41, -45, 32};
-        UpdateTransaction updateTransaction = CLIENT.sendUpdateTransaction(nodeApiUrl, secretPhrase, feeATM, 0, updateUrl, newWalletVersion, Architecture.AMD64, Platform.LINUX, Convert.toHexString(hash), 5);
+        String hashString = "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4";
+        byte[] hash = Convert.parseHexString(hashString);
+        UpdateTransaction updateTransaction = CLIENT.sendUpdateTransaction(nodeApiUrl, secretPhrase, feeATM, 0, updateUrl, newWalletVersion, Architecture.AMD64, Platform.LINUX, hashString, 5);
         UpdateTransaction.UpdateAttachment attachment = new UpdateTransaction.UpdateAttachment(Platform.LINUX, Architecture.AMD64, updateUrl, newWalletVersion, hash);
         Assert.assertEquals(TransactionType.Update.CRITICAL, TransactionType.findTransactionType(updateTransaction.getType(), updateTransaction.getSubtype()));
         Assert.assertEquals(attachment, updateTransaction.getAttachment());
@@ -221,14 +222,15 @@ public class TestnetIntegrationScenario {
 
 
     private boolean isFork() throws Exception {
-        Long currentBlockchainHeight;
-        Long prevBlockchainHeight = null;
+        Long height = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
+        Set<Block> peersLastBlocks = new HashSet<>();
         for (String url : runner.getUrls()) {
-            currentBlockchainHeight = CLIENT.getBlockchainHeight(url);
-            if (prevBlockchainHeight != null && !currentBlockchainHeight.equals(prevBlockchainHeight)) {
+            Block block = CLIENT.getBlock(url, height);
+            peersLastBlocks.add(block);
+            if (peersLastBlocks.size() > 1) {
+                LOG.error("Peer " + url + " is on Fork! " + block.toString());
                 return true;
             }
-            prevBlockchainHeight = currentBlockchainHeight;
         }
         return false;
     }
