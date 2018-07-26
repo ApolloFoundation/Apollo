@@ -255,7 +255,7 @@ public final class API {
             gzipHandler.setMinGzipSize(com.apollocurrency.aplwallet.apl.peer.Peers.MIN_COMPRESS_SIZE);
             apiHandler.setGzipHandler(gzipHandler);
 
-            apiHandler.addServlet(APITestServlet.class, "/src/test/test");
+            apiHandler.addServlet(APITestServlet.class, "/test");
             apiHandler.addServlet(APITestServlet.class, "/test-proxy");
 
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");

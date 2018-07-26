@@ -51,7 +51,7 @@ public class PlatformDependentUpdater {
         mediator.shutdownApplication();
     }
 
-    private void shutdownAndRunScript(Path workingDirectory, String scriptName, String runTool) {
+    private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
         Thread scriptRunner = new Thread(() -> {
         LOG.debug("Waiting apl shutdown...");
             while (!mediator.isShutdown()) {
@@ -62,14 +62,14 @@ public class PlatformDependentUpdater {
                     Logger.logErrorMessage("Platform dependent updater's thread was awakened", e);
                 }
             }
-            Path scriptPath = workingDirectory.resolve(scriptName);
+            Path scriptPath = updateDirectory.resolve(scriptName);
             if (!Files.exists(scriptPath)) {
                 LOG.error("File {} not exist in update directory! Cannot continue update.", scriptPath);
                 System.exit(1);
             }
             try {
                 LOG.debug("Starting platform dependent script");
-                Runtime.getRuntime().exec(String.format("%s %s %s %s %s", runTool, scriptPath.toString(), Paths.get("").toAbsolutePath().toString(), workingDirectory.toAbsolutePath().toString(), RuntimeEnvironment.isDesktopApplicationEnabled()).trim());
+                Runtime.getRuntime().exec(String.format("%s %s %s %s %s", runTool, scriptPath.toString(), Paths.get("").toAbsolutePath().toString(), updateDirectory.toAbsolutePath().toString(), RuntimeEnvironment.isDesktopApplicationEnabled()).trim());
                 LOG.debug("Platform dependent script was started");
             }
             catch (IOException e) {
@@ -77,7 +77,7 @@ public class PlatformDependentUpdater {
             }
             LOG.debug("Exit...");
             System.exit(0);
-        }, "Windows Platform dependent update thread");
+        }, "Platform dependent update thread");
         scriptRunner.start();
     }
 

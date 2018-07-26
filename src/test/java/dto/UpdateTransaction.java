@@ -98,6 +98,13 @@ public class UpdateTransaction extends Transaction {
             this.hash = Convert.parseHexString(hash);
         }
 
+        public UpdateAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
+            this.platform = platform;
+            this.architecture = architecture;
+            this.url = url;
+            this.version = version;
+            this.hash = hash;
+        }
 
         public UpdateAttachment() {
         }

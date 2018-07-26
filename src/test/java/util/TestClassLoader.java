@@ -7,7 +7,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TestClassLoader extends ClassLoader {
 
@@ -63,10 +65,24 @@ public class TestClassLoader extends ClassLoader {
 
     }
 
+    private boolean useCache;
+
+    public boolean isUseCache() {
+        return useCache;
+    }
+
+    public void setUseCache(boolean useCache) {
+        this.useCache = useCache;
+    }
+
+    private Map<String, Class> cachedClasses = new ConcurrentHashMap<>();
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         if (!classNames.contains(name) && !name.startsWith(rootDirName)) {
             return super.loadClass(name);
+        }
+        if (useCache && cachedClasses.containsKey(name)) {
+            return cachedClasses.get(name);
         }
         try(InputStream in = ClassLoader.getSystemResourceAsStream(name.replaceAll("\\.", "\\\\") + ".class")) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -78,7 +94,9 @@ public class TestClassLoader extends ClassLoader {
             buffer.flush();
             byte[] byteArray = buffer.toByteArray();
             in.close();
-            return defineClass(name, byteArray, 0, byteArray.length);
+            Class<?> loadedClass = defineClass(name, byteArray, 0, byteArray.length);
+            cachedClasses.put(name, loadedClass);
+            return loadedClass;
         }
         catch (IOException e) {
             throw new RuntimeException("Cannot load class " + name, e);
