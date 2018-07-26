@@ -16,8 +16,15 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.updater.Architecture;
+import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
+import com.apollocurrency.aplwallet.apl.updater.Platform;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.ForgingDetails;
 import dto.Transaction;
+import dto.UpdateTransaction;
 import org.junit.*;
 import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
@@ -30,9 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
 import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.atm;
 
 public class TestnetIntegrationScenario {
     private static final Map<String, String> ACCOUNTS = new HashMap<>(TestUtil.loadKeys(TestData.TEST_FILE));
@@ -76,6 +85,53 @@ public class TestnetIntegrationScenario {
         LOG.info("Private {} was successfully confirmed. Checking peers...", transaction);
         testIsAllPeersConnected();
         testIsFork();
+    }
+
+    @Test
+    public void testSendCriticalUpdate() throws Exception {
+        testIsFork();
+        testIsAllPeersConnected();
+        String nodeApiUrl = TestUtil.randomUrl(runner.getUrls());
+        String secretPhrase = ACCOUNTS.get(TestUtil.getRandomRS(ACCOUNTS));
+        long feeATM = atm(1L);
+        DoubleByteArrayTuple updateUrl = new DoubleByteArrayTuple(new byte[0], new byte[0]);
+        Version peerWalletVersion = CLIENT.getRemoteVersion(randomUrl());
+        Version newWalletVersion = peerWalletVersion.incrementVersion();
+        byte[] hash = new byte[] {123, 41, -45, 32};
+        UpdateTransaction updateTransaction = CLIENT.sendUpdateTransaction(nodeApiUrl, secretPhrase, feeATM, 0, updateUrl, newWalletVersion, Architecture.AMD64, Platform.LINUX, Convert.toHexString(hash), 5);
+        UpdateTransaction.UpdateAttachment attachment = new UpdateTransaction.UpdateAttachment(Platform.LINUX, Architecture.AMD64, updateUrl, newWalletVersion, hash);
+        Assert.assertEquals(TransactionType.Update.CRITICAL, TransactionType.findTransactionType(updateTransaction.getType(), updateTransaction.getSubtype()));
+        Assert.assertEquals(attachment, updateTransaction.getAttachment());
+        waitBlocks(1);
+        waitFor((String url)-> {
+                    try {
+                        Version walletCurrentVersion = CLIENT.getRemoteVersion(url);
+                        return (walletCurrentVersion.equals(newWalletVersion));
+                    }
+                    catch (IOException e) {
+                        return false;
+                    }
+                }
+            , 600
+        );
+        waitBlocks(1);
+        testIsFork();
+        testIsAllPeersConnected();
+    }
+
+    private  void waitFor(Predicate<String> condition, int seconds) throws InterruptedException {
+        double totalSeconds = 0;
+        while (!condition.test(randomUrl())) {
+            if (totalSeconds >= seconds) {
+                throw new RuntimeException("Time out");
+            }
+            TimeUnit.MILLISECONDS.sleep(500);
+            totalSeconds += 0.5;
+        }
+    }
+
+    private String randomUrl() {
+        return TestUtil.randomUrl(runner.getUrls());
     }
 
     @Test

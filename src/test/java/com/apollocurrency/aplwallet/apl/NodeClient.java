@@ -530,4 +530,14 @@ public class NodeClient {
         JsonNode transactionJson = root.get("transactionJSON");
         return MAPPER.readValue(transactionJson.toString(), UpdateTransaction.class);
     }
+
+    public Version getRemoteVersion(String url) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getState");
+        String json = getJson(createURI(url), params);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode versionString = root.get("version");
+        return Version.from(versionString.asText());
+    }
+
 }

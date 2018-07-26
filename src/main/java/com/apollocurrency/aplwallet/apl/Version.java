@@ -95,6 +95,9 @@ public class Version implements Comparable<Version> {
         return compareTo(v) > 0;
     }
 
+    public Version incrementVersion() {
+        return new Version(getMajorVersion(), getIntermediateVersion(), getMinorVersion() + 1);
+    }
     public boolean lessThan(Version v) {
         return compareTo(v) < 0;
     }
