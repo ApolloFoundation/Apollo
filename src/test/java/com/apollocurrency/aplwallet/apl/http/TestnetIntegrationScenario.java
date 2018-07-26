@@ -16,19 +16,22 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
-import util.TestUtil;
 import dto.ForgingDetails;
 import dto.Transaction;
 import org.junit.*;
+import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
+import util.TestUtil;
 import util.WalletRunner;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class TestnetIntegrationScenario {
@@ -36,29 +39,19 @@ public class TestnetIntegrationScenario {
     private static final NodeClient CLIENT = new NodeClient();
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
     private static final Random RANDOM = new Random();
-    private static String adminPass;
-    private static WalletRunner runner = new WalletRunner();
+    private WalletRunner runner;
 
-    static {
-        Properties properties = new Properties();
-        try {
-            properties.load(Files.newInputStream(Paths.get("conf/apl.properties")));
-            adminPass = String.valueOf(properties.get("apl.adminPassword"));
-        }
-        catch (IOException e) {
-            LOG.error("Cannot read apl.properties file", e);
-        }
-    }
-
-
-    @AfterClass
-    public static void tearDown() throws Exception {
+    @After
+    public  void tearDown() throws Exception {
         runner.shutdown();
     }
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
+        runner = new WalletRunner();
         runner.run();
+        //wait for init
+        TimeUnit.SECONDS.sleep(5);
     }
 
     @Test
@@ -86,8 +79,8 @@ public class TestnetIntegrationScenario {
     }
 
     @Test
-    @Ignore
     public void testStopForgingAndBlockAcceptance() throws Exception {
+        runner.disableReloading();
         testIsFork();
         testIsAllPeersConnected();
         LOG.info("Starting forging on {} accounts", ACCOUNTS.size());
@@ -96,12 +89,14 @@ public class TestnetIntegrationScenario {
                 CLIENT.startForging(TestData.TEST_LOCALHOST, secretPhrase);
             }
             catch (IOException e) {
-                LOG.error("Cannot start forging for account: " + accountRS + " on " + TestData.TEST_LOCALHOST, e);
+                String errorMessage = "Cannot start forging for account: " + accountRS + " on " + TestData.TEST_LOCALHOST;
+                LOG.error(errorMessage, e);
+                Assert.fail(errorMessage);
             }
         });
         TimeUnit.SECONDS.sleep(5);
         LOG.info("Verifying forgers on localhost");
-        List<ForgingDetails> forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, adminPass);
+        List<ForgingDetails> forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, ADMIN_PASS);
         Assert.assertEquals(5, forgers.size());
         forgers.forEach( generator -> {
             if (!ACCOUNTS.containsKey(generator.getAccountRS())) {
@@ -110,13 +105,14 @@ public class TestnetIntegrationScenario {
         });
         LOG.info("Stopping forging and peer server...");
         long remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
-        CLIENT.stopForgingAndBlockAcceptance(TestData.TEST_LOCALHOST, adminPass);
+        Class updaterCore = runner.loadClass("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
+        Whitebox.invokeMethod(updaterCore.getMethod("getInstance").invoke(null, null), "stopForgingAndBlockAcceptance");
         long localHeight = CLIENT.getBlockchainHeight(TestData.TEST_LOCALHOST);
         LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
         Assert.assertEquals(localHeight, remoteHeight);
         Assert.assertEquals(CLIENT.getBlock(TestUtil.randomUrl(runner.getUrls()), remoteHeight), CLIENT.getBlock(TestData.TEST_LOCALHOST, localHeight));
         LOG.info("Checking forgers on node (Assuming no forgers)");
-        forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, adminPass);
+        forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, ADMIN_PASS);
         Assert.assertEquals(0, forgers.size());
         LOG.info("Waiting 5 blocks creation...");
         waitBlocks(5);
@@ -153,7 +149,7 @@ public class TestnetIntegrationScenario {
         System.out.println("PeerCount=" + CLIENT.getPeersCount(runner.getUrls().get(0)));
         System.out.println("BLOCKS=" + CLIENT.getBlocksList(runner.getUrls().get(0), false, null));
         System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(runner.getUrls().get(0)));
-        System.out.println("Forgers="+ CLIENT.getForging(TestData.TEST_LOCALHOST, null, adminPass));
+        System.out.println("Forgers="+ CLIENT.getForging(TestData.TEST_LOCALHOST, null, ADMIN_PASS));
     }
 
     @Test

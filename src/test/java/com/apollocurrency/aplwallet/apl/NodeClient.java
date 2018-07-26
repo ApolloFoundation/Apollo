@@ -231,17 +231,9 @@ public class NodeClient {
         return transactions.toJSONString();
     }
 
-    public void stopForgingAndBlockAcceptance(String url, String adminPassword) {
-        Map<String, String> params = new HashMap<>();
-        params.put("requestType", "stopForgingAndBlockAcceptance");
-        params.put("adminPassword", adminPassword);
-        URI uri = createURI(url);
-        postJson(uri, params, "");
-    }
     public List<Transaction> getBlockTransactionsList(String url, Long height) throws ParseException, IOException {
-        String blockTransactions = getBlockTransactions(url, height);
-        List<Transaction> transactionsList = MAPPER.readValue(blockTransactions, new TypeReference<List<Transaction>>() {});
-        return transactionsList;
+        String json = getBlockTransactions(url, height);
+        return MAPPER.readValue(json, new TypeReference<List<Transaction>>() {});
     }
 
     public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {

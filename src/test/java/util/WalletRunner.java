@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class WalletRunner {
@@ -70,25 +71,25 @@ public class WalletRunner {
         System.setProperty("apl.runtime.mode", "desktop");
 
         //change config for test purposes
+            Map<String, String> parameters = new HashMap<>();
         if (isTestnet) {
-            Map<String, String> parameters = new HashMap<>();
             parameters.put("apl.isTestnet", "true");
-            savedStandartPropertiesPath = changeProperties(parameters);
         } else {
-            Map<String, String> parameters = new HashMap<>();
             parameters.put("apl.isTestnet", "false");
-            savedStandartPropertiesPath = changeProperties(parameters);
         }
-
-        //run application
-        String[] parameters = {""};
-        mainClass = loader.loadClass("com.apollocurrency.aplwallet.apl.Apl");
-        Object[] param = {parameters};
-        Method main = mainClass.getMethod("main", parameters.getClass());
-        main.invoke(null, param);
-
+        parameters.put("apl.adminPassword", ADMIN_PASS);
+        savedStandartPropertiesPath = changeProperties(parameters);
+        try {
+            //run application
+            String[] args = {""};
+            mainClass = loader.loadClass("com.apollocurrency.aplwallet.apl.Apl");
+            Object[] param = {args};
+            Method main = mainClass.getMethod("main", args.getClass());
+            main.invoke(null, param);
         //restore config
-        restoreProperties(savedStandartPropertiesPath);
+        } finally {
+            restoreProperties(savedStandartPropertiesPath);
+        }
     }
 
     private void restoreProperties(Path propertiesFilePath) throws IOException {
@@ -150,5 +151,17 @@ public class WalletRunner {
 
     public List<String> getUrls() {
         return urls;
+    }
+
+    public void disableReloading() {
+        loader.setUseCache(true);
+    }
+
+    public void enableReloading() {
+        loader.setUseCache(false);
+    }
+
+    public Class loadClass(String name) throws ClassNotFoundException {
+        return loader.loadClass(name);
     }
 }
