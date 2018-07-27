@@ -506,17 +506,14 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     @Ignore
     public void testSendUpdateTransaction() throws IOException {
-        if (true) {
-            return;
-        }
-        //todo url requires encryption
+        Assert.fail("Encrypted url is required");
         DoubleByteArrayTuple updateUrl = new DoubleByteArrayTuple(
-                "http://93.175.202.255:8080/ApolloPackages/Updates/ApolloWallet-1.0.7-update.jar".getBytes(), new byte[0]);
+                new byte[0], new byte[0]);
 
-        String hash = "7999a5388cba90dfc0d955ec4c60bdbc874f4a72c289ba51fdec8c71fe2aa207";
+        String hash = "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4";
         Platform platform = Platform.LINUX;
         Architecture architecture = Architecture.AMD64;
-        Version version = Version.from("1.0.7");
+        Version version = Version.from("1.0.8");
         UpdateTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, 5);
         UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
         expectedAttachment.setArchitecture(architecture);
