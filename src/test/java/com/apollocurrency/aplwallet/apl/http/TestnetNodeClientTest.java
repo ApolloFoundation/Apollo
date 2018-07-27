@@ -504,11 +504,15 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
-    @Ignore
     public void testSendUpdateTransaction() throws IOException {
         Assert.fail("Encrypted url is required");
+        String firstPart = "9539c731ab178c2fd9b49c73c5343fcdb26f522641c84a1b6a7a2f3a8073acb55ed32040e6c34ca4255aa8ebf76f7263d239c55329fa87ffc153d94de03bbde936cfc642cec09f0847e3f298fdc9c01d47de559c2222b38b7ff0135e799d19734fc80c30ad7da3757244414b7695e5531b3702ae23eba77a760072a781c60d720aca4ca718f1703fbad856fbf1bb8a9e431cb6fbce0ede2633a56d89d209017fddbb2a95a24b2490a46cd64a4ee983d5129ff9965893efeff842a8df1156ea3ab40ad393755bac431c267ea720370c7450b7407d6b9bbb80e171227252fbec34f318e6bd90d84fca7e76b36aebb14e35429d9669dda7433babe74d2a12f0a69a"; String secondPart =
+                "751340d756f48d24823d6f77b19ce7ff28676a6e86d29f6f676f10da07b0de9b831c96d19199bce76793418adcc36fc917477b23491079d465cff1e6d01827c9dbafc61ddccd20803c45ff7538f3d58de0eb77876e91f90102a0aefa8eb82be7435c42c7e19969aa803c3242b99cdd2947fa3e1a478e376d75dd56715f6de61a29cb73ca802192899a8528847d4afd4d7d020fa9c8949751c5bff1b6644d7cbb9aad1a7e8559ef2c31401e1e40058a2c5e8824dee35f658afc253a47280c8d081f51a27981921ebd5b2b03a4fb9e913c65845d8faf623bebeeefc35d1dfa2f115c1d2df31e0b81f8f0cd39ef3433760d12c5e2ad0ad9b08199f33c3598309e1b";
+        Assert.assertEquals(1024, firstPart.length());
+        Assert.assertEquals(1024, secondPart.length());
+
         DoubleByteArrayTuple updateUrl = new DoubleByteArrayTuple(
-                new byte[0], new byte[0]);
+                Convert.parseHexString(firstPart), Convert.parseHexString(secondPart));
 
         String hash = "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4";
         Platform platform = Platform.LINUX;

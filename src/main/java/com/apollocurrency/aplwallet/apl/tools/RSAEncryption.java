@@ -92,6 +92,7 @@ public class RSAEncryption {
             System.out.println("Second encryption will be performed");
         } else if (messageBytes.length > RSAUtil.maxEncryptionLength(privateKey)) {
             System.out.println("Message size is greater than " + RSAUtil.maxEncryptionLength(privateKey) + " bytes. Cannot encrypt.");
+            return;
         }
         String result;
         if (isSecondEncryption) {
