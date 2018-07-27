@@ -20,7 +20,7 @@ public class UpdaterConstants {
    public static final String LINUX_UPDATE_SCRIPT_PATH = "update.sh";
    public static final String OSX_UPDATE_SCRIPT_PATH = "update.sh";
    public static final String WINDOWS_RUN_TOOL_PATH = "wscript.exe";
-   public static final String LINUX_RUN_TOOL_PATH = "";
+   public static final String LINUX_RUN_TOOL_PATH = "/bin/bash";
    public static final String OSX_RUN_TOOL_PATH = "";
    public static final int DOWNLOAD_ATTEMPTS = 10;
    public static final int NEXT_ATTEMPT_TIMEOUT = 60;

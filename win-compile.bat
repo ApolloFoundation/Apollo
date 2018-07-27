@@ -48,6 +48,11 @@ set APPLICATION=Apollo
 echo Compiling main sources... '
 call mvn clean package -Dmaven.test.skip=true 2>&1 && ( echo Main Apl class files compiled successfully ) || ( goto error )
 
+RMDIR "lib" /S /Q
+DEL "Apollo.jar" /F /Q
+COPY /Y "target\Apollo.jar" "Apollo.jar"
+XCOPY /Y /E "target\lib" "lib\"
+
 dir /S addons\*.java /B > nul 2>&1 && ( echo Addons are present ) || ( echo Addons are not present. & goto success )
 dir /S addons\src\*.java /B > sources.tmp
 echo Compiling addons sources... 'addons\src\*'

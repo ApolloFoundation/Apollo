@@ -6,6 +6,10 @@ echo "compiling and packaging Apollo wallet..."
 mvn clean package -Dmaven.test.skip=true
 echo "Apollo wallet was compiled successfully"
 
+rm -f "Apollo.jar"
+rm -f -r "lib"
+cp -f "target/Apollo.jar" "Apollo.jar"
+cp -r "target/lib/" "lib/"
 
 find addons/src/ -name "*.java" > addons.tmp
 if [ -s addons.tmp ]; then

@@ -13,6 +13,11 @@ echo "Compiling main APL classes"
 
 mvn clean package -Dmaven.test.skip=true && echo Main classes compiled successfully || echo Classes cannot be compiled & exit 1
 
+rm -f "Apollo.jar"
+rm -f -r "lib"
+cp -f "target/Apollo.jar" "Apollo.jar"
+cp -r "target/lib/" "lib/"
+
 ls addons/src/*.java > /dev/null 2>&1 || exit 0
 javac -encoding utf8 -sourcepath "${SP}" -classpath "${CP}" -d addons/classes addons/src/*.java || exit 1
 

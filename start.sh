@@ -17,6 +17,6 @@ if [ -x jre/bin/java ]; then
 else
     JAVA=java
 fi
-nohup ${JAVA} -cp target/classes:target/lib/*:conf:addons/classes:addons/lib/* com.apollocurrency.aplwallet.apl.Apl > /dev/null 2>&1 &
+nohup ${JAVA} -cp addons/classes:addons/lib/* -jar Apollo.jar > /dev/null 2>&1 &
 echo $! > ~/.${APPLICATION}/apl.pid
 cd - > /dev/null
