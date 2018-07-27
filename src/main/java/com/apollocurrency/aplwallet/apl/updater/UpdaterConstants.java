@@ -36,5 +36,8 @@ public class UpdaterConstants {
    public static final String CA_CERTIFICATE_NAME = "rootCA" + CERTIFICATE_SUFFIX;
    public static final String CA_CERTIFICATE_URL = "https://raw.githubusercontent.com/ApolloFoundation/Apollo/master/conf/certs/" + CA_CERTIFICATE_NAME;
 
+    public static final int MIN_BLOCKS_WAITING = 10;
+    public static final int MAX_BLOCKS_WAITING = 20;
+
    private UpdaterConstants() {}
 }
