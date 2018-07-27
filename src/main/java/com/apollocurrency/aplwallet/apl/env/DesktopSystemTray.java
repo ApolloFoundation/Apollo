@@ -118,7 +118,7 @@ public class DesktopSystemTray {
 
         refreshDesktopApplication.addActionListener(e -> {
             try {
-                Class.forName("com.apollocurrency.aplwallet.apldesktop.DesktopApplication").getMethod("refresh").invoke(null);
+                Class.forName("com.apollocurrency.aplwallet.apldesktop.DesktopApplication").getMethod("refreshMainApplication").invoke(null);
             } catch (ReflectiveOperationException exception) {
                 Logger.logInfoMessage("apldesktop.DesktopApplication failed to refresh", exception);
             }

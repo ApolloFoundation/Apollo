@@ -73,6 +73,10 @@ public class DesktopApplication extends Application {
     private static volatile Stage mainStage;
     private static volatile Stage screenStage;
 
+    public static void refreshMainApplication() {
+        MainApplication.refresh();
+    }
+
     private static String getUrl() {
         String url = API.getWelcomePageUri().toString();
         if (url.startsWith("https")) {
