@@ -44,7 +44,7 @@ public class UpdaterCore {
             isUpdated = UpdaterDb.getUpdateStatus();
         }
         catch (Throwable e) {
-            //ignore
+            Logger.logDebugMessage("Updater db error: ", e.getLocalizedMessage());
         }
         if (transaction != null && !isUpdated) {
             UpdateDataHolder updateHolder = processTransaction(transaction);

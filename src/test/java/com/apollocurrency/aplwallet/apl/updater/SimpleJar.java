@@ -67,11 +67,16 @@ public class SimpleJar {
     public void addFileContents(String filename, byte[] contents) throws IOException {
         checkNotNull(filename, "filename");
         checkNotNull(contents, "contents");
-
         zos.putNextEntry(new ZipEntry(filename));
         zos.write(contents);
         zos.closeEntry();
 
+    }
+
+    public void addDirectory(String dirname) throws IOException {
+        checkNotNull(dirname, "dirname");
+        zos.putNextEntry(new ZipEntry(dirname + "/"));
+        zos.closeEntry();
     }
 
 

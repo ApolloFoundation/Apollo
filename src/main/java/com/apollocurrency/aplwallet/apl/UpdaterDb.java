@@ -1,10 +1,10 @@
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UpdaterDb {
@@ -12,13 +12,7 @@ public class UpdaterDb {
     public static Transaction loadLastUpdateTransaction() {
         try (Connection connection = Db.db.getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT * FROM transaction where id = (SELECT transaction_id FROM update_status)")) {
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return TransactionDb.loadTransaction(connection, resultSet);
-            }
-            catch (AplException.NotValidException e) {
-                Logger.logErrorMessage("Update transaction is invalid", e);
-                return null;
-            }
+            return new DbIterator<Transaction>(connection, statement, TransactionDb::loadTransaction).next();
         }
         catch (SQLException e) {
             Logger.logDebugMessage("Unable to load update transaction", e);
