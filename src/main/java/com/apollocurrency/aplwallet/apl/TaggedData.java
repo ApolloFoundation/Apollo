@@ -70,9 +70,9 @@ public class TaggedData {
             if (Constants.ENABLE_PRUNING) {
                 try (Connection con = db.getConnection();
                      PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
-                             + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                    int expiration = Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
-                    pstmtSelect.setInt(1, expiration);
+                             + "FROM tagged_data WHERE transaction_timestamp < ? - time_to_live AND latest = TRUE ")) {
+                    int currTime = Apl.getEpochTime();
+                    pstmtSelect.setInt(1, currTime);
                     Map<String,Integer> expiredTags = new HashMap<>();
                     try (ResultSet rs = pstmtSelect.executeQuery()) {
                         while (rs.next()) {
@@ -365,6 +365,7 @@ public class TaggedData {
     private final String channel;
     private final boolean isText;
     private final String filename;
+    private final long timeToLive;
     private int transactionTimestamp;
     private int blockTimestamp;
     private int height;
@@ -389,6 +390,7 @@ public class TaggedData {
         this.blockTimestamp = blockTimestamp;
         this.transactionTimestamp = transaction.getTimestamp();
         this.height = height;
+        this.timeToLive = attachment.getTimeToLive();
     }
 
     private TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -407,9 +409,10 @@ public class TaggedData {
         this.blockTimestamp = rs.getInt("block_timestamp");
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
         this.height = rs.getInt("height");
+        this.timeToLive = rs.getInt("time_to_live");
     }
 
-    private TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
+    private TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename, long timeToLive) {
         this.id = id;
         this.dbKey = dbKey;
         this.accountId = accountId;
@@ -422,12 +425,13 @@ public class TaggedData {
         this.channel = channel;
         this.isText = isText;
         this.filename = filename;
+        this.timeToLive = timeToLive;
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
-                + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest, time_to_live) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);
@@ -443,6 +447,7 @@ public class TaggedData {
             pstmt.setInt(++i, this.blockTimestamp);
             pstmt.setInt(++i, this.transactionTimestamp);
             pstmt.setInt(++i, height);
+            pstmt.setLong(++i, timeToLive);
             pstmt.executeUpdate();
         }
     }
@@ -497,6 +502,10 @@ public class TaggedData {
 
     public int getBlockTimestamp() {
         return blockTimestamp;
+    }
+
+    public long getTimeToLive() {
+        return timeToLive;
     }
 
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {

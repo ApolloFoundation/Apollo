@@ -724,6 +724,13 @@ public final class ParameterParser {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("isText"));
         String filename = Convert.nullToEmpty(req.getParameter("filename")).trim();
         String dataValue = Convert.emptyToNull(req.getParameter("data"));
+
+        long timeToLive = 0;
+        String timeToLiveStrValue = req.getParameter("timeToLive");
+        if(timeToLiveStrValue != null) {
+            timeToLive = Long.parseLong(timeToLiveStrValue);
+        }
+
         byte[] data;
         if (dataValue == null) {
             try {
@@ -749,7 +756,7 @@ public final class ParameterParser {
             data = isText ? Convert.toBytes(dataValue) : Convert.parseHexString(dataValue);
         }
 
-        String detectedMimeType = Search.detectMimeType(data, filename);
+        String detectedMimeType = null;//Search.detectMimeType(data, filename);
         if (detectedMimeType != null) {
             isText = detectedMimeType.startsWith("text/");
             if (type.isEmpty()) {
@@ -794,7 +801,11 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+
+        if(timeToLive <= 0) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_TTL);
+        }
+        return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data, timeToLive);
     }
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
