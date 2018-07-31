@@ -2947,31 +2947,7 @@ public abstract class TransactionType {
 
     public static abstract class Data extends TransactionType {
 
-        private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL) {
-            @Override
-            public int getSize(TransactionImpl transaction, Appendix appendix) {
-                return appendix.getFullSize();
-            }
-        };
-
-        public static class DataStorageFee extends Fee.SizeAndTimeToLiveBasedFee {
-
-            public DataStorageFee(long constantFee, long feePerSize, long feePerTimeUnit) {
-                super(constantFee, feePerSize, feePerTimeUnit);
-            }
-
-            @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
-                return appendage.getFullSize();
-            }
-
-            @Override
-            public int getTimeToLive(TransactionImpl transaction, Appendix appendage) {
-
-                return 0;
-            }
-
-        }
+        private static final Fee TAGGED_DATA_FEE = new TaggedDataFee();
 
         private Data() {
         }

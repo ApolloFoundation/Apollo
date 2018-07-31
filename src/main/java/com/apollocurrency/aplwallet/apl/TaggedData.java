@@ -68,27 +68,48 @@ public class TaggedData {
         @Override
         protected void prune() {
             if (Constants.ENABLE_PRUNING) {
-                try (Connection con = db.getConnection();
-                     PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
-                             + "FROM tagged_data WHERE transaction_timestamp < ? - time_to_live AND latest = TRUE ")) {
-                    int currTime = Apl.getEpochTime();
-                    pstmtSelect.setInt(1, currTime);
-                    Map<String,Integer> expiredTags = new HashMap<>();
-                    try (ResultSet rs = pstmtSelect.executeQuery()) {
-                        while (rs.next()) {
-                            Object[] array = (Object[])rs.getArray("parsed_tags").getArray();
-                            for (Object tag : array) {
-                                Integer count = expiredTags.get(tag);
-                                expiredTags.put((String)tag, count != null ? count + 1 : 1);
-                            }
+                pruneTags();
+                pruneData();
+            }
+        }
+
+        private void pruneTags() {
+            try (Connection con = db.getConnection();
+                 PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
+                         + "FROM tagged_data WHERE transaction_timestamp < ? - time_to_live AND latest = TRUE ")) {
+                int currTime = Apl.getEpochTime();
+                pstmtSelect.setInt(1, currTime);
+                Map<String,Integer> expiredTags = new HashMap<>();
+                try (ResultSet rs = pstmtSelect.executeQuery()) {
+                    while (rs.next()) {
+                        Object[] array = (Object[])rs.getArray("parsed_tags").getArray();
+                        for (Object tag : array) {
+                            Integer count = expiredTags.get(tag);
+                            expiredTags.put((String)tag, count != null ? count + 1 : 1);
                         }
                     }
-                    Tag.delete(expiredTags);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
                 }
+                Tag.delete(expiredTags);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
             }
-            super.prune();
+        }
+
+        private void pruneData() {
+            try (Connection con = db.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? - time_to_live LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
+                pstmt.setInt(1, Apl.getEpochTime());
+                int deleted;
+                do {
+                    deleted = pstmt.executeUpdate();
+                    if (deleted > 0) {
+                        Logger.logDebugMessage("Deleted " + deleted + " expired tagged data");
+                    }
+                    db.commitTransaction();
+                } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
         }
 
     };
@@ -509,7 +530,7 @@ public class TaggedData {
     }
 
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
-        if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
+        if (Apl.getEpochTime() - transaction.getTimestamp() < attachment.getTimeToLive() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment);
@@ -534,7 +555,7 @@ public class TaggedData {
         List<Long> extendTransactionIds = extendTable.get(dbKey);
         extendTransactionIds.add(transaction.getId());
         extendTable.insert(taggedDataId, extendTransactionIds);
-        if (Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
+        if (Apl.getEpochTime() - attachment.getTimeToLive() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
                 TransactionImpl uploadTransaction = TransactionDb.findTransaction(taggedDataId);

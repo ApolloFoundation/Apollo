@@ -109,7 +109,7 @@ public interface Fee {
             if (size < 0) {
                 size = 0;
             }
-            int ttl = getTimeToLive(transaction, appendage);
+            long ttl = getTimeToLive(transaction, appendage);
             if(ttl < 0) {
                 ttl = 0;
             }
@@ -120,7 +120,7 @@ public interface Fee {
         }
 
         public abstract int getSize(TransactionImpl transaction, Appendix appendage);
-        public abstract int getTimeToLive(TransactionImpl transaction, Appendix appendage);
+        public abstract long getTimeToLive(TransactionImpl transaction, Appendix appendage);
 
     }
 

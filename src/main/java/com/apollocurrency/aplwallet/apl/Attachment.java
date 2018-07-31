@@ -3341,6 +3341,11 @@ public interface Attachment extends Appendix {
 
         abstract long getTaggedDataId(Transaction transaction);
 
+        @Override
+        public boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+            return Apl.getEpochTime() - transaction.getTimestamp() < getTimeToLive();
+        }
+
     }
 
     final class TaggedDataUpload extends TaggedDataAttachment {
