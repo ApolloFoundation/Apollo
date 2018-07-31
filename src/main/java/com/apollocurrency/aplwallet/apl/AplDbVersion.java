@@ -649,6 +649,14 @@ class AplDbVersion extends DbVersion {
                 FullTextTrigger.init();
                 apply(null);
             case 239:
+                apply("CREATE TABLE IF NOT EXISTS update_status ("
+                        + "db_id IDENTITY, "
+                        + "transaction_id BIGINT NOT NULL, "
+                        + "updated BOOLEAN NOT NULL DEFAULT FALSE, "
+                        + "FOREIGN KEY (transaction_id) REFERENCES transaction(id) ON DELETE CASCADE"
+                        + ")"
+                );
+            case 240:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

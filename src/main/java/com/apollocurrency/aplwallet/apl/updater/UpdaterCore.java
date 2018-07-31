@@ -37,7 +37,29 @@ public class UpdaterCore {
     private volatile UpdateDataHolder updateDataHolder;
     private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
     private UpdaterCore() {
-        UpdaterMediator.getInstance().addUpdateListener(updateListener);
+        Transaction transaction = null;
+        boolean isUpdated = false;
+        try {
+            transaction = UpdaterDb.loadLastUpdateTransaction();
+            isUpdated = UpdaterDb.getUpdateStatus();
+        }
+        catch (Throwable e) {
+            Logger.logDebugMessage("Updater db error: ", e.getLocalizedMessage());
+        }
+        if (transaction != null && !isUpdated) {
+            UpdateDataHolder updateHolder = processTransaction(transaction);
+            if (updateHolder == null) {
+                Logger.logErrorMessage("Unable to validate update transaction: " + transaction.getJSONObject().toJSONString());
+            } else {
+                if (((TransactionType.Update) updateHolder.getTransaction().getType()).getLevel() == Level.MINOR) {
+                    UpdaterMediator.getInstance().addUpdateListener(updateListener);
+                }
+                this.updateDataHolder = updateHolder;
+                startUpdate();
+            }
+        } else {
+            UpdaterMediator.getInstance().addUpdateListener(updateListener);
+        }
     }
 
     public static UpdaterCore getInstance() {
@@ -45,6 +67,11 @@ public class UpdaterCore {
     }
 
     public void startUpdate() {
+        UpdaterDb.clear();
+        boolean isSaved = UpdaterDb.saveUpdateTransaction(updateDataHolder.getTransaction().getId());
+        if (!isSaved) {
+            Logger.logErrorMessage("Unable to save update transaction to db!");
+        }
         new Thread(() -> triggerUpdate(updateDataHolder), "Updater thread").start();
     }
 
@@ -152,33 +179,42 @@ public class UpdaterCore {
 
     private void processTransactions(List<? extends Transaction> transactions) {
         transactions.forEach(transaction -> {
-            if (UpdaterMediator.getInstance().isUpdateTransaction(transaction)) {
-                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
-                if (attachment.getAppVersion().greaterThan(UpdaterMediator.getInstance().getWalletVersion())) {
-                    Platform currentPlatform = Platform.current();
-                    Architecture currentArchitecture = Architecture.current();
-                    if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                        String url = RSAUtil.tryDecryptUrl(CERTIFICATE_DIRECTORY, attachment.getUrl(), attachment.getAppVersion());
-                        if (url != null && !url.isEmpty()) {
-                            if (AuthorityChecker.getInstance().verifyCertificates(CERTIFICATE_DIRECTORY)) {
-                                this.updateDataHolder = new UpdateDataHolder(transaction, url);
-                                startUpdate();
-                                if (((TransactionType.Update) transaction.getType()).getLevel() != Level.MINOR) {
-                                    UpdaterMediator.getInstance().removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
-                                }
-                            } else {
-                                Logger.logErrorMessage("Cannot verify certificates!");
-                                SecurityAlertSender.getInstance().send("Certificate verification error" + transaction.getJSONObject().toJSONString());
-                            }
+            UpdateDataHolder holder = processTransaction(transaction);
+            if (holder != null) {
+                if (((TransactionType.Update) holder.getTransaction().getType()).getLevel() != Level.MINOR) {
+                    UpdaterMediator.getInstance().removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+                }
+                this.updateDataHolder = holder;
+                startUpdate();
+            }
+    });
+    }
+
+    private UpdateDataHolder processTransaction(Transaction tr) {
+        if (UpdaterMediator.getInstance().isUpdateTransaction(tr)) {
+            Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) tr.getAttachment();
+            if (attachment.getAppVersion().greaterThan(UpdaterMediator.getInstance().getWalletVersion())) {
+                Platform currentPlatform = Platform.current();
+                Architecture currentArchitecture = Architecture.current();
+                if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
+                    String url = RSAUtil.tryDecryptUrl(CERTIFICATE_DIRECTORY, attachment.getUrl(), attachment.getAppVersion());
+                    if (url != null && !url.isEmpty()) {
+                        if (AuthorityChecker.getInstance().verifyCertificates(CERTIFICATE_DIRECTORY)) {
+                          return new UpdateDataHolder(tr, url);
                         } else {
-                            Logger.logErrorMessage("Cannot decrypt url for update transaction:" + transaction.getId());
-                            SecurityAlertSender.getInstance().send("Cannot decrypt url for update transaction:" + transaction.getId());
+                            Logger.logErrorMessage("Cannot verify certificates!");
+                            SecurityAlertSender.getInstance().send("Certificate verification error" + tr.getJSONObject().toJSONString());
                         }
+                    } else {
+                        Logger.logErrorMessage("Cannot decrypt url for update transaction:" + tr.getId());
+                        SecurityAlertSender.getInstance().send("Cannot decrypt url for update transaction:" + tr.getId());
                     }
                 }
             }
-        });
+        }
+        return null;
     }
+
 
     private boolean verifyJar(Path jarFilePath) {
         try {
@@ -216,9 +252,9 @@ public class UpdaterCore {
                 //update is NOW on currentBlockchainHeight
                 type == TransactionType.Update.CRITICAL ? UpdaterMediator.getInstance().getBlockchainHeight() :
 
-                        // update height = currentBlockchainHeight + random number in range [100.1000]
-                        type == TransactionType.Update.IMPORTANT ? new Random().nextInt(900)
-                                + 100 + UpdaterMediator.getInstance().getBlockchainHeight() :
+                        // update height = currentBlockchainHeight + random number in range [MIN_BLOCKS_WAITING...MAX_BLOCKS_WAITING]
+                        type == TransactionType.Update.IMPORTANT ? new Random().nextInt(MAX_BLOCKS_WAITING - MIN_BLOCKS_WAITING)
+                                + MIN_BLOCKS_WAITING + UpdaterMediator.getInstance().getBlockchainHeight() :
 
                                 //assume that current update is not mandatory
                                 type == TransactionType.Update.MINOR ? -1 : 0;

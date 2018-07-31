@@ -15,6 +15,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.UpdaterDb;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.Logger;
@@ -54,6 +55,7 @@ public class PlatformDependentUpdater {
     private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
         Thread scriptRunner = new Thread(() -> {
         LOG.debug("Waiting apl shutdown...");
+            UpdaterDb.setUpdateStatus(true);
             while (!mediator.isShutdown()) {
                 try {
                     TimeUnit.MILLISECONDS.sleep(100);

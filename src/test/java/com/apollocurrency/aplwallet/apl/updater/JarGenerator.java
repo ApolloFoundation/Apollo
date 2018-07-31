@@ -53,6 +53,12 @@ public class JarGenerator {
         jar.addFileContents("com/test/MainClass.class", randomBytes(4096));
         jar.addFileContents("com/test/AnotherClass.class", randomBytes(2123));
         jar.addFileContents("com/test/AnotherClass2.class", randomBytes(7654));
+        jar.addDirectory("conf");
+        jar.addDirectory("test");
+        jar.addDirectory("classes");
+        jar.addFileContents("classes/AnotherClass3.class", randomBytes(234));
+        jar.addFileContents("test/AnotherClass4.class", randomBytes(74));
+
     }
 
     public void close() throws IOException {

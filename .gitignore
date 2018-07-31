@@ -12,3 +12,4 @@ sources.tmp
 Apollo.jar
 Apolloservice.jar
 *.iml
+/lib

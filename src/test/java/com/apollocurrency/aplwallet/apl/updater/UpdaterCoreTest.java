@@ -44,7 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
-@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, Logger.class})
+@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, Logger.class, UpdaterDb.class})
 public class UpdaterCoreTest {
 
     @Mock
@@ -281,7 +281,7 @@ public class UpdaterCoreTest {
     @Test
     public void testProcessTransactions() throws Exception {
         doReturn(true).when(fakeCheckerInstance, "verifyCertificates", CERTIFICATE_DIRECTORY);
-
+        mockStatic(UpdaterDb.class);
         Version testVersion = Version.from("1.0.7");
         when(fakeMediatorInstance, "getWalletVersion").thenReturn(testVersion);
 

@@ -30,12 +30,13 @@ public class UnpackerTest {
                     JarEntry jarEntry = entries.nextElement();
                     files.put(jarEntry.getName(), jarEntry.getSize());
                 }
+                jarFile.close();
                 Path finalUnpackedFile = unpackedFile;
                 Files.walkFileTree(unpackedFile, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                        Path relativize = finalUnpackedFile.relativize(file);
-                        Assert.assertTrue(files.containsKey(relativize.toString().replaceAll("\\\\", "/")));
+                        Path unpackedFile = finalUnpackedFile.relativize(file);
+                        Assert.assertTrue(files.containsKey(unpackedFile.toString().replaceAll("\\\\", "/")));
                         return FileVisitResult.CONTINUE;
                     }
                 });
