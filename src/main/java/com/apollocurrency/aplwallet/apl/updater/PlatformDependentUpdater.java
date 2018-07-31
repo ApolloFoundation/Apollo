@@ -55,7 +55,7 @@ public class PlatformDependentUpdater {
     private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
         Thread scriptRunner = new Thread(() -> {
         LOG.debug("Waiting apl shutdown...");
-            UpdaterDb.setUpdateStatus(true);
+            UpdaterDb.saveUpdateStatus(true);
             while (!mediator.isShutdown()) {
                 try {
                     TimeUnit.MILLISECONDS.sleep(100);
