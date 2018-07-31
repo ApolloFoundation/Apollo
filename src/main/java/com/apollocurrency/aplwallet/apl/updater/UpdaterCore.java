@@ -67,8 +67,7 @@ public class UpdaterCore {
     }
 
     public void startUpdate() {
-        UpdaterDb.clear();
-        boolean isSaved = UpdaterDb.saveUpdateTransaction(updateDataHolder.getTransaction().getId());
+        boolean isSaved = UpdaterDb.clearAndSaveUpdateTransaction(updateDataHolder.getTransaction().getId());
         if (!isSaved) {
             Logger.logErrorMessage("Unable to save update transaction to db!");
         }
