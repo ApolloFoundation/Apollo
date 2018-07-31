@@ -25,18 +25,23 @@ import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 import util.TestUtil;
+import util.WalletRunner;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
 import static org.mockito.Matchers.*;
@@ -44,9 +49,16 @@ import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
-@PrepareForTest({UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, Logger.class})
+@PrepareForTest(value = {UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, Logger.class, UpdaterDb.class })
 public class UpdaterCoreTest {
 
+    private Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
+            Platform.current(),
+            Architecture.current(),
+            new DoubleByteArrayTuple(new byte[0], new byte[0]),
+            Version.from("1.0.8"),
+            new byte[0],
+            (byte) 0);
     @Mock
     private UpdaterMediator fakeMediatorInstance;
     @Mock
@@ -73,19 +85,13 @@ public class UpdaterCoreTest {
         BDDMockito.given(PlatformDependentUpdater.getInstance()).willReturn(fakePlatformDependentUpdaterInstance);
         mockStatic(AuthorityChecker.class);
         BDDMockito.given(AuthorityChecker.getInstance()).willReturn(fakeCheckerInstance);
+        mockStatic(UpdaterDb.class);
     }
 
     @Test
     public void testTriggerCriticalUpdate() throws Exception {
         //Prepare testdata
         Version testVersion = Version.from("1.0.8");
-        Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
-                Platform.current(),
-                Architecture.current(),
-                new DoubleByteArrayTuple(new byte[0], new byte[0]),
-                testVersion,
-                new byte[0],
-                (byte) 0);
         UpdaterCore.UpdateDataHolder holder = new UpdaterCore.UpdateDataHolder(new UpdateTransaction(TransactionType.Update.CRITICAL, 0L, 0L, TestUtil.atm(1L), 0L, 9, attachment), decryptedUrl);
 
         //Mock dependent classes
@@ -93,22 +99,21 @@ public class UpdaterCoreTest {
         Whitebox.setInternalState(fakeMediatorInstance, "updateInfo", UpdateInfo.getInstance());
 
         //mock external methods
-
-        doReturn(10).when(fakeMediatorInstance, "getBlockchainHeight");
-        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(true, 10, holder.getTransaction().getHeight(),Level.CRITICAL, testVersion);
+        when(fakeMediatorInstance, "getBlockchainHeight").thenReturn(10);
+        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(true, 10, holder.getTransaction().getHeight(), Level.CRITICAL, testVersion);
         doCallRealMethod().when(fakeMediatorInstance).setUpdateState(any(UpdateInfo.UpdateState.class));
 
         //spy target class
         UpdaterCore updaterCore = spy(UpdaterCore.getInstance());
 
         //mock inner private methods
-        doReturn(true).when(updaterCore, "tryUpdate", attachment, decryptedUrl);
+        doReturn(true).when(updaterCore, "tryUpdate", attachment, decryptedUrl, true);
 
         //call target method
         Whitebox.invokeMethod(updaterCore, "triggerUpdate", holder);
 
         //verify methods invocations
-        verifyPrivate(updaterCore).invoke("tryUpdate", attachment, decryptedUrl);
+        verifyPrivate(updaterCore).invoke("tryUpdate", attachment, decryptedUrl, true);
         UpdateInfo info = UpdateInfo.getInstance();
         Assert.assertEquals(testVersion, info.getVersion());
         Assert.assertEquals(9, info.getReceivedHeight());
@@ -122,13 +127,6 @@ public class UpdaterCoreTest {
     public void testBadTriggerCriticalUpdate() throws Exception {
         //Prepare testdata
         Version testVersion = Version.from("1.0.8");
-        Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
-                Platform.current(),
-                Architecture.current(),
-                new DoubleByteArrayTuple(new byte[0], new byte[0]),
-                testVersion,
-                new byte[0],
-                (byte) 0);
         UpdaterCore.UpdateDataHolder holder = new UpdaterCore.UpdateDataHolder(new UpdateTransaction(TransactionType.Update.CRITICAL, 0L, 0L, TestUtil.atm(1L), 0L, 9, attachment), decryptedUrl);
 
         //Mock dependent classes
@@ -137,20 +135,20 @@ public class UpdaterCoreTest {
 
         //mock external methods
         doReturn(10).when(fakeMediatorInstance, "getBlockchainHeight");
-        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(true, 10, holder.getTransaction().getHeight(),Level.CRITICAL, testVersion);
+        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(true, 10, holder.getTransaction().getHeight(), Level.CRITICAL, testVersion);
         doCallRealMethod().when(fakeMediatorInstance).setUpdateState(any(UpdateInfo.UpdateState.class));
 
         //spy target class
         UpdaterCore updaterCore = spy(UpdaterCore.getInstance());
 
         //mock inner private methods
-        doReturn(false).when(updaterCore, "tryUpdate", attachment, decryptedUrl);
+        doReturn(false).when(updaterCore, "tryUpdate", attachment, decryptedUrl, true);
 
         //call target method
         Whitebox.invokeMethod(updaterCore, "triggerUpdate", holder);
 
         //verify methods invocations
-        verifyPrivate(updaterCore).invoke("tryUpdate", attachment, decryptedUrl);
+        verifyPrivate(updaterCore).invoke("tryUpdate", attachment, decryptedUrl, true);
         UpdateInfo info = UpdateInfo.getInstance();
         Assert.assertEquals(testVersion, info.getVersion());
         Assert.assertEquals(9, info.getReceivedHeight());
@@ -165,13 +163,6 @@ public class UpdaterCoreTest {
     public void testTriggerImportantUpdate() throws Exception {
         //Prepare testdata
         Version testVersion = Version.from("1.0.8");
-        Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
-                Platform.current(),
-                Architecture.current(),
-                new DoubleByteArrayTuple(new byte[0], new byte[0]),
-                testVersion,
-                new byte[0],
-                (byte) 1);
         UpdaterCore.UpdateDataHolder holder = new UpdaterCore.UpdateDataHolder(new UpdateTransaction(TransactionType.Update.IMPORTANT, 0L, 0L, TestUtil.atm(1L), 0L, 100, attachment), decryptedUrl);
 
         //Mock dependent classes
@@ -179,7 +170,7 @@ public class UpdaterCoreTest {
         Whitebox.setInternalState(fakeMediatorInstance, "updateInfo", UpdateInfo.getInstance());
 
         //mock external methods
-        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(anyBoolean(), anyInt(), anyInt(),any(Level.class), any(Version.class));
+        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(anyBoolean(), anyInt(), anyInt(), any(Level.class), any(Version.class));
         doCallRealMethod().when(fakeMediatorInstance).setUpdateState(any(UpdateInfo.UpdateState.class));
 
         //spy target class
@@ -193,7 +184,7 @@ public class UpdaterCoreTest {
         Whitebox.invokeMethod(updaterCore, "triggerUpdate", holder);
 
         //verify methods invocations
-        verifyPrivate(updaterCore).invoke("scheduleUpdate", anyInt(), any(Attachment.ImportantUpdate.class),  anyString());
+        verifyPrivate(updaterCore).invoke("scheduleUpdate", anyInt(), any(Attachment.ImportantUpdate.class), anyString());
         UpdateInfo info = UpdateInfo.getInstance();
         Assert.assertEquals(testVersion, info.getVersion());
         Assert.assertEquals(100, info.getReceivedHeight());
@@ -208,13 +199,6 @@ public class UpdaterCoreTest {
     public void testTriggerMinorUpdate() throws Exception {
         //Prepare testdata
         Version testVersion = Version.from("1.0.8");
-        Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
-                Platform.current(),
-                Architecture.current(),
-                new DoubleByteArrayTuple(new byte[0], new byte[0]),
-                testVersion,
-                new byte[0],
-                (byte) 2);
         UpdaterCore.UpdateDataHolder holder = new UpdaterCore.UpdateDataHolder(new UpdateTransaction(TransactionType.Update.MINOR, 0L, 0L, TestUtil.atm(1L), 0L, 100, attachment), decryptedUrl);
 
         //Mock dependent classes
@@ -222,7 +206,7 @@ public class UpdaterCoreTest {
         Whitebox.setInternalState(fakeMediatorInstance, "updateInfo", UpdateInfo.getInstance());
 
         //mock external methods
-        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(anyBoolean(), anyInt(), anyInt(),any(Level.class), any(Version.class));
+        doCallRealMethod().when(fakeMediatorInstance).setUpdateData(anyBoolean(), anyInt(), anyInt(), any(Level.class), any(Version.class));
         doCallRealMethod().when(fakeMediatorInstance).setUpdateState(any(UpdateInfo.UpdateState.class));
 
         //spy target class
@@ -244,7 +228,6 @@ public class UpdaterCoreTest {
         Assert.assertEquals(UpdateInfo.UpdateState.REQUIRED_START, info.getUpdateState());
 
     }
-
 
 
     @Test
@@ -272,16 +255,11 @@ public class UpdaterCoreTest {
         }
     }
 
-    @Test
-    public void testScheduleUpdate() {
-
-    }
-
     //TODO create few tests
     @Test
     public void testProcessTransactions() throws Exception {
         doReturn(true).when(fakeCheckerInstance, "verifyCertificates", CERTIFICATE_DIRECTORY);
-
+        mockStatic(UpdaterDb.class);
         Version testVersion = Version.from("1.0.7");
         when(fakeMediatorInstance, "getWalletVersion").thenReturn(testVersion);
 
@@ -361,5 +339,66 @@ public class UpdaterCoreTest {
         //verify methods invocations
         verifyPrivate(updaterCore).invoke("verifyJar", fakeJarPath);
         Mockito.verify(fakePlatformDependentUpdaterInstance, Mockito.times(1)).continueUpdate(fakeUnpackedDirPath, attachment.getPlatform());
+    }
+
+    @Test
+    public void testTryUpdateWithWaiting() throws Exception {
+        //Prepare testdata
+
+        Path fakeJarPath = Paths.get("");
+        Path fakeUnpackedDirPath = Paths.get("");
+
+        //Mock dependent classes
+
+        //mock external methods
+        doReturn(fakeJarPath).when(fakeDownloaderInstance, "tryDownload", decryptedUrl, attachment.getHash());
+        doReturn(fakeUnpackedDirPath).when(fakeUnpackerInstance, "unpack", fakeJarPath);
+        doNothing().when(fakePlatformDependentUpdaterInstance, "continueUpdate", fakeUnpackedDirPath, attachment.getPlatform());
+
+        //spy target class
+        UpdaterCore updaterCore = spy(UpdaterCore.getInstance());
+
+        //mock inner private methods
+        doReturn(true).when(updaterCore, "verifyJar", fakeJarPath);
+        doNothing().when(updaterCore, "stopForgingAndBlockAcceptance");
+        when(fakeMediatorInstance.getBlockchainHeight()).then(new Answer<Integer>() {
+            private int counter = 10;
+
+            @Override
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                return counter++;
+            }
+        });
+        //call target method
+        Object result = Whitebox.invokeMethod(updaterCore, "tryUpdate", attachment, decryptedUrl, true);
+        Assert.assertTrue((Boolean) result);
+
+        //verify methods invocations
+        verifyPrivate(updaterCore).invoke("verifyJar", fakeJarPath);
+        Mockito.verify(fakePlatformDependentUpdaterInstance, Mockito.times(1)).continueUpdate(fakeUnpackedDirPath, attachment.getPlatform());
+        Mockito.verify(fakeMediatorInstance, Mockito.times(4)).getBlockchainHeight();
+    }
+
+    @Test
+    public void testWaitBlocks() throws Exception {
+            WalletRunner runner = new WalletRunner();
+        try {
+            runner.run();
+            TimeUnit.SECONDS.sleep(5);
+            when(fakeMediatorInstance.getBlockchainHeight()).thenCallRealMethod();
+            int startHeight = UpdaterMediator.getInstance().getBlockchainHeight();
+            long startTime = System.currentTimeMillis() / 1000;
+            Whitebox.invokeMethod(UpdaterCore.getInstance(), "waitBlocks", 1, 70);
+            long finishTime = System.currentTimeMillis() / 1000;
+            int finishHeight = UpdaterMediator.getInstance().getBlockchainHeight();
+            if (finishTime - startTime < 70 && finishHeight - startHeight < 1) {
+                Assert.fail("Bad waiting");
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            runner.shutdown();
+        }
     }
 }

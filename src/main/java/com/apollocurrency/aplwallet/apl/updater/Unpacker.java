@@ -15,9 +15,13 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -30,27 +34,57 @@ public class Unpacker {
         return UnpackerHolder.INSTANCE;
     }
 
+    public static void main(String[] args) throws IOException {
+        getInstance().unpack(Paths.get("C:/users/zandr/downloads/ApolloWallet-1.0.8.jar"));
+    }
+
     public Path unpack(Path jarFilePath) throws IOException {
         Path destDirPath = Files.createTempDirectory("apollo-unpacked");
-        try (JarFile jar = new JarFile(jarFilePath.toString())) {
-            Enumeration directoryEntries = jar.entries();
-            while (directoryEntries.hasMoreElements()) {
-                JarEntry file = (JarEntry) directoryEntries.nextElement();
-                Path f = destDirPath.resolve(file.getName());
-                if (file.isDirectory()) {
-                    Files.createDirectory(f);
-                } else {
-                    if (!Files.exists(f)) {
-                        Files.createDirectories(f.getParent());
-                    }
-                    Files.copy(jar.getInputStream(file), f);
+        JarFile jar = new JarFile(jarFilePath.toFile());
+
+        // fist get all directories,
+        // then make those directory on the destination Path
+        for (Enumeration<JarEntry> enums = jar.entries(); enums.hasMoreElements(); ) {
+            JarEntry entry = enums.nextElement();
+
+            String fileName = destDirPath.toAbsolutePath() + File.separator + entry.getName();
+            File f = new File(fileName);
+
+            if (fileName.endsWith("/") || entry.isDirectory()) {
+                f.mkdirs();
+            }
+
+        }
+        //now create all files
+        for (Enumeration<JarEntry> enums = jar.entries(); enums.hasMoreElements(); ) {
+            JarEntry entry = enums.nextElement();
+
+            String fileName = destDirPath.toAbsolutePath().toString() + File.separator + entry.getName();
+            File f = new File(fileName);
+            if (!fileName.endsWith("/") && !entry.isDirectory()) {
+                try (InputStream is = jar.getInputStream(entry)) {
+                    copyPath(is, f);
                 }
             }
+        }
             return destDirPath;
+    }
+
+        private static class UnpackerHolder {
+            private static final Unpacker INSTANCE = new Unpacker();
+        }
+
+    private void copy(InputStream is, File f) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(f)) {
+            byte[] buff = new byte[4096];
+            int c;
+            while ((c = is.read(buff)) != -1) {
+                fos.write(buff, 0, c);
+            }
         }
     }
 
-    private static class UnpackerHolder {
-        private static final Unpacker INSTANCE = new Unpacker();
+    private void copyPath(InputStream is, File f) throws IOException {
+        Files.copy(is, f.toPath());
     }
 }
