@@ -74,16 +74,16 @@ public class UpdaterMediator {
     private UpdaterMediator() {}
 
 
-    public int stopForging() {
-        return Generator.stopForging();
+    public void stopForging() {
+        Generator.suspendForging();
     }
 
     public void shutdownPeerServer() {
-        Peers.shutdown();
+        Peers.suspend();
     }
 
     public void shutdownBlockchainProcessor() {
-        BlockchainProcessorImpl.getInstance().shutdown();
+        BlockchainProcessorImpl.getInstance().suspendBlockchainDownloading();
     }
 
     public void addUpdateListener(Listener<List<? extends Transaction>> listener) {
@@ -107,5 +107,13 @@ public class UpdaterMediator {
 
     public int getBlockchainHeight() {
         return BlockchainImpl.getInstance().getHeight();
+    }
+
+    public void restoreConnection() {
+        Logger.logDebugMessage("Restarting peer server, blockchain processor and forging");
+        BlockchainProcessorImpl.getInstance().resumeBlockchainDownloading();
+        Peers.resume();
+        Generator.resumeForging();
+        Logger.logDebugMessage("Peer server, blockchain processor and forging were restarted successfully");
     }
 }

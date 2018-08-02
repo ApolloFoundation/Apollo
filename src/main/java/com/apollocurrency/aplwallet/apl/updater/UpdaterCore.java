@@ -90,7 +90,8 @@ public class UpdaterCore {
                     UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.FINISHED);
                 } else {
                     Logger.logErrorMessage("Error! Cannot install minor update.");
-                    UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                    UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.FAILED_REQUIRED_START);
+                    UpdaterMediator.getInstance().restoreConnection();
                 }
             };
             new Thread(minorUpdateTask, "Minor update thread").start();
@@ -106,6 +107,7 @@ public class UpdaterCore {
         int updateHeight = getUpdateHeightFromType(type);
         UpdaterMediator.getInstance().setUpdateData(true, updateHeight, updateTransaction.getHeight(), type.getLevel(), attachment.getAppVersion());
         UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.IN_PROGRESS);
+        boolean restoreRequired = false;
         if (type == TransactionType.Update.CRITICAL) {
             //stop forging and peer server immediately
             Logger.logWarningMessage("Starting critical update now!");
@@ -115,12 +117,14 @@ public class UpdaterCore {
             } else {
                 Logger.logErrorMessage("FAILURE! Cannot install critical update.");
                 UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                UpdaterMediator.getInstance().restoreConnection();
             }
         } else if (type == TransactionType.Update.IMPORTANT) {
             boolean updated = false;
             while (!updated) {
                 updated = scheduleUpdate(updateHeight, attachment, holder.getDecryptedUrl());
                 if (!updated) {
+                    UpdaterMediator.getInstance().restoreConnection();
                     updateHeight = getUpdateHeightFromType(type);
                     Logger.logErrorMessage("Cannot install scheduled important update. Trying to schedule new update attempt at " + updateHeight + " height");
                     UpdaterMediator.getInstance().setUpdateHeight(updateHeight);
@@ -261,15 +265,15 @@ public class UpdaterCore {
     }
 
     private void stopForgingAndBlockAcceptance() {
-        Logger.logDebugMessage("Stopping forging...");
-        int numberOfGenerators = UpdaterMediator.getInstance().stopForging();
-        Logger.logInfoMessage("Forging was stopped, total generators: " + numberOfGenerators);
-        Logger.logDebugMessage("Shutdown peer server...");
+        Logger.logDebugMessage("Suspending forging...");
+        UpdaterMediator.getInstance().stopForging();
+        Logger.logInfoMessage("Forging was suspended!");
+        Logger.logDebugMessage("Suspending peer server...");
         UpdaterMediator.getInstance().shutdownPeerServer();
-        Logger.logInfoMessage("Peer server was shutdown");
-        Logger.logDebugMessage("Shutdown blockchain processor...");
+        Logger.logInfoMessage("Peer server was suspended");
+        Logger.logDebugMessage("Suspend blockchain processor...");
         UpdaterMediator.getInstance().shutdownBlockchainProcessor();
-        Logger.logInfoMessage("Blockchain processor was shutdown");
+        Logger.logInfoMessage("Blockchain processor was suspended");
     }
 
     private int getUpdateHeightFromType(TransactionType type) {
