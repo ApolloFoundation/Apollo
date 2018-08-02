@@ -655,12 +655,20 @@ public final class DigitalGoodsStore {
             Logger.logMessage("1");
             final int timestamp = block.getTimestamp();
             Logger.logMessage("2");
-            final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
+            Blockchain bc = Apl.getBlockchain();
             Logger.logMessage("3");
+            long priv_blockID = block.getPreviousBlockId();
+            Logger.logMessage("4");
+            Block priv_block = bc.getBlock(priv_blockID);
+            Logger.logMessage("5");
+            int ts = priv_block.getTimestamp();
+            Logger.logMessage("6");
+            final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
+            Logger.logMessage("7");
             DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
                     .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
                     .and(new DbClause.BooleanClause("pending", true));
-            Logger.logMessage("4");
+            Logger.logMessage("8");
             return purchaseTable.getManyBy(dbClause, 0, -1);
         }
 
