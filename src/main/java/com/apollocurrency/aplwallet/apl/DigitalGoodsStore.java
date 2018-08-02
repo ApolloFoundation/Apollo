@@ -660,7 +660,7 @@ public final class DigitalGoodsStore {
             long priv_blockID = block.getPreviousBlockId();
             Logger.logMessage("4");
             Block priv_block = bc.getBlock(priv_blockID);
-            Logger.logMessage("5");
+            Logger.logMessage("5:" + priv_block);
             int ts = priv_block.getTimestamp();
             Logger.logMessage("6");
             final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
