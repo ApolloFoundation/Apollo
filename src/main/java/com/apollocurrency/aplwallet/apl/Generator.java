@@ -18,22 +18,11 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.*;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +36,7 @@ public final class Generator implements Comparable<Generator> {
     private static final int MAX_FORGERS = Apl.getIntProperty("apl.maxNumberOfForgers");
     private static final byte[] fakeForgingPublicKey = Apl.getBooleanProperty("apl.enableFakeForging") ?
             Account.getPublicKey(Convert.parseAccountId(Apl.getStringProperty("apl.fakeForgingAccount"))) : null;
-
+    private static volatile boolean suspendForging = false;
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
     private static final ConcurrentMap<String, Generator> generators = new ConcurrentHashMap<>();
@@ -62,7 +51,10 @@ public final class Generator implements Comparable<Generator> {
 
         @Override
         public void run() {
-
+            if (suspendForging) {
+                Logger.logDebugMessage("Block generation was suspended");
+                return;
+            }
             try {
                 try {
                     BlockchainImpl.getInstance().updateLock();
@@ -368,6 +360,14 @@ public final class Generator implements Comparable<Generator> {
 
     private int getTimestamp(int generationLimit) {
         return (generationLimit - hitTime > 3600) ? generationLimit : (int)hitTime + 1;
+    }
+
+    public static void suspendForging() {
+        suspendForging = true;
+    }
+    public static void resumeForging() {
+        Logger.logDebugMessage("Forging was resumed");
+        suspendForging = false;
     }
 
     /** Active block generators */

@@ -36,6 +36,7 @@ import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
 public class UpdaterCore {
     private volatile UpdateDataHolder updateDataHolder;
     private final Listener<List<? extends Transaction>> updateListener = this::processTransactions;
+
     private UpdaterCore() {
         Transaction transaction = null;
         boolean isUpdated = false;
@@ -75,8 +76,8 @@ public class UpdaterCore {
     }
 
     public void startMinorUpdate() {
-        Runnable minorUpdaTask = () -> {
-            if (updateDataHolder.getTransaction().getType() == TransactionType.Update.MINOR) {
+        if (updateDataHolder.getTransaction().getType() == TransactionType.Update.MINOR) {
+            Runnable minorUpdateTask = () -> {
                 Logger.logInfoMessage("Starting minor update...");
                 Transaction updateTransaction = updateDataHolder.getTransaction();
                 TransactionType.Update type = (TransactionType.Update) updateTransaction.getType();
@@ -91,11 +92,11 @@ public class UpdaterCore {
                     Logger.logErrorMessage("Error! Cannot install minor update.");
                     UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
                 }
-            } else {
-                throw new RuntimeException("Cannot start manually minor update for transaction type: " + updateDataHolder.getTransaction().getType());
-            }
-        };
-        new Thread(minorUpdaTask, "Minor update thread").start();
+            };
+            new Thread(minorUpdateTask, "Minor update thread").start();
+        } else {
+            throw new RuntimeException("Cannot start manually minor update for transaction type: " + updateDataHolder.getTransaction().getType());
+        }
     }
 
     private void triggerUpdate(UpdateDataHolder holder) {
@@ -108,7 +109,7 @@ public class UpdaterCore {
         if (type == TransactionType.Update.CRITICAL) {
             //stop forging and peer server immediately
             Logger.logWarningMessage("Starting critical update now!");
-            if (tryUpdate(attachment, holder.getDecryptedUrl())) {
+            if (tryUpdate(attachment, holder.getDecryptedUrl(), true)) {
                 Logger.logInfoMessage("Critical update was successfully installed");
                 UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.FINISHED);
             } else {
@@ -147,14 +148,38 @@ public class UpdaterCore {
                 TimeUnit.MILLISECONDS.sleep(500);
             }
             catch (InterruptedException e) {
-                Logger.logErrorMessage("Update thread was awakened");
+                Logger.logErrorMessage(e.getMessage(), e);
             }
         }
         Logger.logInfoMessage("Starting scheduled update. CurrentHeight: " + UpdaterMediator.getInstance().getBlockchainHeight() + " updateHeight: " + updateHeight);
         return tryUpdate(attachment, decryptedUrl);
     }
 
+    private void waitBlocks(int blocks, int maxTime) {
+        int currentHeight = UpdaterMediator.getInstance().getBlockchainHeight();
+        int targetHeight = currentHeight + blocks;
+        int timeSpent = 0;
+        while (currentHeight < targetHeight && timeSpent < maxTime) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+                timeSpent++;
+                currentHeight = UpdaterMediator.getInstance().getBlockchainHeight();
+            }
+            catch (InterruptedException e) {
+                Logger.logErrorMessage(e.getMessage(), e);
+            }
+        }
+    }
+
     private boolean tryUpdate(Attachment.UpdateAttachment attachment, String decryptedUrl) {
+        return tryUpdate(attachment, decryptedUrl, false);
+    }
+
+    private boolean tryUpdate(Attachment.UpdateAttachment attachment, String decryptedUrl, boolean isWait) {
+        if (isWait) {
+            Logger.logInfoMessage("Waiting 3 blocks or 200 sec for starting update");
+            waitBlocks(3, 200);
+        }
         Logger.logInfoMessage("Update to version: " + attachment.getAppVersion());
         stopForgingAndBlockAcceptance();
         //Downloader downloads update package
@@ -176,6 +201,7 @@ public class UpdaterCore {
         return false;
     }
 
+
     private void processTransactions(List<? extends Transaction> transactions) {
         transactions.forEach(transaction -> {
             UpdateDataHolder holder = processTransaction(transaction);
@@ -186,7 +212,7 @@ public class UpdaterCore {
                 this.updateDataHolder = holder;
                 startUpdate();
             }
-    });
+        });
     }
 
     private UpdateDataHolder processTransaction(Transaction tr) {
@@ -199,7 +225,7 @@ public class UpdaterCore {
                     String url = RSAUtil.tryDecryptUrl(CERTIFICATE_DIRECTORY, attachment.getUrl(), attachment.getAppVersion());
                     if (url != null && !url.isEmpty()) {
                         if (AuthorityChecker.getInstance().verifyCertificates(CERTIFICATE_DIRECTORY)) {
-                          return new UpdateDataHolder(tr, url);
+                            return new UpdateDataHolder(tr, url);
                         } else {
                             Logger.logErrorMessage("Cannot verify certificates!");
                             SecurityAlertSender.getInstance().send("Certificate verification error" + tr.getJSONObject().toJSONString());

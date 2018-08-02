@@ -1970,4 +1970,13 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         return true;
     }
+
+    public void suspendBlockchainDownloading() {
+        getMoreBlocks = false;
+    }
+
+    public void resumeBlockchainDownloading() {
+        getMoreBlocks = true;
+    }
+
 }

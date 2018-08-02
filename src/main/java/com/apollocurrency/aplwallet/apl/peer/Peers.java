@@ -138,6 +138,7 @@ public final class Peers {
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
     private static boolean shutdown;
+    private static boolean suspend;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
 
@@ -502,7 +503,7 @@ public final class Peers {
 
         @Override
         public void run() {
-            if (shutdown) {
+            if (shutdown || suspend) {
                 return;
             }
             try {
@@ -811,6 +812,31 @@ public final class Peers {
         ThreadPool.shutdownExecutor("peersService", peersService, 5);
     }
 
+    public static void suspend() {
+        suspend = true;
+        if (Init.peerServer != null) {
+            try {
+                Init.peerServer.stop();
+            } catch (Exception e) {
+                Logger.logShutdownMessage("Failed to stop peer server", e);
+            }
+        }
+    }
+
+    public static void resume() {
+        suspend = false;
+
+        if (Init.peerServer != null) {
+            try {
+                Logger.logDebugMessage("Starting peer server");
+                Init.peerServer.start();
+                Logger.logDebugMessage("peer server started");
+            } catch (Exception e) {
+                Logger.logShutdownMessage("Failed to resume peer server", e);
+            }
+        }
+    }
+
     public static boolean addListener(Listener<Peer> listener, Event eventType) {
         return Peers.listeners.addListener(listener, eventType);
     }
@@ -1029,8 +1055,8 @@ public final class Peers {
     }
 
     private static void sendToSomePeers(final JSONObject request) {
-        if (shutdown) {
-            String errorMessage = "Cannot send request to peers. Peer server was already shutdown";
+        if (shutdown || suspend) {
+            String errorMessage = String.format("Cannot send request to peers. Peer server was %s", suspend ? "suspended" : "shutdown");
             Logger.logErrorMessage(errorMessage);
             throw new RuntimeException(errorMessage);
         }

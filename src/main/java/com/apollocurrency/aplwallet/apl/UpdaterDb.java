@@ -96,7 +96,7 @@ public class UpdaterDb {
             }
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Unable to insert update status! ", e);
+            Logger.logDebugMessage("Unable to get update status! ", e);
         }
         return false;
     }
