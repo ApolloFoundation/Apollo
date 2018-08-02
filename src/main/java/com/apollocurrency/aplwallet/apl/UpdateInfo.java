@@ -59,7 +59,7 @@ public class UpdateInfo {
     }
 
     public enum UpdateState {
-        NONE, IN_PROGRESS, REQUIRED_START, REQUIRED_MANUAL_INSTALL, RE_PLANNING, FINISHED
+        NONE, IN_PROGRESS, REQUIRED_START, REQUIRED_MANUAL_INSTALL, RE_PLANNING, FINISHED, FAILED_REQUIRED_START
     }
 
     public DownloadStatus getDownloadStatus() {
