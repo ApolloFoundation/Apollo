@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.db.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
 import java.sql.Connection;
@@ -651,11 +652,15 @@ public final class DigitalGoodsStore {
         }
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
+            Logger.logMessage("1");
             final int timestamp = block.getTimestamp();
+            Logger.logMessage("2");
             final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
+            Logger.logMessage("3");
             DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
                     .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
                     .and(new DbClause.BooleanClause("pending", true));
+            Logger.logMessage("4");
             return purchaseTable.getManyBy(dbClause, 0, -1);
         }
 
