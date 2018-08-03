@@ -46,6 +46,7 @@ var NRS = (function(NRS, $, undefined) {
 		this.privateKey = null;
 		this.sharedKey = null;
 		this.serverKey = null;
+		this.blockHeight = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
@@ -318,9 +319,35 @@ var NRS = (function(NRS, $, undefined) {
 			var that = this;
         	setInterval(function() {
                 that.getItems();
+
             }, 60000)
 		};
-		
+		this.blocksPulling = function() {
+			var that = this;
+
+			setInterval(function(){
+                $.ajax({
+                    url: API + 'requestType=getBlock',
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                    	data  = JSON.parse(data);
+
+                    	if (that.blockHeight && that.blockHeight !== data.height) {
+							that.blockHeight = data.height;
+							that.getItems();
+						}
+						if (!that.blockHeight) {
+							that.blockHeight = data.height;
+							that.getItems();
+						}
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			},2000);
+		}
 		this.destroyTable = function() {
 			$('#transactions_table').find('tbody').empty();
 			
@@ -392,6 +419,8 @@ var NRS = (function(NRS, $, undefined) {
       
         this.renderItems();
         this.logPulling();
+
+        this.blocksPulling();
     };
 
     NRS.myTransactionPagination;
@@ -529,8 +558,6 @@ var NRS = (function(NRS, $, undefined) {
 		}
 		
 		NRS.sendRequest("getBlockchainTransactions", {
-
-
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -1316,9 +1343,10 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			return NRS.formatAmount(entry.change);
 		});
+
 		decimalParams.holdingChangeDecimals = NRS.getNumberOfDecimals(entries, "change", function(entry) {
-			if (isHoldingEntry(entry)) {
-				return NRS.formatQuantity(entry.change, entry.holdingInfo.decimals);
+            if (isHoldingEntry(entry)) {
+					return NRS.formatQuantity(entry.change, entry.holdingInfo.decimals);
 			}
 			return "";
 		});
@@ -1330,7 +1358,7 @@ var NRS = (function(NRS, $, undefined) {
 		});
 		decimalParams.holdingBalanceDecimals = NRS.getNumberOfDecimals(entries, "balance", function(entry) {
 			if (isHoldingEntry(entry)) {
-				return NRS.formatQuantity(entry.balance, entry.holdingInfo.decimals);
+					return NRS.formatQuantity(entry.balance, entry.holdingInfo.decimals);
 			}
 			return "";
 		});
