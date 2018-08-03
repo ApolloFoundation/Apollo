@@ -88,6 +88,11 @@ public final class EncryptedData {
         this.nonce = nonce;
     }
 
+    public EncryptedData(byte[] data) {
+        this.data = data;
+        nonce = new byte[0];
+    }
+
     public byte[] decrypt(String secretPhrase, byte[] theirPublicKey) {
         if (data.length == 0) {
             return data;

@@ -75,6 +75,10 @@ public enum HashFunction {
         this.id = id;
     }
 
+    HashFunction() {
+        id = 0;
+    }
+
     public static HashFunction getHashFunction(byte id) {
         for (HashFunction function : values()) {
             if (function.id == id) {

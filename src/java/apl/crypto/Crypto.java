@@ -310,4 +310,12 @@ public final class Crypto {
         return Curve25519.isCanonicalSignature(signature);
     }
 
+    public static byte[] getRandomBytes(int size) {
+        byte[] bytes = new byte[size];
+        getSecureRandom().nextBytes(bytes);
+        return bytes;
+    }
+    public static byte[] getRandomBytes() {
+        return getRandomBytes(32);
+    }
 }
