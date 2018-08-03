@@ -6,8 +6,8 @@
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final Version VERSION = Version.from("1.0.7");
+    public static final Version VERSION = Version.from("1.0.8");
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();

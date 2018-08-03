@@ -1,4 +1,3 @@
-Copyright © 2017-2018 Apollo Foundation. 
 Copyright © 2016-2017 Jelurida IP B.V.
 Copyright © 2013-2016 The Nxt Core Developers.
 
