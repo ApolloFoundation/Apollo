@@ -652,7 +652,7 @@ public final class DigitalGoodsStore {
         }
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
-            Logger.logMessage("1: " + block);
+            Logger.logMessage("1: " + block.toJsonString());
             final int timestamp = block.getTimestamp();
             Logger.logMessage("2");
             Blockchain bc = Apl.getBlockchain();
@@ -660,7 +660,7 @@ public final class DigitalGoodsStore {
             long priv_blockID = block.getPreviousBlockId();
             Logger.logMessage("4");
             Block priv_block = bc.getBlock(priv_blockID);
-            Logger.logMessage("5:" + priv_block);
+            Logger.logMessage("5:" + priv_block.toJsonString());
             int ts = priv_block.getTimestamp();
             Logger.logMessage("6");
             final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
