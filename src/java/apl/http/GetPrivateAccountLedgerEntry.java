@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.http;
@@ -28,7 +17,9 @@ import static apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
 
-    /** GetPrivateAccountLedgerEntry instance */
+    /**
+     * GetPrivateAccountLedgerEntry instance
+     */
     private static class GetPrivateAccountLedgerEntryHolder {
         private static final GetPrivateAccountLedgerEntry INSTANCE = new GetPrivateAccountLedgerEntry();
     }
@@ -41,15 +32,15 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * Create the GetPrivateAccountLedgerEntry instance
      */
     private GetPrivateAccountLedgerEntry() {
-        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
+        super(new APITag[]{APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
 
     /**
      * Process the GetPrivateAccountLedgerEntry API request
      *
-     * @param   req                 API request
-     * @return                      API response
-     * @throws  AplException        Invalid request
+     * @param req API request
+     * @return API response
+     * @throws AplException Invalid request
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -85,7 +76,7 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
     /**
      * No required block parameters
      *
-     * @return                      FALSE to disable the required block parameters
+     * @return FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

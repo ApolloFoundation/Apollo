@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.tools;
@@ -132,7 +135,7 @@ public final class BaseTargetTest {
                         continue;
                     }
 
-                    int testBlocktime = (int)((previousBaseTarget * (timestamp - previousTimestamp - 1)) / previousTestBaseTarget) + 1;
+                    int testBlocktime = (int) ((previousBaseTarget * (timestamp - previousTimestamp - 1)) / previousTestBaseTarget) + 1;
                     if (testBlocktimeEMA == 0) {
                         testBlocktimeEMA = testBlocktime;
                     } else {
@@ -206,8 +209,8 @@ public final class BaseTargetTest {
             Logger.logMessage("Max test blocktime " + maxTestBlocktime);
             Logger.logMessage("Min blocktime " + minBlocktime);
             Logger.logMessage("Min test blocktime " + minTestBlocktime);
-            Logger.logMessage("Average blocktime " + ((double)totalBlocktime) / count);
-            Logger.logMessage("Average test blocktime " + ((double)totalTestBlocktime) / count);
+            Logger.logMessage("Average blocktime " + ((double) totalBlocktime) / count);
+            Logger.logMessage("Average test blocktime " + ((double) totalTestBlocktime) / count);
             Logger.logMessage("Standard deviation of blocktime " + Math.sqrt(S / count));
             Logger.logMessage("Standard deviation of test blocktime " + Math.sqrt(testS / count));
 

@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package test.dto;
@@ -142,14 +131,14 @@ public class Peer {
     @Override
     public String toString() {
         return "Peer{" +
-            "address='" + address + '\'' +
-            ", blockchainState=" + blockchainState +
-            ", lastUpdated=" + lastUpdated +
-            ", blacklisted=" + blacklisted +
-            ", announcedAddress='" + announcedAddress + '\'' +
-            ", apiPort=" + apiPort +
-            ", port=" + port +
-            '}';
+                "address='" + address + '\'' +
+                ", blockchainState=" + blockchainState +
+                ", lastUpdated=" + lastUpdated +
+                ", blacklisted=" + blacklisted +
+                ", announcedAddress='" + announcedAddress + '\'' +
+                ", apiPort=" + apiPort +
+                ", port=" + port +
+                '}';
     }
 
     public void setAnnouncedAddress(String announcedAddress) {

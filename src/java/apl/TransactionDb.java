@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -65,7 +68,7 @@ final class TransactionDb {
     static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized(BlockDb.blockCache) {
+        synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
@@ -96,7 +99,7 @@ final class TransactionDb {
 
     static boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
+        synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
@@ -121,7 +124,7 @@ final class TransactionDb {
     static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
+        synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
@@ -142,7 +145,7 @@ final class TransactionDb {
 
     static byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
+        synchronized (BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return transaction.fullHash();
@@ -205,7 +208,7 @@ final class TransactionDb {
                     .index(transactionIndex);
             if (transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
-                if (! rs.wasNull()) {
+                if (!rs.wasNull()) {
                     builder.recipientId(recipientId);
                 }
             }
@@ -240,7 +243,7 @@ final class TransactionDb {
 
     static List<TransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
+        synchronized (BlockDb.blockCache) {
             BlockImpl block = BlockDb.blockCache.get(blockId);
             if (block != null) {
                 return block.getTransactions();
@@ -358,7 +361,7 @@ final class TransactionDb {
                 }
                 if (transaction.referencedTransactionFullHash() != null) {
                     try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
-                         + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
+                            + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
                         pstmt.setLong(1, transaction.getId());
                         pstmt.setLong(2, Convert.fullHashToId(transaction.referencedTransactionFullHash()));
                         pstmt.executeUpdate();

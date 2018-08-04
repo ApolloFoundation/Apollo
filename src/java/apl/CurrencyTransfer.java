@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -36,7 +39,7 @@ public final class CurrencyTransfer {
         TRANSFER
     }
 
-    private static final Listeners<CurrencyTransfer,Event> listeners = new Listeners<>();
+    private static final Listeners<CurrencyTransfer, Event> listeners = new Listeners<>();
 
     private static final DbKey.LongKeyFactory<CurrencyTransfer> currencyTransferDbKeyFactory = new DbKey.LongKeyFactory<CurrencyTransfer>("id") {
 
@@ -84,7 +87,6 @@ public final class CurrencyTransfer {
     public static boolean removeListener(Listener<CurrencyTransfer> listener) {
         return removeListener(listener, Event.TRANSFER);
     }
-
 
 
     public static DbIterator<CurrencyTransfer> getCurrencyTransfers(long currencyId, int from, int to) {
@@ -142,7 +144,8 @@ public final class CurrencyTransfer {
         return transfer;
     }
 
-    static void init() {}
+    static void init() {
+    }
 
 
     private final long id;
@@ -196,7 +199,9 @@ public final class CurrencyTransfer {
         return id;
     }
 
-    public long getCurrencyId() { return currencyId; }
+    public long getCurrencyId() {
+        return currencyId;
+    }
 
     public long getSenderId() {
         return senderId;
@@ -206,7 +211,9 @@ public final class CurrencyTransfer {
         return recipientId;
     }
 
-    public long getUnits() { return units; }
+    public long getUnits() {
+        return units;
+    }
 
     public int getTimestamp() {
         return timestamp;

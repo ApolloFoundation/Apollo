@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apldesktop;
@@ -92,7 +95,7 @@ public class DesktopApplication extends Application {
     }
 
     public static void updateSplashScreenStatus(String newStatus) {
-         SPLASH_SCREEN.setLastStatus(newStatus);
+        SPLASH_SCREEN.setLastStatus(newStatus);
     }
 
     //rewrite (start on existing stage)
@@ -132,7 +135,7 @@ public class DesktopApplication extends Application {
     @SuppressWarnings("unused")
     public static void shutdown() {
         System.out.println("shutting down JavaFX platform");
-        Platform.runLater(()-> {
+        Platform.runLater(() -> {
             if (screenStage.isShowing()) {
                 screenStage.close();
             }
@@ -145,8 +148,7 @@ public class DesktopApplication extends Application {
             try {
                 Class<?> aClass = Class.forName("com.mohamnag.fxwebview_debugger.DevToolsDebuggerServer");
                 aClass.getMethod("stopDebugServer").invoke(null);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Logger.logInfoMessage("Error shutting down webview debugger", e);
             }
         }
@@ -165,7 +167,8 @@ public class DesktopApplication extends Application {
         private AtomicBoolean shutdown = new AtomicBoolean(false);
         private volatile String lastStatus;
 
-        private SplashScreen() {}
+        private SplashScreen() {
+        }
 
         public static SplashScreen getInstance() {
             return instance;
@@ -189,13 +192,12 @@ public class DesktopApplication extends Application {
             screenStage.setTitle("Apollo wallet");
             AnchorPane pane = new AnchorPane();
             try {
-                BackgroundImage myBI= new BackgroundImage(new Image(Files.newInputStream(Paths.get("html/www/img/apollo_logo_splash-screen.png")),400,250,false,true),
+                BackgroundImage myBI = new BackgroundImage(new Image(Files.newInputStream(Paths.get("html/www/img/apollo_logo_splash-screen.png")), 400, 250, false, true),
                         BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
                         new BackgroundSize(400, 250, false, false, true, true));
                 Background background = new Background(myBI);
                 pane.setBackground(background);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Logger.logErrorMessage("Cannot load image", e);
             }
             pane.setStyle("-fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0)");
@@ -204,10 +206,10 @@ public class DesktopApplication extends Application {
             indicator.setId("progress-indicator");
             indicator.setStyle(
                     "-fx-max-height: 50; " +
-                    "-fx-max-width: 50;" +
-                    "-fx-min-height: 50;" +
-                    "-fx-min-width: 50;" +
-                    "-fx-progress-color: white");
+                            "-fx-max-width: 50;" +
+                            "-fx-min-height: 50;" +
+                            "-fx-min-width: 50;" +
+                            "-fx-progress-color: white");
             AnchorPane.setTopAnchor(indicator, 130.0);
             AnchorPane.setLeftAnchor(indicator, 175.0);
             pane.getChildren().add(indicator);
@@ -248,8 +250,7 @@ public class DesktopApplication extends Application {
                                 statusText.setText(lastStatus);
                             }
                         });
-                    }
-                    catch (InterruptedException e) {
+                    } catch (InterruptedException e) {
                         Logger.logErrorMessage("GUI thread was interrupted", e);
                     }
                 }
@@ -274,7 +275,8 @@ public class DesktopApplication extends Application {
         private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
 
-        private MainApplication() {}
+        private MainApplication() {
+        }
 
         public static void refresh() {
             Platform.runLater(() -> showStage(true));
@@ -345,8 +347,7 @@ public class DesktopApplication extends Application {
                                 @SuppressWarnings("deprecation") Debugger debugger = webEngine.impl_getDebugger();
                                 Method startDebugServer = aClass.getMethod("startDebugServer", Debugger.class, int.class);
                                 startDebugServer.invoke(null, debugger, 51742);
-                            }
-                            catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                                 Logger.logInfoMessage("Cannot start JavaFx debugger", e);
                             }
                         }
@@ -421,8 +422,7 @@ public class DesktopApplication extends Application {
             Platform.runLater(() -> {
                 try {
                     Desktop.getDesktop().browse(new URI(newValue));
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     Logger.logInfoMessage("Cannot open " + newValue + " error " + e.getMessage());
                 }
             });
@@ -433,8 +433,7 @@ public class DesktopApplication extends Application {
             URL url;
             try {
                 url = new URL(newValue);
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 Logger.logInfoMessage("Malformed URL " + newValue, e);
                 return;
             }
@@ -469,8 +468,7 @@ public class DesktopApplication extends Application {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
                         }
-                    }
-                    catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -494,8 +492,7 @@ public class DesktopApplication extends Application {
                             growl("Pruned message not currently available from any peer");
                             return;
                         }
-                    }
-                    catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -520,8 +517,7 @@ public class DesktopApplication extends Application {
                         } else {
                             data = prunableMessage.getMessage();
                         }
-                    }
-                    catch (RuntimeException e) {
+                    } catch (RuntimeException e) {
                         Logger.logDebugMessage("Decryption of message to recipient failed: " + e.toString());
                         growl("Wrong secretPhrase or sharedKey");
                         return;
@@ -543,8 +539,7 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
             }
         }
@@ -572,7 +567,8 @@ public class DesktopApplication extends Application {
     private static class DbRecoveringUI {
         private static DbRecoveringUI instance = new DbRecoveringUI();
 
-        private DbRecoveringUI() {}
+        private DbRecoveringUI() {
+        }
 
         public static DbRecoveringUI getInstance() {
             return instance;
@@ -596,8 +592,7 @@ public class DesktopApplication extends Application {
                                     deleteDbAndHandleException().show();
                                 }
                             }
-                        }
-                        catch (SQLException sqlEx) {
+                        } catch (SQLException sqlEx) {
                             Logger.logErrorMessage("Cannot reindex database!", sqlEx);
                             //delete db and show alert
                             deleteDbAndHandleException().show();
@@ -633,8 +628,7 @@ public class DesktopApplication extends Application {
             try {
                 Db.tryToDeleteDb();
                 alert = prepareAlert(Alert.AlertType.INFORMATION, "Success", "DB was removed successfully! Please, restart the wallet.", 180);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Logger.logErrorMessage("Unable to delete db!", e);
                 alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete db folder.", 180);
             }

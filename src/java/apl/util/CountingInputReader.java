@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.util;
@@ -28,17 +31,21 @@ import java.io.Reader;
  */
 public class CountingInputReader extends FilterReader {
 
-    /** Current character count */
+    /**
+     * Current character count
+     */
     private long count = 0;
 
-    /** Maximum character count */
+    /**
+     * Maximum character count
+     */
     private final long limit;
 
     /**
      * Create a CountingInputReader for the supplied Reader
      *
-     * @param   reader              Input reader
-     * @param   limit               Maximum number of characters to be read
+     * @param reader Input reader
+     * @param limit  Maximum number of characters to be read
      */
     public CountingInputReader(Reader reader, long limit) {
         super(reader);
@@ -53,8 +60,8 @@ public class CountingInputReader extends FilterReader {
     /**
      * Read a single character
      *
-     * @return                      Character or -1 if end of stream reached
-     * @throws  IOException         I/O error occurred
+     * @return Character or -1 if end of stream reached
+     * @throws IOException I/O error occurred
      */
     @Override
     public int read() throws IOException {
@@ -67,11 +74,11 @@ public class CountingInputReader extends FilterReader {
     /**
      * Read characters into an array starting at the specified offset
      *
-     * @param   cbuf                Character array
-     * @param   off                 Starting offset
-     * @param   len                 Number of characters to be read
-     * @return                      Number of characters read or -1 if end of stream reached
-     * @throws  IOException         I/O error occurred
+     * @param cbuf Character array
+     * @param off  Starting offset
+     * @param len  Number of characters to be read
+     * @return Number of characters read or -1 if end of stream reached
+     * @throws IOException I/O error occurred
      */
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
@@ -84,9 +91,9 @@ public class CountingInputReader extends FilterReader {
     /**
      * Skip characters in the input stream
      *
-     * @param   n                   Number of characters to skip
-     * @return                      Number of characters skipped or -1 if end of stream reached
-     * @throws  IOException         I/O error occurred
+     * @param n Number of characters to skip
+     * @return Number of characters skipped or -1 if end of stream reached
+     * @throws IOException I/O error occurred
      */
     @Override
     public long skip(long n) throws IOException {
@@ -99,7 +106,7 @@ public class CountingInputReader extends FilterReader {
     /**
      * Return the total number of characters read
      *
-     * @return                      Character count
+     * @return Character count
      */
     public long getCount() {
         return count;
@@ -108,8 +115,8 @@ public class CountingInputReader extends FilterReader {
     /**
      * Increment the character count and check if the maximum count has been exceeded
      *
-     * @param   c                   Number of characters read
-     * @throws  AplIOException      Maximum count exceeded
+     * @param c Number of characters read
+     * @throws AplIOException Maximum count exceeded
      */
     private void incCount(long c) throws AplIOException {
         count += c;

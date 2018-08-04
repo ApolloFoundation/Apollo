@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -35,7 +38,7 @@ public final class HexConvert extends APIServlet.APIRequestHandler {
     }
 
     private HexConvert() {
-        super(new APITag[] {APITag.UTILS}, "string");
+        super(new APITag[]{APITag.UTILS}, "string");
     }
 
     @Override
@@ -50,11 +53,13 @@ public final class HexConvert extends APIServlet.APIRequestHandler {
             if (asHex.length > 0) {
                 response.put("text", Convert.toString(asHex));
             }
-        } catch (RuntimeException ignore) {}
+        } catch (RuntimeException ignore) {
+        }
         try {
             byte[] asText = Convert.toBytes(string);
             response.put("binary", Convert.toHexString(asText));
-        } catch (RuntimeException ignore) {}
+        } catch (RuntimeException ignore) {
+        }
         return response;
     }
 

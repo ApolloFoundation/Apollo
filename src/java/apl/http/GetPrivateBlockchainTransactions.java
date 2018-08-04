@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.http;
@@ -37,7 +26,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
     }
 
     private GetPrivateBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "publicKey", "secretPhrase");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.TRANSACTIONS}, "height", "firstIndex", "lastIndex", "type", "subtype", "publicKey", "secretPhrase");
     }
 
     @Override
@@ -55,14 +44,12 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
         byte subtype;
         try {
             type = Byte.parseByte(req.getParameter("type"));
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             type = -1;
         }
         try {
             subtype = Byte.parseByte(req.getParameter("subtype"));
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             subtype = -1;
         }
         JSONArray transactions = new JSONArray();
@@ -73,7 +60,7 @@ public final class GetPrivateBlockchainTransactions extends APIServlet.APIReques
 
                     if (transaction.getSenderId() != data.getAccountId() && transaction.getRecipientId() != data.getAccountId()) {
                         transactions.add(JSONData.transaction(true, transaction));
-                    } else if (data.isEncrypt()){
+                    } else if (data.isEncrypt()) {
                         transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
 
                     } else {

@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package test;
@@ -51,19 +40,19 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
         parameters.put("height", "10000");
         String json = client.getJson(createURI(url), parameters);
         assertThatJson(json)
-            .isPresent()
-            .node("height")
-            .isPresent()
-            .isEqualTo(10000);
+                .isPresent()
+                .node("height")
+                .isPresent()
+                .isEqualTo(10000);
         assertThatJson(json)
-            .node("numberOfTransactions")
-            .isEqualTo("0");
+                .node("numberOfTransactions")
+                .isEqualTo("0");
         assertThatJson(json)
-            .node("totalFeeATM")
-            .isStringEqualTo("0");
+                .node("totalFeeATM")
+                .isStringEqualTo("0");
         assertThatJson(json)
-            .node("totalAmountATM")
-            .isStringEqualTo("0");
+                .node("totalAmountATM")
+                .isStringEqualTo("0");
     }
 
     @Test
@@ -80,9 +69,9 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
         Assert.assertNotNull(peers);
         Assert.assertFalse(peers.isEmpty());
         assertThatJson(peers)
-            .node("peers")
-            .isPresent()
-            .isArray();
+                .node("peers")
+                .isPresent()
+                .isArray();
     }
 
     @Test
@@ -98,16 +87,16 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
         String json = client.getBlocks(url);
         Assert.assertTrue(StringUtil.isNotBlank(json));
         assertThatJson(json)
-            .node("blocks")
-            .isPresent()
-            .isArray()
-            .ofLength(5);
+                .node("blocks")
+                .isPresent()
+                .isArray()
+                .ofLength(5);
     }
 
     @Test
     @Override
     public void testGetBlocksList() throws Exception {
-        List<Block> blocksList = client.getBlocksList(url,false, null);
+        List<Block> blocksList = client.getBlocksList(url, false, null);
         checkList(blocksList);
         Assert.assertEquals(5, blocksList.size());
     }
@@ -118,13 +107,13 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
         String blockTransactions = client.getBlockTransactions(url, height);
         Assert.assertTrue(StringUtil.isNotBlank(blockTransactions));
         assertThatJson(blockTransactions)
-            .isPresent()
-            .isArray()
-            .ofLength(3);
+                .isPresent()
+                .isArray()
+                .ofLength(3);
         assertThatJson(blockTransactions)
-            .node("[0].height")
-            .isPresent()
-            .isEqualTo(height);
+                .node("[0].height")
+                .isPresent()
+                .isEqualTo(height);
     }
 
     @Test
@@ -149,37 +138,37 @@ public class NodeClientTestMainnet extends AbstractNodeClientTest {
         String transaction = client.sendMoney(url, accounts.get(senderRS), recipientRS);
         Assert.assertTrue(StringUtil.isNotBlank(transaction));
         assertThatJson(transaction)
-            .isPresent()
-            .node("signatureHash")
-            .isPresent();
+                .isPresent()
+                .node("signatureHash")
+                .isPresent();
         assertThatJson(transaction)
-            .node("transactionJSON")
-            .isPresent()
-            .isObject();
+                .node("transactionJSON")
+                .isPresent()
+                .isObject();
         assertThatJson(transaction)
-            .node("transactionJSON.amountATM")
-            .isPresent()
-            .isStringEqualTo(atm(1).toString());
+                .node("transactionJSON.amountATM")
+                .isPresent()
+                .isStringEqualTo(atm(1).toString());
         assertThatJson(transaction)
-            .node("transactionJSON.feeATM")
-            .isPresent()
-            .isStringEqualTo(atm(1).toString());
+                .node("transactionJSON.feeATM")
+                .isPresent()
+                .isStringEqualTo(atm(1).toString());
         assertThatJson(transaction)
-            .node("transactionJSON.recipientRS")
-            .isPresent()
-            .isStringEqualTo(recipientRS);
+                .node("transactionJSON.recipientRS")
+                .isPresent()
+                .isStringEqualTo(recipientRS);
         assertThatJson(transaction)
-            .node("transactionJSON.senderRS")
-            .isPresent()
-            .isStringEqualTo(senderRS);
+                .node("transactionJSON.senderRS")
+                .isPresent()
+                .isStringEqualTo(senderRS);
         assertThatJson(transaction)
-            .node("transactionJSON.type")
-            .isPresent()
-            .isEqualTo(0);
+                .node("transactionJSON.type")
+                .isPresent()
+                .isEqualTo(0);
         assertThatJson(transaction)
-            .node("transactionJSON.subtype")
-            .isPresent()
-            .isEqualTo(0);
+                .node("transactionJSON.subtype")
+                .isPresent()
+                .isEqualTo(0);
     }
 
     @Test

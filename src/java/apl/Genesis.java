@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -39,14 +42,15 @@ public final class Genesis {
     private static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
     public static final long EPOCH_BEGINNING;
+
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("data/genesisParameters.json")) {
-            JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
-            CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
+            JSONObject genesisParameters = (JSONObject) JSONValue.parseWithException(new InputStreamReader(is));
+            CREATOR_PUBLIC_KEY = Convert.parseHexString((String) genesisParameters.get("genesisPublicKey"));
             CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
             EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
-        } catch (IOException|ParseException|java.text.ParseException e) {
+        } catch (IOException | ParseException | java.text.ParseException e) {
             throw new RuntimeException("Failed to load genesis parameters", e);
         }
     }
@@ -58,10 +62,10 @@ public final class Genesis {
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream("data/genesisAccounts" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
-        } catch (IOException|ParseException e) {
+        } catch (IOException | ParseException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
-        digest.update((byte)(Constants.isTestnet ? 1 : 0));
+        digest.update((byte) (Constants.isTestnet ? 1 : 0));
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         return digest.digest();
     }
@@ -80,7 +84,7 @@ public final class Genesis {
         Logger.logDebugMessage(loadingPublicKeysString);
         Apl.getRuntimeMode().updateAppStatus(loadingPublicKeysString + "...");
         for (Object jsonPublicKey : publicKeys) {
-            byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
+            byte[] publicKey = Convert.parseHexString((String) jsonPublicKey);
             Account account = Account.addOrGetAccount(Account.getId(publicKey));
             account.apply(publicKey);
             if (count++ % 100 == 0) {
@@ -94,7 +98,7 @@ public final class Genesis {
         Logger.logDebugMessage(loadingAmountsString);
         Apl.getRuntimeMode().updateAppStatus(loadingAmountsString + "...");
         long total = 0;
-        for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
+        for (Map.Entry<String, Long> entry : ((Map<String, Long>) balances).entrySet()) {
             Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()));
             account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
             total += entry.getValue();
@@ -105,13 +109,14 @@ public final class Genesis {
         if (total > Constants.MAX_BALANCE_ATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_ATM);
         }
-        Logger.logDebugMessage("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.COIN_SYMBOL);
+        Logger.logDebugMessage("Total balance %f %s", (double) total / Constants.ONE_APL, Constants.COIN_SYMBOL);
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
     }
 
-    private Genesis() {} // never
+    private Genesis() {
+    } // never
 
 }

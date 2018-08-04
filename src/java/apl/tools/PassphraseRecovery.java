@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.tools;
@@ -76,16 +79,16 @@ public final class PassphraseRecovery {
             }
             String dictionaryStr = Apl.getStringProperty("recoveryDictionary", "");
             char[] dictionary;
-            switch(dictionaryStr.toLowerCase()) {
+            switch (dictionaryStr.toLowerCase()) {
                 case "":
                 case "ascii":
                     dictionary = getDictionary(32, 127);
                     break;
                 case "asciiall":
-                    dictionary = getDictionary(0, (int)(Math.pow(2, 8) - 1));
+                    dictionary = getDictionary(0, (int) (Math.pow(2, 8) - 1));
                     break;
                 case "unicode":
-                    dictionary = getDictionary(0, (int)(Math.pow(2, 16) - 1));
+                    dictionary = getDictionary(0, (int) (Math.pow(2, 16) - 1));
                     break;
                 default:
                     dictionary = dictionaryStr.toCharArray();
@@ -144,7 +147,7 @@ public final class PassphraseRecovery {
             if (positions.length == 0) {
                 Logger.logInfoMessage("Position not specified scanning for a single typo");
                 char[] copy = new char[wildcard.length];
-                for (int i=0; i<wildcard.length; i++) {
+                for (int i = 0; i < wildcard.length; i++) {
                     positions = new int[1];
                     positions[0] = i;
                     System.arraycopy(wildcard, 0, copy, 0, wildcard.length);

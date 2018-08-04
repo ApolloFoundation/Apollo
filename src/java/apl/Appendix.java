@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -36,20 +39,32 @@ import java.util.Set;
 public interface Appendix {
 
     int getSize();
+
     int getFullSize();
+
     void putBytes(ByteBuffer buffer);
+
     JSONObject getJSONObject();
+
     byte getVersion();
+
     int getBaselineFeeHeight();
+
     Fee getBaselineFee(Transaction transaction);
+
     int getNextFeeHeight();
+
     Fee getNextFee(Transaction transaction);
+
     boolean isPhased(Transaction transaction);
 
     interface Prunable {
         byte[] getHash();
+
         boolean hasPrunableData();
+
         void restorePrunableData(Transaction transaction, int blockTimestamp, int height);
+
         default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             return Apl.getEpochTime() - transaction.getTimestamp() <
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
@@ -164,7 +179,8 @@ public interface Appendix {
             loadPrunable(transaction, false);
         }
 
-        void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
+        void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+        }
 
         abstract boolean isPhasable();
 
@@ -193,7 +209,7 @@ public interface Appendix {
         private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                return ((Message)appendage).getMessage().length;
+                return ((Message) appendage).getMessage().length;
             }
         };
 
@@ -219,7 +235,7 @@ public interface Appendix {
 
         Message(JSONObject attachmentData) {
             super(attachmentData);
-            String messageString = (String)attachmentData.get("message");
+            String messageString = (String) attachmentData.get("message");
             this.isText = Boolean.TRUE.equals(attachmentData.get("messageIsText"));
             this.message = isText ? Convert.toBytes(messageString) : Convert.parseHexString(messageString);
         }
@@ -276,7 +292,8 @@ public interface Appendix {
         }
 
         @Override
-        void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+        void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        }
 
         public byte[] getMessage() {
             return message;
@@ -300,11 +317,11 @@ public interface Appendix {
         }
     }
 
-    class PrunablePlainMessage extends Appendix.AbstractAppendix implements Prunable {
+    class PrunablePlainMessage extends AbstractAppendix implements Prunable {
 
         private static final String appendixName = "PrunablePlainMessage";
 
-        private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
+        private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendix) {
                 return appendix.getFullSize();
@@ -418,7 +435,7 @@ public interface Appendix {
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-                PrunableMessage.add((TransactionImpl)transaction, this);
+                PrunableMessage.add((TransactionImpl) transaction, this);
             }
         }
 
@@ -442,7 +459,7 @@ public interface Appendix {
                 return hash;
             }
             MessageDigest digest = Crypto.sha256();
-            digest.update((byte)(isText ? 1 : 0));
+            digest.update((byte) (isText ? 1 : 0));
             digest.update(message);
             return digest.digest();
         }
@@ -469,7 +486,7 @@ public interface Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            PrunableMessage.add((TransactionImpl)transaction, this, blockTimestamp, height);
+            PrunableMessage.add((TransactionImpl) transaction, this, blockTimestamp, height);
         }
     }
 
@@ -478,7 +495,7 @@ public interface Appendix {
         private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                return ((AbstractEncryptedMessage)appendage).getEncryptedDataLength() - 16;
+                return ((AbstractEncryptedMessage) appendage).getEncryptedDataLength() - 16;
             }
         };
 
@@ -499,7 +516,7 @@ public interface Appendix {
 
         private AbstractEncryptedMessage(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
             super(attachmentJSON);
-            byte[] data = Convert.parseHexString((String)encryptedMessageJSON.get("data"));
+            byte[] data = Convert.parseHexString((String) encryptedMessageJSON.get("data"));
             byte[] nonce = Convert.parseHexString((String) encryptedMessageJSON.get("nonce"));
             this.encryptedData = new EncryptedData(data, nonce);
             this.isText = Boolean.TRUE.equals(encryptedMessageJSON.get("isText"));
@@ -561,7 +578,8 @@ public interface Appendix {
         }
 
         @Override
-        void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+        void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        }
 
         public final EncryptedData getEncryptedData() {
             return encryptedData;
@@ -594,7 +612,7 @@ public interface Appendix {
 
         private static final String appendixName = "PrunableEncryptedMessage";
 
-        private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
+        private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendix) {
                 return appendix.getFullSize();
@@ -605,7 +623,7 @@ public interface Appendix {
             if (!hasAppendix(appendixName, attachmentData)) {
                 return null;
             }
-            JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptedMessage");
+            JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
             if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
                 return new UnencryptedPrunableEncryptedMessage(attachmentData);
             }
@@ -725,7 +743,7 @@ public interface Appendix {
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
             if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
-                PrunableMessage.add((TransactionImpl)transaction, this);
+                PrunableMessage.add((TransactionImpl) transaction, this);
             }
         }
 
@@ -764,8 +782,8 @@ public interface Appendix {
                 return hash;
             }
             MessageDigest digest = Crypto.sha256();
-            digest.update((byte)(isText ? 1 : 0));
-            digest.update((byte)(isCompressed ? 1 : 0));
+            digest.update((byte) (isText ? 1 : 0));
+            digest.update((byte) (isCompressed ? 1 : 0));
             digest.update(encryptedData.getData());
             digest.update(encryptedData.getNonce());
             return digest.digest();
@@ -793,7 +811,7 @@ public interface Appendix {
 
         @Override
         public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-            PrunableMessage.add((TransactionImpl)transaction, this, blockTimestamp, height);
+            PrunableMessage.add((TransactionImpl) transaction, this, blockTimestamp, height);
         }
     }
 
@@ -805,10 +823,10 @@ public interface Appendix {
         private UnencryptedPrunableEncryptedMessage(JSONObject attachmentJSON) {
             super(attachmentJSON);
             setEncryptedData(null);
-            JSONObject encryptedMessageJSON = (JSONObject)attachmentJSON.get("encryptedMessage");
-            String messageToEncryptString = (String)encryptedMessageJSON.get("messageToEncrypt");
+            JSONObject encryptedMessageJSON = (JSONObject) attachmentJSON.get("encryptedMessage");
+            String messageToEncryptString = (String) encryptedMessageJSON.get("messageToEncrypt");
             this.messageToEncrypt = isText() ? Convert.toBytes(messageToEncryptString) : Convert.parseHexString(messageToEncryptString);
-            this.recipientPublicKey = Convert.parseHexString((String)attachmentJSON.get("recipientPublicKey"));
+            this.recipientPublicKey = Convert.parseHexString((String) attachmentJSON.get("recipientPublicKey"));
         }
 
         public UnencryptedPrunableEncryptedMessage(byte[] messageToEncrypt, boolean isText, boolean isCompressed, byte[] recipientPublicKey) {
@@ -861,7 +879,8 @@ public interface Appendix {
         }
 
         @Override
-        void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
+        void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+        }
 
         @Override
         public void encrypt(String secretPhrase) {
@@ -887,7 +906,7 @@ public interface Appendix {
             if (!hasAppendix(appendixName, attachmentData)) {
                 return null;
             }
-            if (((JSONObject)attachmentData.get("encryptedMessage")).get("data") == null) {
+            if (((JSONObject) attachmentData.get("encryptedMessage")).get("data") == null) {
                 return new UnencryptedEncryptedMessage(attachmentData);
             }
             return new EncryptedMessage(attachmentData);
@@ -898,7 +917,7 @@ public interface Appendix {
         }
 
         EncryptedMessage(JSONObject attachmentData) {
-            super(attachmentData, (JSONObject)attachmentData.get("encryptedMessage"));
+            super(attachmentData, (JSONObject) attachmentData.get("encryptedMessage"));
         }
 
         public EncryptedMessage(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
@@ -935,10 +954,10 @@ public interface Appendix {
         UnencryptedEncryptedMessage(JSONObject attachmentData) {
             super(attachmentData);
             setEncryptedData(null);
-            JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptedMessage");
-            String messageToEncryptString = (String)encryptedMessageJSON.get("messageToEncrypt");
+            JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
+            String messageToEncryptString = (String) encryptedMessageJSON.get("messageToEncrypt");
             messageToEncrypt = isText() ? Convert.toBytes(messageToEncryptString) : Convert.parseHexString(messageToEncryptString);
-            recipientPublicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
+            recipientPublicKey = Convert.parseHexString((String) attachmentData.get("recipientPublicKey"));
         }
 
         public UnencryptedEncryptedMessage(byte[] messageToEncrypt, boolean isText, boolean isCompressed, byte[] recipientPublicKey) {
@@ -1009,7 +1028,7 @@ public interface Appendix {
             if (!hasAppendix(appendixName, attachmentData)) {
                 return null;
             }
-            if (((JSONObject)attachmentData.get("encryptToSelfMessage")).get("data") == null) {
+            if (((JSONObject) attachmentData.get("encryptToSelfMessage")).get("data") == null) {
                 return new UnencryptedEncryptToSelfMessage(attachmentData);
             }
             return new EncryptToSelfMessage(attachmentData);
@@ -1020,7 +1039,7 @@ public interface Appendix {
         }
 
         EncryptToSelfMessage(JSONObject attachmentData) {
-            super(attachmentData, (JSONObject)attachmentData.get("encryptToSelfMessage"));
+            super(attachmentData, (JSONObject) attachmentData.get("encryptToSelfMessage"));
         }
 
         public EncryptToSelfMessage(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
@@ -1048,8 +1067,8 @@ public interface Appendix {
         UnencryptedEncryptToSelfMessage(JSONObject attachmentData) {
             super(attachmentData);
             setEncryptedData(null);
-            JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptToSelfMessage");
-            String messageToEncryptString = (String)encryptedMessageJSON.get("messageToEncrypt");
+            JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptToSelfMessage");
+            String messageToEncryptString = (String) encryptedMessageJSON.get("messageToEncrypt");
             messageToEncrypt = isText() ? Convert.toBytes(messageToEncryptString) : Convert.parseHexString(messageToEncryptString);
         }
 
@@ -1132,7 +1151,7 @@ public interface Appendix {
 
         PublicKeyAnnouncement(JSONObject attachmentData) {
             super(attachmentData);
-            this.publicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
+            this.publicKey = Convert.parseHexString((String) attachmentData.get("recipientPublicKey"));
         }
 
         public PublicKeyAnnouncement(byte[] publicKey) {
@@ -1172,7 +1191,7 @@ public interface Appendix {
                 throw new AplException.NotValidException("Announced public key does not match recipient accountId");
             }
             byte[] recipientPublicKey = Account.getPublicKey(recipientId);
-            if (recipientPublicKey != null && ! Arrays.equals(publicKey, recipientPublicKey)) {
+            if (recipientPublicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
                 throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
             }
         }
@@ -1201,7 +1220,7 @@ public interface Appendix {
 
         private static final Fee PHASING_FEE = (transaction, appendage) -> {
             long fee = 0;
-            Phasing phasing = (Phasing)appendage;
+            Phasing phasing = (Phasing) appendage;
             if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
                 fee += 20 * Constants.ONE_APL;
             } else {
@@ -1231,7 +1250,7 @@ public interface Appendix {
             super(buffer);
             finishHeight = buffer.getInt();
             params = new PhasingParams(buffer);
-            
+
             byte linkedFullHashesSize = buffer.get();
             if (linkedFullHashesSize > 0) {
                 linkedFullHashes = new byte[linkedFullHashesSize][];
@@ -1265,7 +1284,7 @@ public interface Appendix {
             } else {
                 linkedFullHashes = Convert.EMPTY_BYTES;
             }
-            String hashedSecret = Convert.emptyToNull((String)attachmentData.get("phasingHashedSecret"));
+            String hashedSecret = Convert.emptyToNull((String) attachmentData.get("phasingHashedSecret"));
             if (hashedSecret != null) {
                 this.hashedSecret = Convert.parseHexString(hashedSecret);
                 this.algorithm = ((Long) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
@@ -1301,7 +1320,7 @@ public interface Appendix {
             for (byte[] hash : linkedFullHashes) {
                 buffer.put(hash);
             }
-            buffer.put((byte)hashedSecret.length);
+            buffer.put((byte) hashedSecret.length);
             buffer.put(hashedSecret);
             buffer.put(algorithm);
         }
@@ -1420,7 +1439,7 @@ public interface Appendix {
             Account senderAccount = Account.getAccount(transaction.getSenderId());
             transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
             senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
-                                                     transaction.getAmountATM());
+                    transaction.getAmountATM());
             TransactionProcessorImpl.getInstance()
                     .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
             Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been rejected");

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.util;
@@ -37,13 +40,15 @@ import java.util.regex.Pattern;
 
 public final class JSON {
 
-    private JSON() {} //never
+    private JSON() {
+    } //never
 
     public final static JSONStreamAware emptyJSON = prepare(new JSONObject());
 
     public static JSONStreamAware prepare(final JSONObject json) {
         return new JSONStreamAware() {
             private final char[] jsonChars = JSON.toJSONString(json).toCharArray();
+
             @Override
             public void writeJSONString(Writer out) throws IOException {
                 out.write(jsonChars);
@@ -60,31 +65,34 @@ public final class JSON {
         StringWriter stringWriter = new StringWriter();
         try {
             JSON.writeJSONString(jsonStreamAware, stringWriter);
-        } catch (IOException ignore) {}
+        } catch (IOException ignore) {
+        }
         return stringWriter.toString();
     }
 
-    /** String escape pattern */
+    /**
+     * String escape pattern
+     */
     private static final Pattern pattern = Pattern.compile(
             "[\"\\\\\\u0008\\f\\n\\r\\t/\\u0000-\\u001f\\u007f-\\u009f\\u2000-\\u20ff\\ud800-\\udbff]");
 
     /**
      * Create a formatted JSON string
      *
-     * @param   json                            JSON list or map
-     * @return                                  Formatted string
+     * @param json JSON list or map
+     * @return Formatted string
      */
     public static String toJSONString(JSONAware json) {
         if (json == null)
             return "null";
         if (json instanceof Map) {
             StringBuilder sb = new StringBuilder(1024);
-            encodeObject((Map)json, sb);
+            encodeObject((Map) json, sb);
             return sb.toString();
         }
         if (json instanceof List) {
             StringBuilder sb = new StringBuilder(1024);
-            encodeArray((List)json, sb);
+            encodeArray((List) json, sb);
             return sb.toString();
         }
         return json.toJSONString();
@@ -93,9 +101,9 @@ public final class JSON {
     /**
      * Write a formatted JSON string
      *
-     * @param   json                            JSON list or map
-     * @param   writer                          Writer
-     * @throws  IOException                     I/O error occurred
+     * @param json   JSON list or map
+     * @param writer Writer
+     * @throws IOException I/O error occurred
      */
     public static void writeJSONString(JSONStreamAware json, Writer writer) throws IOException {
         if (json == null) {
@@ -104,13 +112,13 @@ public final class JSON {
         }
         if (json instanceof Map) {
             StringBuilder sb = new StringBuilder(1024);
-            encodeObject((Map)json, sb);
+            encodeObject((Map) json, sb);
             writer.write(sb.toString());
             return;
         }
         if (json instanceof List) {
             StringBuilder sb = new StringBuilder(1024);
-            encodeArray((List)json, sb);
+            encodeArray((List) json, sb);
             writer.write(sb.toString());
             return;
         }
@@ -124,13 +132,13 @@ public final class JSON {
         }
         if (json instanceof Map) {
             StringBuilder sb = new StringBuilder(1024);
-            encodeObject((Map)json, sb);
+            encodeObject((Map) json, sb);
             Files.write(filePath, sb.toString().getBytes(), StandardOpenOption.APPEND);
             return;
         }
         if (json instanceof List) {
             StringBuilder sb = new StringBuilder(1024);
-            encodeArray((List)json, sb);
+            encodeArray((List) json, sb);
             Files.write(filePath, sb.toString().getBytes(), StandardOpenOption.APPEND);
             return;
         }
@@ -140,8 +148,8 @@ public final class JSON {
     /**
      * Create a formatted string from a list
      *
-     * @param   list                            List
-     * @param   sb                              String builder
+     * @param list List
+     * @param sb   String builder
      */
     private static void encodeArray(List<?> list, StringBuilder sb) {
         if (list == null) {
@@ -163,15 +171,15 @@ public final class JSON {
     /**
      * Create a formatted string from a map
      *
-     * @param   map                             Map
-     * @param   sb                              String builder
+     * @param map Map
+     * @param sb  String builder
      */
     public static void encodeObject(Map<?, ?> map, StringBuilder sb) {
         if (map == null) {
             sb.append("null");
             return;
         }
-        Set<Map.Entry<Object, Object>> entries = (Set)map.entrySet();
+        Set<Map.Entry<Object, Object>> entries = (Set) map.entrySet();
         Iterator<Map.Entry<Object, Object>> it = entries.iterator();
         boolean firstElement = true;
         sb.append('{');
@@ -194,19 +202,19 @@ public final class JSON {
     /**
      * Encode a JSON value
      *
-     * @param   value                           JSON value
-     * @param   sb                              String builder
+     * @param value JSON value
+     * @param sb    String builder
      */
     public static void encodeValue(Object value, StringBuilder sb) {
         if (value == null) {
             sb.append("null");
         } else if (value instanceof Double) {
-            if (((Double)value).isInfinite() || ((Double)value).isNaN())
+            if (((Double) value).isInfinite() || ((Double) value).isNaN())
                 sb.append("null");
             else
                 sb.append(value.toString());
         } else if (value instanceof Float) {
-            if (((Float)value).isInfinite() || ((Float)value).isNaN())
+            if (((Float) value).isInfinite() || ((Float) value).isNaN())
                 sb.append("null");
             else
                 sb.append(value.toString());
@@ -215,9 +223,9 @@ public final class JSON {
         } else if (value instanceof Boolean) {
             sb.append(value.toString());
         } else if (value instanceof Map) {
-            encodeObject((Map<Object, Object>)value, sb);
+            encodeObject((Map<Object, Object>) value, sb);
         } else if (value instanceof List) {
-            encodeArray((List<Object>)value, sb);
+            encodeArray((List<Object>) value, sb);
         } else {
             sb.append('\"');
             escapeString(value.toString(), sb);
@@ -228,8 +236,8 @@ public final class JSON {
     /**
      * Escape control characters in a string and append them to the string buffer
      *
-     * @param   string                      String to be written
-     * @param   sb                          String builder
+     * @param string String to be written
+     * @param sb     String builder
      */
     private static void escapeString(String string, StringBuilder sb) {
         if (string.length() == 0)
@@ -274,8 +282,8 @@ public final class JSON {
                     sb.append("\\/");
                     break;
                 default:
-                    if((c>='\u0000' && c<='\u001F') || (c>='\u007F' && c<='\u009F') || (c>='\u2000' && c<='\u20FF')){
-                        sb.append("\\u").append(String.format("%04X", (int)c));
+                    if ((c >= '\u0000' && c <= '\u001F') || (c >= '\u007F' && c <= '\u009F') || (c >= '\u2000' && c <= '\u20FF')) {
+                        sb.append("\\u").append(String.format("%04X", (int) c));
                     } else {
                         sb.append(c);
                     }

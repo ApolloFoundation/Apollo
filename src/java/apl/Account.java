@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -466,7 +469,7 @@ public final class Account {
 
         @Override
         public Account newEntity(DbKey dbKey) {
-            return new Account(((DbKey.LongKey)dbKey).getId());
+            return new Account(((DbKey.LongKey) dbKey).getId());
         }
 
     };
@@ -490,6 +493,7 @@ public final class Account {
             }
             super.trim(height);
         }
+
         @Override
         public void checkAvailable(int height) {
             if (height > Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
@@ -560,7 +564,7 @@ public final class Account {
 
         @Override
         public PublicKey newEntity(DbKey dbKey) {
-            return new PublicKey(((DbKey.LongKey)dbKey).getId(), null);
+            return new PublicKey(((DbKey.LongKey) dbKey).getId(), null);
         }
 
     };
@@ -608,7 +612,7 @@ public final class Account {
         @Override
         public void checkAvailable(int height) {
             if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < Apl.getBlockchainProcessor().getMinRollbackHeight()) {
-                throw new IllegalArgumentException("Historical data as of height " + height +" not available.");
+                throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
             }
             if (height > Apl.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Apl.getBlockchain().getHeight());
@@ -696,15 +700,15 @@ public final class Account {
     private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = Apl.getBooleanProperty("apl.enablePublicKeyCache") ?
             new ConcurrentHashMap<>() : null;
 
-    private static final Listeners<Account,Event> listeners = new Listeners<>();
+    private static final Listeners<Account, Event> listeners = new Listeners<>();
 
-    private static final Listeners<AccountAsset,Event> assetListeners = new Listeners<>();
+    private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
 
-    private static final Listeners<AccountCurrency,Event> currencyListeners = new Listeners<>();
+    private static final Listeners<AccountCurrency, Event> currencyListeners = new Listeners<>();
 
-    private static final Listeners<AccountLease,Event> leaseListeners = new Listeners<>();
+    private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
 
-    private static final Listeners<AccountProperty,Event> propertyListeners = new Listeners<>();
+    private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
     public static boolean addListener(Listener<Account> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -1083,7 +1087,8 @@ public final class Account {
 
     }
 
-    static void init() {}
+    static void init() {
+    }
 
 
     private final long id;
@@ -1232,7 +1237,7 @@ public final class Account {
             if (activeLesseeId == 0) {
                 effectiveBalanceATM += getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
             }
-	        return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
+            return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         } finally {
             Apl.getBlockchain().readUnlock();
         }
@@ -1492,7 +1497,7 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             publicKeyTable.insert(publicKey);
-        } else if (! Arrays.equals(publicKey.publicKey, key)) {
+        } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.height >= Apl.getBlockchain().getHeight() - 1) {
             PublicKey dbPublicKey = publicKeyTable.get(dbKey, false);

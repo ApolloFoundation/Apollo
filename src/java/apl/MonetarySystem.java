@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -60,7 +63,8 @@ public abstract class MonetarySystem extends TransactionType {
         }
     }
 
-    private MonetarySystem() {}
+    private MonetarySystem() {
+    }
 
     @Override
     public final byte getType() {
@@ -74,7 +78,7 @@ public abstract class MonetarySystem extends TransactionType {
         String nameLower = currency.getName().toLowerCase();
         String codeLower = currency.getCode().toLowerCase();
         boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, false);
-        if (! nameLower.equals(codeLower)) {
+        if (!nameLower.equals(codeLower)) {
             isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, false);
         }
         return isDuplicate;
@@ -143,7 +147,7 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         long[] getBackFees(Transaction transaction) {
             long feeATM = transaction.getFeeATM();
-            return new long[] {feeATM * 3 / 10, feeATM * 2 / 10, feeATM / 10};
+            return new long[]{feeATM * 3 / 10, feeATM * 2 / 10, feeATM / 10};
         }
 
         @Override
@@ -162,7 +166,7 @@ public abstract class MonetarySystem extends TransactionType {
             String nameLower = attachment.getName().toLowerCase();
             String codeLower = attachment.getCode().toLowerCase();
             boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, true);
-            if (! nameLower.equals(codeLower)) {
+            if (!nameLower.equals(codeLower)) {
                 isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, true);
             }
             return isDuplicate;
@@ -412,7 +416,7 @@ public abstract class MonetarySystem extends TransactionType {
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (! currency.isActive()) {
+            if (!currency.isActive()) {
                 throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
             }
         }
@@ -511,7 +515,7 @@ public abstract class MonetarySystem extends TransactionType {
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (! currency.isActive()) {
+            if (!currency.isActive()) {
                 throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
             }
         }
@@ -565,7 +569,7 @@ public abstract class MonetarySystem extends TransactionType {
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (! currency.isActive()) {
+            if (!currency.isActive()) {
                 throw new AplException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
             }
         }
@@ -812,7 +816,7 @@ public abstract class MonetarySystem extends TransactionType {
             String nameLower = currency.getName().toLowerCase();
             String codeLower = currency.getCode().toLowerCase();
             boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, true);
-            if (! nameLower.equals(codeLower)) {
+            if (!nameLower.equals(codeLower)) {
                 isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, true);
             }
             return isDuplicate;

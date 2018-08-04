@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -92,12 +95,12 @@ public final class CurrencyMinting {
         if (min < 1 || max > 255) {
             throw new IllegalArgumentException(String.format("Min: %d, Max: %d, allowed range is 1 to 255", min, max));
         }
-        int exp = (int)(256 - min - ((max - min) * currentMintableSupply) / totalMintableSupply);
+        int exp = (int) (256 - min - ((max - min) * currentMintableSupply) / totalMintableSupply);
         return BigInteger.valueOf(2).pow(exp).subtract(BigInteger.ONE).divide(BigInteger.valueOf(units));
     }
 
     private static byte[] reverse(byte[] b) {
-        for(int i=0; i < b.length/2; i++) {
+        for (int i = 0; i < b.length / 2; i++) {
             byte temp = b[i];
             b[i] = b[b.length - i - 1];
             b[b.length - i - 1] = temp;
@@ -106,14 +109,15 @@ public final class CurrencyMinting {
     }
 
     private static byte[] reverseXor(byte[] b) {
-        for(int i=0; i < b.length/2; i++) {
-            b[i]^=b[b.length-i-1];
-            b[b.length-i-1]^=b[i];
-            b[i]^=b[b.length-i-1];
+        for (int i = 0; i < b.length / 2; i++) {
+            b[i] ^= b[b.length - i - 1];
+            b[b.length - i - 1] ^= b[i];
+            b[i] ^= b[b.length - i - 1];
         }
         return b;
     }
 
-    private CurrencyMinting() {} // never
+    private CurrencyMinting() {
+    } // never
 
 }

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -33,6 +36,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+
 import static apl.TransactionType.AccountControl.*;
 
 public final class AccountRestrictions {
@@ -136,7 +140,7 @@ public final class AccountRestrictions {
 
         private void checkTransaction(Transaction transaction) throws AccountControlException {
             if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
-                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL, Constants.COIN_SYMBOL));
+                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double) maxFees) / Constants.ONE_APL, Constants.COIN_SYMBOL));
             }
             if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
                 return;
@@ -222,9 +226,9 @@ public final class AccountRestrictions {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         return
                 senderAccount.getControls().contains(ControlType.PHASING_ONLY)
-                && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
-                && transaction.getType() != SET_PHASING_ONLY
-                && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                        && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
+                        && transaction.getType() != SET_PHASING_ONLY
+                        && TransactionType.isDuplicate(SET_PHASING_ONLY,
                         Long.toUnsignedString(senderAccount.getId()), duplicates, true);
     }
 

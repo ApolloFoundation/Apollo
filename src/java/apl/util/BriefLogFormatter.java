@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.util;
@@ -32,7 +35,9 @@ import java.util.logging.Logger;
  */
 public class BriefLogFormatter extends Formatter {
 
-    /** Format used for log messages */
+    /**
+     * Format used for log messages
+     */
     private static final ThreadLocal<MessageFormat> messageFormat = new ThreadLocal<MessageFormat>() {
         @Override
         protected MessageFormat initialValue() {
@@ -40,10 +45,14 @@ public class BriefLogFormatter extends Formatter {
         }
     };
 
-    /** Logger instance at the top of the name tree */
+    /**
+     * Logger instance at the top of the name tree
+     */
     private static final Logger logger = Logger.getLogger("");
 
-    /** singleton BriefLogFormatter instance */
+    /**
+     * singleton BriefLogFormatter instance
+     */
     private static final BriefLogFormatter briefLogFormatter = new BriefLogFormatter();
 
     /**
@@ -57,11 +66,11 @@ public class BriefLogFormatter extends Formatter {
 
     /**
      * Format the log record as follows:
+     * <p>
+     * Date Level Message ExceptionTrace
      *
-     *     Date Level Message ExceptionTrace
-     *
-     * @param       logRecord       The log record
-     * @return                      The formatted string
+     * @param logRecord The log record
+     * @return The formatted string
      */
     @Override
     public String format(LogRecord logRecord) {
@@ -80,7 +89,8 @@ public class BriefLogFormatter extends Formatter {
         return messageFormat.get().format(arguments);
     }
 
-    private BriefLogFormatter() {}
+    private BriefLogFormatter() {
+    }
 
     @Override
     public String getTail(Handler h) {

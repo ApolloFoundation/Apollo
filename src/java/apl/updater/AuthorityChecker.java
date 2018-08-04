@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.updater;
@@ -40,7 +29,8 @@ public class AuthorityChecker {
         private static final AuthorityChecker INSTANCE = new AuthorityChecker();
     }
 
-    private AuthorityChecker() {}
+    private AuthorityChecker() {
+    }
 
     public static AuthorityChecker getInstance() {
         return AuthorityCheckerHolder.INSTANCE;
@@ -58,15 +48,14 @@ public class AuthorityChecker {
             Certificate caCertificate = readCertificate(path);
             intermediateCertificate.verify(caCertificate.getPublicKey());
             return true;
-        }
-        catch (CertificateException |IOException e) {
+        } catch (CertificateException | IOException e) {
             Logger.logErrorMessage("Unable to read or load certificate", e);
-        }
-        catch (NoSuchAlgorithmException | SignatureException | NoSuchProviderException | InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | SignatureException | NoSuchProviderException | InvalidKeyException e) {
             Logger.logErrorMessage("Unable to verify certificate signature", e);
         }
         return false;
     }
+
     private Path downloadCACertificate() throws IOException {
         return downloader.downloadAttempt(UpdaterConstants.CA_CERTIFICATE_URL, "", UpdaterConstants.CA_CERTIFICATE_NAME);
     }

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -24,7 +27,7 @@ import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public interface BlockchainProcessor extends Observable<Block,BlockchainProcessor.Event> {
+public interface BlockchainProcessor extends Observable<Block, BlockchainProcessor.Event> {
 
     enum Event {
         BLOCK_PUSHED, BLOCK_POPPED, BLOCK_GENERATED, BLOCK_SCANNED,
@@ -120,9 +123,9 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
             super(message, block);
         }
 
-	}
+    }
 
-	class InvalidTransactionException extends BlockNotAcceptedException {
+    class InvalidTransactionException extends BlockNotAcceptedException {
 
         InvalidTransactionException(String message, BlockImpl block) {
             super(message, block);

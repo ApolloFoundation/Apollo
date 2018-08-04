@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.peer;
@@ -39,13 +42,15 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
     }
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.TOO_MANY_BLOCKS_REQUESTED);
         TOO_MANY_BLOCKS_REQUESTED = JSON.prepare(response);
     }
 
-    private GetNextBlocks() {}
+    private GetNextBlocks() {
+    }
 
 
     @Override
@@ -55,7 +60,7 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
         JSONArray nextBlocksArray = new JSONArray();
         List<? extends Block> blocks;
         long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
-        List<String> stringList = (List<String>)request.get("blockIds");
+        List<String> stringList = (List<String>) request.get("blockIds");
         if (stringList != null) {
             if (stringList.size() > 36) {
                 return TOO_MANY_BLOCKS_REQUESTED;
@@ -68,7 +73,7 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
             if (limit > 36) {
                 return TOO_MANY_BLOCKS_REQUESTED;
             }
-            blocks = Apl.getBlockchain().getBlocksAfter(blockId, limit > 0 ? (int)limit : 36);
+            blocks = Apl.getBlockchain().getBlocksAfter(blockId, limit > 0 ? (int) limit : 36);
         }
         blocks.forEach(block -> nextBlocksArray.add(block.getJSONObject()));
         response.put("nextBlocks", nextBlocksArray);

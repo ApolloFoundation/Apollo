@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -73,13 +76,13 @@ public class TaggedData {
                              + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
                     int expiration = Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
                     pstmtSelect.setInt(1, expiration);
-                    Map<String,Integer> expiredTags = new HashMap<>();
+                    Map<String, Integer> expiredTags = new HashMap<>();
                     try (ResultSet rs = pstmtSelect.executeQuery()) {
                         while (rs.next()) {
-                            Object[] array = (Object[])rs.getArray("parsed_tags").getArray();
+                            Object[] array = (Object[]) rs.getArray("parsed_tags").getArray();
                             for (Object tag : array) {
                                 Integer count = expiredTags.get(tag);
-                                expiredTags.put((String)tag, count != null ? count + 1 : 1);
+                                expiredTags.put((String) tag, count != null ? count + 1 : 1);
                             }
                         }
                     }
@@ -190,7 +193,8 @@ public class TaggedData {
             return tagTable.getManyBy(dbClause, from, to, " ORDER BY tag ");
         }
 
-        private static void init() {}
+        private static void init() {
+        }
 
         private static void add(TaggedData taggedData) {
             for (String tagValue : taggedData.getParsedTags()) {
@@ -221,11 +225,11 @@ public class TaggedData {
             }
         }
 
-        private static void delete(Map<String,Integer> expiredTags) {
+        private static void delete(Map<String, Integer> expiredTags) {
             try (Connection con = Db.db.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count - ? WHERE tag = ?");
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM data_tag WHERE tag_count <= 0")) {
-                for (Map.Entry<String,Integer> entry : expiredTags.entrySet()) {
+                for (Map.Entry<String, Integer> entry : expiredTags.entrySet()) {
                     pstmt.setInt(1, entry.getValue());
                     pstmt.setString(2, entry.getKey());
                     pstmt.executeUpdate();

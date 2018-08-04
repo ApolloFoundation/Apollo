@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -31,7 +34,6 @@ public enum CurrencyType {
      * Can be exchanged from/to APL<br>
      */
     EXCHANGEABLE(0x01) {
-
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
         }
@@ -53,11 +55,10 @@ public enum CurrencyType {
      * Only issuer account can publish exchange offer<br>
      */
     CONTROLLABLE(0x02) {
-
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
-                if (currency == null ||  (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
+                if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
                 }
             }
@@ -69,24 +70,24 @@ public enum CurrencyType {
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {}
+        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {
+        }
 
     },
     /**
      * Can be reserved before the currency is active, reserve is distributed to founders once the currency becomes active<br>
      */
     RESERVABLE(0x04) {
-
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
                 int finishHeight = attachment.getFinishValidationHeight(transaction);
-                if  (issuanceHeight <= finishHeight) {
+                if (issuanceHeight <= finishHeight) {
                     throw new AplException.NotCurrentlyValidException(
-                        String.format("Reservable currency activation height %d not higher than transaction apply height %d",
-                                issuanceHeight, finishHeight));
+                            String.format("Reservable currency activation height %d not higher than transaction apply height %d",
+                                    issuanceHeight, finishHeight));
                 }
                 if (attachment.getMinReservePerUnitATM() <= 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
@@ -136,7 +137,6 @@ public enum CurrencyType {
      * Cannot be {@link #EXCHANGEABLE}
      */
     CLAIMABLE(0x08) {
-
         @Override
         void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
@@ -179,7 +179,7 @@ public enum CurrencyType {
                         throw new AplException.NotValidException("Invalid minting algorithm " + hashFunction);
                     }
                 } catch (IllegalArgumentException e) {
-                    throw new AplException.NotValidException("Illegal algorithm code specified" , e);
+                    throw new AplException.NotValidException("Illegal algorithm code specified", e);
                 }
                 if (issuanceAttachment.getMinDifficulty() < 1 || issuanceAttachment.getMaxDifficulty() > 255 ||
                         issuanceAttachment.getMaxDifficulty() < issuanceAttachment.getMinDifficulty()) {
@@ -311,16 +311,16 @@ public enum CurrencyType {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;
-        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(name)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByCode(name)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByCode(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
         }
-        if ((currency = Currency.getCurrencyByName(code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByName(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
     }

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -48,13 +51,13 @@ public final class Shuffling {
     }
 
     public enum Stage {
-        REGISTRATION((byte)0, new byte[]{1,4}) {
+        REGISTRATION((byte) 0, new byte[]{1, 4}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
                 return shuffling.getFullHash();
             }
         },
-        PROCESSING((byte)1, new byte[]{2,3,4}) {
+        PROCESSING((byte) 1, new byte[]{2, 3, 4}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
                 if (shuffling.assigneeAccountId == shuffling.issuerId) {
@@ -68,19 +71,19 @@ public final class Shuffling {
 
             }
         },
-        VERIFICATION((byte)2, new byte[]{3,4,5}) {
+        VERIFICATION((byte) 2, new byte[]{3, 4, 5}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
                 return shuffling.getLastParticipant().getDataTransactionFullHash();
             }
         },
-        BLAME((byte)3, new byte[]{4}) {
+        BLAME((byte) 3, new byte[]{4}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
                 return shuffling.getParticipant(shuffling.assigneeAccountId).getDataTransactionFullHash();
             }
         },
-        CANCELLED((byte)4, new byte[]{}) {
+        CANCELLED((byte) 4, new byte[]{}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
                 byte[] hash = shuffling.getLastParticipant().getDataTransactionFullHash();
@@ -92,7 +95,7 @@ public final class Shuffling {
                 }
             }
         },
-        DONE((byte)5, new byte[]{}) {
+        DONE((byte) 5, new byte[]{}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
                 return shuffling.getLastParticipant().getDataTransactionFullHash();
@@ -259,7 +262,7 @@ public final class Shuffling {
             throw new RuntimeException(e.toString(), e);
         }
     }
-    
+
     public static DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                         .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
@@ -273,7 +276,8 @@ public final class Shuffling {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    static void init() {}
+    static void init() {
+    }
 
     private final long id;
     private final DbKey dbKey;
@@ -560,7 +564,8 @@ public final class Shuffling {
                     try {
                         decryptedBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
                         break;
-                    } catch (Exception ignore) {}
+                    } catch (Exception ignore) {
+                    }
                 }
             }
             if (decryptedBytes == null) {
@@ -635,7 +640,7 @@ public final class Shuffling {
                 Account.addOrGetAccount(recipientId).apply(recipientPublicKey);
             }
         }
-        setStage(Stage.VERIFICATION, 0, (short)(Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
+        setStage(Stage.VERIFICATION, 0, (short) (Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_FINISHED);
     }
@@ -695,7 +700,7 @@ public final class Shuffling {
                 recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
             }
         }
-        setStage(Stage.DONE, 0, (short)0);
+        setStage(Stage.DONE, 0, (short) 0);
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_DONE);
         if (deleteFinished) {
@@ -730,15 +735,15 @@ public final class Shuffling {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
-                Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
+                Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double) fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
             }
             fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
             blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             blockGeneratorAccount.addToForgedBalanceATM(fee);
-            Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
+            Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double) fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
         }
-        setStage(Stage.CANCELLED, blamedAccountId, (short)0);
+        setStage(Stage.CANCELLED, blamedAccountId, (short) 0);
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_CANCELLED);
         if (deleteFinished) {

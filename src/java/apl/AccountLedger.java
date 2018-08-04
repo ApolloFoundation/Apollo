@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -42,28 +45,44 @@ import java.util.TreeSet;
  */
 public class AccountLedger {
 
-    /** Account ledger is enabled */
+    /**
+     * Account ledger is enabled
+     */
     private static final boolean ledgerEnabled;
 
-    /** Track all accounts */
+    /**
+     * Track all accounts
+     */
     private static final boolean trackAllAccounts;
 
-    /** Accounts to track */
+    /**
+     * Accounts to track
+     */
     private static final SortedSet<Long> trackAccounts = new TreeSet<>();
 
-    /** Unconfirmed logging */
+    /**
+     * Unconfirmed logging
+     */
     private static final int logUnconfirmed;
 
-    /** Number of blocks to keep when trimming */
+    /**
+     * Number of blocks to keep when trimming
+     */
     public static final int trimKeep = Apl.getIntProperty("apl.ledgerTrimKeep", 30000);
 
-    /** Blockchain */
+    /**
+     * Blockchain
+     */
     private static final Blockchain blockchain = Apl.getBlockchain();
 
-    /** Blockchain processor */
+    /**
+     * Blockchain processor
+     */
     private static final BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
 
-    /** Pending ledger entries */
+    /**
+     * Pending ledger entries
+     */
     private static final List<LedgerEntry> pendingEntries = new ArrayList<>();
 
     /**
@@ -108,7 +127,7 @@ public class AccountLedger {
         /**
          * Insert an entry into the table
          *
-         * @param   ledgerEntry             Ledger entry
+         * @param ledgerEntry Ledger entry
          */
         public void insert(LedgerEntry ledgerEntry) {
             try (Connection con = db.getConnection()) {
@@ -121,7 +140,7 @@ public class AccountLedger {
         /**
          * Trim the account ledger table
          *
-         * @param   height                  Trim height
+         * @param height Trim height
          */
         @Override
         public void trim(int height) {
@@ -140,11 +159,12 @@ public class AccountLedger {
             }
         }
     }
+
     private static final AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
 
     /**
      * Initialization
-     *
+     * <p>
      * We don't do anything but we need to be called from Apl.init() in order to
      * register our table
      */
@@ -166,9 +186,9 @@ public class AccountLedger {
     /**
      * Add a listener
      *
-     * @param   listener                    Listener
-     * @param   eventType                   Event to listen for
-     * @return                              True if the listener was added
+     * @param listener  Listener
+     * @param eventType Event to listen for
+     * @return True if the listener was added
      */
     public static boolean addListener(Listener<LedgerEntry> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -177,9 +197,9 @@ public class AccountLedger {
     /**
      * Remove a listener
      *
-     * @param   listener                    Listener
-     * @param   eventType                   Event to listen for
-     * @return                              True if the listener was removed
+     * @param listener  Listener
+     * @param eventType Event to listen for
+     * @return True if the listener was removed
      */
     public static boolean removeListener(Listener<LedgerEntry> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
@@ -224,7 +244,7 @@ public class AccountLedger {
     /**
      * Log an event in the account_ledger table
      *
-     * @param   ledgerEntry                 Ledger entry
+     * @param ledgerEntry Ledger entry
      */
     static void logEntry(LedgerEntry ledgerEntry) {
         //
@@ -246,7 +266,7 @@ public class AccountLedger {
                 if (existingEntry.getAccountId() == ledgerEntry.getAccountId() &&
                         existingEntry.getHolding() == ledgerEntry.getHolding() &&
                         ((existingEntry.getHoldingId() == null && ledgerEntry.getHoldingId() == null) ||
-                        (existingEntry.getHoldingId() != null && existingEntry.getHoldingId().equals(ledgerEntry.getHoldingId())))) {
+                                (existingEntry.getHoldingId() != null && existingEntry.getHoldingId().equals(ledgerEntry.getHoldingId())))) {
                     adjustedBalance += existingEntry.getChange();
                     existingEntry.setBalance(adjustedBalance);
                 }
@@ -277,9 +297,9 @@ public class AccountLedger {
     /**
      * Return a single entry identified by the ledger entry identifier
      *
-     * @param   ledgerId                    Ledger entry identifier
-     * @param allowPrivate                  Allow requested ledger entry to belong to private transaction or not
-     * @return                              Ledger entry or null if entry not found
+     * @param ledgerId     Ledger entry identifier
+     * @param allowPrivate Allow requested ledger entry to belong to private transaction or not
+     * @return Ledger entry or null if entry not found
      */
     public static LedgerEntry getEntry(long ledgerId, boolean allowPrivate) {
         if (!ledgerEnabled)
@@ -290,7 +310,7 @@ public class AccountLedger {
             sql += " AND event_id NOT IN (select event_id from account_ledger where event_type = ? ) ";
         }
         try (Connection con = Db.db.getConnection();
-                PreparedStatement stmt = con.prepareStatement(sql)) {
+             PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setLong(1, ledgerId);
             if (!allowPrivate) {
                 stmt.setInt(2, LedgerEvent.PRIVATE_PAYMENT.code);
@@ -310,16 +330,15 @@ public class AccountLedger {
     /**
      * Return the ledger entries sorted in descending insert order
      *
-     *
-     * @param   accountId                   Account identifier or zero if no account identifier
-     * @param   event                       Ledger event or null
-     * @param   eventId                     Ledger event identifier or zero if no event identifier
-     * @param   holding                     Ledger holding or null
-     * @param   holdingId                   Ledger holding identifier or zero if no holding identifier
-     * @param   firstIndex                  First matching entry index, inclusive
-     * @param   lastIndex                   Last matching entry index, inclusive
-     * @param   includePrivate              Boolean flag that specifies, should response include private ledger entries or not
-     * @return                              List of ledger entries
+     * @param accountId      Account identifier or zero if no account identifier
+     * @param event          Ledger event or null
+     * @param eventId        Ledger event identifier or zero if no event identifier
+     * @param holding        Ledger holding or null
+     * @param holdingId      Ledger holding identifier or zero if no holding identifier
+     * @param firstIndex     First matching entry index, inclusive
+     * @param lastIndex      Last matching entry index, inclusive
+     * @param includePrivate Boolean flag that specifies, should response include private ledger entries or not
+     * @return List of ledger entries
      */
     public static List<LedgerEntry> getEntries(long accountId, LedgerEvent event, long eventId,
                                                LedgerHolding holding, long holdingId,
@@ -346,8 +365,7 @@ public class AccountLedger {
                 sb.append("AND ");
             }
             sb.append("event_id not in (select event_id from account_ledger where ");
-            if (accountId != 0)
-            {
+            if (accountId != 0) {
                 sb.append("account_id = ? AND ");
             }
             sb.append("event_type = ? ) ");
@@ -387,13 +405,13 @@ public class AccountLedger {
                 pstmt.setInt(++i, LedgerEvent.PRIVATE_PAYMENT.code);
             }
             if (event != null) {
-                pstmt.setByte(++i, (byte)event.getCode());
+                pstmt.setByte(++i, (byte) event.getCode());
                 if (eventId != 0) {
                     pstmt.setLong(++i, eventId);
                 }
             }
             if (holding != null) {
-                pstmt.setByte(++i, (byte)holding.getCode());
+                pstmt.setByte(++i, (byte) holding.getCode());
                 if (holdingId != 0) {
                     pstmt.setLong(++i, holdingId);
                 }
@@ -414,86 +432,89 @@ public class AccountLedger {
 
     /**
      * Ledger events
-     *
+     * <p>
      * There must be a ledger event defined for each transaction (type,subtype) pair.  When adding
      * a new event, do not change the existing code assignments since these codes are stored in
      * the event_type field of the account_ledger table.
      */
     public enum LedgerEvent {
         // Block and Transaction
-            BLOCK_GENERATED(1, false),
-            REJECT_PHASED_TRANSACTION(2, true),
-            TRANSACTION_FEE(50, true),
+        BLOCK_GENERATED(1, false),
+        REJECT_PHASED_TRANSACTION(2, true),
+        TRANSACTION_FEE(50, true),
         // TYPE_PAYMENT
-            ORDINARY_PAYMENT(3, true),
-            PRIVATE_PAYMENT(58, true),
+        ORDINARY_PAYMENT(3, true),
+        PRIVATE_PAYMENT(58, true),
         // TYPE_MESSAGING
-            ACCOUNT_INFO(4, true),
-            ALIAS_ASSIGNMENT(5, true),
-            ALIAS_BUY(6, true),
-            ALIAS_DELETE(7, true),
-            ALIAS_SELL(8, true),
-            ARBITRARY_MESSAGE(9, true),
-            HUB_ANNOUNCEMENT(10, true),
-            PHASING_VOTE_CASTING(11, true),
-            POLL_CREATION(12, true),
-            VOTE_CASTING(13, true),
-            ACCOUNT_PROPERTY(56, true),
-            ACCOUNT_PROPERTY_DELETE(57, true),
+        ACCOUNT_INFO(4, true),
+        ALIAS_ASSIGNMENT(5, true),
+        ALIAS_BUY(6, true),
+        ALIAS_DELETE(7, true),
+        ALIAS_SELL(8, true),
+        ARBITRARY_MESSAGE(9, true),
+        HUB_ANNOUNCEMENT(10, true),
+        PHASING_VOTE_CASTING(11, true),
+        POLL_CREATION(12, true),
+        VOTE_CASTING(13, true),
+        ACCOUNT_PROPERTY(56, true),
+        ACCOUNT_PROPERTY_DELETE(57, true),
         // TYPE_COLORED_COINS
-            ASSET_ASK_ORDER_CANCELLATION(14, true),
-            ASSET_ASK_ORDER_PLACEMENT(15, true),
-            ASSET_BID_ORDER_CANCELLATION(16, true),
-            ASSET_BID_ORDER_PLACEMENT(17, true),
-            ASSET_DIVIDEND_PAYMENT(18, true),
-            ASSET_ISSUANCE(19, true),
-            ASSET_TRADE(20, true),
-            ASSET_TRANSFER(21, true),
-            ASSET_DELETE(49, true),
+        ASSET_ASK_ORDER_CANCELLATION(14, true),
+        ASSET_ASK_ORDER_PLACEMENT(15, true),
+        ASSET_BID_ORDER_CANCELLATION(16, true),
+        ASSET_BID_ORDER_PLACEMENT(17, true),
+        ASSET_DIVIDEND_PAYMENT(18, true),
+        ASSET_ISSUANCE(19, true),
+        ASSET_TRADE(20, true),
+        ASSET_TRANSFER(21, true),
+        ASSET_DELETE(49, true),
         // TYPE_DIGITAL_GOODS
-            DIGITAL_GOODS_DELISTED(22, true),
-            DIGITAL_GOODS_DELISTING(23, true),
-            DIGITAL_GOODS_DELIVERY(24, true),
-            DIGITAL_GOODS_FEEDBACK(25, true),
-            DIGITAL_GOODS_LISTING(26, true),
-            DIGITAL_GOODS_PRICE_CHANGE(27, true),
-            DIGITAL_GOODS_PURCHASE(28, true),
-            DIGITAL_GOODS_PURCHASE_EXPIRED(29, true),
-            DIGITAL_GOODS_QUANTITY_CHANGE(30, true),
-            DIGITAL_GOODS_REFUND(31, true),
+        DIGITAL_GOODS_DELISTED(22, true),
+        DIGITAL_GOODS_DELISTING(23, true),
+        DIGITAL_GOODS_DELIVERY(24, true),
+        DIGITAL_GOODS_FEEDBACK(25, true),
+        DIGITAL_GOODS_LISTING(26, true),
+        DIGITAL_GOODS_PRICE_CHANGE(27, true),
+        DIGITAL_GOODS_PURCHASE(28, true),
+        DIGITAL_GOODS_PURCHASE_EXPIRED(29, true),
+        DIGITAL_GOODS_QUANTITY_CHANGE(30, true),
+        DIGITAL_GOODS_REFUND(31, true),
         // TYPE_ACCOUNT_CONTROL
-            ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING(32, true),
-            ACCOUNT_CONTROL_PHASING_ONLY(55, true),
+        ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING(32, true),
+        ACCOUNT_CONTROL_PHASING_ONLY(55, true),
         // TYPE_CURRENCY
-            CURRENCY_DELETION(33, true),
-            CURRENCY_DISTRIBUTION(34, true),
-            CURRENCY_EXCHANGE(35, true),
-            CURRENCY_EXCHANGE_BUY(36, true),
-            CURRENCY_EXCHANGE_SELL(37, true),
-            CURRENCY_ISSUANCE(38, true),
-            CURRENCY_MINTING(39, true),
-            CURRENCY_OFFER_EXPIRED(40, true),
-            CURRENCY_OFFER_REPLACED(41, true),
-            CURRENCY_PUBLISH_EXCHANGE_OFFER(42, true),
-            CURRENCY_RESERVE_CLAIM(43, true),
-            CURRENCY_RESERVE_INCREASE(44, true),
-            CURRENCY_TRANSFER(45, true),
-            CURRENCY_UNDO_CROWDFUNDING(46, true),
+        CURRENCY_DELETION(33, true),
+        CURRENCY_DISTRIBUTION(34, true),
+        CURRENCY_EXCHANGE(35, true),
+        CURRENCY_EXCHANGE_BUY(36, true),
+        CURRENCY_EXCHANGE_SELL(37, true),
+        CURRENCY_ISSUANCE(38, true),
+        CURRENCY_MINTING(39, true),
+        CURRENCY_OFFER_EXPIRED(40, true),
+        CURRENCY_OFFER_REPLACED(41, true),
+        CURRENCY_PUBLISH_EXCHANGE_OFFER(42, true),
+        CURRENCY_RESERVE_CLAIM(43, true),
+        CURRENCY_RESERVE_INCREASE(44, true),
+        CURRENCY_TRANSFER(45, true),
+        CURRENCY_UNDO_CROWDFUNDING(46, true),
         // TYPE_DATA
-            TAGGED_DATA_UPLOAD(47, true),
-            TAGGED_DATA_EXTEND(48, true),
+        TAGGED_DATA_UPLOAD(47, true),
+        TAGGED_DATA_EXTEND(48, true),
         // TYPE_SHUFFLING
-            SHUFFLING_REGISTRATION(51, true),
-            SHUFFLING_PROCESSING(52, true),
-            SHUFFLING_CANCELLATION(53, true),
-            SHUFFLING_DISTRIBUTION(54, true),
+        SHUFFLING_REGISTRATION(51, true),
+        SHUFFLING_PROCESSING(52, true),
+        SHUFFLING_CANCELLATION(53, true),
+        SHUFFLING_DISTRIBUTION(54, true),
         // TYPE_UPDATE
-            UPDATE_CRITICAL(59, true),
-            UPDATE_IMPORTANT(60, true),
-            UPDATE_MINOR(61, true);
+        UPDATE_CRITICAL(59, true),
+        UPDATE_IMPORTANT(60, true),
+        UPDATE_MINOR(61, true);
 
-        /** Event code mapping */
+        /**
+         * Event code mapping
+         */
         private static final Map<Integer, LedgerEvent> eventMap = new HashMap<>();
+
         static {
             for (LedgerEvent event : values()) {
                 if (eventMap.put(event.code, event) != null) {
@@ -502,17 +523,21 @@ public class AccountLedger {
             }
         }
 
-        /** Event code */
+        /**
+         * Event code
+         */
         private final int code;
 
-        /** Event identifier is a transaction */
+        /**
+         * Event identifier is a transaction
+         */
         private final boolean isTransaction;
 
         /**
          * Create the ledger event
          *
-         * @param   code                    Event code
-         * @param   isTransaction           Event identifier is a transaction
+         * @param code          Event code
+         * @param isTransaction Event identifier is a transaction
          */
         LedgerEvent(int code, boolean isTransaction) {
             this.code = code;
@@ -522,7 +547,7 @@ public class AccountLedger {
         /**
          * Check if the event identifier is a transaction
          *
-         * @return                          TRUE if the event identifier is a transaction
+         * @return TRUE if the event identifier is a transaction
          */
         public boolean isTransaction() {
             return isTransaction;
@@ -531,7 +556,7 @@ public class AccountLedger {
         /**
          * Return the event code
          *
-         * @return                          Event code
+         * @return Event code
          */
         public int getCode() {
             return code;
@@ -540,8 +565,8 @@ public class AccountLedger {
         /**
          * Get the event from the event code
          *
-         * @param   code                    Event code
-         * @return                          Event
+         * @param code Event code
+         * @return Event
          */
         public static LedgerEvent fromCode(int code) {
             LedgerEvent event = eventMap.get(code);
@@ -554,7 +579,7 @@ public class AccountLedger {
 
     /**
      * Ledger holdings
-     *
+     * <p>
      * When adding a new holding, do not change the existing code assignments since
      * they are stored in the holding_type field of the account_ledger table.
      */
@@ -566,8 +591,11 @@ public class AccountLedger {
         UNCONFIRMED_CURRENCY_BALANCE(5, true),
         CURRENCY_BALANCE(6, false);
 
-        /** Holding code mapping */
+        /**
+         * Holding code mapping
+         */
         private static final Map<Integer, LedgerHolding> holdingMap = new HashMap<>();
+
         static {
             for (LedgerHolding holding : values()) {
                 if (holdingMap.put(holding.code, holding) != null) {
@@ -576,17 +604,21 @@ public class AccountLedger {
             }
         }
 
-        /** Holding code */
+        /**
+         * Holding code
+         */
         private final int code;
 
-        /** Unconfirmed holding */
+        /**
+         * Unconfirmed holding
+         */
         private final boolean isUnconfirmed;
 
         /**
          * Create the holding event
          *
-         * @param   code                    Holding code
-         * @param   isUnconfirmed           TRUE if the holding is unconfirmed
+         * @param code          Holding code
+         * @param isUnconfirmed TRUE if the holding is unconfirmed
          */
         LedgerHolding(int code, boolean isUnconfirmed) {
             this.code = code;
@@ -596,7 +628,7 @@ public class AccountLedger {
         /**
          * Check if the holding is unconfirmed
          *
-         * @return                          TRUE if the holding is unconfirmed
+         * @return TRUE if the holding is unconfirmed
          */
         public boolean isUnconfirmed() {
             return this.isUnconfirmed;
@@ -605,7 +637,7 @@ public class AccountLedger {
         /**
          * Return the holding code
          *
-         * @return                          Holding code
+         * @return Holding code
          */
         public int getCode() {
             return code;
@@ -614,8 +646,8 @@ public class AccountLedger {
         /**
          * Get the holding from the holding code
          *
-         * @param   code                    Holding code
-         * @return                          Holding
+         * @param code Holding code
+         * @return Holding
          */
         public static LedgerHolding fromCode(int code) {
             LedgerHolding holding = holdingMap.get(code);
@@ -631,52 +663,74 @@ public class AccountLedger {
      */
     public static class LedgerEntry {
 
-        /** Ledger identifier */
+        /**
+         * Ledger identifier
+         */
         private long ledgerId = -1;
 
-        /** Ledger event */
+        /**
+         * Ledger event
+         */
         private final LedgerEvent event;
 
-        /** Associated event identifier */
+        /**
+         * Associated event identifier
+         */
         private final long eventId;
 
-        /** Account identifier */
+        /**
+         * Account identifier
+         */
         private final long accountId;
 
-        /** Holding */
+        /**
+         * Holding
+         */
         private final LedgerHolding holding;
 
-        /** Holding identifier */
+        /**
+         * Holding identifier
+         */
         private final Long holdingId;
 
-        /** Change in balance */
+        /**
+         * Change in balance
+         */
         private long change;
 
-        /** New balance */
+        /**
+         * New balance
+         */
         private long balance;
 
-        /** Block identifier */
+        /**
+         * Block identifier
+         */
         private final long blockId;
 
-        /** Blockchain height */
+        /**
+         * Blockchain height
+         */
         private final int height;
 
-        /** Block timestamp */
+        /**
+         * Block timestamp
+         */
         private final int timestamp;
 
         /**
          * Create a ledger entry
          *
-         * @param   event                   Event
-         * @param   eventId                 Event identifier
-         * @param   accountId               Account identifier
-         * @param   holding                 Holding or null
-         * @param   holdingId               Holding identifier or null
-         * @param   change                  Change in balance
-         * @param   balance                 New balance
+         * @param event     Event
+         * @param eventId   Event identifier
+         * @param accountId Account identifier
+         * @param holding   Holding or null
+         * @param holdingId Holding identifier or null
+         * @param change    Change in balance
+         * @param balance   New balance
          */
         public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId,
-                                            long change, long balance) {
+                           long change, long balance) {
             this.event = event;
             this.eventId = eventId;
             this.accountId = accountId;
@@ -693,11 +747,11 @@ public class AccountLedger {
         /**
          * Create a ledger entry
          *
-         * @param   event                   Event
-         * @param   eventId                 Event identifier
-         * @param   accountId               Account identifier
-         * @param   change                  Change in balance
-         * @param   balance                 New balance
+         * @param event     Event
+         * @param eventId   Event identifier
+         * @param accountId Account identifier
+         * @param change    Change in balance
+         * @param balance   New balance
          */
         public LedgerEntry(LedgerEvent event, long eventId, long accountId, long change, long balance) {
             this(event, eventId, accountId, null, null, change, balance);
@@ -706,8 +760,8 @@ public class AccountLedger {
         /**
          * Create a ledger entry from a database entry
          *
-         * @param   rs                      Result set
-         * @throws  SQLException            Database error occurred
+         * @param rs Result set
+         * @throws SQLException Database error occurred
          */
         private LedgerEntry(ResultSet rs) throws SQLException {
             ledgerId = rs.getLong("db_id");
@@ -736,7 +790,7 @@ public class AccountLedger {
         /**
          * Return the ledger identifier
          *
-         * @return                          Ledger identifier or -1 if not set
+         * @return Ledger identifier or -1 if not set
          */
         public long getLedgerId() {
             return ledgerId;
@@ -745,7 +799,7 @@ public class AccountLedger {
         /**
          * Return the ledger event
          *
-         * @return                          Ledger event
+         * @return Ledger event
          */
         public LedgerEvent getEvent() {
             return event;
@@ -754,7 +808,7 @@ public class AccountLedger {
         /**
          * Return the associated event identifier
          *
-         * @return                          Event identifier
+         * @return Event identifier
          */
         public long getEventId() {
             return eventId;
@@ -763,7 +817,7 @@ public class AccountLedger {
         /**
          * Return the account identifier
          *
-         * @return                          Account identifier
+         * @return Account identifier
          */
         public long getAccountId() {
             return accountId;
@@ -772,7 +826,7 @@ public class AccountLedger {
         /**
          * Return the holding
          *
-         * @return                          Holding or null if there is no holding
+         * @return Holding or null if there is no holding
          */
         public LedgerHolding getHolding() {
             return holding;
@@ -781,7 +835,7 @@ public class AccountLedger {
         /**
          * Return the holding identifier
          *
-         * @return                          Holding identifier or null if there is no holding identifier
+         * @return Holding identifier or null if there is no holding identifier
          */
         public Long getHoldingId() {
             return holdingId;
@@ -790,7 +844,7 @@ public class AccountLedger {
         /**
          * Update the balance change
          *
-         * @param   amount                  Change amount
+         * @param amount Change amount
          */
         private void updateChange(long amount) {
             change += amount;
@@ -799,7 +853,7 @@ public class AccountLedger {
         /**
          * Return the balance change
          *
-         * @return                          Balance changes
+         * @return Balance changes
          */
         public long getChange() {
             return change;
@@ -808,7 +862,7 @@ public class AccountLedger {
         /**
          * Set the new balance
          *
-         * @param balance                   New balance
+         * @param balance New balance
          */
         private void setBalance(long balance) {
             this.balance = balance;
@@ -817,7 +871,7 @@ public class AccountLedger {
         /**
          * Return the new balance
          *
-         * @return                          New balance
+         * @return New balance
          */
         public long getBalance() {
             return balance;
@@ -826,7 +880,7 @@ public class AccountLedger {
         /**
          * Return the block identifier
          *
-         * @return                          Block identifier
+         * @return Block identifier
          */
         public long getBlockId() {
             return blockId;
@@ -835,7 +889,7 @@ public class AccountLedger {
         /**
          * Return the height
          *
-         * @return                          Height
+         * @return Height
          */
         public int getHeight() {
             return height;
@@ -844,7 +898,7 @@ public class AccountLedger {
         /**
          * Return the timestamp
          *
-         * @return                          Timestamp
+         * @return Timestamp
          */
         public int getTimestamp() {
             return timestamp;
@@ -853,7 +907,7 @@ public class AccountLedger {
         /**
          * Return the hash code
          *
-         * @return                          Hash code
+         * @return Hash code
          */
         @Override
         public int hashCode() {
@@ -864,36 +918,36 @@ public class AccountLedger {
         /**
          * Check if two ledger events are equal
          *
-         * @param   obj                     Ledger event to check
-         * @return                          TRUE if the ledger events are the same
+         * @param obj Ledger event to check
+         * @return TRUE if the ledger events are the same
          */
         @Override
         public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof LedgerEntry) && accountId == ((LedgerEntry)obj).accountId &&
-                    event == ((LedgerEntry)obj).event && eventId == ((LedgerEntry)obj).eventId &&
-                    holding == ((LedgerEntry)obj).holding &&
-                    (holdingId != null ? holdingId.equals(((LedgerEntry)obj).holdingId) : ((LedgerEntry)obj).holdingId == null));
+            return (obj != null && (obj instanceof LedgerEntry) && accountId == ((LedgerEntry) obj).accountId &&
+                    event == ((LedgerEntry) obj).event && eventId == ((LedgerEntry) obj).eventId &&
+                    holding == ((LedgerEntry) obj).holding &&
+                    (holdingId != null ? holdingId.equals(((LedgerEntry) obj).holdingId) : ((LedgerEntry) obj).holdingId == null));
         }
 
         /**
          * Save the ledger entry
          *
-         * @param   con                     Database connection
-         * @throws  SQLException            Database error occurred
+         * @param con Database connection
+         * @throws SQLException Database error occurred
          */
         private void save(Connection con) throws SQLException {
             try (PreparedStatement stmt = con.prepareStatement("INSERT INTO account_ledger "
                     + "(account_id, event_type, event_id, holding_type, holding_id, change, balance, "
                     + "block_id, height, timestamp) "
                     + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                int i=0;
+                int i = 0;
                 stmt.setLong(++i, accountId);
                 stmt.setByte(++i, (byte) event.getCode());
                 stmt.setLong(++i, eventId);
                 if (holding != null) {
-                    stmt.setByte(++i, (byte)holding.getCode());
+                    stmt.setByte(++i, (byte) holding.getCode());
                 } else {
-                    stmt.setByte(++i, (byte)-1);
+                    stmt.setByte(++i, (byte) -1);
                 }
                 DbUtils.setLong(stmt, ++i, holdingId);
                 stmt.setLong(++i, change);

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -105,7 +108,8 @@ public final class DebugTrace {
             "shuffling",
             "sender", "recipient", "block", "timestamp"};
 
-    private static final Map<String,String> headers = new HashMap<>();
+    private static final Map<String, String> headers = new HashMap<>();
+
     static {
         for (String entry : columns) {
             headers.put(entry, entry);
@@ -169,21 +173,21 @@ public final class DebugTrace {
     }
 
     private void trace(Account.AccountAsset accountAsset, boolean unconfirmed) {
-        if (! include(accountAsset.getAccountId())) {
+        if (!include(accountAsset.getAccountId())) {
             return;
         }
         log(getValues(accountAsset.getAccountId(), accountAsset, unconfirmed));
     }
 
     private void trace(Account.AccountCurrency accountCurrency, boolean unconfirmed) {
-        if (! include(accountCurrency.getAccountId())) {
+        if (!include(accountCurrency.getAccountId())) {
             return;
         }
         log(getValues(accountCurrency.getAccountId(), accountCurrency, unconfirmed));
     }
 
     private void trace(Account.AccountLease accountLease, boolean start) {
-        if (! include(accountLease.getCurrentLesseeId()) && ! include(accountLease.getLessorId())) {
+        if (!include(accountLease.getCurrentLesseeId()) && !include(accountLease.getLessorId())) {
             return;
         }
         log(getValues(accountLease.getLessorId(), accountLease, start));
@@ -209,7 +213,7 @@ public final class DebugTrace {
     private void trace(Block block) {
         for (Transaction transaction : block.getTransactions()) {
             long senderId = transaction.getSenderId();
-            if (((TransactionImpl)transaction).attachmentIsPhased()) {
+            if (((TransactionImpl) transaction).attachmentIsPhased()) {
                 if (include(senderId)) {
                     log(getValues(senderId, transaction, false, true, false));
                 }
@@ -260,7 +264,7 @@ public final class DebugTrace {
     private void traceShufflingCancel(Shuffling shuffling) {
         long blamedAccountId = shuffling.getAssigneeAccountId();
         if (blamedAccountId != 0 && include(blamedAccountId)) {
-            Map<String,String> map = getValues(blamedAccountId, false);
+            Map<String, String> map = getValues(blamedAccountId, false);
             map.put("transaction fee", String.valueOf(-Constants.SHUFFLING_DEPOSIT_ATM));
             map.put("event", "shuffling blame");
             log(map);
@@ -278,7 +282,7 @@ public final class DebugTrace {
             fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
             long generatorId = Apl.getBlockchain().getLastBlock().getGeneratorId();
             if (include(generatorId)) {
-                Map<String,String> generatorMap = getValues(generatorId, false);
+                Map<String, String> generatorMap = getValues(generatorId, false);
                 generatorMap.put("generation fee", String.valueOf(fee));
                 generatorMap.put("event", "shuffling blame");
                 log(generatorMap);
@@ -286,8 +290,8 @@ public final class DebugTrace {
         }
     }
 
-    private Map<String,String> lessorGuaranteedBalance(Account account, long lesseeId) {
-        Map<String,String> map = new HashMap<>();
+    private Map<String, String> lessorGuaranteedBalance(Account account, long lesseeId) {
+        Map<String, String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(account.getId()));
         map.put("lessor guaranteed balance", String.valueOf(account.getGuaranteedBalanceATM()));
         map.put("lessee", Long.toUnsignedString(lesseeId));
@@ -310,14 +314,14 @@ public final class DebugTrace {
         }
         for (CurrencyFounder founder : currencyFounders) {
             long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitATM()) / totalAmountPerUnit;
-            Map<String,String> founderMap = getValues(founder.getAccountId(), false);
+            Map<String, String> founderMap = getValues(founder.getAccountId(), false);
             founderMap.put("currency", Long.toUnsignedString(currency.getId()));
             founderMap.put("currency units", String.valueOf(units));
             founderMap.put("event", "distribution");
             log(founderMap);
             foundersTotal += units;
         }
-        Map<String,String> map = getValues(currency.getAccountId(), false);
+        Map<String, String> map = getValues(currency.getAccountId(), false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
         map.put("crowdfunding", String.valueOf(currency.getReserveSupply()));
         map.put("currency units", String.valueOf(remainingSupply - foundersTotal));
@@ -330,7 +334,7 @@ public final class DebugTrace {
 
     private void undoCrowdfunding(Currency currency) {
         logFounders(currency);
-        Map<String,String> map = getValues(currency.getAccountId(), false);
+        Map<String, String> map = getValues(currency.getAccountId(), false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
         map.put("currency units", String.valueOf(-currency.getInitialSupply()));
         map.put("event", "undo crowdfunding");
@@ -354,7 +358,7 @@ public final class DebugTrace {
                 }
             }
         }
-        Map<String,String> map = getValues(accountId, false);
+        Map<String, String> map = getValues(accountId, false);
         map.put("currency", Long.toUnsignedString(currency.getId()));
         if (currency.is(CurrencyType.RESERVABLE)) {
             if (currency.is(CurrencyType.CLAIMABLE) && currency.isActive()) {
@@ -372,7 +376,7 @@ public final class DebugTrace {
     private void logFounders(Currency currency) {
         try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounder founder : founders) {
-                Map<String,String> founderMap = getValues(founder.getAccountId(), false);
+                Map<String, String> founderMap = getValues(founder.getAccountId(), false);
                 founderMap.put("currency", Long.toUnsignedString(currency.getId()));
                 founderMap.put("currency cost", String.valueOf(Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM())));
                 founderMap.put("event", "undo distribution");
@@ -392,8 +396,8 @@ public final class DebugTrace {
         log(map);
     }
 
-    private Map<String,String> getValues(long accountId, boolean unconfirmed) {
-        Map<String,String> map = new HashMap<>();
+    private Map<String, String> getValues(long accountId, boolean unconfirmed) {
+        Map<String, String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
         Account account = Account.getAccount(accountId);
         map.put("balance", String.valueOf(account != null ? account.getBalanceATM() : 0));
@@ -404,30 +408,30 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Trade trade, boolean isAsk) {
-        Map<String,String> map = getValues(accountId, false);
+    private Map<String, String> getValues(long accountId, Trade trade, boolean isAsk) {
+        Map<String, String> map = getValues(accountId, false);
         map.put("asset", Long.toUnsignedString(trade.getAssetId()));
-        map.put("trade quantity", String.valueOf(isAsk ? - trade.getQuantityATU() : trade.getQuantityATU()));
+        map.put("trade quantity", String.valueOf(isAsk ? -trade.getQuantityATU() : trade.getQuantityATU()));
         map.put("trade price", String.valueOf(trade.getPriceATM()));
         long tradeCost = Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM());
-        map.put("trade cost", String.valueOf((isAsk ? tradeCost : - tradeCost)));
+        map.put("trade cost", String.valueOf((isAsk ? tradeCost : -tradeCost)));
         map.put("event", "trade");
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Exchange exchange, boolean isSell) {
-        Map<String,String> map = getValues(accountId, false);
+    private Map<String, String> getValues(long accountId, Exchange exchange, boolean isSell) {
+        Map<String, String> map = getValues(accountId, false);
         map.put("currency", Long.toUnsignedString(exchange.getCurrencyId()));
         map.put("exchange quantity", String.valueOf(isSell ? -exchange.getUnits() : exchange.getUnits()));
         map.put("exchange rate", String.valueOf(exchange.getRate()));
         long exchangeCost = Math.multiplyExact(exchange.getUnits(), exchange.getRate());
-        map.put("exchange cost", String.valueOf((isSell ? exchangeCost : - exchangeCost)));
+        map.put("exchange cost", String.valueOf((isSell ? exchangeCost : -exchangeCost)));
         map.put("event", "exchange");
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Shuffling shuffling, boolean isRecipient) {
-        Map<String,String> map = getValues(accountId, false);
+    private Map<String, String> getValues(long accountId, Shuffling shuffling, boolean isRecipient) {
+        Map<String, String> map = getValues(accountId, false);
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
         String deposit = String.valueOf(isRecipient ? Constants.SHUFFLING_DEPOSIT_ATM : -Constants.SHUFFLING_DEPOSIT_ATM);
@@ -448,20 +452,20 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Transaction transaction, boolean isRecipient, boolean logFee, boolean logAmount) {
+    private Map<String, String> getValues(long accountId, Transaction transaction, boolean isRecipient, boolean logFee, boolean logAmount) {
         long amount = transaction.getAmountATM();
         long fee = transaction.getFeeATM();
         if (isRecipient) {
             fee = 0; // fee doesn't affect recipient account
         } else {
             // for sender the amounts are subtracted
-            amount = - amount;
-            fee = - fee;
+            amount = -amount;
+            fee = -fee;
         }
         if (fee == 0 && amount == 0) {
             return Collections.emptyMap();
         }
-        Map<String,String> map = getValues(accountId, false);
+        Map<String, String> map = getValues(accountId, false);
         if (logAmount) {
             map.put("transaction amount", String.valueOf(amount));
         }
@@ -478,7 +482,7 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Block block) {
+    private Map<String, String> getValues(long accountId, Block block) {
         long fee = block.getTotalFeeATM();
         if (fee == 0) {
             return Collections.emptyMap();
@@ -487,7 +491,7 @@ public final class DebugTrace {
         if (block.getHeight() > 3) {
             long[] backFees = new long[3];
             for (Transaction transaction : block.getTransactions()) {
-                long[] fees = ((TransactionImpl)transaction).getBackFees();
+                long[] fees = ((TransactionImpl) transaction).getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
                 }
@@ -499,7 +503,7 @@ public final class DebugTrace {
                 totalBackFees += backFees[i];
                 long previousGeneratorId = BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
                 if (include(previousGeneratorId)) {
-                    Map<String,String> map = getValues(previousGeneratorId, false);
+                    Map<String, String> map = getValues(previousGeneratorId, false);
                     map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceAPL()));
                     map.put("generation fee", String.valueOf(backFees[i]));
                     map.put("block", block.getStringId());
@@ -510,7 +514,7 @@ public final class DebugTrace {
                 }
             }
         }
-        Map<String,String> map = getValues(accountId, false);
+        Map<String, String> map = getValues(accountId, false);
         map.put("effective balance", String.valueOf(Account.getAccount(accountId).getEffectiveBalanceAPL()));
         map.put("generation fee", String.valueOf(fee - totalBackFees));
         map.put("block", block.getStringId());
@@ -520,8 +524,8 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Account.AccountAsset accountAsset, boolean unconfirmed) {
-        Map<String,String> map = new HashMap<>();
+    private Map<String, String> getValues(long accountId, Account.AccountAsset accountAsset, boolean unconfirmed) {
+        Map<String, String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
         map.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
         if (unconfirmed) {
@@ -535,8 +539,8 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Account.AccountCurrency accountCurrency, boolean unconfirmed) {
-        Map<String,String> map = new HashMap<>();
+    private Map<String, String> getValues(long accountId, Account.AccountCurrency accountCurrency, boolean unconfirmed) {
+        Map<String, String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
         map.put("currency", Long.toUnsignedString(accountCurrency.getCurrencyId()));
         if (unconfirmed) {
@@ -550,8 +554,8 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Account.AccountLease accountLease, boolean start) {
-        Map<String,String> map = new HashMap<>();
+    private Map<String, String> getValues(long accountId, Account.AccountLease accountLease, boolean start) {
+        Map<String, String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
         map.put("event", start ? "lease begin" : "lease end");
         map.put("timestamp", String.valueOf(Apl.getBlockchain().getLastBlock().getTimestamp()));
@@ -560,24 +564,24 @@ public final class DebugTrace {
         return map;
     }
 
-    private Map<String,String> getValues(long accountId, Transaction transaction, Attachment attachment, boolean isRecipient) {
-        Map<String,String> map = getValues(accountId, false);
+    private Map<String, String> getValues(long accountId, Transaction transaction, Attachment attachment, boolean isRecipient) {
+        Map<String, String> map = getValues(accountId, false);
         if (attachment instanceof Attachment.ColoredCoinsOrderPlacement) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsOrderPlacement orderPlacement = (Attachment.ColoredCoinsOrderPlacement)attachment;
+            Attachment.ColoredCoinsOrderPlacement orderPlacement = (Attachment.ColoredCoinsOrderPlacement) attachment;
             boolean isAsk = orderPlacement instanceof Attachment.ColoredCoinsAskOrderPlacement;
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
             map.put("order", transaction.getStringId());
             map.put("order price", String.valueOf(orderPlacement.getPriceATM()));
             long quantity = orderPlacement.getQuantityATU();
             if (isAsk) {
-                quantity = - quantity;
+                quantity = -quantity;
             }
             map.put("order quantity", String.valueOf(quantity));
             BigInteger orderCost = BigInteger.valueOf(orderPlacement.getPriceATM()).multiply(BigInteger.valueOf(orderPlacement.getQuantityATU()));
-            if (! isAsk) {
+            if (!isAsk) {
                 orderCost = orderCost.negate();
             }
             map.put("order cost", orderCost.toString());
@@ -587,16 +591,16 @@ public final class DebugTrace {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetIssuance assetIssuance = (Attachment.ColoredCoinsAssetIssuance)attachment;
+            Attachment.ColoredCoinsAssetIssuance assetIssuance = (Attachment.ColoredCoinsAssetIssuance) attachment;
             map.put("asset", transaction.getStringId());
             map.put("asset quantity", String.valueOf(assetIssuance.getQuantityATU()));
             map.put("event", "asset issuance");
         } else if (attachment instanceof Attachment.ColoredCoinsAssetTransfer) {
-            Attachment.ColoredCoinsAssetTransfer assetTransfer = (Attachment.ColoredCoinsAssetTransfer)attachment;
+            Attachment.ColoredCoinsAssetTransfer assetTransfer = (Attachment.ColoredCoinsAssetTransfer) attachment;
             map.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
             long quantity = assetTransfer.getQuantityATU();
-            if (! isRecipient) {
-                quantity = - quantity;
+            if (!isRecipient) {
+                quantity = -quantity;
             }
             map.put("asset quantity", String.valueOf(quantity));
             map.put("event", "asset transfer");
@@ -604,24 +608,24 @@ public final class DebugTrace {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetDelete assetDelete = (Attachment.ColoredCoinsAssetDelete)attachment;
+            Attachment.ColoredCoinsAssetDelete assetDelete = (Attachment.ColoredCoinsAssetDelete) attachment;
             map.put("asset", Long.toUnsignedString(assetDelete.getAssetId()));
             long quantity = assetDelete.getQuantityATU();
             map.put("asset quantity", String.valueOf(-quantity));
             map.put("event", "asset delete");
         } else if (attachment instanceof Attachment.ColoredCoinsOrderCancellation) {
-            Attachment.ColoredCoinsOrderCancellation orderCancellation = (Attachment.ColoredCoinsOrderCancellation)attachment;
+            Attachment.ColoredCoinsOrderCancellation orderCancellation = (Attachment.ColoredCoinsOrderCancellation) attachment;
             map.put("order", Long.toUnsignedString(orderCancellation.getOrderId()));
             map.put("event", "order cancel");
         } else if (attachment instanceof Attachment.DigitalGoodsPurchase) {
-            Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase)transaction.getAttachment();
+            Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
             if (isRecipient) {
                 map = getValues(DigitalGoodsStore.Goods.getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
             map.put("purchase", transaction.getStringId());
         } else if (attachment instanceof Attachment.DigitalGoodsDelivery) {
-            Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
+            Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery) transaction.getAttachment();
             DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(delivery.getPurchaseId());
             if (isRecipient) {
                 map = getValues(purchase.getBuyerId(), false);
@@ -633,23 +637,23 @@ public final class DebugTrace {
             map.put("purchase quantity", String.valueOf(purchase.getQuantity()));
             long cost = Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity());
             if (isRecipient) {
-                cost = - cost;
+                cost = -cost;
             }
             map.put("purchase cost", String.valueOf(cost));
-            if (! isRecipient) {
-                discount = - discount;
+            if (!isRecipient) {
+                discount = -discount;
             }
             map.put("discount", String.valueOf(discount));
         } else if (attachment instanceof Attachment.DigitalGoodsRefund) {
-            Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund)transaction.getAttachment();
+            Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
             if (isRecipient) {
                 map = getValues(DigitalGoodsStore.Purchase.getPurchase(refund.getPurchaseId()).getBuyerId(), false);
             }
             map.put("event", "refund");
             map.put("purchase", Long.toUnsignedString(refund.getPurchaseId()));
             long refundATM = refund.getRefundATM();
-            if (! isRecipient) {
-                refundATM = - refundATM;
+            if (!isRecipient) {
+                refundATM = -refundATM;
             }
             map.put("refund", String.valueOf(refundATM));
         } else if (attachment == Attachment.ARBITRARY_MESSAGE) {
@@ -664,7 +668,7 @@ public final class DebugTrace {
                 map.put("recipient", Long.toUnsignedString(transaction.getRecipientId()));
             }
         } else if (attachment instanceof Attachment.MonetarySystemPublishExchangeOffer) {
-            Attachment.MonetarySystemPublishExchangeOffer publishOffer = (Attachment.MonetarySystemPublishExchangeOffer)attachment;
+            Attachment.MonetarySystemPublishExchangeOffer publishOffer = (Attachment.MonetarySystemPublishExchangeOffer) attachment;
             map.put("currency", Long.toUnsignedString(publishOffer.getCurrencyId()));
             map.put("offer", transaction.getStringId());
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateATM()));
@@ -706,7 +710,7 @@ public final class DebugTrace {
             map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitATM(), currency.getReserveSupply())));
             map.put("event", "currency reserve");
         } else if (attachment instanceof Attachment.ColoredCoinsDividendPayment) {
-            Attachment.ColoredCoinsDividendPayment dividendPayment = (Attachment.ColoredCoinsDividendPayment)attachment;
+            Attachment.ColoredCoinsDividendPayment dividendPayment = (Attachment.ColoredCoinsDividendPayment) attachment;
             long totalDividend = 0;
             String assetId = Long.toUnsignedString(dividendPayment.getAssetId());
             try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(dividendPayment.getAssetId(), dividendPayment.getHeight(), 0, -1)) {
@@ -732,7 +736,7 @@ public final class DebugTrace {
         return map;
     }
 
-    private void log(Map<String,String> map) {
+    private void log(Map<String, String> map) {
         if (map.isEmpty()) {
             return;
         }
