@@ -268,33 +268,6 @@ var NRS = (function(NRS, $) {
 		});
 	};
 
-	NRS.userInfoModal.marketplace = function() {
-		NRS.sendRequest("getDGSGoods", {
-			"seller": NRS.userInfoModal.user,
-			"firstIndex": 0,
-			"lastIndex": 100
-		}, function(response) {
-			var rows = "";
-			var quantityDecimals = NRS.getNumberOfDecimals(response.goods, "quantity", function(val) {
-				return NRS.format(val.quantity);
-			});
-			var priceDecimals = NRS.getNumberOfDecimals(response.goods, "priceATM", function(val) {
-				return NRS.formatAmount(val.priceATM);
-			});
-			if (response.goods && response.goods.length) {
-				for (var i = 0; i < response.goods.length; i++) {
-					var good = response.goods[i];
-					if (good.name.length > 150) {
-						good.name = good.name.substring(0, 150) + "...";
-					}
-					rows += "<tr><td><a href='#' data-goto-goods='" + NRS.escapeRespStr(good.goods) + "' data-seller='" + NRS.escapeRespStr(NRS.userInfoModal.user) + "'>" + NRS.escapeRespStr(good.name) + "</a></td><td class='numeric'>" + NRS.formatAmount(good.priceATM, false, false, priceDecimals) + " " + NRS.constants.COIN_SYMBOL + "</td><td class='numeric'>" + NRS.format(good.quantity, false, quantityDecimals) + "</td></tr>";
-				}
-			}
-            var infoModalMarketplaceTable = $("#user_info_modal_marketplace_table");
-            infoModalMarketplaceTable.find("tbody").empty().append(rows);
-			NRS.dataLoadFinished(infoModalMarketplaceTable);
-		});
-	};
 	
 	NRS.userInfoModal.currencies = function() {
 		NRS.sendRequest("getAccountCurrencies+", {

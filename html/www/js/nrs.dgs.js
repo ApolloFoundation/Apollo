@@ -363,48 +363,6 @@ var NRS = (function(NRS, $) {
 		});
 	};
 
-	NRS.setup.dgs_search = function() {
-		var sidebarId = 'sidebar_dgs_buyer';
-		var options = {
-			"id": sidebarId,
-			"titleHTML": '<img class="menu-icon" src="./img/menu_icons/marketplace.png" alt="Alt"></img><span class="hide-menu"> Marketplace <span class="fa arrow"></span></span>',
-			"page": 'dgs_search',
-			"desiredPosition": 60,
-			"depends": { tags: [ NRS.constants.API_TAGS.DGS ] }
-		};
-		NRS.addTreeviewSidebarMenuItem(options);
-		options = {
-			"titleHTML": '<span class="hide-menu" data-i18n="purchased_products">Purchased Products</span>',
-			"type": 'PAGE',
-			"page": 'purchased_dgs'
-		};
-		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
-		options = {
-			"titleHTML": '<span class="hide-menu" data-i18n="my_products_for_sale">My Products For Sale</span>',
-			"type": 'PAGE',
-			"page": 'my_dgs_listings'
-		};
-		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
-		options = {
-			"titleHTML": '<span class="hide-menu" data-i18n="my_pending_orders">My Pending Orders</span>',
-			"type": 'PAGE',
-			"page": 'pending_orders_dgs'
-		};
-		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
-		options = {
-			"titleHTML": '<span class="hide-menu" data-i18n="my_completed_orders">My Completed Orders</span>',
-			"type": 'PAGE',
-			"page": 'completed_orders_dgs'
-		};
-		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
-		options = {
-			"titleHTML": '<span class="hide-menu" data-i18n="list_product_for_sale">List Product For Sale</span>',
-			"type": 'MODAL',
-			"modalId": 'dgs_listing_modal'
-		};
-		NRS.appendMenuItemToTSMenuItem(sidebarId, options);
-	};
-
 	NRS.incoming.purchased_dgs = function(transactions) {
 		if (NRS.hasTransactionUpdates(transactions)) {
 			NRS.loadPage("purchased_dgs");
@@ -1138,10 +1096,6 @@ var NRS = (function(NRS, $) {
 		});
 	});
 
-	$(".dgs_my_purchases_link").click(function(e) {
-		e.preventDefault();
-		$("#sidebar_dgs_buyer").find("a[data-page=purchased_dgs]").addClass("active").trigger("click");
-	});
 
 	$(".dgs_search").on("submit", function(e) {
 		e.preventDefault();
@@ -1180,12 +1134,6 @@ var NRS = (function(NRS, $) {
 	$("#dgs_clear_results").on("click", function(e) {
 		e.preventDefault();
 		NRS.dgs_search_main();
-	});
-
-	$("#accept_dgs_link").on("click", function(e) {
-		e.preventDefault();
-		NRS.updateSettings("marketplace", "1");
-		NRS.pages.dgs_search();
 	});
 
 	$("#user_info_modal").on("click", "a[data-goto-goods]", function(e) {

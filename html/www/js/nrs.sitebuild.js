@@ -93,7 +93,7 @@ var NRS = (function(NRS, $) {
 
     NRS.loadModalHTMLTemplates = function() {
         jQuery.ajaxSetup({ async: false });
-        
+
         $.get("html/modals/templates.html", '', function (data) {
             _replaceModalHTMLTemplateDiv(data, 'recipient_modal_template');
             _replaceModalHTMLTemplateDiv(data, 'add_message_modal_template');
@@ -175,13 +175,16 @@ var NRS = (function(NRS, $) {
         if (!NRS.isApiEnabled(options.depends)) {
             return;
         }
-        var menuHTML = '<li class="treeview" id="' + options["id"] + '" data-sidebar-position="' + options["desiredPosition"] + '">';
-        menuHTML += '<a class="waves-effect" href="#" data-page="' + options["page"] + '">' + options["titleHTML"] + '</a>';
-        menuHTML += '<ul class="treeview-menu nav nav-second-level collapse" style="display: none;"></ul>';
-        menuHTML += '</li>';
-        _appendToSidebar(menuHTML, options["id"], options["desiredPosition"]);
+
+        if (options["id"] !== 'sidebar_dgs_buyer') {
+            var menuHTML = '<li class="treeview" id="' + options["id"] + '" data-sidebar-position="' + options["desiredPosition"] + '">';
+            menuHTML += '<a class="waves-effect" href="#" data-page="' + options["page"] + '">' + options["titleHTML"] + '</a>';
+            menuHTML += '<ul class="treeview-menu nav nav-second-level collapse" style="display: none;"></ul>';
+            menuHTML += '</li>';
+            _appendToSidebar(menuHTML, options["id"], options["desiredPosition"]);
+        }
     };
-    
+
     NRS.appendMenuItemToTSMenuItem = function(itemId, options) {
         if (!NRS.isApiEnabled(options.depends)) {
             return;
