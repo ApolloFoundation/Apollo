@@ -1,17 +1,17 @@
-Sample APL APIs for Node JS
+Sample NXT APIs for Node JS
 ===========================
 
 The sample code performs local signing and encryption using
-the same code used by the official APL wallet.
+the same code used by the official NXT wallet.
 Your passphrase is never sent to the remote node when submitting
 a transaction.
 
 To use the samples:
-- No need to install the APL software or download the blockchain
+- No need to install the NXT software or download the blockchain
 - Install Node JS and NPM from https://nodejs.org/en/
 - From the command prompt type:
-- npm install apl-blockchain
-cd node_modules/apl-blockchain/sample
+- npm install nxt-blockchain
+cd node_modules/nxt-blockchain/sample
 
 - Configure the remote node and APL account by editing the config.json file
 - Run the samples using Node JS, for example:

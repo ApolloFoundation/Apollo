@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 
@@ -29,7 +18,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class TestData {
     public static final List<String> URLS = new ArrayList<>();
-        private static final Logger LOG = getLogger(TestData.class);
+    private static final Logger LOG = getLogger(TestData.class);
 
     static {
         Properties aplProperties = new Properties();
@@ -39,8 +28,7 @@ public class TestData {
             for (int i = 0; i < ips.length; i++) {
                 URLS.add("http://" + ips[i] + ":6876/apl");
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.error("Cannot read ip's for peers from conf/apl.properties", e);
         }
     }

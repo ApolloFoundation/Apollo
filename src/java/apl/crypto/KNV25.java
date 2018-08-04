@@ -1,19 +1,22 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
+* Copyright © 2013-2016 The Nxt Core Developers.
+* Copyright © 2016-2017 Jelurida IP B.V.
+*
+* See the LICENSE.txt file at the top-level directory of this distribution
+* for licensing information.
+*
+* Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+* no part of the Nxt software, including this file, may be copied, modified,
+* propagated, or distributed except according to the terms contained in the
+* LICENSE.txt file.
+*
+* Removal or modification of this copyright notice is prohibited.
+*
+*/
+
+/*
+* Copyright © 2018 Apollo Foundation
+*/
 
 package apl.crypto;
 
@@ -87,37 +90,21 @@ public final class KNV25 {
                 state23 ^= (~state24) & t13;
                 state24 ^= (~t13) & t18;
             }
-            state[0] = state0;
-            state[1] = state1;
-            state[2] = state2;
-            state[3] = state3;
-            state[4] = state4;
-            state[5] = state5;
-            state[6] = state6;
-            state[7] = state7;
-            state[8] = state8;
-            state[9] = state9;
-            state[10] = state10;
-            state[11] = state11;
-            state[12] = state12;
-            state[13] = state13;
-            state[14] = state14;
-            state[15] = state15;
-            state[16] = state16;
-            state[17] = state17;
-            state[18] = state18;
-            state[19] = state19;
-            state[20] = state20;
-            state[21] = state21;
-            state[22] = state22;
-            state[23] = state23;
-            state[24] = state24;
+            addAll(state, state0, state1, state2,state3, state4, state5, state6, state7,
+                    state8, state9, state10, state11, state12, state13, state14, state15,
+                    state16, state17, state18, state19, state20, state21, state22, state23, state24);
         }
 
         for (int i = 0; i < 32; i++) {
             output[i] = (byte)(state[i >> 3] >> ((i & 7) << 3));
         }
         return output;
+    }
+    private static void addAll(long[] arr, long... elements) {
+        if (elements != null)
+        {
+            System.arraycopy(elements, 0, arr, 0, elements.length);
+        }
     }
 
 }

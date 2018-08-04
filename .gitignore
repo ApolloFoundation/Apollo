@@ -10,3 +10,5 @@ classes/
 sources.tmp
 Apollo.jar
 Apolloservice.jar
+logs/*
+logs/*.*

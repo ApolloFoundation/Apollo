@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 
@@ -280,13 +269,13 @@ public class NodeClientTestTestnet extends AbstractNodeClientTest {
         Assert.assertEquals(5, transactionsList1.size());
         checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
 
-        List<Transaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, null, 10L, secretPhrase,  Convert.toHexString(publicKey));
+        List<Transaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, null, 10L, secretPhrase, Convert.toHexString(publicKey));
         checkList(transactionsList2);
         Assert.assertEquals(11, transactionsList2.size());
         Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
         checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
 
-        List<Transaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, null, secretPhrase,  Convert.toHexString(publicKey));
+        List<Transaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, null, 5L, null, secretPhrase, Convert.toHexString(publicKey));
         checkList(transactionsList3);
         Assert.assertTrue(transactionsList3.size() > 5);
         Assert.assertTrue(transactionsList3.containsAll(transactionsList1));

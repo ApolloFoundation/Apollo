@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018 Apollo Foundation
+ */
+
 package apl.updater;
 
 import java.io.IOException;

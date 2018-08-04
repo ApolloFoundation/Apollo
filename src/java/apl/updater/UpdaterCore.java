@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.updater;
@@ -113,8 +102,7 @@ public class UpdaterCore {
         while (mediator.getBlockchainHeight() < updateHeight) {
             try {
                 TimeUnit.MILLISECONDS.sleep(500);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 Logger.logErrorMessage("Update thread was awakened");
             }
         }
@@ -133,8 +121,7 @@ public class UpdaterCore {
                     Path unpackedDirPath = unpacker.unpack(path);
                     platformDependentUpdater.continueUpdate(unpackedDirPath, attachment.getPlatform());
                     return true;
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     Logger.logErrorMessage("Cannot unpack file: " + path.toString());
                 }
             } else {
@@ -180,14 +167,12 @@ public class UpdaterCore {
             for (Certificate certificate : certificates) {
                 try {
                     checker.verifyJarSignature(certificate, jarFilePath);
-                }
-                catch (SecurityException e) {
+                } catch (SecurityException e) {
                     Logger.logWarningMessage("Certificate is not appropriate." + certificate.toString());
                 }
                 return true;
             }
-        }
-        catch (CertificateException | IOException e) {
+        } catch (CertificateException | IOException e) {
             Logger.logErrorMessage("Unable to load certificates");
         }
         return false;
@@ -208,11 +193,9 @@ public class UpdaterCore {
                     return urlString;
                 }
             }
-        }
-        catch (IOException | CertificateException e) {
+        } catch (IOException | CertificateException e) {
             Logger.logErrorMessage("Cannot read or load certificate", e);
-        }
-        catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
             Logger.logErrorMessage("Cannot decrypt url", e);
         }
         return null;
