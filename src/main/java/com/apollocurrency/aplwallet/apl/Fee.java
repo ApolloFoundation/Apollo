@@ -78,4 +78,50 @@ public interface Fee {
 
     }
 
+    /**
+     * Fee based on size of an object and time-to-live of this object
+     */
+    abstract class SizeAndTimeToLiveBasedFee implements Fee {
+
+        private final long constantFee;
+        private final long feePerSize;
+        private final int unitSize;
+
+        private final long feePerTimeUnit;
+        private final long timeUnitSize; // in seconds
+
+        public SizeAndTimeToLiveBasedFee(long constantFee, long feePerSize, long feePerTimeUnit) {
+            this(constantFee, feePerSize, 1024, feePerTimeUnit, 60 * 60 * 24 * 30 /* one month */);
+        }
+
+        public SizeAndTimeToLiveBasedFee(long constantFee, long feePerSize, int unitSize, long feePerTimeUnit, long timeUnitSize) {
+            this.constantFee = constantFee;
+            this.feePerSize = feePerSize;
+            this.unitSize = unitSize;
+            this.feePerTimeUnit = feePerTimeUnit;
+            this.timeUnitSize = timeUnitSize;
+        }
+
+        // the first size unit is free if constantFee is 0
+        @Override
+        public final long getFee(TransactionImpl transaction, Appendix appendage) {
+            int size = getSize(transaction, appendage) - 1;
+            if (size < 0) {
+                size = 0;
+            }
+            long ttl = getTimeToLive(transaction, appendage);
+            if(ttl < 0) {
+                ttl = 0;
+            }
+
+            long sizeFee = Math.addExact(constantFee, Math.multiplyExact((long) (size / unitSize), feePerSize));
+            long ttlFee = Math.multiplyExact(ttl / timeUnitSize, feePerTimeUnit);
+            return Math.addExact(sizeFee, ttlFee);
+        }
+
+        public abstract int getSize(TransactionImpl transaction, Appendix appendage);
+        public abstract long getTimeToLive(TransactionImpl transaction, Appendix appendage);
+
+    }
+
 }

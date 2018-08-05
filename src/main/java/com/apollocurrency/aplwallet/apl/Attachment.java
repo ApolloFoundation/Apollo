@@ -3139,6 +3139,16 @@ public interface Attachment extends Appendix {
 
     abstract class TaggedDataAttachment extends AbstractAttachment implements Prunable {
 
+        private static final String KEY_NAME = "name";
+        private static final String KEY_DESCRIPTION = "description";
+        private static final String KEY_TAGS = "tags";
+        private static final String KEY_TYPE = "type";
+        private static final String KEY_CHANNEL = "channel";
+        private static final String KEY_IS_TEXT = "isText";
+        private static final String KEY_FILENAME = "filename";
+        private static final String KEY_DATA = "data";
+        private static final String KEY_TIME_TO_LIVE = "timeToLive";
+
         private final String name;
         private final String description;
         private final String tags;
@@ -3147,6 +3157,7 @@ public interface Attachment extends Appendix {
         private final boolean isText;
         private final String filename;
         private final byte[] data;
+        private final long timeToLive;
         private volatile TaggedData taggedData;
 
         private TaggedDataAttachment(ByteBuffer buffer) {
@@ -3159,20 +3170,22 @@ public interface Attachment extends Appendix {
             this.isText = false;
             this.filename = null;
             this.data = null;
+            this.timeToLive = -1;
         }
 
         private TaggedDataAttachment(JSONObject attachmentData) {
             super(attachmentData);
-            String dataJSON = (String) attachmentData.get("data");
+            String dataJSON = (String) attachmentData.get(KEY_DATA);
             if (dataJSON != null) {
-                this.name = (String) attachmentData.get("name");
-                this.description = (String) attachmentData.get("description");
-                this.tags = (String) attachmentData.get("tags");
-                this.type = (String) attachmentData.get("type");
-                this.channel = Convert.nullToEmpty((String) attachmentData.get("channel"));
-                this.isText = Boolean.TRUE.equals(attachmentData.get("isText"));
+                this.name = (String) attachmentData.get(KEY_NAME);
+                this.description = (String) attachmentData.get(KEY_DESCRIPTION);
+                this.tags = (String) attachmentData.get(KEY_TAGS);
+                this.type = (String) attachmentData.get(KEY_TYPE);
+                this.channel = Convert.nullToEmpty((String) attachmentData.get(KEY_CHANNEL));
+                this.isText = Boolean.TRUE.equals(attachmentData.get(KEY_IS_TEXT));
                 this.data = isText ? Convert.toBytes(dataJSON) : Convert.parseHexString(dataJSON);
-                this.filename = (String) attachmentData.get("filename");
+                this.filename = (String) attachmentData.get(KEY_FILENAME);
+                this.timeToLive = (Long) attachmentData.get(KEY_TIME_TO_LIVE);
             } else {
                 this.name = null;
                 this.description = null;
@@ -3182,11 +3195,12 @@ public interface Attachment extends Appendix {
                 this.isText = false;
                 this.filename = null;
                 this.data = null;
+                this.timeToLive = -1;
             }
 
         }
 
-        private TaggedDataAttachment(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data) {
+        private TaggedDataAttachment(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data, long timeToLive) {
             this.name = name;
             this.description = description;
             this.tags = tags;
@@ -3195,6 +3209,7 @@ public interface Attachment extends Appendix {
             this.isText = isText;
             this.data = data;
             this.filename = filename;
+            this.timeToLive = timeToLive;
         }
 
         @Override
@@ -3209,23 +3224,25 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             if (taggedData != null) {
-                attachment.put("name", taggedData.getName());
-                attachment.put("description", taggedData.getDescription());
-                attachment.put("tags", taggedData.getTags());
-                attachment.put("type", taggedData.getType());
-                attachment.put("channel", taggedData.getChannel());
-                attachment.put("isText", taggedData.isText());
-                attachment.put("filename", taggedData.getFilename());
-                attachment.put("data", taggedData.isText() ? Convert.toString(taggedData.getData()) : Convert.toHexString(taggedData.getData()));
+                attachment.put(KEY_NAME, taggedData.getName());
+                attachment.put(KEY_DESCRIPTION, taggedData.getDescription());
+                attachment.put(KEY_TAGS, taggedData.getTags());
+                attachment.put(KEY_TYPE, taggedData.getType());
+                attachment.put(KEY_CHANNEL, taggedData.getChannel());
+                attachment.put(KEY_IS_TEXT, taggedData.isText());
+                attachment.put(KEY_FILENAME, taggedData.getFilename());
+                attachment.put(KEY_DATA, taggedData.isText() ? Convert.toString(taggedData.getData()) : Convert.toHexString(taggedData.getData()));
+                attachment.put(KEY_TIME_TO_LIVE, taggedData.getTimeToLive());
             } else if (data != null) {
-                attachment.put("name", name);
-                attachment.put("description", description);
-                attachment.put("tags", tags);
-                attachment.put("type", type);
-                attachment.put("channel", channel);
-                attachment.put("isText", isText);
-                attachment.put("filename", filename);
-                attachment.put("data", isText ? Convert.toString(data) : Convert.toHexString(data));
+                attachment.put(KEY_NAME, name);
+                attachment.put(KEY_DESCRIPTION, description);
+                attachment.put(KEY_TAGS, tags);
+                attachment.put(KEY_TYPE, type);
+                attachment.put(KEY_CHANNEL, channel);
+                attachment.put(KEY_IS_TEXT, isText);
+                attachment.put(KEY_FILENAME, filename);
+                attachment.put(KEY_DATA, isText ? Convert.toString(data) : Convert.toHexString(data));
+                attachment.put(KEY_TIME_TO_LIVE, timeToLive);
             }
         }
 
@@ -3243,6 +3260,7 @@ public interface Attachment extends Appendix {
             digest.update((byte)(isText ? 1 : 0));
             digest.update(Convert.toBytes(filename));
             digest.update(data);
+            digest.update(Convert.toBytes(timeToLive));
             return digest.digest();
         }
 
@@ -3302,6 +3320,13 @@ public interface Attachment extends Appendix {
             return data;
         }
 
+        public final long getTimeToLive() {
+            if (taggedData != null) {
+                return taggedData.getTimeToLive();
+            }
+            return timeToLive;
+        }
+
         @Override
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
@@ -3315,6 +3340,11 @@ public interface Attachment extends Appendix {
         }
 
         abstract long getTaggedDataId(Transaction transaction);
+
+        @Override
+        public boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+            return Apl.getEpochTime() - transaction.getTimestamp() < getTimeToLive();
+        }
 
     }
 
@@ -3346,8 +3376,8 @@ public interface Attachment extends Appendix {
         }
 
         public TaggedDataUpload(String name, String description, String tags, String type, String channel, boolean isText,
-                                String filename, byte[] data) throws AplException.NotValidException {
-            super(name, description, tags, type, channel, isText, filename, data);
+                                String filename, byte[] data, long timeToLive) throws AplException.NotValidException {
+            super(name, description, tags, type, channel, isText, filename, data, timeToLive);
             this.hash = null;
             if (isText && !Arrays.equals(data, Convert.toBytes(Convert.toString(data)))) {
                 throw new AplException.NotValidException("Data is not UTF-8 text");
@@ -3422,7 +3452,8 @@ public interface Attachment extends Appendix {
 
         public TaggedDataExtend(TaggedData taggedData) {
             super(taggedData.getName(), taggedData.getDescription(), taggedData.getTags(), taggedData.getType(),
-                    taggedData.getChannel(), taggedData.isText(), taggedData.getFilename(), taggedData.getData());
+                    taggedData.getChannel(), taggedData.isText(), taggedData.getFilename(), taggedData.getData(),
+                    taggedData.getTimeToLive());
             this.taggedDataId = taggedData.getId();
             this.jsonIsPruned = false;
         }

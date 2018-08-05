@@ -140,6 +140,7 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_TYPE = incorrect("type", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_TYPE_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_CHANNEL = incorrect("channel", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_CHANNEL_LENGTH + " characters)");
     public static final JSONStreamAware INCORRECT_TAGGED_DATA_FILE = incorrect("data", "cannot read file data");
+    public static final JSONStreamAware INCORRECT_TAGGED_DATA_TTL = incorrect("timeToLive", "should be greater than zero. Unit - seconds");
     public static final JSONStreamAware INCORRECT_FILE = incorrect("file", "cannot read file data");
     public static final JSONStreamAware INCORRECT_DATA_TOO_LONG = incorrect("data", "(length must be not longer than " + Constants.MAX_TAGGED_DATA_DATA_LENGTH + " bytes)");
     public static final JSONStreamAware INCORRECT_DATA_ZERO_LENGTH = incorrect("data", "(length cannot be 0 bytes)");
