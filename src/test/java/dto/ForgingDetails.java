@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018 Apollo Foundation
+ */
 package dto;
 
 import java.util.Objects;
