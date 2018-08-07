@@ -17,19 +17,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.db.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -142,7 +134,49 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(dbClause, from, to);
     }
 
-    public static DbIterator<Poll> getPollsFinishingAt(int height) {
+    public static DbIterator<? extends Transaction> getPollsByAccount(long accountId, int from, int to) {
+        Connection connection = null;
+        try {
+            connection = Db.db.getConnection();
+            StringBuilder inStatementData = new StringBuilder();
+            try (PreparedStatement votesStatement =
+                    connection.prepareStatement("SELECT * FROM transaction where sender_id = ? and type = ? and subtype = ? " + " ORDER BY " +
+                            "block_timestamp DESC, transaction_index DESC " + DbUtils.limitsClause(from, to))) {
+                int i = 0;
+                votesStatement.setLong(++i, accountId);
+                votesStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
+                votesStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
+                DbUtils.setLimits(++i, votesStatement, from, to);
+                List<Long> ids = new ArrayList<>();
+                try (ResultSet votesResultSet = votesStatement.executeQuery()) {
+                    while (votesResultSet.next()) {
+                        TransactionImpl transaction = TransactionDb.loadTransaction(connection, votesResultSet);
+                        Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
+                        long pollId = attachment.getPollId();
+                        ids.add(pollId);
+                    }
+                }
+                if (!ids.isEmpty()) {
+                    for (int j = 0; j < ids.size(); j++) {
+                        inStatementData.append(ids.get(j));
+                        if (j < ids.size() - 1) {
+                            inStatementData.append(",");
+                        }
+                    }
+                }
+            }
+            PreparedStatement pollStatement =
+                    connection.prepareStatement("SELECT * FROM transaction where id in ("+ inStatementData.toString() +")");
+            DbIterator<? extends Transaction> accountPolls = BlockchainImpl.getInstance().getTransactions(connection, pollStatement);
+            return accountPolls;
+        }
+        catch (SQLException | AplException.NotValidException e) {
+            DbUtils.close(connection);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+        public static DbIterator<Poll> getPollsFinishingAt(int height) {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
     }
 

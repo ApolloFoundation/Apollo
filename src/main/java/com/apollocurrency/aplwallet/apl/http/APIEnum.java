@@ -296,6 +296,7 @@ public enum APIEnum {
     GET_UPDATE_STATUS("getUpdateStatus", GetUpdateStatus.getInstance()),
     START_MINOR_UPDATE("startMinorUpdate", StartMinorUpdate.getInstance()),
     GET_ALL_TRANSACTIONS("getAllTransactions", GetAllTransactions.getInstance()),
+    GET_ACCOUNT_VOTES("getAccountVotes", GetAccountVotes.getInstance()),
 
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
