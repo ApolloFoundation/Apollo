@@ -652,7 +652,12 @@ public final class DigitalGoodsStore {
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
             final int timestamp = block.getTimestamp();
-            final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
+            Blockchain bc = Apl.getBlockchain();
+            long priv_blockID = block.getPreviousBlockId();
+            Block priv_block = bc.getBlock(priv_blockID);
+            
+            final int previousTimestamp =  priv_block.getTimestamp();
+
             DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
                     .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
                     .and(new DbClause.BooleanClause("pending", true));

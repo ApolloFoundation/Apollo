@@ -70,6 +70,8 @@ public class RSAUtil {
         byte[] firstDecryptedPart1 = decrypt(publicKey, encryptedBytes.getFirst());
         byte[] firstDecryptedPart2 = decrypt(publicKey, encryptedBytes.getSecond());
 
+        if (firstDecryptedPart1 == null || firstDecryptedPart2 == null) return null;
+
         byte[] result = new byte[firstDecryptedPart1.length + firstDecryptedPart2.length];
 
         System.arraycopy(firstDecryptedPart1, 0, result, 0, firstDecryptedPart1.length);
@@ -87,9 +89,20 @@ public class RSAUtil {
     }
 
     public static byte[] decrypt(PublicKey publicKey, byte[] encrypted) throws GeneralSecurityException {
+        if (encrypted == null) return null;
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
-        return cipher.doFinal(encrypted);
+        
+        try
+        {
+           byte[] decrypted = cipher.doFinal(encrypted);
+           return decrypted;
+        }
+        catch(javax.crypto.BadPaddingException e) 
+        {
+            return null;
+        }
+        
     }
 
     public static byte[] encrypt(String privateKeyPath, byte[] message) throws GeneralSecurityException, IOException, URISyntaxException {
@@ -149,7 +162,8 @@ public class RSAUtil {
                     }
                 }
                 catch (Exception e) {
-                    Logger.logErrorMessage("Cannot decrypt url", e);
+                      Logger.logMessage("Cannot decrypt url.");
+//                    Logger.logErrorMessage("Cannot decrypt url", e);
                 }
             }
         }
