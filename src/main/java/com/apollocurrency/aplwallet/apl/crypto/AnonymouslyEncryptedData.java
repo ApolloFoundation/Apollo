@@ -65,6 +65,11 @@ public final class AnonymouslyEncryptedData {
         this.publicKey = publicKey;
     }
 
+    public AnonymouslyEncryptedData(byte[] publicKey) {
+        this.publicKey = publicKey;
+        this.data = new byte[32];
+    }
+
     public byte[] decrypt(String secretPhrase) {
         byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), publicKey);
         return Crypto.aesGCMDecrypt(data, sharedKey);

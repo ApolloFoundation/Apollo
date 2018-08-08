@@ -1267,9 +1267,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             try {
                 Db.db.beginTransaction();
                 previousLastBlock = blockchain.getLastBlock();
-
                 validate(block, previousLastBlock, curTime);
-
                 long nextHitTime = Generator.getNextHitTime(previousLastBlock.getId(), curTime);
                 if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
                     String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
@@ -1279,13 +1277,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     Generator.setDelay(-Constants.FORGING_SPEEDUP);
                     throw new BlockOutOfOrderException(msg, block);
                 }
-
                 Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
                 List<TransactionImpl> validPhasedTransactions = new ArrayList<>();
                 List<TransactionImpl> invalidPhasedTransactions = new ArrayList<>();
                 validatePhasedTransactions(previousLastBlock.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
-
                 block.setPrevious(previousLastBlock);
                 blockListeners.notify(block, Event.BEFORE_BLOCK_ACCEPT);
                 TransactionProcessorImpl.getInstance().requeueAllUnconfirmedTransactions();
@@ -1293,7 +1289,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 BlockDb.commit(block);
                 Db.db.commitTransaction();
+
             } catch (Exception e) {
+                Logger.logErrorMessage("PushBlock, error:", e);
                 Db.db.rollbackTransaction();
                 popOffTo(previousLastBlock);
                 blockchain.setLastBlock(previousLastBlock);
