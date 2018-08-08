@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.db.DbBytesConverter;
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 
@@ -660,6 +661,9 @@ class AplDbVersion extends DbVersion {
                         + ")"
                 );
             case 240:
+                DbBytesConverter.init();
+                apply(null);
+            case 241:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

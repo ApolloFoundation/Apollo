@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Poll;
-import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -14,15 +13,15 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class GetAccountVotes extends APIServlet.APIRequestHandler {
-    private static class GetAccountVotesHolder {
-        private static final GetAccountVotes INSTANCE = new GetAccountVotes();
+public class GetVotedAccountPolls extends APIServlet.APIRequestHandler {
+    private static class GetVotedAccountPollsHolder {
+        private static final GetVotedAccountPolls INSTANCE = new GetVotedAccountPolls();
     }
 
-    public static GetAccountVotes getInstance() {
-        return GetAccountVotesHolder.INSTANCE;
+    public static GetVotedAccountPolls getInstance() {
+        return GetVotedAccountPollsHolder.INSTANCE;
     }
-    private GetAccountVotes() {
+    private GetVotedAccountPolls() {
         super(new APITag[] {APITag.VS, }, "account", "firstIndex", "lastIndex");
     }
 
@@ -33,9 +32,9 @@ public class GetAccountVotes extends APIServlet.APIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(request);
         JSONObject response = new JSONObject();
         JSONArray pollJsonArray = new JSONArray();
-        try (DbIterator<? extends Transaction> pollDbIterator = Poll.getPollsByAccount(account, firstIndex, lastIndex)) {
+        try (DbIterator<Poll> pollDbIterator = Poll.getVotedPollsByAccount(account, firstIndex, lastIndex)) {
             while (pollDbIterator.hasNext()) {
-                pollJsonArray.add(JSONData.transaction(false, pollDbIterator.next()));
+                pollJsonArray.add(JSONData.poll(pollDbIterator.next()));
             }
         }
         response.put("polls", pollJsonArray);
