@@ -300,6 +300,8 @@ public enum APIEnum {
     START_MINOR_UPDATE("startMinorUpdate", StartMinorUpdate.getInstance()),
     GET_ALL_TRANSACTIONS("getAllTransactions", GetAllTransactions.getInstance()),
     GET_VOTED_ACCOUNT_POLLS("getVotedAccountPolls", GetVotedAccountPolls.getInstance()),
+    GET_CHATS("getChats", GetChats.getInstance()),
+    GET_CHAT_HISTORY("getChatHistory", GetChatHistory.getInstance()),
 
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();

@@ -22,7 +22,7 @@ public class GetVotedAccountPolls extends APIServlet.APIRequestHandler {
         return GetVotedAccountPollsHolder.INSTANCE;
     }
     private GetVotedAccountPolls() {
-        super(new APITag[] {APITag.VS, }, "account", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.VS, APITag.ACCOUNTS }, "account", "firstIndex", "lastIndex");
     }
 
     @Override
