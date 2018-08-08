@@ -51,6 +51,9 @@ public final class DigitalGoodsStore {
             if (block.getHeight() == 0) {
                 return;
             }
+            if (block.getHeight() == 0) {
+                return;
+            }
             List<Purchase> expiredPurchases = new ArrayList<>();
             try (DbIterator<Purchase> iterator = Purchase.getExpiredPendingPurchases(block)) {
                 while (iterator.hasNext()) {
@@ -652,23 +655,16 @@ public final class DigitalGoodsStore {
         }
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
-            Logger.logMessage("1: " + block.toJsonString());
+
             final int timestamp = block.getTimestamp();
-            Logger.logMessage("2");
             Blockchain bc = Apl.getBlockchain();
-            Logger.logMessage("3");
             long priv_blockID = block.getPreviousBlockId();
-            Logger.logMessage("4");
             Block priv_block = bc.getBlock(priv_blockID);
-            Logger.logMessage("5:" + priv_block.toJsonString());
-            int ts = priv_block.getTimestamp();
-            Logger.logMessage("6");
-            final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
-            Logger.logMessage("7");
+            
+            final int previousTimestamp =  priv_block.getTimestamp();
             DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
                     .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
                     .and(new DbClause.BooleanClause("pending", true));
-            Logger.logMessage("8");
             return purchaseTable.getManyBy(dbClause, 0, -1);
         }
 
