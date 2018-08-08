@@ -35,18 +35,25 @@ public class UpdaterDb {
     //required operations in one transaction
     public static boolean clearAndSaveUpdateTransaction(Long transactionId) {
         boolean success = false;
-        try (Connection connection = Db.db.beginTransaction()) {
+        boolean isInTransaction = Db.db.isInTransaction();
+        try {
+            Connection connection;
+            if (!isInTransaction) connection = Db.db.beginTransaction();
+            else connection = Db.db.getConnection();
             clear(connection);
             success = saveUpdateTransaction(transactionId, connection);
             Db.db.commitTransaction();
+            success = true;            
         }
         catch (SQLException e) {
             Db.db.rollbackTransaction();
             Logger.logErrorMessage("Db error", e);
-        } finally {
-            Db.db.endTransaction();
         }
-        return success;
+        finally {
+            if (!isInTransaction) Db.db.endTransaction();
+            return success;
+        }
+        
     }
 
     public static boolean saveUpdateTransaction(Long transactionId) {

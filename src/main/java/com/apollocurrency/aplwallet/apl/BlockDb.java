@@ -331,6 +331,7 @@ final class BlockDb {
             BlockImpl lastBlock;
             try {
                 Db.db.beginTransaction();
+                // TODO: Recursion, check if safe...
                 lastBlock = deleteBlocksFrom(blockId);
                 Db.db.commitTransaction();
             } catch (Exception e) {
