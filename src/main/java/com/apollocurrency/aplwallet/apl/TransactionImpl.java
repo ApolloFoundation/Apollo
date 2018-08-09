@@ -36,6 +36,15 @@ import java.util.Map;
 
 final class TransactionImpl implements Transaction {
 
+    private static final int FLAG_MESSAGE                       = 1 << 0;
+    private static final int FLAG_ENCRYPTED_MESSAGE             = 1 << 1;
+    private static final int FLAG_PUBLIC_KEY_ANNOUNCEMENT       = 1 << 2;
+    private static final int FLAG_ENCRYPT_TO_SELF_MESSAGE       = 1 << 3;
+    private static final int FLAG_PHASING                       = 1 << 4;
+    private static final int FLAG_PRUNABLE_PLAIN_MESSAGE        = 1 << 5;
+    private static final int FLAG_PRUNABLE_ENCRYPTED_MESSAGE    = 1 << 6;
+    private static final int FLAG_PRUNABLE_TTL                  = 1 << 7;
+
     static final class BuilderImpl implements Builder {
 
         private final short deadline;
@@ -67,6 +76,7 @@ final class TransactionImpl implements Transaction {
         private int ecBlockHeight;
         private long ecBlockId;
         private short index = -1;
+        private long prunableTimeToLive = 0;
 
         BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                     Attachment.AbstractAttachment attachment) {
@@ -180,6 +190,12 @@ final class TransactionImpl implements Transaction {
             return this;
         }
 
+        @Override
+        public BuilderImpl prunableTimeToLive(long prunableTimeToLive) {
+            this.prunableTimeToLive = prunableTimeToLive;
+            return this;
+        }
+
         BuilderImpl id(long id) {
             this.id = id;
             return this;
@@ -242,6 +258,7 @@ final class TransactionImpl implements Transaction {
     private final Appendix.Phasing phasing;
     private final Appendix.PrunablePlainMessage prunablePlainMessage;
     private final Appendix.PrunableEncryptedMessage prunableEncryptedMessage;
+    private final long prunableTimeToLive;
 
     private final List<Appendix.AbstractAppendix> appendages;
     private final int appendagesSize;
@@ -278,6 +295,7 @@ final class TransactionImpl implements Transaction {
         this.fullHash = builder.fullHash;
 		this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
+        this.prunableTimeToLive = builder.prunableTimeToLive;
 
         List<Appendix.AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
@@ -623,6 +641,7 @@ final class TransactionImpl implements Transaction {
                 buffer.putInt(getFlags());
                 buffer.putInt(ecBlockHeight);
                 buffer.putLong(ecBlockId);
+                buffer.putLong(prunableTimeToLive);
                 for (Appendix appendage : appendages) {
                     appendage.putBytes(buffer);
                 }
@@ -661,10 +680,14 @@ final class TransactionImpl implements Transaction {
             int flags = 0;
             int ecBlockHeight = 0;
             long ecBlockId = 0;
+            long prunableTTL = 0;
             if (version > 0) {
                 flags = buffer.getInt();
                 ecBlockHeight = buffer.getInt();
                 ecBlockId = buffer.getLong();
+                if((flags & FLAG_PRUNABLE_TTL) != 0) {
+                    prunableTTL = buffer.getLong();
+                }
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountATM, feeATM,
@@ -677,37 +700,41 @@ final class TransactionImpl implements Transaction {
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(recipientId);
             }
-            int position = 1;
-            if ((flags & position) != 0 || (version == 0 && transactionType == TransactionType.Messaging.ARBITRARY_MESSAGE)) {
+
+            builder.prunableTimeToLive(prunableTTL);
+
+            if ((flags & FLAG_MESSAGE) != 0 || (version == 0 && transactionType == TransactionType.Messaging.ARBITRARY_MESSAGE)) {
                 builder.appendix(new Appendix.Message(buffer));
             }
-            position <<= 1;
-            if ((flags & position) != 0) {
+
+            if ((flags & FLAG_ENCRYPTED_MESSAGE) != 0) {
                 builder.appendix(new Appendix.EncryptedMessage(buffer));
             }
-            position <<= 1;
-            if ((flags & position) != 0) {
+
+            if ((flags & FLAG_PUBLIC_KEY_ANNOUNCEMENT) != 0) {
                 builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
             }
-            position <<= 1;
-            if ((flags & position) != 0) {
+
+            if ((flags & FLAG_ENCRYPT_TO_SELF_MESSAGE) != 0) {
                 builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
             }
-            position <<= 1;
-            if ((flags & position) != 0) {
+
+            if ((flags & FLAG_PHASING) != 0) {
                 builder.appendix(new Appendix.Phasing(buffer));
             }
-            position <<= 1;
-            if ((flags & position) != 0) {
+
+            if ((flags & FLAG_PRUNABLE_PLAIN_MESSAGE) != 0) {
                 builder.appendix(new Appendix.PrunablePlainMessage(buffer));
             }
-            position <<= 1;
-            if ((flags & position) != 0) {
+
+            if ((flags & FLAG_PRUNABLE_ENCRYPTED_MESSAGE) != 0) {
                 builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
             }
+
             if (buffer.hasRemaining()) {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
+
             return builder;
         } catch (AplException.NotValidException|RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
@@ -774,6 +801,7 @@ final class TransactionImpl implements Transaction {
             json.put("attachment", attachmentJSON);
         }
         json.put("version", version);
+        json.put("prunableTimeToLive", prunableTimeToLive);
         return json;
     }
 
@@ -847,6 +875,9 @@ final class TransactionImpl implements Transaction {
                 builder.appendix(Appendix.PrunablePlainMessage.parse(attachmentData));
                 builder.appendix(Appendix.PrunableEncryptedMessage.parse(attachmentData));
             }
+            Long prunableTimeToLiveValue = (Long) transactionData.get("prunableTimeToLive");
+            builder.prunableTimeToLive(prunableTimeToLiveValue == null ? 0 : prunableTimeToLiveValue);
+
             return builder;
         } catch (AplException.NotValidException|RuntimeException e) {
             Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
@@ -889,7 +920,7 @@ final class TransactionImpl implements Transaction {
     }
 
     private int getSize() {
-        return signatureOffset() + 64  + 4 + 4 + 8 + appendagesSize;
+        return signatureOffset() + 64  + 4 + 4 + 8 + (8 /* long prunableTimeToLive */) + appendagesSize;
     }
 
     @Override
@@ -914,35 +945,39 @@ final class TransactionImpl implements Transaction {
     }
 
     private int getFlags() {
+
         int flags = 0;
-        int position = 1;
+
         if (message != null) {
-            flags |= position;
+            flags |= FLAG_MESSAGE;
         }
-        position <<= 1;
+
         if (encryptedMessage != null) {
-            flags |= position;
+            flags |= FLAG_ENCRYPTED_MESSAGE;
         }
-        position <<= 1;
+
         if (publicKeyAnnouncement != null) {
-            flags |= position;
+            flags |= FLAG_PUBLIC_KEY_ANNOUNCEMENT;
         }
-        position <<= 1;
+
         if (encryptToSelfMessage != null) {
-            flags |= position;
+            flags |= FLAG_ENCRYPT_TO_SELF_MESSAGE;
         }
-        position <<= 1;
+
         if (phasing != null) {
-            flags |= position;
+            flags |= FLAG_PHASING;
         }
-        position <<= 1;
+
         if (prunablePlainMessage != null) {
-            flags |= position;
+            flags |= FLAG_PRUNABLE_PLAIN_MESSAGE;
         }
-        position <<= 1;
+
         if (prunableEncryptedMessage != null) {
-            flags |= position;
+            flags |= FLAG_PRUNABLE_ENCRYPTED_MESSAGE;
         }
+
+        flags |= FLAG_PRUNABLE_TTL;
+
         return flags;
     }
 
@@ -1091,6 +1126,11 @@ final class TransactionImpl implements Transaction {
             totalFee = Math.addExact(totalFee, Constants.ONE_APL);
         }
         return totalFee;
+    }
+
+    @Override
+    public long getPrunableTimeToLive(){
+        return prunableTimeToLive;
     }
 
 }

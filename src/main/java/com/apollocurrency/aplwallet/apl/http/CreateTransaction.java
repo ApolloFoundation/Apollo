@@ -185,6 +185,8 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             ecBlockId = Apl.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
         }
 
+        String prunableTimeToLiveValue = req.getParameter("prunableTimeToLive");
+
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
@@ -203,6 +205,9 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             builder.appendix(phasing);
             builder.appendix(prunablePlainMessage);
             builder.appendix(prunableEncryptedMessage);
+            if(prunableTimeToLiveValue != null) {
+                builder.prunableTimeToLive(Long.parseLong(prunableTimeToLiveValue));
+            }
             if (ecBlockId != 0) {
                 builder.ecBlockId(ecBlockId);
                 builder.ecBlockHeight(ecBlockHeight);

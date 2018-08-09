@@ -500,7 +500,7 @@ public class TaggedData {
     }
 
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
-        if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
+        if (Apl.getEpochTime() - transaction.getTimestamp() < transaction.getPrunableTimeToLive() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment);

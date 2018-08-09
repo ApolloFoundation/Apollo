@@ -1459,11 +1459,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             block.apply();
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
-            int fromTimestamp = Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
+            long now = Apl.getEpochTime();
             for (TransactionImpl transaction : block.getTransactions()) {
                 try {
                     transaction.apply();
-                    if (transaction.getTimestamp() > fromTimestamp) {
+                    if (transaction.getTimestamp() + transaction.getPrunableTimeToLive() > now) {
                         for (Appendix.AbstractAppendix appendage : transaction.getAppendages(true)) {
                             if ((appendage instanceof Appendix.Prunable) &&
                                         !((Appendix.Prunable)appendage).hasPrunableData()) {

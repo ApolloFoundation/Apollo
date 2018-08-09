@@ -53,6 +53,8 @@ public interface Transaction {
 
         Builder ecBlockId(long blockId);
 
+        Builder prunableTimeToLive(long prunableTimeToLive);
+
         Transaction build() throws AplException.NotValidException;
 
         Transaction build(String secretPhrase) throws AplException.NotValidException;
@@ -136,4 +138,7 @@ public interface Transaction {
     int getECBlockHeight();
 
     long getECBlockId();
+
+    long getPrunableTimeToLive();
+
 }

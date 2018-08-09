@@ -51,9 +51,7 @@ public interface Appendix {
         boolean hasPrunableData();
         void restorePrunableData(Transaction transaction, int blockTimestamp, int height);
         default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-            return Apl.getEpochTime() - transaction.getTimestamp() <
-                    (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
-                            Constants.MAX_PRUNABLE_LIFETIME : Constants.MIN_PRUNABLE_LIFETIME);
+            return Apl.getEpochTime() - transaction.getTimestamp() < transaction.getPrunableTimeToLive();
         }
     }
 
@@ -417,7 +415,7 @@ public interface Appendix {
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
+            if (Apl.getEpochTime() - transaction.getTimestamp() < transaction.getPrunableTimeToLive()) {
                 PrunableMessage.add((TransactionImpl)transaction, this);
             }
         }
@@ -724,7 +722,7 @@ public interface Appendix {
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
+            if (Apl.getEpochTime() - transaction.getTimestamp() < transaction.getPrunableTimeToLive()) {
                 PrunableMessage.add((TransactionImpl)transaction, this);
             }
         }

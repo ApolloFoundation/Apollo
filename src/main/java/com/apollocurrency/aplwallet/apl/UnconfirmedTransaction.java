@@ -297,6 +297,11 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public long getPrunableTimeToLive() {
+        return transaction.getPrunableTimeToLive();
+    }
+
+    @Override
     public short getIndex() {
         return transaction.getIndex();
     }
@@ -309,4 +314,7 @@ class UnconfirmedTransaction implements Transaction {
                 ", feePerByte=" + feePerByte +
                 '}';
     }
+
+
+
 }

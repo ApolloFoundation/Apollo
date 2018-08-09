@@ -253,4 +253,9 @@ public class SimpleTransactionImpl implements Transaction {
     public long getECBlockId() {
         return 0;
     }
+
+    @Override
+    public long getPrunableTimeToLive() {
+        return 0;
+    }
 }

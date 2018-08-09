@@ -20,6 +20,8 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 
+import static com.apollocurrency.aplwallet.apl.Constants.MAX_PRUNABLE_LIFETIME;
+
 class AplDbVersion extends DbVersion {
 
     protected void update(int nextUpdate) {
@@ -657,6 +659,8 @@ class AplDbVersion extends DbVersion {
                         + ")"
                 );
             case 240:
+                apply("ALTER TABLE TRANSACTION ADD PRUNABLE_TTL BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
+            case 241:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
