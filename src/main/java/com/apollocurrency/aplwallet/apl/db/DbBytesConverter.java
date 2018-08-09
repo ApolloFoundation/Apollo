@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.Db;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -29,21 +28,14 @@ public class DbBytesConverter {
     }
 
     public static void init() {
-        Connection connection = null;
-        try {
-            connection = Db.db.getConnection();
-            PreparedStatement statement = connection.prepareStatement("DROP ALIAS IF EXISTS " + BYTE_TO_LONG_DB_FUNCTION_NAME);
-            statement.executeUpdate();
+        try (Connection connection = Db.db.getConnection();
+             Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate("DROP ALIAS IF EXISTS " + BYTE_TO_LONG_DB_FUNCTION_NAME);
             String className = DbBytesConverter.class.getName();
             String functionPath = className + "." + BYTE_TO_LONG_METHOD_NAME;
-            PreparedStatement stmt = connection.prepareStatement("CREATE ALIAS ? FOR \"?\"");
-            int i = 0;
-            stmt.setString(++i, BYTE_TO_LONG_DB_FUNCTION_NAME);
-            stmt.setString(++i, functionPath);
-
+            stmt.executeUpdate(String.format("CREATE ALIAS %s FOR \"%s\"", BYTE_TO_LONG_DB_FUNCTION_NAME, functionPath));
         }
         catch (SQLException e) {
-            DbUtils.close(connection);
             throw new RuntimeException(e.toString(), e);
         }
     }
