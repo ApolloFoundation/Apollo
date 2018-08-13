@@ -5,6 +5,7 @@
 package dto;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
 
 import java.util.Objects;
 
@@ -23,7 +24,7 @@ public class LedgerEntry {
     String account;
     Long height;
     Long timestamp;
-    Transaction transaction;
+    JSONTransaction transaction;
 
     public Long getLedgerId() {
         return ledgerId;
@@ -138,11 +139,11 @@ public class LedgerEntry {
         this.timestamp = timestamp;
     }
 
-    public Transaction getTransaction() {
+    public JSONTransaction getTransaction() {
         return transaction;
     }
 
-    public void setTransaction(Transaction transaction) {
+    public void setTransaction(JSONTransaction transaction) {
         this.transaction = transaction;
     }
 

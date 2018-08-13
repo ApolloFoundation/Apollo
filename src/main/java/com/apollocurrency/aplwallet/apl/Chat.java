@@ -89,6 +89,9 @@ public class Chat {
         public long getLastMessageTime() {
             return lastMessageTime;
         }
+
+        public ChatInfo() {
+        }
     }
 
 }

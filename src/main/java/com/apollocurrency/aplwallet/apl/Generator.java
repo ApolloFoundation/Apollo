@@ -55,7 +55,6 @@ public final class Generator implements Comparable<Generator> {
         @Override
         public void run() {
             if (suspendForging) {
-                Logger.logDebugMessage("Block generation was suspended");
                 return;
             }
             try {
@@ -367,10 +366,11 @@ public final class Generator implements Comparable<Generator> {
 
     public static void suspendForging() {
         suspendForging = true;
+        Logger.logMessage("Block generation was suspended");
     }
     public static void resumeForging() {
-        Logger.logDebugMessage("Forging was resumed");
         suspendForging = false;
+        Logger.logDebugMessage("Forging was resumed");
     }
 
     /** Active block generators */
