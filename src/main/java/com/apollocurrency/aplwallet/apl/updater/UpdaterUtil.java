@@ -50,6 +50,10 @@ public class UpdaterUtil {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificatePath));
     }
+    static String getStringRepresentation(Certificate cert) {
+        return ((cert instanceof X509Certificate) ?
+                ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
+    }
 
     static Set<Certificate> readCertificates(String directory, String prefix, String suffix) throws CertificateException, IOException, URISyntaxException {
         return readCertificates(findFiles(directory, prefix, suffix));
@@ -90,11 +94,6 @@ public class UpdaterUtil {
                     "firstCertificate=" + getStringRepresentation(firstCertificate) +
                     ", secondCertificate=" + getStringRepresentation(secondCertificate) +
                     '}';
-        }
-
-        private String getStringRepresentation(Certificate cert) {
-            return ((cert instanceof X509Certificate) ?
-                    ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
         }
 
         @Override

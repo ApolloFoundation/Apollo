@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
@@ -35,9 +34,10 @@ public class Downloader {
     private boolean checkConsistency(Path file, byte hash[]) {
         try {
             byte[] actualHash = calclulateHash(file);
-            if (Arrays.equals(hash, actualHash)) {
-                return true;
-            }
+            String message = "Actual hash is " + Convert.toHexString(actualHash) + " for file " + file;
+            Logger.logDebugMessage(message);
+//            System.out.println(message);
+            return Convert.toHexString(actualHash).equalsIgnoreCase(Convert.toHexString(hash));
         }
         catch (Exception e) {
             Logger.logErrorMessage("Cannot calculate checksum for file: " + file, e);
