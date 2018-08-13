@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -86,9 +87,14 @@ public class UpdaterUtil {
         @Override
         public String toString() {
             return "CertificatePair{" +
-                    "firstCertificate=" + firstCertificate +
-                    ", secondCertificate=" + secondCertificate +
+                    "firstCertificate=" + getStringRepresentation(firstCertificate) +
+                    ", secondCertificate=" + getStringRepresentation(secondCertificate) +
                     '}';
+        }
+
+        private String getStringRepresentation(Certificate cert) {
+            return ((cert instanceof X509Certificate) ?
+                    ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
         }
 
         @Override

@@ -25,7 +25,10 @@ public class UpdaterMediator {
 
     public UpdateInfo.UpdateState getUpdateState() {return updateInfo.getUpdateState();}
 
-    public void setUpdateState(UpdateInfo.UpdateState updateState) {updateInfo.setUpdateState(updateState);}
+    public void setUpdateState(UpdateInfo.UpdateState updateState) {
+
+        Logger.logInfoMessage("Update state: " + updateState);
+        updateInfo.setUpdateState(updateState);}
 
     public void setUpdateData(boolean isUpdate, int updateHeight, int receivedUpdateHeight, Level updateLevel, Version newVersion) {
         //required

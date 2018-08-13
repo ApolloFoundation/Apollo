@@ -12,7 +12,8 @@ import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.Block;
-import dto.*;
+import dto.LedgerEntry;
+import dto.Peer;
 import org.json.simple.parser.ParseException;
 import org.junit.*;
 import util.TestUtil;
@@ -527,31 +528,27 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Ignore
     public void testSendUpdateTransaction() throws IOException, ParseException {
         Assert.fail("Encrypted url is required");
-        String firstPart = "9539c731ab178c2fd9b49c73c5343fcdb26f522641c84a1b6a7a2f3a8073acb55ed32040e6c34ca4255aa8ebf76f7263d239c55329fa87ffc153d94de03bbde936cfc642cec09f0847e3f298fdc9c01d47de559c2222b38b7ff0135e799d19734fc80c30ad7da3757244414b7695e5531b3702ae23eba77a760072a781c60d720aca4ca718f1703fbad856fbf1bb8a9e431cb6fbce0ede2633a56d89d209017fddbb2a95a24b2490a46cd64a4ee983d5129ff9965893efeff842a8df1156ea3ab40ad393755bac431c267ea720370c7450b7407d6b9bbb80e171227252fbec34f318e6bd90d84fca7e76b36aebb14e35429d9669dda7433babe74d2a12f0a69a"; String secondPart =
-                "751340d756f48d24823d6f77b19ce7ff28676a6e86d29f6f676f10da07b0de9b831c96d19199bce76793418adcc36fc917477b23491079d465cff1e6d01827c9dbafc61ddccd20803c45ff7538f3d58de0eb77876e91f90102a0aefa8eb82be7435c42c7e19969aa803c3242b99cdd2947fa3e1a478e376d75dd56715f6de61a29cb73ca802192899a8528847d4afd4d7d020fa9c8949751c5bff1b6644d7cbb9aad1a7e8559ef2c31401e1e40058a2c5e8824dee35f658afc253a47280c8d081f51a27981921ebd5b2b03a4fb9e913c65845d8faf623bebeeefc35d1dfa2f115c1d2df31e0b81f8f0cd39ef3433760d12c5e2ad0ad9b08199f33c3598309e1b";
+        String firstPart = "a427a6d86645d0c32527e50fe292a0b1cf3983ef083f9fc392359e34d90012a65d5bd927c2cd09466433c107e523ff01bc00e414108d01e515f56ddbc054abce83fa4bd30bdf4623928e768536f8e56d9695ebadfbe34b5d1d59aa63545f5238a4817ec09389687df5ec116423b0e572a5ee9c47eaab432b19805a610beecb495595636a14009524caee8f1c73db084f1842bf895440233bff67c8f09674056113efd58da69f8411df3df174438bd2e8280e4eac97d6f89a6d756c1feddccc6d593d59578aab46ad9024b0ba742c547418ea7b2adbed80c8f673cd2cff31fefb6ab068c03232d79dfd83977a05bb0fb286f81ddbc0a9c75e6fce81747223a8fe5e506f9a9d7a7fd08d51b63ba25b4872886857b59607e24e842aa39e9d0d78a3db3ad97b03e64fb135ef55f5f396e29c8a4e146087b853f9a1be0a647201836da32ef5b0bff1a3bc599bff155cbfe8a24ad5ee7ab711bf9de7682876c8b7986025e68c8ee63f63505d3ec21f53a98e9de78f39b69c8438028a0e569f81c9ac7bc7d2dc0ea4f4406a696938fe422bad1076342267ee13d657aa9e68d07aafba6b33fc3e90d72ea5147bc21d223b862c56d989a568a7a2609b272261df3af318f340283490ff4d909768deee8987e363bba10c489d746e4e706daf02b78ba5886f59c204bc2237702d1c2191a6c6b0d3095c9c3d462e4e1cae02f0f53b5e94c215"; String secondPart =
+                "b51c553a2e69bc868926235c2fc01ba04b69070324a0c94d9c0d32f65ad4bb475c2b2887800caed2f4023f6510c363a5c4a7da0d8ba7cf85e921990fa7eba87c053ee753157c7541b291483a3f444b0e5d91dcb0f74def9dbe46c910546d0b616ebd9241e7f09aa619cb84b95560307d7e6b07e4fa47c508a621683717485542883203f1f17279b5e93173fa01b19bc707b1ee899bd1118322befed65b6eb28df579d56e61ca6b90abe5408f21544e3e6195ab23876baab07db967de04e815a9395987775acbe57bb7ac8d7366ad62a655bb4598edb4d3d2dce3d326fbeef97b654c686e9abd2c613ea740701a5a4d647e1ebf3bda0fc29fdbb5dfc7dc22842f32e552b0f999076d5f644809ff752224b71fe2f85ad8ac4766d57756d52953bbfb6e6b2134b173bf4995218429371ce3989cd764482396acb05eeaf2e138f38bae9107a9b6db626c6647be5d4a1e6f02f17326700ddeec0b8037671252f0e5c475e06964b6c5a5ff51bc07b494ee84ef5be7d84146f949fe6639409c3fe7550597e45c93ec276721781d9e8677fe4501b583a2b6d96d583c6397c8c5ef14ab6932581d81a8a3518da882fb920dd47c4af25ed755697a7cb181936ae0f21f3c2976f3168202e02fc4b351dcbb7f0c9e5b50a7f1f1d1841dd4de09ca374e3d01fc4fa6cb9271c727a194a2b701ec5e7d882790bb800cc2f86339ad708869ea2911";
         Assert.assertEquals(1024, firstPart.length());
         Assert.assertEquals(1024, secondPart.length());
 
         DoubleByteArrayTuple updateUrl = new DoubleByteArrayTuple(
                 Convert.parseHexString(firstPart), Convert.parseHexString(secondPart));
 
-        String hash = "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4";
-        Platform platform = Platform.LINUX;
+        String hash = "92d5e38b0a3d73d5ce36adc3df998145a070e2b4924cf48aa7898822320bdd0b";
+        Platform platform = Platform.WINDOWS;
         Architecture architecture = Architecture.AMD64;
         Version version = Version.from("1.0.8");
-        Transaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl, version, architecture, platform, hash, 5);
-//        UpdateTransaction.UpdateAttachment expectedAttachment = new UpdateTransaction.UpdateAttachment();
-//        expectedAttachment.setArchitecture(architecture);
-//        expectedAttachment.setHash(hash);
-//        expectedAttachment.setPlatform(platform);
-//        expectedAttachment.setVersion(version);
-//        expectedAttachment.setUrl(updateUrl);
-//        Assert.assertEquals(8, updateTransaction.getType().intValue());
-//        Assert.assertEquals(0, updateTransaction.getSubtype().intValue());
-//        Assert.assertEquals(TransactionType.Update.CRITICAL, TransactionType.findTransactionType(updateTransaction.getType(), updateTransaction.getSubtype()));
-//        Assert.assertNull(updateTransaction.getRecipientRS());
-//        Assert.assertEquals(100_000_000, updateTransaction.getFeeATM().intValue());
-//        Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
+        JSONTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl,
+                version, architecture, platform, hash, 5);
+        Attachment.UpdateAttachment expectedAttachment = Attachment.UpdateAttachment.getAttachment(platform, architecture, updateUrl, version,
+                Convert.parseHexString(hash)
+                , (byte)0);
+        Assert.assertEquals(TransactionType.Update.CRITICAL, updateTransaction.getType());
+        Assert.assertNull(updateTransaction.getRecipientRS());
+        Assert.assertEquals(100_000_000, updateTransaction.getFeeATM());
+        Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
     }
 
     @Test

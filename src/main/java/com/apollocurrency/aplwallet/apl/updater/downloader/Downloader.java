@@ -7,12 +7,14 @@ package com.apollocurrency.aplwallet.apl.updater.downloader;
 import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -53,6 +55,15 @@ public class Downloader {
             }
             return digest.digest();
         }
+    }
+
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
+        boolean b = getInstance().checkConsistency(Paths.get("C:/users/zandr/Downloads/ApolloWallet-1.0.8(1).jar"), Convert.parseHexString(
+                "92d5e38b0a3d73d5ce36adc3df998145a070e2b4924cf48aa7898822320bdd0b"));
+        System.out.println(b);
+        Path download = getInstance().defaultDownloadExecutor.download("http://34.243.237.59:7876/ApolloWallet-1.0.8.jar");
+        System.out.println(getInstance().checkConsistency(download, Convert.parseHexString(
+                "92d5e38b0a3d73d5ce36adc3df998145a070e2b4924cf48aa7898822320bdd0b")));
     }
 
     /**
