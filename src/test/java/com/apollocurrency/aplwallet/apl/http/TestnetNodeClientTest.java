@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
 import static util.TestUtil.atm;
 import static util.TestUtil.getRandomRS;
 
@@ -43,24 +44,28 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     public static final int BLOCK_HEIGHT = 7446;
     public static final int PRIVATE_BLOCK_HEIGHT = 16847;
     public static final String PRIVATE_TRANSACTION_RECIPIENT = "APL-4QN7-PNGP-SZFV-59XZL";
-
+    public static TestAccount randomChatAccount;
     public TestnetNodeClientTest() {
-        super(TestData.TEST_LOCALHOST, TestData.TEST_FILE, runner.getUrls());
-        try {
-            chatAcc = TestDataGenerator.generateAccount("chat_acc");
-            TestDataGenerator.fundAcc(chatAcc, new TestAccount(TestUtil.getRandomSecretPhrase(accounts)), 50);
-            chats = TestDataGenerator.generateChatsForAccount(chatAcc);
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        super(TestData.TEST_LOCALHOST, TEST_FILE, runner.getUrls());
     }
 
     private static WalletRunner runner = new WalletRunner();
     @BeforeClass
     public static void setUp() throws Exception {
         runner.run();
-        //        JSONTransaction tr = new
+        try {
+            chatAcc = TestDataGenerator.generateAccount("chat_acc");
+            TestDataGenerator.fundAcc(chatAcc, new TestAccount(TestUtil.getRandomSecretPhrase(TestUtil.loadKeys(TEST_FILE))), 50);
+            chats = TestDataGenerator.generateChatsForAccount(chatAcc);
+            chats.forEach((acc, trs)-> {
+                if (trs.size() == 7) {
+                    randomChatAccount = acc;
+                }
+            });
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @AfterClass
@@ -234,9 +239,9 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertTrue(privateTransaction1.isPrivate());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGetPrivateTransactionFromGetTransaction() throws Exception {
-        client.getTransaction(url, PRIVATE_TRANSACTION_HASH);
+        Assert.assertNull(client.getTransaction(url, PRIVATE_TRANSACTION_HASH));
     }
 
     @Test
@@ -565,6 +570,21 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
             Assert.assertTrue(first.isPresent());
             Assert.assertEquals(c.getLastMessageTime(), first.get().getTimestamp());
         });
+    }
+    @Test
+    public void testGetChatHistory() throws IOException {
+        List<JSONTransaction> chatTransactions = client.getChatHistory(url, chatAcc.getRS(), randomChatAccount.getRS(), 0, 5);
+        checkList(chatTransactions);
+        Assert.assertEquals(chats.get(randomChatAccount).size() - 1 , chatTransactions.size());
+        for (int i = 0; i < chats.get(randomChatAccount).subList(0, 6).size(); i++) {
+            JSONTransaction expected = chats.get(randomChatAccount).get(i);
+            JSONTransaction actual = chatTransactions.get(i);
+            Assert.assertEquals(expected.getHeight(), actual.getHeight());
+            Assert.assertEquals(expected.getTimestamp(), actual.getTimestamp());
+            Assert.assertEquals(expected.getSenderRS(), actual.getSenderRS());
+            Assert.assertEquals(expected.getRecipientRS(), actual.getRecipientRS());
+            Assert.assertEquals(Convert.toString(expected.getMessage().getMessage(), true), Convert.toString(actual.getMessage().getMessage(), true));
+        }
     }
 }
 
