@@ -213,7 +213,7 @@ var NRS = (function(NRS, $, undefined) {
 
                                      options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
-                                     var decrypted =  NRS.decryptData(entry.encryptedLedgerEntry, options);
+                                     var decrypted =  NRS.decryptDataJava(entry.encryptedLedgerEntry, options);
                                      decrypted = decrypted.message;
                                      decrypted = converters.hexStringToString(decrypted);
                                      decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
@@ -934,7 +934,7 @@ var NRS = (function(NRS, $, undefined) {
             options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
 
-            var decrypted =  NRS.decryptData(t.encryptedTransaction, options);
+            var decrypted =  NRS.decryptDataJava(t.encryptedTransaction, options);
             decrypted = decrypted.message;
             decrypted = converters.hexStringToString(decrypted);
             decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
