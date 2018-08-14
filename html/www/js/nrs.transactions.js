@@ -48,6 +48,8 @@ var NRS = (function(NRS, $, undefined) {
 		this.serverKey = null;
 		this.blockHeight = null;
 
+		this.previewTransactions = null;
+
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
 	        if ($(e.target).attr('data-navigate-page') === 'prev') {
@@ -96,8 +98,42 @@ var NRS = (function(NRS, $, undefined) {
 	        this.getItems();
 	
         };
-        
-        this.getItems = function(page, place) {
+
+        this.getPreviewTransactions = function () {
+			var url = API;
+			url += 'requestType=getBlockchainTransactions';
+			url += '&firstIndex=0&lastIndex=9';
+			url += '&account=' + NRS.account;
+
+			var target = $('#dashboard_table tbody');
+            if (target) {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        var rows = "";
+                        data = JSON.parse(data).transactions;
+
+                        console.log(data);
+                        for (var i = 0; i < data.length; i++) {
+                            var transaction = data[i];
+
+                            transaction.confirmed = true;
+                            rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+                        }
+                        NRS.dataLoaded(rows);
+                        console.log(target);
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+
+        };
+
+        this.getItems = function(page, place, isPreview) {
         	if (page) {
                 this.page = page;
             }
@@ -335,19 +371,26 @@ var NRS = (function(NRS, $, undefined) {
 
                     	if (that.blockHeight && that.blockHeight !== data.height) {
 							that.blockHeight = data.height;
+
+                            $('[data-block]').empty().html(that.blockHeight);
+                            $('[data-block]').attr('data-block', that.blockHeight);
 							that.getItems();
 						}
 						if (!that.blockHeight) {
 							that.blockHeight = data.height;
-							that.getItems();
+                            $('[data-block]').empty().html(that.blockHeight);
+                            $('[data-block]').attr('data-block', that.blockHeight);
+
+                            that.getItems();
 						}
                     },
                     error: function(data) {
                         console.log('err: ', data);
                     }
                 });
+                that.getPreviewTransactions();
 			},2000);
-		}
+		};
 		this.destroyTable = function() {
 			$('#transactions_table').find('tbody').empty();
 			
