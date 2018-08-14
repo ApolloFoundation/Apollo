@@ -74,16 +74,16 @@ public class Chat {
 
 
     public static class ChatInfo {
-        long accountId;
+        long account;
         long lastMessageTime;
 
-        public ChatInfo(long accountId, long lastMessageTime) {
-            this.accountId = accountId;
+        public ChatInfo(long account, long lastMessageTime) {
+            this.account = account;
             this.lastMessageTime = lastMessageTime;
         }
 
-        public long getAccountId() {
-            return accountId;
+        public long getAccount() {
+            return account;
         }
 
         public long getLastMessageTime() {

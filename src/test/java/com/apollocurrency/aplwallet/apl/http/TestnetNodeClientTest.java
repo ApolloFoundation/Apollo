@@ -37,14 +37,6 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     public static final String MESSAGE_SENDER = "APL-KL45-8GRF-BKPM-E58NH";
     private static TestAccount chatAcc;
     private  static Map<TestAccount, List<JSONTransaction>> chats;
-   {
-        try {
-
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 
     public static final Long PRIVATE_TRANSACTION_SENDER_ID = 3958487933422064851L;
     public static final String PRIVATE_TRANSACTION_ID = "2309523316024890732";
@@ -55,7 +47,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     public TestnetNodeClientTest() {
         super(TestData.TEST_LOCALHOST, TestData.TEST_FILE, runner.getUrls());
         try {
-            chatAcc = TestDataGenerator.generateAccount("chat_acc", false);
+            chatAcc = TestDataGenerator.generateAccount("chat_acc");
             TestDataGenerator.fundAcc(chatAcc, new TestAccount(TestUtil.getRandomSecretPhrase(accounts)), 50);
             chats = TestDataGenerator.generateChatsForAccount(chatAcc);
         }
@@ -562,10 +554,11 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     public void testGetChats() throws IOException {
         List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, chatAcc.getRS());
+//        List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, "APL-NFCE-2L6E-6NKP-8FH59");
         checkList(chatInfo);
         Assert.assertEquals(chats.size(), chatInfo.size());
         chatInfo.forEach(c -> {
-            List<TestAccount> matchedAcc = chats.keySet().stream().filter(acc -> c.getAccountId() == acc.getId()).collect(Collectors.toList());
+            List<TestAccount> matchedAcc = chats.keySet().stream().filter(acc -> c.getAccount() == acc.getId()).collect(Collectors.toList());
             Assert.assertNotNull(matchedAcc);
             Assert.assertEquals(1, matchedAcc.size());
             Optional<JSONTransaction> first = chats.get(matchedAcc.get(0)).stream().max(Comparator.comparingLong(JSONTransaction::getTimestamp));

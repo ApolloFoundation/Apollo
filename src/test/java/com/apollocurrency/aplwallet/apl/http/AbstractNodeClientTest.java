@@ -84,7 +84,7 @@ public abstract class AbstractNodeClientTest {
 
     public void testPost() throws Exception {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put("requestType", "getAccountId");
+        parameters.put("requestType", "getAccount");
         String randomRS = getRandomRS(accounts);
         parameters.put("secretPhrase", accounts.get(randomRS));
         String json = client.postJson(TestUtil.createURI(url),
