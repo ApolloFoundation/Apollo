@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package test;
@@ -31,7 +20,7 @@ import static test.TestUtil.*;
 
 public abstract class AbstractNodeClientTest {
     protected static final Pattern IP_PATTERN = Pattern.compile(
-        "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+            "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
     protected final Map<String, String> accounts = new HashMap<>();
     protected final String url;
     protected NodeClient client = new NodeClient();
@@ -49,7 +38,7 @@ public abstract class AbstractNodeClientTest {
         String randomRS = getRandomRS(accounts);
         parameters.put("secretPhrase", accounts.get(randomRS));
         String json = client.postJson(createURI(url),
-            parameters, "");
+                parameters, "");
         Assert.assertNotNull(json);
         Assert.assertTrue(!json.isEmpty());
         JSONObject result = (JSONObject) parser.parse(json);
@@ -70,6 +59,7 @@ public abstract class AbstractNodeClientTest {
             }
         });
     }
+
     @Test
     public void testSendMoneyTransaction() throws Exception {
         String senderRS = getRandomRS(accounts);
@@ -139,8 +129,10 @@ public abstract class AbstractNodeClientTest {
 
     @Test
     public abstract void testGetPeersCount() throws Exception;
+
     @Test
     public abstract void testGetPeersIPs() throws Exception;
+
     @Test
     public abstract void testGetTransaction() throws Exception;
 }

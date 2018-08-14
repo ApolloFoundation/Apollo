@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.peer;
@@ -50,13 +53,14 @@ public final class PeerServlet extends WebSocketServlet {
 
     abstract static class PeerRequestHandler {
         abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
+
         abstract boolean rejectWhileDownloading();
     }
 
-    private static final Map<String,PeerRequestHandler> peerRequestHandlers;
+    private static final Map<String, PeerRequestHandler> peerRequestHandlers;
 
     static {
-        Map<String,PeerRequestHandler> map = new HashMap<>();
+        Map<String, PeerRequestHandler> map = new HashMap<>();
         map.put("addPeers", AddPeers.getInstance());
         map.put("getCumulativeDifficulty", GetCumulativeDifficulty.getInstance());
         map.put("getInfo", GetInfo.getInstance());
@@ -72,12 +76,15 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     static final JSONStreamAware UNSUPPORTED_REQUEST_TYPE;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.UNSUPPORTED_REQUEST_TYPE);
         UNSUPPORTED_REQUEST_TYPE = JSON.prepare(response);
     }
+
     private static final JSONStreamAware CONNECTION_TIMEOUT;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.CONNECTION_TIMEOUT);
@@ -85,6 +92,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static final JSONStreamAware UNSUPPORTED_PROTOCOL;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.UNSUPPORTED_PROTOCOL);
@@ -92,6 +100,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static final JSONStreamAware UNKNOWN_PEER;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.UNKNOWN_PEER);
@@ -99,6 +108,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static final JSONStreamAware SEQUENCE_ERROR;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.SEQUENCE_ERROR);
@@ -106,6 +116,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static final JSONStreamAware MAX_INBOUND_CONNECTIONS;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.MAX_INBOUND_CONNECTIONS);
@@ -113,6 +124,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static final JSONStreamAware DOWNLOADING;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.DOWNLOADING);
@@ -120,6 +132,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static final JSONStreamAware LIGHT_CLIENT;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.LIGHT_CLIENT);
@@ -137,7 +150,7 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * Configure the WebSocket factory
      *
-     * @param   factory             WebSocket factory
+     * @param factory WebSocket factory
      */
     @Override
     public void configure(WebSocketServletFactory factory) {
@@ -149,10 +162,10 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * Process HTTP POST request
      *
-     * @param   req                 HTTP request
-     * @param   resp                HTTP response
-     * @throws  ServletException    Servlet processing error
-     * @throws  IOException         I/O error
+     * @param req  HTTP request
+     * @param resp HTTP response
+     * @throws ServletException Servlet processing error
+     * @throws IOException      I/O error
      */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -188,7 +201,7 @@ public final class PeerServlet extends WebSocketServlet {
                     Logger.logDebugMessage("Error sending response to peer " + peer.getHost(), e);
                 } else {
                     Logger.logDebugMessage(String.format("Error sending response to peer %s: %s",
-                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
+                            peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
                 }
             }
             peer.blacklist(e);
@@ -198,9 +211,9 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * Process WebSocket POST request
      *
-     * @param   webSocket           WebSocket for the connection
-     * @param   requestId           Request identifier
-     * @param   request             Request message
+     * @param webSocket WebSocket for the connection
+     * @param requestId Request identifier
+     * @param request   Request message
      */
     void doPost(PeerWebSocket webSocket, long requestId, String request) {
         JSONStreamAware jsonResponse;
@@ -238,9 +251,9 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * Process the peer request
      *
-     * @param   peer                Peer
-     * @param   inputReader         Input reader
-     * @return                      JSON response
+     * @param peer        Peer
+     * @param inputReader Input reader
+     * @return JSON response
      */
     private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
         //
@@ -257,13 +270,13 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the request
         //
         try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
-            JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
+            JSONObject request = (JSONObject) JSONValue.parseWithException(cr);
             peer.updateDownloadedVolume(cr.getCount());
-            if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
+            if (request.get("protocol") == null || ((Number) request.get("protocol")).intValue() != 1) {
                 Logger.logDebugMessage("Unsupported protocol " + request.get("protocol"));
                 return UNSUPPORTED_PROTOCOL;
             }
-            PeerRequestHandler peerRequestHandler = peerRequestHandlers.get((String)request.get("requestType"));
+            PeerRequestHandler peerRequestHandler = peerRequestHandlers.get((String) request.get("requestType"));
             if (peerRequestHandler == null) {
                 return UNSUPPORTED_REQUEST_TYPE;
             }
@@ -289,7 +302,7 @@ public final class PeerServlet extends WebSocketServlet {
                 }
             }
             return peerRequestHandler.processRequest(request, peer);
-        } catch (RuntimeException|ParseException|IOException e) {
+        } catch (RuntimeException | ParseException | IOException e) {
             Logger.logDebugMessage("Error processing POST request: " + e.toString());
             peer.blacklist(e);
             return error(e);
@@ -299,13 +312,13 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * WebSocket creator for peer connections
      */
-    private class PeerSocketCreator implements WebSocketCreator  {
+    private class PeerSocketCreator implements WebSocketCreator {
         /**
          * Create a peer WebSocket
          *
-         * @param   req             WebSocket upgrade request
-         * @param   resp            WebSocket upgrade response
-         * @return                  WebSocket
+         * @param req  WebSocket upgrade request
+         * @param resp WebSocket upgrade response
+         * @return WebSocket
          */
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {

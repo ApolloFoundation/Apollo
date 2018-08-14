@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -37,7 +40,7 @@ public final class PopOff extends APIServlet.APIRequestHandler {
     }
 
     private PopOff() {
-        super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "keepTransactions");
+        super(new APITag[]{APITag.DEBUG}, "numBlocks", "height", "keepTransactions");
     }
 
     @Override
@@ -46,11 +49,13 @@ public final class PopOff extends APIServlet.APIRequestHandler {
         int numBlocks = 0;
         try {
             numBlocks = Integer.parseInt(req.getParameter("numBlocks"));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
         int height = 0;
         try {
             height = Integer.parseInt(req.getParameter("height"));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
         boolean keepTransactions = "true".equalsIgnoreCase(req.getParameter("keepTransactions"));
         List<? extends Block> blocks;
         try {

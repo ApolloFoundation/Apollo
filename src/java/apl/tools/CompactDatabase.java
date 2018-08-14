@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.tools;
@@ -31,21 +34,21 @@ import java.sql.Statement;
 /**
  * Compact and reorganize the NRS database.  The NRS application must not be
  * running.
- *
+ * <p>
  * To run the database compact tool on Linux or Mac:
- *
- *   java -cp "classes:lib/*:conf" apl.tools.CompactDatabase
- *
+ * <p>
+ * java -cp "classes:lib/*:conf" apl.tools.CompactDatabase
+ * <p>
  * To run the database compact tool on Windows:
- *
- *   java -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop apl.tools.CompactDatabase
+ * <p>
+ * java -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop apl.tools.CompactDatabase
  */
 public class CompactDatabase {
 
     /**
      * Compact the NRS database
      *
-     * @param   args                Command line arguments
+     * @param args Command line arguments
      */
     public static void main(String[] args) {
         //
@@ -95,7 +98,7 @@ public class CompactDatabase {
         //
         int pos = dbUrl.indexOf(':');
         if (pos >= 0) {
-            pos = dbUrl.indexOf(':', pos+1);
+            pos = dbUrl.indexOf(':', pos + 1);
         }
         if (pos < 0) {
             Logger.logErrorMessage("Malformed database URL: " + dbUrl);
@@ -168,7 +171,7 @@ public class CompactDatabase {
             Logger.logInfoMessage("Creating the new database");
             if (!dbFile.renameTo(oldFile)) {
                 throw new IOException(String.format("Unable to rename '%s' to '%s'",
-                                                    dbFile.getPath(), oldFile.getPath()));
+                        dbFile.getPath(), oldFile.getPath()));
             }
             phase = 1;
             try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
@@ -215,7 +218,7 @@ public class CompactDatabase {
                     }
                     if (!oldFile.renameTo(dbFile)) {
                         Logger.logErrorMessage(String.format("Unable to rename '%s' to '%s'",
-                                                             oldFile.getPath(), dbFile.getPath()));
+                                oldFile.getPath(), dbFile.getPath()));
                     }
                     break;
                 case 2:
@@ -237,8 +240,7 @@ public class CompactDatabase {
     public static Connection getConnection(String url, String user, String password) {
         try {
             return DriverManager.getConnection(url, user, password);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             Logger.logErrorMessage("Unable to connect to database", e);
         }
         return null;

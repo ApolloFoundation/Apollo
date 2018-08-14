@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.http;
@@ -38,7 +27,7 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
     }
 
     private GetPrivateTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
     }
 
     @Override
@@ -65,14 +54,13 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
                     return UNKNOWN_TRANSACTION;
                 }
             }
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
         JSONObject response;
         if (transaction == null) {
             transaction = Apl.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || !transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
+            if (transaction == null || !transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {
@@ -81,7 +69,7 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
                 response = JSONData.unconfirmedTransaction(transaction);
             }
         } else {
-            if (!transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
+            if (!transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {

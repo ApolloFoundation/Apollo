@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -48,7 +51,7 @@ public final class Generator implements Comparable<Generator> {
     private static final byte[] fakeForgingPublicKey = Apl.getBooleanProperty("apl.enableFakeForging") ?
             Account.getPublicKey(Convert.parseAccountId(Apl.getStringProperty("apl.fakeForgingAccount"))) : null;
 
-    private static final Listeners<Generator,Event> listeners = new Listeners<>();
+    private static final Listeners<Generator, Event> listeners = new Listeners<>();
 
     private static final ConcurrentMap<String, Generator> generators = new ConcurrentHashMap<>();
     private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
@@ -138,7 +141,8 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
-    static void init() {}
+    static void init() {
+    }
 
     public static boolean addListener(Listener<Generator> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -258,7 +262,7 @@ public final class Generator implements Comparable<Generator> {
         MessageDigest digest = Crypto.sha256();
         digest.update(block.getGenerationSignature());
         byte[] generationSignatureHash = digest.digest(publicKey);
-        return new BigInteger(1, new byte[] {generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
+        return new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
     }
 
     static long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
@@ -367,38 +371,46 @@ public final class Generator implements Comparable<Generator> {
     }
 
     private int getTimestamp(int generationLimit) {
-        return (generationLimit - hitTime > 3600) ? generationLimit : (int)hitTime + 1;
+        return (generationLimit - hitTime > 3600) ? generationLimit : (int) hitTime + 1;
     }
 
-    /** Active block generators */
+    /**
+     * Active block generators
+     */
     private static final Set<Long> activeGeneratorIds = new HashSet<>();
 
-    /** Active block identifier */
+    /**
+     * Active block identifier
+     */
     private static long activeBlockId;
 
-    /** Sorted list of generators for the next block */
+    /**
+     * Sorted list of generators for the next block
+     */
     private static final List<ActiveGenerator> activeGenerators = new ArrayList<>();
 
-    /** Generator list has been initialized */
+    /**
+     * Generator list has been initialized
+     */
     private static boolean generatorsInitialized = false;
 
     /**
      * Return a list of generators for the next block.  The caller must hold the blockchain
      * read lock to ensure the integrity of the returned list.
      *
-     * @return                      List of generator account identifiers
+     * @return List of generator account identifiers
      */
     public static List<ActiveGenerator> getNextGenerators() {
         List<ActiveGenerator> generatorList;
         Blockchain blockchain = Apl.getBlockchain();
-        synchronized(activeGenerators) {
+        synchronized (activeGenerators) {
             if (!generatorsInitialized) {
                 activeGeneratorIds.addAll(BlockDb.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
                 activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
                 Logger.logDebugMessage(activeGeneratorIds.size() + " block generators found");
                 Apl.getBlockchainProcessor().addListener(block -> {
                     long generatorId = block.getGeneratorId();
-                    synchronized(activeGenerators) {
+                    synchronized (activeGenerators) {
                         if (!activeGeneratorIds.contains(generatorId)) {
                             activeGeneratorIds.add(generatorId);
                             activeGenerators.add(new ActiveGenerator(generatorId));
@@ -478,7 +490,7 @@ public final class Generator implements Comparable<Generator> {
 
         @Override
         public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator)obj).accountId);
+            return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator) obj).accountId);
         }
 
         @Override

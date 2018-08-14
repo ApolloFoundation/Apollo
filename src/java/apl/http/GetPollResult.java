@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -52,10 +55,10 @@ public class GetPollResult extends APIServlet.APIRequestHandler {
             pollResults = poll.getResults();
             voteWeighting = poll.getVoteWeighting();
         } else {
-            byte votingModel = ParameterParser.getByte(req, "votingModel", (byte)0, (byte)3, true);
+            byte votingModel = ParameterParser.getByte(req, "votingModel", (byte) 0, (byte) 3, true);
             long holdingId = ParameterParser.getLong(req, "holding", Long.MIN_VALUE, Long.MAX_VALUE, false);
             long minBalance = ParameterParser.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
-            byte minBalanceModel = ParameterParser.getByte(req, "minBalanceModel", (byte)0, (byte)3, false);
+            byte minBalanceModel = ParameterParser.getByte(req, "minBalanceModel", (byte) 0, (byte) 3, false);
             voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
             voteWeighting.validate();
             pollResults = poll.getResults(voteWeighting);

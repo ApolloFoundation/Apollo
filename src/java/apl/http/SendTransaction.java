@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -33,7 +36,7 @@ import java.util.Collections;
  * signing of transactions.
  * Unlike {@link BroadcastTransaction}, does not validate the transaction and requires adminPassword parameter to avoid
  * abuses. Also does not re-broadcast the transaction and does not store it as unconfirmed transaction.
- *
+ * <p>
  * Clients first submit their transaction using {@link CreateTransaction} without providing the secret phrase.<br>
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
@@ -63,7 +66,7 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
     }
 
     private SendTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
     @Override
@@ -80,7 +83,7 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
             Peers.sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHash());
-        } catch (AplException.ValidationException|RuntimeException e) {
+        } catch (AplException.ValidationException | RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

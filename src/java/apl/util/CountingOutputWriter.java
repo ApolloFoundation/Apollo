@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.util;
@@ -26,13 +29,15 @@ import java.io.Writer;
  */
 public class CountingOutputWriter extends FilterWriter {
 
-    /** Character count */
+    /**
+     * Character count
+     */
     private long count = 0;
 
     /**
      * Create the CountingOutputWriter for the specified writer
      *
-     * @param   writer              Output writer
+     * @param writer Output writer
      */
     public CountingOutputWriter(Writer writer) {
         super(writer);
@@ -41,8 +46,8 @@ public class CountingOutputWriter extends FilterWriter {
     /**
      * Write a single character
      *
-     * @param   c                   Character to be written
-     * @throws  IOException         I/O error occurred
+     * @param c Character to be written
+     * @throws IOException I/O error occurred
      */
     @Override
     public void write(int c) throws IOException {
@@ -53,10 +58,10 @@ public class CountingOutputWriter extends FilterWriter {
     /**
      * Write an array of characters starting at the specified offset
      *
-     * @param   cbuf                Characters to be written
-     * @param   off                 Starting offset
-     * @param   len                 Number of characters to write
-     * @throws  IOException         I/O error occurred
+     * @param cbuf Characters to be written
+     * @param off  Starting offset
+     * @param len  Number of characters to write
+     * @throws IOException I/O error occurred
      */
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
@@ -67,10 +72,10 @@ public class CountingOutputWriter extends FilterWriter {
     /**
      * Write a substring
      *
-     * @param   s                   String to be written
-     * @param   off                 Starting offset
-     * @param   len                 Number of characters to write
-     * @throws  IOException         I/O error occurred
+     * @param s   String to be written
+     * @param off Starting offset
+     * @param len Number of characters to write
+     * @throws IOException I/O error occurred
      */
     @Override
     public void write(String s, int off, int len) throws IOException {
@@ -81,7 +86,7 @@ public class CountingOutputWriter extends FilterWriter {
     /**
      * Return the number of characters written
      *
-     * @return                      Character count
+     * @return Character count
      */
     public long getCount() {
         return count;

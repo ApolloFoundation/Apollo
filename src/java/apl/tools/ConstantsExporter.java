@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.tools;
@@ -38,7 +41,7 @@ public class ConstantsExporter {
             Files.write(filePath, (String.format("if (!NRS) {%1$s" +
                     "    var NRS = {};%1$s" +
                     "    NRS.constants = {};%1$s" +
-                    "}%1$s%1$s",System.lineSeparator())).getBytes());
+                    "}%1$s%1$s", System.lineSeparator())).getBytes());
             Files.write(filePath, ("NRS.constants.SERVER = ").getBytes(), StandardOpenOption.APPEND);
             JSON.writeJSONString(GetConstants.getConstants(), filePath);
             Files.write(filePath, String.format("%1$s%1$s" +

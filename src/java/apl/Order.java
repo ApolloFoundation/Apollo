@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -38,6 +41,7 @@ public abstract class Order {
     private final short transactionIndex;
     private final int transactionHeight;
     private long quantityATU;
+
     private Order(Transaction transaction, Attachment.ColoredCoinsOrderPlacement attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
@@ -62,8 +66,8 @@ public abstract class Order {
 
     private static void matchOrders(long assetId) {
 
-        Order.Ask askOrder;
-        Order.Bid bidOrder;
+        Ask askOrder;
+        Bid bidOrder;
 
         while ((askOrder = Ask.getNextOrder(assetId)) != null
                 && (bidOrder = Bid.getNextOrder(assetId)) != null) {
@@ -264,8 +268,7 @@ public abstract class Order {
                 try (DbIterator<Ask> askOrders = askOrderTable.getManyBy(con, pstmt, true)) {
                     return askOrders.hasNext() ? askOrders.next() : null;
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -280,7 +283,8 @@ public abstract class Order {
             askOrderTable.delete(getAskOrder(orderId));
         }
 
-        static void init() {}
+        static void init() {
+        }
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);
@@ -385,8 +389,7 @@ public abstract class Order {
                 try (DbIterator<Bid> bidOrders = bidOrderTable.getManyBy(con, pstmt, true)) {
                     return bidOrders.hasNext() ? bidOrders.next() : null;
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -401,7 +404,8 @@ public abstract class Order {
             bidOrderTable.delete(getBidOrder(orderId));
         }
 
-        static void init() {}
+        static void init() {
+        }
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);

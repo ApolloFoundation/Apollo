@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.mint;
@@ -90,18 +93,18 @@ public class MintWorker {
         if (currency.get("algorithm") == null) {
             throw new IllegalArgumentException("Minting algorithm not specified, currency " + currencyCode + " is not mintable");
         }
-        byte algorithm = (byte)(long) currency.get("algorithm");
-        byte decimal = (byte)(long) currency.get("decimals");
+        byte algorithm = (byte) (long) currency.get("algorithm");
+        byte decimal = (byte) (long) currency.get("decimals");
         String unitsStr = Apl.getStringProperty("apl.mint.unitsPerMint");
         double wholeUnits = 1;
         if (unitsStr != null && unitsStr.length() > 0) {
             wholeUnits = Double.parseDouble(unitsStr);
         }
-        long units = (long)(wholeUnits * Math.pow(10, decimal));
+        long units = (long) (wholeUnits * Math.pow(10, decimal));
         JSONObject mintingTarget = getMintingTarget(currencyId, rsAccount, units);
         long counter = (long) mintingTarget.get("counter");
         byte[] target = Convert.parseHexString((String) mintingTarget.get("targetBytes"));
-        BigInteger difficulty = new BigInteger((String)mintingTarget.get("difficulty"));
+        BigInteger difficulty = new BigInteger((String) mintingTarget.get("difficulty"));
         long initialNonce = Apl.getIntProperty("apl.mint.initialNonce");
         if (initialNonce == 0) {
             initialNonce = new Random().nextLong();
@@ -117,7 +120,7 @@ public class MintWorker {
             counter++;
             try {
                 JSONObject response = mintImpl(secretPhrase, accountId, units, currencyId, algorithm, counter, target,
-                    initialNonce, threadPoolSize, executorService, difficulty, isSubmitted);
+                        initialNonce, threadPoolSize, executorService, difficulty, isSubmitted);
                 Logger.logInfoMessage("currency mint response:" + response.toJSONString());
             } catch (Exception e) {
                 Logger.logInfoMessage("mint error", e);
@@ -130,7 +133,7 @@ public class MintWorker {
             }
             mintingTarget = getMintingTarget(currencyId, rsAccount, units);
             target = Convert.parseHexString((String) mintingTarget.get("targetBytes"));
-            difficulty = new BigInteger((String)mintingTarget.get("difficulty"));
+            difficulty = new BigInteger((String) mintingTarget.get("difficulty"));
         }
     }
 
@@ -138,7 +141,7 @@ public class MintWorker {
                                 long counter, byte[] target, long initialNonce, int threadPoolSize, ExecutorService executorService, BigInteger difficulty, boolean isSubmitted) {
         long startTime = System.currentTimeMillis();
         List<Callable<Long>> workersList = new ArrayList<>();
-        for (int i=0; i < threadPoolSize; i++) {
+        for (int i = 0; i < threadPoolSize; i++) {
             HashSolver hashSolver = new HashSolver(algorithm, currencyId, accountId, counter, units, initialNonce + i, target, threadPoolSize);
             workersList.add(hashSolver);
         }
@@ -328,12 +331,12 @@ public class MintWorker {
                 byte[] hash = CurrencyMinting.getHash(hashFunction, n, currencyId, units, counter, accountId);
                 if (CurrencyMinting.meetsTarget(hash, target)) {
                     Logger.logDebugMessage("%s found solution hash %s nonce %d currencyId %d units %d counter %d accountId %d" +
-                            " hash %s meets target %s",
+                                    " hash %s meets target %s",
                             Thread.currentThread().getName(), hashFunction, n, currencyId, units, counter, accountId,
                             Arrays.toString(hash), Arrays.toString(target));
                     return n;
                 }
-                n+=poolSize;
+                n += poolSize;
                 if (((n - nonce) % (poolSize * 1000000)) == 0) {
                     Logger.logInfoMessage("%s computed %d [MH]", Thread.currentThread().getName(), (n - nonce) / poolSize / 1000000);
                 }

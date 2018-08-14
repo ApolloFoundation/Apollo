@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.updater;
@@ -37,7 +26,8 @@ import static apl.updater.UpdaterConstants.*;
 public class Downloader {
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
 
-    private Downloader() {}
+    private Downloader() {
+    }
 
     public static Downloader getInstance() {
         return DownloaderHolder.INSTANCE;
@@ -57,8 +47,7 @@ public class Downloader {
             }
             fos.close();
             bis.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //delete failed file and directory
             Files.deleteIfExists(downloadedFilePath);
             Files.deleteIfExists(tempDir);
@@ -74,8 +63,7 @@ public class Downloader {
             if (Arrays.equals(hash, actualHash)) {
                 return true;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Logger.logErrorMessage("Cannot calculate checksum for file: " + file, e);
         }
         return false;
@@ -111,13 +99,11 @@ public class Downloader {
                 }
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
                 TimeUnit.SECONDS.sleep(NEXT_ATTEMPT_TIMEOUT);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Logger.logErrorMessage("Unable to download update from: " + url, e);
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
                 mediator.setStatus(UpdateInfo.DownloadStatus.CONNECTION_FAILURE);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 Logger.logInfoMessage("Downloader was awakened", e);
             }
         }

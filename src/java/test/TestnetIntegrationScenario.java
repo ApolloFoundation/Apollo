@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package test;
@@ -42,11 +31,11 @@ public class TestnetIntegrationScenario {
         try {
             properties.load(Files.newInputStream(Paths.get("conf/apl.properties")));
             adminPass = String.valueOf(properties.get("apl.adminPassword"));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.error("Cannot read apl.properties file", e);
         }
     }
+
     @Test
     public void testSendTransaction() throws Exception {
         testIsFork();
@@ -79,8 +68,7 @@ public class TestnetIntegrationScenario {
         ACCOUNTS.forEach((accountRS, secretPhrase) -> {
             try {
                 CLIENT.startForging(TEST_LOCALHOST, secretPhrase);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 LOG.error("Cannot start forging for account: " + accountRS + " on " + TEST_LOCALHOST, e);
             }
         });
@@ -90,7 +78,7 @@ public class TestnetIntegrationScenario {
         LOG.info("Verifying forgers on localhost");
         List<ForgingDetails> forgers = CLIENT.getForging(TEST_LOCALHOST, null, adminPass);
         Assert.assertEquals(5, forgers.size());
-        forgers.forEach( generator -> {
+        forgers.forEach(generator -> {
             if (!ACCOUNTS.containsKey(generator.getAccountRS())) {
                 Assert.fail("Incorrect generator: " + generator.getAccountRS());
             }
@@ -135,14 +123,15 @@ public class TestnetIntegrationScenario {
         System.out.println("PeerCount=" + CLIENT.getPeersCount(URLS.get(0)));
         System.out.println("BLOCKS=" + CLIENT.getBlocksList(URLS.get(0), false, null));
         System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(URLS.get(0)));
-        System.out.println("Forgers="+ CLIENT.getForging(TEST_LOCALHOST, null, adminPass));
+        System.out.println("Forgers=" + CLIENT.getForging(TEST_LOCALHOST, null, adminPass));
     }
 
     @Test
     public void testIsFork() throws Exception {
-        Assert.assertFalse("Fork was occurred!",isFork());
+        Assert.assertFalse("Fork was occurred!", isFork());
         LOG.info("Fork is not detected. Current height {}", CLIENT.getBlockchainHeight(randomUrl()));
     }
+
     @Test
     public void testIsAllPeersConnected() throws Exception {
         Assert.assertTrue("All peers are NOT connected!", isAllPeersConnected());

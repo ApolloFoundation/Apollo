@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -36,12 +39,15 @@ import java.util.TreeMap;
 
 final class BlockDb {
 
-    /** Block cache */
+    /**
+     * Block cache
+     */
     static final int BLOCK_CACHE_SIZE = 10;
     static final Map<Long, BlockImpl> blockCache = new HashMap<>();
     static final SortedMap<Integer, BlockImpl> heightMap = new TreeMap<>();
     static final Map<Long, TransactionImpl> transactionCache = new HashMap<>();
     static final Blockchain blockchain = Apl.getBlockchain();
+
     static {
         Apl.getBlockchainProcessor().addListener((block) -> {
             synchronized (blockCache) {
@@ -56,9 +62,9 @@ final class BlockDb {
                         it.remove();
                     }
                 }
-                block.getTransactions().forEach((tx) -> transactionCache.put(tx.getId(), (TransactionImpl)tx));
-                heightMap.put(height, (BlockImpl)block);
-                blockCache.put(block.getId(), (BlockImpl)block);
+                block.getTransactions().forEach((tx) -> transactionCache.put(tx.getId(), (TransactionImpl) tx));
+                heightMap.put(height, (BlockImpl) block);
+                blockCache.put(block.getId(), (BlockImpl) block);
             }
         }, BlockchainProcessor.Event.BLOCK_PUSHED);
     }
@@ -101,7 +107,7 @@ final class BlockDb {
 
     static boolean hasBlock(long blockId, int height) {
         // Check the block cache
-        synchronized(blockCache) {
+        synchronized (blockCache) {
             BlockImpl block = blockCache.get(blockId);
             if (block != null) {
                 return block.getHeight() <= height;
@@ -121,7 +127,7 @@ final class BlockDb {
 
     static long findBlockIdAtHeight(int height) {
         // Check the cache
-        synchronized(blockCache) {
+        synchronized (blockCache) {
             BlockImpl block = heightMap.get(height);
             if (block != null) {
                 return block.getId();
@@ -144,7 +150,7 @@ final class BlockDb {
 
     static BlockImpl findBlockAtHeight(int height) {
         // Check the cache
-        synchronized(blockCache) {
+        synchronized (blockCache) {
             BlockImpl block = heightMap.get(height);
             if (block != null) {
                 return block;
@@ -202,8 +208,8 @@ final class BlockDb {
     static Set<Long> getBlockGenerators(int startHeight) {
         Set<Long> generators = new HashSet<>();
         try (Connection con = Db.db.getConnection();
-                PreparedStatement pstmt = con.prepareStatement(
-                        "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id")) {
+             PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id")) {
             pstmt.setInt(1, startHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -350,11 +356,11 @@ final class BlockDb {
                 try (ResultSet rs = pstmtSelect.executeQuery()) {
                     Db.db.commitTransaction();
                     while (rs.next()) {
-        	            pstmtDelete.setLong(1, rs.getLong("db_id"));
-            	        pstmtDelete.executeUpdate();
+                        pstmtDelete.setLong(1, rs.getLong("db_id"));
+                        pstmtDelete.executeUpdate();
                         Db.db.commitTransaction();
                     }
-	            }
+                }
                 BlockImpl lastBlock = findLastBlock();
                 lastBlock.setNextBlockId(0);
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
@@ -398,7 +404,8 @@ final class BlockDb {
                 BlockchainProcessorImpl.getInstance().getDerivedTables().forEach(table -> {
                     try {
                         stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
-                    } catch (SQLException ignore) {}
+                    } catch (SQLException ignore) {
+                    }
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");
                 Db.db.commitTransaction();

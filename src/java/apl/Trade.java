@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -38,7 +41,7 @@ public final class Trade {
         TRADE
     }
 
-    private static final Listeners<Trade,Event> listeners = new Listeners<>();
+    private static final Listeners<Trade, Event> listeners = new Listeners<>();
 
     private static final DbKey.LinkKeyFactory<Trade> tradeDbKeyFactory = new DbKey.LinkKeyFactory<Trade>("ask_order_id", "bid_order_id") {
 
@@ -164,7 +167,8 @@ public final class Trade {
         return trade;
     }
 
-    static void init() {}
+    static void init() {
+    }
 
 
     private final int timestamp;
@@ -259,11 +263,17 @@ public final class Trade {
         }
     }
 
-    public long getBlockId() { return blockId; }
+    public long getBlockId() {
+        return blockId;
+    }
 
-    public long getAskOrderId() { return askOrderId; }
+    public long getAskOrderId() {
+        return askOrderId;
+    }
 
-    public long getBidOrderId() { return bidOrderId; }
+    public long getBidOrderId() {
+        return bidOrderId;
+    }
 
     public int getAskOrderHeight() {
         return askOrderHeight;
@@ -281,13 +291,21 @@ public final class Trade {
         return buyerId;
     }
 
-    public long getQuantityATU() { return quantityATU; }
+    public long getQuantityATU() {
+        return quantityATU;
+    }
 
-    public long getPriceATM() { return priceATM; }
-    
-    public long getAssetId() { return assetId; }
-    
-    public int getTimestamp() { return timestamp; }
+    public long getPriceATM() {
+        return priceATM;
+    }
+
+    public long getAssetId() {
+        return assetId;
+    }
+
+    public int getTimestamp() {
+        return timestamp;
+    }
 
     public int getHeight() {
         return height;

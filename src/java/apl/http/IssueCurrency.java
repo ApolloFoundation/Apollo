@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -92,7 +95,7 @@ public final class IssueCurrency extends CreateTransaction {
     }
 
     private IssueCurrency() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION},
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION},
                 "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
                 "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
     }
@@ -142,11 +145,11 @@ public final class IssueCurrency extends CreateTransaction {
         long minReservePerUnit = ParameterParser.getLong(req, "minReservePerUnitATM", 1, Constants.MAX_BALANCE_ATM, false);
         int minDifficulty = ParameterParser.getInt(req, "minDifficulty", 1, 255, false);
         int maxDifficulty = ParameterParser.getInt(req, "maxDifficulty", 1, 255, false);
-        byte ruleset = ParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
-        byte algorithm = ParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
-        byte decimals = ParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
+        byte ruleset = ParameterParser.getByte(req, "ruleset", (byte) 0, Byte.MAX_VALUE, false);
+        byte algorithm = ParameterParser.getByte(req, "algorithm", (byte) 0, Byte.MAX_VALUE, false);
+        byte decimals = ParameterParser.getByte(req, "decimals", (byte) 0, Byte.MAX_VALUE, false);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
+        Attachment attachment = new Attachment.MonetarySystemCurrencyIssuance(name, code, description, (byte) type, initialSupply,
                 reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
         return createTransaction(req, account, attachment);

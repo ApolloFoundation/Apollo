@@ -1,16 +1,5 @@
 /*
  * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
  */
 
 package apl.updater;
@@ -54,6 +43,7 @@ public class UpdaterUtil {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificateFilePath));
     }
+
     static Set<Certificate> readCertificates(Path directory, String prefix, String suffix) throws CertificateException, IOException {
         return readCertificates(findFiles(directory, prefix, suffix));
     }
@@ -61,7 +51,6 @@ public class UpdaterUtil {
     static Set<Certificate> readCertificates(Path directory, String suffix, String... prefixes) throws CertificateException, IOException {
         return readCertificates(findFiles(directory, suffix, prefixes));
     }
-
 
 
     static Set<Path> findFiles(Path directory, String prefix, String suffix) throws IOException {
@@ -72,10 +61,13 @@ public class UpdaterUtil {
         return Files.walk(directory, 1)
                 .filter(filePath -> {
                     String fileName = filePath.getFileName().toString();
-                    return fileName.endsWith(suffix) && Arrays.stream(prefixes).anyMatch(fileName::startsWith);})
+                    return fileName.endsWith(suffix) && Arrays.stream(prefixes).anyMatch(fileName::startsWith);
+                })
                 .collect(Collectors.toSet());
     }
-    private UpdaterUtil(){}
+
+    private UpdaterUtil() {
+    }
 
     static class CertificatePair {
         private Certificate firstCertificate;

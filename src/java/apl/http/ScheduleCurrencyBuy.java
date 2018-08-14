@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -48,7 +51,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     }
 
     private ScheduleCurrencyBuy() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
                 "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }
 
@@ -73,7 +76,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 Account account = ParameterParser.getSenderAccount(req);
                 String secretPhrase = ParameterParser.getSecretPhrase(req, false);
                 Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
-                response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
+                response = (JSONObject) JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (secretPhrase == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
                     return response;
@@ -86,14 +89,15 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 response.put("transactionJSON", json);
                 try {
                     response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
-                } catch (AplException.NotYetEncryptedException ignore) {}
+                } catch (AplException.NotYetEncryptedException ignore) {
+                }
                 response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transaction.getFullHash());
             }
 
-            Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();
+            Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy) transaction.getAttachment();
             Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
             Apl.getBlockchain().updateLock();
@@ -158,7 +162,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     || transaction.getPhasing() != null) {
                 return false;
             }
-            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
             if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
                 return false;
             }

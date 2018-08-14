@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -33,7 +36,7 @@ public final class PhasingParams {
     private final long quorum;
     private final long[] whitelist;
     private final VoteWeighting voteWeighting;
-    
+
     PhasingParams(ByteBuffer buffer) {
         byte votingModel = buffer.get();
         quorum = buffer.getLong();
@@ -51,7 +54,7 @@ public final class PhasingParams {
         byte minBalanceModel = buffer.get();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     PhasingParams(JSONObject attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
@@ -69,7 +72,7 @@ public final class PhasingParams {
         byte minBalanceModel = ((Long) attachmentData.get("phasingMinBalanceModel")).byteValue();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     public PhasingParams(byte votingModel, long holdingId, long quorum, long minBalance, byte minBalanceModel, long[] whitelist) {
         this.quorum = quorum;
         this.whitelist = Convert.nullToEmpty(whitelist);
@@ -88,7 +91,7 @@ public final class PhasingParams {
     int getMySize() {
         return 1 + 8 + 8 + 1 + 8 * whitelist.length + 8 + 1;
     }
-    
+
     void putMyBytes(ByteBuffer buffer) {
         buffer.put(voteWeighting.getVotingModel().getCode());
         buffer.putLong(quorum);
@@ -100,7 +103,7 @@ public final class PhasingParams {
         buffer.putLong(voteWeighting.getHoldingId());
         buffer.put(voteWeighting.getMinBalanceModel().getCode());
     }
-    
+
     void putMyJSON(JSONObject json) {
         json.put("phasingQuorum", quorum);
         json.put("phasingMinBalance", voteWeighting.getMinBalance());
@@ -221,18 +224,18 @@ public final class PhasingParams {
     public VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof PhasingParams)) {
             return false;
         }
-        PhasingParams other = (PhasingParams)obj;
+        PhasingParams other = (PhasingParams) obj;
         return other.quorum == this.quorum
                 && other.voteWeighting.equals(this.voteWeighting)
                 && Arrays.equals(other.whitelist, this.whitelist);
     }
-    
+
     @Override
     public int hashCode() {
         int hashCode = 17;
@@ -243,7 +246,7 @@ public final class PhasingParams {
         hashCode = 31 * hashCode + voteWeighting.hashCode();
         return hashCode;
     }
-    
+
     @Override
     public String toString() {
         JSONObject resultJson = new JSONObject();

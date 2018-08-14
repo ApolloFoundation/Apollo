@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.util;
@@ -31,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public final class ThreadPool {
 
     private static volatile ScheduledExecutorService scheduledThreadPool;
-    private static Map<Runnable,Long> backgroundJobs = new HashMap<>();
+    private static Map<Runnable, Long> backgroundJobs = new HashMap<>();
     private static List<Runnable> beforeStartJobs = new ArrayList<>();
     private static List<Runnable> lastBeforeStartJobs = new ArrayList<>();
     private static List<Runnable> afterStartJobs = new ArrayList<>();
@@ -59,7 +62,7 @@ public final class ThreadPool {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started, no new jobs accepted");
         }
-        if (! Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
+        if (!Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
             backgroundJobs.put(runnable, timeUnit.toMillis(delay));
         } else {
             Logger.logMessage("Will not run " + name + " thread");
@@ -81,7 +84,7 @@ public final class ThreadPool {
 
         Logger.logDebugMessage("Starting " + backgroundJobs.size() + " background jobs");
         scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size());
-        for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
+        for (Map.Entry<Runnable, Long> entry : backgroundJobs.entrySet()) {
             scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, Math.max(entry.getValue() / timeMultiplier, 1), TimeUnit.MILLISECONDS);
         }
         backgroundJobs = null;
@@ -97,10 +100,10 @@ public final class ThreadPool {
 
     public static void shutdown() {
         if (scheduledThreadPool != null) {
-	        Logger.logShutdownMessage("Stopping background jobs...");
+            Logger.logShutdownMessage("Stopping background jobs...");
             shutdownExecutor("scheduledThreadPool", scheduledThreadPool, 10);
             scheduledThreadPool = null;
-        	Logger.logShutdownMessage("...Done");
+            Logger.logShutdownMessage("...Done");
         }
     }
 
@@ -112,7 +115,7 @@ public final class ThreadPool {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        if (! executor.isTerminated()) {
+        if (!executor.isTerminated()) {
             Logger.logShutdownMessage("some threads in " + name + " didn't terminate, forcing shutdown");
             executor.shutdownNow();
         }
@@ -146,6 +149,7 @@ public final class ThreadPool {
         }
     }
 
-    private ThreadPool() {} //never
+    private ThreadPool() {
+    } //never
 
 }

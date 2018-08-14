@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -57,7 +60,7 @@ public final class GetState extends APIServlet.APIRequestHandler {
     }
 
     private GetState() {
-        super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
+        super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
     }
 
     @Override
@@ -76,11 +79,11 @@ public final class GetState extends APIServlet.APIRequestHandler {
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", Trade.getCount());
             response.put("numberOfTransfers", AssetTransfer.getCount());
-	        response.put("numberOfCurrencies", Currency.getCount());
-    	    response.put("numberOfOffers", CurrencyBuyOffer.getCount());
+            response.put("numberOfCurrencies", Currency.getCount());
+            response.put("numberOfOffers", CurrencyBuyOffer.getCount());
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
-        	response.put("numberOfExchanges", Exchange.getCount());
-        	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
+            response.put("numberOfExchanges", Exchange.getCount());
+            response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", Alias.getCount());
             response.put("numberOfGoods", DigitalGoodsStore.Goods.getCount());
             response.put("numberOfPurchases", DigitalGoodsStore.Purchase.getCount());

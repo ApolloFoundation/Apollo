@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl;
@@ -45,81 +48,121 @@ import java.util.concurrent.Semaphore;
  */
 public final class FundingMonitor {
 
-    /** Minimum monitor amount */
+    /**
+     * Minimum monitor amount
+     */
     public static final long MIN_FUND_AMOUNT = 1;
 
-    /** Minimum monitor threshold */
+    /**
+     * Minimum monitor threshold
+     */
     public static final long MIN_FUND_THRESHOLD = 1;
 
-    /** Minimum funding interval */
+    /**
+     * Minimum funding interval
+     */
     public static final int MIN_FUND_INTERVAL = 10;
 
-    /** Maximum number of monitors */
+    /**
+     * Maximum number of monitors
+     */
     private static final int MAX_MONITORS = Apl.getIntProperty("apl.maxNumberOfMonitors");
 
-    /** Monitor started */
+    /**
+     * Monitor started
+     */
     private static volatile boolean started = false;
 
-    /** Monitor stopped */
+    /**
+     * Monitor stopped
+     */
     private static volatile boolean stopped = false;
 
-    /** Active monitors */
+    /**
+     * Active monitors
+     */
     private static final List<FundingMonitor> monitors = new ArrayList<>();
 
-    /** Monitored accounts */
+    /**
+     * Monitored accounts
+     */
     private static final Map<Long, List<MonitoredAccount>> accounts = new HashMap<>();
 
-    /** Process semaphore */
+    /**
+     * Process semaphore
+     */
     private static final Semaphore processSemaphore = new Semaphore(0);
 
-    /** Pending updates */
+    /**
+     * Pending updates
+     */
     private static final ConcurrentLinkedQueue<MonitoredAccount> pendingEvents = new ConcurrentLinkedQueue<>();
 
-    /** Account monitor holding type */
+    /**
+     * Account monitor holding type
+     */
     private final HoldingType holdingType;
 
-    /** Holding identifier */
+    /**
+     * Holding identifier
+     */
     private final long holdingId;
 
-    /** Account property */
+    /**
+     * Account property
+     */
     private final String property;
 
-    /** Fund amount */
+    /**
+     * Fund amount
+     */
     private final long amount;
 
-    /** Fund threshold */
+    /**
+     * Fund threshold
+     */
     private final long threshold;
 
-    /** Fund interval */
+    /**
+     * Fund interval
+     */
     private final int interval;
 
-    /** Fund account identifier */
+    /**
+     * Fund account identifier
+     */
     private final long accountId;
 
-    /** Fund account name */
+    /**
+     * Fund account name
+     */
     private final String accountName;
 
-    /** Fund account secret phrase */
+    /**
+     * Fund account secret phrase
+     */
     private final String secretPhrase;
 
-    /** Fund account public key */
+    /**
+     * Fund account public key
+     */
     private final byte[] publicKey;
 
     /**
      * Create a monitor
      *
-     * @param   holdingType         Holding type
-     * @param   holdingId           Asset or Currency identifier, ignored for APL monitor
-     * @param   property            Account property name
-     * @param   amount              Fund amount
-     * @param   threshold           Fund threshold
-     * @param   interval            Fund interval
-     * @param   accountId           Fund account identifier
-     * @param   secretPhrase        Fund account secret phrase
+     * @param holdingType  Holding type
+     * @param holdingId    Asset or Currency identifier, ignored for APL monitor
+     * @param property     Account property name
+     * @param amount       Fund amount
+     * @param threshold    Fund threshold
+     * @param interval     Fund interval
+     * @param accountId    Fund account identifier
+     * @param secretPhrase Fund account secret phrase
      */
     private FundingMonitor(HoldingType holdingType, long holdingId, String property,
-                                    long amount, long threshold, int interval,
-                                    long accountId, String secretPhrase) {
+                           long amount, long threshold, int interval,
+                           long accountId, String secretPhrase) {
         this.holdingType = holdingType;
         this.holdingId = (holdingType != HoldingType.APL ? holdingId : 0);
         this.property = property;
@@ -148,7 +191,7 @@ public final class FundingMonitor {
     /**
      * Return the monitor holding type
      *
-     * @return                      Holding type
+     * @return Holding type
      */
     public HoldingType getHoldingType() {
         return holdingType;
@@ -157,7 +200,7 @@ public final class FundingMonitor {
     /**
      * Return the holding identifier
      *
-     * @return                      Holding identifier for asset or currency
+     * @return Holding identifier for asset or currency
      */
     public long getHoldingId() {
         return holdingId;
@@ -166,7 +209,7 @@ public final class FundingMonitor {
     /**
      * Return the account property name
      *
-     * @return                      Account property
+     * @return Account property
      */
     public String getProperty() {
         return property;
@@ -175,7 +218,7 @@ public final class FundingMonitor {
     /**
      * Return the fund amount
      *
-     * @return                      Fund amount
+     * @return Fund amount
      */
     public long getAmount() {
         return amount;
@@ -184,7 +227,7 @@ public final class FundingMonitor {
     /**
      * Return the fund threshold
      *
-     * @return                      Fund threshold
+     * @return Fund threshold
      */
     public long getThreshold() {
         return threshold;
@@ -193,7 +236,7 @@ public final class FundingMonitor {
     /**
      * Return the fund interval
      *
-     * @return                      Fund interval
+     * @return Fund interval
      */
     public int getInterval() {
         return interval;
@@ -202,7 +245,7 @@ public final class FundingMonitor {
     /**
      * Return the fund account identifier
      *
-     * @return                      Account identifier
+     * @return Account identifier
      */
     public long getAccountId() {
         return accountId;
@@ -211,7 +254,7 @@ public final class FundingMonitor {
     /**
      * Return the fund account name
      *
-     * @return                      Account name
+     * @return Account name
      */
     public String getAccountName() {
         return accountName;
@@ -223,17 +266,17 @@ public final class FundingMonitor {
      * One or more funding parameters can be overridden in the account property value
      * string: {"amount":"long","threshold":"long","interval":integer}
      *
-     * @param   holdingType         Holding type
-     * @param   holdingId           Asset or currency identifier, ignored for APL monitor
-     * @param   property            Account property name
-     * @param   amount              Fund amount
-     * @param   threshold           Fund threshold
-     * @param   interval            Fund interval
-     * @param   secretPhrase        Fund account secret phrase
-     * @return                      TRUE if the monitor was started
+     * @param holdingType  Holding type
+     * @param holdingId    Asset or currency identifier, ignored for APL monitor
+     * @param property     Account property name
+     * @param amount       Fund amount
+     * @param threshold    Fund threshold
+     * @param interval     Fund interval
+     * @param secretPhrase Fund account secret phrase
+     * @return TRUE if the monitor was started
      */
     public static boolean startMonitor(HoldingType holdingType, long holdingId, String property,
-                                    long amount, long threshold, int interval, String secretPhrase) {
+                                       long amount, long threshold, int interval, String secretPhrase) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
         // instead of during NRS initialization so we don't start the monitor thread if it
@@ -298,14 +341,14 @@ public final class FundingMonitor {
 
     /**
      * Create a monitored account
-     *
+     * <p>
      * The amount, threshold and interval values specified when the monitor was started can be overridden
      * by specifying one or more values in the property value string
      *
-     * @param   accountId           Account identifier
-     * @param   monitor             Account monitor
-     * @param   propertyValue       Account property value
-     * @return                      Monitored account
+     * @param accountId     Account identifier
+     * @param monitor       Account monitor
+     * @param propertyValue Account property value
+     * @return Monitored account
      */
     private static MonitoredAccount createMonitoredAccount(long accountId, FundingMonitor monitor, String propertyValue) {
         long monitorAmount = monitor.amount;
@@ -317,13 +360,13 @@ public final class FundingMonitor {
                 if (!(parsedValue instanceof JSONObject)) {
                     throw new IllegalArgumentException("Property value is not a JSON object");
                 }
-                JSONObject jsonValue = (JSONObject)parsedValue;
+                JSONObject jsonValue = (JSONObject) parsedValue;
                 monitorAmount = getValue(jsonValue.get("amount"), monitorAmount);
                 monitorThreshold = getValue(jsonValue.get("threshold"), monitorThreshold);
-                monitorInterval = (int)getValue(jsonValue.get("interval"), monitorInterval);
+                monitorInterval = (int) getValue(jsonValue.get("interval"), monitorInterval);
             } catch (IllegalArgumentException | ParseException exc) {
                 String errorMessage = String.format("Account %s, property '%s', value '%s' is not valid",
-                            Convert.rsAccount(accountId), monitor.property, propertyValue);
+                        Convert.rsAccount(accountId), monitor.property, propertyValue);
                 throw new IllegalArgumentException(errorMessage, exc);
             }
         }
@@ -333,9 +376,9 @@ public final class FundingMonitor {
     /**
      * Convert a JSON parameter to a numeric value
      *
-     * @param   jsonValue           The parsed JSON value
-     * @param   defaultValue        The default value
-     * @return                      The JSON value or the default value
+     * @param jsonValue    The parsed JSON value
+     * @param defaultValue The default value
+     * @return The JSON value or the default value
      */
     private static long getValue(Object jsonValue, long defaultValue) {
         if (jsonValue == null) {
@@ -346,14 +389,14 @@ public final class FundingMonitor {
 
     /**
      * Stop all monitors
-     *
+     * <p>
      * Pending fund transactions will still be processed
      *
-     * @return                      Number of monitors stopped
+     * @return Number of monitors stopped
      */
     public static int stopAllMonitors() {
         int stopCount;
-        synchronized(monitors) {
+        synchronized (monitors) {
             stopCount = monitors.size();
             monitors.clear();
             accounts.clear();
@@ -364,19 +407,19 @@ public final class FundingMonitor {
 
     /**
      * Stop monitor
-     *
+     * <p>
      * Pending fund transactions will still be processed
      *
-     * @param   holdingType         Monitor holding type
-     * @param   holdingId           Asset or currency identifier, ignored for APL monitor
-     * @param   property            Account property
-     * @param   accountId           Fund account identifier
-     * @return                      TRUE if the monitor was stopped
+     * @param holdingType Monitor holding type
+     * @param holdingId   Asset or currency identifier, ignored for APL monitor
+     * @param property    Account property
+     * @param accountId   Fund account identifier
+     * @return TRUE if the monitor was stopped
      */
     public static boolean stopMonitor(HoldingType holdingType, long holdingId, String property, long accountId) {
         FundingMonitor monitor = null;
         boolean wasStopped = false;
-        synchronized(monitors) {
+        synchronized (monitors) {
             //
             // Deactivate the monitor
             //
@@ -411,7 +454,7 @@ public final class FundingMonitor {
                     }
                 }
                 Logger.logInfoMessage(String.format("%s monitor stopped for fund account %s, property '%s', holding %d",
-                    holdingType.name(), monitor.accountName, monitor.property, monitor.holdingId));
+                        holdingType.name(), monitor.accountName, monitor.property, monitor.holdingId));
             }
         }
         return wasStopped;
@@ -420,12 +463,12 @@ public final class FundingMonitor {
     /**
      * Get monitors satisfying the supplied filter
      *
-     * @param   filter              Monitor filter
-     * @return                      Monitor list
+     * @param filter Monitor filter
+     * @return Monitor list
      */
     public static List<FundingMonitor> getMonitors(Filter<FundingMonitor> filter) {
         List<FundingMonitor> result = new ArrayList<>();
-        synchronized(monitors) {
+        synchronized (monitors) {
             monitors.forEach((monitor) -> {
                 if (filter.test(monitor)) {
                     result.add(monitor);
@@ -438,24 +481,25 @@ public final class FundingMonitor {
     /**
      * Get all monitors
      *
-     * @return                      Account monitor list
+     * @return Account monitor list
      */
     public static List<FundingMonitor> getAllMonitors() {
         List<FundingMonitor> allMonitors = new ArrayList<>();
-        synchronized(monitors) {
+        synchronized (monitors) {
             allMonitors.addAll(monitors);
         }
         return allMonitors;
     }
 
-    /** Get all monitored accounts for a single monitor
+    /**
+     * Get all monitored accounts for a single monitor
      *
-     * @param  monitor              Monitor
-     * @return                      List of monitored accounts
+     * @param monitor Monitor
+     * @return List of monitored accounts
      */
     public static List<MonitoredAccount> getMonitoredAccounts(FundingMonitor monitor) {
         List<MonitoredAccount> monitoredAccounts = new ArrayList<>();
-        synchronized(monitors) {
+        synchronized (monitors) {
             accounts.values().forEach(monitorList -> monitorList.forEach(account -> {
                 if (account.monitor.equals(monitor)) {
                     monitoredAccounts.add(account);
@@ -515,24 +559,24 @@ public final class FundingMonitor {
     /**
      * Return the hash code
      *
-     * @return                      Hash code
+     * @return Hash code
      */
     @Override
     public int hashCode() {
-        return holdingType.hashCode() + (int)holdingId + property.hashCode() + (int)accountId;
+        return holdingType.hashCode() + (int) holdingId + property.hashCode() + (int) accountId;
     }
 
     /**
      * Check if two monitors are equal
      *
-     * @param   obj                 Comparison object
-     * @return                      TRUE if the objects are equal
+     * @param obj Comparison object
+     * @return TRUE if the objects are equal
      */
     @Override
     public boolean equals(Object obj) {
         boolean isEqual = false;
         if (obj != null && (obj instanceof FundingMonitor)) {
-            FundingMonitor monitor = (FundingMonitor)obj;
+            FundingMonitor monitor = (FundingMonitor) obj;
             if (holdingType == monitor.holdingType && holdingId == monitor.holdingId &&
                     property.equals(monitor.property) && accountId == monitor.accountId) {
                 isEqual = true;
@@ -613,19 +657,19 @@ public final class FundingMonitor {
     /**
      * Process a APL event
      *
-     * @param   monitoredAccount            Monitored account
-     * @param   targetAccount               Target account
-     * @param   fundingAccount              Funding account
-     * @throws  AplException                Unable to create transaction
+     * @param monitoredAccount Monitored account
+     * @param targetAccount    Target account
+     * @param fundingAccount   Funding account
+     * @throws AplException Unable to create transaction
      */
     private static void processAplEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
-                                            throws AplException {
+            throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
             Transaction.Builder builder = Apl.newTransactionBuilder(monitor.publicKey,
-                    monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT);
+                    monitoredAccount.amount, 0, (short) 1440, Attachment.ORDINARY_PAYMENT);
             builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
+                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
@@ -634,7 +678,7 @@ public final class FundingMonitor {
                 Apl.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Apl.getBlockchain().getHeight();
                 Logger.logDebugMessage(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        Constants.COIN_SYMBOL, transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
+                        Constants.COIN_SYMBOL, transaction.getStringId(), (double) monitoredAccount.amount / Constants.ONE_APL,
                         Constants.COIN_SYMBOL, monitor.accountName, monitoredAccount.accountName));
             }
         }
@@ -643,13 +687,13 @@ public final class FundingMonitor {
     /**
      * Process an ASSET event
      *
-     * @param   monitoredAccount            Monitored account
-     * @param   targetAccount               Target account
-     * @param   fundingAccount              Funding account
-     * @throws  AplException                Unable to create transaction
+     * @param monitoredAccount Monitored account
+     * @param targetAccount    Target account
+     * @param fundingAccount   Funding account
+     * @throws AplException Unable to create transaction
      */
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
-                                            throws AplException {
+            throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         Account.AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
         Account.AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
@@ -660,9 +704,9 @@ public final class FundingMonitor {
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
             Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Apl.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
+                    0, 0, (short) 1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
+                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
@@ -680,13 +724,13 @@ public final class FundingMonitor {
     /**
      * Process a CURRENCY event
      *
-     * @param   monitoredAccount            Monitored account
-     * @param   targetAccount               Target account
-     * @param   fundingAccount              Funding account
-     * @throws  AplException                Unable to create transaction
+     * @param monitoredAccount Monitored account
+     * @param targetAccount    Target account
+     * @param fundingAccount   Funding account
+     * @throws AplException Unable to create transaction
      */
     private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
-                                            throws AplException {
+            throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         Account.AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
         Account.AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
@@ -697,9 +741,9 @@ public final class FundingMonitor {
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
             Attachment attachment = new Attachment.MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Apl.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
+                    0, 0, (short) 1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
+                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
@@ -719,35 +763,49 @@ public final class FundingMonitor {
      */
     public static final class MonitoredAccount {
 
-        /** Account identifier */
+        /**
+         * Account identifier
+         */
         private final long accountId;
 
-        /** Account name */
+        /**
+         * Account name
+         */
         private final String accountName;
 
-        /** Associated monitor */
+        /**
+         * Associated monitor
+         */
         private final FundingMonitor monitor;
 
-        /** Fund amount */
+        /**
+         * Fund amount
+         */
         private long amount;
 
-        /** Fund threshold */
+        /**
+         * Fund threshold
+         */
         private long threshold;
 
-        /** Fund interval */
-        private  int interval;
+        /**
+         * Fund interval
+         */
+        private int interval;
 
-        /** Last fund height */
+        /**
+         * Last fund height
+         */
         private int height;
 
         /**
          * Create a new monitored account
          *
-         * @param   accountId           Account identifier
-         * @param   monitor             Account monitor
-         * @param   amount              Fund amount
-         * @param   threshold           Fund threshold
-         * @param   interval            Fund interval
+         * @param accountId Account identifier
+         * @param monitor   Account monitor
+         * @param amount    Fund amount
+         * @param threshold Fund threshold
+         * @param interval  Fund interval
          */
         private MonitoredAccount(long accountId, FundingMonitor monitor, long amount, long threshold, int interval) {
             if (amount < MIN_FUND_AMOUNT) {
@@ -770,7 +828,7 @@ public final class FundingMonitor {
         /**
          * Get the account identifier
          *
-         * @return                      Account identifier
+         * @return Account identifier
          */
         public long getAccountId() {
             return accountId;
@@ -779,7 +837,7 @@ public final class FundingMonitor {
         /**
          * Get the account name (Reed-Solomon encoded account identifier)
          *
-         * @return                      Account name
+         * @return Account name
          */
         public String getAccountName() {
             return accountName;
@@ -788,7 +846,7 @@ public final class FundingMonitor {
         /**
          * Get the funding amount
          *
-         * @return                      Funding amount
+         * @return Funding amount
          */
         public long getAmount() {
             return amount;
@@ -797,7 +855,7 @@ public final class FundingMonitor {
         /**
          * Get the funding threshold
          *
-         * @return                      Funding threshold
+         * @return Funding threshold
          */
         public long getThreshold() {
             return threshold;
@@ -806,7 +864,7 @@ public final class FundingMonitor {
         /**
          * Get the funding interval
          *
-         * @return                      Funding interval
+         * @return Funding interval
          */
         public int getInterval() {
             return interval;
@@ -821,7 +879,7 @@ public final class FundingMonitor {
         /**
          * Account event notification
          *
-         * @param   account                 Account
+         * @param account Account
          */
         @Override
         public void notify(Account account) {
@@ -832,14 +890,14 @@ public final class FundingMonitor {
             //
             // Check the APL balance for monitored accounts
             //
-            synchronized(monitors) {
+            synchronized (monitors) {
                 List<MonitoredAccount> accountList = accounts.get(account.getId());
                 if (accountList != null) {
                     accountList.forEach((maccount) -> {
-                       if (maccount.monitor.holdingType == HoldingType.APL && balance < maccount.threshold &&
-                               !pendingEvents.contains(maccount)) {
-                           pendingEvents.add(maccount);
-                       }
+                        if (maccount.monitor.holdingType == HoldingType.APL && balance < maccount.threshold &&
+                                !pendingEvents.contains(maccount)) {
+                            pendingEvents.add(maccount);
+                        }
                     });
                 }
             }
@@ -854,7 +912,7 @@ public final class FundingMonitor {
         /**
          * Asset event notification
          *
-         * @param   asset                   Account asset
+         * @param asset Account asset
          */
         @Override
         public void notify(Account.AccountAsset asset) {
@@ -866,7 +924,7 @@ public final class FundingMonitor {
             //
             // Check the asset balance for monitored accounts
             //
-            synchronized(monitors) {
+            synchronized (monitors) {
                 List<MonitoredAccount> accountList = accounts.get(asset.getAccountId());
                 if (accountList != null) {
                     accountList.forEach((maccount) -> {
@@ -890,7 +948,7 @@ public final class FundingMonitor {
         /**
          * Currency event notification
          *
-         * @param   currency                Account currency
+         * @param currency Account currency
          */
         @Override
         public void notify(Account.AccountCurrency currency) {
@@ -902,7 +960,7 @@ public final class FundingMonitor {
             //
             // Check the currency balance for monitored accounts
             //
-            synchronized(monitors) {
+            synchronized (monitors) {
                 List<MonitoredAccount> accountList = accounts.get(currency.getAccountId());
                 if (accountList != null) {
                     accountList.forEach((maccount) -> {
@@ -926,7 +984,7 @@ public final class FundingMonitor {
         /**
          * Property event notification
          *
-         * @param   property                Account property
+         * @param property Account property
          */
         @Override
         public void notify(Account.AccountProperty property) {
@@ -936,7 +994,7 @@ public final class FundingMonitor {
             long accountId = property.getRecipientId();
             try {
                 boolean addMonitoredAccount = true;
-                synchronized(monitors) {
+                synchronized (monitors) {
                     //
                     // Check if updating an existing monitored account.  In this case, we don't need to create
                     // a new monitored account and just need to update any monitor overrides.
@@ -953,7 +1011,7 @@ public final class FundingMonitor {
                                 pendingEvents.add(account);
                                 Logger.logDebugMessage(
                                         String.format("Updated %s monitor for account %s, property '%s', holding %s, "
-                                                + "amount %d, threshold %d, interval %d",
+                                                        + "amount %d, threshold %d, interval %d",
                                                 account.monitor.holdingType.name(), account.accountName,
                                                 property.getProperty(), Long.toUnsignedString(account.monitor.holdingId),
                                                 account.amount, account.threshold, account.interval));
@@ -976,7 +1034,7 @@ public final class FundingMonitor {
                                 pendingEvents.add(account);
                                 Logger.logDebugMessage(
                                         String.format("Created %s monitor for account %s, property '%s', holding %s, "
-                                                + "amount %d, threshold %d, interval %d",
+                                                        + "amount %d, threshold %d, interval %d",
                                                 monitor.holdingType.name(), account.accountName,
                                                 property.getProperty(), Long.toUnsignedString(monitor.holdingId),
                                                 account.amount, account.threshold, account.interval));
@@ -998,7 +1056,7 @@ public final class FundingMonitor {
         /**
          * Property event notification
          *
-         * @param   property                Account property
+         * @param property Account property
          */
         @Override
         public void notify(Account.AccountProperty property) {
@@ -1006,7 +1064,7 @@ public final class FundingMonitor {
                 return;
             }
             long accountId = property.getRecipientId();
-            synchronized(monitors) {
+            synchronized (monitors) {
                 List<MonitoredAccount> accountList = accounts.get(accountId);
                 if (accountList != null) {
                     Iterator<MonitoredAccount> it = accountList.iterator();
@@ -1030,7 +1088,7 @@ public final class FundingMonitor {
 
     /**
      * Block event handler (BLOCK_PUSHED event)
-     *
+     * <p>
      * We will process pending funding events when a block is pushed to the blockchain.  This ensures that all
      * block transactions have been processed before we process funding events.
      */

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.http;
@@ -25,6 +28,7 @@ import apl.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
@@ -71,7 +75,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
     }
 
     private GetNextBlockGeneratorsTemp() {
-        super(new APITag[] {APITag.FORGING}, "limit");
+        super(new APITag[]{APITag.FORGING}, "limit");
     }
 
     @Override
@@ -96,7 +100,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
                 JSONData.putAccount(resp, "account", generator.getAccountId());
                 resp.put("effectiveBalanceAPL", generator.getEffectiveBalance());
                 resp.put("hitTime", generator.getHitTime());
-                resp.put("deadline", (int)generator.getHitTime() - lastBlock.getTimestamp());
+                resp.put("deadline", (int) generator.getHitTime() - lastBlock.getTimestamp());
                 generators.add(resp);
                 if (generators.size() == limit) {
                     break;
@@ -112,7 +116,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
     /**
      * No required block parameters
      *
-     * @return                      FALSE to disable the required block parameters
+     * @return FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

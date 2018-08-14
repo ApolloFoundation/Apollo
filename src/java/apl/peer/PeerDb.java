@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.peer;
@@ -59,7 +62,7 @@ final class PeerDb {
 
         @Override
         public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof Entry) && address.equals(((Entry)obj).address));
+            return (obj != null && (obj instanceof Entry) && address.equals(((Entry) obj).address));
         }
 
         @Override
@@ -100,8 +103,8 @@ final class PeerDb {
 
     static void updatePeers(Collection<Entry> peers) {
         try (Connection con = Db.db.getConnection();
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                        + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
+             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
+                     + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
             for (Entry peer : peers) {
                 pstmt.setString(1, peer.getAddress());
                 pstmt.setLong(2, peer.getServices());
@@ -115,8 +118,8 @@ final class PeerDb {
 
     static void updatePeer(PeerImpl peer) {
         try (Connection con = Db.db.getConnection();
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                        + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
+             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
+                     + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
             pstmt.setString(1, peer.getAnnouncedAddress());
             pstmt.setLong(2, peer.getServices());
             pstmt.setInt(3, peer.getLastUpdated());

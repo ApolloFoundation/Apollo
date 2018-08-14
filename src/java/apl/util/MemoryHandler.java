@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida IP B.V.,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package apl.util;
@@ -28,7 +31,7 @@ import java.util.logging.LogRecord;
 /**
  * MemoryHandler maintains a ring buffer of log messages.  The GetLog API is used
  * to retrieve these log messages.
- *
+ * <p>
  * The following logging.properties entries are used:
  * <ul>
  * <li>apl.util.MemoryHandler.level (default ALL)</li>
@@ -37,22 +40,34 @@ import java.util.logging.LogRecord;
  */
 public class MemoryHandler extends Handler {
 
-    /** Default ring buffer size */
+    /**
+     * Default ring buffer size
+     */
     private static final int DEFAULT_SIZE = 100;
 
-    /** Level OFF value */
+    /**
+     * Level OFF value
+     */
     private static final int OFF_VALUE = Level.OFF.intValue();
 
-    /** Ring buffer */
+    /**
+     * Ring buffer
+     */
     private final LogRecord[] buffer;
 
-    /** Buffer start */
+    /**
+     * Buffer start
+     */
     private int start = 0;
 
-    /** Number of buffer entries */
+    /**
+     * Number of buffer entries
+     */
     private int count = 0;
 
-    /** Publish level */
+    /**
+     * Publish level
+     */
     private Level level;
 
     /**
@@ -67,7 +82,7 @@ public class MemoryHandler extends Handler {
         //
         int bufferSize;
         try {
-            value = manager.getProperty(cname+".size");
+            value = manager.getProperty(cname + ".size");
             if (value != null)
                 bufferSize = Math.max(Integer.valueOf(value.trim()), 10);
             else
@@ -80,7 +95,7 @@ public class MemoryHandler extends Handler {
         // Get publish level
         //
         try {
-            value = manager.getProperty(cname+".level");
+            value = manager.getProperty(cname + ".level");
             if (value != null) {
                 level = Level.parse(value.trim());
             } else {
@@ -94,14 +109,14 @@ public class MemoryHandler extends Handler {
     /**
      * Store a LogRecord in the ring buffer
      *
-     * @param   record              Description of the log event. A null record is
-     *                              silently ignored and is not published
+     * @param record Description of the log event. A null record is
+     *               silently ignored and is not published
      */
     @Override
     public void publish(LogRecord record) {
         if (record != null && record.getLevel().intValue() >= level.intValue() && level.intValue() != OFF_VALUE) {
-            synchronized(buffer) {
-                int ix = (start+count)%buffer.length;
+            synchronized (buffer) {
+                int ix = (start + count) % buffer.length;
                 buffer[ix] = record;
                 if (count < buffer.length) {
                     count++;
@@ -116,16 +131,16 @@ public class MemoryHandler extends Handler {
     /**
      * Return the log messages from the ring buffer
      *
-     * @param   msgCount            Number of messages to return
-     * @return                      List of log messages
+     * @param msgCount Number of messages to return
+     * @return List of log messages
      */
     public List<String> getMessages(int msgCount) {
         List<String> rtnList = new ArrayList<>(buffer.length);
-        synchronized(buffer) {
+        synchronized (buffer) {
             int rtnSize = Math.min(msgCount, count);
-            int pos = (start + (count-rtnSize))%buffer.length;
+            int pos = (start + (count - rtnSize)) % buffer.length;
             Formatter formatter = getFormatter();
-            for (int i=0; i<rtnSize; i++) {
+            for (int i = 0; i < rtnSize; i++) {
                 rtnList.add(formatter.format(buffer[pos++]));
                 if (pos == buffer.length)
                     pos = 0;
@@ -139,7 +154,7 @@ public class MemoryHandler extends Handler {
      */
     @Override
     public void flush() {
-        synchronized(buffer) {
+        synchronized (buffer) {
             start = 0;
             count = 0;
         }
@@ -153,7 +168,8 @@ public class MemoryHandler extends Handler {
     /**
      * Close the handler
      */
-    @Override public void close() {
+    @Override
+    public void close() {
         level = Level.OFF;
     }
 }
