@@ -1,21 +1,17 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers.                             *
+ * Copyright © 2013-2016 The Nxt Core Developers                             *
  * Copyright © 2016-2017 Jelurida IP B.V.                                     *
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation *
  * no part of the Nxt software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
  *                                                                            *
  * Removal or modification of this copyright notice is prohibited.            *
- *                                                                            *
- ******************************************************************************/
-
- /******************************************************************************
- * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  ******************************************************************************/
 
@@ -51,6 +47,8 @@ var NRS = (function(NRS, $, undefined) {
 		this.sharedKey = null;
 		this.serverKey = null;
 		this.blockHeight = null;
+
+		this.previewTransactions = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
@@ -100,8 +98,50 @@ var NRS = (function(NRS, $, undefined) {
 	        this.getItems();
 	
         };
-        
+
         this.getItems = function(page, place) {
+
+        this.getPreviewTransactions = function () {
+			var url = API;
+			url += 'requestType=getBlockchainTransactions';
+			url += '&firstIndex=0&lastIndex=9';
+			url += '&account=' + NRS.account;
+
+			var target = $('#dashboard_page');
+            if (target) {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        var rows = "";
+                        data = JSON.parse(data).transactions;
+
+                        for (var i = 0; i < data.length; i++) {
+                            var transaction = data[i];
+
+                            transaction.confirmed = true;
+                            rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+                        }
+                        var $el = $("#dashboard_content");
+
+                        if ($el.length) {
+                            $el.empty().append(rows);
+                        } else {
+                            $el = $("#dashboard_table");
+                            $el.find("tbody").empty().append(rows);
+                            $el.find('[data-toggle="tooltip"]').tooltip();
+                        }
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+
+        };
+
+        this.getItems = function(page, place, isPreview) {
         	if (page) {
                 this.page = page;
             }
@@ -213,7 +253,7 @@ var NRS = (function(NRS, $, undefined) {
 
                                      options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
-                                     var decrypted =  NRS.decryptData(entry.encryptedLedgerEntry, options);
+                                     var decrypted =  NRS.decryptDataJava(entry.encryptedLedgerEntry, options);
                                      decrypted = decrypted.message;
                                      decrypted = converters.hexStringToString(decrypted);
                                      decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
@@ -339,19 +379,26 @@ var NRS = (function(NRS, $, undefined) {
 
                     	if (that.blockHeight && that.blockHeight !== data.height) {
 							that.blockHeight = data.height;
+
+                            $('[data-block]').empty().html(that.blockHeight);
+                            $('[data-block]').attr('data-block', that.blockHeight);
 							that.getItems();
 						}
 						if (!that.blockHeight) {
 							that.blockHeight = data.height;
-							that.getItems();
+                            $('[data-block]').empty().html(that.blockHeight);
+                            $('[data-block]').attr('data-block', that.blockHeight);
+
+                            that.getItems();
 						}
                     },
                     error: function(data) {
                         console.log('err: ', data);
                     }
                 });
+                that.getPreviewTransactions();
 			},2000);
-		}
+		};
 		this.destroyTable = function() {
 			$('#transactions_table').find('tbody').empty();
 			
