@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPrunableDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.fs.FileManager;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
@@ -68,27 +69,48 @@ public class TaggedData {
         @Override
         protected void prune() {
             if (Constants.ENABLE_PRUNING) {
-                try (Connection con = db.getConnection();
-                     PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
-                             + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                    int expiration = Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
-                    pstmtSelect.setInt(1, expiration);
-                    Map<String,Integer> expiredTags = new HashMap<>();
-                    try (ResultSet rs = pstmtSelect.executeQuery()) {
-                        while (rs.next()) {
-                            Object[] array = (Object[])rs.getArray("parsed_tags").getArray();
-                            for (Object tag : array) {
-                                Integer count = expiredTags.get(tag);
-                                expiredTags.put((String)tag, count != null ? count + 1 : 1);
-                            }
+                pruneTags();
+                pruneData();
+            }
+        }
+
+        private void pruneTags() {
+            try (Connection con = db.getConnection();
+                 PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
+                         + "FROM tagged_data WHERE transaction_timestamp < ? - time_to_live AND latest = TRUE ")) {
+                int currTime = Apl.getEpochTime();
+                pstmtSelect.setInt(1, currTime);
+                Map<String,Integer> expiredTags = new HashMap<>();
+                try (ResultSet rs = pstmtSelect.executeQuery()) {
+                    while (rs.next()) {
+                        Object[] array = (Object[])rs.getArray("parsed_tags").getArray();
+                        for (Object tag : array) {
+                            Integer count = expiredTags.get(tag);
+                            expiredTags.put((String)tag, count != null ? count + 1 : 1);
                         }
                     }
-                    Tag.delete(expiredTags);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
                 }
+                Tag.delete(expiredTags);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
             }
-            super.prune();
+        }
+
+        private void pruneData() {
+            try (Connection con = db.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? - time_to_live LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
+                pstmt.setInt(1, Apl.getEpochTime());
+                int deleted;
+                do {
+                    deleted = pstmt.executeUpdate();
+                    if (deleted > 0) {
+                        Logger.logDebugMessage("Deleted " + deleted + " expired tagged data");
+                    }
+                    db.commitTransaction();
+                } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
         }
 
     };
@@ -365,6 +387,7 @@ public class TaggedData {
     private final String channel;
     private final boolean isText;
     private final String filename;
+    private final long timeToLive;
     private int transactionTimestamp;
     private int blockTimestamp;
     private int height;
@@ -389,9 +412,11 @@ public class TaggedData {
         this.blockTimestamp = blockTimestamp;
         this.transactionTimestamp = transaction.getTimestamp();
         this.height = height;
+        this.timeToLive = transaction.getPrunableTimeToLive();
     }
 
     private TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
+
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
@@ -399,7 +424,6 @@ public class TaggedData {
         this.description = rs.getString("description");
         this.tags = rs.getString("tags");
         this.parsedTags = DbUtils.getArray(rs, "parsed_tags", String[].class);
-        this.data = rs.getBytes("data");
         this.type = rs.getString("type");
         this.channel = rs.getString("channel");
         this.isText = rs.getBoolean("is_text");
@@ -407,27 +431,17 @@ public class TaggedData {
         this.blockTimestamp = rs.getInt("block_timestamp");
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
         this.height = rs.getInt("height");
-    }
+        this.timeToLive = rs.getInt("time_to_live");
 
-    private TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.accountId = accountId;
-        this.name = name;
-        this.description = description;
-        this.tags = tags;
-        this.parsedTags = parsedTags;
-        this.data = data;
-        this.type = type;
-        this.channel = channel;
-        this.isText = isText;
-        this.filename = filename;
+        String key = FileManager.generateKey(this.id);
+        this.data = FileManager.getStorage().get(key);
+
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
-                + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "type, channel, is_text, filename, block_timestamp, transaction_timestamp, height, latest, time_to_live) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);
@@ -437,14 +451,18 @@ public class TaggedData {
             DbUtils.setArray(pstmt, ++i, this.parsedTags);
             pstmt.setString(++i, this.type);
             pstmt.setString(++i, this.channel);
-            pstmt.setBytes(++i, this.data);
             pstmt.setBoolean(++i, this.isText);
             pstmt.setString(++i, this.filename);
             pstmt.setInt(++i, this.blockTimestamp);
             pstmt.setInt(++i, this.transactionTimestamp);
             pstmt.setInt(++i, height);
+            pstmt.setLong(++i, timeToLive);
             pstmt.executeUpdate();
         }
+
+        String key = FileManager.generateKey(this.id);
+        FileManager.getStorage().put(key, this.data);
+
     }
 
     public long getId() {
@@ -499,6 +517,10 @@ public class TaggedData {
         return blockTimestamp;
     }
 
+    public long getTimeToLive() {
+        return timeToLive;
+    }
+
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
         if (Apl.getEpochTime() - transaction.getTimestamp() < transaction.getPrunableTimeToLive() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
@@ -525,7 +547,7 @@ public class TaggedData {
         List<Long> extendTransactionIds = extendTable.get(dbKey);
         extendTransactionIds.add(transaction.getId());
         extendTable.insert(taggedDataId, extendTransactionIds);
-        if (Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
+        if (Apl.getEpochTime() - transaction.getPrunableTimeToLive() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
                 TransactionImpl uploadTransaction = TransactionDb.findTransaction(taggedDataId);

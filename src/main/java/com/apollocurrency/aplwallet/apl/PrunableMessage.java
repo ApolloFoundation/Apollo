@@ -19,10 +19,7 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
 import java.sql.Connection;
@@ -41,7 +38,7 @@ public final class PrunableMessage {
 
     };
 
-    private static final PrunableDbTable<PrunableMessage> prunableMessageTable = new PrunableDbTable<PrunableMessage>("prunable_message", prunableMessageKeyFactory) {
+    private static final PrunableDbTable<PrunableMessage> prunableMessageTable = new TTLBasedPrunableDbTable<PrunableMessage>("prunable_message", prunableMessageKeyFactory) {
 
         @Override
         protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -126,6 +123,7 @@ public final class PrunableMessage {
     private final int transactionTimestamp;
     private final int blockTimestamp;
     private final int height;
+    private final long timeToLive;
 
     private PrunableMessage(Transaction transaction, int blockTimestamp, int height) {
         this.id = transaction.getId();
@@ -135,6 +133,7 @@ public final class PrunableMessage {
         this.blockTimestamp = blockTimestamp;
         this.height = height;
         this.transactionTimestamp = transaction.getTimestamp();
+        this.timeToLive = transaction.getPrunableTimeToLive();
     }
 
     private void setPlain(Appendix.PrunablePlainMessage appendix) {
@@ -166,16 +165,7 @@ public final class PrunableMessage {
         this.blockTimestamp = rs.getInt("block_timestamp");
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
         this.height = rs.getInt("height");
-    }
-
-    private PrunableMessage(long id, DbKey dbKey, long senderId, long recipientId, int transactionTimestamp, int blockTimestamp, int height) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.senderId = senderId;
-        this.recipientId = recipientId;
-        this.transactionTimestamp = transactionTimestamp;
-        this.blockTimestamp = blockTimestamp;
-        this.height = height;
+        this.timeToLive = rs.getInt("time_to_live");
     }
 
     private void save(Connection con) throws SQLException {
@@ -183,9 +173,9 @@ public final class PrunableMessage {
             throw new IllegalStateException("Prunable message not fully initialized");
         }
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, sender_id, recipient_id, "
-                + "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height) "
+                + "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height, time_to_live) "
                 + "KEY (id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.senderId);
@@ -198,6 +188,7 @@ public final class PrunableMessage {
             pstmt.setInt(++i, this.blockTimestamp);
             pstmt.setInt(++i, this.transactionTimestamp);
             pstmt.setInt(++i, this.height);
+            pstmt.setLong(++i, this.timeToLive);
             pstmt.executeUpdate();
         }
     }
@@ -246,6 +237,10 @@ public final class PrunableMessage {
         return height;
     }
 
+    public long getTimeToLive() {
+        return timeToLive;
+    }
+
     public byte[] decrypt(String secretPhrase) {
         if (encryptedData == null) {
             return null;
@@ -291,7 +286,7 @@ public final class PrunableMessage {
 
     static void add(TransactionImpl transaction, Appendix.PrunableEncryptedMessage appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
-                PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
+            PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {
                 prunableMessage = new PrunableMessage(transaction, blockTimestamp, height);
             } else if (prunableMessage.height != height) {
@@ -309,7 +304,7 @@ public final class PrunableMessage {
             return false;
         }
         try (Connection con = Db.db.getConnection();
-                PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return !rs.next()

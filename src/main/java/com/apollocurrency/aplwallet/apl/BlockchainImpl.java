@@ -430,7 +430,7 @@ final class BlockchainImpl implements Blockchain {
             }
             if (withMessage) {
                 buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE ");
-                buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
+                buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ? - PRUNABLE_TTL)) ");
             }
             if (phasedOnly) {
                 buf.append("AND phased = TRUE ");
@@ -463,7 +463,7 @@ final class BlockchainImpl implements Blockchain {
             }
             if (withMessage) {
                 buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE OR has_encrypttoself_message = TRUE ");
-                buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
+                buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ? - PRUNABLE_TTL)) ");
             }
             if (phasedOnly) {
                 buf.append("AND phased = TRUE ");
@@ -498,11 +498,11 @@ final class BlockchainImpl implements Blockchain {
             if (height < Integer.MAX_VALUE) {
                 pstmt.setInt(++i, height);
             }
-            int prunableExpiration = Math.max(0, Constants.INCLUDE_EXPIRED_PRUNABLE && includeExpiredPrunable ?
-                                        Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME :
-                                        Apl.getEpochTime() - Constants.MIN_PRUNABLE_LIFETIME);
+
+            int now = Apl.getEpochTime(); // current moment to calc expiration // timestamp > now - PRUNABLE_TTL
+
             if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
+                pstmt.setInt(++i, now);
             }
             pstmt.setLong(++i, accountId);
             if (blockTimestamp > 0) {
@@ -522,7 +522,7 @@ final class BlockchainImpl implements Blockchain {
                 pstmt.setInt(++i, height);
             }
             if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
+                pstmt.setInt(++i, now);
             }
             DbUtils.setLimits(++i, pstmt, from, to);
             return getTransactions(con, pstmt);

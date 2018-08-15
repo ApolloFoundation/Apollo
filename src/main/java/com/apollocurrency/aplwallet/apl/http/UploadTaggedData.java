@@ -44,6 +44,7 @@ public final class UploadTaggedData extends CreateTransaction {
 
         Account account = ParameterParser.getSenderAccount(req);
         Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
+
         return createTransaction(req, account, taggedDataUpload);
 
     }

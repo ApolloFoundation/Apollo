@@ -749,7 +749,7 @@ public final class ParameterParser {
             data = isText ? Convert.toBytes(dataValue) : Convert.parseHexString(dataValue);
         }
 
-        String detectedMimeType = Search.detectMimeType(data, filename);
+        String detectedMimeType = null;// Search.detectMimeType(data, filename);
         if (detectedMimeType != null) {
             isText = detectedMimeType.startsWith("text/");
             if (type.isEmpty()) {
