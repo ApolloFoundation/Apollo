@@ -194,6 +194,10 @@ public final class Apl {
         }
     }
 
+    public static File getLogDir() {
+        return dirProvider.getLogFileDir();
+    }
+
     private static void printCommandLineArguments() {
         try {
             List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
