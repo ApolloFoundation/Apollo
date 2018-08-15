@@ -105,7 +105,7 @@ var NRS = (function(NRS, $, undefined) {
 			url += '&firstIndex=0&lastIndex=9';
 			url += '&account=' + NRS.account;
 
-			var target = $('#dashboard_table tbody');
+			var target = $('#dashboard_page');
             if (target) {
                 $.ajax({
                     url: url,
@@ -115,15 +115,21 @@ var NRS = (function(NRS, $, undefined) {
                         var rows = "";
                         data = JSON.parse(data).transactions;
 
-                        console.log(data);
                         for (var i = 0; i < data.length; i++) {
                             var transaction = data[i];
 
                             transaction.confirmed = true;
                             rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
                         }
-                        NRS.dataLoaded(rows);
-                        console.log(target);
+                        var $el = $("#dashboard_content");
+
+                        if ($el.length) {
+                            $el.empty().append(rows);
+                        } else {
+                            $el = $("#dashboard_table");
+                            $el.find("tbody").empty().append(rows);
+                            $el.find('[data-toggle="tooltip"]').tooltip();
+                        }
                     },
                     error: function(data) {
                         console.log('err: ', data);
