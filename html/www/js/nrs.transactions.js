@@ -119,7 +119,6 @@ var NRS = (function(NRS, $, undefined) {
                         var rows = "";
                         data = JSON.parse(data).transactions;
 
-                        console.log(data);
                         for (var i = 0; i < data.length; i++) {
                             var transaction = data[i];
 
@@ -380,11 +379,15 @@ var NRS = (function(NRS, $, undefined) {
                     success: function(data) {
                     	data  = JSON.parse(data);
 
+                        $('.nrs_current_block').html(that.blockHeight);
+                        $('#nrs_current_block_time').html(NRS.formatTimestamp(data.timestamp));
+
                     	if (that.blockHeight && that.blockHeight !== data.height) {
 							that.blockHeight = data.height;
 
                             $('[data-block]').empty().html(that.blockHeight);
                             $('[data-block]').attr('data-block', that.blockHeight);
+
 							that.getItems();
 						}
 						if (!that.blockHeight) {
