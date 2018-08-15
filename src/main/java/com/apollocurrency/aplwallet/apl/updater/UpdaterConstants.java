@@ -15,7 +15,7 @@ public class UpdaterConstants {
    public static final int NEXT_ATTEMPT_TIMEOUT = 60;
    public static final String TEMP_DIR_PREFIX = "Apollo-update";
    public static final String DOWNLOADED_FILE_NAME = "Apollo-newVersion.jar";
-
+   public static final int MAX_SHUTDOWN_TIMEOUT = 5; //seconds
 //   Certificate constants
    public static final String CERTIFICATE_DIRECTORY = "conf/certs";
    public static final String FIRST_DECRYPTION_CERTIFICATE_PREFIX = "1_";

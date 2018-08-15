@@ -23,7 +23,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
     }
 
     private SendUpdateTransaction() {
-        super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "signature", "hash", "version", "urlFirstPart",
+        super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "hash", "version", "urlFirstPart",
                 "urlSecondPart",
                 "level");
     }

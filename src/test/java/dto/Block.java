@@ -4,6 +4,8 @@
 
 package dto;
 
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -19,13 +21,13 @@ public class Block {
     private String generatorRS;
     private Long numberOfTransactions;
     private String blockSignature;
-    private List<Transaction> transactions;
+    private List<JSONTransaction> transactions;
     private Long version;
     private Long totalFeeATM;
     private String previousBlock;
     private String cumulativeDifficulty;
     private String block; //block id
-    private Long height;
+    private int height;
     private Long timestamp; //time in seconds since genesis block
 
     @Override
@@ -137,11 +139,11 @@ public class Block {
         return numberOfTransactions;
     }
 
-    public List<Transaction> getTransactions() {
+    public List<JSONTransaction> getTransactions() {
         return transactions;
     }
 
-    public void setTransactions(List<Transaction> transactions) {
+    public void setTransactions(List<JSONTransaction> transactions) {
         this.transactions = transactions;
     }
 
@@ -198,11 +200,11 @@ public class Block {
         this.block = block;
     }
 
-    public Long getHeight() {
+    public int getHeight() {
         return height;
     }
 
-    public void setHeight(Long height) {
+    public void setHeight(int height) {
         this.height = height;
     }
 

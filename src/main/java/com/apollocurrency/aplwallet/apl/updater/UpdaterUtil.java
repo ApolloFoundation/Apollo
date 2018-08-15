@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,10 @@ public class UpdaterUtil {
     static Certificate readCertificate(Path certificatePath) throws CertificateException, IOException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificatePath));
+    }
+    static String getStringRepresentation(Certificate cert) {
+        return ((cert instanceof X509Certificate) ?
+                ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
     }
 
     static Set<Certificate> readCertificates(String directory, String prefix, String suffix) throws CertificateException, IOException, URISyntaxException {
@@ -86,8 +91,8 @@ public class UpdaterUtil {
         @Override
         public String toString() {
             return "CertificatePair{" +
-                    "firstCertificate=" + firstCertificate +
-                    ", secondCertificate=" + secondCertificate +
+                    "firstCertificate=" + getStringRepresentation(firstCertificate) +
+                    ", secondCertificate=" + getStringRepresentation(secondCertificate) +
                     '}';
         }
 

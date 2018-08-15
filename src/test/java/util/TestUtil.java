@@ -4,7 +4,10 @@
 
 package util;
 
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
+import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -25,6 +28,9 @@ public class TestUtil {
 
     static {
         MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(JSONTransaction.class, new TransactionDeserializer());
+        MAPPER.registerModule(module);
     }
 
     private TestUtil() {} //never
@@ -38,7 +44,7 @@ public class TestUtil {
         }
     }
 
-    public static Long atm(long amount) {
+    public static long atm(long amount) {
         return 100_000_000L * amount;
     }
 
