@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.Account;
 import dto.Block;
 import dto.LedgerEntry;
 import dto.Peer;
@@ -25,8 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
-import static util.TestUtil.atm;
-import static util.TestUtil.getRandomRS;
+import static util.TestUtil.*;
 
 /**
  * Test scenarios on testnet for {@link NodeClient}
@@ -36,36 +36,22 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     public static final String PRIVATE_TRANSACTION_HASH = "6c55253438130d20e70834ed67d7fcfc11c79528d1cdfbff3d6398bf67357fad";
     public static final String PRIVATE_TRANSACTION_SENDER = "APL-PP8M-TPRN-ARNZ-5ZUVF";
     public static final String MESSAGE_SENDER = "APL-KL45-8GRF-BKPM-E58NH";
-    private static TestAccount chatAcc;
-    private  static Map<TestAccount, List<JSONTransaction>> chats;
 
     public static final Long PRIVATE_TRANSACTION_SENDER_ID = 3958487933422064851L;
     public static final String PRIVATE_TRANSACTION_ID = "2309523316024890732";
     public static final int BLOCK_HEIGHT = 7446;
     public static final int PRIVATE_BLOCK_HEIGHT = 16847;
     public static final String PRIVATE_TRANSACTION_RECIPIENT = "APL-4QN7-PNGP-SZFV-59XZL";
-    public static TestAccount randomChatAccount;
+
     public TestnetNodeClientTest() {
         super(TestData.TEST_LOCALHOST, TEST_FILE, runner.getUrls());
     }
 
     private static WalletRunner runner = new WalletRunner();
+
     @BeforeClass
     public static void setUp() throws Exception {
         runner.run();
-        try {
-            chatAcc = TestDataGenerator.generateAccount("chat_acc");
-            TestDataGenerator.fundAcc(chatAcc, new TestAccount(TestUtil.getRandomSecretPhrase(TestUtil.loadKeys(TEST_FILE))), 50);
-            chats = TestDataGenerator.generateChatsForAccount(chatAcc);
-            chats.forEach((acc, trs)-> {
-                if (trs.size() == 7) {
-                    randomChatAccount = acc;
-                }
-            });
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     @AfterClass
@@ -120,7 +106,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Block block2 = client.getBlock(url, PRIVATE_BLOCK_HEIGHT);
         Assert.assertEquals(block1.getTransactions().size(), block2.getTransactions().size());
         Assert.assertEquals(4, block1.getTransactions().size());
-        Assert.assertNotEquals(block1.getTotalAmountATM(), block2.getTotalAmountATM());
+        Assert.assertNotSame(block1.getTotalAmountATM(), block2.getTotalAmountATM());
         Assert.assertFalse(block1.getTotalAmountATM() <= atm(2));
         Assert.assertEquals(block1.getTotalAmountATM().longValue(), block1.getTransactions().stream().mapToLong(JSONTransaction::getAmountATM).sum());
         Assert.assertEquals(block2.getTotalAmountATM().longValue(), block2.getTransactions().stream().mapToLong(JSONTransaction::getAmountATM).sum());
@@ -344,7 +330,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
                     if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
                         Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
                         Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
-                        Assert.assertNotEquals(tr1.getAmountATM(), (tr2.getAmountATM()));
+                        Assert.assertNotSame(tr1.getAmountATM(), (tr2.getAmountATM()));
                     }
                 }));
     }
@@ -380,6 +366,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
         client.sendTransaction(url, "test5", atm(1L), 100, pars);
     }
+
     @Test
     public void testGetUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
@@ -525,7 +512,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Ignore
     public void testSendUpdateTransaction() throws IOException, ParseException {
         Assert.fail("Encrypted url is required");
-        String firstPart = "a427a6d86645d0c32527e50fe292a0b1cf3983ef083f9fc392359e34d90012a65d5bd927c2cd09466433c107e523ff01bc00e414108d01e515f56ddbc054abce83fa4bd30bdf4623928e768536f8e56d9695ebadfbe34b5d1d59aa63545f5238a4817ec09389687df5ec116423b0e572a5ee9c47eaab432b19805a610beecb495595636a14009524caee8f1c73db084f1842bf895440233bff67c8f09674056113efd58da69f8411df3df174438bd2e8280e4eac97d6f89a6d756c1feddccc6d593d59578aab46ad9024b0ba742c547418ea7b2adbed80c8f673cd2cff31fefb6ab068c03232d79dfd83977a05bb0fb286f81ddbc0a9c75e6fce81747223a8fe5e506f9a9d7a7fd08d51b63ba25b4872886857b59607e24e842aa39e9d0d78a3db3ad97b03e64fb135ef55f5f396e29c8a4e146087b853f9a1be0a647201836da32ef5b0bff1a3bc599bff155cbfe8a24ad5ee7ab711bf9de7682876c8b7986025e68c8ee63f63505d3ec21f53a98e9de78f39b69c8438028a0e569f81c9ac7bc7d2dc0ea4f4406a696938fe422bad1076342267ee13d657aa9e68d07aafba6b33fc3e90d72ea5147bc21d223b862c56d989a568a7a2609b272261df3af318f340283490ff4d909768deee8987e363bba10c489d746e4e706daf02b78ba5886f59c204bc2237702d1c2191a6c6b0d3095c9c3d462e4e1cae02f0f53b5e94c215"; String secondPart =
+        String firstPart = "a427a6d86645d0c32527e50fe292a0b1cf3983ef083f9fc392359e34d90012a65d5bd927c2cd09466433c107e523ff01bc00e414108d01e515f56ddbc054abce83fa4bd30bdf4623928e768536f8e56d9695ebadfbe34b5d1d59aa63545f5238a4817ec09389687df5ec116423b0e572a5ee9c47eaab432b19805a610beecb495595636a14009524caee8f1c73db084f1842bf895440233bff67c8f09674056113efd58da69f8411df3df174438bd2e8280e4eac97d6f89a6d756c1feddccc6d593d59578aab46ad9024b0ba742c547418ea7b2adbed80c8f673cd2cff31fefb6ab068c03232d79dfd83977a05bb0fb286f81ddbc0a9c75e6fce81747223a8fe5e506f9a9d7a7fd08d51b63ba25b4872886857b59607e24e842aa39e9d0d78a3db3ad97b03e64fb135ef55f5f396e29c8a4e146087b853f9a1be0a647201836da32ef5b0bff1a3bc599bff155cbfe8a24ad5ee7ab711bf9de7682876c8b7986025e68c8ee63f63505d3ec21f53a98e9de78f39b69c8438028a0e569f81c9ac7bc7d2dc0ea4f4406a696938fe422bad1076342267ee13d657aa9e68d07aafba6b33fc3e90d72ea5147bc21d223b862c56d989a568a7a2609b272261df3af318f340283490ff4d909768deee8987e363bba10c489d746e4e706daf02b78ba5886f59c204bc2237702d1c2191a6c6b0d3095c9c3d462e4e1cae02f0f53b5e94c215";
+        String secondPart =
                 "b51c553a2e69bc868926235c2fc01ba04b69070324a0c94d9c0d32f65ad4bb475c2b2887800caed2f4023f6510c363a5c4a7da0d8ba7cf85e921990fa7eba87c053ee753157c7541b291483a3f444b0e5d91dcb0f74def9dbe46c910546d0b616ebd9241e7f09aa619cb84b95560307d7e6b07e4fa47c508a621683717485542883203f1f17279b5e93173fa01b19bc707b1ee899bd1118322befed65b6eb28df579d56e61ca6b90abe5408f21544e3e6195ab23876baab07db967de04e815a9395987775acbe57bb7ac8d7366ad62a655bb4598edb4d3d2dce3d326fbeef97b654c686e9abd2c613ea740701a5a4d647e1ebf3bda0fc29fdbb5dfc7dc22842f32e552b0f999076d5f644809ff752224b71fe2f85ad8ac4766d57756d52953bbfb6e6b2134b173bf4995218429371ce3989cd764482396acb05eeaf2e138f38bae9107a9b6db626c6647be5d4a1e6f02f17326700ddeec0b8037671252f0e5c475e06964b6c5a5ff51bc07b494ee84ef5be7d84146f949fe6639409c3fe7550597e45c93ec276721781d9e8677fe4501b583a2b6d96d583c6397c8c5ef14ab6932581d81a8a3518da882fb920dd47c4af25ed755697a7cb181936ae0f21f3c2976f3168202e02fc4b351dcbb7f0c9e5b50a7f1f1d1841dd4de09ca374e3d01fc4fa6cb9271c727a194a2b701ec5e7d882790bb800cc2f86339ad708869ea2911";
         Assert.assertEquals(1024, firstPart.length());
         Assert.assertEquals(1024, secondPart.length());
@@ -541,7 +529,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
                 version, architecture, platform, hash, 5);
         Attachment.UpdateAttachment expectedAttachment = Attachment.UpdateAttachment.getAttachment(platform, architecture, updateUrl, version,
                 Convert.parseHexString(hash)
-                , (byte)0);
+                , (byte) 0);
         Assert.assertEquals(TransactionType.Update.CRITICAL, updateTransaction.getType());
         Assert.assertNull(updateTransaction.getRecipientRS());
         Assert.assertEquals(100_000_000, updateTransaction.getFeeATM());
@@ -557,34 +545,13 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
-    public void testGetChats() throws IOException {
-        List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, chatAcc.getRS());
-//        List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, "APL-NFCE-2L6E-6NKP-8FH59");
-        checkList(chatInfo);
-        Assert.assertEquals(chats.size(), chatInfo.size());
-        chatInfo.forEach(c -> {
-            List<TestAccount> matchedAcc = chats.keySet().stream().filter(acc -> c.getAccount() == acc.getId()).collect(Collectors.toList());
-            Assert.assertNotNull(matchedAcc);
-            Assert.assertEquals(1, matchedAcc.size());
-            Optional<JSONTransaction> first = chats.get(matchedAcc.get(0)).stream().max(Comparator.comparingLong(JSONTransaction::getTimestamp));
-            Assert.assertTrue(first.isPresent());
-            Assert.assertEquals(c.getLastMessageTime(), first.get().getTimestamp());
-        });
-    }
-    @Test
-    public void testGetChatHistory() throws IOException {
-        List<JSONTransaction> chatTransactions = client.getChatHistory(url, chatAcc.getRS(), randomChatAccount.getRS(), 0, 5);
-        checkList(chatTransactions);
-        Assert.assertEquals(chats.get(randomChatAccount).size() - 1 , chatTransactions.size());
-        for (int i = 0; i < chats.get(randomChatAccount).subList(0, 6).size(); i++) {
-            JSONTransaction expected = chats.get(randomChatAccount).get(i);
-            JSONTransaction actual = chatTransactions.get(i);
-            Assert.assertEquals(expected.getHeight(), actual.getHeight());
-            Assert.assertEquals(expected.getTimestamp(), actual.getTimestamp());
-            Assert.assertEquals(expected.getSenderRS(), actual.getSenderRS());
-            Assert.assertEquals(expected.getRecipientRS(), actual.getRecipientRS());
-            Assert.assertEquals(Convert.toString(expected.getMessage().getMessage(), true), Convert.toString(actual.getMessage().getMessage(), true));
-        }
+    public void testGetAccounts() throws IOException {
+        List<Account> allAccounts = client.getAllAccounts(url, 0, 14);
+        Assert.assertEquals(15, allAccounts.size());
+        List<Account> sortedAccounts = allAccounts.stream().sorted(Comparator.comparingLong(Account::getBalanceATM).reversed()).collect(Collectors.toList());
+        Assert.assertEquals(sortedAccounts, allAccounts);
+        long minBal = sortedAccounts.stream().min(Comparator.comparingLong(Account::getBalanceATM)).get().getBalanceATM();
+        Assert.assertTrue(minBal >= client.getAllAccounts(url, 15, 15).get(0).getBalanceATM());
     }
 }
 

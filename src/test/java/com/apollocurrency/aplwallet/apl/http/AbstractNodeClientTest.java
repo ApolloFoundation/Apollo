@@ -144,19 +144,6 @@ public abstract class AbstractNodeClientTest {
         Assert.assertEquals(TransactionType.Payment.PRIVATE, privateTransaction.getType());
     }
 
-    protected <T> void checkList(List<T> list) {
-        Assert.assertNotNull(list);
-        Assert.assertFalse(list.isEmpty());
-    }
-
-    protected void checkAddress(List<JSONTransaction> transactions, String address) {
-        transactions.forEach(transaction -> {
-            if (!transaction.getSenderRS().equalsIgnoreCase(address) && !transaction.getRecipientRS().equalsIgnoreCase(address)) {
-                Assert.fail(transaction.toString() + " is not for this address \'" + address + "\'");
-            }
-        });
-    }
-
     public abstract void testGet() throws Exception;
 
     public abstract void testGetBlockchainHeight() throws Exception;

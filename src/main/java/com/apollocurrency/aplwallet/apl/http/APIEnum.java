@@ -20,12 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import java.util.Base64;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
@@ -302,6 +297,7 @@ public enum APIEnum {
     GET_VOTED_ACCOUNT_POLLS("getVotedAccountPolls", GetVotedAccountPolls.getInstance()),
     GET_CHATS("getChats", GetChats.getInstance()),
     GET_CHAT_HISTORY("getChatHistory", GetChatHistory.getInstance()),
+    GET_ACCOUNTS("getAccounts", GetAccounts.getInstance()),
 
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();

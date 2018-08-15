@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.Account;
 import dto.Block;
 import dto.*;
 import org.eclipse.jetty.client.HttpClient;
@@ -577,6 +578,19 @@ public class NodeClient {
         List<JSONTransaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<JSONTransaction>>() {});
         return transactionsList;
     }
+
+    public List<Account> getAllAccounts(String url, int firstIndex, int lastIndex) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        URI uri = createURI(url);
+        params.put("requestType", "getAccounts");
+        putPagination(params, firstIndex, lastIndex);
+        String json = getJson(uri, params);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode accountsArray = root.get("accounts");
+        List<Account> accountsList = MAPPER.readValue(accountsArray.toString(), new TypeReference<List<Account>>() {});
+        return accountsList;
+    }
+
     public List<JSONTransaction> getAllTransactions(String url, int firstIndex, int lastIndex) throws IOException {
         return getAllTransactions(url, firstIndex, lastIndex, (byte)-1, (byte)-1);
     }

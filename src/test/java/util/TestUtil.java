@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.junit.Assert;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -34,6 +35,21 @@ public class TestUtil {
     }
 
     private TestUtil() {} //never
+
+
+    public static  <T> void checkList(List<T> list) {
+        Assert.assertNotNull(list);
+        Assert.assertFalse(list.isEmpty());
+    }
+
+    public static void checkAddress(List<JSONTransaction> transactions, String address) {
+        transactions.forEach(transaction -> {
+            if (!transaction.getSenderRS().equalsIgnoreCase(address) && !transaction.getRecipientRS().equalsIgnoreCase(address)) {
+                Assert.fail(transaction.toString() + " is not for this address \'" + address + "\'");
+            }
+        });
+    }
+
 
     public static URI createURI(String url) {
         try {

@@ -37,16 +37,8 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -878,6 +870,23 @@ public final class Account {
         }
         throw new RuntimeException("DUPLICATE KEY for account " + Long.toUnsignedString(accountId)
                 + " existing key " + Convert.toHexString(account.publicKey.publicKey) + " new key " + Convert.toHexString(publicKey));
+    }
+
+    public static DbIterator<Account> getAccounts(int from, int to) {
+        Connection con = null;
+        try {
+            con = Db.db.getConnection();
+            PreparedStatement pstmt =
+                    con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true ORDER BY balance desc "
+                            + DbUtils.limitsClause(from, to));
+            int i = 0;
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return new DbIterator<>(con, pstmt, (connection, rs) -> new Account(rs, null));
+        }
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     public static long getId(byte[] publicKey) {

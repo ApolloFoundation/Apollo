@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
+import static util.TestUtil.checkList;
 
 /**
  * Test scenarios on mainnet for {@link NodeClient}
