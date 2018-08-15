@@ -14,7 +14,7 @@
  *                                                                            *
  ******************************************************************************/
 
- /******************************************************************************
+/******************************************************************************
  * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  ******************************************************************************/
@@ -51,6 +51,8 @@ var NRS = (function(NRS, $, undefined) {
 		this.sharedKey = null;
 		this.serverKey = null;
 		this.blockHeight = null;
+
+		this.previewTransactions = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
@@ -100,8 +102,48 @@ var NRS = (function(NRS, $, undefined) {
 	        this.getItems();
 	
         };
-        
-        this.getItems = function(page, place) {
+
+        this.getPreviewTransactions = function () {
+			var url = API;
+			url += 'requestType=getBlockchainTransactions';
+			url += '&firstIndex=0&lastIndex=9';
+			url += '&account=' + NRS.account;
+
+			var target = $('#dashboard_table tbody');
+            if (target) {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                        var rows = "";
+                        data = JSON.parse(data).transactions;
+
+                        for (var i = 0; i < data.length; i++) {
+                            var transaction = data[i];
+
+                            transaction.confirmed = true;
+                            rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+                        }
+                        var $el = $("#dashboard_contents");
+
+                        if ($el.length) {
+                            $el.empty().append(rows);
+                        } else {
+                            $el = $("#dashboard_table");
+                            $el.find("tbody").empty().append(rows);
+                            $el.find('[data-toggle="tooltip"]').tooltip();
+                        }
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			}
+
+        };
+
+        this.getItems = function(page, place, isPreview) {
         	if (page) {
                 this.page = page;
             }
@@ -109,20 +151,20 @@ var NRS = (function(NRS, $, undefined) {
             if (place) {
 	            this.account = place;
             }
-            
+
             var indicator = '';
             indicator += parseInt(this.page * 15 - 14) + ' &hellip; ' + parseInt(this.page * 15);
             $(this.target).parent().find('[data-transactions-pagination]').find('.page-nav').html(indicator);
 
             var url = API;
-			
+
             if (place) {
 	            url += 'account=' + place + '&';
-	
+
             } else {
 	            url += 'account=' + NRS.account + '&';
             }
-	
+
 	        if (this.isPrivate) {
                 if (this.transactionType === 'getBlockchainTransactions' || this.transactionType === 'getPrivateBlockchainTransactions') {
                     url += 'requestType=getPrivateBlockchainTransactions&';
@@ -177,7 +219,7 @@ var NRS = (function(NRS, $, undefined) {
 
                     if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
                         that.items = JSON.parse(data).transactions;
-	
+
 	                    if (that.items.length < 15 && that.page == 1) {
                             $(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
 						} else {
@@ -244,7 +286,7 @@ var NRS = (function(NRS, $, undefined) {
                 }
             });
         };
-        
+
         this.validatePagimation = function(url, action) {
         	if (action === 'prev') {
                 $.ajax({
@@ -307,7 +349,7 @@ var NRS = (function(NRS, $, undefined) {
                 }
 			}
 		};
-        
+
         this.renderItems = function() {
             var indicator = '';
 
@@ -318,7 +360,7 @@ var NRS = (function(NRS, $, undefined) {
 
             this.getItems();
 		};
-  
+
 		this.logPulling = function() {
 			var that = this;
         	setInterval(function() {
@@ -337,77 +379,88 @@ var NRS = (function(NRS, $, undefined) {
                     success: function(data) {
                     	data  = JSON.parse(data);
 
+                        $('.nrs_current_block').html(that.blockHeight);
+                        $('#nrs_current_block_time').html(NRS.formatTimestamp(data.timestamp));
+
                     	if (that.blockHeight && that.blockHeight !== data.height) {
 							that.blockHeight = data.height;
+
+                            $('[data-block]').empty().html(that.blockHeight);
+                            $('[data-block]').attr('data-block', that.blockHeight);
+
 							that.getItems();
 						}
 						if (!that.blockHeight) {
 							that.blockHeight = data.height;
-							that.getItems();
+                            $('[data-block]').empty().html(that.blockHeight);
+                            $('[data-block]').attr('data-block', that.blockHeight);
+
+                            that.getItems();
 						}
                     },
                     error: function(data) {
                         console.log('err: ', data);
                     }
                 });
+                that.getPreviewTransactions();
 			},2000);
-		}
+		};
 		this.destroyTable = function() {
 			$('#transactions_table').find('tbody').empty();
-			
+
 			var $el = $("#" + NRS.currentPage + "_contents");
 			$el = $el.selector;
-			
+
 			$.ajax({
 				url: '/apl?account=' + NRS.account + '&requestType=getBlockchainTransactions&type=null&firstIndex=0&lastIndex=14&',
 				type: 'GET',
 				cache: false,
 				success: function(data) {
-					
+
 					var rows = "";
-					
+
 					if (that.items.length < 15 && that.page == 1) {
 						$(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').addClass('disabled');
 					} else {
 						$(that.target).parent().find('[data-transactions-pagination]').find('.page-nav').removeClass('disabled');
 					}
-					
+
 					for (var i = 0; i < that.items.length; i++) {
 						var transaction = that.items[i];
 						transaction.confirmed = true;
 						rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
 					}
-					
+
 					if ($el === '#transactions_contents') {
 						NRS.dataLoaded(rows);
 					}
-					
+
 					NRS.addPhasingInfoToTransactionRows(that.items);
-					
+
 					$('#transactions_table').find('tbody').html(rows);
-					
+
 					if (that.transactionType === 'getBlockchainTransactions' || that.transactionType === 'getPrivateBlockchainTransactions') {
 						that.items = JSON.parse(data).transactions;
 					}
 					if (that.transactionType === 'getAccountLedger' || that.transactionType === 'getPrivateAccountLedger') {
 						that.items = JSON.parse(data).entries;
-						
+
 						var decimalParams = NRS.getLedgerNumberOfDecimals(that.items);
 						for (var i = 0; i < that.items.length; i++) {
 							var entry = that.items[i];
 							rows += NRS.getLedgerEntryRow(entry, decimalParams);
 						}
-						
+
 						if ($el === '#ledger_contents') {
 							NRS.dataLoaded(rows);
 						}
 					}
 					if (that.transactionType === 'getBlocks') {
 						that.items = JSON.parse(data).blocks;
-						
+
 						if ($el === '#blocks_contents') {
 							NRS.blocksPageLoaded(that.items);
-							
+
 						}
 					}
 				},
@@ -420,7 +473,7 @@ var NRS = (function(NRS, $, undefined) {
 		// initialisation
         this.renderItems();
 	    this.initPaginations();
-      
+
         this.renderItems();
         this.logPulling();
 
@@ -545,22 +598,22 @@ var NRS = (function(NRS, $, undefined) {
 		NRS.myTransactionPagination = new NRS.paginate('getBlockchainTransactions', '#transactions_table');
 		NRS.accountLedgerPagination = new NRS.paginate('getAccountLedger',          '#ledger_table');
 		NRS.blocksPagination        = new NRS.paginate('getBlocks',                 '#blocks_table');
-		
-		
+
+
 		if (NRS.myTransactionPagination && NRS.accountLedgerPagination && NRS.blocksPagination) {
 			console.log('made switch ');
-			
+
 			NRS.myTransactionPagination.destroyTable();
-			
+
 			NRS.myTransactionPagination.unsetPrivate();
 			NRS.accountLedgerPagination.unsetPrivate();
 			NRS.blocksPagination       .unsetPrivate();
-			
+
 			NRS.myTransactionPagination.getItems(1, NRS.account);
 			NRS.accountLedgerPagination.getItems(1, NRS.account);
 			NRS.blocksPagination       .getItems(1, NRS.account);
 		}
-		
+
 		NRS.sendRequest("getBlockchainTransactions", {
 			"account": NRS.account,
 			"firstIndex": 0,
@@ -576,12 +629,12 @@ var NRS = (function(NRS, $, undefined) {
 					transactions.push(transaction);
 					transactionIds.push(transaction.transaction);
 				}
-				
+
 				NRS.getUnconfirmedTransactions(function() {
 					NRS.loadPage('dashboard');
 				});
 			} else {
-				
+
 				NRS.getUnconfirmedTransactions(function() {
 					NRS.loadPage('dashboard');
 				});
