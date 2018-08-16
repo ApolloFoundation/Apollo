@@ -109,6 +109,10 @@ var NRS = (function(NRS, $, undefined) {
 			url += '&firstIndex=0&lastIndex=9';
 			url += '&account=' + NRS.account;
 
+			var unconfirmedTransaction = API;
+            unconfirmedTransaction += 'requestType=getUnconfirmedTransactions';
+            unconfirmedTransaction += '&account=' + NRS.account;
+
 			var target = $('#dashboard_table tbody');
             if (target) {
                 $.ajax({
@@ -118,6 +122,8 @@ var NRS = (function(NRS, $, undefined) {
                     success: function(data) {
                         var rows = "";
                         data = JSON.parse(data).transactions;
+
+                        data = data.concat(getUnconfirmedTransaction()).slice(0, 9);
 
                         for (var i = 0; i < data.length; i++) {
                             var transaction = data[i];
@@ -144,6 +150,27 @@ var NRS = (function(NRS, $, undefined) {
                         console.log('err: ', data);
                     }
                 });
+
+
+                function getUnconfirmedTransaction () {
+                    var result;
+                    $.ajax({
+                        url: unconfirmedTransaction,
+                        type: 'GET',
+                        cache: false,
+                        async: false,
+                        success: function(data) {
+                            data = JSON.parse(data).unconfirmedTransactions;
+
+                            result =  data;
+                        },
+                        error: function(data) {
+                            console.log('err: ', data);
+                        }
+                    });
+                    return result;
+                }
+
 			}
 
         };
