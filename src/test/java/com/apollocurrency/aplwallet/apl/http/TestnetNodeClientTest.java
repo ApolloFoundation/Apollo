@@ -550,7 +550,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(15, allAccounts.size());
         List<Account> sortedAccounts = allAccounts.stream().sorted(Comparator.comparingLong(Account::getBalanceATM).reversed()).collect(Collectors.toList());
         Assert.assertEquals(sortedAccounts, allAccounts);
-        long minBal = sortedAccounts.stream().min(Comparator.comparingLong(Account::getBalanceATM)).get().getBalanceATM();
+        long minBal = allAccounts.get(14).getBalanceATM();
         Assert.assertTrue(minBal >= client.getAllAccounts(url, 15, 15).get(0).getBalanceATM());
     }
 }

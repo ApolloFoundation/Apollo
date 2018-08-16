@@ -33,6 +33,8 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 
 public final class JSONData {
@@ -56,10 +58,13 @@ public final class JSONData {
         return json;
     }
 
+    static void putAccountBalancePercentage(JSONObject json, Account account, long totalAmount) {
+        json.put("percentage", String.format("%.4f%%", 100D * account.getBalanceATM() / totalAmount));
+    }
+
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
         return accountBalance(account, includeEffectiveBalance, Apl.getBlockchain().getHeight());
     }
-
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
@@ -422,6 +427,34 @@ public final class JSONData {
             json.put("executedPhasedTransactions", phasedTransactions);
         }
         return json;
+    }
+
+    static JSONObject getAccounts(int from, int to) {
+        //using one connection for 3 queries
+        try(Connection con = Db.db.getConnection("")) {
+            List<Account> accounts = Account.getAccounts(con, from, to);
+            long totalAmount = Account.getTotalAmount(con);
+            long totalAccounts = Account.getTotalNumberOfAccounts(con);
+            return accounts(accounts, totalAmount, totalAccounts);
+            }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private static JSONObject accounts(List<Account> accounts, long totalAmount, long totalAccounts) {
+        JSONObject result = new JSONObject();
+        result.put("totalAmount", totalAmount);
+        result.put("totalNumberOfAccounts", totalAccounts);
+        JSONArray jsonArray = new JSONArray();
+        accounts.forEach(account -> {
+            JSONObject json = JSONData.accountBalance(account, false);
+            JSONData.putAccount(json, "account", account.getId());
+            JSONData.putAccountBalancePercentage(json, account, totalAmount);
+            jsonArray.add(json);
+        });
+        result.put("accounts", jsonArray);
+        return result;
     }
 
     static JSONObject encryptedData(EncryptedData encryptedData) {

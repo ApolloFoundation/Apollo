@@ -298,6 +298,7 @@ public enum APIEnum {
     GET_CHATS("getChats", GetChats.getInstance()),
     GET_CHAT_HISTORY("getChatHistory", GetChatHistory.getInstance()),
     GET_ACCOUNTS("getAccounts", GetAccounts.getInstance()),
+    GET_TOTAL_AMOUNT("getTotalAmount", GetTotalAmount.getInstance()),
 
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
