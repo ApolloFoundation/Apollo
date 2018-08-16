@@ -126,7 +126,7 @@ var NRS = (function(NRS, $, undefined) {
                             rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
                         }
                         var $el = $("#dashboard_contents");
-
+/*
                         if ($el.length) {
                             $el.empty().append(rows);
                         } else {
@@ -134,6 +134,11 @@ var NRS = (function(NRS, $, undefined) {
                             $el.find("tbody").empty().append(rows);
                             $el.find('[data-toggle="tooltip"]').tooltip();
                         }
+*/
+			    $el = $("#dashboard_table");
+                            $el.find("tbody").empty().append(rows);
+                            $el.find('[data-toggle="tooltip"]').tooltip();
+                        
                     },
                     error: function(data) {
                         console.log('err: ', data);
@@ -372,6 +377,8 @@ var NRS = (function(NRS, $, undefined) {
 			var that = this;
 
 			setInterval(function(){
+                var accountURL = API + 'requestType=getAccount&account=' + NRS.account;
+                
                 $.ajax({
                     url: API + 'requestType=getBlock',
                     type: 'GET',
@@ -385,23 +392,44 @@ var NRS = (function(NRS, $, undefined) {
                     	if (that.blockHeight && that.blockHeight !== data.height) {
 							that.blockHeight = data.height;
 
-                            $('[data-block]').empty().html(that.blockHeight);
-                            $('[data-block]').attr('data-block', that.blockHeight);
+                    	$('#sidebar_block_link').find('[data-block]').empty().html(that.blockHeight);
+                    	$('#sidebar_block_link').find('[data-block]').attr('data-block', that.blockHeight);
 
 							that.getItems();
 						}
 						if (!that.blockHeight) {
 							that.blockHeight = data.height;
-                            $('[data-block]').empty().html(that.blockHeight);
-                            $('[data-block]').attr('data-block', that.blockHeight);
+                            $('#sidebar_block_link').find('[data-block]').empty().html(that.blockHeight);
+                            $('#sidebar_block_link').find('[data-block]').attr('data-block', that.blockHeight);
 
                             that.getItems();
 						}
                     },
                     error: function(data) {
                         console.log('err: ', data);
+                
                     }
                 });
+                
+                
+                $.ajax({
+            	    url: accountURL,
+            	    cache: false,
+        	    type: 'GET',
+        	    success: function(data){
+        		data = JSON.parse(data);
+        		
+			var accountBalance = data.unconfirmedBalanceATM;
+			var balanceIntegers = Math.floor(accountBalance/100000000).toLocaleString();
+			var balanceDecimals = Math.round((accountBalance/100000000 - Math.floor(accountBalance/100000000))*100);
+			$('#account_balance').empty().html( balanceIntegers + '<span style="font-size:12px">.' + balanceDecimals +  '</span>');
+        	    },
+        	    error: function(data){
+                        console.log('err: ', data);
+                    }
+        	    
+        	});
+                
                 that.getPreviewTransactions();
 			},2000);
 		};
