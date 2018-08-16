@@ -765,7 +765,11 @@ var NRS = (function (NRS, $) {
         return decryptData(data, options);
 	};
 
-	function decryptData(data, options) {
+    NRS.decryptDataJava = function(data, options) {
+        return decryptDataJava(data, options);
+    };
+
+    function decryptDataJava(data, options) {
 		if (!options.sharedKey) {
 			options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
@@ -800,6 +804,25 @@ var NRS = (function (NRS, $) {
 
         return { message: message, sharedKey: converters.byteArrayToHexString(result.sharedKey) };
 	}
+
+    function decryptData(data, options) {
+        if (!options.sharedKey) {
+            options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
+        }
+
+        var result = aesDecrypt(data, options);
+        var binData = new Uint8Array(result.decrypted);
+        if (!(options.isCompressed === false)) {
+            binData = pako.inflate(binData);
+        }
+        var message;
+        if (!(options.isText === false)) {
+            message = converters.byteArrayToString(binData);
+        } else {
+            message = converters.byteArrayToHexString(binData);
+        }
+        return { message: message, sharedKey: converters.byteArrayToHexString(result.sharedKey) };
+    }
 
 	function getSharedSecret(key1, key2) {
         return converters.shortArrayToByteArray(curve25519_(converters.byteArrayToShortArray(key1), converters.byteArrayToShortArray(key2), null));

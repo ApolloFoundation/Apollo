@@ -52,7 +52,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final Version VERSION = Version.from("1.0.8");
+    public static final Version VERSION = Version.from("1.0.9");
     public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
