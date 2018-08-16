@@ -123,10 +123,18 @@ var NRS = (function(NRS, $, undefined) {
                         var rows = "";
                         data = JSON.parse(data).transactions;
 
-                        data = data.concat(getUnconfirmedTransaction()).slice(0, 9);
+                        var unconfirmed = getUnconfirmedTransaction();
 
-                        for (var i = 0; i < data.length; i++) {
-                            var transaction = data[i];
+                        var i = 0;
+                        for (; (i < unconfirmed.length) && (i < 10); i++) {
+                            var transaction = unconfirmed[i];
+
+                            transaction.confirmed = false;
+                            rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
+                        }
+                        
+                        for (; i < data.length && (i < 10); i++) {
+                            var transaction = data[i - unconfirmed.length];
 
                             transaction.confirmed = true;
                             rows += NRS.getTransactionRowHTML(transaction, false, {amount: 0, fee: 0});
