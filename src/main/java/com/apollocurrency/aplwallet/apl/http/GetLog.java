@@ -20,18 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.util.MemoryHandler;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import com.apollocurrency.aplwallet.apl.util.MemoryAppender;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.logging.Handler;
-import java.util.logging.Logger;
+import java.util.Iterator;
 
 /**
  * <p>The GetLog API will return log messages from the ring buffer
- * maintained by the MemoryHandler log handler.  The most recent
+ * maintained by the MemoryAppender log handler.  The most recent
  * 'count' messages will be returned.  All log messages in the
  * ring buffer will be returned if 'count' is omitted.</p>
  *
@@ -84,12 +87,14 @@ public final class GetLog extends APIServlet.APIRequestHandler {
         // Get the log messages
         //
         JSONArray logJSON = new JSONArray();
-        Logger logger = Logger.getLogger("");
-        Handler[] handlers = logger.getHandlers();
-        for (Handler handler : handlers) {
-            if (handler instanceof MemoryHandler) {
-                logJSON.addAll(((MemoryHandler)handler).getMessages(count));
-                break;
+        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        for (ch.qos.logback.classic.Logger logger : context.getLoggerList()) {
+            for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext();) {
+                Appender<ILoggingEvent> appender = index.next();
+                if(appender.getName().equalsIgnoreCase("inMemory")){
+                    MemoryAppender memoryAppender = (MemoryAppender) appender;
+                    logJSON.addAll(memoryAppender.getMessages(count));
+                }
             }
         }
         //
