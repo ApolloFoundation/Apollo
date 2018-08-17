@@ -453,14 +453,16 @@ var NRS = (function(NRS, $, undefined) {
         	    type: 'GET',
         	    success: function(data){
         		data = JSON.parse(data);
+//TODO: Refactor that shit
 			var accountBalance = data.unconfirmedBalanceATM;
 			var balanceIntegers = Math.floor(accountBalance/100000000).toLocaleString();
 			var balanceDecimals = Math.round((accountBalance/100000000 - Math.floor(accountBalance/100000000))*100);
-			if (accountBalance == 0)
+			if (accountBalance == 0 || typeof(accountBalance) == 'undefined')
 			{
 			    balanceIntegers = 0;
-			    balanceDecimals = "00";
+			    balanceDecimals = "";
 			}
+
 			$('#account_balance').empty().html( balanceIntegers + '<span style="font-size:12px">.' + balanceDecimals +  '</span>');
         	    },
         	    error: function(data){
