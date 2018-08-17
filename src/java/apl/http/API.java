@@ -147,7 +147,13 @@ public final class API {
             final String host = Apl.getStringProperty("apl.apiServerHost");
             disableAdminPassword = Apl.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
 
-            apiServer = new Server();
+            int maxThreadPoolSize = Apl.getIntProperty("apl.threadPoolMaxSize");
+            int minThreadPoolSize = Apl.getIntProperty("apl.threadPoolMinSize");
+            org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
+            threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
+            threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
+            apiServer = new Server(threadPool);
+
             ServerConnector connector;
             boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
             //
