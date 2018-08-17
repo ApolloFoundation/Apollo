@@ -13,9 +13,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Account;
-import dto.Block;
 import dto.*;
+import dto.Block;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -579,16 +578,13 @@ public class NodeClient {
         return transactionsList;
     }
 
-    public List<Account> getAllAccounts(String url, int firstIndex, int lastIndex) throws IOException {
+    public AccountsStatistic getAccountsStatistic(String url, int numberOfAccounts) throws IOException {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
-        params.put("requestType", "getAccounts");
-        putPagination(params, firstIndex, lastIndex);
+        params.put("requestType", "getAccountsStatistic");
+        params.put("numberOfAccounts", String.valueOf(numberOfAccounts));
         String json = getJson(uri, params);
-        JsonNode root = MAPPER.readTree(json);
-        JsonNode accountsArray = root.get("accounts");
-        List<Account> accountsList = MAPPER.readValue(accountsArray.toString(), new TypeReference<List<Account>>() {});
-        return accountsList;
+        return MAPPER.readValue(json, AccountsStatistic.class);
     }
 
     public List<JSONTransaction> getAllTransactions(String url, int firstIndex, int lastIndex) throws IOException {

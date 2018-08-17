@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Account;
+import dto.AccountsStatistic;
 import dto.Block;
 import dto.LedgerEntry;
 import dto.Peer;
@@ -21,9 +21,10 @@ import util.TestUtil;
 import util.WalletRunner;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
 import static util.TestUtil.*;
@@ -545,13 +546,10 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
-    public void testGetAccounts() throws IOException {
-        List<Account> allAccounts = client.getAllAccounts(url, 0, 14);
-        Assert.assertEquals(15, allAccounts.size());
-        List<Account> sortedAccounts = allAccounts.stream().sorted(Comparator.comparingLong(Account::getBalanceATM).reversed()).collect(Collectors.toList());
-        Assert.assertEquals(sortedAccounts, allAccounts);
-        long minBal = allAccounts.get(14).getBalanceATM();
-        Assert.assertTrue(minBal >= client.getAllAccounts(url, 15, 15).get(0).getBalanceATM());
+    public void testGetAccountsStatistic() throws IOException {
+        AccountsStatistic accountsStatistic = client.getAccountsStatistic(url, 100);
+        Assert.assertNotNull(accountsStatistic);
+        Assert.assertEquals(100, accountsStatistic.getNumberOfTopAccounts());
     }
 }
 
