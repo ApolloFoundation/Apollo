@@ -107,6 +107,9 @@ public final class Constants {
     public static final byte MAX_VOTE_VALUE = 92;
     public static final byte NO_VOTE_VALUE = Byte.MIN_VALUE;
 
+    public static final int MIN_TOP_ACCOUNTS_NUMBER = 50;
+    public static final int MAX_TOP_ACCOUNTS_NUMBER = 500;
+
     public static final int MAX_DGS_LISTING_QUANTITY = 1000000000;
     public static final int MAX_DGS_LISTING_NAME_LENGTH = 100;
     public static final int MAX_DGS_LISTING_DESCRIPTION_LENGTH = 1000;
