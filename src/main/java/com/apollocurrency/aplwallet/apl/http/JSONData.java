@@ -429,31 +429,25 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject getAccounts(int from, int to) {
+    static JSONObject getAccountsStatistic(int numberOfAccounts) {
         //using one connection for 3 queries
-        try(Connection con = Db.db.getConnection("")) {
-            List<Account> accounts = Account.getAccounts(con, from, to);
-            long totalAmount = Account.getTotalAmount(con);
+        try(Connection con = Db.db.getConnection()) {
+            long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
+            long totalSupply = Account.getTotalSupply(con);
             long totalAccounts = Account.getTotalNumberOfAccounts(con);
-            return accounts(accounts, totalAmount, totalAccounts);
+            return accounts(totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
             }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    private static JSONObject accounts(List<Account> accounts, long totalAmount, long totalAccounts) {
+    private static JSONObject accounts(long totalAmountOnTopAccounts, long totalSupply, long totalAccounts, int numberOfAccounts) {
         JSONObject result = new JSONObject();
-        result.put("totalAmount", totalAmount);
+        result.put("totalSupply", totalSupply);
         result.put("totalNumberOfAccounts", totalAccounts);
-        JSONArray jsonArray = new JSONArray();
-        accounts.forEach(account -> {
-            JSONObject json = JSONData.accountBalance(account, false);
-            JSONData.putAccount(json, "account", account.getId());
-            JSONData.putAccountBalancePercentage(json, account, totalAmount);
-            jsonArray.add(json);
-        });
-        result.put("accounts", jsonArray);
+        result.put("totalAmountOnTopAccounts", totalAmountOnTopAccounts);
+        result.put("numberOfTopAccounts", numberOfAccounts);
         return result;
     }
 

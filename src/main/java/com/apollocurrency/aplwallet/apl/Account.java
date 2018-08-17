@@ -538,29 +538,33 @@ public final class Account {
                 + " existing key " + Convert.toHexString(account.publicKey.publicKey) + " new key " + Convert.toHexString(publicKey));
     }
 
-    public static List<Account> getAccounts(Connection con, int from, int to) throws SQLException {
+    public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
         try (
             PreparedStatement pstmt =
-                    con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true ORDER BY balance desc "
-                            + DbUtils.limitsClause(from, to))) {
+                    con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
             int i = 0;
-            DbUtils.setLimits(++i, pstmt, from, to);
-            List<Account> accounts = new ArrayList<>();
+            DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    accounts.add(new Account(rs, null));
+                if (rs.next()) {
+                    return rs.getLong("total_amount");
+                } else {
+                    throw new RuntimeException("Cannot retrieve total_amount: no data");
                 }
-                return accounts;
             }
         }
     }
-    public static List<Account> getAccounts(int from, int to) {
+    public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         try(Connection con = Db.db.getConnection()) {
-            return getAccounts(con, from, to);
+            return getTotalAmountOnTopAccounts(numberOfTopAccounts);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    public static long getTotalAmountOnTopAccounts() {
+        return getTotalAmountOnTopAccounts(100);
     }
 
     public static long getTotalNumberOfAccounts(Connection con) throws SQLException {
@@ -585,24 +589,24 @@ public final class Account {
     }
 
 
-    public static long getTotalAmount(Connection con) throws SQLException {
+    public static long getTotalSupply(Connection con) throws SQLException {
         try (
-                PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_amount FROM account WHERE id = ?")
+                PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
         ) {
             int i = 0;
             pstmt.setLong(++i, Genesis.CREATOR_ID);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getLong("total_amount");
+                    return rs.getLong("total_supply");
                 } else {
                     throw new RuntimeException("Cannot retrieve total_amount: no data");
                 }
             }
         }
     }
-    public static long getTotalAmount() {
+    public static long getTotalSupply() {
         try(Connection con = Db.db.getConnection()) {
-            return getTotalAmount(con);
+            return getTotalSupply(con);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

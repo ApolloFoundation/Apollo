@@ -11,22 +11,22 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class GetTotalAmount extends APIServlet.APIRequestHandler{
+public class GetTotalSupply extends APIServlet.APIRequestHandler{
     private static class GetTotalAmountHolder {
-        private static final GetTotalAmount INSTANCE = new GetTotalAmount();
+        private static final GetTotalSupply INSTANCE = new GetTotalSupply();
     }
 
-    public static GetTotalAmount getInstance() {
+    public static GetTotalSupply getInstance() {
         return GetTotalAmountHolder.INSTANCE;
     }
-    private GetTotalAmount() {
+    private GetTotalSupply() {
         super(new APITag[] {APITag.INFO, APITag.ACCOUNTS});
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         JSONObject response = new JSONObject();
-        response.put("totalAmount", Account.getTotalAmount());
+        response.put("totalAmount", Account.getTotalSupply());
         return response;
     }
 }

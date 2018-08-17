@@ -66,7 +66,7 @@ public class PlatformDependentUpdater {
         method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
         System.setProperty("apl.runtime.mode", "desktop");
         Apl.main(null);
-        getInstance().continueUpdate(Paths.get(""), Platform.LINUX);
+        getInstance().continueUpdate(Paths.get("E:/ApolloWallet-1.0.8"), Platform.WINDOWS);
     }
 
     private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
@@ -75,7 +75,7 @@ public class PlatformDependentUpdater {
             UpdaterDb.saveUpdateStatus(true);
             while (!mediator.isShutdown()) {
                 try {
-                    LOG.debug("WAITING...");
+                    LOG.trace("WAITING...");
                     TimeUnit.MILLISECONDS.sleep(100);
                 }
                 catch (InterruptedException e) {
@@ -90,7 +90,8 @@ public class PlatformDependentUpdater {
             }
             try {
                 LOG.debug("Starting platform dependent script");
-                Runtime.getRuntime().exec(String.format("%s %s %s %s %s", runTool, scriptPath.toString(), Paths.get("").toAbsolutePath().toString(), updateDirectory.toAbsolutePath().toString(), RuntimeEnvironment.isDesktopApplicationEnabled()).trim());
+                Runtime.getRuntime().exec(String.format("%s %s %s %s %s", runTool, scriptPath.toString(),
+                        Paths.get("").toAbsolutePath().toString(), updateDirectory.toAbsolutePath().toString(), RuntimeEnvironment.isDesktopApplicationEnabled()).trim());
                 LOG.debug("Platform dependent script was started");
             }
             catch (IOException e) {

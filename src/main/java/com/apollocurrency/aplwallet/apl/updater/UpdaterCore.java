@@ -36,17 +36,34 @@ public class UpdaterCore {
         catch (Throwable e) {
             Logger.logDebugMessage("Updater db error: ", e.getLocalizedMessage());
         }
-        if (transaction != null && !isUpdated) {
-            Logger.logDebugMessage("Found non-installed update : " + transaction.getJSONObject().toJSONString());
-            UpdateDataHolder updateHolder = processTransaction(transaction);
-            if (updateHolder == null) {
-                Logger.logErrorMessage("Unable to validate update transaction: " + transaction.getJSONObject().toJSONString());
-            } else {
-                if (((TransactionType.Update) updateHolder.getTransaction().getType()).getLevel() == Level.MINOR) {
-                    UpdaterMediator.getInstance().addUpdateListener(updateListener);
+        if (transaction != null) {
+            if (!isUpdated) {
+                Logger.logDebugMessage("Found non-installed update : " + transaction.getJSONObject().toJSONString());
+                UpdateDataHolder updateHolder = processTransaction(transaction);
+                if (updateHolder == null) {
+                    Logger.logErrorMessage("Unable to validate update transaction: " + transaction.getJSONObject().toJSONString());
+                } else {
+                    if (((TransactionType.Update) updateHolder.getTransaction().getType()).getLevel() == Level.MINOR) {
+                        UpdaterMediator.getInstance().addUpdateListener(updateListener);
+                    }
+                    this.updateDataHolder = updateHolder;
+                    startUpdate();
                 }
-                this.updateDataHolder = updateHolder;
-                startUpdate();
+            } else {
+                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+                Version expectedVersion = attachment.getAppVersion();
+                if (expectedVersion.greaterThan(Apl.VERSION)) {
+                    Logger.logErrorMessage("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + Apl.VERSION +
+                            " " + " updateVersion: " + expectedVersion);
+                    if (transaction.getType() == TransactionType.Update.CRITICAL) {
+//                        UpdaterMediator.getInstance().addUpdateListener(updateListener);
+                                                stopForgingAndBlockAcceptance();
+                        UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                    } else {
+                        Logger.logInfoMessage("Skip uninstalled non-critical update");
+                        UpdaterMediator.getInstance().addUpdateListener(updateListener);
+                    }
+                }
             }
         } else {
             UpdaterMediator.getInstance().addUpdateListener(updateListener);

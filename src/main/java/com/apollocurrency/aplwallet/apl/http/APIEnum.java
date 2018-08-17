@@ -297,8 +297,8 @@ public enum APIEnum {
     GET_VOTED_ACCOUNT_POLLS("getVotedAccountPolls", GetVotedAccountPolls.getInstance()),
     GET_CHATS("getChats", GetChats.getInstance()),
     GET_CHAT_HISTORY("getChatHistory", GetChatHistory.getInstance()),
-    GET_ACCOUNTS("getAccounts", GetAccounts.getInstance()),
-    GET_TOTAL_AMOUNT("getTotalAmount", GetTotalAmount.getInstance()),
+    GET_ACCOUNTS_STATISTIC("getAccountsStatistic", GetAccountsStatistic.getInstance()),
+    GET_TOTAL_SUPPLY("getTotalSupply", GetTotalSupply.getInstance()),
 
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
