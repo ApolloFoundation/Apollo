@@ -957,6 +957,7 @@ public final class JSONData {
         json.put("version", transaction.getVersion());
         json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
         json.put("ecBlockHeight", transaction.getECBlockHeight());
+        json.put("prunableTimeToLive", transaction.getPrunableTimeToLive());
 
         return json;
     }
