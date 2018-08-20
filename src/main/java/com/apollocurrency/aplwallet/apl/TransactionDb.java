@@ -182,6 +182,7 @@ final class TransactionDb {
             byte[] fullHash = rs.getBytes("full_hash");
             byte version = rs.getByte("version");
             short transactionIndex = rs.getShort("transaction_index");
+            long prunableTimeToLive = rs.getLong("prunable_ttl");
 
             ByteBuffer buffer = null;
             if (attachmentBytes != null) {
@@ -230,6 +231,8 @@ final class TransactionDb {
             if (rs.getBoolean("has_prunable_encrypted_message")) {
                 builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
             }
+
+            builder.prunableTimeToLive(prunableTimeToLive);
 
             return builder.build();
 
@@ -310,8 +313,8 @@ final class TransactionDb {
                         + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
                         + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                         + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
-                        + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                        + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index, prunable_ttl) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
@@ -354,6 +357,7 @@ final class TransactionDb {
                     pstmt.setInt(++i, transaction.getECBlockHeight());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getECBlockId());
                     pstmt.setShort(++i, index++);
+                    pstmt.setLong(++i, transaction.getPrunableTimeToLive());
                     pstmt.executeUpdate();
                 }
                 if (transaction.referencedTransactionFullHash() != null) {
