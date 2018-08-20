@@ -1,19 +1,14 @@
-package util;/*
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
+package util;
+
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
+import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.junit.Assert;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -34,9 +29,27 @@ public class TestUtil {
 
     static {
         MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(JSONTransaction.class, new TransactionDeserializer());
+        MAPPER.registerModule(module);
     }
 
     private TestUtil() {} //never
+
+
+    public static  <T> void checkList(List<T> list) {
+        Assert.assertNotNull(list);
+        Assert.assertFalse(list.isEmpty());
+    }
+
+    public static void checkAddress(List<JSONTransaction> transactions, String address) {
+        transactions.forEach(transaction -> {
+            if (!transaction.getSenderRS().equalsIgnoreCase(address) && !transaction.getRecipientRS().equalsIgnoreCase(address)) {
+                Assert.fail(transaction.toString() + " is not for this address \'" + address + "\'");
+            }
+        });
+    }
+
 
     public static URI createURI(String url) {
         try {
@@ -47,7 +60,7 @@ public class TestUtil {
         }
     }
 
-    public static Long atm(long amount) {
+    public static long atm(long amount) {
         return 100_000_000L * amount;
     }
 

@@ -1,13 +1,12 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
@@ -15,8 +14,13 @@
  *
  */
 
+/*
+ * Copyright © 2018 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.db.DbBytesConverter;
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.fs.migration.MigrateFromH2;
@@ -660,17 +664,20 @@ class AplDbVersion extends DbVersion {
                         + ")"
                 );
             case 240:
-                apply("ALTER TABLE TRANSACTION ADD PRUNABLE_TTL BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
+                DbBytesConverter.init();
+                apply(null);
             case 241:
+                apply("ALTER TABLE TRANSACTION ADD PRUNABLE_TTL BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
+            case 242:
                 apply("ALTER TABLE TAGGED_DATA ADD TIME_TO_LIVE BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
                 return;
-            case 242:
+            case 243:
                 apply("ALTER TABLE PRUNABLE_MESSAGE ADD TIME_TO_LIVE BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
                 return;
-            case 243:
+            case 244:
                 MigrateFromH2.migrate(this.db);
                 apply("ALTER TABLE TAGGED_DATA DROP COLUMN DATA");
-            case 244:
+            case 245:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

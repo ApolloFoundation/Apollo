@@ -1,16 +1,5 @@
 /*
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl;
@@ -24,9 +13,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Block;
 import dto.*;
-import dto.Transaction;
+import dto.Block;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -139,8 +127,7 @@ public class NodeClient {
     public String getBlocks(String url, int from, int to, boolean includeTransactions, Long timestamp) {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getBlocks");
-        params.put("firstIndex", String.valueOf(from));
-        params.put("lastIndex", String.valueOf(to));
+        putPagination(params, from, to);
         if (timestamp != null) {
             params.put("timestamp", timestamp.toString());
         }
@@ -154,9 +141,9 @@ public class NodeClient {
     }
 
 
-    public Long getBlockchainHeight(String url) throws Exception {
+    public int getBlockchainHeight(String url) throws Exception {
         String blocks = getBlocks(url);
-        return (Long) ((JSONObject) ((JSONArray) ((JSONObject) PARSER.parse(blocks)).get("blocks")).get(0)).get("height");
+        return Integer.parseInt(((JSONObject) ((JSONArray) ((JSONObject) PARSER.parse(blocks)).get("blocks")).get(0)).get("height").toString());
     }
 
     public String getAccountTransactions(String url, String rsAddress) {
@@ -169,14 +156,13 @@ public class NodeClient {
         return getJson(uri, params);
     }
 
-    public List<Transaction> getAccountTransactions(String url, String rsAddress, int from, int to, int type, int subtype) throws IOException {
+    public List<JSONTransaction> getAccountTransactions(String url, String rsAddress, int from, int to, int type, int subtype) throws IOException {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getBlockchainTransactions");
         params.put("account", rsAddress);
         params.put("includeTransactions", "true");
-        params.put("firstIndex", String.valueOf(from));
-        params.put("lastIndex", String.valueOf(to));
+        putPagination(params, from, to);
         if (type >= 0) {
             params.put("type", String.valueOf(type));
         }
@@ -187,18 +173,18 @@ public class NodeClient {
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
         try {
-            return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
+            return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<JSONTransaction>>() {});
         }
         catch (Throwable e) {
             return Collections.emptyList();
         }
     }
 
-    public List<Transaction> getAccountTransactionsList(String url, String rsAddress) throws ParseException, IOException {
+    public List<JSONTransaction> getAccountTransactionsList(String url, String rsAddress) throws ParseException, IOException {
         String accountTransactions = getAccountTransactions(url, rsAddress);
         JsonNode root = MAPPER.readTree(accountTransactions);
         JsonNode transactionsArray = root.get("transactions");
-        List<Transaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
+        List<JSONTransaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<JSONTransaction>>() {});
         return transactionsList;
     }
 
@@ -219,10 +205,10 @@ public class NodeClient {
 
     }
 
-    public String getBlockTransactions(String url, Long height) throws ParseException {
+    public String getBlockTransactions(String url, int height) throws ParseException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getBlock");
-        params.put("height", height.toString());
+        params.put("height", String.valueOf(height));
         params.put("includeTransactions", "true");
         params.put("includeExecutedPhased", "true");
         URI uri = createURI(url);
@@ -231,9 +217,9 @@ public class NodeClient {
         return transactions.toJSONString();
     }
 
-    public List<Transaction> getBlockTransactionsList(String url, Long height) throws ParseException, IOException {
+    public List<JSONTransaction> getBlockTransactionsList(String url, int height) throws ParseException, IOException {
         String json = getBlockTransactions(url, height);
-        return MAPPER.readValue(json, new TypeReference<List<Transaction>>() {});
+        return MAPPER.readValue(json, new TypeReference<List<JSONTransaction>>() {});
     }
 
     public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
@@ -247,10 +233,16 @@ public class NodeClient {
         return postJson(createURI(url), parameters, "");
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+    public JSONTransaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
         String json = sendMoney(url, secretPhrase, recipient, amountATM, feeATM, deadline);
-        String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
-        return MAPPER.readValue(transactionJSON, Transaction.class);
+        String transactionJSON;
+        try {
+            transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Unsuccessful request:" + json, e);
+        }
+        return MAPPER.readValue(transactionJSON, JSONTransaction.class);
     }
 
     private String sendMoneyPrivate(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) {
@@ -264,17 +256,31 @@ public class NodeClient {
         return postJson(createURI(url), parameters, "");
     }
 
-    public Transaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM, Long deadline) throws IOException, ParseException {
+    public JSONTransaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM,
+                                                      Long deadline) throws IOException, ParseException {
         String json = sendMoneyPrivate(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
-        return MAPPER.readValue(transactionJSON, Transaction.class);
+        return MAPPER.readValue(transactionJSON, JSONTransaction.class);
     }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) throws IOException, ParseException {
+    public JSONTransaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM) throws IOException,
+            ParseException {
         return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
+    public JSONTransaction sendMoneyTransaction(String url, String secretPhrase, String recipientPublicKey, int deadline, String recipient,
+                                                Long amountATM,
+                                                Long feeATM) throws IOException,
+            ParseException {
+        Map<String, String> params = new HashMap<>();
+        params.put("recipientPublicKey", recipientPublicKey);
+        params.put("requestType", "sendMoney");
+        params.put("recipient", recipient);
+        params.put("amountATM", String.valueOf(amountATM));
+        return sendTransaction(url, secretPhrase, feeATM, deadline, params);
+    }
 
-    public Transaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM) throws IOException, ParseException {
+    public JSONTransaction sendMoneyTransaction(String url, String secretPhrase, String recipient, Long amountATM) throws IOException,
+            ParseException {
         return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, DEFAULT_FEE);
     }
 
@@ -297,22 +303,22 @@ public class NodeClient {
         return sendMoney(url, secretPhrase, recipient, DEFAULT_AMOUNT);
     }
 
-    public Transaction getTransaction(String url, String fullHash) throws IOException {
+    public JSONTransaction getTransaction(String url, String fullHash) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getTransaction");
         parameters.put("fullHash", fullHash);
         String json = getJson(createURI(url), parameters);
-        return MAPPER.readValue(json, Transaction.class);
+        return MAPPER.readValue(json, JSONTransaction.class);
     }
 
-    public List<Transaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) throws Exception {
+    public List<JSONTransaction> getPrivateBlockchainTransactionsList(String url, String secretPhrase, int height, Long firstIndex, Long lastIndex) throws Exception {
         String json = getPrivateBlockchainTransactionsJson(url, secretPhrase, height, firstIndex, lastIndex);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
-        return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<Transaction>>() {});
+        return MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<JSONTransaction>>() {});
     }
 
-    public List<Transaction> getEncryptedPrivateBlockchainTransactionsList(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) throws Exception {
+    public List<JSONTransaction> getEncryptedPrivateBlockchainTransactionsList(String url, int height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) throws Exception {
         String json = getEncryptedPrivateBlockchainTransactionsJson(url, height, firstIndex, lastIndex, null, publicKey);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
@@ -321,29 +327,29 @@ public class NodeClient {
             throw new RuntimeException("Cannot find transactions or serverPublic key in json: " + root.toString());
         }
         byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), Convert.parseHexString(serverPublicKey.textValue()));
-        List<Transaction> transactions = new ArrayList<>();
+        List<JSONTransaction> transactions = new ArrayList<>();
         for (final JsonNode transactionJson: transactionsArray) {
             if (transactionJson.get("encryptedTransaction") != null) {
                 JsonNode encryptedTransaction = transactionJson.get("encryptedTransaction");
                 byte[] encryptedBytes = Convert.parseHexString(encryptedTransaction.textValue());
                 byte[] decryptedData = Crypto.aesDecrypt(encryptedBytes, sharedKey);
                 String decryptedJson = Convert.toString(decryptedData);
-                Transaction transaction = MAPPER.readValue(decryptedJson, Transaction.class);
+                JSONTransaction transaction = MAPPER.readValue(decryptedJson, JSONTransaction.class);
                 transactions.add(transaction);
             } else {
-                transactions.add(MAPPER.readValue(transactionJson.toString(), Transaction.class));
+                transactions.add(MAPPER.readValue(transactionJson.toString(), JSONTransaction.class));
             }
         }
         return transactions;
     }
 
-    public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase, Long height, Long firstIndex, Long lastIndex) {
+    public String getPrivateBlockchainTransactionsJson(String url, String secretPhrase, int height, Long firstIndex, Long lastIndex) {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
         params.put("secretPhrase", secretPhrase);
-        if (height != null) {
-            params.put("height", height.toString());
+        if (height >=0) {
+            params.put("height", String.valueOf(height));
         }
         if (firstIndex != null) {
             params.put("firstIndex", firstIndex.toString());
@@ -354,7 +360,7 @@ public class NodeClient {
         return getJson(uri, params);
     }
 
-    public String getEncryptedPrivateBlockchainTransactionsJson(String url, Long height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) {
+    public String getEncryptedPrivateBlockchainTransactionsJson(String url, int height, Long firstIndex, Long lastIndex, String secretPhrase, String publicKey) {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
@@ -364,8 +370,8 @@ public class NodeClient {
         } else if (secretPhrase != null) {
             params.put("secretPhrase", secretPhrase);
         }
-        if (height != null) {
-            params.put("height", height.toString());
+        if (height >= 0) {
+            params.put("height", String.valueOf(height));
         }
         if (firstIndex != null) {
             params.put("firstIndex", firstIndex.toString());
@@ -381,41 +387,38 @@ public class NodeClient {
     }
 
     public List<LedgerEntry> getAccountLedger(String url, String rsAddress, boolean includeTransactions, int from, int to) throws Exception {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("requestType", "getAccountLedger");
-        parameters.put("account", rsAddress);
-        parameters.put("includeTransactions", String.valueOf(includeTransactions));
-        parameters.put("firstIndex", String.valueOf(from));
-        parameters.put("lastIndex", String.valueOf(to));
-        String json = getJson(createURI(url), parameters);
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getAccountLedger");
+        params.put("account", rsAddress);
+        params.put("includeTransactions", String.valueOf(includeTransactions));
+        putPagination(params, from, to);
+        String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("entries");
         return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
     }
 
-    public List<Transaction> getUnconfirmedTransactions(String url, String rsAddress, int from, int to) throws
+    public List<JSONTransaction> getUnconfirmedTransactions(String url, String rsAddress, int from, int to) throws
             Exception {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("requestType", "getUnconfirmedTransactions");
-        parameters.put("account", rsAddress);
-        parameters.put("firstIndex", String.valueOf(from));
-        parameters.put("lastIndex", String.valueOf(to));
-        String json = getJson(createURI(url), parameters);
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getUnconfirmedTransactions");
+        params.put("account", rsAddress);
+        putPagination(params, from, to);
+        String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("unconfirmedTransactions");
-        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<Transaction>>() {});
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<JSONTransaction>>() {});
     }
-    public List<Transaction> getPrivateUnconfirmedTransactions(String url, String secretPhrase, int from, int to) throws
+    public List<JSONTransaction> getPrivateUnconfirmedTransactions(String url, String secretPhrase, int from, int to) throws
             Exception {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getPrivateUnconfirmedTransactions");
         parameters.put("secretPhrase", secretPhrase);
-        parameters.put("firstIndex", String.valueOf(from));
-        parameters.put("lastIndex", String.valueOf(to));
+        putPagination(parameters, from, to);
         String json = getJson(createURI(url), parameters);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("unconfirmedTransactions");
-        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<Transaction>>() {});
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<JSONTransaction>>() {});
     }
 
     public List<LedgerEntry> getPrivateAccountLedger(String url, String secretPhrase, boolean includeTransactions, int from, int to) throws Exception {
@@ -423,15 +426,14 @@ public class NodeClient {
         parameters.put("requestType", "getPrivateAccountLedger");
         parameters.put("secretPhrase", secretPhrase);
         parameters.put("includeTransactions", String.valueOf(includeTransactions));
-        parameters.put("firstIndex", String.valueOf(from));
-        parameters.put("lastIndex", String.valueOf(to));
+        putPagination(parameters, from, to);
         String json = getJson(createURI(url), parameters);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("entries");
         return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
     }
 
-    public Transaction getPrivateTransaction(String url, String secretPhrase, String fullHash, String transactionId) throws IOException {
+    public JSONTransaction getPrivateTransaction(String url, String secretPhrase, String fullHash, String transactionId) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "getPrivateTransaction");
         parameters.put("secretPhrase", secretPhrase);
@@ -443,13 +445,13 @@ public class NodeClient {
             throw new RuntimeException("Both fullHash and transactionId are not provided");
         }
         String json = getJson(createURI(url), parameters);
-        return MAPPER.readValue(json, Transaction.class);
+        return MAPPER.readValue(json, JSONTransaction.class);
     }
 
-    public Block getBlock(String url, Long height) throws IOException {
+    public Block getBlock(String url, int height) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getBlock");
-        params.put("height", height.toString());
+        params.put("height", String.valueOf(height));
         params.put("includeTransactions", "true");
         URI uri = createURI(url);
         String json = getJson(uri, params);
@@ -512,12 +514,10 @@ public class NodeClient {
         return MAPPER.readValue(json, NextGenerators.class);
     }
 
-    public UpdateTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, DoubleByteArrayTuple updateUrl, Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException {
+    public JSONTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, DoubleByteArrayTuple updateUrl,
+                                              Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException, ParseException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendUpdateTransaction");
-        parameters.put("secretPhrase", secretPhrase);
-        parameters.put("feeATM", String.valueOf(feeATM));
-        parameters.put("deadline", String.valueOf(deadline));
         parameters.put("version", version.toString());
         parameters.put("architecture", architecture.toString());
         parameters.put("platform", platform.toString());
@@ -525,10 +525,7 @@ public class NodeClient {
         parameters.put("urlFirstPart", Convert.toHexString(updateUrl.getFirst()));
         parameters.put("urlSecondPart", Convert.toHexString(updateUrl.getSecond()));
         parameters.put("level", String.valueOf(level));
-        String json = postJson(createURI(url), parameters, "");
-        JsonNode root = MAPPER.readTree(json);
-        JsonNode transactionJson = root.get("transactionJSON");
-        return MAPPER.readValue(transactionJson.toString(), UpdateTransaction.class);
+        return sendTransaction(url, secretPhrase, feeATM, deadline, parameters);
     }
 
     public Version getRemoteVersion(String url) throws IOException {
@@ -540,4 +537,104 @@ public class NodeClient {
         return Version.from(versionString.asText());
     }
 
+    public List<Chat.ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getChats");
+        params.put("account", account);
+        putPagination(params, firstIndex, lastIndex);
+        String json = getJson(createURI(url), params);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode chatString = root.get("chats");
+        return MAPPER.readValue(chatString.toString(), new TypeReference<List<Chat.ChatInfo>>() {});
+    }
+
+    public List<Chat.ChatInfo> getChatInfo(String url, String account) throws IOException {
+        return getChatInfo(url, account, 0, -1);
+    }
+
+    public List<JSONTransaction> getChatHistory(String url, String account1, String account2, int firstIndex, int lastIndex) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        URI uri = createURI(url);
+        params.put("requestType", "getChatHistory");
+        params.put("account1", account1);
+        params.put("account2", account2);
+        putPagination(params, firstIndex, lastIndex);
+        String json = getJson(uri, params);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionsArray = root.get("chatHistory");
+        List<JSONTransaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<JSONTransaction>>() {});
+        return transactionsList;
+    }
+
+    public List<JSONTransaction> getAllTransactions(String url, int firstIndex, int lastIndex, byte type, byte subtype) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        URI uri = createURI(url);
+        params.put("requestType", "getAllTransactions");
+        putPagination(params, firstIndex, lastIndex);
+        String json = getJson(uri, params);
+        JsonNode root = MAPPER.readTree(json);
+        JsonNode transactionsArray = root.get("transactions");
+        List<JSONTransaction> transactionsList = MAPPER.readValue(transactionsArray.toString(), new TypeReference<List<JSONTransaction>>() {});
+        return transactionsList;
+    }
+
+    public AccountsStatistic getAccountsStatistic(String url, int numberOfAccounts) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        URI uri = createURI(url);
+        params.put("requestType", "getAccountsStatistic");
+        params.put("numberOfAccounts", String.valueOf(numberOfAccounts));
+        String json = getJson(uri, params);
+        return MAPPER.readValue(json, AccountsStatistic.class);
+    }
+
+    public List<JSONTransaction> getAllTransactions(String url, int firstIndex, int lastIndex) throws IOException {
+        return getAllTransactions(url, firstIndex, lastIndex, (byte)-1, (byte)-1);
+    }
+
+    public List<JSONTransaction> getAllTransactions(String url, byte type, byte subtype) throws IOException {
+        return getAllTransactions(url, 0, -1, type, subtype);
+    }
+
+    public List<JSONTransaction> getAllTransactions(String url) throws IOException {
+        return getAllTransactions(url, 0, -1, (byte)-1, (byte)-1);
+    }
+
+    public JSONTransaction sendTransaction(String url, String secretPhrase, long feeATM, long deadline, Map<String, String> specificParams) throws ParseException, IOException {
+        Map<String, String> transactionParams = new HashMap<>();
+        transactionParams.putAll(specificParams);
+        transactionParams.put("secretPhrase", secretPhrase);
+        transactionParams.put("feeATM", String.valueOf(feeATM));
+        transactionParams.put("deadline", String.valueOf(deadline));
+        String json = postJson(createURI(url), transactionParams, "");
+        String transactionJSON = null;
+        try {
+            transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Unsuccessful request: " + json, e);
+        }
+        return MAPPER.readValue(transactionJSON, JSONTransaction.class);
+    }
+
+    public JSONTransaction sendChatTransaction(String url, String message, String secretPhrase, int deadline, String recipient, long feeATM) throws ParseException,
+            IOException {
+        Map<String, String> transactionParams = new HashMap<>();
+        transactionParams.put("requestType", "sendMessage");
+        transactionParams.put("message", message);
+        transactionParams.put("recipient", recipient);
+        return sendTransaction(url, secretPhrase, feeATM, deadline, transactionParams);
+    }
+
+    public JSONTransaction setAccountInfo(String url, String name, String secretPhrase, int deadline, long feeATM) throws ParseException,
+            IOException {
+        Map<String, String> transactionParams = new HashMap<>();
+        transactionParams.put("requestType", "setAccountInfo");
+        transactionParams.put("name", name);
+        return sendTransaction(url, secretPhrase, feeATM, deadline, transactionParams);
+    }
+
+    private void putPagination(Map<String, String> params, int firstIndex, int lastIndex) {
+        params.put("firstIndex", String.valueOf(firstIndex));
+        params.put("lastIndex", String.valueOf(lastIndex));
+    }
 }

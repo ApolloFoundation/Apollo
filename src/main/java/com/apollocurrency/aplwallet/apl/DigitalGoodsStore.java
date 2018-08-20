@@ -6,13 +6,17 @@
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl;
@@ -652,7 +656,12 @@ public final class DigitalGoodsStore {
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
             final int timestamp = block.getTimestamp();
-            final int previousTimestamp = Apl.getBlockchain().getBlock(block.getPreviousBlockId()).getTimestamp();
+            Blockchain bc = Apl.getBlockchain();
+            long privBlockId = block.getPreviousBlockId();
+            Block privBlock = bc.getBlock(privBlockId);
+            
+            final int previousTimestamp =  privBlock.getTimestamp();
+
             DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
                     .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
                     .and(new DbClause.BooleanClause("pending", true));

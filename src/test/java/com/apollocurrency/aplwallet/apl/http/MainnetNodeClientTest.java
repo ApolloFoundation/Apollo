@@ -1,37 +1,27 @@
 /*
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
-import util.TestUtil;
+import com.apollocurrency.aplwallet.apl.TransactionType;
 import dto.Block;
 import dto.Peer;
-import dto.Transaction;
 import org.eclipse.jetty.util.StringUtil;
 import org.junit.*;
+import util.TestUtil;
 import util.WalletRunner;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
+import static util.TestUtil.checkList;
 
 /**
  * Test scenarios on mainnet for {@link NodeClient}
@@ -41,7 +31,7 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
     private static WalletRunner runner = new WalletRunner(false);
 
     public MainnetNodeClientTest() {
-        super(TestData.MAIN_LOCALHOST, TestData.MAIN_FILE);
+        super(TestData.MAIN_LOCALHOST, TestData.MAIN_FILE, runner.getUrls());
     }
 
     @Override
@@ -92,8 +82,7 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     @Override
     public void testGetBlockchainHeight() throws Exception {
-        Long blockchainHeight = client.getBlockchainHeight(url);
-        Assert.assertNotNull(blockchainHeight);
+        int blockchainHeight = client.getBlockchainHeight(url);
         Assert.assertTrue(blockchainHeight > 0);
     }
 
@@ -108,14 +97,13 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
             .isArray();
     }
 
-    @Ignore
     @Test
+    @Ignore
     @Override
     public void testGetPeersList() throws Exception {
-        TimeUnit.SECONDS.sleep(10);
         List<Peer> peersList = client.getPeersList(url);
         checkList(peersList);
-        Assert.assertTrue(peersList.size() > Math.ceil(0.51 * runner.getUrls().size()));
+        Assert.assertTrue(peersList.size() > 5);
     }
 
     @Test
@@ -139,7 +127,7 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetBlockTransactions() throws Exception {
-        long height = 106070L;
+        int height = 106070;
         String blockTransactions = client.getBlockTransactions(url, height);
         Assert.assertTrue(StringUtil.isNotBlank(blockTransactions));
         assertThatJson(blockTransactions)
@@ -155,8 +143,8 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     @Override
     public void testGetBlockTransactionsList() throws Exception {
-        long height = 106070L;
-        List<Transaction> blockTransactionsList = client.getBlockTransactionsList(url, height);
+        int height = 106070;
+        List<JSONTransaction> blockTransactionsList = client.getBlockTransactionsList(url, height);
         checkList(blockTransactionsList);
         blockTransactionsList.forEach(transaction -> Assert.assertEquals(height, (long) transaction.getHeight()));
     }
@@ -185,11 +173,11 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
         assertThatJson(transaction)
             .node("transactionJSON.amountATM")
             .isPresent()
-            .isStringEqualTo(TestUtil.atm(1).toString());
+            .isStringEqualTo(String.valueOf(TestUtil.atm(1)));
         assertThatJson(transaction)
             .node("transactionJSON.feeATM")
             .isPresent()
-            .isStringEqualTo(TestUtil.atm(1).toString());
+            .isStringEqualTo(String.valueOf(TestUtil.atm(1)));
         assertThatJson(transaction)
             .node("transactionJSON.recipientRS")
             .isPresent()
@@ -219,13 +207,12 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     @Override
     public void testGetTransaction() throws IOException {
-        Transaction transaction = client.getTransaction(url, TRANSACTION_HASH);
+        JSONTransaction transaction = client.getTransaction(url, TRANSACTION_HASH);
         Assert.assertNotNull(transaction);
         Assert.assertEquals(TRANSACTION_HASH, transaction.getFullHash());
         Assert.assertEquals(TestUtil.atm(1), transaction.getFeeATM());
         Assert.assertEquals(TestUtil.atm(902000), transaction.getAmountATM());
-        Assert.assertEquals(0, transaction.getSubtype().intValue());
-        Assert.assertEquals(0, transaction.getType().intValue());
+        Assert.assertEquals(TransactionType.Payment.ORDINARY, transaction.getType());
         Assert.assertEquals("APL-NZKH-MZRE-2CTT-98NPZ", transaction.getSenderRS());
     }
 

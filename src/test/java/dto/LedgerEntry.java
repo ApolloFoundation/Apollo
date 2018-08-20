@@ -1,22 +1,11 @@
 /*
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ * Copyright © 2018 Apollo Foundation
  */
-
 
 package dto;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
 
 import java.util.Objects;
 
@@ -35,7 +24,7 @@ public class LedgerEntry {
     String account;
     Long height;
     Long timestamp;
-    Transaction transaction;
+    JSONTransaction transaction;
 
     public Long getLedgerId() {
         return ledgerId;
@@ -150,11 +139,11 @@ public class LedgerEntry {
         this.timestamp = timestamp;
     }
 
-    public Transaction getTransaction() {
+    public JSONTransaction getTransaction() {
         return transaction;
     }
 
-    public void setTransaction(Transaction transaction) {
+    public void setTransaction(JSONTransaction transaction) {
         this.transaction = transaction;
     }
 

@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.http;
@@ -30,6 +33,8 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 
 public final class JSONData {
@@ -53,10 +58,13 @@ public final class JSONData {
         return json;
     }
 
+    static void putAccountBalancePercentage(JSONObject json, Account account, long totalAmount) {
+        json.put("percentage", String.format("%.4f%%", 100D * account.getBalanceATM() / totalAmount));
+    }
+
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
         return accountBalance(account, includeEffectiveBalance, Apl.getBlockchain().getHeight());
     }
-
     static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
@@ -419,6 +427,28 @@ public final class JSONData {
             json.put("executedPhasedTransactions", phasedTransactions);
         }
         return json;
+    }
+
+    static JSONObject getAccountsStatistic(int numberOfAccounts) {
+        //using one connection for 3 queries
+        try(Connection con = Db.db.getConnection()) {
+            long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
+            long totalSupply = Account.getTotalSupply(con);
+            long totalAccounts = Account.getTotalNumberOfAccounts(con);
+            return accounts(totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
+            }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private static JSONObject accounts(long totalAmountOnTopAccounts, long totalSupply, long totalAccounts, int numberOfAccounts) {
+        JSONObject result = new JSONObject();
+        result.put("totalSupply", totalSupply);
+        result.put("totalNumberOfAccounts", totalAccounts);
+        result.put("totalAmountOnTopAccounts", totalAmountOnTopAccounts);
+        result.put("numberOfTopAccounts", numberOfAccounts);
+        return result;
     }
 
     static JSONObject encryptedData(EncryptedData encryptedData) {

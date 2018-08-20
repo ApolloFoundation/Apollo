@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.util.Logger;
@@ -9,6 +13,9 @@ import java.sql.SQLException;
 
 public class UpdaterDb {
 
+    private static final RuntimeException INCONSISTENT_UPDATE_STATUS_TABLE_EXCEPTION = new RuntimeException(
+            "(\'update_status\' table is inconsistent. (more than one update transaction " +
+            "present)");
     public static Transaction loadLastUpdateTransaction() {
         try (Connection connection = Db.db.getConnection())
         {
@@ -20,33 +27,54 @@ public class UpdaterDb {
         return null;
     }
     public static Transaction loadLastUpdateTransaction(Connection connection) {
+            Transaction updateTransaction = null;
         try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM transaction where id = (SELECT transaction_id FROM update_status)")) {
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
-                return TransactionDb.loadTransaction(connection, rs);
+                updateTransaction = TransactionDb.loadTransaction(connection, rs);
             }
+            checkInconsistency(rs);
         }
         catch (SQLException | AplException.NotValidException e) {
             Logger.logDebugMessage("Unable to load update transaction", e);
         }
-         return null;
+        return updateTransaction;
+    }
+
+    private static void checkInconsistency(ResultSet rs) throws SQLException {
+        if (rs.next()) {
+            throw INCONSISTENT_UPDATE_STATUS_TABLE_EXCEPTION;
+        }
+    }
+
+    private static void checkInconsistency(int updatedRows) {
+        if (updatedRows > 1) {
+            throw INCONSISTENT_UPDATE_STATUS_TABLE_EXCEPTION;
+        }
     }
 
     //required operations in one transaction
     public static boolean clearAndSaveUpdateTransaction(Long transactionId) {
         boolean success = false;
-        try (Connection connection = Db.db.beginTransaction()) {
+        boolean isInTransaction = Db.db.isInTransaction();
+        try {
+            Connection connection;
+            if (!isInTransaction) connection = Db.db.beginTransaction();
+            else connection = Db.db.getConnection();
             clear(connection);
             success = saveUpdateTransaction(transactionId, connection);
             Db.db.commitTransaction();
+            success = true;            
         }
         catch (SQLException e) {
             Db.db.rollbackTransaction();
             Logger.logErrorMessage("Db error", e);
-        } finally {
-            Db.db.endTransaction();
         }
-        return success;
+        finally {
+            if (!isInTransaction) Db.db.endTransaction();
+            return success;
+        }
+        
     }
 
     public static boolean saveUpdateTransaction(Long transactionId) {
@@ -69,6 +97,7 @@ public class UpdaterDb {
             Logger.logDebugMessage("Unable to insert update transaction id! ", e);
             return false;
         }
+        checkInconsistency(updateCount);
         return updateCount == 1;
     }
 
@@ -84,16 +113,18 @@ public class UpdaterDb {
             Logger.logDebugMessage("Unable to insert update status! ", e);
             return false;
         }
+        checkInconsistency(updateCount);
         return updateCount == 1;
     }
 
     public static boolean getUpdateStatus() {
         try (Connection connection = Db.db.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT updated FROM update_status")) {
-            ResultSet rs =  statement.executeQuery();
+             PreparedStatement statement = connection.prepareStatement("SELECT updated FROM update_status");
+             ResultSet rs =  statement.executeQuery()) {
             if (rs.next()) {
                 return rs.getBoolean("updated");
             }
+            checkInconsistency(rs);
         }
         catch (SQLException e) {
             Logger.logDebugMessage("Unable to get update status! ", e);

@@ -1,16 +1,5 @@
 /*
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
@@ -24,6 +13,7 @@ import java.nio.file.Paths;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,6 +49,10 @@ public class UpdaterUtil {
     static Certificate readCertificate(Path certificatePath) throws CertificateException, IOException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificatePath));
+    }
+    static String getStringRepresentation(Certificate cert) {
+        return ((cert instanceof X509Certificate) ?
+                ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
     }
 
     static Set<Certificate> readCertificates(String directory, String prefix, String suffix) throws CertificateException, IOException, URISyntaxException {
@@ -97,8 +91,8 @@ public class UpdaterUtil {
         @Override
         public String toString() {
             return "CertificatePair{" +
-                    "firstCertificate=" + firstCertificate +
-                    ", secondCertificate=" + secondCertificate +
+                    "firstCertificate=" + getStringRepresentation(firstCertificate) +
+                    ", secondCertificate=" + getStringRepresentation(secondCertificate) +
                     '}';
         }
 

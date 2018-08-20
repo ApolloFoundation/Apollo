@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl;
@@ -43,6 +46,14 @@ final class TransactionImpl implements Transaction {
     private static final int FLAG_PHASING                       = 1 << 4;
     private static final int FLAG_PRUNABLE_PLAIN_MESSAGE        = 1 << 5;
     private static final int FLAG_PRUNABLE_ENCRYPTED_MESSAGE    = 1 << 6;
+
+    /**
+     * this flag is used to check if prunableTTL value is available
+     * in transaction bytes.
+     *
+     * TODO Maybe it is better to version instead of this flag
+     *
+     */
     private static final int FLAG_PRUNABLE_TTL                  = 1 << 7;
 
     static final class BuilderImpl implements Builder {

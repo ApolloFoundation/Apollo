@@ -1,35 +1,31 @@
 /*
- * Copyright © 2017-2018 Apollo Foundation
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.NodeClient;
-import util.TestUtil;
-import dto.Transaction;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.Assert;
+import org.junit.Test;
+import util.TestUtil;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.NodeClient.DEFAULT_AMOUNT;
-import static util.TestUtil.getRandomRS;
-import static util.TestUtil.getRandomRecipientRS;
+import static util.TestUtil.*;
 
 public abstract class AbstractNodeClientTest {
     protected static final Pattern IP_PATTERN = Pattern.compile(
@@ -38,15 +34,57 @@ public abstract class AbstractNodeClientTest {
     protected final String url;
     protected NodeClient client = new NodeClient();
     protected JSONParser parser = new JSONParser();
+    protected List<String> peerUrls;
 
-    public AbstractNodeClientTest(String url, String fileName) {
+    public AbstractNodeClientTest(String url, String fileName, List<String> peerUrls) {
         this.url = url;
+        this.peerUrls = peerUrls;
         accounts.putAll(TestUtil.loadKeys(fileName));
+    }
+
+    protected String getRandomUrl() {
+        return randomUrl(peerUrls);
+    }
+
+    @Test
+    public void testGetAllTransactions() throws Exception {
+        int transactionsSize = 100;
+        List<JSONTransaction> allTransactions = client.getAllTransactions(url, 0, transactionsSize -1);
+        checkList(allTransactions);
+        Assert.assertEquals(transactionsSize, allTransactions.size());
+
+        Stream<Long> sentToSelfTransactionStream = allTransactions
+                .stream()
+                .filter(tr -> tr.getRecipientId() != 0 && tr.getSenderId() != 0 && tr.getRecipientId() == (tr.getSenderId()))
+                .map(Transaction::getSenderId);
+        Stream<Long> sendersAccountStream = allTransactions
+                .stream()
+                .filter(tr -> tr.getRecipientId() == 0 || tr.getSenderId() == 0 || tr.getRecipientId() !=(tr.getSenderId()))
+                .map(Transaction::getSenderId);
+        Stream<Long> recipientsAccountStream = allTransactions
+                .stream()
+                .filter(tr-> tr.getRecipientId() == 0 || tr.getSenderId() == 0 || tr.getRecipientId()!=(tr.getSenderId()))
+                .map(Transaction::getRecipientId);
+        Map<Long, Long> accounts =
+                Stream.concat(
+                        sentToSelfTransactionStream,
+                        Stream.concat(
+                                sendersAccountStream,
+                                recipientsAccountStream))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors
+                                .groupingBy(Function.identity(), Collectors.counting()));
+        accounts.forEach((acc, numberOfTransactions)-> {
+                System.out.println("Account " + acc + " has " + numberOfTransactions +" / " + transactionsSize);
+            if (numberOfTransactions >= transactionsSize) {
+                Assert.fail("GetAllTransactions failed. Account " + acc + " has more than " + (transactionsSize - 1) + " transactions");
+            }
+        } );
     }
 
     public void testPost() throws Exception {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put("requestType", "getAccountId");
+        parameters.put("requestType", "getAccount");
         String randomRS = getRandomRS(accounts);
         parameters.put("secretPhrase", accounts.get(randomRS));
         String json = client.postJson(TestUtil.createURI(url),
@@ -59,13 +97,13 @@ public abstract class AbstractNodeClientTest {
 
     public void testGetAccountTransactionsList() throws Exception {
         String randomRS = getRandomRS(accounts);
-        List<Transaction> accountTransactionsList = client.getAccountTransactionsList(url, randomRS);
+        List<JSONTransaction> accountTransactionsList = client.getAccountTransactionsList(url, randomRS);
         Assert.assertNotNull(accountTransactionsList);
         Assert.assertFalse(accountTransactionsList.isEmpty());
         accountTransactionsList.forEach(transaction -> {
-            if (!randomRS.equalsIgnoreCase(transaction.getSenderRS()) && !randomRS.equalsIgnoreCase(transaction.getRecipientRS()))
+            if (!randomRS.equalsIgnoreCase(Convert.rsAccount(transaction.getSenderId())) && !randomRS.equalsIgnoreCase(Convert.rsAccount(transaction.getRecipientId())))
                 Assert.fail("There are not this user transactions!");
-            if (transaction.isPrivate()) {
+            if (transaction.getType() == TransactionType.Payment.PRIVATE) {
                 Assert.fail("Private transactions should not appeared here!");
             }
         });
@@ -75,26 +113,25 @@ public abstract class AbstractNodeClientTest {
         String senderRS = getRandomRS(accounts);
         String recipientRS = getRandomRecipientRS(accounts, senderRS);
         Transaction transaction = client.sendMoneyTransaction(url, accounts.get(senderRS), recipientRS, DEFAULT_AMOUNT);
-        Assert.assertFalse(transaction.isPrivate());
-        Assert.assertEquals(0, transaction.getType().intValue());
-        Assert.assertEquals(0, transaction.getSubtype().intValue());
-        Assert.assertEquals(recipientRS, transaction.getRecipientRS());
-        Assert.assertEquals(senderRS, transaction.getSenderRS());
-        Assert.assertEquals(60L, transaction.getDeadline().longValue());
-        Assert.assertEquals(100000000L, transaction.getAmountATM().longValue());
-        Assert.assertEquals(100000000L, transaction.getFeeATM().longValue());
+        Assert.assertEquals(0, transaction.getType().getType());
+        Assert.assertEquals(0, transaction.getType().getSubtype());
+        Assert.assertEquals(recipientRS, Convert.rsAccount(transaction.getRecipientId()));
+        Assert.assertEquals(senderRS, Convert.rsAccount(transaction.getSenderId()));
+        Assert.assertEquals(60L, transaction.getDeadline());
+        Assert.assertEquals(100000000L, transaction.getAmountATM());
+        Assert.assertEquals(100000000L, transaction.getFeeATM());
     }
 
     public void testGetPrivateBlockchainTransactions() throws Exception {
         String account = getRandomRS(accounts);
-        List<Transaction> allTransactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(account), null, null, null);
+        List<JSONTransaction> allTransactions = client.getPrivateBlockchainTransactionsList(url, accounts.get(account), -1, null, null);
         Assert.assertNotNull(allTransactions);
         client.getAccountTransactionsList(url, account).forEach(allTransactions::remove);
         allTransactions.forEach(transaction -> {
-            if (!transaction.getRecipientRS().equalsIgnoreCase(account) && !transaction.getSenderRS().equalsIgnoreCase(account)) {
+            if (!Convert.rsAccount(transaction.getRecipientId()).equalsIgnoreCase(account) && !Convert.rsAccount(transaction.getSenderId()).equalsIgnoreCase(account)) {
                 Assert.fail("Not this user: " + account + " transaction " + transaction);
             }
-            Assert.assertTrue(transaction.isPrivate());
+            Assert.assertEquals(TransactionType.Payment.PRIVATE, transaction.getType());
         });
     }
 
@@ -104,20 +141,7 @@ public abstract class AbstractNodeClientTest {
         String recipient = getRandomRecipientRS(accounts, sender);
         Transaction privateTransaction = client.sendMoneyPrivateTransaction(url, secretPhrase, recipient, DEFAULT_AMOUNT, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
         Assert.assertNotNull(privateTransaction);
-        Assert.assertTrue(privateTransaction.isPrivate());
-    }
-
-    protected <T> void checkList(List<T> list) {
-        Assert.assertNotNull(list);
-        Assert.assertFalse(list.isEmpty());
-    }
-
-    protected void checkAddress(List<Transaction> transactions, String address) {
-        transactions.forEach(transaction -> {
-            if (!transaction.getSenderRS().equalsIgnoreCase(address) && !transaction.getRecipientRS().equalsIgnoreCase(address)) {
-                Assert.fail(transaction.toString() + " is not for this address \'" + address + "\'");
-            }
-        });
+        Assert.assertEquals(TransactionType.Payment.PRIVATE, privateTransaction.getType());
     }
 
     public abstract void testGet() throws Exception;

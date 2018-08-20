@@ -1,18 +1,21 @@
 /*
  * Copyright © 2013-2016 The Nxt Core Developers.
  * Copyright © 2016-2017 Jelurida IP B.V.
- * Copyright © 2017-2018 Apollo Foundation
  *
  * See the LICENSE.txt file at the top-level directory of this distribution
  * for licensing information.
  *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
- * no part of the Apl software, including this file, may be copied, modified,
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
  *
  * Removal or modification of this copyright notice is prohibited.
  *
+ */
+
+/*
+ * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl;
@@ -21,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -134,43 +136,24 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(dbClause, from, to);
     }
 
-    public static DbIterator<? extends Transaction> getPollsByAccount(long accountId, int from, int to) {
+    public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) {
         Connection connection = null;
         try {
             connection = Db.db.getConnection();
-            StringBuilder inStatementData = new StringBuilder();
-            try (PreparedStatement votesStatement =
-                    connection.prepareStatement("SELECT * FROM transaction where sender_id = ? and type = ? and subtype = ? " + " ORDER BY " +
-                            "block_timestamp DESC, transaction_index DESC " + DbUtils.limitsClause(from, to))) {
-                int i = 0;
-                votesStatement.setLong(++i, accountId);
-                votesStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
-                votesStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
-                DbUtils.setLimits(++i, votesStatement, from, to);
-                List<Long> ids = new ArrayList<>();
-                try (ResultSet votesResultSet = votesStatement.executeQuery()) {
-                    while (votesResultSet.next()) {
-                        TransactionImpl transaction = TransactionDb.loadTransaction(connection, votesResultSet);
-                        Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
-                        long pollId = attachment.getPollId();
-                        ids.add(pollId);
-                    }
-                }
-                if (!ids.isEmpty()) {
-                    for (int j = 0; j < ids.size(); j++) {
-                        inStatementData.append(ids.get(j));
-                        if (j < ids.size() - 1) {
-                            inStatementData.append(",");
-                        }
-                    }
-                }
-            }
-            PreparedStatement pollStatement =
-                    connection.prepareStatement("SELECT * FROM transaction where id in ("+ inStatementData.toString() +")");
-            DbIterator<? extends Transaction> accountPolls = BlockchainImpl.getInstance().getTransactions(connection, pollStatement);
-            return accountPolls;
+            PreparedStatement pollStatement = connection.prepareStatement(
+                    "SELECT * FROM poll WHERE id IN" +
+                            " (SELECT bytes_to_long(attachment_bytes, 1) FROM transaction WHERE " +
+                            "sender_id = ? AND type = ? AND subtype = ? " +
+                            "ORDER BY block_timestamp DESC, transaction_index DESC"
+                            + DbUtils.limitsClause(from, to) + ")");
+            int i = 0;
+            pollStatement.setLong(++i, accountId);
+            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
+            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
+            DbUtils.setLimits(++i, pollStatement, from, to);
+            return pollTable.getManyBy(connection, pollStatement, false);
         }
-        catch (SQLException | AplException.NotValidException e) {
+        catch (SQLException e) {
             DbUtils.close(connection);
             throw new RuntimeException(e.toString(), e);
         }
