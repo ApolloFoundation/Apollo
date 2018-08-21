@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 
+import java.security.PublicKey;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -538,11 +539,30 @@ public final class Account {
                 + " existing key " + Convert.toHexString(account.publicKey.publicKey) + " new key " + Convert.toHexString(publicKey));
     }
 
-    public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
+    public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
         try (
             PreparedStatement pstmt =
-                    con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
+                    con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)) ) {
+            int i = 0;
+            DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
+            return accountTable.getManyBy(con, pstmt, false);
+        }
+    }
+    public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
+        try(Connection con = Db.db.getConnection()) {
+            return getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
+        try (
+                PreparedStatement pstmt =
+                        con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
+                                " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -552,14 +572,6 @@ public final class Account {
                     throw new RuntimeException("Cannot retrieve total_amount: no data");
                 }
             }
-        }
-    }
-    public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
-        try(Connection con = Db.db.getConnection()) {
-            return getTotalAmountOnTopAccounts(numberOfTopAccounts);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
         }
     }
 
