@@ -540,14 +540,11 @@ public final class Account {
     }
 
     public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
-        try (
-            PreparedStatement pstmt =
-                    con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
-                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)) ) {
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             return accountTable.getManyBy(con, pstmt, false);
-        }
     }
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         try(Connection con = Db.db.getConnection()) {
