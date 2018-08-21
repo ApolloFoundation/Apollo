@@ -54,7 +54,7 @@ public final class Apl {
 
     public static final Version VERSION = Version.from("1.0.7");
     public static final String APPLICATION = "Apollo";
-
+    private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
 
     public static final String APL_DEFAULT_PROPERTIES = "apl-default.properties";
@@ -194,6 +194,10 @@ public final class Apl {
         }
     }
 
+    static void removeShutdownHook() {
+        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    }
+
     public static File getLogDir() {
         return dirProvider.getLogFileDir();
     }
@@ -327,7 +331,8 @@ public final class Apl {
 
     public static void main(String[] args) {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apl::shutdown));
+            shutdownHook = new Thread(Apl::shutdown);
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
             init();
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());

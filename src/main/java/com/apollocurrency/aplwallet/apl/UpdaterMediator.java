@@ -49,6 +49,7 @@ public class UpdaterMediator {
     }
     public void shutdownApplication() {
         Apl.shutdown();
+        Apl.removeShutdownHook();
     }
 
     public boolean isUpdate() {return updateInfo.isUpdate();}

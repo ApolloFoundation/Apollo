@@ -42,6 +42,11 @@ public final class SearchDGSGoods extends APIServlet.APIRequestHandler {
         return SearchDGSGoodsHolder.INSTANCE;
     }
 
+    @Override
+    protected boolean logRequestTime() {
+        return true;
+    }
+
     private SearchDGSGoods() {
         super(new APITag[] {APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
     }

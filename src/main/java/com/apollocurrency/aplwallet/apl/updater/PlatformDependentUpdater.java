@@ -4,18 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterDb;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,16 +53,6 @@ public class PlatformDependentUpdater {
 
         }, "Updater Apollo shutdown thread").start();
     }
-
-    public static void main(String[] args) throws NoSuchMethodException, MalformedURLException, InvocationTargetException, IllegalAccessException {
-        Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
-        method.setAccessible(true);
-        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
-        System.setProperty("apl.runtime.mode", "desktop");
-        Apl.main(null);
-        getInstance().continueUpdate(Paths.get("E:/ApolloWallet-1.0.8"), Platform.WINDOWS);
-    }
-
     private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
         Thread scriptRunner = new Thread(() -> {
         LOG.debug("Waiting apl shutdown...");

@@ -123,6 +123,7 @@ public final class APIServlet extends HttpServlet {
             return false;
         }
 
+        protected boolean logRequestTime() { return false; }
     }
 
     private static final boolean enforcePost = Apl.getBooleanProperty("apl.apiServerEnforcePOST");
@@ -195,7 +196,7 @@ public final class APIServlet extends HttpServlet {
 
         JSONStreamAware response = JSON.emptyJSON;
         long startTime = System.currentTimeMillis();
-
+        boolean logRequestTime = false;
         try {
 
             if (!API.isAllowed(req.getRemoteHost())) {
@@ -253,6 +254,7 @@ public final class APIServlet extends HttpServlet {
                         return;
                     }
                     response = apiRequestHandler.processRequest(req, resp);
+                    logRequestTime = apiRequestHandler.logRequestTime();
                     if (requireLastBlockId == 0 && requireBlockId != 0 && response instanceof JSONObject) {
                         ((JSONObject) response).put("lastBlock", Apl.getBlockchain().getLastBlock().getStringId());
                     }
@@ -283,7 +285,11 @@ public final class APIServlet extends HttpServlet {
             // The response will be null if we created an asynchronous context
             if (response != null) {
                 if (response instanceof JSONObject) {
-                    ((JSONObject) response).put("requestProcessingTime", System.currentTimeMillis() - startTime);
+                    long requestTime = System.currentTimeMillis() - startTime;
+                    ((JSONObject) response).put("requestProcessingTime", requestTime);
+                    if (logRequestTime) {
+                        Logger.logDebugMessage("Request \'" +req.getParameter("requestType")+ "\' took " + requestTime + " ms");
+                    }
                 }
                 try (Writer writer = resp.getWriter()) {
                     JSON.writeJSONString(response, writer);
