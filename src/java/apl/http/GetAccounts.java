@@ -10,15 +10,15 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class GetAccountsStatistic extends APIServlet.APIRequestHandler {
+public class GetAccounts extends APIServlet.APIRequestHandler {
     private static class GetAccountsHolder {
-        private static final GetAccountsStatistic INSTANCE = new GetAccountsStatistic();
+        private static final GetAccounts INSTANCE = new GetAccounts();
     }
 
-    public static GetAccountsStatistic getInstance() {
+    public static GetAccounts getInstance() {
         return GetAccountsHolder.INSTANCE;
     }
-    private GetAccountsStatistic() {
+    private GetAccounts() {
         super(new APITag[] {APITag.INFO}, "numberOfAccounts");
     }
 
