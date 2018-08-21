@@ -2,10 +2,10 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package apl.http;
+package com.apollocurrency.aplwallet.apl.http;
 
-import apl.AplException;
-import apl.Constants;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Constants;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

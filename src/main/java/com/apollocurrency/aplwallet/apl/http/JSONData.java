@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -307,7 +308,7 @@ public final class JSONData {
     }
 
     static JSONObject getAccountsStatistic(int numberOfAccounts) {
-        //using one connection for 3 queries
+        //using one connection for 4 queries
         Connection con = null;
         try {
             con = Db.db.getConnection();
@@ -465,18 +466,6 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject getAccountsStatistic(int numberOfAccounts) {
-        //using one connection for 3 queries
-        try(Connection con = Db.db.getConnection()) {
-            long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            long totalSupply = Account.getTotalSupply(con);
-            long totalAccounts = Account.getTotalNumberOfAccounts(con);
-            return accounts(totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
-            }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 
     private static JSONObject accounts(long totalAmountOnTopAccounts, long totalSupply, long totalAccounts, int numberOfAccounts) {
         JSONObject result = new JSONObject();

@@ -4,11 +4,14 @@
 
 package dto;
 
+import java.util.List;
+
 public class AccountsStatistic {
     private long totalSupply;
     private long totalAmountOnTopAccounts;
     private long numberOfTopAccounts;
     private int totalNumberOfAccounts;
+    private List<Account> topHolders;
 
     public void setTotalSupply(long totalSupply) {
         this.totalSupply = totalSupply;
@@ -40,5 +43,13 @@ public class AccountsStatistic {
 
     public int getTotalNumberOfAccounts() {
         return totalNumberOfAccounts;
+    }
+
+    public List<Account> getTopHolders() {
+        return topHolders;
+    }
+
+    public void setTopHolders(List<Account> topHolders) {
+        this.topHolders = topHolders;
     }
 }
