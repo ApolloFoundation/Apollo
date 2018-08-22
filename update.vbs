@@ -1,17 +1,16 @@
 Set fso = CreateObject("Scripting.FileSystemObject")
 const ReadOnly = 1
+
+If Not WScript.Arguments.Named.Exists("elevate") Then
+  CreateObject("Shell.Application").ShellExecute WScript.FullName _
+    , """" & WScript.ScriptFullName & """ /elevate", "", "runas", 1
+  WScript.Quit
+End If
+
 If  ( (WScript.Arguments.Count = 3) AND (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Arguments(1) )) AND (("false" = LCase(WScript.Arguments(2)) ) Or ( "true" = LCase(WScript.Arguments(2)) ))) Then
 	WScript.Echo "Starting Platform Dependent Updater"
 	WScript.Echo "Waiting 3 sec"
 	WScript.Sleep 3000
-	CURRENT_CONF_FILE = WScript.Arguments(0) & "/conf/apl.properties"
-	UPDATE_CONF_FILE = WScript.Arguments(1) & "/conf/apl.properties"
-	If (fso.FileExists(CURRENT_CONF_FILE)) Then
-		WScript.Echo "Copy config file"
-		fso.CopyFile CURRENT_CONF_FILE, UPDATE_CONF_FILE, True
-    Else
-		WScript.Echo "Config file:" & CURRENT_CONF_FILE & " does not exist!"
-	End If
     WScript.Echo "Copy update files"
     Set fso = CreateObject("Scripting.FileSystemObject")
 	Set objFolder = fso.GetFolder(WScript.Arguments(1))
