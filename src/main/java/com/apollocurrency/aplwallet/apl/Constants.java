@@ -55,6 +55,7 @@ public final class Constants {
     public static final int FORGING_DELAY = Apl.getIntProperty("apl.forgingDelay");
     public static final int FORGING_SPEEDUP = Apl.getIntProperty("apl.forgingSpeedup");
     public static final int BATCH_COMMIT_SIZE = Apl.getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
+    public static final int TRIM_TRANSACTION_TIME_THRESHHOLD = Apl.getIntProperty("apl.trimOperationsLogThreshold", 1000);
 
     public static final byte MAX_PHASING_VOTE_TRANSACTIONS = 10;
     public static final byte MAX_PHASING_WHITELIST_SIZE = 10;

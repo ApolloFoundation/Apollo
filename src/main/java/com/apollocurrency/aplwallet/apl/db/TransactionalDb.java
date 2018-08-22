@@ -65,6 +65,13 @@ public class TransactionalDb extends BasicDb {
         return enableSqlLogs ? new ConnectionSpy(realConnection) : realConnection;
     }
 
+    public Connection getConnection(boolean doSqlLog) throws SQLException {
+        if (!enableSqlLogs && doSqlLog) {
+            return new ConnectionSpy(getConnection());
+        }
+        return getConnection();
+    }
+
     public boolean isInTransaction() {
         return localConnection.get() != null;
     }
@@ -84,6 +91,12 @@ public class TransactionalDb extends BasicDb {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+    public Connection beginTransaction(boolean doSqlLog) {
+        if (!enableSqlLogs && doSqlLog) {
+            return new ConnectionSpy(beginTransaction());
+        }
+        return beginTransaction();
     }
 
     public void commitTransaction() {

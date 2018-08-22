@@ -27,12 +27,7 @@ import com.apollocurrency.aplwallet.apl.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -40,30 +35,9 @@ import org.json.simple.JSONValue;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
+import java.sql.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 final class BlockchainProcessorImpl implements BlockchainProcessor {
 
@@ -80,7 +54,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final BlockchainImpl blockchain = BlockchainImpl.getInstance();
 
-    private final ExecutorService networkService = Executors.newCachedThreadPool();
+    private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
     private final boolean trimDerivedTables = Apl.getBooleanProperty("apl.trimDerivedTables");
     private final int defaultNumberOfForkConfirmations = Apl.getIntProperty(Constants.isTestnet
@@ -938,7 +912,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         blockListeners.addListener(block -> Db.db.analyzeTables(), Event.RESCAN_END);
 
-        ThreadPool.runBeforeStart(() -> {
+        ThreadPool.runBeforeStart("Blockchain init", () -> {
             alreadyInitialized = true;
             addGenesisBlock();
             if (Apl.getBooleanProperty("apl.forceScan")) {
@@ -990,7 +964,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public void trimDerivedTables() {
         try {
-            Db.db.beginTransaction();
+            Db.db.beginTransaction(true);
             doTrimDerivedTables();
             Db.db.commitTransaction();
         } catch (Exception e) {

@@ -149,6 +149,7 @@ public final class API {
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
+            threadPool.setName("API thread pool");
             apiServer = new Server(threadPool);
             ServerConnector connector;
             boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
@@ -283,7 +284,7 @@ public final class API {
             apiServer.setHandler(apiHandlers);
             apiServer.setStopAtShutdown(true);
 
-            ThreadPool.runBeforeStart(() -> {
+            ThreadPool.runBeforeStart("UPnP ports init", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {

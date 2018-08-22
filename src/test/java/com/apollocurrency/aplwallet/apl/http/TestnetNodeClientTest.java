@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.Account;
 import dto.AccountsStatistic;
 import dto.Block;
 import dto.LedgerEntry;
@@ -555,6 +556,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         List<dto.Account> expectedOrderedAccounts =
                 accountsStatistic.getTopHolders().stream().sorted(Comparator.comparingLong(dto.Account::getBalanceATM).reversed()).collect(Collectors.toList());
         Assert.assertEquals(expectedOrderedAccounts, accountsStatistic.getTopHolders());
+        Assert.assertEquals(accountsStatistic.getTotalAmountOnTopAccounts(),
+                accountsStatistic.getTopHolders().stream().mapToLong(Account::getBalanceATM).sum());
     }
 }
 

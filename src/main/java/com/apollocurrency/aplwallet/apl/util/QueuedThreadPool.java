@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -52,8 +54,8 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
      * @param   coreSize                Core pool size
      * @param   maxSize                 Maximum pool size
      */
-    public QueuedThreadPool(int coreSize, int maxSize) {
-        super(coreSize, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+    public QueuedThreadPool(int coreSize, int maxSize, String poolName) {
+        super(coreSize, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadFactoryImpl(poolName));
         this.coreSize = coreSize;
         this.maxSize = maxSize;
     }

@@ -21,8 +21,9 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,7 +32,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
+import static org.slf4j.LoggerFactory.getLogger;
+
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
+    private static final Logger LOG = getLogger(VersionedEntityDbTable.class);
+
 
     protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
@@ -135,7 +141,8 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
+        long startTime = System.currentTimeMillis();
+        try (Connection con = db.getConnection(true);
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + dbKeyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + dbKeyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + dbKeyFactory.getPKClause()
@@ -166,6 +173,10 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                     deleted = pstmtDeleteDeleted.executeUpdate();
                     db.commitTransaction();
                 } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+            }
+            long trimTime = System.currentTimeMillis() - startTime;
+            if (trimTime > TRIM_TRANSACTION_TIME_THRESHHOLD) {
+                LOG.debug("Trim for table {} took {} ms", table, trimTime);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
