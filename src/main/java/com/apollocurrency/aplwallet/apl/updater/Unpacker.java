@@ -4,10 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,7 +21,9 @@ public class Unpacker {
     }
 
     public static void main(String[] args) throws IOException {
-        getInstance().unpack(Paths.get("C:/users/zandr/downloads/ApolloWallet-1.0.8.jar"));
+        Path unpack = getInstance().unpack(Paths.get("C:/users/zandr/downloads/Apollo-1.0.10.jar"));
+
+        System.out.println(unpack);
     }
 
     public Path unpack(Path jarFilePath) throws IOException {
@@ -51,6 +50,9 @@ public class Unpacker {
             String fileName = destDirPath.toAbsolutePath().toString() + File.separator + entry.getName();
             File f = new File(fileName);
             if (!fileName.endsWith("/") && !entry.isDirectory()) {
+                if (!f.getParentFile().exists()) {
+                    f.getParentFile().mkdirs();
+                }
                 try (InputStream is = jar.getInputStream(entry)) {
                     copyPath(is, f);
                 }
@@ -58,6 +60,7 @@ public class Unpacker {
         }
             return destDirPath;
     }
+
 
         private static class UnpackerHolder {
             private static final Unpacker INSTANCE = new Unpacker();
