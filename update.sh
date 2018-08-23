@@ -6,28 +6,26 @@
 if  [[ -d $1 && -d $2 && -n $3 ]]
 then
     echo Starting Platform Dependent Updater
-    echo Waiting 3 sec
-    sleep 3
-    CURRENT_CONF_FILE=$1'/conf/apl.properties'
-    UPDATE_CONF_FILE=$2'/conf/apl.properties'
-    if [[ -f $CURRENT_CONF_FILE && -f $UPDATE_CONF_FILE ]]
-    then
-        echo Copy config file
-        cp -f $CURRENT_CONF_FILE $UPDATE_CONF_FILE
-        echo Copy update files
-        cp -TRa $2 $1
+    echo Stopping wallet.... 
+    NEXT_WAIT_TIME=0
+    
+    until [ $(ps aux | grep Apollo.jar | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
+	sleep $(( NEXT_WAIT_TIME++ ))
+	echo "Waiting more time to stop wallet..."
+    done
 
-        if [ $3 == true ]
-        then
-            echo Start desktop application
-            $1/run-desktop.sh
-        else
-            echo Start command line application
-            $1/run.sh
-        fi
+    echo Copy update files
+    cp -TRa $2 $1
+
+    if [ $3 == true ]
+    then
+        echo Start desktop application
+        $1/run-desktop.sh
     else
-        echo Config files: $CURRENT_CONF_FILE or $UPDATE_CONF_FILE do not exist!
+        echo Start command line application
+        $1/run.sh
     fi
+
 else
     echo Invalid input parameters $1,$2,$3
 fi
