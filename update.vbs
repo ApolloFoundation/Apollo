@@ -39,7 +39,6 @@ If  ( (WScript.Arguments.Count = 5) AND (fso.FolderExists(WScript.Arguments(0)))
 	Set objShell = Wscript.CreateObject("WScript.Shell")
 	if  ("true" = LCase(WScript.Arguments(2))) Then
         WScript.Echo "Start desktop application"
-     	WScript.Sleep 10000
 	objShell.Run WScript.Arguments(0) & "\start.vbs"
     else
         WScript.Echo "Start command line application"
@@ -50,7 +49,6 @@ Else
 	WScript.Echo "Invalid input parameters:" & WScript.Arguments(0) & " " & WScript.Arguments(1) & " " & WScript.Arguments(2)
 End If
 
-	WScript.Sleep 10000
 
 Sub CopySubFolders(Folder)
     For Each Subfolder in Folder.SubFolders
