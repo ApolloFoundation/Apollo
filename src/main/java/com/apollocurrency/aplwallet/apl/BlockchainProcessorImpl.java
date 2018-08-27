@@ -964,8 +964,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public void trimDerivedTables() {
         try {
-            Db.db.beginTransaction(true);
+            Db.db.beginTransaction();
+            long startTime = System.currentTimeMillis();
             doTrimDerivedTables();
+            Logger.logDebugMessage("Total trim time: " + (System.currentTimeMillis() - startTime));
             Db.db.commitTransaction();
         } catch (Exception e) {
             Logger.logMessage(e.toString(), e);
@@ -978,17 +980,21 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void doTrimDerivedTables() {
         lastTrimHeight = Math.max(blockchain.getHeight() - Constants.MAX_ROLLBACK, 0);
+        long onlyTrimTime = 0;
         if (lastTrimHeight > 0) {
             for (DerivedDbTable table : derivedTables) {
                 blockchain.readLock();
                 try {
+                    long startTime = System.currentTimeMillis();
                     table.trim(lastTrimHeight);
                     Db.db.commitTransaction();
+                    onlyTrimTime += (System.currentTimeMillis() - startTime);
                 } finally {
                     blockchain.readUnlock();
                 }
             }
         }
+        Logger.logDebugMessage("Only trim time: " + onlyTrimTime);
     }
 
     List<DerivedDbTable> getDerivedTables() {
