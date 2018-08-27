@@ -142,31 +142,49 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             throw new IllegalStateException("Not in transaction");
         }
         long startTime = System.currentTimeMillis();
-        try (Connection con = db.getConnection(true);
+        try (Connection con = db.getConnection();
+             //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + dbKeyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + dbKeyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1");
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + dbKeyFactory.getPKClause()
-                     + " AND height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE);
+//             delete record by id
+             PreparedStatement pstmtDelete =
+                     con.prepareStatement("DELETE FROM " + table + " where db_id = ?");
+
+
              PreparedStatement pstmtDeleteDeleted = con.prepareStatement("DELETE FROM " + table + " WHERE height < ? AND height >= 0 AND latest = FALSE "
                      + " AND (" + dbKeyFactory.getPKColumns() + ") NOT IN (SELECT (" + dbKeyFactory.getPKColumns() + ") FROM "
                      + table + " WHERE height >= ?) LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
             pstmtSelect.setInt(1, height);
+                long startDeleteTime;
             try (ResultSet rs = pstmtSelect.executeQuery()) {
-                int count = 0;
+                startDeleteTime = System.currentTimeMillis();
                 int deleted;
                 while (rs.next()) {
                     DbKey dbKey = dbKeyFactory.newKey(rs);
-                    int i = 1;
-                    i = dbKey.setPK(pstmtDelete, i);
-                    pstmtDelete.setInt(i, rs.getInt("max_height"));
-                    do {
-                        deleted = pstmtDelete.executeUpdate();
-                        if ((count += deleted) >= Constants.BATCH_COMMIT_SIZE) {
-                            db.commitTransaction();
-                            count = 0;
+                    PreparedStatement selectDbIdStatement =
+                            con.prepareStatement("SELECT db_id, height FROM " + table + " " + dbKeyFactory.getPKClause() );
+                    dbKey.setPK(selectDbIdStatement);
+                    List<Long> keys = new ArrayList<>();
+                    int maxHeight = rs.getInt("max_height");
+                    try (ResultSet dbIdsSet = selectDbIdStatement.executeQuery()) {
+                        while (dbIdsSet.next()) {
+                            int currentHeight = dbIdsSet.getInt(2);
+                            if (currentHeight < maxHeight && currentHeight >= 0) {
+                                keys.add(dbIdsSet.getLong(1));
+                            }
                         }
-                    } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+                    }
+                    if (!keys.isEmpty()) {
+                        for (Long key : keys) {
+                            pstmtDelete.setLong(1, key);
+//                        pstmtDelete.setArray(1, con.createArrayOf("bigint", keys.toArray()));
+                            pstmtDelete.executeUpdate();
+                        }
+                    }
                 }
+                LOG.debug("Delete time {} for table {}", System.currentTimeMillis() - startDeleteTime, table);
+
+                db.commitTransaction();
                 pstmtDeleteDeleted.setInt(1, height);
                 pstmtDeleteDeleted.setInt(2, height);
                 do {
