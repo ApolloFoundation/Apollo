@@ -668,6 +668,13 @@ public final class Account {
         }
         return publicKey;
     }
+    private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
+        PublicKey publicKey = publicKeyTable.get(dbKey, cache);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, cache);
+        }
+        return publicKey;
+    }
 
     private static PublicKey getPublicKey(DbKey dbKey, int height) {
         PublicKey publicKey = publicKeyTable.get(dbKey, height);
@@ -1184,7 +1191,7 @@ public final class Account {
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.height >= Apl.getBlockchain().getHeight() - 1) {
-            PublicKey dbPublicKey = publicKeyTable.get(dbKey, false);
+            PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);
             }

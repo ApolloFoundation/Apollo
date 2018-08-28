@@ -98,7 +98,7 @@ public final class Genesis {
         Apl.getRuntimeMode().updateAppStatus(loadingAmountsString + "...");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
-            Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), false);
+            Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
             account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
