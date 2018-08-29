@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.UpdaterDb;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,24 +69,30 @@ public class PlatformDependentUpdater {
             }
             LOG.debug("Apl was shutdown");
             Path scriptPath = updateDirectory.resolve(scriptName);
-            if (!Files.exists(scriptPath)) {
-                LOG.error("File {} not exist in update directory! Cannot continue update.", scriptPath);
-                System.exit(20);
-            }
-            try {
-                LOG.debug("Starting platform dependent script");
-                Runtime.getRuntime().exec(String.format("%s %s %s %s %s", runTool, scriptPath.toString(),
-                        Paths.get("").toAbsolutePath().toString(), updateDirectory.toAbsolutePath().toString(), RuntimeEnvironment.isDesktopApplicationEnabled()).trim());
-                LOG.debug("Platform dependent script was started");
-            }
-            catch (IOException e) {
-                LOG.error("Cannot execute update script: " + scriptPath, e);
-                System.exit(10);
-            }
-            LOG.debug("Exit...");
-            System.exit(5);
+            runScript(scriptPath, runTool);
         }, "Platform dependent update thread");
         scriptRunner.start();
+    }
+
+    private void runScript(Path scriptPath, String runTool) {
+        if (!Files.exists(scriptPath)) {
+            LOG.error("File {} not exist in update directory! Cannot continue update.", scriptPath);
+            System.exit(20);
+        }
+        try {
+            LOG.debug("Starting platform dependent script");
+            String command = String.format("%s %s %s %s %s", runTool, scriptPath.toString(),
+                    Paths.get("").toAbsolutePath().toString(), scriptPath.getParent().toAbsolutePath().toString(),
+                    RuntimeEnvironment.isDesktopApplicationEnabled()).trim();
+            Runtime.getRuntime().exec(command, null, new File("").getAbsoluteFile());
+            LOG.debug("Platform dependent script was started");
+        }
+        catch (IOException e) {
+            LOG.error("Cannot execute update script: " + scriptPath, e);
+            System.exit(10);
+        }
+        LOG.debug("Exit...");
+        System.exit(5);
     }
 
     private static class PlatformDpendentUpdaterHolder {

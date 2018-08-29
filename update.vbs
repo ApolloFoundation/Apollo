@@ -37,12 +37,13 @@ If  ( (WScript.Arguments.Count = 5) AND (fso.FolderExists(WScript.Arguments(0)))
 	CopySubfolders fso.GetFolder(objFolder)
 	Wscript.Echo "Subfolders were copied"
 	Set objShell = Wscript.CreateObject("WScript.Shell")
+	objShell.CurrentDirectory = WScript.Arguments(0)
 	if  ("true" = LCase(WScript.Arguments(2))) Then
         WScript.Echo "Start desktop application"
-	objShell.Run WScript.Arguments(0) & "\start.vbs"
+	    objShell.Run "start-desktop.vbs"
     else
         WScript.Echo "Start command line application"
-        objShell.Run WScript.Arguments(0) & "\start.vbs"
+        objShell.Run "start.vbs"
     End If
 	WScript.Echo "Exit"
 Else
