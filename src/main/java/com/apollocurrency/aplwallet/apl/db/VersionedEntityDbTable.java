@@ -159,7 +159,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             pstmtSelect.setInt(1, height);
             long startDeleteTime;
             long deleted = 0L;
-            long deleteTransactions = 0L;
+            long deleteStm = 0L;
             long startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery()) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
@@ -182,13 +182,16 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                     if (!keys.isEmpty()) {
                         pstmtDelete.setObject(1, keys.toArray());
                         deleted +=pstmtDelete.executeUpdate();
-                        deleteTransactions++;
+                        deleteStm++;
+                        if (deleted % 100 == 0) {
+                            db.commitTransaction();
+                        }
                     }
                 }
-                LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
-                        deleteTransactions, deleted);
-
                 db.commitTransaction();
+                LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
+                        deleteStm, deleted);
+
                 pstmtDeleteDeleted.setInt(1, height);
                 pstmtDeleteDeleted.setInt(2, height);
                 long startDeleteDeletedTime = System.currentTimeMillis();

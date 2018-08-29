@@ -30,7 +30,7 @@ import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResource;
 
 
 public class RSAUtil {
-    private static final String URL_TEMPLATE = "((http)|(https))://.+/Apollo-%s.jar";
+    private static final String URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-%s.jar";
 
     public static DoubleByteArrayTuple doubleEncrypt(PrivateKey privateKey1, PrivateKey privateKey2, byte[] message) throws Exception {
         byte[] firstEncryptedBytes = encrypt(privateKey1, message);

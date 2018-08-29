@@ -664,6 +664,9 @@ class AplDbVersion extends DbVersion {
                 DbBytesConverter.init();
                 apply(null);
             case 241:
+                PublicKeyMigration.init();
+                apply(null);
+            case 242:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
