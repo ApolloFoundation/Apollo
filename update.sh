@@ -20,10 +20,10 @@ then
     if [ $3 == true ]
     then
         echo Start desktop application
-        $1/run-desktop.sh
+        cd $1 && exec sh start-desktop.sh
     else
         echo Start command line application
-        $1/run.sh
+        cd $1 && exec sh start.sh
     fi
 
 else

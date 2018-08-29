@@ -1,0 +1,33 @@
+/******************************************************************************
+ * Copyright © 2017-2018 Apollo Foundation                                    *
+ *                                                                            *
+ * See the LICENSE.txt file at the top-level directory of this distribution   *
+ * for licensing information.                                                 *
+ *                                                                            *
+ * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
+ * no part of the Apl software, including this file, may be copied, modified, *
+ * propagated, or distributed except according to the terms contained in the  *
+ * LICENSE.txt file.                                                          *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+#main-pane{
+    -fx-background-image: url('../img/apollo-splash-screen-logo.png');
+    -fx-background-repeat: stretch;
+    -fx-background-size: 400 250;
+    -fx-background-position: center center;
+    -fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0);
+
+}
+#status-text {
+    -fx-fill: white;
+    -fx-font-size: 15;
+}
+#progress-indicator {
+    -fx-max-height: 50;
+    -fx-max-width: 50;
+    -fx-min-height: 50;
+    -fx-min-width: 50;
+    -fx-progress-color: white;
+}
