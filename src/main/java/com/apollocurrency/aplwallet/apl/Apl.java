@@ -590,6 +590,9 @@ public final class Apl {
     private Apl() {} // never
 
     private static void initUpdater() {
+        if (!getBooleanProperty("apl.allowUpdates", false)) {
+            return;
+        }
         try {
             Class<?> aClass = Class.forName("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
             //force load lazy updater instance
