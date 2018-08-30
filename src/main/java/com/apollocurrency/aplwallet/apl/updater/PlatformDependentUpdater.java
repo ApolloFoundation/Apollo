@@ -36,7 +36,7 @@ public class PlatformDependentUpdater {
                 shutdownAndRunScript(updateDirectory, LINUX_UPDATE_SCRIPT_PATH, LINUX_RUN_TOOL_PATH, LINUX_RUN_COMMAND_POSTFIX);
                 break;
             case OSX:
-                shutdownAndRunScript(updateDirectory, OSX_UPDATE_SCRIPT_PATH, OSX_RUN_TOOL_PATH);
+                shutdownAndRunScript(updateDirectory, OSX_UPDATE_SCRIPT_PATH, OSX_RUN_TOOL_PATH, OSX_RUN_COMMAND_POSTFIX);
                 break;
         }
         new Thread(() -> {
