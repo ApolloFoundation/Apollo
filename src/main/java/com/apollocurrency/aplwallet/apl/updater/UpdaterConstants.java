@@ -34,6 +34,10 @@ public class UpdaterConstants {
    public static final String LINUX_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.linuxRunToolPath", "/bin/bash");
    public static final String OSX_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.osxRunToolPath", "/bin/bash");
 
+    public static final String LINUX_RUN_COMMAND_POSTFIX = "& disown";
+
+    public static final String OSX_RUN_COMMAND_POSTFIX = "& disown";
+
    // Downloader constants
    public static final int DOWNLOAD_ATTEMPTS = getIntPropertyOrDefault("updater.downloader.numberOfAttempts", 10);
    public static final int NEXT_ATTEMPT_TIMEOUT = getIntPropertyOrDefault("updater.downloader.attemptTimeout", 60);

@@ -33,10 +33,10 @@ public class PlatformDependentUpdater {
                 shutdownAndRunScript(updateDirectory, WINDOWS_UPDATE_SCRIPT_PATH, WINDOWS_RUN_TOOL_PATH);
                 break;
             case LINUX:
-                shutdownAndRunScript(updateDirectory, LINUX_UPDATE_SCRIPT_PATH, LINUX_RUN_TOOL_PATH);
+                shutdownAndRunScript(updateDirectory, LINUX_UPDATE_SCRIPT_PATH, LINUX_RUN_TOOL_PATH, LINUX_RUN_COMMAND_POSTFIX);
                 break;
             case OSX:
-                shutdownAndRunScript(updateDirectory, OSX_UPDATE_SCRIPT_PATH, OSX_RUN_TOOL_PATH);
+                shutdownAndRunScript(updateDirectory, OSX_UPDATE_SCRIPT_PATH, OSX_RUN_TOOL_PATH, OSX_RUN_COMMAND_POSTFIX);
                 break;
         }
         new Thread(() -> {
@@ -55,8 +55,12 @@ public class PlatformDependentUpdater {
         }, "Updater Apollo shutdown thread").start();
     }
     private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
+        shutdownAndRunScript(updateDirectory, scriptName, runTool, "");
+    }
+
+    private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool, String runCommandPostfix) {
         Thread scriptRunner = new Thread(() -> {
-        LOG.debug("Waiting apl shutdown...");
+            LOG.debug("Waiting apl shutdown...");
             UpdaterDb.saveUpdateStatus(true);
             while (!mediator.isShutdown()) {
                 try {
@@ -69,21 +73,21 @@ public class PlatformDependentUpdater {
             }
             LOG.debug("Apl was shutdown");
             Path scriptPath = updateDirectory.resolve(scriptName);
-            runScript(scriptPath, runTool);
+            runScript(scriptPath, runTool, runCommandPostfix);
         }, "Platform dependent update thread");
         scriptRunner.start();
     }
 
-    private void runScript(Path scriptPath, String runTool) {
+    private void runScript(Path scriptPath, String runTool, String commandPostfix) {
         if (!Files.exists(scriptPath)) {
             LOG.error("File {} not exist in update directory! Cannot continue update.", scriptPath);
             System.exit(20);
         }
         try {
             LOG.debug("Starting platform dependent script");
-            String command = String.format("%s %s %s %s %s", runTool, scriptPath.toString(),
+            String command = String.format("%s %s %s %s %s %s", runTool, scriptPath.toString(),
                     Paths.get("").toAbsolutePath().toString(), scriptPath.getParent().toAbsolutePath().toString(),
-                    RuntimeEnvironment.isDesktopApplicationEnabled()).trim();
+                    RuntimeEnvironment.isDesktopApplicationEnabled(), commandPostfix).trim();
             Runtime.getRuntime().exec(command, null, new File("").getAbsoluteFile());
             LOG.debug("Platform dependent script was started");
         }
