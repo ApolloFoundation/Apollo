@@ -33,7 +33,7 @@ public final class AfterStart implements AddOn {
     public void init() {
         String afterStartScript = Apl.getStringProperty("apl.afterStartScript");
         if (afterStartScript != null) {
-            ThreadPool.runAfterStart(() -> {
+            ThreadPool.runAfterStart("After start script", () -> {
                 try {
                     Runtime.getRuntime().exec(afterStartScript);
                 } catch (Exception e) {

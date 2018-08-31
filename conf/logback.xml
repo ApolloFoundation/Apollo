@@ -23,10 +23,13 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.apollocurrency.aplwallet.apl" level="debug"/>
+    <logger name="com.apollocurrency.aplwallet.apl" level="trace"/>
     <logger name="org.eclipse.jetty" level="off"/>
     <logger name="javax.servlet.level" level="off"/>
     <logger name="com.apollocurrency.aplwallet.apl.http.APIProxyServlet" level="info"/>
+    <logger name="jdbc" level="off"/>
+    <logger name="jdbc.connection" level="info"/>
+    <logger name="jdbc.sqltiming" level="info"/>
     <root level="severe">
         <appender-ref ref="console" />
         <appender-ref ref="file" />

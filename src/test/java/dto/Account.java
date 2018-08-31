@@ -4,6 +4,8 @@
 
 package dto;
 
+import java.util.Objects;
+
 public class Account {
     private long balanceATM;
     private long forgedBalanceATM;
@@ -11,6 +13,36 @@ public class Account {
     private long unconfirmedBalanceATM;
     private String account;
     private double percentage;
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "balanceATM=" + balanceATM +
+                ", forgedBalanceATM=" + forgedBalanceATM +
+                ", accountRS='" + accountRS + '\'' +
+                ", unconfirmedBalanceATM=" + unconfirmedBalanceATM +
+                ", account='" + account + '\'' +
+                ", percentage=" + percentage +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Account)) return false;
+        Account account1 = (Account) o;
+        return balanceATM == account1.balanceATM &&
+                forgedBalanceATM == account1.forgedBalanceATM &&
+                unconfirmedBalanceATM == account1.unconfirmedBalanceATM &&
+                Double.compare(account1.percentage, percentage) == 0 &&
+                Objects.equals(accountRS, account1.accountRS) &&
+                Objects.equals(account, account1.account);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(balanceATM, forgedBalanceATM, accountRS, unconfirmedBalanceATM, account, percentage);
+    }
 
     public long getBalanceATM() {
         return balanceATM;

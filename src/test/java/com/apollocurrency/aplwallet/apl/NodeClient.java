@@ -581,7 +581,7 @@ public class NodeClient {
     public AccountsStatistic getAccountsStatistic(String url, int numberOfAccounts) throws IOException {
         Map<String, String> params = new HashMap<>();
         URI uri = createURI(url);
-        params.put("requestType", "getAccountsStatistic");
+        params.put("requestType", "getAccounts");
         params.put("numberOfAccounts", String.valueOf(numberOfAccounts));
         String json = getJson(uri, params);
         return MAPPER.readValue(json, AccountsStatistic.class);

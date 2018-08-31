@@ -91,7 +91,7 @@ public class Version implements Comparable<Version> {
             return majorVersionCompare;
         int intermediateVersionCompare = Integer.compare(intermediateVersion, v.getIntermediateVersion());
         if (intermediateVersionCompare != 0 )
-            return majorVersionCompare;
+            return intermediateVersionCompare;
         return Integer.compare(minorVersion, v.getMinorVersion());
     }
 

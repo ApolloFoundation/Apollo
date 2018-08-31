@@ -1,18 +1,18 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
+* Copyright © 2013-2016 The Nxt Core Developers.
+* Copyright © 2016-2017 Jelurida IP B.V.
+*
+* See the LICENSE.txt file at the top-level directory of this distribution
+* for licensing information.
+*
+* Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+* no part of the Nxt software, including this file, may be copied, modified,
+* propagated, or distributed except according to the terms contained in the
+* LICENSE.txt file.
+*
+* Removal or modification of this copyright notice is prohibited.
+*
+*/
 
 /*
  * Copyright © 2018 Apollo Foundation
@@ -297,9 +297,8 @@ public enum APIEnum {
     GET_VOTED_ACCOUNT_POLLS("getVotedAccountPolls", GetVotedAccountPolls.getInstance()),
     GET_CHATS("getChats", GetChats.getInstance()),
     GET_CHAT_HISTORY("getChatHistory", GetChatHistory.getInstance()),
-    GET_ACCOUNTS_STATISTIC("getAccountsStatistic", GetAccountsStatistic.getInstance()),
     GET_TOTAL_SUPPLY("getTotalSupply", GetTotalSupply.getInstance()),
-
+    GET_ACCOUNTS("getAccounts", GetAccounts.getInstance()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

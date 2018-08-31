@@ -141,19 +141,9 @@ public final class Account {
         }
 
     };
-    private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new VersionedPersistentDbTable<PublicKey>("public_key", publicKeyDbKeyFactory) {
-
-        @Override
-        protected PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new PublicKey(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, PublicKey publicKey) throws SQLException {
-            publicKey.save(con);
-        }
-
-    };
+    private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new PublicKeyTable("public_key", publicKeyDbKeyFactory);
+    private static final VersionedPersistentDbTable<PublicKey> genesisPublicKeyTable = new PublicKeyTable("genesis_public_key",
+            publicKeyDbKeyFactory, false);
     private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LinkKeyFactory<AccountAsset>("account_id", "asset_id") {
 
         @Override
@@ -408,7 +398,7 @@ public final class Account {
     }
 
     public static int getCount() {
-        return publicKeyTable.getCount();
+        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
     }
 
     public static int getAssetAccountCount(long assetId) {
@@ -500,7 +490,7 @@ public final class Account {
         DbKey dbKey = accountDbKeyFactory.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
-            PublicKey publicKey = publicKeyTable.get(dbKey);
+            PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey != null) {
                 account = accountTable.newEntity(dbKey);
                 account.publicKey = publicKey;
@@ -513,7 +503,7 @@ public final class Account {
         DbKey dbKey = accountDbKeyFactory.newKey(id);
         Account account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = publicKeyTable.get(dbKey, height);
+            PublicKey publicKey = getPublicKey(dbKey, height);
             if (publicKey != null) {
                 account = new Account(id);
                 account.publicKey = publicKey;
@@ -529,7 +519,7 @@ public final class Account {
             return null;
         }
         if (account.publicKey == null) {
-            account.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(account));
+            account.publicKey = getPublicKey(accountDbKeyFactory.newKey(account));
         }
         if (account.publicKey == null || account.publicKey.publicKey == null || Arrays.equals(account.publicKey.publicKey, publicKey)) {
             return account;
@@ -538,11 +528,27 @@ public final class Account {
                 + " existing key " + Convert.toHexString(account.publicKey.publicKey) + " new key " + Convert.toHexString(publicKey));
     }
 
+    public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
+            int i = 0;
+            DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
+            return accountTable.getManyBy(con, pstmt, false);
+    }
+    public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
+        try(Connection con = Db.db.getConnection()) {
+            return getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
         try (
-            PreparedStatement pstmt =
-                    con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
+                PreparedStatement pstmt =
+                        con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
+                                " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -552,14 +558,6 @@ public final class Account {
                     throw new RuntimeException("Cannot retrieve total_amount: no data");
                 }
             }
-        }
-    }
-    public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
-        try(Connection con = Db.db.getConnection()) {
-            return getTotalAmountOnTopAccounts(numberOfTopAccounts);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
         }
     }
 
@@ -625,7 +623,7 @@ public final class Account {
             key = publicKeyCache.get(dbKey);
         }
         if (key == null) {
-            PublicKey publicKey = publicKeyTable.get(dbKey);
+            PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null || (key = publicKey.publicKey) == null) {
                 return null;
             }
@@ -637,6 +635,10 @@ public final class Account {
     }
 
     static Account addOrGetAccount(long id) {
+        return addOrGetAccount(id, false);
+    }
+
+    static Account addOrGetAccount(long id, boolean isGenesis) {
         if (id == 0) {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
@@ -644,14 +646,42 @@ public final class Account {
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = accountTable.newEntity(dbKey);
-            PublicKey publicKey = publicKeyTable.get(dbKey);
+            PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null) {
-                publicKey = publicKeyTable.newEntity(dbKey);
-                publicKeyTable.insert(publicKey);
+                if (isGenesis) {
+                    publicKey = genesisPublicKeyTable.newEntity(dbKey);
+                    genesisPublicKeyTable.insert(publicKey);
+                } else {
+                    publicKey = publicKeyTable.newEntity(dbKey);
+                    publicKeyTable.insert(publicKey);
+                }
             }
             account.publicKey = publicKey;
         }
         return account;
+    }
+
+    private static PublicKey getPublicKey(DbKey dbKey) {
+        PublicKey publicKey = publicKeyTable.get(dbKey);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey);
+        }
+        return publicKey;
+    }
+    private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
+        PublicKey publicKey = publicKeyTable.get(dbKey, cache);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, cache);
+        }
+        return publicKey;
+    }
+
+    private static PublicKey getPublicKey(DbKey dbKey, int height) {
+        PublicKey publicKey = publicKeyTable.get(dbKey, height);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, height);
+        }
+        return publicKey;
     }
 
     private static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
@@ -774,7 +804,7 @@ public final class Account {
 
     static boolean setOrVerify(long accountId, byte[] key) {
         DbKey dbKey = publicKeyDbKeyFactory.newKey(accountId);
-        PublicKey publicKey = publicKeyTable.get(dbKey);
+        PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
         }
@@ -889,7 +919,7 @@ public final class Account {
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (this.publicKey == null) {
-            this.publicKey = publicKeyTable.get(accountDbKeyFactory.newKey(this));
+            this.publicKey = getPublicKey(accountDbKeyFactory.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
@@ -1143,17 +1173,25 @@ public final class Account {
     }
 
     void apply(byte[] key) {
-        PublicKey publicKey = publicKeyTable.get(dbKey);
+        apply(key, false);
+    }
+
+    void apply(byte[] key, boolean isGenesis) {
+        PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
-            publicKeyTable.insert(publicKey);
+            if (isGenesis) {
+                genesisPublicKeyTable.insert(publicKey);
+            } else {
+                publicKeyTable.insert(publicKey);
+            }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.height >= Apl.getBlockchain().getHeight() - 1) {
-            PublicKey dbPublicKey = publicKeyTable.get(dbKey, false);
+            PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);
             }
@@ -1844,18 +1882,6 @@ public final class Account {
             this.height = rs.getInt("height");
         }
 
-        private void save(Connection con) throws SQLException {
-            height = Apl.getBlockchain().getHeight();
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO public_key (account_id, public_key, height, latest) "
-                    + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, accountId);
-                DbUtils.setBytes(pstmt, ++i, publicKey);
-                pstmt.setInt(++i, height);
-                pstmt.executeUpdate();
-            }
-        }
-
         public long getAccountId() {
             return accountId;
         }
@@ -1874,6 +1900,36 @@ public final class Account {
 
         DoubleSpendingException(String message, long accountId, long confirmed, long unconfirmed) {
             super(message + " account: " + Long.toUnsignedString(accountId) + " confirmed: " + confirmed + " unconfirmed: " + unconfirmed);
+        }
+
+    }
+
+
+    static class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
+        protected PublicKeyTable(String table, DbKey.Factory<PublicKey> dbKeyFactory) {
+            super(table, dbKeyFactory);
+        }
+
+        protected PublicKeyTable(String table, DbKey.Factory<PublicKey> dbKeyFactory, boolean multiversion) {
+            super(table, dbKeyFactory, multiversion, null );
+        }
+
+        @Override
+        protected PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            return new PublicKey(rs, dbKey);
+        }
+
+        @Override
+        protected void save(Connection con, PublicKey publicKey) throws SQLException {
+            publicKey.height = Apl.getBlockchain().getHeight();
+            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table +" (account_id, public_key, height, latest) "
+                    + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
+                int i = 0;
+                pstmt.setLong(++i, publicKey.accountId);
+                DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
+                pstmt.setInt(++i, publicKey.height);
+                pstmt.executeUpdate();
+            }
         }
 
     }

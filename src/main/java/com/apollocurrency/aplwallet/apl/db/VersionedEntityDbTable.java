@@ -21,8 +21,9 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,7 +32,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
+import static org.slf4j.LoggerFactory.getLogger;
+
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
+    private static final Logger LOG = getLogger(VersionedEntityDbTable.class);
+
 
     protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
@@ -92,6 +98,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
+        long startTime = System.currentTimeMillis();
         try (Connection con = db.getConnection();
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + dbKeyFactory.getPKColumns()
                      + " FROM " + table + " WHERE height > ?");
@@ -107,18 +114,18 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                     dbKeys.add(dbKeyFactory.newKey(rs));
                 }
             }
-            /*
-            if (dbKeys.size() > 0 && Logger.isDebugEnabled()) {
-                Logger.logDebugMessage(String.format("rollback table %s found %d records to update to latest", table, dbKeys.size()));
+
+            if (dbKeys.size() > 0 ) {
+                LOG.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
-            */
+
             pstmtDelete.setInt(1, height);
             int deletedRecordsCount = pstmtDelete.executeUpdate();
-            /*
-            if (deletedRecordsCount > 0 && Logger.isDebugEnabled()) {
-                Logger.logDebugMessage(String.format("rollback table %s deleting %d records", table, deletedRecordsCount));
+
+            if (deletedRecordsCount > 0) {
+                LOG.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
-            */
+
             for (DbKey dbKey : dbKeys) {
                 int i = 1;
                 i = dbKey.setPK(pstmtSetLatest, i);
@@ -129,43 +136,74 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+         LOG.debug("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
     static void trim(final TransactionalDb db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
+        long startTime = System.currentTimeMillis();
         try (Connection con = db.getConnection();
+             //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + dbKeyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + dbKeyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1");
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + dbKeyFactory.getPKClause()
-                     + " AND height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE);
+//             delete record by id
+             PreparedStatement pstmtDelete =
+                     con.prepareStatement("DELETE FROM " + table + " WHERE db_id IN (SELECT * FROM table(x bigint = ? ))");
+
+
              PreparedStatement pstmtDeleteDeleted = con.prepareStatement("DELETE FROM " + table + " WHERE height < ? AND height >= 0 AND latest = FALSE "
                      + " AND (" + dbKeyFactory.getPKColumns() + ") NOT IN (SELECT (" + dbKeyFactory.getPKColumns() + ") FROM "
                      + table + " WHERE height >= ?) LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
             pstmtSelect.setInt(1, height);
+            long startDeleteTime;
+            long deleted = 0L;
+            long deleteStm = 0L;
+            long startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery()) {
-                int count = 0;
-                int deleted;
+                LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
+                startDeleteTime = System.currentTimeMillis();
                 while (rs.next()) {
                     DbKey dbKey = dbKeyFactory.newKey(rs);
-                    int i = 1;
-                    i = dbKey.setPK(pstmtDelete, i);
-                    pstmtDelete.setInt(i, rs.getInt("max_height"));
-                    do {
-                        deleted = pstmtDelete.executeUpdate();
-                        if ((count += deleted) >= Constants.BATCH_COMMIT_SIZE) {
-                            db.commitTransaction();
-                            count = 0;
+                    PreparedStatement selectDbIdStatement =
+                            con.prepareStatement("SELECT db_id, height FROM " + table + " " + dbKeyFactory.getPKClause() );
+                    dbKey.setPK(selectDbIdStatement);
+                    List<Long> keys = new ArrayList<>();
+                    int maxHeight = rs.getInt("max_height");
+                    try (ResultSet dbIdsSet = selectDbIdStatement.executeQuery()) {
+                        while (dbIdsSet.next()) {
+                            int currentHeight = dbIdsSet.getInt(2);
+                            if (currentHeight < maxHeight && currentHeight >= 0) {
+                                keys.add(dbIdsSet.getLong(1));
+                            }
                         }
-                    } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+                    }
+                    if (!keys.isEmpty()) {
+                        pstmtDelete.setObject(1, keys.toArray());
+                        deleted +=pstmtDelete.executeUpdate();
+                        deleteStm++;
+                        if (deleted % 100 == 0) {
+                            db.commitTransaction();
+                        }
+                    }
                 }
+                db.commitTransaction();
+                LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
+                        deleteStm, deleted);
+
                 pstmtDeleteDeleted.setInt(1, height);
                 pstmtDeleteDeleted.setInt(2, height);
+                long startDeleteDeletedTime = System.currentTimeMillis();
                 do {
                     deleted = pstmtDeleteDeleted.executeUpdate();
                     db.commitTransaction();
                 } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+                LOG.trace("Delete deleted time for table {} is: {}", table, System.currentTimeMillis() - startDeleteDeletedTime);
+            }
+            long trimTime = System.currentTimeMillis() - startTime;
+            if (trimTime > TRIM_TRANSACTION_TIME_THRESHHOLD) {
+                LOG.debug("Trim for table {} took {} ms", table, trimTime);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

@@ -57,8 +57,9 @@ public class UpdaterCore {
                             " " + " updateVersion: " + expectedVersion);
                     if (transaction.getType() == TransactionType.Update.CRITICAL) {
 //                        UpdaterMediator.getInstance().addUpdateListener(updateListener);
-                                                stopForgingAndBlockAcceptance();
+                        stopForgingAndBlockAcceptance();
                         UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                        throw new RuntimeException("Manual install required for critical update!");
                     } else {
                         Logger.logInfoMessage("Skip uninstalled non-critical update");
                         UpdaterMediator.getInstance().addUpdateListener(updateListener);
@@ -219,7 +220,7 @@ public class UpdaterCore {
                 if (((TransactionType.Update) holder.getTransaction().getType()).getLevel() != Level.MINOR) {
                     UpdaterMediator.getInstance().removeListener(updateListener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
                 }
-                Logger.logDebugMessage("Found appropriate update transaction: " + holder.getTransaction().getPrunableAttachmentJSON());
+                Logger.logDebugMessage("Found appropriate update transaction: " + holder.getTransaction().getJSONObject().get("attachment"));
                 this.updateDataHolder = holder;
                 startUpdate();
             }

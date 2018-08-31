@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.Account;
 import dto.AccountsStatistic;
 import dto.Block;
 import dto.LedgerEntry;
@@ -21,10 +22,12 @@ import util.TestUtil;
 import util.WalletRunner;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
 import static util.TestUtil.*;
@@ -550,6 +553,11 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         AccountsStatistic accountsStatistic = client.getAccountsStatistic(url, 100);
         Assert.assertNotNull(accountsStatistic);
         Assert.assertEquals(100, accountsStatistic.getNumberOfTopAccounts());
+        List<dto.Account> expectedOrderedAccounts =
+                accountsStatistic.getTopHolders().stream().sorted(Comparator.comparingLong(dto.Account::getBalanceATM).reversed()).collect(Collectors.toList());
+        Assert.assertEquals(expectedOrderedAccounts, accountsStatistic.getTopHolders());
+        Assert.assertEquals(accountsStatistic.getTotalAmountOnTopAccounts(),
+                accountsStatistic.getTopHolders().stream().mapToLong(Account::getBalanceATM).sum());
     }
 }
 

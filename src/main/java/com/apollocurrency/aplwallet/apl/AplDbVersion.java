@@ -667,17 +667,20 @@ class AplDbVersion extends DbVersion {
                 DbBytesConverter.init();
                 apply(null);
             case 241:
-                apply("ALTER TABLE TRANSACTION ADD PRUNABLE_TTL BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
+                PublicKeyMigration.init();
+                apply(null);
             case 242:
+                apply("ALTER TABLE TRANSACTION ADD PRUNABLE_TTL BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
+            case 243:
                 apply("ALTER TABLE TAGGED_DATA ADD TIME_TO_LIVE BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
                 return;
-            case 243:
+            case 244:
                 apply("ALTER TABLE PRUNABLE_MESSAGE ADD TIME_TO_LIVE BIGINT NOT NULL default " + MAX_PRUNABLE_LIFETIME);
                 return;
-            case 244:
+            case 245:
                 MigrateFromH2.migrate(this.db);
                 apply("ALTER TABLE TAGGED_DATA DROP COLUMN DATA");
-            case 245:
+            case 246:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

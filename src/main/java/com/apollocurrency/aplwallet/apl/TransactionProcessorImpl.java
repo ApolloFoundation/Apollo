@@ -296,7 +296,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         if (!Constants.isLightClient) {
             if (!Constants.isOffline) {
                 ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 5);
-                ThreadPool.runAfterStart(this::rebroadcastAllUnconfirmedTransactions);
+                ThreadPool.runAfterStart("Rebroadcast all unconfirmed txs",this::rebroadcastAllUnconfirmedTransactions);
                 ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
             }
             ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);

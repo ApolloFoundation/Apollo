@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -306,6 +307,42 @@ public final class JSONData {
         return json;
     }
 
+    static JSONObject getAccountsStatistic(int numberOfAccounts) {
+        //using one connection for 4 queries
+        Connection con = null;
+        try {
+            con = Db.db.getConnection();
+            long totalSupply = Account.getTotalSupply(con);
+            long totalAccounts = Account.getTotalNumberOfAccounts(con);
+            long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
+            try(DbIterator<Account> topHolders = Account.getTopHolders(con, numberOfAccounts)) {
+                return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
+            }
+        }
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private static JSONObject accounts(DbIterator<Account> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
+                                       int numberOfAccounts) {
+        JSONObject result = new JSONObject();
+        result.put("totalSupply", totalSupply);
+        result.put("totalNumberOfAccounts", totalAccounts);
+        result.put("numberOfTopAccounts", numberOfAccounts);
+        result.put("totalAmountOnTopAccounts", totalAmountOnTopAccounts);
+        JSONArray holders = new JSONArray();
+        while (topAccountsIterator.hasNext()) {
+            Account account = topAccountsIterator.next();
+            JSONObject accountJson = JSONData.accountBalance(account, false);
+            JSONData.putAccount(accountJson, "account", account.getId());
+            holders.add(accountJson);
+        }
+        result.put("topHolders", holders);
+        return result;
+    }
+
     static JSONObject availableOffers(CurrencyExchangeOffer.AvailableOffers availableOffers) {
         JSONObject json = new JSONObject();
         json.put("rateATM", String.valueOf(availableOffers.getRateATM()));
@@ -402,13 +439,13 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         Long totalAmountATM = 0L;
-        for (Transaction transaction: block.getTransactions()) {
-                JSONObject transactionJson = transaction(true, transaction);
-                Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
-                totalAmountATM += amountATM;
-                if (includeTransactions) {
-                    transactions.add(transactionJson);
-                }
+        for (Transaction transaction : block.getTransactions()) {
+            JSONObject transactionJson = transaction(true, transaction);
+            Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
+            totalAmountATM += amountATM;
+            if (includeTransactions) {
+                transactions.add(transactionJson);
+            }
         }
         json.put("totalAmountATM", String.valueOf(totalAmountATM));
         json.put("transactions", transactions);
@@ -429,18 +466,6 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject getAccountsStatistic(int numberOfAccounts) {
-        //using one connection for 3 queries
-        try(Connection con = Db.db.getConnection()) {
-            long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            long totalSupply = Account.getTotalSupply(con);
-            long totalAccounts = Account.getTotalNumberOfAccounts(con);
-            return accounts(totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
-            }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 
     private static JSONObject accounts(long totalAmountOnTopAccounts, long totalSupply, long totalAccounts, int numberOfAccounts) {
         JSONObject result = new JSONObject();

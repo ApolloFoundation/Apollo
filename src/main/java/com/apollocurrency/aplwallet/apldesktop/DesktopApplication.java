@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
@@ -33,17 +32,20 @@ import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.Label;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
+import org.slf4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
@@ -65,8 +67,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopApplication extends Application {
+        private static final Logger LOG = getLogger(DesktopApplication.class);
+        
     private static final MainApplication MAIN_APPLICATION = MainApplication.getInstance();
     private static final SplashScreen SPLASH_SCREEN = SplashScreen.getInstance();
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
@@ -128,11 +133,11 @@ public class DesktopApplication extends Application {
     //start javaFx splash screen
     public static void showSplashScreen() {
         if (!isSplashScreenLaunched) {
-            Logger.logInfoMessage("Starting splash screen");
+            LOG.info("Starting splash screen");
             SPLASH_SCREEN.startAndShow();
             isSplashScreenLaunched = true;
         } else {
-            Logger.logInfoMessage("Splash screen has already started");
+            LOG.info("Splash screen has already started");
         }
     }
 
@@ -154,7 +159,7 @@ public class DesktopApplication extends Application {
                 aClass.getMethod("stopDebugServer").invoke(null);
             }
             catch (Exception e) {
-                Logger.logInfoMessage("Error shutting down webview debugger", e);
+                LOG.info("Error shutting down webview debugger", e);
             }
         }
         System.out.println("JavaFX platform shutdown complete");
@@ -189,51 +194,21 @@ public class DesktopApplication extends Application {
         public void startAndShow() {
             screenStage.setTitle("Apollo wallet");
             AnchorPane pane = new AnchorPane();
-            try {
-                BackgroundImage myBI= new BackgroundImage(new Image(Files.newInputStream(Paths.get("html/www/img/apollo_logo_splash-screen.png")),400,250,false,true),
-                        BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                        new BackgroundSize(400, 250, false, false, true, true));
-                Background background = new Background(myBI);
-                pane.setBackground(background);
-            }
-            catch (IOException e) {
-                Logger.logErrorMessage("Cannot load image", e);
-            }
-            pane.setStyle("-fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0)");
+            Scene scene = new Scene(pane);
+            URL cssUrl = getClass().getClassLoader().getResource("css/splash-screen.css");
+            pane.getStylesheets().addAll(cssUrl.toExternalForm());
             pane.setId("main-pane");
             ProgressIndicator indicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
             indicator.setId("progress-indicator");
-            indicator.setStyle(
-                    "-fx-max-height: 50; " +
-                    "-fx-max-width: 50;" +
-                    "-fx-min-height: 50;" +
-                    "-fx-min-width: 50;" +
-                    "-fx-progress-color: white");
             AnchorPane.setTopAnchor(indicator, 130.0);
             AnchorPane.setLeftAnchor(indicator, 175.0);
             pane.getChildren().add(indicator);
-            Label statusText = new Label();
+            Text statusText = new Text();
             statusText.setId("status-text");
-            statusText.setTextFill(Color.WHITE);
-            statusText.setStyle("-fx-font-size: 15");
             statusText.setText("Apollo wallet is loading. Please, wait");
             AnchorPane.setTopAnchor(statusText, 228.0);
             AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
-            Scene scene = new Scene(pane);
-//            Path path = Paths.get("html/www/css/java/splash-screen.css");
-//            Logger.logInfoMessage("DEBUG: css path: " + path.toString());
-//            try {
-//                String e = new URL("file:///" + path.toAbsolutePath().toString()).toExternalForm();
-//                Logger.logInfoMessage("DEBUG: " + e);
-//                scene.getStylesheets().add(e);
-//                scene.setUserAgentStylesheet(e);
-//            }
-//            catch (MalformedURLException e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println("DEBUG: splash " + path.toAbsolutePath().toString());
-//            System.out.println("DEBUG: splash " + path.toString());
             screenStage.setScene(scene);
             screenStage.setHeight(250);
             screenStage.setWidth(400);
@@ -251,14 +226,16 @@ public class DesktopApplication extends Application {
                         });
                     }
                     catch (InterruptedException e) {
-                        Logger.logErrorMessage("GUI thread was interrupted", e);
+                        LOG.info("GUI thread was interrupted", e);
                     }
                 }
-                Logger.logMessage("Shutdown splash screen");
+                LOG.info("Shutdown splash screen");
                 Platform.runLater(() -> screenStage.hide());
                 shutdown.set(false);
             };
-            new Thread(statusUpdater).start();
+            Thread updateSplashScreenThread = new Thread(statusUpdater, "Update splash screen status thread");
+            updateSplashScreenThread.setDaemon(true);
+            updateSplashScreenThread.start();
         }
 
         public void shutdown() {
@@ -315,9 +292,9 @@ public class DesktopApplication extends Application {
             Worker<Void> loadWorker = webEngine.getLoadWorker();
             loadWorker.stateProperty().addListener(
                     (ov, oldState, newState) -> {
-                        Logger.logDebugMessage("loadWorker old state " + oldState + " new state " + newState);
+                        LOG.debug("loadWorker old state " + oldState + " new state " + newState);
                         if (newState != Worker.State.SUCCEEDED) {
-                            Logger.logDebugMessage("loadWorker state change ignored");
+                            LOG.debug("loadWorker state change ignored");
                             return;
                         }
                         JSObject window = (JSObject) webEngine.executeScript("window");
@@ -348,7 +325,7 @@ public class DesktopApplication extends Application {
                                 startDebugServer.invoke(null, debugger, 51742);
                             }
                             catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                                Logger.logInfoMessage("Cannot start JavaFx debugger", e);
+                                LOG.info("Cannot start JavaFx debugger", e);
                             }
                         }
                     });
@@ -363,7 +340,7 @@ public class DesktopApplication extends Application {
             // Invoked when clicking a link to external site like Help or API console
             webEngine.setCreatePopupHandler(
                     config -> {
-                        Logger.logInfoMessage("popup request from webEngine");
+                        LOG.info("popup request from webEngine");
                         return invisible.getEngine();
                     });
 
@@ -418,25 +395,25 @@ public class DesktopApplication extends Application {
 
         @SuppressWarnings("WeakerAccess")
         public void popupHandlerURLChange(String newValue) {
-            Logger.logInfoMessage("popup request for " + newValue);
+            LOG.info("popup request for " + newValue);
             Platform.runLater(() -> {
                 try {
                     Desktop.getDesktop().browse(new URI(newValue));
                 }
                 catch (Exception e) {
-                    Logger.logInfoMessage("Cannot open " + newValue + " error " + e.getMessage());
+                    LOG.info("Cannot open " + newValue + " error " + e.getMessage());
                 }
             });
         }
 
         private void webViewURLChange(String newValue) {
-            Logger.logInfoMessage("webview address changed to " + newValue);
+            LOG.info("webview address changed to " + newValue);
             URL url;
             try {
                 url = new URL(newValue);
             }
             catch (MalformedURLException e) {
-                Logger.logInfoMessage("Malformed URL " + newValue, e);
+                LOG.info("Malformed URL " + newValue, e);
                 return;
             }
             String query = url.getQuery();
@@ -455,7 +432,7 @@ public class DesktopApplication extends Application {
             if (DOWNLOAD_REQUEST_TYPES.contains(requestType)) {
                 download(requestType, params);
             } else {
-                Logger.logInfoMessage(String.format("requestType %s is not a download request", requestType));
+                LOG.info(String.format("requestType %s is not a download request", requestType));
             }
         }
 
@@ -523,7 +500,7 @@ public class DesktopApplication extends Application {
                         }
                     }
                     catch (RuntimeException e) {
-                        Logger.logDebugMessage("Decryption of message to recipient failed: " + e.toString());
+                        LOG.debug("Decryption of message to recipient failed: " + e.toString());
                         growl("Wrong secretPhrase or sharedKey");
                         return;
                     }
@@ -538,7 +515,7 @@ public class DesktopApplication extends Application {
         private void downloadFile(byte[] data, String filename) {
             Path folderPath = Paths.get(System.getProperty("user.home"), "downloads");
             Path path = Paths.get(folderPath.toString(), filename);
-            Logger.logInfoMessage("Downloading data to " + path.toAbsolutePath());
+            LOG.info("Downloading data to " + path.toAbsolutePath());
             try {
                 OutputStream outputStream = Files.newOutputStream(path);
                 outputStream.write(data);
@@ -560,9 +537,9 @@ public class DesktopApplication extends Application {
 
         private void growl(String msg, Exception e) {
             if (e == null) {
-                Logger.logInfoMessage(msg);
+                LOG.info(msg);
             } else {
-                Logger.logInfoMessage(msg, e);
+                LOG.info(msg, e);
             }
             nrs.call("growl", msg);
         }
@@ -587,7 +564,7 @@ public class DesktopApplication extends Application {
                 if (selectedButtonType.isPresent()) {
                     if (selectedButtonType.get().getButtonData() == ButtonBar.ButtonData.YES) {
                         try {
-                            Logger.logInfoMessage("Trying to reindex db...");
+                            LOG.info("Trying to reindex db...");
                             //re-index db and return alert
                             Optional<ButtonType> clickedButtonType = reindexDbUI().showAndWait();
                             if (clickedButtonType.isPresent()) {
@@ -599,13 +576,13 @@ public class DesktopApplication extends Application {
                             }
                         }
                         catch (SQLException sqlEx) {
-                            Logger.logErrorMessage("Cannot reindex database!", sqlEx);
+                            LOG.error("Cannot reindex database!", sqlEx);
                             //delete db and show alert
                             deleteDbAndHandleException().show();
                         }
                     }
                 }
-                Apl.shutdown();
+                System.exit(0);
             });
         }
 
@@ -636,12 +613,10 @@ public class DesktopApplication extends Application {
                 alert = prepareAlert(Alert.AlertType.INFORMATION, "Success", "DB was removed successfully! Please, restart the wallet.", 180);
             }
             catch (IOException e) {
-                Logger.logErrorMessage("Unable to delete db!", e);
+                LOG.error("Unable to delete db!", e);
                 alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete db folder.", 180);
             }
             return alert;
         }
-
     }
-
 }
