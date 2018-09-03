@@ -20,7 +20,7 @@ import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class PlatformDependentUpdater {
-        private static final org.slf4j.Logger LOG = getLogger(PlatformDependentUpdater.class);
+    private static final org.slf4j.Logger LOG = getLogger(PlatformDependentUpdater.class);
 
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
     public static PlatformDependentUpdater getInstance() {
@@ -33,10 +33,10 @@ public class PlatformDependentUpdater {
                 shutdownAndRunScript(updateDirectory, WINDOWS_UPDATE_SCRIPT_PATH, WINDOWS_RUN_TOOL_PATH);
                 break;
             case LINUX:
-                shutdownAndRunScript(updateDirectory, LINUX_UPDATE_SCRIPT_PATH, LINUX_RUN_TOOL_PATH, LINUX_RUN_COMMAND_POSTFIX);
+                shutdownAndRunScript(updateDirectory, LINUX_UPDATE_SCRIPT_PATH, LINUX_RUN_TOOL_PATH, true);
                 break;
             case OSX:
-                shutdownAndRunScript(updateDirectory, OSX_UPDATE_SCRIPT_PATH, OSX_RUN_TOOL_PATH, OSX_RUN_COMMAND_POSTFIX);
+                shutdownAndRunScript(updateDirectory, OSX_UPDATE_SCRIPT_PATH, OSX_RUN_TOOL_PATH, true);
                 break;
         }
         new Thread(() -> {
@@ -55,10 +55,10 @@ public class PlatformDependentUpdater {
         }, "Updater Apollo shutdown thread").start();
     }
     private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool) {
-        shutdownAndRunScript(updateDirectory, scriptName, runTool, "");
+        shutdownAndRunScript(updateDirectory, scriptName, runTool, false);
     }
 
-    private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool, String runCommandPostfix) {
+    private void shutdownAndRunScript(Path updateDirectory, String scriptName, String runTool, boolean isUnix) {
         Thread scriptRunner = new Thread(() -> {
             LOG.debug("Waiting apl shutdown...");
             UpdaterDb.saveUpdateStatus(true);
@@ -73,28 +73,33 @@ public class PlatformDependentUpdater {
             }
             LOG.debug("Apl was shutdown");
             Path scriptPath = updateDirectory.resolve(scriptName);
-            runScript(scriptPath, runTool, runCommandPostfix);
+            runScript(scriptPath, runTool, isUnix);
         }, "Platform dependent update thread");
         scriptRunner.start();
     }
 
-    private void runScript(Path scriptPath, String runTool, String commandPostfix) {
+    private void runScript(Path scriptPath, String runTool, boolean isUnix) {
         if (!Files.exists(scriptPath)) {
             LOG.error("File {} not exist in update directory! Cannot continue update.", scriptPath);
             System.exit(20);
         }
         try {
             LOG.debug("Starting platform dependent script");
-            String command = String.format("%s %s %s %s %s %s", runTool, scriptPath.toString(),
+            String command = String.format("%s %s %s %s %s ", runTool, scriptPath.toString(),
                     Paths.get("").toAbsolutePath().toString(), scriptPath.getParent().toAbsolutePath().toString(),
-                    RuntimeEnvironment.isDesktopApplicationEnabled(), commandPostfix).trim();
-            Runtime.getRuntime().exec(command, null, new File("").getAbsoluteFile());
+                    RuntimeEnvironment.isDesktopApplicationEnabled()).trim();
+            LOG.debug("Running command: " + command);
+            Process proc = Runtime.getRuntime().exec(command, null, new File("").getAbsoluteFile());
+            if (isUnix) proc.waitFor();
+
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {
             LOG.error("Cannot execute update script: " + scriptPath, e);
             System.exit(10);
         }
+        catch (InterruptedException e)
+        {}
         LOG.debug("Exit...");
         System.exit(5);
     }
