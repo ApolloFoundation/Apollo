@@ -23,9 +23,9 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -36,7 +36,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 final class BlockImpl implements Block {
+    private static final Logger LOG = getLogger(BlockImpl.class);
+
 
     private final int version;
     private final int timestamp;
@@ -292,8 +296,8 @@ final class BlockImpl implements Block {
             }
             return block;
         } catch (AplException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse block: " + blockData.toJSONString());
-            Logger.logDebugMessage("Exception: " + e.getMessage());
+            LOG.debug("Failed to parse block: " + blockData.toJSONString());
+            LOG.debug("Exception: " + e.getMessage());
             throw e;
         }
     }
@@ -368,7 +372,7 @@ final class BlockImpl implements Block {
 
         } catch (RuntimeException e) {
 
-            Logger.logMessage("Error verifying block generation signature", e);
+            LOG.info("Error verifying block generation signature", e);
             return false;
 
         }
@@ -393,13 +397,14 @@ final class BlockImpl implements Block {
                 }
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                Logger.logDebugMessage("Back fees %f %s to forger at height %d", ((double)backFees[i])/Constants.ONE_APL, Constants.COIN_SYMBOL, this.height - i - 1);
+                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, Constants.COIN_SYMBOL,
+                        this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            Logger.logDebugMessage("Fee reduced by %f %s at height %d", ((double)totalBackFees)/Constants.ONE_APL, Constants.COIN_SYMBOL, this.height);
+            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, Constants.COIN_SYMBOL, this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
         generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);

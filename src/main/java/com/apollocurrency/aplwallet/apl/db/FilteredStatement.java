@@ -20,13 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Wrapper for a SQL Statement
@@ -34,6 +32,7 @@ import java.sql.Statement;
  * The wrapper forwards all methods to the wrapped statement
  */
 public class FilteredStatement implements Statement {
+        private static final Logger LOG = getLogger(FilteredStatement.class);
 
     private final Statement stmt;
 
@@ -306,7 +305,7 @@ public class FilteredStatement implements Statement {
             cancel();
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Cannot cancel filtered statement", e);
+            LOG.debug("Cannot cancel filtered statement", e);
         }
     }
 }

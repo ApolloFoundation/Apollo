@@ -21,11 +21,11 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,16 +35,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class PassphraseRecovery {
+    private static final Logger LOG = getLogger(PassphraseRecovery.class);
 
     final static Solution NO_SOLUTION = new Solution();
 
@@ -57,11 +55,11 @@ public final class PassphraseRecovery {
             Map<Long, byte[]> publicKeys = getPublicKeys();
             String wildcard = Apl.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
             if ("".equals(wildcard)) {
-                Logger.logInfoMessage("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
+                LOG.info("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
                 return;
             }
             int[] passphraseChars = wildcard.chars().toArray();
-            Logger.logInfoMessage("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
+            LOG.info("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
             String positionsStr = Apl.getStringProperty("recoveryPositions", "");
             int[] positions;
             try {
@@ -72,9 +70,9 @@ public final class PassphraseRecovery {
                 }
                 List<Integer> list = IntStream.of(positions).boxed().collect(Collectors.toList());
                 String s = list.stream().map(p -> Character.toString(wildcard.charAt(p))).collect(Collectors.joining(" "));
-                Logger.logInfoMessage("Recovering chars: " + s);
+                LOG.info("Recovering chars: " + s);
             } catch (NumberFormatException e) {
-                Logger.logInfoMessage("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
+                LOG.info("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
                 return;
             }
             String dictionaryStr = Apl.getStringProperty("recoveryDictionary", "");
@@ -93,10 +91,10 @@ public final class PassphraseRecovery {
                 default:
                     dictionary = dictionaryStr.toCharArray();
             }
-            Logger.logMessage(String.format("Wildcard %s positions %s dictionary %s", wildcard, Arrays.toString(positions), Arrays.toString(dictionary)));
+            LOG.info(String.format("Wildcard %s positions %s dictionary %s", wildcard, Arrays.toString(positions), Arrays.toString(dictionary)));
             Scanner scanner = new Scanner(publicKeys, positions, wildcard.toCharArray(), dictionary);
             Solution solution = scanner.scan();
-            Logger.logDebugMessage("" + solution);
+            LOG.debug("" + solution);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -125,7 +123,7 @@ public final class PassphraseRecovery {
             throw new IllegalStateException(e);
         }
 
-        Logger.logMessage(String.format("Loaded %d public keys", publicKeys.size()));
+        LOG.info(String.format("Loaded %d public keys", publicKeys.size()));
         return publicKeys;
     }
 
@@ -145,7 +143,7 @@ public final class PassphraseRecovery {
 
         Solution scan() {
             if (positions.length == 0) {
-                Logger.logInfoMessage("Position not specified scanning for a single typo");
+                LOG.info("Position not specified scanning for a single typo");
                 char[] copy = new char[wildcard.length];
                 for (int i=0; i<wildcard.length; i++) {
                     positions = new int[1];
@@ -158,7 +156,7 @@ public final class PassphraseRecovery {
                 }
                 return NO_SOLUTION;
             }
-            Logger.logInfoMessage("Scanning " + Math.pow(dictionary.length, positions.length) + " permutations");
+            LOG.info("Scanning " + Math.pow(dictionary.length, positions.length) + " permutations");
             if (positions.length == 1) {
                 return scan(0, wildcard);
             }
@@ -174,7 +172,7 @@ public final class PassphraseRecovery {
                         throw new IllegalStateException(e);
                     }
                     counter++;
-                    Logger.logInfoMessage(String.format("task %d / %d is done", counter, dictionary.length));
+                    LOG.info(String.format("task %d / %d is done", counter, dictionary.length));
                     if (solution != NO_SOLUTION) {
                         realSolution = solution;
                         break;

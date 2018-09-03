@@ -4,14 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class UpdaterDb {
+    private static final Logger LOG = getLogger(UpdaterDb.class);
 
     private static final RuntimeException INCONSISTENT_UPDATE_STATUS_TABLE_EXCEPTION = new RuntimeException(
             "(\'update_status\' table is inconsistent. (more than one update transaction " +
@@ -22,7 +25,7 @@ public class UpdaterDb {
             return loadLastUpdateTransaction(connection);
         }
         catch (SQLException e) {
-            Logger.logErrorMessage("Db error", e);
+            LOG.error("Db error", e);
         }
         return null;
     }
@@ -36,7 +39,7 @@ public class UpdaterDb {
             checkInconsistency(rs);
         }
         catch (SQLException | AplException.NotValidException e) {
-            Logger.logDebugMessage("Unable to load update transaction", e);
+            LOG.debug("Unable to load update transaction", e);
         }
         return updateTransaction;
     }
@@ -68,7 +71,7 @@ public class UpdaterDb {
         }
         catch (SQLException e) {
             Db.db.rollbackTransaction();
-            Logger.logErrorMessage("Db error", e);
+            LOG.error("Db error", e);
         }
         finally {
             if (!isInTransaction) Db.db.endTransaction();
@@ -82,7 +85,7 @@ public class UpdaterDb {
             return saveUpdateTransaction(transactionId, connection);
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Db error! ", e);
+            LOG.debug("Db error! ", e);
             return false;
         }
     }
@@ -94,7 +97,7 @@ public class UpdaterDb {
             updateCount = statement.executeUpdate();
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Unable to insert update transaction id! ", e);
+            LOG.debug("Unable to insert update transaction id! ", e);
             return false;
         }
         checkInconsistency(updateCount);
@@ -110,7 +113,7 @@ public class UpdaterDb {
             updateCount = statement.executeUpdate();
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Unable to insert update status! ", e);
+            LOG.debug("Unable to insert update status! ", e);
             return false;
         }
         checkInconsistency(updateCount);
@@ -127,7 +130,7 @@ public class UpdaterDb {
             checkInconsistency(rs);
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Unable to get update status! ", e);
+            LOG.debug("Unable to get update status! ", e);
         }
         return false;
     }
@@ -137,7 +140,7 @@ public class UpdaterDb {
             return clear(connection);
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Db error ", e);
+            LOG.debug("Db error ", e);
             return 0;
         }
     }
@@ -148,7 +151,7 @@ public class UpdaterDb {
             deletedTransactionCount = statement.executeUpdate();
         }
         catch (SQLException e) {
-            Logger.logDebugMessage("Unable to delete db entries! ", e);
+            LOG.debug("Unable to delete db entries! ", e);
             return 0;
         }
         return deletedTransactionCount;

@@ -20,11 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -63,6 +65,7 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  */
 public class SetLogging extends APIServlet.APIRequestHandler {
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SetLogging.class);
 
     /** SetLogging instance */
     private static class SetLoggingHolder {
@@ -110,25 +113,26 @@ public class SetLogging extends APIServlet.APIRequestHandler {
         // Get the log level
         //
         String value = req.getParameter("logLevel");
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         if (value != null) {
             switch (value) {
                 case "DEBUG":
-                    Logger.setLevel(Logger.Level.DEBUG);
+                    root.setLevel(Level.DEBUG);
                     break;
                 case "INFO":
-                    Logger.setLevel(Logger.Level.INFO);
+                    root.setLevel(Level.INFO);
                     break;
                 case "WARN":
-                    Logger.setLevel(Logger.Level.WARN);
+                    root.setLevel(Level.WARN);
                     break;
                 case "ERROR":
-                    Logger.setLevel(Logger.Level.ERROR);
+                    root.setLevel(Level.ERROR);
                     break;
                 default:
                     response = INCORRECT_LEVEL;
             }
         } else {
-            Logger.setLevel(Logger.Level.INFO);
+            root.setLevel(Level.INFO);
         }
         //
         // Get the communication events

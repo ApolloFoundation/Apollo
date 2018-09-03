@@ -20,22 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.Block;
-import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.Db;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
@@ -44,16 +38,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * EventListener listens for peer, block, transaction and account ledger events as
@@ -67,6 +58,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
  */
 class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
+        private static final Logger LOG = getLogger(EventListener.class);
 
     /** Maximum event users */
     static final int maxEventUsers = Apl.getIntProperty("apl.apiMaxEventUsers");
@@ -202,7 +194,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         EventListener oldListener = eventListeners.put(address, this);
         if (oldListener != null)
             oldListener.deactivateListener();
-        Logger.logDebugMessage(String.format("Event listener activated for %s", address));
+        LOG.debug(String.format("Event listener activated for %s", address));
     }
 
     /**
@@ -311,7 +303,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         } finally {
             lock.unlock();
         }
-        Logger.logDebugMessage(String.format("Event listener deactivated for %s", address));
+        LOG.debug(String.format("Event listener deactivated for %s", address));
     }
 
     /**
@@ -390,7 +382,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 try (Writer writer = resp.getWriter()) {
                     response.writeJSONString(writer);
                 } catch (IOException exc) {
-                    Logger.logDebugMessage(String.format("Unable to return API response to %s: %s",
+                    LOG.debug(String.format("Unable to return API response to %s: %s",
                                                          address, exc.toString()));
                 }
                 context.complete();
@@ -433,7 +425,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             pendingWaits.remove(context);
             context.complete();
             timestamp = System.currentTimeMillis();
-            Logger.logDebugMessage("Error detected during event wait for "+address, event.getThrowable());
+            LOG.debug("Error detected during event wait for "+address, event.getThrowable());
         } finally {
             lock.unlock();
         }
@@ -465,7 +457,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             try (Writer writer = context.getResponse().getWriter()) {
                 response.writeJSONString(writer);
             } catch (IOException exc) {
-                Logger.logDebugMessage(String.format("Unable to return API response to %s: %s",
+                LOG.debug(String.format("Unable to return API response to %s: %s",
                                                      address, exc.toString()));
             }
             context.complete();

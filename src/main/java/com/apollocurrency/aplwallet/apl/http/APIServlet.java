@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -36,25 +36,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_DISABLED;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_INCORRECT_REQUEST;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_NOT_ALLOWED;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.LIGHT_CLIENT_DISABLED_API;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.POST_REQUIRED;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.REQUIRED_BLOCK_NOT_FOUND;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.REQUIRED_LAST_BLOCK_NOT_FOUND;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class APIServlet extends HttpServlet {
+    private static final Logger LOG = getLogger(APIServlet.class);
 
     public abstract static class APIRequestHandler {
 
@@ -161,10 +149,10 @@ public final class APIServlet extends HttpServlet {
             }
         });
         if (!API.disabledAPIs.isEmpty()) {
-            Logger.logInfoMessage("Disabled APIs: " + API.disabledAPIs);
+            LOG.info("Disabled APIs: " + API.disabledAPIs);
         }
         if (!API.disabledAPITags.isEmpty()) {
-            Logger.logInfoMessage("Disabled APITags: " + API.disabledAPITags);
+            LOG.info("Disabled APITags: " + API.disabledAPITags);
         }
 
         apiRequestHandlers = Collections.unmodifiableMap(map);
@@ -271,15 +259,15 @@ public final class APIServlet extends HttpServlet {
         } catch (ParameterException e) {
             response = e.getErrorResponse();
         } catch (AplException | RuntimeException e) {
-            Logger.logDebugMessage("Error processing API request", e);
+            LOG.debug("Error processing API request", e);
             JSONObject json = new JSONObject();
             JSONData.putException(json, e);
             response = JSON.prepare(json);
         } catch (ExceptionInInitializerError err) {
-            Logger.logErrorMessage("Initialization Error", err.getCause());
+            LOG.error("Initialization Error", err.getCause());
             response = ERROR_INCORRECT_REQUEST;
         } catch (Exception e) {
-            Logger.logErrorMessage("Error processing request", e);
+            LOG.error("Error processing request", e);
             response = ERROR_INCORRECT_REQUEST;
         } finally {
             // The response will be null if we created an asynchronous context
@@ -288,7 +276,7 @@ public final class APIServlet extends HttpServlet {
                     long requestTime = System.currentTimeMillis() - startTime;
                     ((JSONObject) response).put("requestProcessingTime", requestTime);
                     if (logRequestTime) {
-                        Logger.logDebugMessage("Request \'" +req.getParameter("requestType")+ "\' took " + requestTime + " ms");
+                        LOG.debug("Request \'" +req.getParameter("requestType")+ "\' took " + requestTime + " ms");
                     }
                 }
                 try (Writer writer = resp.getWriter()) {

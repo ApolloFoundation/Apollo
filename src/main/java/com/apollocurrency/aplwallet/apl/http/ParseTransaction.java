@@ -23,13 +23,17 @@ package com.apollocurrency.aplwallet.apl.http;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class ParseTransaction extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(ParseTransaction.class);
+
 
     private static class ParseTransactionHolder {
         private static final ParseTransaction INSTANCE = new ParseTransaction();
@@ -55,7 +59,7 @@ public final class ParseTransaction extends APIServlet.APIRequestHandler {
         try {
             transaction.validate();
         } catch (AplException.ValidationException|RuntimeException e) {
-            Logger.logDebugMessage(e.getMessage(), e);
+            LOG.debug(e.getMessage(), e);
             response.put("validate", false);
             JSONData.putException(response, e, "Invalid transaction");
         }

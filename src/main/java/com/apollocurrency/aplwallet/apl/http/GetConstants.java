@@ -24,16 +24,19 @@ import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class GetConstants extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(GetConstants.class);
 
     private static class GetConstantsHolder {
         private static final GetConstants INSTANCE = new GetConstants();
@@ -198,7 +201,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
 
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {
-                Logger.logErrorMessage(e.toString(), e);
+                LOG.error(e.toString(), e);
                 throw e;
             }
         }

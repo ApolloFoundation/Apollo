@@ -24,8 +24,8 @@ import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,8 +33,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler {
+        private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
 
     private static class DownloadPrunableMessageHolder {
         private static final DownloadPrunableMessage INSTANCE = new DownloadPrunableMessage();
@@ -75,7 +77,7 @@ public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler 
                     data = prunableMessage.getMessage();
                 }
             } catch (RuntimeException e) {
-                Logger.logDebugMessage("Decryption of message to recipient failed: " + e.toString());
+                LOG.debug("Decryption of message to recipient failed: " + e.toString());
                 return JSONResponses.error("Wrong secretPhrase or sharedKey");
             }
         }

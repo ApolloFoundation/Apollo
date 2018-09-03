@@ -26,10 +26,10 @@ import com.apollocurrency.aplwallet.apl.AplException.ValidationException;
 import com.apollocurrency.aplwallet.apl.Attachment.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.VoteWeighting.VotingModel;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -37,8 +37,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 
 public abstract class TransactionType {
+    private static final Logger LOG = getLogger(TransactionType.class);
 
     private static final byte TYPE_PAYMENT = 0;
     private static final byte TYPE_MESSAGING = 1;
@@ -2213,7 +2216,7 @@ public abstract class TransactionType {
                             String mediaTypeName = tika.detect(image);
                             mediaType = MediaType.parse(mediaTypeName);
                         } catch (NoClassDefFoundError e) {
-                            Logger.logErrorMessage("Error running Tika parsers", e);
+                            LOG.error("Error running Tika parsers", e);
                         }
                         if (mediaType == null || !"image".equals(mediaType.getType())) {
                             throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);

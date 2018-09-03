@@ -6,16 +6,21 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.util.List;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class UpdaterMediator {
+    private static final Logger LOG = getLogger(UpdaterMediator.class);
+
     private final UpdateInfo updateInfo = UpdateInfo.getInstance();
 
     public UpdateInfo.DownloadStatus getStatus() {return updateInfo.getDownloadStatus();}
 
     public void setStatus(UpdateInfo.DownloadStatus status) {
-        Logger.logInfoMessage("Update download status: " + status);
+        LOG.info("Update download status: " + status);
         updateInfo.setDownloadStatus(status);
     }
 
@@ -27,7 +32,7 @@ public class UpdaterMediator {
 
     public void setUpdateState(UpdateInfo.UpdateState updateState) {
 
-        Logger.logInfoMessage("Update state: " + updateState);
+        LOG.info("Update state: " + updateState);
         updateInfo.setUpdateState(updateState);}
 
     public void setUpdateData(boolean isUpdate, int updateHeight, int receivedUpdateHeight, Level updateLevel, Version newVersion) {
@@ -44,7 +49,7 @@ public class UpdaterMediator {
     public void setUpdateHeight(int updateHeight) {updateInfo.setEstimatedHeight(updateHeight);}
 
     public void setState(UpdateInfo.DownloadState state) {
-        Logger.logInfoMessage("Update download state: " + state);
+        LOG.info("Update download state: " + state);
         updateInfo.setDownloadState(state);
     }
     public void shutdownApplication() {
@@ -103,10 +108,10 @@ public class UpdaterMediator {
     }
 
     public void restoreConnection() {
-        Logger.logDebugMessage("Restarting peer server, blockchain processor and forging");
+        LOG.debug("Restarting peer server, blockchain processor and forging");
         BlockchainProcessorImpl.getInstance().resumeBlockchainDownloading();
         Peers.resume();
         Generator.resumeForging();
-        Logger.logDebugMessage("Peer server, blockchain processor and forging were restarted successfully");
+        LOG.debug("Peer server, blockchain processor and forging were restarted successfully");
     }
 }

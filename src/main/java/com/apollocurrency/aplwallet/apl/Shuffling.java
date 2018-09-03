@@ -22,29 +22,23 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffling {
+    private static final Logger LOG = getLogger(Shuffling.class);
 
     public enum Event {
         SHUFFLING_CREATED, SHUFFLING_PROCESSING_ASSIGNED, SHUFFLING_PROCESSING_FINISHED, SHUFFLING_BLAME_STARTED, SHUFFLING_CANCELLED, SHUFFLING_DONE
@@ -218,7 +212,7 @@ public final class Shuffling {
         long shufflingId = Convert.fullHashToId(fullHash);
         Shuffling shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
         if (shuffling != null && !Arrays.equals(shuffling.getFullHash(), fullHash)) {
-            Logger.logDebugMessage("Shuffling with different hash %s but same id found for hash %s",
+            LOG.debug("Shuffling with different hash %s but same id found for hash %s",
                     Convert.toHexString(shuffling.getFullHash()), Convert.toHexString(fullHash));
             return null;
         }
@@ -408,7 +402,7 @@ public final class Shuffling {
         this.stage = stage;
         this.assigneeAccountId = assigneeAccountId;
         this.blocksRemaining = blocksRemaining;
-        Logger.logDebugMessage("Shuffling %s entered stage %s, assignee %s, remaining blocks %s",
+        LOG.debug("Shuffling %s entered stage %s, assignee %s, remaining blocks %s",
                 Long.toUnsignedString(id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
@@ -476,7 +470,7 @@ public final class Shuffling {
                 byte[] decrypted = encryptedData.decrypt(secretPhrase);
                 outputDataList.add(decrypted);
             } catch (Exception e) {
-                Logger.logMessage("Decryption failed", e);
+                LOG.info("Decryption failed", e);
                 return isLast ? new Attachment.ShufflingRecipients(this.id, Convert.EMPTY_BYTES, shufflingStateHash)
                         : new Attachment.ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
             }
@@ -499,7 +493,7 @@ public final class Shuffling {
             for (byte[] publicKey : outputDataList) {
                 if (!Crypto.isCanonicalPublicKey(publicKey) || !recipientAccounts.add(Account.getId(publicKey))) {
                     // duplicate or invalid recipient public key
-                    Logger.logDebugMessage("Invalid recipient public key " + Convert.toHexString(publicKey));
+                    LOG.debug("Invalid recipient public key " + Convert.toHexString(publicKey));
                     return new Attachment.ShufflingRecipients(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
             }
@@ -510,11 +504,11 @@ public final class Shuffling {
             byte[] previous = null;
             for (byte[] decrypted : outputDataList) {
                 if (previous != null && Arrays.equals(decrypted, previous)) {
-                    Logger.logDebugMessage("Duplicate decrypted data");
+                    LOG.debug("Duplicate decrypted data");
                     return new Attachment.ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
                 if (decrypted.length != 32 + 64 * (participantCount - participantIndex - 1)) {
-                    Logger.logDebugMessage("Invalid encrypted data length in process " + decrypted.length);
+                    LOG.debug("Invalid encrypted data length in process " + decrypted.length);
                     return new Attachment.ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
                 previous = decrypted;
@@ -704,7 +698,7 @@ public final class Shuffling {
         if (deleteFinished) {
             delete();
         }
-        Logger.logDebugMessage("Shuffling %s was distributed", Long.toUnsignedString(id));
+        LOG.debug("Shuffling %s was distributed", Long.toUnsignedString(id));
     }
 
     private void cancel(Block block) {
@@ -733,13 +727,13 @@ public final class Shuffling {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
-                Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
+                LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
             }
             fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
             blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             blockGeneratorAccount.addToForgedBalanceATM(fee);
-            Logger.logDebugMessage("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
+            LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
         }
         setStage(Stage.CANCELLED, blamedAccountId, (short)0);
         shufflingTable.insert(this);
@@ -747,18 +741,18 @@ public final class Shuffling {
         if (deleteFinished) {
             delete();
         }
-        Logger.logDebugMessage("Shuffling %s was cancelled, blaming account %s", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));
+        LOG.debug("Shuffling %s was cancelled, blaming account %s", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));
     }
 
     private long blame() {
         // if registration never completed, no one is to blame
         if (stage == Stage.REGISTRATION) {
-            Logger.logDebugMessage("Registration never completed for shuffling %s", Long.toUnsignedString(id));
+            LOG.debug("Registration never completed for shuffling %s", Long.toUnsignedString(id));
             return 0;
         }
         // if no one submitted cancellation, blame the first one that did not submit processing data
         if (stage == Stage.PROCESSING) {
-            Logger.logDebugMessage("Participant %s did not submit processing", Long.toUnsignedString(assigneeAccountId));
+            LOG.debug("Participant %s did not submit processing", Long.toUnsignedString(assigneeAccountId));
             return assigneeAccountId;
         }
         List<ShufflingParticipant> participants = new ArrayList<>();
@@ -771,7 +765,7 @@ public final class Shuffling {
             // if verification started, blame the first one who did not submit verification
             for (ShufflingParticipant participant : participants) {
                 if (participant.getState() != ShufflingParticipant.State.VERIFIED) {
-                    Logger.logDebugMessage("Participant %s did not submit verification", Long.toUnsignedString(participant.getAccountId()));
+                    LOG.debug("Participant %s did not submit verification", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
             }
@@ -784,7 +778,7 @@ public final class Shuffling {
             byte[][] keySeeds = participant.getKeySeeds();
             // if participant couldn't submit key seeds because he also couldn't decrypt some of the previous data, this should have been caught before
             if (keySeeds.length == 0) {
-                Logger.logDebugMessage("Participant %s did not reveal keys", Long.toUnsignedString(participant.getAccountId()));
+                LOG.debug("Participant %s did not reveal keys", Long.toUnsignedString(participant.getAccountId()));
                 return participant.getAccountId();
             }
             byte[] publicKey = Crypto.getPublicKey(keySeeds[0]);
@@ -798,7 +792,7 @@ public final class Shuffling {
             }
             if (encryptedData == null || !Arrays.equals(publicKey, encryptedData.getPublicKey())) {
                 // participant lied about key seeds or data
-                Logger.logDebugMessage("Participant %s did not submit blame data, or revealed invalid keys", Long.toUnsignedString(participant.getAccountId()));
+                LOG.debug("Participant %s did not submit blame data, or revealed invalid keys", Long.toUnsignedString(participant.getAccountId()));
                 return participant.getAccountId();
             }
             for (int k = i + 1; k < participantCount; k++) {
@@ -810,7 +804,7 @@ public final class Shuffling {
                     participantBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
                 } catch (Exception e) {
                     // the next participant couldn't decrypt the data either, blame this one
-                    Logger.logDebugMessage("Could not decrypt data from participant %s", Long.toUnsignedString(participant.getAccountId()));
+                    LOG.debug("Could not decrypt data from participant %s", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
                 boolean isLast = k == participantCount - 1;
@@ -818,17 +812,17 @@ public final class Shuffling {
                     // not encrypted data but plaintext recipient public key
                     if (!Crypto.isCanonicalPublicKey(publicKey)) {
                         // not a valid public key
-                        Logger.logDebugMessage("Participant %s submitted invalid recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant %s submitted invalid recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                     // check for collisions and assume they are intentional
                     byte[] currentPublicKey = Account.getPublicKey(Account.getId(participantBytes));
                     if (currentPublicKey != null && !Arrays.equals(currentPublicKey, participantBytes)) {
-                        Logger.logDebugMessage("Participant %s submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant %s submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                     if (!recipientAccounts.add(Account.getId(participantBytes))) {
-                        Logger.logDebugMessage("Participant %s submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant %s submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                 }
@@ -844,7 +838,7 @@ public final class Shuffling {
                 }
                 if (!found) {
                     // the next participant did not include this participant's data
-                    Logger.logDebugMessage("Participant %s did not include previous data", Long.toUnsignedString(nextParticipant.getAccountId()));
+                    LOG.debug("Participant %s did not include previous data", Long.toUnsignedString(nextParticipant.getAccountId()));
                     return nextParticipant.getAccountId();
                 }
                 if (!isLast) {

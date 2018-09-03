@@ -20,22 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
+import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.servlet.*;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +45,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class PeerServlet extends WebSocketServlet {
+    private static final Logger LOG = getLogger(PeerServlet.class);
 
     abstract static class PeerRequestHandler {
         abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
@@ -188,9 +187,9 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer != null) {
             if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
                 if (e instanceof RuntimeException) {
-                    Logger.logDebugMessage("Error sending response to peer " + peer.getHost(), e);
+                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
                 } else {
-                    Logger.logDebugMessage(String.format("Error sending response to peer %s: %s",
+                    LOG.debug(String.format("Error sending response to peer %s: %s",
                         peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
                 }
             }
@@ -263,7 +262,7 @@ public final class PeerServlet extends WebSocketServlet {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
             peer.updateDownloadedVolume(cr.getCount());
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
-                Logger.logDebugMessage("Unsupported protocol " + request.get("protocol"));
+                LOG.debug("Unsupported protocol " + request.get("protocol"));
                 return UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = peerRequestHandlers.get((String)request.get("requestType"));
@@ -293,7 +292,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException|ParseException|IOException e) {
-            Logger.logDebugMessage("Error processing POST request: " + e.toString());
+            LOG.debug("Error processing POST request: " + e.toString());
             peer.blacklist(e);
             return error(e);
         }

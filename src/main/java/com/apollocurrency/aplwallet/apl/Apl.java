@@ -30,11 +30,11 @@ import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -50,7 +50,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Apl {
+    private static Logger LOG;
 
     public static final Version VERSION = Version.from("1.0.7");
     public static final String APPLICATION = "Apollo";
@@ -78,6 +81,7 @@ public final class Apl {
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
         System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
         dirProvider = RuntimeEnvironment.getDirProvider();
+        LOG = getLogger(Apl.class);
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         loadProperties(defaultProperties, APL_DEFAULT_PROPERTIES, true);
         if (!VERSION.equals(Version.from(Apl.defaultProperties.getProperty("apl.version")))) {
@@ -223,10 +227,10 @@ public final class Apl {
     public static int getIntProperty(String name, int defaultValue) {
         try {
             int result = Integer.parseInt(properties.getProperty(name));
-            Logger.logMessage(name + " = \"" + result + "\"");
+            LOG.info(name + " = \"" + result + "\"");
             return result;
         } catch (NumberFormatException e) {
-            Logger.logMessage(name + " not defined or not numeric, using default value " + defaultValue);
+            LOG.info(name + " not defined or not numeric, using default value " + defaultValue);
             return defaultValue;
         }
     }
@@ -246,9 +250,9 @@ public final class Apl {
     public static String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
         String value = properties.getProperty(name);
         if (value != null && ! "".equals(value)) {
-            Logger.logMessage(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
+            LOG.info(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
         } else {
-            Logger.logMessage(name + " not defined");
+            LOG.info(name + " not defined");
             value = defaultValue;
         }
         if (encoding == null || value == null) {
@@ -283,13 +287,13 @@ public final class Apl {
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = properties.getProperty(name);
         if (Boolean.TRUE.toString().equals(value)) {
-            Logger.logMessage(name + " = \"true\"");
+            LOG.info(name + " = \"true\"");
             return true;
         } else if (Boolean.FALSE.toString().equals(value)) {
-            Logger.logMessage(name + " = \"false\"");
+            LOG.info(name + " = \"false\"");
             return false;
         }
-        Logger.logMessage(name + " not defined, using default " + defaultValue);
+        LOG.info(name + " not defined, using default " + defaultValue);
         return defaultValue;
     }
 
@@ -350,7 +354,7 @@ public final class Apl {
     }
 
     public static void shutdown() {
-        Logger.logShutdownMessage("Shutting down...");
+        LOG.info("Shutting down...");
         AddOns.shutdown();
         API.shutdown();
         FundingMonitor.shutdown();
@@ -358,8 +362,7 @@ public final class Apl {
         BlockchainProcessorImpl.getInstance().shutdown();
         Peers.shutdown();
         Db.shutdown();
-        Logger.logShutdownMessage(Apl.APPLICATION + " server " + VERSION + " stopped.");
-        Logger.shutdown();
+        LOG.info(Apl.APPLICATION + " server " + VERSION + " stopped.");
         runtimeMode.shutdown();
         Apl.shutdown = true;
     }
@@ -371,8 +374,8 @@ public final class Apl {
 
         static {
             try {
+
                 long startTime = System.currentTimeMillis();
-                Logger.init();
                 setSystemProperties();
                 logSystemProperties();
                 runtimeMode.init();
@@ -425,7 +428,7 @@ public final class Apl {
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), Apl.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
-                    Logger.logMessage("TIME WILL FLOW " + timeMultiplier + " TIMES FASTER!");
+                    LOG.info("TIME WILL FLOW " + timeMultiplier + " TIMES FASTER!");
                 }
                 try {
                     secureRandomInitThread.join(10000);
@@ -433,16 +436,16 @@ public final class Apl {
                 catch (InterruptedException ignore) {}
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
-                Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
+                LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Apl.APPLICATION + " server " + VERSION + " started successfully.";
-                Logger.logMessage(message);
+                LOG.info(message);
                 runtimeMode.updateAppStatus(message);
-                Logger.logMessage("Copyright © 2013-2016 The NXT Core Developers.");
-                Logger.logMessage("Copyright © 2016-2017 Jelurida IP B.V..");
-                Logger.logMessage("Copyright © 2017-2018 Apollo Foundation.");
-                Logger.logMessage("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
+                LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
+                LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
+                LOG.info("Copyright © 2017-2018 Apollo Foundation.");
+                LOG.info("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
                 if (API.getWelcomePageUri() != null) {
-                    Logger.logMessage("Client UI is at " + API.getWelcomePageUri());
+                    LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
                 if (isDesktopApplicationEnabled()) {
@@ -450,7 +453,7 @@ public final class Apl {
                     launchDesktopApplication();
                 }
                 if (Constants.isTestnet) {
-                    Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
+                    LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
             }
             catch (final RuntimeException e) {
@@ -463,11 +466,11 @@ public final class Apl {
                         throw e; //re-throw non-db exception
                     }
                 }
-                Logger.logErrorMessage("Database initialization failed ", e);
+                LOG.error("Database initialization failed ", e);
                 runtimeMode.recoverDb();
             }
             catch (Exception e) {
-                Logger.logErrorMessage(e.getMessage(), e);
+                LOG.error(e.getMessage(), e);
                 runtimeMode.alert(e.getMessage() + "\n" +
                         "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");
                 System.exit(1);
@@ -520,11 +523,11 @@ public final class Apl {
                 RuntimeEnvironment.DIRPROVIDER_ARG
         };
         for (String property : loggedProperties) {
-            Logger.logDebugMessage(String.format("%s = %s", property, System.getProperty(property)));
+            LOG.debug("{} = {}", property, System.getProperty(property));
         }
-        Logger.logDebugMessage(String.format("availableProcessors = %s", Runtime.getRuntime().availableProcessors()));
-        Logger.logDebugMessage(String.format("maxMemory = %s", Runtime.getRuntime().maxMemory()));
-        Logger.logDebugMessage(String.format("processId = %s", getProcessId()));
+        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
+        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
+        LOG.debug("processId = {}", getProcessId());
     }
 
     private static Thread initSecureRandom() {
@@ -600,7 +603,7 @@ public final class Apl {
 
         }
         catch (Exception e) {
-            Logger.logErrorMessage("Cannot load Updater!", e);
+            LOG.error("Cannot load Updater!", e);
         }
     }
 }

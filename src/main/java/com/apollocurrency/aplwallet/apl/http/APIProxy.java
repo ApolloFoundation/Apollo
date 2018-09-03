@@ -20,24 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class APIProxy {
+    private static final Logger LOG = getLogger(APIProxy.class);
+
     public static final Set<String> NOT_FORWARDED_REQUESTS;
 
     private static class APIProxyHolder {
@@ -80,7 +78,7 @@ public class APIProxy {
         int curTime = Apl.getEpochTime();
         getInstance().blacklistedPeers.entrySet().removeIf((entry) -> {
             if (entry.getValue() < curTime) {
-                Logger.logDebugMessage("Unblacklisting API peer " + entry.getKey());
+                LOG.debug("Unblacklisting API peer " + entry.getKey());
                 return true;
             }
             return false;
@@ -156,7 +154,7 @@ public class APIProxy {
             }
         }
         peersHosts = Collections.unmodifiableList(currentPeersHosts);
-        Logger.logInfoMessage("Selected API peer " + resultPeer + " peer hosts selected " + currentPeersHosts);
+        LOG.info("Selected API peer " + resultPeer + " peer hosts selected " + currentPeersHosts);
         return resultPeer;
     }
 
@@ -191,7 +189,7 @@ public class APIProxy {
 
     boolean blacklistHost(String host) {
         if (blacklistedPeers.size() > 1000) {
-            Logger.logInfoMessage("Too many blacklisted peers");
+            LOG.info("Too many blacklisted peers");
             return false;
         }
         blacklistedPeers.put(host, Apl.getEpochTime() + blacklistingPeriod);

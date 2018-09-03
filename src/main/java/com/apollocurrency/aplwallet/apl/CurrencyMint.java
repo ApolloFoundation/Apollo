@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,10 +37,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Manages currency proof of work minting
  */
 public final class CurrencyMint {
+    private static final Logger LOG = getLogger(CurrencyMint.class);
+
 
     public enum Event {
         CURRENCY_MINT
@@ -173,7 +177,7 @@ public final class CurrencyMint {
             currency.increaseSupply(units);
             listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
         } else {
-            Logger.logDebugMessage("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
+            LOG.debug("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
         }
     }
 

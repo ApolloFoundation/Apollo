@@ -20,16 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,7 +32,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class ShufflingParticipant {
+    private static final Logger LOG = getLogger(ShufflingParticipant.class);
 
     public enum State {
         REGISTERED((byte)0, new byte[]{1}),
@@ -292,7 +290,7 @@ public final class ShufflingParticipant {
             throw new IllegalStateException(String.format("Shuffling participant in state %s cannot go to state %s", this.state, state));
         }
         this.state = state;
-        Logger.logDebugMessage("Shuffling participant %s changed state to %s", Long.toUnsignedString(accountId), this.state);
+        LOG.debug("Shuffling participant %s changed state to %s", Long.toUnsignedString(accountId), this.state);
     }
 
     public byte[][] getData() {
