@@ -60,6 +60,23 @@
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <exclude.path>${project.build.testSourceDirectory}</exclude.path>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>arm64</id>
+            <properties>
+                <exclude.path>com/apollocurrency/aplwallet/apldesktop/*</exclude.path>
+            </properties>
+        </profile>
+    </profiles>
 
 
     <dependencies>
@@ -447,6 +464,15 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>${exclude.path}</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
