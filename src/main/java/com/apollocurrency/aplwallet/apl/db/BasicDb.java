@@ -196,10 +196,6 @@ public class BasicDb {
         return shutdown;
     }
 
-    public void setShutdown(boolean shutdown) {
-        this.shutdown = shutdown;
-    }
-
     public void analyzeTables() {
         try (Connection con = cp.getConnection();
              Statement stmt = con.createStatement()) {
