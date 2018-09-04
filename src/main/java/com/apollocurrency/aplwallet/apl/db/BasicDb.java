@@ -130,6 +130,7 @@ public class BasicDb {
     private final int defaultLockTimeout;
     private final int maxMemoryRows;
     private volatile boolean initialized = false;
+    private volatile boolean shutdown = false;
 
     public BasicDb(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.maxCacheSize;
@@ -171,6 +172,7 @@ public class BasicDb {
         }
         dbVersion.init(this);
         initialized = true;
+        shutdown = false;
     }
 
     public void shutdown() {
@@ -183,9 +185,19 @@ public class BasicDb {
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
             LOG.info("Database shutdown completed");
+            shutdown = true;
+            initialized = false;
         } catch (SQLException e) {
             LOG.info(e.toString(), e);
         }
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    public void setShutdown(boolean shutdown) {
+        this.shutdown = shutdown;
     }
 
     public void analyzeTables() {

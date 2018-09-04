@@ -46,7 +46,7 @@ public final class LuceneReindex extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        try (Connection con = Db.db.getConnection()) {
+        try (Connection con = Db.getDb().getConnection()) {
             FullTextTrigger.reindex(con);
             response.put("done", true);
         } catch (SQLException e) {

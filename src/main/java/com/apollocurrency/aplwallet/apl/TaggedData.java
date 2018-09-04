@@ -203,7 +203,7 @@ public class TaggedData {
         }
 
         private static void add(TaggedData taggedData, int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count + 1 WHERE tag = ? AND height >= ?")) {
                 for (String tagValue : taggedData.getParsedTags()) {
                     pstmt.setString(1, tagValue);
@@ -221,7 +221,7 @@ public class TaggedData {
         }
 
         private static void delete(Map<String,Integer> expiredTags) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count - ? WHERE tag = ?");
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM data_tag WHERE tag_count <= 0")) {
                 for (Map.Entry<String,Integer> entry : expiredTags.entrySet()) {
@@ -560,7 +560,7 @@ public class TaggedData {
     }
 
     static boolean isPruned(long transactionId) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {

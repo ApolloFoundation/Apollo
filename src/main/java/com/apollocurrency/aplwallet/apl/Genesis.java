@@ -99,7 +99,7 @@ public final class Genesis {
             Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
             account.apply(publicKey, true);
             if (count++ % 100 == 0) {
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             }
         }
         LOG.debug("Loaded " + publicKeys.size() + " public keys");
@@ -114,7 +114,7 @@ public final class Genesis {
             account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             }
         }
         if (total > Constants.MAX_BALANCE_ATM) {

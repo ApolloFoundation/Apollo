@@ -241,7 +241,7 @@ public final class Shuffling {
     public static DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT shuffling.* FROM shuffling, shuffling_participant WHERE "
                     + "shuffling_participant.account_id = ? AND shuffling.id = shuffling_participant.shuffling_id "
                     + (includeFinished ? "" : "AND shuffling.blocks_remaining IS NOT NULL ")

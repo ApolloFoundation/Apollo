@@ -761,10 +761,10 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             protected void dispatch(PendingEvent pendingEvent) {
                 lock.lock();
                 try {
-                    if (waitTransaction() && Db.db.isInTransaction()) {
+                    if (waitTransaction() && Db.getDb().isInTransaction()) {
                         pendingEvent.setThread(Thread.currentThread());
                         dbEvents.add(pendingEvent);
-                        Db.db.registerCallback(owner);
+                        Db.getDb().registerCallback(owner);
                     } else {
                         pendingEvents.add(pendingEvent);
                         if (!pendingWaits.isEmpty() && !dispatched) {

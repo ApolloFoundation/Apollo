@@ -236,14 +236,14 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
                 pstmtDelete.setInt(1, height - Constants.GUARANTEED_BALANCE_CONFIRMATIONS);
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } while (count >= Constants.BATCH_COMMIT_SIZE);
             }
             catch (SQLException e) {
@@ -572,7 +572,7 @@ public final class Account {
             return accountTable.getManyBy(con, pstmt, false);
     }
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
-        try(Connection con = Db.db.getConnection()) {
+        try(Connection con = Db.getDb().getConnection()) {
             return getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
         }
         catch (SQLException e) {
@@ -614,7 +614,7 @@ public final class Account {
         }
     }
     public static long getTotalNumberOfAccounts() {
-        try(Connection con = Db.db.getConnection()) {
+        try(Connection con = Db.getDb().getConnection()) {
             return getTotalNumberOfAccounts(con);
         }
         catch (SQLException e) {
@@ -639,7 +639,7 @@ public final class Account {
         }
     }
     public static long getTotalSupply() {
-        try(Connection con = Db.db.getConnection()) {
+        try(Connection con = Db.getDb().getConnection()) {
             return getTotalSupply(con);
         }
         catch (SQLException e) {
@@ -723,7 +723,7 @@ public final class Account {
     private static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement(
                     "SELECT * FROM account_lease WHERE current_leasing_height_from = ? AND latest = TRUE "
                             + "UNION ALL SELECT * FROM account_lease WHERE current_leasing_height_to = ? AND latest = TRUE "
@@ -987,7 +987,7 @@ public final class Account {
             balances[i] = lessors.get(i).getBalanceATM();
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
                      + (height < blockchainHeight ? " AND height <= ? " : "")
@@ -1040,7 +1040,7 @@ public final class Account {
                     || height > Apl.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
                          + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
                 pstmt.setLong(1, this.id);
@@ -1494,7 +1494,7 @@ public final class Account {
             return;
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
                      + "WHERE account_id = ? and height = ?");
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "

@@ -186,7 +186,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(Apl.getUserHomeDir()).toAbsolutePath()));
-        addDataRow(statusPanel, "Database URL", Db.db == null ? "unavailable" : Db.db.getUrl());
+        addDataRow(statusPanel, "Database URL", Db.getDb() == null ? "unavailable" : Db.getDb().getUrl());
         addEmptyRow(statusPanel);
 
         if (lastBlock != null) {

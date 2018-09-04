@@ -130,7 +130,7 @@ public final class PhasingPoll extends AbstractPoll {
         @Override
         public void trim(int height) {
             super.trim(height);
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  DbIterator<PhasingPoll> pollsToTrim = phasingPollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
                  PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");
                  PreparedStatement pstmt2 = con.prepareStatement("DELETE FROM phasing_poll_voter WHERE transaction_id = ?");
@@ -245,7 +245,7 @@ public final class PhasingPoll extends AbstractPoll {
     static DbIterator<TransactionImpl> getFinishingTransactions(int height) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
@@ -260,7 +260,7 @@ public final class PhasingPoll extends AbstractPoll {
     public static DbIterator<TransactionImpl> getVoterPhasedTransactions(long voterId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* "
                     + "FROM transaction, phasing_poll_voter, phasing_poll "
                     + "LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id "
@@ -288,7 +288,7 @@ public final class PhasingPoll extends AbstractPoll {
 
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* " +
                     "FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.holding_id = ? " +
@@ -318,7 +318,7 @@ public final class PhasingPoll extends AbstractPoll {
     public static DbIterator<TransactionImpl> getAccountPhasedTransactions(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                     " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
@@ -339,7 +339,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public static int getAccountPhasedTransactionCount(long accountId) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                      " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
@@ -359,7 +359,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public static List<? extends Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                      "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
@@ -378,7 +378,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     static long getSenderPhasedTransactionFees(long accountId) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                      " WHERE phasing_poll.id = transaction.id AND transaction.sender_id = ? " +

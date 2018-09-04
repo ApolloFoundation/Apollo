@@ -30,7 +30,7 @@ public interface DirProvider {
 
     void updateLogFileHandler(Properties loggingProperties);
 
-    String getDbDir(String dbDir);
+    String getDbDir(String dbDir, int chainId);
 
     File getLogFileDir();
 

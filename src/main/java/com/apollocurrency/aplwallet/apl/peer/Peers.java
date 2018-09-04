@@ -20,10 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -38,13 +47,33 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 import javax.servlet.DispatcherType;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
-import static org.slf4j.LoggerFactory.getLogger;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class Peers {
     private static final Logger LOG = getLogger(Peers.class);
@@ -77,7 +106,8 @@ public final class Peers {
     static final boolean useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
     static final boolean isGzipEnabled;
 
-
+    private static final int DEFAULT_PEER_PORT = 47874;
+    private static final int TESTNET_PEER_PORT = 46874;
     private static final String myPlatform;
     private static final String myAddress;
     private static final int myPeerServerPort;
@@ -232,6 +262,7 @@ public final class Peers {
         json.put("application", Apl.APPLICATION);
         json.put("version", Apl.VERSION.toString());
         json.put("platform", Peers.myPlatform);
+        json.put("chainId", Constants.CHAIN_ID);
         json.put("shareAddress", Peers.shareMyAddress);
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             servicesList.add(Peer.Service.PRUNABLE);
@@ -709,15 +740,15 @@ public final class Peers {
             // Update the peer database
             //
             try {
-                Db.db.beginTransaction();
+                Db.getDb().beginTransaction();
                 PeerDb.deletePeers(toDelete);
                 PeerDb.updatePeers(toUpdate);
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             } catch (Exception e) {
-                Db.db.rollbackTransaction();
+                Db.getDb().rollbackTransaction();
                 throw e;
             } finally {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
         }
 
@@ -727,14 +758,14 @@ public final class Peers {
         Peers.addListener(peer -> peersService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    Db.db.beginTransaction();
+                    Db.getDb().beginTransaction();
                     PeerDb.updatePeer((PeerImpl)peer);
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
-                    Db.db.rollbackTransaction();
+                    Db.getDb().rollbackTransaction();
                 } finally {
-                    Db.db.endTransaction();
+                    Db.getDb().endTransaction();
                 }
             }
         }), Peers.Event.CHANGED_SERVICES);

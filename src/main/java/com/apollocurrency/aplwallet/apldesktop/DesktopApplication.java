@@ -649,7 +649,7 @@ public class DesktopApplication extends Application {
         }
 
         private Alert reindexDbUI() throws SQLException {
-            FullTextTrigger.reindex(Db.db.getConnection());
+            FullTextTrigger.reindex(Db.getDb().getConnection());
             return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
         }
 

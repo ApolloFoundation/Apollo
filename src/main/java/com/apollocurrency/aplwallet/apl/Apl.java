@@ -197,6 +197,7 @@ public final class Apl {
         }
     }
 
+    // For using Apl.shutdown instead of System.exit
     static void removeShutdownHook() {
         Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
@@ -383,6 +384,7 @@ public final class Apl {
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
+                ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
@@ -616,8 +618,22 @@ public final class Apl {
         return "";
     }
 
+    public static String getDbDir(String dbDir, int chainId) {
+        return dirProvider.getDbDir(dbDir, chainId);
+    }
+
     public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir);
+        return dirProvider.getDbDir(dbDir, Constants.CHAIN_ID);
+    }
+
+    public static String getOldDbDir(String dbDir, int chainId) {
+        return dirProvider
+                .getDbDir(dbDir, chainId)
+                .replace(String.valueOf(chainId) + File.pathSeparator, "");
+    }
+
+    public static String getOldDbDir(String dbDir) {
+        return getOldDbDir(dbDir, Constants.CHAIN_ID);
     }
 
     public static void updateLogFileHandler(Properties loggingProperties) {

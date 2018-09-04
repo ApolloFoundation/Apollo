@@ -35,8 +35,8 @@ public class DefaultDirProvider implements DirProvider {
     public void updateLogFileHandler(Properties loggingProperties) {}
 
     @Override
-    public String getDbDir(String dbDir) {
-        return dbDir;
+    public String getDbDir(String dbDir, int chainId) {
+        return Paths.get(String.valueOf(chainId),dbDir).toAbsolutePath().toString();
     }
 
     @Override

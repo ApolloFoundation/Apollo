@@ -165,6 +165,8 @@ public final class Constants {
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+    public static final int CHAIN_ID = isTestnet ? Apl.getIntProperty("apl.testnetChainId", 1_000_000) : Apl.getIntProperty("apl.chainId", 0);
+
     private Constants() {} // never
 
 }
