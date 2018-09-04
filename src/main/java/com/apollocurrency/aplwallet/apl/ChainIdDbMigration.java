@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -58,10 +59,17 @@ public class ChainIdDbMigration {
                 LOG.info("Copying db from {} to {}", oldDbDirPath, chainIdDbDirPath);
 
                 try {
-                    Files.walk(oldDbDirPath)
+                    Files.walk(oldDbDirPath.getParent())
                             .forEach(source -> {
                                 try {
-                                    Files.copy(source, chainIdDbDirPath.resolve(oldDbDirPath.relativize(source)));
+                                    if (Files.isDirectory(source)) {
+                                        Path targetPath = chainIdDbDirPath.resolve(oldDbDirPath.relativize(source));
+                                        if (Files.notExists(targetPath)) {
+                                            Files.createDirectory(targetPath);
+                                        }
+                                    } else {
+                                        Files.copy(source, chainIdDbDirPath.resolve(oldDbDirPath.relativize(source)), StandardCopyOption.REPLACE_EXISTING);
+                                    }
                                 }
                                 catch (IOException e) {
                                     throw new RuntimeException(e.toString(), e);
@@ -71,7 +79,6 @@ public class ChainIdDbMigration {
                 catch (IOException e) {
                     throw new RuntimeException(e.toString(), e);
                 }
-
             }
             Db.init();
             try (Connection con = Db.getDb().getConnection();
