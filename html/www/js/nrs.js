@@ -155,6 +155,33 @@ var NRS = (function(NRS, $, undefined) {
 
     NRS.init = function() {
 
+        NRS.sendRequest("getUpdateStatus", {}, function (response) {
+            console.log(response);
+
+
+            if (!response.isUpdate) {
+
+                $.growl("You are using up to date version.", {
+                    "type": "info"
+                });
+			} else {
+            	if (response.level === 'CRITICAL') {
+                    $.growl("You current version is outdated. Available new IMPORTANT version: " + response.availableVersion + " that contains CRYTICAL changes", {
+                        "type": "warning"
+                    });
+				}
+				if (response.level === 'IMPORTANT') {
+                    $.growl("You current version is outdated. Available new version: " + response.availableVersion + " that contains IMPORTANT changes", {
+                        "type": "warning"
+                    });
+				} else {
+                    $.growl("You current version is outdated. Available new version: " + response.availableVersion, {
+                        "type": "warning"
+                    });
+				}
+			}
+        });
+
 	    i18next.use(i18nextXHRBackend)
             .use(i18nextLocalStorageCache)
             .use(i18nextBrowserLanguageDetector)
