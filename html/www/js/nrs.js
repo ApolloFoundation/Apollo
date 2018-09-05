@@ -162,21 +162,25 @@ var NRS = (function(NRS, $, undefined) {
             if (!response.isUpdate) {
 
                 $.growl("You are using up to date version.", {
-                    "type": "info"
+                    "type": "info",
+                    delay: 60000
                 });
 			} else {
             	if (response.level === 'CRITICAL') {
                     $.growl("You current version is outdated. Available new IMPORTANT version: " + response.availableVersion + " that contains CRYTICAL changes", {
-                        "type": "warning"
+                        "type": "danger",
+                        delay: 60000
                     });
 				}
 				if (response.level === 'IMPORTANT') {
                     $.growl("You current version is outdated. Available new version: " + response.availableVersion + " that contains IMPORTANT changes", {
-                        "type": "warning"
+                        "type": "danger",
+                        delay: 60000
                     });
 				} else {
                     $.growl("You current version is outdated. Available new version: " + response.availableVersion, {
-                        "type": "warning"
+                        "type": "danger",
+                        delay: 60000
                     });
 				}
 			}
