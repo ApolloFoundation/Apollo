@@ -2,17 +2,18 @@ Set fso = CreateObject("Scripting.FileSystemObject")
 const ReadOnly = 1
 If Wscript.Arguments.Count > 1 Then
    For i = 0 To Wscript.Arguments.Count - 1
-      prgArgs = prgArgs & " " & Wscript.Arguments.Item(i)
+      prgArgs = prgArgs & " " & chr(34) & Wscript.Arguments.Item(i) & chr(34)
    Next
 End If
 
 If Not WScript.Arguments.Named.Exists("elevate") Then
   CreateObject("Shell.Application").ShellExecute WScript.FullName _
-    , """" & WScript.ScriptFullName & Chr(34) & prgArgs & """ /elevate ", "", "runas", 1
+    , chr(34) & WScript.ScriptFullName  & chr(34) & " " & prgArgs & " " & chr(34) & "/elevate" & chr(34), "", "runas", 1
   WScript.Quit
 End If
+WScript.Echo "Got: " & WScript.Arguments.Count & " params"
 
-If  ( (WScript.Arguments.Count = 5) AND (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Arguments(1) )) AND (("false" = LCase(WScript.Arguments(2)) ) Or ( "true" = LCase(WScript.Arguments(2)) ))) Then
+If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Arguments(1) )) AND (("false" = LCase(WScript.Arguments(2)) ) Or ( "true" = LCase(WScript.Arguments(2)) ))) Then
 	WScript.Echo "Starting Platform Dependent Updater"
 	WScript.Echo "Waiting 3 sec"
 	WScript.Sleep 3000
