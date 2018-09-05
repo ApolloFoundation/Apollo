@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
@@ -85,11 +86,15 @@ public class PlatformDependentUpdater {
         }
         try {
             LOG.debug("Starting platform dependent script");
-            String command = String.format("%s %s %s %s %s ", runTool, scriptPath.toString(),
-                    Paths.get("").toAbsolutePath().toString(), scriptPath.getParent().toAbsolutePath().toString(),
-                    RuntimeEnvironment.isDesktopApplicationEnabled()).trim();
-            LOG.debug("Running command: " + command);
-            Process proc = Runtime.getRuntime().exec(command, null, new File("").getAbsoluteFile());
+            String[] cmdArray = new String[]{
+                    runTool,
+                    scriptPath.toString(),
+                    Paths.get("").toAbsolutePath().toString(),
+                    scriptPath.getParent().toAbsolutePath().toString(),
+                    String.valueOf(RuntimeEnvironment.isDesktopApplicationEnabled())
+            };
+            LOG.debug("Running cmdArray: " + Arrays.toString(cmdArray));
+            Process proc = Runtime.getRuntime().exec(cmdArray, null, new File("").getAbsoluteFile());
             if (isUnix) proc.waitFor();
 
             LOG.debug("Platform dependent script was started");
