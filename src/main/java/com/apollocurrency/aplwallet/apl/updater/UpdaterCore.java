@@ -60,8 +60,10 @@ public class UpdaterCore {
 //                        UpdaterMediator.getInstance().addUpdateListener(updateListener);
                         stopForgingAndBlockAcceptance();
                         UpdaterMediator.getInstance().setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                        UpdaterMediator.getInstance().setUpdateData(true, 0,
+                                transaction.getHeight(), Level.CRITICAL, expectedVersion);
                         startUpdater = false;
-                        throw new RuntimeException("Manual install required for critical update!");
+                        Logger.logErrorMessage("Manual install required for critical update!");
                     } else {
                         Logger.logInfoMessage("Skip uninstalled non-critical update");
                     }
