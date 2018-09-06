@@ -18,10 +18,10 @@ then
     echo Copy update files
     cp -vRa $2/* $1
 
-    cd $1 
+    cd $1
     chmod 755 *.sh
 
-    cd $1 
+    cd $1
     chmod 755 *.sh
 
     if [ $3 == true ]
