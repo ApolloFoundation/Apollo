@@ -9,5 +9,5 @@ echo "* under ~/.apl/ , invoke this script as:                              *"
 echo "* ./compact.sh -Dapl.runtime.mode=desktop                             *"
 echo "***********************************************************************"
 
-java -Xmx1024m -cp "classes:lib/*:conf" $@ apl.tools.CompactDatabase
+java -Xmx1024m -cp "classes:lib/*:conf" $@ com.apollocurrency.aplwallet.apl.tools.CompactDatabase
 exit $?

@@ -1,3 +1,3 @@
 #!/bin/sh
-java -cp "classes:lib/*:conf" apl.tools.SignTransactionJSON $@
+java -cp "target/classes:target/lib/*:conf" com.apollocurrency.aplwallet.apl.tools.SignTransactionJSON $@
 exit $?

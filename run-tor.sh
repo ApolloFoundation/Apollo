@@ -10,5 +10,5 @@ if [ -x jre/bin/java ]; then
 else
     JAVA=java
 fi
-${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -cp classes:lib/*:conf:addons/classes:addons/lib/* apl.Apl
+${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -cp target/classes:target/lib/*:conf:addons/classes:addons/lib/* com.apollocurrency.aplwallet.apl.Apl
 
