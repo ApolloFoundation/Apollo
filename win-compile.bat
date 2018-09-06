@@ -37,41 +37,26 @@ if not defined javaDir (
     echo JDK was found
     echo JDK_HOME="%javaDir%"
     echo JDK_VERSION="%javaVersion%"
-    set "javaDir=%javaDir%\bin\"
+    set "JAVA_HOME=%javaDir%"
 )
 
-set CP=lib\*;classes
-set SP=src\java\
+set CP=target\lib\*;target\classes
+set SP=src\main\java\
 set APPLICATION=Apollo
-if exist "%APPLICATION%.jar" (
-echo Removing '%APPLICATION%.jar'
-    del /Q /F %APPLICATION%.jar
-)
-if exist "%APPLICATION%service.jar" (
-    echo Removing '%APPLICATION%service.jar'
-    del /Q /F %APPLICATION%service.jar
-)
-if exist classes\ (
-echo Removing compiled classes 'classes\'
-    rd /s /q classes
-)
-echo Creating directory 'classes\'
-    md classes\
-if exist addons\classes (
-    echo Removing directory 'addons\classes\'
-    rd /s /q addons\classes
-)
-echo Creating directory 'addons\classes\'
-md addons\classes\
-dir /S src\java\*.java /B > sources.tmp
-echo Compiling main sources... 'src\java\*'
-"%javaDir%javac.exe" -encoding utf8 -sourcepath %SP% -classpath %CP% -d classes\ @sources.tmp && ( echo Main Apl class files compiled successfully ) || ( goto error )
-del /Q /F sources.tmp
 
-dir /S addons\*.java /B > nul 2>&1 && ( echo Addons are present ) || (echo Addons are not present. & goto success)
+
+echo Compiling main sources... '
+call mvn clean package -Dmaven.test.skip=true 2>&1 && ( echo Main Apl class files compiled successfully ) || ( goto error )
+
+RMDIR "lib" /S /Q
+DEL "Apollo.jar" /F /Q
+COPY /Y "target\Apollo.jar" "Apollo.jar"
+XCOPY /Y /E "target\lib" "lib\"
+
+dir /S addons\*.java /B > nul 2>&1 && ( echo Addons are present ) || ( echo Addons are not present. & goto success )
 dir /S addons\src\*.java /B > sources.tmp
 echo Compiling addons sources... 'addons\src\*'
-"%javaDir%javac.exe" -encoding utf8 -sourcepath %SP% -classpath %CP% -d addons\classes @sources.tmp  && ( echo addon class files compiled successfully & goto success ) || ( goto error)
+"%javaDir%\bin\javac.exe" -encoding utf8 -sourcepath %SP% -classpath %CP% -d addons\classes @sources.tmp  && ( echo addon class files compiled successfully & goto success ) || ( goto error)
 del /Q /F sources.tmp
 :error
 echo FAIL! Classes were compiled with errors!

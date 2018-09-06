@@ -1,2 +1,2 @@
 Set WshShell = CreateObject("WScript.Shell") 
-WshShell.Run "run.bat", 0, false
+WshShell.Run CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName) & "\run.bat", 0, false

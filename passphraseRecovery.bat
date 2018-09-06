@@ -8,4 +8,4 @@ if exist jre (
 )
 
 
-%javaDir%java.exe -Xmx1024m -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop apl.tools.PassphraseRecovery
+%javaDir%java.exe -Xmx1024m -cp "target/classes;target/lib/*;conf" -Dapl.runtime.mode=desktop com.apollocurrency.aplwallet.apl.tools.PassphraseRecovery

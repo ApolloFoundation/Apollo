@@ -4,4 +4,4 @@ if exist jre (
 )
 
 
-%javaDir%java.exe -cp classes;lib\*;conf apl.mint.MintWorker
+%javaDir%java.exe -cp target\classes;target\lib\*;conf com.apollocurrency.aplwallet.apl.mint.MintWorker
