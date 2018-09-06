@@ -38,7 +38,7 @@ public final class GetDGSPurchaseCount extends APIServlet.APIRequestHandler {
     }
 
     private GetDGSPurchaseCount() {
-        super(new APITag[]{APITag.DGS}, "seller", "buyer", "withPublicFeedbacksOnly", "completed");
+        super(new APITag[] {APITag.DGS}, "seller", "buyer", "withPublicFeedbacksOnly", "completed");
     }
 
     @Override

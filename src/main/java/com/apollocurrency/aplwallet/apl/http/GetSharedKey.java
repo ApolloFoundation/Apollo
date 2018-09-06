@@ -40,7 +40,7 @@ public final class GetSharedKey extends APIServlet.APIRequestHandler {
     }
 
     private GetSharedKey() {
-        super(new APITag[]{APITag.MESSAGES}, "account", "secretPhrase", "nonce");
+        super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce");
     }
 
     @Override

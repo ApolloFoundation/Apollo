@@ -35,6 +35,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
 
@@ -321,10 +322,7 @@ public final class Account {
             Apl.getBlockchainProcessor().addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
 
         }
-    }
 
-    public static boolean addListener(Listener<Account> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
     }
 
     private final long id;

@@ -40,7 +40,7 @@ public final class SearchAccounts extends APIServlet.APIRequestHandler {
     }
 
     private SearchAccounts() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.SEARCH}, "query", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.SEARCH}, "query", "firstIndex", "lastIndex");
     }
 
     @Override

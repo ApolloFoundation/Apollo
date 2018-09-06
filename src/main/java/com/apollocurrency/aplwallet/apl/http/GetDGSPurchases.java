@@ -41,7 +41,7 @@ public final class GetDGSPurchases extends APIServlet.APIRequestHandler {
     }
 
     private GetDGSPurchases() {
-        super(new APITag[]{APITag.DGS}, "seller", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
+        super(new APITag[] {APITag.DGS}, "seller", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
     }
 
     @Override

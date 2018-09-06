@@ -79,7 +79,7 @@ public final class Vote {
         return voteTable.getManyBy(new DbClause.LongClause("poll_id", pollId), from, to);
     }
 
-    public static Vote getVote(long pollId, long voterId) {
+    public static Vote getVote(long pollId, long voterId){
         DbClause clause = new DbClause.LongClause("poll_id", pollId).and(new DbClause.LongClause("voter_id", voterId));
         return voteTable.getBy(clause);
     }
@@ -90,8 +90,7 @@ public final class Vote {
         return vote;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long id;

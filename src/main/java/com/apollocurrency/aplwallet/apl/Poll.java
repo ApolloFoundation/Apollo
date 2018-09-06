@@ -177,8 +177,7 @@ public final class Poll extends AbstractPoll {
         pollTable.insert(poll);
     }
 
-    static void init() {
-    }
+    static void init() {}
 
     static {
         if (Poll.isPollsProcessing) {
@@ -295,7 +294,7 @@ public final class Poll extends AbstractPoll {
         }
     }
 
-    public DbIterator<Vote> getVotes() {
+    public DbIterator<Vote> getVotes(){
         return Vote.getVotes(this.getId(), 0, -1);
     }
 

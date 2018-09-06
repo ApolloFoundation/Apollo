@@ -41,7 +41,7 @@ public final class TransferCurrency extends CreateTransaction {
     }
 
     private TransferCurrency() {
-        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "units");
+        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "units");
     }
 
     @Override

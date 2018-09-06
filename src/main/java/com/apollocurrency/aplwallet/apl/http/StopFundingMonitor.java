@@ -55,16 +55,15 @@ public class StopFundingMonitor extends APIServlet.APIRequestHandler {
     }
 
     private StopFundingMonitor() {
-        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
+        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
                 "account", "adminPassword");
     }
-
     /**
      * Process the request
      *
-     * @param req Client request
-     * @return Client response
-     * @throws ParameterException Unable to process request
+     * @param   req                 Client request
+     * @return                      Client response
+     * @throws  ParameterException        Unable to process request
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {

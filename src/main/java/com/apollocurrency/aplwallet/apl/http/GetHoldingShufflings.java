@@ -42,7 +42,7 @@ public final class GetHoldingShufflings extends APIServlet.APIRequestHandler {
     }
 
     private GetHoldingShufflings() {
-        super(new APITag[]{APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
     }
 
     @Override

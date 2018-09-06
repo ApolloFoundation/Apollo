@@ -37,7 +37,7 @@ public final class SendMoney extends CreateTransaction {
     }
 
     private SendMoney() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");
     }
 
     @Override

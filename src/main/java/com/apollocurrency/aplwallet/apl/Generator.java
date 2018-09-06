@@ -132,8 +132,7 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
-    static void init() {
-    }
+    static void init() {}
 
     public static boolean addListener(Listener<Generator> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -253,7 +252,7 @@ public final class Generator implements Comparable<Generator> {
         MessageDigest digest = Crypto.sha256();
         digest.update(block.getGenerationSignature());
         byte[] generationSignatureHash = digest.digest(publicKey);
-        return new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
+        return new BigInteger(1, new byte[] {generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
     }
 
     static long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
@@ -362,7 +361,7 @@ public final class Generator implements Comparable<Generator> {
     }
 
     private int getTimestamp(int generationLimit) {
-        return (generationLimit - hitTime > 3600) ? generationLimit : (int) hitTime + 1;
+        return (generationLimit - hitTime > 3600) ? generationLimit : (int)hitTime + 1;
     }
 
     public static void suspendForging() {
@@ -377,38 +376,32 @@ public final class Generator implements Comparable<Generator> {
     /** Active block generators */
     private static final Set<Long> activeGeneratorIds = new HashSet<>();
 
-    /**
-     * Active block identifier
-     */
+    /** Active block identifier */
     private static long activeBlockId;
 
-    /**
-     * Sorted list of generators for the next block
-     */
+    /** Sorted list of generators for the next block */
     private static final List<ActiveGenerator> activeGenerators = new ArrayList<>();
 
-    /**
-     * Generator list has been initialized
-     */
+    /** Generator list has been initialized */
     private static boolean generatorsInitialized = false;
 
     /**
      * Return a list of generators for the next block.  The caller must hold the blockchain
      * read lock to ensure the integrity of the returned list.
      *
-     * @return List of generator account identifiers
+     * @return                      List of generator account identifiers
      */
     public static List<ActiveGenerator> getNextGenerators() {
         List<ActiveGenerator> generatorList;
         Blockchain blockchain = Apl.getBlockchain();
-        synchronized (activeGenerators) {
+        synchronized(activeGenerators) {
             if (!generatorsInitialized) {
                 activeGeneratorIds.addAll(BlockDb.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
                 activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
                 Logger.logDebugMessage(activeGeneratorIds.size() + " block generators found");
                 Apl.getBlockchainProcessor().addListener(block -> {
                     long generatorId = block.getGeneratorId();
-                    synchronized (activeGenerators) {
+                    synchronized(activeGenerators) {
                         if (!activeGeneratorIds.contains(generatorId)) {
                             activeGeneratorIds.add(generatorId);
                             activeGenerators.add(new ActiveGenerator(generatorId));
@@ -488,7 +481,7 @@ public final class Generator implements Comparable<Generator> {
 
         @Override
         public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator) obj).accountId);
+            return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator)obj).accountId);
         }
 
         @Override

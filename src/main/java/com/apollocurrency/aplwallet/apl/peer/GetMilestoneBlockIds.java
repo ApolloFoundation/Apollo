@@ -38,8 +38,7 @@ final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
         return GetMilestoneBlockIdsHolder.INSTANCE;
     }
 
-    private GetMilestoneBlockIds() {
-    }
+    private GetMilestoneBlockIds() {}
 
 
     @Override

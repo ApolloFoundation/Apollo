@@ -30,14 +30,12 @@ import java.util.logging.LogManager;
  */
 public class AplLogManager extends LogManager {
 
-    /**
-     * Logging reconfiguration in progress
-     */
+    /** Logging reconfiguration in progress */
     private volatile boolean loggingReconfiguration = false;
 
     /**
      * Create the Apl log manager
-     * <p>
+     *
      * We will let the Java LogManager create its shutdown hook so that the
      * shutdown context will be set up properly.  However, we will intercept
      * the reset() method so we can delay the actual shutdown until we are
@@ -50,9 +48,9 @@ public class AplLogManager extends LogManager {
     /**
      * Reconfigure logging support using a configuration file
      *
-     * @param inStream Input stream
-     * @throws IOException       Error reading input stream
-     * @throws SecurityException Caller does not have LoggingPermission("control")
+     * @param       inStream            Input stream
+     * @throws      IOException         Error reading input stream
+     * @throws      SecurityException   Caller does not have LoggingPermission("control")
      */
     @Override
     public void readConfiguration(InputStream inStream) throws IOException, SecurityException {
@@ -63,7 +61,7 @@ public class AplLogManager extends LogManager {
 
     /**
      * Reset the log handlers
-     * <p>
+     *
      * This method is called to reset the log handlers.  We will forward the
      * call during logging reconfiguration but will ignore it otherwise.
      * This allows us to continue to use logging facilities during Apl shutdown.

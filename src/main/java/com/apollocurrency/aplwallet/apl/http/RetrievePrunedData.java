@@ -44,7 +44,7 @@ public class RetrievePrunedData extends APIServlet.APIRequestHandler {
     }
 
     private RetrievePrunedData() {
-        super(new APITag[]{APITag.DEBUG});
+        super(new APITag[] {APITag.DEBUG});
     }
 
     @Override

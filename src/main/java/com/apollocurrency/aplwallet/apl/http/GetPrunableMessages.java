@@ -40,7 +40,7 @@ public final class GetPrunableMessages extends APIServlet.APIRequestHandler {
     }
 
     private GetPrunableMessages() {
-        super(new APITag[]{APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp");
+        super(new APITag[] {APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp");
     }
 
     @Override

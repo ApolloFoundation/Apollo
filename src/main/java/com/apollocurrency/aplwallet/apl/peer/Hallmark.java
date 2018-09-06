@@ -61,7 +61,7 @@ public final class Hallmark {
         ByteBuffer buffer = ByteBuffer.allocate(32 + 2 + hostBytes.length + 4 + 4 + 1);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(publicKey);
-        buffer.putShort((short) hostBytes.length);
+        buffer.putShort((short)hostBytes.length);
         buffer.put(hostBytes);
         buffer.putInt(weight);
         buffer.putInt(date);

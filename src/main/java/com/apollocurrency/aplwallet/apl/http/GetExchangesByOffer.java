@@ -43,7 +43,7 @@ public final class GetExchangesByOffer extends APIServlet.APIRequestHandler {
     }
 
     private GetExchangesByOffer() {
-        super(new APITag[]{APITag.MS}, "offer", "includeCurrencyInfo", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.MS}, "offer", "includeCurrencyInfo", "firstIndex", "lastIndex");
     }
 
     @Override

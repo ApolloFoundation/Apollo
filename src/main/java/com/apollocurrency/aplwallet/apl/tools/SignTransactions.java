@@ -64,19 +64,18 @@ public final class SignTransactions {
             if (Files.exists(signed.toPath())) {
                 Files.delete(signed.toPath());
             }
-            Files.createFile(signed.toPath());
-            List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
-            for (String unsignedTransaction : unsignedTransactions) {
-                Files.write(signed.toPath(), signTransaction(unsignedTransaction, secretPhrase).getBytes(), StandardOpenOption.APPEND);
-                Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
-                n += 1;
-            }
-            System.out.println("Signed " + n + " transactions");
+                Files.createFile(signed.toPath());
+                List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
+                for (String unsignedTransaction : unsignedTransactions) {
+                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, secretPhrase).getBytes(), StandardOpenOption.APPEND);
+                    Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
+                    n += 1;
+                }
+                System.out.println("Signed " + n + " transactions");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
     private static String signTransaction(String transactionBytesHexString, String secretPhrase) throws AplException.NotValidException {
         byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
         Transaction.Builder builder = Apl.newTransactionBuilder(transactionBytes);

@@ -73,16 +73,16 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
     }
 
     private StartFundingMonitor() {
-        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
+        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
                 "interval", "secretPhrase");
     }
 
     /**
      * Process the request
      *
-     * @param req Client request
-     * @return Client response
-     * @throws AplException Unable to process request
+     * @param   req                 Client request
+     * @return                      Client response
+     * @throws  AplException        Unable to process request
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

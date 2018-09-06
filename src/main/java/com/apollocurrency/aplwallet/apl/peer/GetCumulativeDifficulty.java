@@ -35,8 +35,7 @@ final class GetCumulativeDifficulty extends PeerServlet.PeerRequestHandler {
         return GetCumulativeDifficultyHolder.INSTANCE;
     }
 
-    private GetCumulativeDifficulty() {
-    }
+    private GetCumulativeDifficulty() {}
 
 
     @Override

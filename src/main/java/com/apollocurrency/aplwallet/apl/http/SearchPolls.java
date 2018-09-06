@@ -40,7 +40,7 @@ public final class SearchPolls extends APIServlet.APIRequestHandler {
     }
 
     private SearchPolls() {
-        super(new APITag[]{APITag.VS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeFinished");
+        super(new APITag[] {APITag.VS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeFinished");
     }
 
     @Override

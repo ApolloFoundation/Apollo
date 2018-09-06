@@ -43,7 +43,7 @@ public final class GetUnconfirmedTransactionIds extends APIServlet.APIRequestHan
     }
 
     private GetUnconfirmedTransactionIds() {
-        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -62,7 +62,7 @@ public final class GetUnconfirmedTransactionIds extends APIServlet.APIRequestHan
                 }
             }
         } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
+            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                     transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
                     firstIndex, lastIndex)) {

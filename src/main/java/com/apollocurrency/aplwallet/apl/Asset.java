@@ -61,7 +61,7 @@ public final class Asset {
         @Override
         public void checkAvailable(int height) {
             if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < Apl.getBlockchainProcessor().getMinRollbackHeight()) {
-                throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
+                throw new IllegalArgumentException("Historical data as of height " + height +" not available.");
             }
             if (height > Apl.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Apl.getBlockchain().getHeight());
@@ -109,8 +109,7 @@ public final class Asset {
         AssetDelete.addAssetDelete(transaction, assetId, quantityATU);
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long assetId;

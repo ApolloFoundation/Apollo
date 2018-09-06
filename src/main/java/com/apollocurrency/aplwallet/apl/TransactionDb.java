@@ -68,7 +68,7 @@ final class TransactionDb {
     static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized (BlockDb.blockCache) {
+        synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
@@ -99,7 +99,7 @@ final class TransactionDb {
 
     static boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (BlockDb.blockCache) {
+        synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
@@ -124,7 +124,7 @@ final class TransactionDb {
     static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized (BlockDb.blockCache) {
+        synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
@@ -145,7 +145,7 @@ final class TransactionDb {
 
     static byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized (BlockDb.blockCache) {
+        synchronized(BlockDb.blockCache) {
             TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
             if (transaction != null) {
                 return transaction.fullHash();
@@ -208,7 +208,7 @@ final class TransactionDb {
                     .index(transactionIndex);
             if (transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
-                if (!rs.wasNull()) {
+                if (! rs.wasNull()) {
                     builder.recipientId(recipientId);
                 }
             }
@@ -243,7 +243,7 @@ final class TransactionDb {
 
     static List<TransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized (BlockDb.blockCache) {
+        synchronized(BlockDb.blockCache) {
             BlockImpl block = BlockDb.blockCache.get(blockId);
             if (block != null) {
                 return block.getTransactions();
@@ -361,7 +361,7 @@ final class TransactionDb {
                 }
                 if (transaction.referencedTransactionFullHash() != null) {
                     try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
-                            + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
+                         + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
                         pstmt.setLong(1, transaction.getId());
                         pstmt.setLong(2, Convert.fullHashToId(transaction.referencedTransactionFullHash()));
                         pstmt.executeUpdate();

@@ -46,7 +46,6 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
     }
 
     private static final JSONStreamAware NO_SUCH_PLAIN_MESSAGE;
-
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -55,7 +54,6 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
     }
 
     private static final JSONStreamAware NO_SUCH_ENCRYPTED_MESSAGE;
-
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -64,7 +62,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
     }
 
     private VerifyPrunableMessage() {
-        super(new APITag[]{APITag.MESSAGES}, "transaction",
+        super(new APITag[] {APITag.MESSAGES}, "transaction",
                 "message", "messageIsText",
                 "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt");
     }

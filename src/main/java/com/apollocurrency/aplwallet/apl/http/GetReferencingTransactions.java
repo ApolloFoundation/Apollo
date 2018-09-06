@@ -41,7 +41,7 @@ public final class GetReferencingTransactions extends APIServlet.APIRequestHandl
     }
 
     private GetReferencingTransactions() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
     }
 
     @Override

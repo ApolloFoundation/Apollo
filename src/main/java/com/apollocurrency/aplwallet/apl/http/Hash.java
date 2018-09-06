@@ -38,7 +38,7 @@ public final class Hash extends APIServlet.APIRequestHandler {
     }
 
     private Hash() {
-        super(new APITag[]{APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");
+        super(new APITag[] {APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");
     }
 
     @Override
@@ -48,8 +48,7 @@ public final class Hash extends APIServlet.APIRequestHandler {
         HashFunction hashFunction = null;
         try {
             hashFunction = HashFunction.getHashFunction(algorithm);
-        } catch (IllegalArgumentException ignore) {
-        }
+        } catch (IllegalArgumentException ignore) {}
         if (hashFunction == null) {
             return JSONResponses.INCORRECT_HASH_ALGORITHM;
         }

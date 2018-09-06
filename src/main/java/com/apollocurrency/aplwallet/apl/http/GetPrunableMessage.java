@@ -41,7 +41,7 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
     }
 
     private GetPrunableMessage() {
-        super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
+        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
     }
 
     @Override

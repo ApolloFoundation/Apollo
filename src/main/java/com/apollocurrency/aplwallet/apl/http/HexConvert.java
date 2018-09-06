@@ -38,7 +38,7 @@ public final class HexConvert extends APIServlet.APIRequestHandler {
     }
 
     private HexConvert() {
-        super(new APITag[]{APITag.UTILS}, "string");
+        super(new APITag[] {APITag.UTILS}, "string");
     }
 
     @Override
@@ -53,13 +53,11 @@ public final class HexConvert extends APIServlet.APIRequestHandler {
             if (asHex.length > 0) {
                 response.put("text", Convert.toString(asHex));
             }
-        } catch (RuntimeException ignore) {
-        }
+        } catch (RuntimeException ignore) {}
         try {
             byte[] asText = Convert.toBytes(string);
             response.put("binary", Convert.toHexString(asText));
-        } catch (RuntimeException ignore) {
-        }
+        } catch (RuntimeException ignore) {}
         return response;
     }
 

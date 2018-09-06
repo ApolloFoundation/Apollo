@@ -103,7 +103,7 @@ public final class ParameterParser {
     }
 
     public static long getLong(HttpServletRequest req, String name, long min, long max,
-                               boolean isMandatory) throws ParameterException {
+                        boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -173,7 +173,6 @@ public final class ParameterParser {
         }
         return Convert.parseHexString(paramValue);
     }
-
     public static byte getByteOrNegative(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
         return getByte(req, name, Byte.MIN_VALUE, Byte.MAX_VALUE, isMandatory, (byte) -1);
     }
@@ -513,8 +512,7 @@ public final class ParameterParser {
             if (lastIndex < 0) {
                 lastIndex = Integer.MAX_VALUE;
             }
-        } catch (NumberFormatException ignored) {
-        }
+        } catch (NumberFormatException ignored) {}
         if (!API.checkPassword(req)) {
             int firstIndex = Math.min(getFirstIndex(req), Integer.MAX_VALUE - API.maxRecords + 1);
             lastIndex = Math.min(lastIndex, firstIndex + API.maxRecords - 1);
@@ -601,9 +599,9 @@ public final class ParameterParser {
         } else {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
-                JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject) JSONValue.parseWithException(prunableAttachmentJSON);
+                JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
                 return Apl.newTransactionBuilder(bytes, prunableAttachments);
-            } catch (AplException.ValidationException | RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException|RuntimeException | ParseException e) {
                 Logger.logDebugMessage(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionBytes");
@@ -820,9 +818,7 @@ public final class ParameterParser {
         byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
-
-    private ParameterParser() {
-    } // never
+    private ParameterParser() {} // never
 
     public static class PrivateTransactionsAPIData {
         private boolean encrypt;

@@ -52,7 +52,7 @@ import java.util.Properties;
 
 public final class Apl {
 
-    public static final Version VERSION = Version.from("1.0.9");
+    public static final Version VERSION = Version.from("1.0.7");
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
@@ -70,7 +70,6 @@ public final class Apl {
     }
 
     private static final Properties defaultProperties = new Properties();
-
     static {
         redirectSystemStreams("out");
         redirectSystemStreams("err");
@@ -161,7 +160,7 @@ public final class Apl {
                         System.out.printf("Creating dir %s\n", homeDir);
                         try {
                             Files.createDirectory(Paths.get(homeDir));
-                        } catch (Exception e) {
+                        } catch(Exception e) {
                             if (!(e instanceof NoSuchFileException)) {
                                 throw e;
                             }
@@ -189,7 +188,7 @@ public final class Apl {
                     throw new IllegalArgumentException("Error loading " + propertiesFile, e);
                 }
             }
-        } catch (IllegalArgumentException e) {
+        } catch(IllegalArgumentException e) {
             e.printStackTrace(); // make sure we log this exception
             throw e;
         }
@@ -246,7 +245,7 @@ public final class Apl {
 
     public static String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
         String value = properties.getProperty(name);
-        if (value != null && !"".equals(value)) {
+        if (value != null && ! "".equals(value)) {
             Logger.logMessage(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
         } else {
             Logger.logMessage(name + " not defined");
@@ -307,7 +306,7 @@ public final class Apl {
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment) attachment);
+        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment)attachment);
     }
 
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
@@ -430,8 +429,8 @@ public final class Apl {
                 }
                 try {
                     secureRandomInitThread.join(10000);
-                } catch (InterruptedException ignore) {
                 }
+                catch (InterruptedException ignore) {}
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 Logger.logMessage("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
@@ -453,7 +452,8 @@ public final class Apl {
                 if (Constants.isTestnet) {
                     Logger.logMessage("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
-            } catch (final RuntimeException e) {
+            }
+            catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
                     Throwable exception = e;
                     while (exception.getCause() != null) { //get root cause of RuntimeException
@@ -465,7 +465,8 @@ public final class Apl {
                 }
                 Logger.logErrorMessage("Database initialization failed ", e);
                 runtimeMode.recoverDb();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 Logger.logErrorMessage(e.getMessage(), e);
                 runtimeMode.alert(e.getMessage() + "\n" +
                         "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");
@@ -480,28 +481,27 @@ public final class Apl {
             initialized = true;
         }
 
-        private Init() {
-        } // never
+        private Init() {} // never
 
     }
 
     private static void setSystemProperties() {
-        // Override system settings that the user has define in apl.properties file.
-        String[] systemProperties = new String[]{
-                "socksProxyHost",
-                "socksProxyPort",
-        };
+      // Override system settings that the user has define in apl.properties file.
+      String[] systemProperties = new String[] {
+        "socksProxyHost",
+        "socksProxyPort",
+      };
 
-        for (String propertyName : systemProperties) {
-            String propertyValue;
-            if ((propertyValue = getStringProperty(propertyName)) != null) {
-                System.setProperty(propertyName, propertyValue);
-            }
+      for (String propertyName : systemProperties) {
+        String propertyValue;
+        if ((propertyValue = getStringProperty(propertyName)) != null) {
+          System.setProperty(propertyName, propertyValue);
         }
+      }
     }
 
     private static void logSystemProperties() {
-        String[] loggedProperties = new String[]{
+        String[] loggedProperties = new String[] {
                 "java.version",
                 "java.vm.version",
                 "java.vm.name",
@@ -544,8 +544,7 @@ public final class Apl {
                 throw new RuntimeException("SecureRandom implementation too slow!!! " +
                         "Install haveged if on linux, or set apl.useStrongSecureRandom=false.");
             }
-        } catch (InterruptedException ignore) {
-        }
+        } catch (InterruptedException ignore) {}
     }
 
     public static String getProcessId() {
@@ -588,8 +587,7 @@ public final class Apl {
         runtimeMode.launchDesktopApplication();
     }
 
-    private Apl() {
-    } // never
+    private Apl() {} // never
 
     private static void initUpdater() {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
@@ -600,7 +598,8 @@ public final class Apl {
             //force load lazy updater instance
             aClass.getMethod("getInstance").invoke(null);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Logger.logErrorMessage("Cannot load Updater!", e);
         }
     }

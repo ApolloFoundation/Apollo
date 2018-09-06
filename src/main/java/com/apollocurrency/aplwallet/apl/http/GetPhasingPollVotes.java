@@ -30,7 +30,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class GetPhasingPollVotes extends APIServlet.APIRequestHandler {
+public class GetPhasingPollVotes extends APIServlet.APIRequestHandler  {
     private static class GetPhasingPollVotesHolder {
         private static final GetPhasingPollVotes INSTANCE = new GetPhasingPollVotes();
     }
@@ -40,7 +40,7 @@ public class GetPhasingPollVotes extends APIServlet.APIRequestHandler {
     }
 
     private GetPhasingPollVotes() {
-        super(new APITag[]{APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
     }
 
     @Override

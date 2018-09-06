@@ -135,7 +135,7 @@ public final class BaseTargetTest {
                         continue;
                     }
 
-                    int testBlocktime = (int) ((previousBaseTarget * (timestamp - previousTimestamp - 1)) / previousTestBaseTarget) + 1;
+                    int testBlocktime = (int)((previousBaseTarget * (timestamp - previousTimestamp - 1)) / previousTestBaseTarget) + 1;
                     if (testBlocktimeEMA == 0) {
                         testBlocktimeEMA = testBlocktime;
                     } else {
@@ -209,8 +209,8 @@ public final class BaseTargetTest {
             Logger.logMessage("Max test blocktime " + maxTestBlocktime);
             Logger.logMessage("Min blocktime " + minBlocktime);
             Logger.logMessage("Min test blocktime " + minTestBlocktime);
-            Logger.logMessage("Average blocktime " + ((double) totalBlocktime) / count);
-            Logger.logMessage("Average test blocktime " + ((double) totalTestBlocktime) / count);
+            Logger.logMessage("Average blocktime " + ((double)totalBlocktime) / count);
+            Logger.logMessage("Average test blocktime " + ((double)totalTestBlocktime) / count);
             Logger.logMessage("Standard deviation of blocktime " + Math.sqrt(S / count));
             Logger.logMessage("Standard deviation of test blocktime " + Math.sqrt(testS / count));
 

@@ -41,7 +41,7 @@ public final class GetDataTagsLike extends APIServlet.APIRequestHandler {
     }
 
     private GetDataTagsLike() {
-        super(new APITag[]{APITag.DATA, APITag.SEARCH}, "tagPrefix", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.DATA, APITag.SEARCH}, "tagPrefix", "firstIndex", "lastIndex");
     }
 
     @Override

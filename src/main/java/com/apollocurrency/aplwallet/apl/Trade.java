@@ -41,7 +41,7 @@ public final class Trade {
         TRADE
     }
 
-    private static final Listeners<Trade, Event> listeners = new Listeners<>();
+    private static final Listeners<Trade,Event> listeners = new Listeners<>();
 
     private static final DbKey.LinkKeyFactory<Trade> tradeDbKeyFactory = new DbKey.LinkKeyFactory<Trade>("ask_order_id", "bid_order_id") {
 
@@ -167,8 +167,7 @@ public final class Trade {
         return trade;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final int timestamp;
@@ -263,17 +262,11 @@ public final class Trade {
         }
     }
 
-    public long getBlockId() {
-        return blockId;
-    }
+    public long getBlockId() { return blockId; }
 
-    public long getAskOrderId() {
-        return askOrderId;
-    }
+    public long getAskOrderId() { return askOrderId; }
 
-    public long getBidOrderId() {
-        return bidOrderId;
-    }
+    public long getBidOrderId() { return bidOrderId; }
 
     public int getAskOrderHeight() {
         return askOrderHeight;
@@ -291,21 +284,13 @@ public final class Trade {
         return buyerId;
     }
 
-    public long getQuantityATU() {
-        return quantityATU;
-    }
+    public long getQuantityATU() { return quantityATU; }
 
-    public long getPriceATM() {
-        return priceATM;
-    }
-
-    public long getAssetId() {
-        return assetId;
-    }
-
-    public int getTimestamp() {
-        return timestamp;
-    }
+    public long getPriceATM() { return priceATM; }
+    
+    public long getAssetId() { return assetId; }
+    
+    public int getTimestamp() { return timestamp; }
 
     public int getHeight() {
         return height;

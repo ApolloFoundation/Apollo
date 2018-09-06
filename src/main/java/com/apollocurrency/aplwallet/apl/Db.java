@@ -53,17 +53,15 @@ public final class Db {
         db.shutdown();
     }
 
-    private Db() {
-    } // never
+    private Db() {} // never
 
     public static void tryToDeleteDb() throws IOException {
-        db.shutdown();
-        Logger.logInfoMessage("Removing db...");
-        Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
-        removeDb(dbPath);
-        Logger.logInfoMessage("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
+            db.shutdown();
+            Logger.logInfoMessage("Removing db...");
+            Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
+            removeDb(dbPath);
+            Logger.logInfoMessage("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }
-
     private static void removeDb(Path dbPath) throws IOException {
         Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
             @Override

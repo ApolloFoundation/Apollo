@@ -55,10 +55,10 @@ public class GetPollResult extends APIServlet.APIRequestHandler {
             pollResults = poll.getResults();
             voteWeighting = poll.getVoteWeighting();
         } else {
-            byte votingModel = ParameterParser.getByte(req, "votingModel", (byte) 0, (byte) 3, true);
+            byte votingModel = ParameterParser.getByte(req, "votingModel", (byte)0, (byte)3, true);
             long holdingId = ParameterParser.getLong(req, "holding", Long.MIN_VALUE, Long.MAX_VALUE, false);
             long minBalance = ParameterParser.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
-            byte minBalanceModel = ParameterParser.getByte(req, "minBalanceModel", (byte) 0, (byte) 3, false);
+            byte minBalanceModel = ParameterParser.getByte(req, "minBalanceModel", (byte)0, (byte)3, false);
             voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
             voteWeighting.validate();
             pollResults = poll.getResults(voteWeighting);

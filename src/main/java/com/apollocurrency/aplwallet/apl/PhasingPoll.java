@@ -51,8 +51,7 @@ public final class PhasingPoll extends AbstractPoll {
             if (acceptedHashFunctions.contains(hashFunction)) {
                 return hashFunction;
             }
-        } catch (IllegalArgumentException ignore) {
-        }
+        } catch (IllegalArgumentException ignore) {}
         return null;
     }
 

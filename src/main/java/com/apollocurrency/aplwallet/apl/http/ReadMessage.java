@@ -50,7 +50,7 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
     }
 
     private ReadMessage() {
-        super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
+        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
     }
 
     @Override

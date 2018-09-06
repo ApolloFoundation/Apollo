@@ -40,7 +40,7 @@ public final class SearchAssets extends APIServlet.APIRequestHandler {
     }
 
     private SearchAssets() {
-        super(new APITag[]{APITag.AE, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");
+        super(new APITag[] {APITag.AE, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");
     }
 
     @Override

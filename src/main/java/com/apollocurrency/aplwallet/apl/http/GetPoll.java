@@ -38,7 +38,7 @@ public final class GetPoll extends APIServlet.APIRequestHandler {
     }
 
     private GetPoll() {
-        super(new APITag[]{APITag.VS}, "poll");
+        super(new APITag[] {APITag.VS}, "poll");
     }
 
     @Override

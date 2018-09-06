@@ -36,7 +36,7 @@ import java.util.Collections;
  * signing of transactions.
  * Unlike {@link BroadcastTransaction}, does not validate the transaction and requires adminPassword parameter to avoid
  * abuses. Also does not re-broadcast the transaction and does not store it as unconfirmed transaction.
- * <p>
+ *
  * Clients first submit their transaction using {@link CreateTransaction} without providing the secret phrase.<br>
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
@@ -66,7 +66,7 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
     }
 
     private SendTransaction() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
     @Override
@@ -83,7 +83,7 @@ public final class SendTransaction extends APIServlet.APIRequestHandler {
             Peers.sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHash());
-        } catch (AplException.ValidationException | RuntimeException e) {
+        } catch (AplException.ValidationException|RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

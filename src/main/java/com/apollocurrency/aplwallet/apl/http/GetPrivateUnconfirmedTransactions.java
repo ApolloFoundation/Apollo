@@ -28,7 +28,7 @@ public final class GetPrivateUnconfirmedTransactions extends APIServlet.APIReque
     }
 
     private GetPrivateUnconfirmedTransactions() {
-        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "firstIndex", "lastIndex", "secretPhrase", "publicKey");
+        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "firstIndex", "lastIndex", "secretPhrase", "publicKey");
     }
 
     @Override

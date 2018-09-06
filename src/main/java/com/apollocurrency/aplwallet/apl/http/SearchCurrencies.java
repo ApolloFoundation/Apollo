@@ -40,7 +40,7 @@ public final class SearchCurrencies extends APIServlet.APIRequestHandler {
     }
 
     private SearchCurrencies() {
-        super(new APITag[]{APITag.MS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");
+        super(new APITag[] {APITag.MS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");
     }
 
     @Override

@@ -43,7 +43,7 @@ public final class GetExpectedOrderCancellations extends APIServlet.APIRequestHa
     }
 
     private GetExpectedOrderCancellations() {
-        super(new APITag[]{APITag.AE});
+        super(new APITag[] {APITag.AE});
     }
 
     @Override

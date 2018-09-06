@@ -30,7 +30,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class GetPollVote extends APIServlet.APIRequestHandler {
+public class GetPollVote extends APIServlet.APIRequestHandler  {
     private static class GetPollVoteHolder {
         private static final GetPollVote INSTANCE = new GetPollVote();
     }
@@ -40,7 +40,7 @@ public class GetPollVote extends APIServlet.APIRequestHandler {
     }
 
     private GetPollVote() {
-        super(new APITag[]{APITag.VS}, "poll", "account", "includeWeights");
+        super(new APITag[] {APITag.VS}, "poll", "account", "includeWeights");
     }
 
     @Override

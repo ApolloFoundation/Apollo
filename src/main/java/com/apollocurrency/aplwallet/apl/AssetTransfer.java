@@ -39,7 +39,7 @@ public final class AssetTransfer {
         ASSET_TRANSFER
     }
 
-    private static final Listeners<AssetTransfer, Event> listeners = new Listeners<>();
+    private static final Listeners<AssetTransfer,Event> listeners = new Listeners<>();
 
     private static final DbKey.LongKeyFactory<AssetTransfer> transferDbKeyFactory = new DbKey.LongKeyFactory<AssetTransfer>("id") {
 
@@ -143,8 +143,7 @@ public final class AssetTransfer {
         return assetTransfer;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long id;
@@ -198,9 +197,7 @@ public final class AssetTransfer {
         return id;
     }
 
-    public long getAssetId() {
-        return assetId;
-    }
+    public long getAssetId() { return assetId; }
 
     public long getSenderId() {
         return senderId;
@@ -210,9 +207,7 @@ public final class AssetTransfer {
         return recipientId;
     }
 
-    public long getQuantityATU() {
-        return quantityATM;
-    }
+    public long getQuantityATU() { return quantityATM; }
 
     public int getTimestamp() {
         return timestamp;

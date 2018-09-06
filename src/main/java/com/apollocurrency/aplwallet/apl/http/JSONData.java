@@ -40,8 +40,7 @@ import java.util.*;
 
 public final class JSONData {
 
-    private JSONData() {
-    } // never
+    private JSONData() {} // never
 
     static JSONObject alias(Alias alias) {
         JSONObject json = new JSONObject();
@@ -1108,7 +1107,8 @@ public final class JSONData {
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
                 }
-            } catch (RuntimeException e) {
+            }
+            catch (RuntimeException e) {
                 putException(json, e, "Decryption failed");
             }
             json.put("isCompressed", prunableMessage.isCompressed());
@@ -1194,7 +1194,6 @@ public final class JSONData {
     static void putAccount(JSONObject json, String name, long accountId) {
         putAccount(json, name, accountId, false);
     }
-
     static void putPrivateAccount(JSONObject json, String name, long accountId) {
         putAccount(json, name, accountId, true);
     }

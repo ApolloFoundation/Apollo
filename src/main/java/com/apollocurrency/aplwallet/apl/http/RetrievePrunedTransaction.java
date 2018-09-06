@@ -40,7 +40,7 @@ public class RetrievePrunedTransaction extends APIServlet.APIRequestHandler {
     }
 
     private RetrievePrunedTransaction() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transaction");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
     }
 
     @Override

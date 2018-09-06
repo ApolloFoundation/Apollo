@@ -43,7 +43,7 @@ public final class GetShufflers extends APIServlet.APIRequestHandler {
     }
 
     private GetShufflers() {
-        super(new APITag[]{APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState");
+        super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState");
     }
 
     @Override

@@ -48,7 +48,7 @@ public class ManifestGenerator {
         manifestGenerator.generate("./resource/aplservice.manifest.mf", serviceClassName, "./lib");
     }
 
-    private void generate(String fileName, String className, String... directories) {
+    private void generate(String fileName, String className, String ... directories) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, className);

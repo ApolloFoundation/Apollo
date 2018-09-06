@@ -41,7 +41,7 @@ public final class GetTrades extends APIServlet.APIRequestHandler {
     }
 
     private GetTrades() {
-        super(new APITag[]{APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
+        super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
     }
 
     @Override

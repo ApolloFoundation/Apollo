@@ -59,7 +59,7 @@ public final class SignTransactionJSON {
                 System.out.println("File already exists: " + signed.getAbsolutePath());
                 System.exit(1);
             }
-            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))){
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
                 byte[] publicKeyHash = Crypto.sha256().digest(Convert.parseHexString((String) json.get("senderPublicKey")));
                 String senderRS = Convert.rsAccount(Convert.fullHashToId(publicKeyHash));

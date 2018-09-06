@@ -37,7 +37,7 @@ public final class Shutdown extends APIServlet.APIRequestHandler {
     }
 
     private Shutdown() {
-        super(new APITag[]{APITag.DEBUG}, "scan");
+        super(new APITag[] {APITag.DEBUG}, "scan");
     }
 
     @Override

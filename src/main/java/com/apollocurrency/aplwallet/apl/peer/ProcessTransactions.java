@@ -36,8 +36,7 @@ final class ProcessTransactions extends PeerServlet.PeerRequestHandler {
         return ProcessTransactionsHolder.INSTANCE;
     }
 
-    private ProcessTransactions() {
-    }
+    private ProcessTransactions() {}
 
 
     @Override

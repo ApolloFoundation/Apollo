@@ -38,7 +38,7 @@ public final class StartForging extends APIServlet.APIRequestHandler {
     }
 
     private StartForging() {
-        super(new APITag[]{APITag.FORGING}, "secretPhrase");
+        super(new APITag[] {APITag.FORGING}, "secretPhrase");
     }
 
     @Override

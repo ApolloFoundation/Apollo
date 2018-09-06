@@ -39,7 +39,7 @@ public final class ShufflingRegister extends CreateTransaction {
     }
 
     private ShufflingRegister() {
-        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");
+        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");
     }
 
     @Override

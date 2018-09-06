@@ -41,7 +41,7 @@ public final class Exchange {
         EXCHANGE
     }
 
-    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
+    private static final Listeners<Exchange,Event> listeners = new Listeners<>();
 
     private static final DbKey.LinkKeyFactory<Exchange> exchangeDbKeyFactory = new DbKey.LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
 
@@ -171,8 +171,7 @@ public final class Exchange {
         return exchange;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long transactionId;
@@ -261,11 +260,11 @@ public final class Exchange {
     public long getRate() {
         return rate;
     }
-
+    
     public long getCurrencyId() {
         return currencyId;
     }
-
+    
     public int getTimestamp() {
         return timestamp;
     }

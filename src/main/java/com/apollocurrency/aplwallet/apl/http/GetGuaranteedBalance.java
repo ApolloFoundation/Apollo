@@ -39,7 +39,7 @@ public final class GetGuaranteedBalance extends APIServlet.APIRequestHandler {
     }
 
     private GetGuaranteedBalance() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
     }
 
     @Override

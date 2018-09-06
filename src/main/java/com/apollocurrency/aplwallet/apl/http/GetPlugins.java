@@ -48,7 +48,7 @@ public final class GetPlugins extends APIServlet.APIRequestHandler {
     }
 
     private GetPlugins() {
-        super(new APITag[]{APITag.INFO});
+        super(new APITag[] {APITag.INFO});
     }
 
     private static final Path PLUGINS_HOME = Paths.get("./html/www/plugins");

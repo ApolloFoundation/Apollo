@@ -41,7 +41,7 @@ public final class GetTransaction extends APIServlet.APIRequestHandler {
     }
 
     private GetTransaction() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transaction", "fullHash", "includePhasingResult");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "includePhasingResult");
     }
 
     @Override

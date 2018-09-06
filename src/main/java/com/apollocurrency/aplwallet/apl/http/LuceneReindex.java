@@ -40,7 +40,7 @@ public final class LuceneReindex extends APIServlet.APIRequestHandler {
     }
 
     private LuceneReindex() {
-        super(new APITag[]{APITag.DEBUG});
+        super(new APITag[] {APITag.DEBUG});
     }
 
     @Override

@@ -38,7 +38,7 @@ public final class GetDGSTagCount extends APIServlet.APIRequestHandler {
     }
 
     private GetDGSTagCount() {
-        super(new APITag[]{APITag.DGS}, "inStockOnly");
+        super(new APITag[] {APITag.DGS}, "inStockOnly");
     }
 
     @Override

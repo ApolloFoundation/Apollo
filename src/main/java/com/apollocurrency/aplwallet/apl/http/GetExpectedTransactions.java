@@ -44,7 +44,7 @@ public final class GetExpectedTransactions extends APIServlet.APIRequestHandler 
     }
 
     private GetExpectedTransactions() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "account", "account", "account");
+        super(new APITag[] {APITag.TRANSACTIONS}, "account", "account", "account");
     }
 
     @Override

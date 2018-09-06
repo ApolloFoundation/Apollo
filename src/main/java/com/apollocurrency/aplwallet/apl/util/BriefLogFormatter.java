@@ -35,9 +35,7 @@ import java.util.logging.Logger;
  */
 public class BriefLogFormatter extends Formatter {
 
-    /**
-     * Format used for log messages
-     */
+    /** Format used for log messages */
     private static final ThreadLocal<MessageFormat> messageFormat = new ThreadLocal<MessageFormat>() {
         @Override
         protected MessageFormat initialValue() {
@@ -45,14 +43,10 @@ public class BriefLogFormatter extends Formatter {
         }
     };
 
-    /**
-     * Logger instance at the top of the name tree
-     */
+    /** Logger instance at the top of the name tree */
     private static final Logger logger = Logger.getLogger("");
 
-    /**
-     * singleton BriefLogFormatter instance
-     */
+    /** singleton BriefLogFormatter instance */
     private static final BriefLogFormatter briefLogFormatter = new BriefLogFormatter();
 
     /**
@@ -66,11 +60,11 @@ public class BriefLogFormatter extends Formatter {
 
     /**
      * Format the log record as follows:
-     * <p>
-     * Date Level Message ExceptionTrace
      *
-     * @param logRecord The log record
-     * @return The formatted string
+     *     Date Level Message ExceptionTrace
+     *
+     * @param       logRecord       The log record
+     * @return                      The formatted string
      */
     @Override
     public String format(LogRecord logRecord) {
@@ -89,8 +83,7 @@ public class BriefLogFormatter extends Formatter {
         return messageFormat.get().format(arguments);
     }
 
-    private BriefLogFormatter() {
-    }
+    private BriefLogFormatter() {}
 
     @Override
     public String getTail(Handler h) {

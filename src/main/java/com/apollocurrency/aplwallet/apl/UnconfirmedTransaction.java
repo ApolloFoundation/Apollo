@@ -98,7 +98,7 @@ class UnconfirmedTransaction implements Transaction {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof UnconfirmedTransaction && transaction.equals(((UnconfirmedTransaction) o).getTransaction());
+        return o instanceof UnconfirmedTransaction && transaction.equals(((UnconfirmedTransaction)o).getTransaction());
     }
 
     @Override

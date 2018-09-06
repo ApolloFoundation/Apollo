@@ -36,7 +36,7 @@ public final class GetShuffling extends APIServlet.APIRequestHandler {
     }
 
     private GetShuffling() {
-        super(new APITag[]{APITag.SHUFFLING}, "shuffling", "includeHoldingInfo");
+        super(new APITag[] {APITag.SHUFFLING}, "shuffling", "includeHoldingInfo");
     }
 
     @Override

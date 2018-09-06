@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * Returns the phasing control certain account. The result contains the following entries similar to the control* parameters of {@link SetPhasingOnlyControl}
- *
+ * 
  * <ul>
  * <li>votingModel - See {@link SetPhasingOnlyControl} for possible values. NONE(-1) means not control is set</li>
  * <li>quorum</li>
@@ -37,14 +37,16 @@ import javax.servlet.http.HttpServletRequest;
  * <li>holding</li>
  * <li>whitelisted - array of whitelisted voter account IDs</li>
  * </ul>
- *
+ * 
  * <p>
  * Parameters
  * <ul>
  * <li>account - the account for which the phasing control is queried</li>
  * </ul>
- *
+ * 
+ * 
  * @see SetPhasingOnlyControl
+ * 
  */
 public final class GetPhasingOnlyControl extends APIServlet.APIRequestHandler {
 
@@ -55,9 +57,9 @@ public final class GetPhasingOnlyControl extends APIServlet.APIRequestHandler {
     public static GetPhasingOnlyControl getInstance() {
         return GetPhasingOnlyControlHolder.INSTANCE;
     }
-
+    
     private GetPhasingOnlyControl() {
-        super(new APITag[]{APITag.ACCOUNT_CONTROL}, "account");
+        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account");
     }
 
     @Override

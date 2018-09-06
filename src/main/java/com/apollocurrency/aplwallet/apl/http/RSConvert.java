@@ -40,7 +40,7 @@ public final class RSConvert extends APIServlet.APIRequestHandler {
     }
 
     private RSConvert() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.UTILS}, "account");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.UTILS}, "account");
     }
 
     @Override

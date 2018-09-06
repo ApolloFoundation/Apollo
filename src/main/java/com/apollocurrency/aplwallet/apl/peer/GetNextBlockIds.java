@@ -38,8 +38,7 @@ final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
         return GetNextBlockIdsHolder.INSTANCE;
     }
 
-    private GetNextBlockIds() {
-    }
+    private GetNextBlockIds() {}
 
 
     @Override
@@ -49,7 +48,7 @@ final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
 
         JSONArray nextBlockIds = new JSONArray();
         long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
-        int limit = (int) Convert.parseLong(request.get("limit"));
+        int limit = (int)Convert.parseLong(request.get("limit"));
         if (limit > 1440) {
             return GetNextBlocks.TOO_MANY_BLOCKS_REQUESTED;
         }

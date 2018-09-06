@@ -25,8 +25,7 @@ public class Downloader {
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
     private DownloadExecutor defaultDownloadExecutor = new DefaultDownloadExecutor(TEMP_DIR_PREFIX, DOWNLOADED_FILE_NAME);
 
-    private Downloader() {
-    }
+    private Downloader() {}
 
     public static Downloader getInstance() {
         return DownloaderHolder.INSTANCE;
@@ -97,7 +96,8 @@ public class Downloader {
                 Logger.logErrorMessage("Unable to download update from: " + uri, e);
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
                 mediator.setStatus(UpdateInfo.DownloadStatus.CONNECTION_FAILURE);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 Logger.logInfoMessage("Downloader was awakened", e);
             }
         }

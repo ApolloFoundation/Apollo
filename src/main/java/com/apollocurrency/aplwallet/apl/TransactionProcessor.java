@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 
-public interface TransactionProcessor extends Observable<List<? extends Transaction>, TransactionProcessor.Event> {
+public interface TransactionProcessor extends Observable<List<? extends Transaction>,TransactionProcessor.Event> {
 
     enum Event {
         REMOVED_UNCONFIRMED_TRANSACTIONS,

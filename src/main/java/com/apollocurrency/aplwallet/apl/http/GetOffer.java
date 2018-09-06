@@ -38,7 +38,7 @@ public final class GetOffer extends APIServlet.APIRequestHandler {
     }
 
     private GetOffer() {
-        super(new APITag[]{APITag.MS}, "offer");
+        super(new APITag[] {APITag.MS}, "offer");
     }
 
     @Override

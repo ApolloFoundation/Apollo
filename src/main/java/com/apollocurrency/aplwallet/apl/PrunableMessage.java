@@ -115,8 +115,7 @@ public final class PrunableMessage {
         }
     }
 
-    static void init() {
-    }
+    static void init() {}
 
     private final long id;
     private final DbKey dbKey;
@@ -295,7 +294,7 @@ public final class PrunableMessage {
 
     static void add(TransactionImpl transaction, Appendix.PrunableEncryptedMessage appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
-            PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
+                PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {
                 prunableMessage = new PrunableMessage(transaction, blockTimestamp, height);
             } else if (prunableMessage.height != height) {
@@ -313,7 +312,7 @@ public final class PrunableMessage {
             return false;
         }
         try (Connection con = Db.db.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
+                PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return !rs.next()

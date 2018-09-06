@@ -39,24 +39,22 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
     }
 
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
-
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.INVALID_ANNOUNCED_ADDRESS);
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
     }
 
-    private GetInfo() {
-    }
+    private GetInfo() {}
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        PeerImpl peerImpl = (PeerImpl) peer;
+        PeerImpl peerImpl = (PeerImpl)peer;
         peerImpl.setLastUpdated(Apl.getEpochTime());
         long origServices = peerImpl.getServices();
-        String servicesString = (String) request.get("services");
+        String servicesString = (String)request.get("services");
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-        peerImpl.analyzeHallmark((String) request.get("hallmark"));
+        peerImpl.analyzeHallmark((String)request.get("hallmark"));
         if (!Peers.ignorePeerAnnouncedAddress) {
             String announcedAddress = Convert.emptyToNull((String) request.get("announcedAddress"));
             if (announcedAddress != null) {
@@ -85,7 +83,7 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
                 }
             }
         }
-        String application = (String) request.get("application");
+        String application = (String)request.get("application");
         if (application == null) {
             application = "?";
         }
@@ -93,14 +91,15 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
 
         Version version = null;
         try {
-            version = Version.from((String) request.get("version"));
-        } catch (Exception e) {
+            version = Version.from((String)request.get("version"));
+        }
+        catch (Exception e) {
             Logger.logErrorMessage("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
         peerImpl.setVersion(version);
 
-        String platform = (String) request.get("platform");
+        String platform = (String)request.get("platform");
         if (platform == null) {
             platform = "?";
         }

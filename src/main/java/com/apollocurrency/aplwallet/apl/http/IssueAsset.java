@@ -46,7 +46,7 @@ public final class IssueAsset extends CreateTransaction {
     }
 
     private IssueAsset() {
-        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
     }
 
     @Override

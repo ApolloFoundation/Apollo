@@ -128,7 +128,7 @@ public final class Currency {
 
     };
 
-    private static final Listeners<Currency, Event> listeners = new Listeners<>();
+    private static final Listeners<Currency,Event> listeners = new Listeners<>();
 
     public static boolean addListener(Listener<Currency> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -195,8 +195,7 @@ public final class Currency {
         Apl.getBlockchainProcessor().addListener(new CrowdFundingListener(), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
     }
 
-    static void init() {
-    }
+    static void init() {}
 
     private final long currencyId;
 
@@ -300,8 +299,8 @@ public final class Currency {
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setInt(++i, this.issuanceHeight);
             pstmt.setLong(++i, this.minReservePerUnitATM);
-            pstmt.setByte(++i, (byte) this.minDifficulty);
-            pstmt.setByte(++i, (byte) this.maxDifficulty);
+            pstmt.setByte(++i, (byte)this.minDifficulty);
+            pstmt.setByte(++i, (byte)this.maxDifficulty);
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
@@ -424,7 +423,7 @@ public final class Currency {
     static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {
         account.addToCurrencyUnits(event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
-        currency.increaseSupply(-units);
+        currency.increaseSupply(- units);
         account.addToBalanceAndUnconfirmedBalanceATM(event, eventId,
                 Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
     }
@@ -476,7 +475,7 @@ public final class Currency {
             return false;
         }
         try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getCurrencyAccounts(this.currencyId, 0, -1)) {
-            return !accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && !accountCurrencies.hasNext();
+            return ! accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && ! accountCurrencies.hasNext();
         }
     }
 
@@ -549,7 +548,7 @@ public final class Currency {
             }
             Account.getAccount(currency.getAccountId())
                     .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                            currency.getId(), -currency.getInitialSupply());
+                            currency.getId(), - currency.getInitialSupply());
             currencyTable.delete(currency);
             CurrencyFounder.remove(currency.getId());
         }

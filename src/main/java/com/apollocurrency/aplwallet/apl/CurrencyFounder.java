@@ -67,8 +67,7 @@ public class CurrencyFounder {
 
     };
 
-    static void init() {
-    }
+    static void init() {}
 
     private final DbKey dbKey;
     private final long currencyId;

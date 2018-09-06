@@ -41,7 +41,7 @@ public class ConstantsExporter {
             Files.write(filePath, (String.format("if (!NRS) {%1$s" +
                     "    var NRS = {};%1$s" +
                     "    NRS.constants = {};%1$s" +
-                    "}%1$s%1$s", System.lineSeparator())).getBytes());
+                    "}%1$s%1$s",System.lineSeparator())).getBytes());
             Files.write(filePath, ("NRS.constants.SERVER = ").getBytes(), StandardOpenOption.APPEND);
             JSON.writeJSONString(GetConstants.getConstants(), filePath);
             Files.write(filePath, String.format("%1$s%1$s" +

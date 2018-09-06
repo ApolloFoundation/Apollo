@@ -27,7 +27,7 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
     }
 
     private GetPrivateTransaction() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
     }
 
     @Override
@@ -54,13 +54,14 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
                     return UNKNOWN_TRANSACTION;
                 }
             }
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
         JSONObject response;
         if (transaction == null) {
             transaction = Apl.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || !transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
+            if (transaction == null || !transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {
@@ -69,7 +70,7 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
                 response = JSONData.unconfirmedTransaction(transaction);
             }
         } else {
-            if (!transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
+            if (!transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {

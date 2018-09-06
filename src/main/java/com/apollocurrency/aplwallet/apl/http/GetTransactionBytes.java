@@ -43,7 +43,7 @@ public final class GetTransactionBytes extends APIServlet.APIRequestHandler {
     }
 
     private GetTransactionBytes() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transaction");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
     }
 
     @Override

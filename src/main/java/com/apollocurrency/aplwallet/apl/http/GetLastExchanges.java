@@ -39,7 +39,7 @@ public final class GetLastExchanges extends APIServlet.APIRequestHandler {
     }
 
     private GetLastExchanges() {
-        super(new APITag[]{APITag.MS}, "currencies", "currencies", "currencies"); // limit to 3 for testing
+        super(new APITag[] {APITag.MS}, "currencies", "currencies", "currencies"); // limit to 3 for testing
     }
 
     @Override

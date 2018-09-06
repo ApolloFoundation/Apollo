@@ -44,7 +44,7 @@ public class SetAPIProxyPeer extends APIServlet.APIRequestHandler {
     }
 
     private SetAPIProxyPeer() {
-        super(new APITag[]{APITag.NETWORK}, "peer");
+        super(new APITag[] {APITag.NETWORK}, "peer");
     }
 
     @Override
@@ -61,7 +61,7 @@ public class SetAPIProxyPeer extends APIServlet.APIRequestHandler {
         if (peer == null) {
             return UNKNOWN_PEER;
         }
-        if (peer.getState() != Peer.State.CONNECTED) {
+        if (peer.getState() != Peer.State.CONNECTED ) {
             return PEER_NOT_CONNECTED;
         }
         if (!peer.isOpenAPI()) {

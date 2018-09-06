@@ -79,16 +79,16 @@ public final class PassphraseRecovery {
             }
             String dictionaryStr = Apl.getStringProperty("recoveryDictionary", "");
             char[] dictionary;
-            switch (dictionaryStr.toLowerCase()) {
+            switch(dictionaryStr.toLowerCase()) {
                 case "":
                 case "ascii":
                     dictionary = getDictionary(32, 127);
                     break;
                 case "asciiall":
-                    dictionary = getDictionary(0, (int) (Math.pow(2, 8) - 1));
+                    dictionary = getDictionary(0, (int)(Math.pow(2, 8) - 1));
                     break;
                 case "unicode":
-                    dictionary = getDictionary(0, (int) (Math.pow(2, 16) - 1));
+                    dictionary = getDictionary(0, (int)(Math.pow(2, 16) - 1));
                     break;
                 default:
                     dictionary = dictionaryStr.toCharArray();
@@ -147,7 +147,7 @@ public final class PassphraseRecovery {
             if (positions.length == 0) {
                 Logger.logInfoMessage("Position not specified scanning for a single typo");
                 char[] copy = new char[wildcard.length];
-                for (int i = 0; i < wildcard.length; i++) {
+                for (int i=0; i<wildcard.length; i++) {
                     positions = new int[1];
                     positions[0] = i;
                     System.arraycopy(wildcard, 0, copy, 0, wildcard.length);

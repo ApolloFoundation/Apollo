@@ -17,9 +17,7 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET
 
 public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
 
-    /**
-     * GetPrivateAccountLedgerEntry instance
-     */
+    /** GetPrivateAccountLedgerEntry instance */
     private static class GetPrivateAccountLedgerEntryHolder {
         private static final GetPrivateAccountLedgerEntry INSTANCE = new GetPrivateAccountLedgerEntry();
     }
@@ -32,15 +30,15 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * Create the GetPrivateAccountLedgerEntry instance
      */
     private GetPrivateAccountLedgerEntry() {
-        super(new APITag[]{APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
+        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
 
     /**
      * Process the GetPrivateAccountLedgerEntry API request
      *
-     * @param req API request
-     * @return API response
-     * @throws AplException Invalid request
+     * @param   req                 API request
+     * @return                      API response
+     * @throws  AplException        Invalid request
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -76,7 +74,7 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
     /**
      * No required block parameters
      *
-     * @return FALSE to disable the required block parameters
+     * @return                      FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

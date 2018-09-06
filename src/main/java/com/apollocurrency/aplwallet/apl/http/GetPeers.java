@@ -41,7 +41,7 @@ public final class GetPeers extends APIServlet.APIRequestHandler {
     }
 
     private GetPeers() {
-        super(new APITag[]{APITag.NETWORK}, "active", "state", "service", "service", "service", "includePeerInfo");
+        super(new APITag[] {APITag.NETWORK}, "active", "state", "service", "service", "service", "includePeerInfo");
     }
 
     @Override

@@ -38,7 +38,7 @@ public final class GetDataTagCount extends APIServlet.APIRequestHandler {
     }
 
     private GetDataTagCount() {
-        super(new APITag[]{APITag.DATA});
+        super(new APITag[] {APITag.DATA});
     }
 
     @Override

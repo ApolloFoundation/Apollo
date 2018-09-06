@@ -51,7 +51,7 @@ public final class Alias {
             this.aliasId = rs.getLong("id");
             this.dbKey = dbKey;
             this.priceATM = rs.getLong("price");
-            this.buyerId = rs.getLong("buyer_id");
+            this.buyerId  = rs.getLong("buyer_id");
         }
 
         private void save(Connection con) throws SQLException {
@@ -222,8 +222,7 @@ public final class Alias {
         }
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private long accountId;

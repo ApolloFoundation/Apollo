@@ -27,7 +27,7 @@ import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public interface BlockchainProcessor extends Observable<Block, BlockchainProcessor.Event> {
+public interface BlockchainProcessor extends Observable<Block,BlockchainProcessor.Event> {
 
     enum Event {
         BLOCK_PUSHED, BLOCK_POPPED, BLOCK_GENERATED, BLOCK_SCANNED,
@@ -123,9 +123,9 @@ public interface BlockchainProcessor extends Observable<Block, BlockchainProcess
             super(message, block);
         }
 
-    }
+	}
 
-    class InvalidTransactionException extends BlockNotAcceptedException {
+	class InvalidTransactionException extends BlockNotAcceptedException {
 
         InvalidTransactionException(String message, BlockImpl block) {
             super(message, block);

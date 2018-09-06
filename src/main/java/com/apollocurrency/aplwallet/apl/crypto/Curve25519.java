@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import java.util.Objects;
-
 /* Ported from C to Java by Dmitry Skiba [sahn0], 23/02/08.
  * Original: http://cds.xs4all.nl:8081/ecdh/
  */
@@ -316,45 +314,6 @@ final class Curve25519 {
             this._9=_9;
         }
         public long _0,_1,_2,_3,_4,_5,_6,_7,_8,_9;
-
-        @Override
-        public String toString() {
-            return "long10{" +
-                    "_0=" + _0 +
-                    ", _1=" + _1 +
-                    ", _2=" + _2 +
-                    ", _3=" + _3 +
-                    ", _4=" + _4 +
-                    ", _5=" + _5 +
-                    ", _6=" + _6 +
-                    ", _7=" + _7 +
-                    ", _8=" + _8 +
-                    ", _9=" + _9 +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof long10)) return false;
-            long10 long10 = (long10) o;
-            return _0 == long10._0 &&
-                    _1 == long10._1 &&
-                    _2 == long10._2 &&
-                    _3 == long10._3 &&
-                    _4 == long10._4 &&
-                    _5 == long10._5 &&
-                    _6 == long10._6 &&
-                    _7 == long10._7 &&
-                    _8 == long10._8 &&
-                    _9 == long10._9;
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9);
-        }
     }
 
     /********************* radix 2^8 math *********************/

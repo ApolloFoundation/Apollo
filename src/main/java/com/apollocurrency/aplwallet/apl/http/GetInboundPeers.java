@@ -53,9 +53,7 @@ import java.util.List;
  */
 public final class GetInboundPeers extends APIServlet.APIRequestHandler {
 
-    /**
-     * GetInboundPeers instance
-     */
+    /** GetInboundPeers instance */
     private static class GetInboundPeersHolder {
         private static final GetInboundPeers INSTANCE = new GetInboundPeers();
     }
@@ -68,14 +66,14 @@ public final class GetInboundPeers extends APIServlet.APIRequestHandler {
      * Create the GetInboundPeers instance
      */
     private GetInboundPeers() {
-        super(new APITag[]{APITag.NETWORK}, "includePeerInfo");
+        super(new APITag[] {APITag.NETWORK}, "includePeerInfo");
     }
 
     /**
      * Process the GetInboundPeers API request
      *
-     * @param req API request
-     * @return API response or null
+     * @param   req                 API request
+     * @return                      API response or null
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {

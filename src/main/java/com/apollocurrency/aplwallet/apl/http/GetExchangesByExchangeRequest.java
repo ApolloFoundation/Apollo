@@ -42,7 +42,7 @@ public final class GetExchangesByExchangeRequest extends APIServlet.APIRequestHa
     }
 
     private GetExchangesByExchangeRequest() {
-        super(new APITag[]{APITag.MS}, "transaction", "includeCurrencyInfo");
+        super(new APITag[] {APITag.MS}, "transaction", "includeCurrencyInfo");
     }
 
     @Override

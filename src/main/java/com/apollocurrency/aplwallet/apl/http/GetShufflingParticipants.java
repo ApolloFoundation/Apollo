@@ -40,7 +40,7 @@ public final class GetShufflingParticipants extends APIServlet.APIRequestHandler
     }
 
     private GetShufflingParticipants() {
-        super(new APITag[]{APITag.SHUFFLING}, "shuffling");
+        super(new APITag[] {APITag.SHUFFLING}, "shuffling");
     }
 
     @Override

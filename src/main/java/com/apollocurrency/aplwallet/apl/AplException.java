@@ -105,7 +105,7 @@ public abstract class AplException extends Exception {
         public AccountControlException(String message, Throwable cause) {
             super(message, cause);
         }
-
+        
     }
 
     public static class InsufficientBalanceException extends NotCurrentlyValidException {
@@ -169,8 +169,7 @@ public abstract class AplException extends Exception {
             super(message, cause);
         }
     }
-
-    public static final class PrivateLedgerEntryAccessDenied extends RuntimeException {
+ public static final class PrivateLedgerEntryAccessDenied extends RuntimeException {
         public PrivateLedgerEntryAccessDenied() {
             super();
         }

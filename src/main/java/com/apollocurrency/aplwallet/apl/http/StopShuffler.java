@@ -40,7 +40,7 @@ public final class StopShuffler extends APIServlet.APIRequestHandler {
     }
 
     private StopShuffler() {
-        super(new APITag[]{APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword");
+        super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword");
     }
 
     @Override

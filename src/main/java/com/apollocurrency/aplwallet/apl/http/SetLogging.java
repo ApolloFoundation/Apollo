@@ -64,9 +64,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class SetLogging extends APIServlet.APIRequestHandler {
 
-    /**
-     * SetLogging instance
-     */
+    /** SetLogging instance */
     private static class SetLoggingHolder {
         private static final SetLogging INSTANCE = new SetLogging();
     }
@@ -75,42 +73,35 @@ public class SetLogging extends APIServlet.APIRequestHandler {
         return SetLoggingHolder.INSTANCE;
     }
 
-    /**
-     * Logging updated
-     */
+    /** Logging updated */
     private static final JSONStreamAware LOGGING_UPDATED;
-
     static {
         JSONObject response = new JSONObject();
         response.put("loggingUpdated", true);
         LOGGING_UPDATED = JSON.prepare(response);
     }
 
-    /**
-     * Incorrect log level
-     */
+    /** Incorrect log level */
     private static final JSONStreamAware INCORRECT_LEVEL =
             JSONResponses.incorrect("logLevel", "Log level must be DEBUG, INFO, WARN or ERROR");
 
-    /**
-     * Incorrect communication event
-     */
+    /** Incorrect communication event */
     private static final JSONStreamAware INCORRECT_EVENT =
             JSONResponses.incorrect("communicationEvent",
-                    "Communication event must be EXCEPTION, HTTP-ERROR or HTTP-OK");
+                                    "Communication event must be EXCEPTION, HTTP-ERROR or HTTP-OK");
 
     /**
      * Create the SetLogging instance
      */
     private SetLogging() {
-        super(new APITag[]{APITag.DEBUG}, "logLevel", "communicationEvent", "communicationEvent", "communicationEvent");
+        super(new APITag[] {APITag.DEBUG}, "logLevel", "communicationEvent", "communicationEvent", "communicationEvent");
     }
 
     /**
      * Process the SetLogging API request
      *
-     * @param req API request
-     * @return API response
+     * @param   req                 API request
+     * @return                      API response
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
@@ -158,7 +149,7 @@ public class SetLogging extends APIServlet.APIRequestHandler {
     /**
      * Require the administrator password
      *
-     * @return TRUE if the admin password is required
+     * @return                      TRUE if the admin password is required
      */
     @Override
     protected boolean requirePassword() {

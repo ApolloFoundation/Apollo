@@ -41,7 +41,7 @@ abstract class AbstractPoll {
         this.id = id;
         this.accountId = accountId;
         this.finishHeight = finishHeight;
-        this.voteWeighting = new VoteWeighting((byte) 0, 0L, 100_000_000L, (byte) 0);
+        this.voteWeighting = new VoteWeighting((byte)0, 0L, 100_000_000L, (byte) 0);
     }
 
     AbstractPoll(ResultSet rs) throws SQLException {

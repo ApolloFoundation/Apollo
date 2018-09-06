@@ -73,9 +73,7 @@ import java.lang.management.ThreadMXBean;
  */
 public class GetStackTraces extends APIServlet.APIRequestHandler {
 
-    /**
-     * GetLog instance
-     */
+    /** GetLog instance */
     private static class GetStackTracesHolder {
         private static final GetStackTraces INSTANCE = new GetStackTraces();
     }
@@ -88,14 +86,14 @@ public class GetStackTraces extends APIServlet.APIRequestHandler {
      * Create the GetStackTraces instance
      */
     private GetStackTraces() {
-        super(new APITag[]{APITag.DEBUG}, "depth");
+        super(new APITag[] {APITag.DEBUG}, "depth");
     }
 
     /**
      * Process the GetStackTraces API request
      *
-     * @param req API request
-     * @return API response
+     * @param   req                 API request
+     * @return                      API response
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
@@ -154,8 +152,8 @@ public class GetStackTraces extends APIServlet.APIRequestHandler {
                         lockJSON.put("thread", tInfo.getLockOwnerId());
                         threadJSON.put("blocked", lockJSON);
                         boolean addLock = true;
-                        for (Object lock : locksJSON) {
-                            if (((JSONObject) lock).get("name").equals(lInfo.getClassName())) {
+                        for (Object lock : locksJSON){
+                            if (((JSONObject)lock).get("name").equals(lInfo.getClassName())) {
                                 addLock = false;
                                 break;
                             }
@@ -194,7 +192,7 @@ public class GetStackTraces extends APIServlet.APIRequestHandler {
     /**
      * Require the administrator password
      *
-     * @return TRUE if the admin password is required
+     * @return                      TRUE if the admin password is required
      */
     @Override
     protected boolean requirePassword() {

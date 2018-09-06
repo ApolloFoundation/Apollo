@@ -41,7 +41,7 @@ public final class PlaceBidOrder extends CreateTransaction {
     }
 
     private PlaceBidOrder() {
-        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
     }
 
     @Override

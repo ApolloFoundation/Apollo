@@ -39,7 +39,7 @@ public final class ShufflingCancel extends CreateTransaction {
     }
 
     private ShufflingCancel() {
-        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "cancellingAccount", "shufflingStateHash");
+        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "cancellingAccount", "shufflingStateHash");
     }
 
     @Override

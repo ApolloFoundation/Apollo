@@ -43,7 +43,7 @@ public final class SetAccountProperty extends CreateTransaction {
     }
 
     private SetAccountProperty() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");
     }
 
     @Override

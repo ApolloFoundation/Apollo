@@ -38,12 +38,11 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
         return ProcessBlockHolder.INSTANCE;
     }
 
-    private ProcessBlock() {
-    }
+    private ProcessBlock() {}
 
     @Override
     JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
-        String previousBlockId = (String) request.get("previousBlock");
+        String previousBlockId = (String)request.get("previousBlock");
         Block lastBlock = Apl.getBlockchain().getLastBlock();
         if (lastBlock.getStringId().equals(previousBlockId) ||
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()

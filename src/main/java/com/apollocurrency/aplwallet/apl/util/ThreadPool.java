@@ -59,7 +59,7 @@ public final class ThreadPool {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started, no new jobs accepted");
         }
-        if (!Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
+        if (! Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
             backgroundJobs.put(runnable, timeUnit.toMillis(delay));
         } else {
             Logger.logMessage("Will not run " + name + " thread");
@@ -97,10 +97,10 @@ public final class ThreadPool {
 
     public static void shutdown() {
         if (scheduledThreadPool != null) {
-            Logger.logShutdownMessage("Stopping background jobs...");
+	        Logger.logShutdownMessage("Stopping background jobs...");
             shutdownExecutor("scheduledThreadPool", scheduledThreadPool, 10);
             scheduledThreadPool = null;
-            Logger.logShutdownMessage("...Done");
+        	Logger.logShutdownMessage("...Done");
         }
     }
 
@@ -112,7 +112,7 @@ public final class ThreadPool {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        if (!executor.isTerminated()) {
+        if (! executor.isTerminated()) {
             Logger.logShutdownMessage("some threads in " + name + " didn't terminate, forcing shutdown");
             executor.shutdownNow();
         }
@@ -146,7 +146,6 @@ public final class ThreadPool {
         }
     }
 
-    private ThreadPool() {
-    } //never
+    private ThreadPool() {} //never
 
 }

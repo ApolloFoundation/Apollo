@@ -19,9 +19,7 @@ public class SecurityAlertSender {
     public void send(Transaction invalidUpdateTransaction) {
         Logger.logInfoMessage("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
     }
-
-    private SecurityAlertSender() {
-    }
+    private SecurityAlertSender() {}
 
     public void send(String message) {
         Logger.logWarningMessage(message);

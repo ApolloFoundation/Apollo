@@ -39,7 +39,7 @@ public final class CurrencyTransfer {
         TRANSFER
     }
 
-    private static final Listeners<CurrencyTransfer, Event> listeners = new Listeners<>();
+    private static final Listeners<CurrencyTransfer,Event> listeners = new Listeners<>();
 
     private static final DbKey.LongKeyFactory<CurrencyTransfer> currencyTransferDbKeyFactory = new DbKey.LongKeyFactory<CurrencyTransfer>("id") {
 
@@ -87,6 +87,7 @@ public final class CurrencyTransfer {
     public static boolean removeListener(Listener<CurrencyTransfer> listener) {
         return removeListener(listener, Event.TRANSFER);
     }
+
 
 
     public static DbIterator<CurrencyTransfer> getCurrencyTransfers(long currencyId, int from, int to) {
@@ -144,8 +145,7 @@ public final class CurrencyTransfer {
         return transfer;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long id;
@@ -199,9 +199,7 @@ public final class CurrencyTransfer {
         return id;
     }
 
-    public long getCurrencyId() {
-        return currencyId;
-    }
+    public long getCurrencyId() { return currencyId; }
 
     public long getSenderId() {
         return senderId;
@@ -211,9 +209,7 @@ public final class CurrencyTransfer {
         return recipientId;
     }
 
-    public long getUnits() {
-        return units;
-    }
+    public long getUnits() { return units; }
 
     public int getTimestamp() {
         return timestamp;

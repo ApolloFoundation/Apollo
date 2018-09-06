@@ -60,7 +60,7 @@ public final class GetState extends APIServlet.APIRequestHandler {
     }
 
     private GetState() {
-        super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
+        super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
     }
 
     @Override
@@ -79,11 +79,11 @@ public final class GetState extends APIServlet.APIRequestHandler {
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", Trade.getCount());
             response.put("numberOfTransfers", AssetTransfer.getCount());
-            response.put("numberOfCurrencies", Currency.getCount());
-            response.put("numberOfOffers", CurrencyBuyOffer.getCount());
+	        response.put("numberOfCurrencies", Currency.getCount());
+    	    response.put("numberOfOffers", CurrencyBuyOffer.getCount());
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
-            response.put("numberOfExchanges", Exchange.getCount());
-            response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
+        	response.put("numberOfExchanges", Exchange.getCount());
+        	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", Alias.getCount());
             response.put("numberOfGoods", DigitalGoodsStore.Goods.getCount());
             response.put("numberOfPurchases", DigitalGoodsStore.Purchase.getCount());

@@ -42,15 +42,13 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
     }
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
-
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.TOO_MANY_BLOCKS_REQUESTED);
         TOO_MANY_BLOCKS_REQUESTED = JSON.prepare(response);
     }
 
-    private GetNextBlocks() {
-    }
+    private GetNextBlocks() {}
 
 
     @Override
@@ -60,7 +58,7 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
         JSONArray nextBlocksArray = new JSONArray();
         List<? extends Block> blocks;
         long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
-        List<String> stringList = (List<String>) request.get("blockIds");
+        List<String> stringList = (List<String>)request.get("blockIds");
         if (stringList != null) {
             if (stringList.size() > 36) {
                 return TOO_MANY_BLOCKS_REQUESTED;
@@ -73,7 +71,7 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
             if (limit > 36) {
                 return TOO_MANY_BLOCKS_REQUESTED;
             }
-            blocks = Apl.getBlockchain().getBlocksAfter(blockId, limit > 0 ? (int) limit : 36);
+            blocks = Apl.getBlockchain().getBlocksAfter(blockId, limit > 0 ? (int)limit : 36);
         }
         blocks.forEach(block -> nextBlocksArray.add(block.getJSONObject()));
         response.put("nextBlocks", nextBlocksArray);

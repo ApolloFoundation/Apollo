@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
@@ -75,7 +74,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
     }
 
     private GetNextBlockGeneratorsTemp() {
-        super(new APITag[]{APITag.FORGING}, "limit");
+        super(new APITag[] {APITag.FORGING}, "limit");
     }
 
     @Override
@@ -100,7 +99,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
                 JSONData.putAccount(resp, "account", generator.getAccountId());
                 resp.put("effectiveBalanceAPL", generator.getEffectiveBalance());
                 resp.put("hitTime", generator.getHitTime());
-                resp.put("deadline", (int) generator.getHitTime() - lastBlock.getTimestamp());
+                resp.put("deadline", (int)generator.getHitTime() - lastBlock.getTimestamp());
                 generators.add(resp);
                 if (generators.size() == limit) {
                     break;
@@ -116,7 +115,7 @@ public final class GetNextBlockGeneratorsTemp extends APIServlet.APIRequestHandl
     /**
      * No required block parameters
      *
-     * @return FALSE to disable the required block parameters
+     * @return                      FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

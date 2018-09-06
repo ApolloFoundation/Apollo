@@ -46,12 +46,12 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
     }
 
     private GetExpectedBidOrders() {
-        super(new APITag[]{APITag.AE}, "asset", "sortByPrice");
+        super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
     }
 
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
-        Attachment.ColoredCoinsOrderPlacement a1 = (Attachment.ColoredCoinsOrderPlacement) o1.getAttachment();
-        Attachment.ColoredCoinsOrderPlacement a2 = (Attachment.ColoredCoinsOrderPlacement) o2.getAttachment();
+        Attachment.ColoredCoinsOrderPlacement a1 = (Attachment.ColoredCoinsOrderPlacement)o1.getAttachment();
+        Attachment.ColoredCoinsOrderPlacement a2 = (Attachment.ColoredCoinsOrderPlacement)o2.getAttachment();
         return Long.compare(a2.getPriceATM(), a1.getPriceATM());
     };
 
@@ -64,7 +64,7 @@ public final class GetExpectedBidOrders extends APIServlet.APIRequestHandler {
             if (transaction.getType() != TransactionType.ColoredCoins.BID_ORDER_PLACEMENT) {
                 return false;
             }
-            Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement) transaction.getAttachment();
+            Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

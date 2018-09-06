@@ -139,7 +139,7 @@ public final class AccountRestrictions {
 
         private void checkTransaction(Transaction transaction) throws AccountControlException {
             if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
-                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double) maxFees) / Constants.ONE_APL, Constants.COIN_SYMBOL));
+                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL, Constants.COIN_SYMBOL));
             }
             if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
                 return;
@@ -225,9 +225,9 @@ public final class AccountRestrictions {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         return
                 senderAccount.getControls().contains(ControlType.PHASING_ONLY)
-                        && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
-                        && transaction.getType() != SET_PHASING_ONLY
-                        && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
+                && transaction.getType() != SET_PHASING_ONLY
+                && TransactionType.isDuplicate(SET_PHASING_ONLY,
                         Long.toUnsignedString(senderAccount.getId()), duplicates, true);
     }
 

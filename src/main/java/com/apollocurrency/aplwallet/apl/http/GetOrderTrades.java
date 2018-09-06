@@ -41,7 +41,7 @@ public final class GetOrderTrades extends APIServlet.APIRequestHandler {
     }
 
     private GetOrderTrades() {
-        super(new APITag[]{APITag.AE}, "askOrder", "bidOrder", "includeAssetInfo", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.AE}, "askOrder", "bidOrder", "includeAssetInfo", "firstIndex", "lastIndex");
     }
 
     @Override

@@ -41,8 +41,7 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
         return GetTransactionsHolder.INSTANCE;
     }
 
-    private GetTransactions() {
-    }
+    private GetTransactions() {}
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
@@ -51,14 +50,14 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
         }
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();
-        JSONArray transactionIds = (JSONArray) request.get("transactionIds");
+        JSONArray transactionIds = (JSONArray)request.get("transactionIds");
         Blockchain blockchain = Apl.getBlockchain();
         //
         // Return the transactions to the caller
         //
         if (transactionIds != null) {
             transactionIds.forEach(transactionId -> {
-                long id = Long.parseUnsignedLong((String) transactionId);
+                long id = Long.parseUnsignedLong((String)transactionId);
                 Transaction transaction = blockchain.getTransaction(id);
                 if (transaction != null) {
                     transaction.getAppendages(true);

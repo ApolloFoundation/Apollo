@@ -36,6 +36,5 @@ final class Errors {
     final static String CONNECTION_TIMEOUT = "Connection timed out";
     final static String UPDATING = "Peer is updating now.";
 
-    private Errors() {
-    } // never
+    private Errors() {} // never
 }

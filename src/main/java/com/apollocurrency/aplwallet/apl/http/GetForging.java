@@ -45,7 +45,7 @@ public final class GetForging extends APIServlet.APIRequestHandler {
     }
 
     private GetForging() {
-        super(new APITag[]{APITag.FORGING}, "secretPhrase", "adminPassword");
+        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword");
     }
 
     @Override

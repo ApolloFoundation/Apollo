@@ -48,7 +48,7 @@ public final class SetAlias extends CreateTransaction {
     }
 
     private SetAlias() {
-        super(new APITag[]{APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
+        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
     }
 
     @Override

@@ -37,7 +37,7 @@ public final class RebroadcastUnconfirmedTransactions extends APIServlet.APIRequ
     }
 
     private RebroadcastUnconfirmedTransactions() {
-        super(new APITag[]{APITag.DEBUG});
+        super(new APITag[] {APITag.DEBUG});
     }
 
     @Override

@@ -38,7 +38,7 @@ public final class GetPhasingPolls extends APIServlet.APIRequestHandler {
     }
 
     private GetPhasingPolls() {
-        super(new APITag[]{APITag.PHASING}, "transaction", "transaction", "transaction", "countVotes"); // limit to 3 for testing
+        super(new APITag[] {APITag.PHASING}, "transaction", "transaction", "transaction", "countVotes"); // limit to 3 for testing
     }
 
     @Override

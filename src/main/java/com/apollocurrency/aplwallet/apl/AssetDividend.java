@@ -38,7 +38,7 @@ public final class AssetDividend {
         ASSET_DIVIDEND
     }
 
-    private static final Listeners<AssetDividend, Event> listeners = new Listeners<>();
+    private static final Listeners<AssetDividend,Event> listeners = new Listeners<>();
 
     private static final DbKey.LongKeyFactory<AssetDividend> dividendDbKeyFactory = new DbKey.LongKeyFactory<AssetDividend>("id") {
 
@@ -101,8 +101,7 @@ public final class AssetDividend {
         return assetDividend;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long id;

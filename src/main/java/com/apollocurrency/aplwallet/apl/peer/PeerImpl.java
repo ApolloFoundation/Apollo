@@ -73,8 +73,7 @@ final class PeerImpl implements Peer {
         this.announcedAddress = announcedAddress;
         try {
             this.port = new URI("http://" + announcedAddress).getPort();
-        } catch (URISyntaxException ignore) {
-        }
+        } catch (URISyntaxException ignore) {}
         this.state = State.NON_CONNECTED;
         this.shareAddress = true;
         this.webSocket = new PeerWebSocket();
@@ -197,7 +196,7 @@ final class PeerImpl implements Peer {
     void setApiPort(Object apiPortValue) {
         if (apiPortValue != null) {
             try {
-                apiPort = ((Long) apiPortValue).intValue();
+                apiPort = ((Long)apiPortValue).intValue();
             } catch (RuntimeException e) {
                 throw new IllegalArgumentException("Invalid peer apiPort " + apiPortValue);
             }
@@ -211,7 +210,7 @@ final class PeerImpl implements Peer {
     void setApiSSLPort(Object apiSSLPortValue) {
         if (apiSSLPortValue != null) {
             try {
-                apiSSLPort = ((Long) apiSSLPortValue).intValue();
+                apiSSLPort = ((Long)apiSSLPortValue).intValue();
             } catch (RuntimeException e) {
                 throw new IllegalArgumentException("Invalid peer apiSSLPort " + apiSSLPortValue);
             }
@@ -247,7 +246,7 @@ final class PeerImpl implements Peer {
 
     void setBlockchainState(Object blockchainStateObj) {
         if (blockchainStateObj instanceof Integer) {
-            int blockchainStateInt = (int) blockchainStateObj;
+            int blockchainStateInt = (int)blockchainStateObj;
             if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
                 this.blockchainState = BlockchainState.values()[blockchainStateInt];
             }
@@ -305,7 +304,7 @@ final class PeerImpl implements Peer {
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = Apl.getBlockchain().getHeight();
         }
-        return (int) (adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / Constants.MAX_BALANCE_APL);
+        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / Constants.MAX_BALANCE_APL);
     }
 
     @Override
@@ -325,7 +324,7 @@ final class PeerImpl implements Peer {
         if (cause instanceof ParseException && Errors.END_OF_FILE.equals(cause.toString())) {
             return;
         }
-        if (!isBlacklisted()) {
+        if (! isBlacklisted()) {
             if (cause instanceof IOException || cause instanceof ParseException || cause instanceof IllegalArgumentException) {
                 Logger.logDebugMessage("Blacklisting " + host + " because of: " + cause.toString());
             } else {
@@ -346,7 +345,7 @@ final class PeerImpl implements Peer {
 
     @Override
     public void unBlacklist() {
-        if (blacklistingTime == 0) {
+        if (blacklistingTime == 0 ) {
             return;
         }
         Logger.logDebugMessage("Unblacklisting " + host);
@@ -411,7 +410,7 @@ final class PeerImpl implements Peer {
     @Override
     public boolean isInboundWebSocket() {
         PeerWebSocket s;
-        return ((s = inboundSocket) != null && s.isOpen());
+        return ((s=inboundSocket) != null && s.isOpen());
     }
 
     @Override
@@ -469,7 +468,7 @@ final class PeerImpl implements Peer {
                     }
                     if (wsResponse.length() > maxResponseSize)
                         throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
-                    response = (JSONObject) JSONValue.parseWithException(wsResponse);
+                    response = (JSONObject)JSONValue.parseWithException(wsResponse);
                     updateDownloadedVolume(wsResponse.length());
                 }
             } else {
@@ -508,7 +507,7 @@ final class PeerImpl implements Peer {
                             String responseValue = byteArrayOutputStream.toString("UTF-8");
                             if (responseValue.length() > 0 && responseStream instanceof GZIPInputStream)
                                 log += String.format("[length: %d, compression ratio: %.2f]",
-                                        cis.getCount(), (double) cis.getCount() / (double) responseValue.length());
+                                              cis.getCount(), (double)cis.getCount()/(double) responseValue.length());
                             log += " >>> " + responseValue;
                             showLog = true;
                             response = (JSONObject) JSONValue.parseWithException(responseValue);
@@ -519,7 +518,7 @@ final class PeerImpl implements Peer {
                                 responseStream = new GZIPInputStream(responseStream);
                             try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
                                 CountingInputReader cir = new CountingInputReader(reader, maxResponseSize);
-                                response = (JSONObject) JSONValue.parseWithException(cir);
+                                response = (JSONObject)JSONValue.parseWithException(cir);
                                 updateDownloadedVolume(cir.getCount());
                             }
                         }
@@ -556,11 +555,11 @@ final class PeerImpl implements Peer {
             if (connection != null) {
                 connection.disconnect();
             }
-        } catch (RuntimeException | ParseException | IOException e) {
+        } catch (RuntimeException|ParseException|IOException e) {
             if (!(e instanceof UnknownHostException || e instanceof SocketTimeoutException ||
-                    e instanceof SocketException || Errors.END_OF_FILE.equals(e.getMessage()))) {
+                                        e instanceof SocketException || Errors.END_OF_FILE.equals(e.getMessage()))) {
                 Logger.logDebugMessage(String.format("Error sending request to peer %s: %s",
-                        host, e.getMessage() != null ? e.getMessage() : e.toString()));
+                                       host, e.getMessage()!=null ? e.getMessage() : e.toString()));
             }
             if ((communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
                 log += " >>> " + e.toString();
@@ -616,10 +615,10 @@ final class PeerImpl implements Peer {
                     setState(State.NON_CONNECTED);
                     return;
                 }
-                String servicesString = (String) response.get("services");
+                String servicesString = (String)response.get("services");
                 long origServices = services;
                 services = (servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-                setApplication((String) response.get("application"));
+                setApplication((String)response.get("application"));
                 setApiPort(response.get("apiPort"));
                 setApiSSLPort(response.get("apiSSLPort"));
                 setDisabledAPIs(response.get("disabledAPIs"));
@@ -670,7 +669,7 @@ final class PeerImpl implements Peer {
                         return;
                     }
                 }
-
+                
                 if (!isOldVersion) {
                     setState(State.CONNECTED);
                     if (services != origServices) {
@@ -706,7 +705,7 @@ final class PeerImpl implements Peer {
                 }
             }
             Logger.logDebugMessage("Announced address " + newAnnouncedAddress + " does not resolve to " + host);
-        } catch (UnknownHostException | URISyntaxException e) {
+        } catch (UnknownHostException|URISyntaxException e) {
             Logger.logDebugMessage(e.toString());
             blacklist(e);
         }
@@ -791,7 +790,7 @@ final class PeerImpl implements Peer {
     }
 
     private int getHallmarkWeight(int date) {
-        if (hallmark == null || !hallmark.isValid() || hallmark.getDate() != date) {
+        if (hallmark == null || ! hallmark.isValid() || hallmark.getDate() != date) {
             return 0;
         }
         return hallmark.getWeight();

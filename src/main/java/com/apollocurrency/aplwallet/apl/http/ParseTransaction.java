@@ -40,7 +40,7 @@ public final class ParseTransaction extends APIServlet.APIRequestHandler {
     }
 
     private ParseTransaction() {
-        super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
     @Override
@@ -54,7 +54,7 @@ public final class ParseTransaction extends APIServlet.APIRequestHandler {
         JSONObject response = JSONData.unconfirmedTransaction(transaction);
         try {
             transaction.validate();
-        } catch (AplException.ValidationException | RuntimeException e) {
+        } catch (AplException.ValidationException|RuntimeException e) {
             Logger.logDebugMessage(e.getMessage(), e);
             response.put("validate", false);
             JSONData.putException(response, e, "Invalid transaction");

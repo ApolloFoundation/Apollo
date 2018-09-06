@@ -40,7 +40,7 @@ public final class ShufflingVerify extends CreateTransaction {
     }
 
     private ShufflingVerify() {
-        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "shufflingStateHash");
+        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "shufflingStateHash");
     }
 
     @Override

@@ -82,9 +82,7 @@ public class UpdaterUtil {
                 })
                 .collect(Collectors.toSet());
     }
-
-    private UpdaterUtil() {
-    }
+    private UpdaterUtil(){}
 
     static class CertificatePair {
         private Certificate firstCertificate;

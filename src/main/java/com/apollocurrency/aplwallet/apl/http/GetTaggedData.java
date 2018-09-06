@@ -41,7 +41,7 @@ public final class GetTaggedData extends APIServlet.APIRequestHandler {
     }
 
     private GetTaggedData() {
-        super(new APITag[]{APITag.DATA}, "transaction", "includeData", "retrieve");
+        super(new APITag[] {APITag.DATA}, "transaction", "includeData", "retrieve");
     }
 
     @Override

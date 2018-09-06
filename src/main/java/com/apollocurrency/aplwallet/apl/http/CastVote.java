@@ -58,7 +58,6 @@ public final class CastVote extends CreateTransaction {
         int numberOfOptions = poll.getOptions().length;
         byte[] vote = new byte[numberOfOptions];
         try {
-        
             for (int i = 0; i < numberOfOptions; i++) {
                 String voteValue = Convert.emptyToNull(req.getParameter("vote" + (i < 10 ? "0" + i : i)));
                 if (voteValue != null) {

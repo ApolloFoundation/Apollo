@@ -98,7 +98,7 @@ public final class CurrencyMint {
 
     };
 
-    private static final Listeners<Mint, Event> listeners = new Listeners<>();
+    private static final Listeners<Mint,Event> listeners = new Listeners<>();
 
     public static boolean addListener(Listener<Mint> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -109,8 +109,7 @@ public final class CurrencyMint {
     }
 
 
-    static void init() {
-    }
+    static void init() {}
 
     private final DbKey dbKey;
     private final long currencyId;

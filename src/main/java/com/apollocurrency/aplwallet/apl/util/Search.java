@@ -78,7 +78,6 @@ public final class Search {
         return ips.stream().anyMatch(ip -> !IP_PATTERN.matcher(ip).matches());
     }
 
-    private Search() {
-    }
+    private Search() {}
 
 }

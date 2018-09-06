@@ -43,7 +43,7 @@ public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandl
     }
 
     private GetUnconfirmedTransactions() {
-        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandl
 
         JSONArray transactions = new JSONArray();
         if (accountIds.isEmpty()) {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
+            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                     transaction -> transaction.getType() != TransactionType.Payment.PRIVATE,
                     firstIndex, lastIndex)) {
@@ -65,7 +65,7 @@ public final class GetUnconfirmedTransactions extends APIServlet.APIRequestHandl
                 }
             }
         } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
+            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     Apl.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                     transaction -> transaction.getType() != TransactionType.Payment.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
                             accountIds.contains(transaction.getRecipientId())),

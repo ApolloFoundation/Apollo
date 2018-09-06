@@ -95,12 +95,12 @@ public final class CurrencyMinting {
         if (min < 1 || max > 255) {
             throw new IllegalArgumentException(String.format("Min: %d, Max: %d, allowed range is 1 to 255", min, max));
         }
-        int exp = (int) (256 - min - ((max - min) * currentMintableSupply) / totalMintableSupply);
+        int exp = (int)(256 - min - ((max - min) * currentMintableSupply) / totalMintableSupply);
         return BigInteger.valueOf(2).pow(exp).subtract(BigInteger.ONE).divide(BigInteger.valueOf(units));
     }
 
     private static byte[] reverse(byte[] b) {
-        for (int i = 0; i < b.length / 2; i++) {
+        for(int i=0; i < b.length/2; i++) {
             byte temp = b[i];
             b[i] = b[b.length - i - 1];
             b[b.length - i - 1] = temp;
@@ -109,15 +109,14 @@ public final class CurrencyMinting {
     }
 
     private static byte[] reverseXor(byte[] b) {
-        for (int i = 0; i < b.length / 2; i++) {
-            b[i] ^= b[b.length - i - 1];
-            b[b.length - i - 1] ^= b[i];
-            b[i] ^= b[b.length - i - 1];
+        for(int i=0; i < b.length/2; i++) {
+            b[i]^=b[b.length-i-1];
+            b[b.length-i-1]^=b[i];
+            b[i]^=b[b.length-i-1];
         }
         return b;
     }
 
-    private CurrencyMinting() {
-    } // never
+    private CurrencyMinting() {} // never
 
 }

@@ -40,7 +40,7 @@ public final class GetDataTags extends APIServlet.APIRequestHandler {
     }
 
     private GetDataTags() {
-        super(new APITag[]{APITag.DATA}, "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.DATA}, "firstIndex", "lastIndex");
     }
 
     @Override

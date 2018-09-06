@@ -38,7 +38,7 @@ public final class StopForging extends APIServlet.APIRequestHandler {
     }
 
     private StopForging() {
-        super(new APITag[]{APITag.FORGING}, "secretPhrase", "adminPassword");
+        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword");
     }
 
     @Override

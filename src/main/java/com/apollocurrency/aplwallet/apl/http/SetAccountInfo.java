@@ -43,7 +43,7 @@ public final class SetAccountInfo extends CreateTransaction {
     }
 
     private SetAccountInfo() {
-        super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
     }
 
     @Override

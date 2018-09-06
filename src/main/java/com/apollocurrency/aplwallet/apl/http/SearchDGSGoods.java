@@ -48,7 +48,7 @@ public final class SearchDGSGoods extends APIServlet.APIRequestHandler {
     }
 
     private SearchDGSGoods() {
-        super(new APITag[]{APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
+        super(new APITag[] {APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
     }
 
     @Override
@@ -65,7 +65,7 @@ public final class SearchDGSGoods extends APIServlet.APIRequestHandler {
         JSONArray goodsJSON = new JSONArray();
         response.put("goods", goodsJSON);
 
-        Filter<DigitalGoodsStore.Goods> filter = hideDelisted ? goods -> !goods.isDelisted() : goods -> true;
+        Filter<DigitalGoodsStore.Goods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
 
         FilteringIterator<DigitalGoodsStore.Goods> iterator = null;
         try {

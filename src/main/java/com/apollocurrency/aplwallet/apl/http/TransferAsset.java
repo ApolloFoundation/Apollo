@@ -41,7 +41,7 @@ public final class TransferAsset extends CreateTransaction {
     }
 
     private TransferAsset() {
-        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
     }
 
     @Override

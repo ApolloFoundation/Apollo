@@ -41,7 +41,7 @@ public final class SearchTaggedData extends APIServlet.APIRequestHandler {
     }
 
     private SearchTaggedData() {
-        super(new APITag[]{APITag.DATA, APITag.SEARCH}, "query", "tag", "channel", "account", "firstIndex", "lastIndex", "includeData");
+        super(new APITag[] {APITag.DATA, APITag.SEARCH}, "query", "tag", "channel", "account", "firstIndex", "lastIndex", "includeData");
     }
 
     @Override

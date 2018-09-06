@@ -50,9 +50,7 @@ import java.util.Iterator;
  */
 public final class GetLog extends APIServlet.APIRequestHandler {
 
-    /**
-     * GetLog instance
-     */
+    /** GetLog instance */
     private static class GetLogHolder {
         private static final GetLog INSTANCE = new GetLog();
     }
@@ -65,14 +63,14 @@ public final class GetLog extends APIServlet.APIRequestHandler {
      * Create the GetLog instance
      */
     private GetLog() {
-        super(new APITag[]{APITag.DEBUG}, "count");
+        super(new APITag[] {APITag.DEBUG}, "count");
     }
 
     /**
      * Process the GetLog API request
      *
-     * @param req API request
-     * @return API response
+     * @param   req                 API request
+     * @return                      API response
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
@@ -110,7 +108,7 @@ public final class GetLog extends APIServlet.APIRequestHandler {
     /**
      * Require the administrator password
      *
-     * @return TRUE if the admin password is required
+     * @return                      TRUE if the admin password is required
      */
     @Override
     protected boolean requirePassword() {

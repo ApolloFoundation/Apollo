@@ -41,7 +41,7 @@ public final class GetDGSTagsLike extends APIServlet.APIRequestHandler {
     }
 
     private GetDGSTagsLike() {
-        super(new APITag[]{APITag.DGS, APITag.SEARCH}, "tagPrefix", "inStockOnly", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.DGS, APITag.SEARCH}, "tagPrefix", "inStockOnly", "firstIndex", "lastIndex");
     }
 
     @Override

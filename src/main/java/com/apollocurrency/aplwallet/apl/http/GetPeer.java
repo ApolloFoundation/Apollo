@@ -40,7 +40,7 @@ public final class GetPeer extends APIServlet.APIRequestHandler {
     }
 
     private GetPeer() {
-        super(new APITag[]{APITag.NETWORK}, "peer");
+        super(new APITag[] {APITag.NETWORK}, "peer");
     }
 
     @Override

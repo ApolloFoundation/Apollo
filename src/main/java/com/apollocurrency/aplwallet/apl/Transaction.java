@@ -32,9 +32,7 @@ public interface Transaction {
 
         Builder recipientId(long recipientId);
 
-        default Builder recipientRs(String recipientRS) {
-            return recipientId(Convert.parseAccountId(recipientRS));
-        }
+        default Builder recipientRs(String recipientRS) {return recipientId(Convert.parseAccountId(recipientRS));}
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 

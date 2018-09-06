@@ -32,32 +32,24 @@ import java.util.Map;
  */
 public class UPnP {
 
-    /**
-     * Initialization done
-     */
+    /** Initialization done */
     private static boolean initDone = false;
 
     private static boolean isShutdown = false;
 
-    /**
-     * UPnP gateway device
-     */
+    /** UPnP gateway device */
     private static GatewayDevice gateway = null;
 
-    /**
-     * Local address
-     */
+    /** Local address */
     private static InetAddress localAddress;
 
-    /**
-     * External address
-     */
+    /** External address */
     private static InetAddress externalAddress;
 
     /**
      * Add a port to the UPnP mapping
      *
-     * @param port Port to add
+     * @param   port                Port to add
      */
     public static synchronized void addPort(int port) {
         if (!initDone)
@@ -72,7 +64,7 @@ public class UPnP {
         //
         try {
             if (gateway.addPortMapping(port, port, localAddress.getHostAddress(), "TCP",
-                    Apl.APPLICATION + " " + Apl.VERSION)) {
+                                       Apl.APPLICATION + " " + Apl.VERSION)) {
                 Logger.logDebugMessage("Mapped port [" + externalAddress.getHostAddress() + "]:" + port);
             } else {
                 Logger.logDebugMessage("Unable to map port " + port);
@@ -85,7 +77,7 @@ public class UPnP {
     /**
      * Delete a port from the UPnP mapping
      *
-     * @param port Port to delete
+     * @param   port                Port to delete
      */
     public static synchronized void deletePort(int port) {
         if (!initDone || gateway == null)
@@ -107,7 +99,7 @@ public class UPnP {
     /**
      * Return the local address
      *
-     * @return Local address or null if the address is not available
+     * @return                      Local address or null if the address is not available
      */
     public static synchronized InetAddress getLocalAddress() {
         if (!initDone)
@@ -118,7 +110,7 @@ public class UPnP {
     /**
      * Return the external address
      *
-     * @return External address or null if the address is not available
+     * @return                      External address or null if the address is not available
      */
     public static synchronized InetAddress getExternalAddress() {
         if (!initDone)

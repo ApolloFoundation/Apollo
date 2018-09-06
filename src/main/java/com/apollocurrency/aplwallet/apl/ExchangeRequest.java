@@ -89,8 +89,7 @@ public final class ExchangeRequest {
         exchangeRequestTable.insert(exchangeRequest);
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long id;

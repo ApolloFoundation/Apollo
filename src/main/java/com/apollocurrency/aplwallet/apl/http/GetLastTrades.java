@@ -39,7 +39,7 @@ public final class GetLastTrades extends APIServlet.APIRequestHandler {
     }
 
     private GetLastTrades() {
-        super(new APITag[]{APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing
+        super(new APITag[] {APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing
     }
 
     @Override

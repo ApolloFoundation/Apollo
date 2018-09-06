@@ -40,7 +40,7 @@ public final class GetDGSTags extends APIServlet.APIRequestHandler {
     }
 
     private GetDGSTags() {
-        super(new APITag[]{APITag.DGS}, "inStockOnly", "firstIndex", "lastIndex");
+        super(new APITag[] {APITag.DGS}, "inStockOnly", "firstIndex", "lastIndex");
     }
 
     @Override

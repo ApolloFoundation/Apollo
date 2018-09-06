@@ -41,7 +41,6 @@ public abstract class Order {
     private final short transactionIndex;
     private final int transactionHeight;
     private long quantityATU;
-
     private Order(Transaction transaction, Attachment.ColoredCoinsOrderPlacement attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
@@ -66,8 +65,8 @@ public abstract class Order {
 
     private static void matchOrders(long assetId) {
 
-        Ask askOrder;
-        Bid bidOrder;
+        Order.Ask askOrder;
+        Order.Bid bidOrder;
 
         while ((askOrder = Ask.getNextOrder(assetId)) != null
                 && (bidOrder = Bid.getNextOrder(assetId)) != null) {
@@ -268,7 +267,8 @@ public abstract class Order {
                 try (DbIterator<Ask> askOrders = askOrderTable.getManyBy(con, pstmt, true)) {
                     return askOrders.hasNext() ? askOrders.next() : null;
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -283,8 +283,7 @@ public abstract class Order {
             askOrderTable.delete(getAskOrder(orderId));
         }
 
-        static void init() {
-        }
+        static void init() {}
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);
@@ -389,7 +388,8 @@ public abstract class Order {
                 try (DbIterator<Bid> bidOrders = bidOrderTable.getManyBy(con, pstmt, true)) {
                     return bidOrders.hasNext() ? bidOrders.next() : null;
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -404,8 +404,7 @@ public abstract class Order {
             bidOrderTable.delete(getBidOrder(orderId));
         }
 
-        static void init() {
-        }
+        static void init() {}
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);

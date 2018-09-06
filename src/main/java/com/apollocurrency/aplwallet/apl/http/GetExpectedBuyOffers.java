@@ -45,12 +45,12 @@ public final class GetExpectedBuyOffers extends APIServlet.APIRequestHandler {
     }
 
     private GetExpectedBuyOffers() {
-        super(new APITag[]{APITag.MS}, "currency", "account", "sortByRate");
+        super(new APITag[] {APITag.MS}, "currency", "account", "sortByRate");
     }
 
     private final Comparator<Transaction> rateComparator = (o1, o2) -> {
-        Attachment.MonetarySystemPublishExchangeOffer a1 = (Attachment.MonetarySystemPublishExchangeOffer) o1.getAttachment();
-        Attachment.MonetarySystemPublishExchangeOffer a2 = (Attachment.MonetarySystemPublishExchangeOffer) o2.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer a1 = (Attachment.MonetarySystemPublishExchangeOffer)o1.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer a2 = (Attachment.MonetarySystemPublishExchangeOffer)o2.getAttachment();
         return Long.compare(a2.getBuyRateATM(), a1.getBuyRateATM());
     };
 
@@ -68,7 +68,7 @@ public final class GetExpectedBuyOffers extends APIServlet.APIRequestHandler {
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

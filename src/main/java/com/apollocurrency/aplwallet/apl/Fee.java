@@ -24,9 +24,9 @@ public interface Fee {
 
     long getFee(TransactionImpl transaction, Appendix appendage);
 
-    Fee DEFAULT_FEE = new ConstantFee(Constants.ONE_APL);
+    Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_APL);
 
-    Fee NONE = new ConstantFee();
+    Fee NONE = new Fee.ConstantFee();
 
     final class ConstantFee implements Fee {
 

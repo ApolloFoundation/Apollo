@@ -40,14 +40,13 @@ final class GetUnconfirmedTransactions extends PeerServlet.PeerRequestHandler {
         return GetUnconfirmedTransactionsHolder.INSTANCE;
     }
 
-    private GetUnconfirmedTransactions() {
-    }
+    private GetUnconfirmedTransactions() {}
 
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
-        List<String> exclude = (List<String>) request.get("exclude");
+        List<String> exclude = (List<String>)request.get("exclude");
         if (exclude == null) {
             return JSON.emptyJSON;
         }

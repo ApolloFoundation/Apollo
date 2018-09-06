@@ -42,15 +42,14 @@ public final class Genesis {
     private static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
     public static final long EPOCH_BEGINNING;
-
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("data/genesisParameters.json")) {
-            JSONObject genesisParameters = (JSONObject) JSONValue.parseWithException(new InputStreamReader(is));
-            CREATOR_PUBLIC_KEY = Convert.parseHexString((String) genesisParameters.get("genesisPublicKey"));
+            JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
+            CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
             CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
             EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
-        } catch (IOException | ParseException | java.text.ParseException e) {
+        } catch (IOException|ParseException|java.text.ParseException e) {
             throw new RuntimeException("Failed to load genesis parameters", e);
         }
     }
@@ -62,10 +61,10 @@ public final class Genesis {
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream("data/genesisAccounts" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
-        } catch (IOException | ParseException e) {
+        } catch (IOException|ParseException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
-        digest.update((byte) (Constants.isTestnet ? 1 : 0));
+        digest.update((byte)(Constants.isTestnet ? 1 : 0));
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         return digest.digest();
     }
@@ -116,7 +115,6 @@ public final class Genesis {
         genesisAccountsJSON = null;
     }
 
-    private Genesis() {
-    } // never
+    private Genesis() {} // never
 
 }

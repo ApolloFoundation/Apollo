@@ -40,10 +40,10 @@ import java.util.Arrays;
 public final class ShufflingParticipant {
 
     public enum State {
-        REGISTERED((byte) 0, new byte[]{1}),
-        PROCESSED((byte) 1, new byte[]{2, 3}),
-        VERIFIED((byte) 2, new byte[]{3}),
-        CANCELLED((byte) 3, new byte[]{});
+        REGISTERED((byte)0, new byte[]{1}),
+        PROCESSED((byte)1, new byte[]{2,3}),
+        VERIFIED((byte)2, new byte[]{3}),
+        CANCELLED((byte)3, new byte[]{});
 
         private final byte code;
         private final byte[] allowedNext;
@@ -197,8 +197,7 @@ public final class ShufflingParticipant {
                 new DbClause.ByteClause("state", State.VERIFIED.getCode())));
     }
 
-    static void init() {
-    }
+    static void init() {}
 
     private final long shufflingId;
     private final long accountId; // sender account

@@ -63,8 +63,7 @@ public abstract class MonetarySystem extends TransactionType {
         }
     }
 
-    private MonetarySystem() {
-    }
+    private MonetarySystem() {}
 
     @Override
     public final byte getType() {
@@ -78,7 +77,7 @@ public abstract class MonetarySystem extends TransactionType {
         String nameLower = currency.getName().toLowerCase();
         String codeLower = currency.getCode().toLowerCase();
         boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, false);
-        if (!nameLower.equals(codeLower)) {
+        if (! nameLower.equals(codeLower)) {
             isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, false);
         }
         return isDuplicate;
@@ -147,7 +146,7 @@ public abstract class MonetarySystem extends TransactionType {
         @Override
         long[] getBackFees(Transaction transaction) {
             long feeATM = transaction.getFeeATM();
-            return new long[]{feeATM * 3 / 10, feeATM * 2 / 10, feeATM / 10};
+            return new long[] {feeATM * 3 / 10, feeATM * 2 / 10, feeATM / 10};
         }
 
         @Override
@@ -166,7 +165,7 @@ public abstract class MonetarySystem extends TransactionType {
             String nameLower = attachment.getName().toLowerCase();
             String codeLower = attachment.getCode().toLowerCase();
             boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, true);
-            if (!nameLower.equals(codeLower)) {
+            if (! nameLower.equals(codeLower)) {
                 isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, true);
             }
             return isDuplicate;
@@ -416,7 +415,7 @@ public abstract class MonetarySystem extends TransactionType {
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (!currency.isActive()) {
+            if (! currency.isActive()) {
                 throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
             }
         }
@@ -515,7 +514,7 @@ public abstract class MonetarySystem extends TransactionType {
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (!currency.isActive()) {
+            if (! currency.isActive()) {
                 throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
             }
         }
@@ -569,7 +568,7 @@ public abstract class MonetarySystem extends TransactionType {
             }
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
-            if (!currency.isActive()) {
+            if (! currency.isActive()) {
                 throw new AplException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
             }
         }
@@ -816,7 +815,7 @@ public abstract class MonetarySystem extends TransactionType {
             String nameLower = currency.getName().toLowerCase();
             String codeLower = currency.getCode().toLowerCase();
             boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, true);
-            if (!nameLower.equals(codeLower)) {
+            if (! nameLower.equals(codeLower)) {
                 isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, true);
             }
             return isDuplicate;

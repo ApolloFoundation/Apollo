@@ -67,7 +67,7 @@ public interface Time {
         }
 
         public int getTime() {
-            return time + (int) ((System.currentTimeMillis() - systemStartTime) / (1000 / multiplier));
+            return time + (int)((System.currentTimeMillis() - systemStartTime) / (1000 / multiplier));
         }
 
     }

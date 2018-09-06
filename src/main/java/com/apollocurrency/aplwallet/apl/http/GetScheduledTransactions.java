@@ -40,7 +40,7 @@ public final class GetScheduledTransactions extends APIServlet.APIRequestHandler
     }
 
     private GetScheduledTransactions() {
-        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
+        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
     }
 
     @Override

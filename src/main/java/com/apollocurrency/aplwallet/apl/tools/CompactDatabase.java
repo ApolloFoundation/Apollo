@@ -34,7 +34,7 @@ import java.sql.Statement;
 /**
  * Compact and reorganize the NRS database.  The NRS application must not be
  * running.
- * <p>
+ *
  * To run the database compact tool on Linux or Mac:
  *
  *   java -cp "classes:lib/*:conf" com.apollocurrency.aplwallet.apl.tools.CompactDatabase
@@ -48,7 +48,7 @@ public class CompactDatabase {
     /**
      * Compact the NRS database
      *
-     * @param args Command line arguments
+     * @param   args                Command line arguments
      */
     public static void main(String[] args) {
         //
@@ -98,7 +98,7 @@ public class CompactDatabase {
         //
         int pos = dbUrl.indexOf(':');
         if (pos >= 0) {
-            pos = dbUrl.indexOf(':', pos + 1);
+            pos = dbUrl.indexOf(':', pos+1);
         }
         if (pos < 0) {
             Logger.logErrorMessage("Malformed database URL: " + dbUrl);
@@ -171,7 +171,7 @@ public class CompactDatabase {
             Logger.logInfoMessage("Creating the new database");
             if (!dbFile.renameTo(oldFile)) {
                 throw new IOException(String.format("Unable to rename '%s' to '%s'",
-                        dbFile.getPath(), oldFile.getPath()));
+                                                    dbFile.getPath(), oldFile.getPath()));
             }
             phase = 1;
             try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
@@ -218,7 +218,7 @@ public class CompactDatabase {
                     }
                     if (!oldFile.renameTo(dbFile)) {
                         Logger.logErrorMessage(String.format("Unable to rename '%s' to '%s'",
-                                oldFile.getPath(), dbFile.getPath()));
+                                                             oldFile.getPath(), dbFile.getPath()));
                     }
                     break;
                 case 2:
@@ -240,7 +240,8 @@ public class CompactDatabase {
     public static Connection getConnection(String url, String user, String password) {
         try {
             return DriverManager.getConnection(url, user, password);
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             Logger.logErrorMessage("Unable to connect to database", e);
         }
         return null;

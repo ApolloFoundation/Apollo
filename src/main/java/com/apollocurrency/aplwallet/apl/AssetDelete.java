@@ -38,7 +38,7 @@ public final class AssetDelete {
         ASSET_DELETE
     }
 
-    private static final Listeners<AssetDelete, Event> listeners = new Listeners<>();
+    private static final Listeners<AssetDelete,Event> listeners = new Listeners<>();
 
     private static final DbKey.LongKeyFactory<AssetDelete> deleteDbKeyFactory = new DbKey.LongKeyFactory<AssetDelete>("id") {
 
@@ -100,8 +100,7 @@ public final class AssetDelete {
         return assetDelete;
     }
 
-    static void init() {
-    }
+    static void init() {}
 
 
     private final long id;
@@ -151,17 +150,13 @@ public final class AssetDelete {
         return id;
     }
 
-    public long getAssetId() {
-        return assetId;
-    }
+    public long getAssetId() { return assetId; }
 
     public long getAccountId() {
         return accountId;
     }
 
-    public long getQuantityATU() {
-        return quantityATU;
-    }
+    public long getQuantityATU() { return quantityATU; }
 
     public int getTimestamp() {
         return timestamp;

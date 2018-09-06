@@ -171,7 +171,7 @@ public final class Shuffler {
     private static Shuffler getRecipientShuffler(long recipientId) {
         BlockchainImpl.getInstance().readLock();
         try {
-            for (Map<Long, Shuffler> shufflerMap : shufflingsMap.values()) {
+            for (Map<Long,Shuffler> shufflerMap : shufflingsMap.values()) {
                 for (Shuffler shuffler : shufflerMap.values()) {
                     if (Account.getId(shuffler.recipientPublicKey) == recipientId) {
                         return shuffler;
@@ -489,7 +489,7 @@ public final class Shuffler {
             if (!attachment.getClass().equals(shufflingAttachment.getClass())) {
                 continue;
             }
-            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((Attachment.ShufflingAttachment) attachment).getShufflingStateHash())) {
+            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((Attachment.ShufflingAttachment)attachment).getShufflingStateHash())) {
                 return true;
             }
         }

@@ -38,7 +38,7 @@ public final class SendMessage extends CreateTransaction {
     }
 
     private SendMessage() {
-        super(new APITag[]{APITag.MESSAGES, APITag.CREATE_TRANSACTION}, "recipient");
+        super(new APITag[] {APITag.MESSAGES, APITag.CREATE_TRANSACTION}, "recipient");
     }
 
     @Override

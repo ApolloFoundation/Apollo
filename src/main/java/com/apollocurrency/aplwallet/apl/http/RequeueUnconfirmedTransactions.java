@@ -37,7 +37,7 @@ public final class RequeueUnconfirmedTransactions extends APIServlet.APIRequestH
     }
 
     private RequeueUnconfirmedTransactions() {
-        super(new APITag[]{APITag.DEBUG});
+        super(new APITag[] {APITag.DEBUG});
     }
 
     @Override
