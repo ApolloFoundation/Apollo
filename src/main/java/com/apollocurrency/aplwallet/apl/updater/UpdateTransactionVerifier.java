@@ -6,9 +6,6 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.Transaction;
 
-public interface SecurityAlertSender {
-
-    void send(Transaction invalidUpdateTransaction);
-
-    void send(String message);
+public interface UpdateTransactionVerifier {
+    UpdateData process(Transaction transaction);
 }

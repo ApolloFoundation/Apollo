@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -18,10 +20,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class UpdaterUtil {
-    static Set<CertificatePair> buildCertificatePairs(String certificateDirectory) throws IOException, CertificateException, URISyntaxException {
+    public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
+     String secondCertificatePrefix, String certificateSuffix) {
+        try {
+            return buildCertificatePairs(loadResourcePath(certificateDirectory), firstCertificatePrefix, secondCertificatePrefix, certificateSuffix);
+        }
+        catch (IOException | CertificateException | URISyntaxException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+    public static Set<CertificatePair> buildCertificatePairs(Path certificateDirectory, String firstCertificatePrefix,
+                                                             String secondCertificatePrefix, String certificateSuffix) throws IOException,
+            CertificateException {
         Set<CertificatePair> certificatePairs = new HashSet<>();
-        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(certificateDirectory, UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.CERTIFICATE_SUFFIX));
-        Set<Certificate> secondDecryptionCertificates = readCertificates(findFiles(certificateDirectory, UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX, UpdaterConstants.CERTIFICATE_SUFFIX));
+        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
+                secondCertificatePrefix, certificateSuffix));
+        Set<Certificate> secondDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
+                firstCertificatePrefix, certificateSuffix));
         for (Certificate firstCertificate : firstDecryptionCertificates) {
             for (Certificate secondCertificate : secondDecryptionCertificates) {
                 certificatePairs.add(new CertificatePair(firstCertificate, secondCertificate));
@@ -30,7 +45,7 @@ public class UpdaterUtil {
         return certificatePairs;
     }
 
-    static Set<Certificate> readCertificates(Set<Path> certificateFilesPaths) throws CertificateException, IOException, URISyntaxException {
+    public static Set<Certificate> readCertificates(Set<Path> certificateFilesPaths) throws CertificateException, IOException {
         Iterator<Path> iterator = certificateFilesPaths.iterator();
         Set<Certificate> certificates = new HashSet<>();
         while (iterator.hasNext()) {
@@ -40,51 +55,65 @@ public class UpdaterUtil {
         return certificates;
     }
 
-    static Certificate readCertificate(String certificateFileName) throws CertificateException, IOException, URISyntaxException {
+    public static Certificate readCertificate(String certificateFileName) throws CertificateException, IOException, URISyntaxException {
         Path certificateFilePath = loadResourcePath(certificateFileName);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificateFilePath));
     }
 
-    static Certificate readCertificate(Path certificatePath) throws CertificateException, IOException {
+    public static Certificate readCertificate(Path certificatePath) throws CertificateException, IOException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificatePath));
     }
-    static String getStringRepresentation(Certificate cert) {
+    public static String getStringRepresentation(Certificate cert) {
         return ((cert instanceof X509Certificate) ?
                 ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
     }
 
-    static Set<Certificate> readCertificates(String directory, String prefix, String suffix) throws CertificateException, IOException, URISyntaxException {
-        return readCertificates(findFiles(directory, prefix, suffix));
+    public static Set<Certificate> readCertificates(String directory, String prefix, String suffix) {
+        return readCertificates(directory, suffix, prefix);
     }
 
-    static Set<Certificate> readCertificates(String directory, String suffix, String... prefixes) throws CertificateException, IOException, URISyntaxException {
-        return readCertificates(findFiles(directory, suffix, prefixes));
+    public static Set<Certificate> readCertificates(String directory, String suffix, String... prefixes) {
+        try {
+            return readCertificates(findFiles(directory, suffix, prefixes));
+        }
+        catch (CertificateException | IOException | URISyntaxException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
-    static Set<Path> findFiles(String directory, String prefix, String suffix) throws IOException, URISyntaxException {
+    public static Set<Path> findFiles(String directory, String prefix, String suffix) throws IOException, URISyntaxException {
         Path directoryPath = loadResourcePath(directory);
-        return Files.walk(directoryPath, 1)
+        return findFiles(directoryPath, prefix, suffix);
+    }
+    public static Set<Path> findFiles(Path directory, String prefix, String suffix) throws IOException {
+
+        return Files.walk(directory, 1)
                 .filter(filePath ->
                         filePath.getFileName().toString().endsWith(suffix) &&
-                        filePath.getFileName().toString().startsWith(prefix))
+                                filePath.getFileName().toString().startsWith(prefix))
                 .collect(Collectors.toSet());
     }
 
-    static Set<Path> findFiles(String directory, String suffix, String... prefixes) throws URISyntaxException, IOException {
+
+    public static Set<Path> findFiles(String directory, String suffix, String... prefixes) throws URISyntaxException, IOException {
         Path directoryPath = loadResourcePath(directory);
-        return Files.walk(directoryPath, 1)
+        return findFiles(directoryPath, suffix, prefixes);
+    }
+
+    public static Set<Path> findFiles(Path directory, String suffix, String... prefixes) throws IOException {
+        return Files.walk(directory, 1)
                 .filter(filePath -> {
                     String fileName = filePath.getFileName().toString();
                     return fileName.endsWith(suffix)
-                                    && Arrays.stream(prefixes).anyMatch(fileName::startsWith);
+                            && Arrays.stream(prefixes).anyMatch(fileName::startsWith);
                 })
                 .collect(Collectors.toSet());
     }
     private UpdaterUtil(){}
 
-    static class CertificatePair {
+    public static class CertificatePair {
         private Certificate firstCertificate;
         private Certificate secondCertificate;
 
@@ -152,5 +181,15 @@ public class UpdaterUtil {
 
     public static Path loadResourcePath(String fileName) throws URISyntaxException {
         return loadResource(fileName).toPath();
+    }
+
+    public static byte[] concatArrays(byte[] arr1, byte[] arr2) {
+        int aLen = arr1.length;
+        int bLen = arr2.length;
+        byte[] result = new byte[aLen + bLen];
+
+        System.arraycopy(arr1, 0, result, 0, aLen);
+        System.arraycopy(arr2, 0, result, aLen, bLen);
+        return result;
     }
 }
