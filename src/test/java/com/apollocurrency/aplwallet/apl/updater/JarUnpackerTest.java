@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 import util.TestUtil;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class UnpackerTest {
+public class JarUnpackerTest {
     @Test
     public void testUnpack() throws IOException {
         Path tempDirectory = Files.createTempDirectory("unpack");
@@ -30,7 +31,8 @@ public class UnpackerTest {
         try (JarGenerator generator = new JarGenerator(Files.newOutputStream(tempJar))) {
             generator.generate();
         }
-            unpackedFile = Unpacker.getInstance().unpack(tempJar);
+            Unpacker unpacker = new JarUnpacker("");
+            unpackedFile = unpacker.unpack(tempJar);
             try (JarFile jarFile = new JarFile(tempJar.toFile())) {
                 Map<String, Long> files = new HashMap<>();
                 Enumeration<JarEntry> entries = jarFile.entries();
