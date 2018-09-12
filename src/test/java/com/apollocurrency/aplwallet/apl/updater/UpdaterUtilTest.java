@@ -58,7 +58,7 @@ public class UpdaterUtilTest {
         createCertificateMocksForFiles(certificateFactoryMock, files);
 
         // Call tested method
-        Set<UpdaterUtil.CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory);
+        Set<UpdaterUtil.CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
 
         Assert.assertNotNull(result);
         for(UpdaterUtil.CertificatePair pair : result) {

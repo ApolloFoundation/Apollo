@@ -1,12 +1,12 @@
-/*
+package util.generator;/*
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
 
-
+import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import dto.transaction.JSONTransaction;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -19,7 +19,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
+import static com.apollocurrency.aplwallet.TestData.ADMIN_PASS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class WalletRunner {

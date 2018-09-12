@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet;
 
 public class TestData {
     public static final String TEST_FILE = "testnet-keys.properties";

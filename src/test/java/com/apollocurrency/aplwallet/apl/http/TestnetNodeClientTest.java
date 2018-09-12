@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.TestData;
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
@@ -12,10 +13,9 @@ import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.Account;
-import dto.AccountsStatistic;
+import dto.*;
 import dto.Block;
-import dto.LedgerEntry;
-import dto.Peer;
+import dto.transaction.JSONTransaction;
 import org.json.simple.parser.ParseException;
 import org.junit.*;
 import util.TestUtil;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
+import static com.apollocurrency.aplwallet.TestData.TEST_FILE;
 import static util.TestUtil.*;
 
 /**

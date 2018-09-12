@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.TestData;
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
@@ -11,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.Block;
 import dto.ForgingDetails;
+import dto.transaction.JSONTransaction;
 import org.junit.*;
-import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 import util.TestUtil;
 import util.WalletRunner;
@@ -22,8 +23,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
+import static com.apollocurrency.aplwallet.TestData.ADMIN_PASS;
+import static com.apollocurrency.aplwallet.TestData.TEST_LOCALHOST;
 import static org.slf4j.LoggerFactory.getLogger;
 import static util.TestUtil.atm;
 
@@ -131,17 +132,17 @@ public class TestnetIntegrationScenario {
         LOG.info("Starting forging on {} accounts", ACCOUNTS.size());
         ACCOUNTS.forEach((accountRS, secretPhrase) -> {
             try {
-                CLIENT.startForging(TestData.TEST_LOCALHOST, secretPhrase);
+                CLIENT.startForging(TEST_LOCALHOST, secretPhrase);
             }
             catch (IOException e) {
-                String errorMessage = "Cannot start forging for account: " + accountRS + " on " + TestData.TEST_LOCALHOST;
+                String errorMessage = "Cannot start forging for account: " + accountRS + " on " + TEST_LOCALHOST;
                 LOG.error(errorMessage, e);
                 Assert.fail(errorMessage);
             }
         });
         TimeUnit.SECONDS.sleep(5);
         LOG.info("Verifying forgers on localhost");
-        List<ForgingDetails> forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, ADMIN_PASS);
+        List<ForgingDetails> forgers = CLIENT.getForging(TEST_LOCALHOST, null, ADMIN_PASS);
         Assert.assertEquals(5, forgers.size());
         forgers.forEach( generator -> {
             if (!ACCOUNTS.containsKey(generator.getAccountRS())) {
@@ -150,19 +151,19 @@ public class TestnetIntegrationScenario {
         });
         LOG.info("Stopping forging and peer server...");
         int remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
-        Class updaterCore = runner.loadClass("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
-        Whitebox.invokeMethod(updaterCore.getMethod("getInstance").invoke(null, null), "stopForgingAndBlockAcceptance");
-        int localHeight = CLIENT.getBlockchainHeight(TestData.TEST_LOCALHOST);
+        Class updaterCore = runner.loadClass("com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore");
+        new UpdaterMediatorImpl().suspendBlockchain();
+        int localHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
         LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
         Assert.assertEquals(localHeight, remoteHeight);
-        Assert.assertEquals(CLIENT.getBlock(TestUtil.randomUrl(runner.getUrls()), remoteHeight), CLIENT.getBlock(TestData.TEST_LOCALHOST, localHeight));
+        Assert.assertEquals(CLIENT.getBlock(TestUtil.randomUrl(runner.getUrls()), remoteHeight), CLIENT.getBlock(TEST_LOCALHOST, localHeight));
         LOG.info("Checking forgers on node (Assuming 5 forgers)");
-        forgers = CLIENT.getForging(TestData.TEST_LOCALHOST, null, ADMIN_PASS);
+        forgers = CLIENT.getForging(TEST_LOCALHOST, null, ADMIN_PASS);
         Assert.assertEquals(5, forgers.size());
         LOG.info("Waiting 5 blocks creation...");
         waitBlocks(5);
         remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
-        long actualLocalHeight = CLIENT.getBlockchainHeight(TestData.TEST_LOCALHOST);
+        long actualLocalHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
         LOG.info("Comparing blockchain height local/remote: {}/{}", actualLocalHeight, remoteHeight);
         Assert.assertEquals(localHeight, actualLocalHeight);
         Assert.assertTrue(remoteHeight >= localHeight + 5);
@@ -196,7 +197,7 @@ public class TestnetIntegrationScenario {
         System.out.println("PeerCount=" + CLIENT.getPeersCount(runner.getUrls().get(0)));
         System.out.println("BLOCKS=" + CLIENT.getBlocksList(runner.getUrls().get(0), false, null));
         System.out.println("Blockchain height: " + CLIENT.getBlockchainHeight(runner.getUrls().get(0)));
-        System.out.println("Forgers="+ CLIENT.getForging(TestData.TEST_LOCALHOST, null, ADMIN_PASS));
+        System.out.println("Forgers="+ CLIENT.getForging(TEST_LOCALHOST, null, ADMIN_PASS));
     }
 
     @Test
@@ -241,7 +242,7 @@ public class TestnetIntegrationScenario {
         int peerQuantity = (int) Math.ceil((double) runner.getUrls().size() * 0.51);
         int maxPeerQuantity = runner.getUrls().size();
         int peers = 0;
-        int localHostPeers = CLIENT.getPeersCount(TestData.TEST_LOCALHOST);
+        int localHostPeers = CLIENT.getPeersCount(TEST_LOCALHOST);
         if (localHostPeers < peerQuantity) {
             LOG.error("Localhost peer has {}/{} peers. Required >= {}", localHostPeers, maxPeerQuantity, peerQuantity);
             return false;

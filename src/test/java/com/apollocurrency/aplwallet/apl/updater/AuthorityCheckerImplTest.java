@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
+import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -18,38 +19,42 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResourcePath;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(AuthorityChecker.class)
-public class AuthorityCheckerTest {
-
+@PrepareForTest(AuthorityCheckerImpl.class)
+public class AuthorityCheckerImplTest {
+    private AuthorityChecker correctAuthorityChecker = new AuthorityCheckerImpl("rootCA.crt", ".crt", "intermediate.crt", "1_", "2_");
     @Test
     public void testVerifyCertificates() throws Exception {
-        AuthorityChecker spy = PowerMockito.spy(AuthorityChecker.getInstance());
         Path testRootCAPath = loadResourcePath("certs/rootCA.crt");
-        doReturn(testRootCAPath).when(spy, "downloadCACertificate");
-
-        boolean isVerified = spy.verifyCertificates("certs");
-
-        Assert.assertTrue(isVerified);
-
+        Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
+        boolean verified = correctAuthorityChecker.verifyCertificates("certs");
+        Assert.assertTrue(verified);
     }
 
     @Test
-    public void testNotVerifiedCertificates() throws Exception {
-        AuthorityChecker spy = PowerMockito.spy(AuthorityChecker.getInstance());
-        Path fakeRootCACertificate = loadResourcePath("certs/1_1.crt");
-        doReturn(fakeRootCACertificate).when(spy, "downloadCACertificate");
+    public void testNotVerifiedCertificatesWhenIncorrectRootCertificate() throws Exception {
 
-        boolean isVerified = spy.verifyCertificates("certs");
+        Path fakeRootCACertificate = loadResourcePath("certs/1_1.crt") ;
+        Certificate certificate = UpdaterUtil.readCertificate(fakeRootCACertificate);
+        AuthorityChecker incorrectAuthorityChecker = new AuthorityCheckerImpl(certificate, ".crt", "intermediate.crt", "1_", "2_");;
+
+        boolean isVerified = incorrectAuthorityChecker.verifyCertificates("certs");
+
+        Assert.assertFalse(isVerified);
+    }
+
+    @Test
+    public void testNotVerifiedCertificatesWhenIncorrectPathIntermediateCertificate() {
+        AuthorityChecker incorrectAuthorityChecker = new AuthorityCheckerImpl("rootCA.crt", ".crt", "intermediat.crt", "1_", "2_");
+
+        boolean isVerified = incorrectAuthorityChecker.verifyCertificates("certs");
 
         Assert.assertFalse(isVerified);
     }
 
     @Test
     public void testVerifyJar() throws Exception {
-            AuthorityChecker checker = PowerMockito.spy(AuthorityChecker.getInstance());
             Path jarFilePath = Files.createTempFile("apl-test", ".jar");
         try {
             OutputStream jarOutputStream = Files.newOutputStream(jarFilePath);
@@ -59,18 +64,15 @@ public class AuthorityCheckerTest {
             generator.generate();
             generator.close();
             jarOutputStream.close();
-            checker.verifyJarSignature(certificate, jarFilePath);
-            Files.delete(jarFilePath);
+            correctAuthorityChecker.verifyJarSignature(certificate, jarFilePath);
         }
-        catch (Exception e) {
+        finally {
             Files.deleteIfExists(jarFilePath);
-            throw e;
         }
     }
 
     @Test(expected = SecurityException.class)
     public void testVerifyNotSignedJar() throws Exception {
-        AuthorityChecker checker = PowerMockito.spy(AuthorityChecker.getInstance());
         Path jarFilePath = Files.createTempFile("apl-test", ".jar");
         try {
             OutputStream jarOutputStream = Files.newOutputStream(jarFilePath);
@@ -79,12 +81,10 @@ public class AuthorityCheckerTest {
             generator.generate();
             generator.close();
             jarOutputStream.close();
-            checker.verifyJarSignature(certificate, jarFilePath);
-            Files.delete(jarFilePath);
+            correctAuthorityChecker.verifyJarSignature(certificate, jarFilePath);
         }
-        catch (Exception e) {
+        finally {
             Files.deleteIfExists(jarFilePath);
-            throw e;
         }
     }
 }

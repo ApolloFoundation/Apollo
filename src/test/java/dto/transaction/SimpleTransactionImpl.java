@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.updater;
+package dto.transaction;
 
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -11,12 +11,13 @@ import org.json.simple.JSONObject;
 import java.util.List;
 
 public class SimpleTransactionImpl implements Transaction {
-    TransactionType type;
-    long recipientId;
-    long senderId;
-    long feeATM;
-    long amountATM;
-    long height;
+    private TransactionType type;
+    private long recipientId;
+    private long senderId;
+    private long feeATM;
+    private long amountATM;
+    private long height;
+    private Attachment attachment;
 
     public SimpleTransactionImpl(TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height) {
         this.type = type;
@@ -160,7 +161,11 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public Attachment getAttachment() {
-        return null;
+        return attachment;
+    }
+
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
     }
 
     @Override
@@ -185,7 +190,10 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public JSONObject getJSONObject() {
-        return null;
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", getId());
+        jsonObject.put("type", getType());
+        return jsonObject;
     }
 
     @Override

@@ -4,8 +4,8 @@
 
 package util;
 
-import com.apollocurrency.aplwallet.apl.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
+import dto.transaction.JSONTransaction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.junit.Assert;

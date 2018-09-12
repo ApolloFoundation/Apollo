@@ -1,11 +1,12 @@
-/*
+package util.generator;/*
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
-
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import dto.transaction.JSONTransaction;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
@@ -13,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
+import static com.apollocurrency.aplwallet.TestData.TEST_LOCALHOST;
 import static org.slf4j.LoggerFactory.getLogger;
 import static util.TestUtil.atm;
 

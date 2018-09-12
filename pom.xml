@@ -48,7 +48,7 @@
 
         <!--Logging-->
         <slf4j.version>1.7.22</slf4j.version>
-        <logback.version>1.0.13</logback.version>
+        <logback.version>1.1.7</logback.version>
         <log4jdbc.version>1.2</log4jdbc.version>
 
         <!--Tests-->
@@ -56,7 +56,7 @@
         <json-simple.version>1.1.1</json-simple.version>
         <json-unit.version>1.20.0</json-unit.version>
         <junit.version>4.12</junit.version>
-        <mockito.version>1.10.19</mockito.version>
+        <mockito.version>2.22.0</mockito.version>
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
         <jersey.version>2.26</jersey.version>
@@ -231,7 +231,7 @@
 
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
+            <artifactId>mockito-core</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
