@@ -3,9 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterCore;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -28,14 +27,9 @@ public final class StartMinorUpdate extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject object = new JSONObject();
-        UpdateInfo info = UpdateInfo.getInstance();
-        if (info.isStartAllowed()) {
-            object.put("updateStarted", "true");
-            object.put("updateInfo:", info.json());
-            UpdaterCore.getInstance().startMinorUpdate();
-        } else {
-            object.put("updateStarted", "false");
-        }
+        boolean started = Apl.startMinorUpdate();
+        object.put("updateStarted", started);
+        object.put("updateInfo", Apl.getUpdateInfo().json());
         return object;
     }
 
