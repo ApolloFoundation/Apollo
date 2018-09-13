@@ -56,7 +56,7 @@
 		echo using Java home directory "%javaDir%"
 	)
 
-:startJava	
+:startJava
 	start "Apollo wallet" "%javaDir%"\bin\java.exe -cp addons\classes;addons\lib\* -jar "%~dp0Apollo.jar"
 
 :endProcess 

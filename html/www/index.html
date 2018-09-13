@@ -229,5 +229,22 @@
         <script src="js/nrs.monitors.js" type="text/javascript"></script>
         <script src="js/nrs.mobile.js" type="text/javascript"></script>
         <script src="js/nrs.generators.js" type="text/javascript"></script>
+    <script language="JavaScript">
+       var eventSource = new EventSource("http://localhost:7877/record3");
+        console.log(eventSource);
+     eventSource.onopen = function() {
+       NRS.logConsole("SSE onopen");
+       console.log("SSE onopen");
+   }
+
+   eventSource.onmessage = function(event) {
+       NRS.logConsole("SSE onmessage: " + event.data);
+       console.log("SSE onmessage: " + event.data);
+   }
+   eventSource.onerror = function(event) {
+       NRS.logConsole("SSE onerror " + event);
+       eventSource.close();
+   }
+    </script>
     </body>
 </html>

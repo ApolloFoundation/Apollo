@@ -20,10 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.AppAsyncListener;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Logger;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -42,7 +46,6 @@ import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import javax.servlet.*;
-import javax.servlet.Filter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -79,6 +82,7 @@ public final class API {
     private static final String forwardedForHeader = Apl.getStringProperty("apl.forwardedForHeader");
 
     private static final Server apiServer;
+    private static Server serverSSE;
     private static URI welcomePageUri;
     private static URI serverRootUri;
     private static Thread serverKeysGenerator = new Thread(() -> {
@@ -156,6 +160,7 @@ public final class API {
             //
             // Create the HTTP connector
             //
+            serverSSE = new Server();
             if (!enableSSL || port != sslPort) {
                 HttpConfiguration configuration = new HttpConfiguration();
                 configuration.setSendDateHeader(false);
@@ -167,6 +172,10 @@ public final class API {
                 connector.setIdleTimeout(apiServerIdleTimeout);
                 connector.setReuseAddress(true);
                 apiServer.addConnector(connector);
+                ServerConnector connector1 = new ServerConnector(serverSSE, new HttpConnectionFactory());
+                connector1.setPort(7877);
+                connector1.setHost(host);
+                serverSSE.addConnector(connector1);
                 Logger.logMessage("API server using HTTP port " + port);
             }
             //
@@ -264,6 +273,12 @@ public final class API {
             apiHandler.addServlet(APITestServlet.class, "/test");
             apiHandler.addServlet(APITestServlet.class, "/test-proxy");
 
+            apiHandler.addServlet(SSEPublisher.class, "/record").setAsyncSupported(true);
+            apiHandler.addEventListener(new AppAsyncListener());
+            apiHandler.addEventListener(new AppContextListener());
+            apiHandler.addServlet(SSE.class, "/record1").setAsyncSupported(true);
+//            apiHandler.addServlet(BlockEventSourceServlet.class, "/record2").setAsyncSupported(true);
+
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
 
             if (apiServerCORS) {
@@ -283,7 +298,11 @@ public final class API {
 
             apiServer.setHandler(apiHandlers);
             apiServer.setStopAtShutdown(true);
+            ServletContextHandler sseHandler = new ServletContextHandler();
+            sseHandler.addServlet(BlockEventSourceServlet.class, "/record3");
 
+            serverSSE.setHandler(sseHandler);
+            serverSSE.setStopAtShutdown(true);
             ThreadPool.runBeforeStart("UPnP ports init", () -> {
                 try {
                     serverKeysGenerator.start();
@@ -298,6 +317,7 @@ public final class API {
                     APIProxyServlet.initClass();
                     APITestServlet.initClass();
                     apiServer.start();
+                    serverSSE.start();
                     if (sslContextFactory != null) {
                         Logger.logDebugMessage("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
                         Logger.logDebugMessage("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
@@ -324,6 +344,14 @@ public final class API {
     public static void init() {}
 
     public static void shutdown() {
+        if (serverSSE != null) {
+            try {
+                serverSSE.stop();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         if (apiServer != null) {
             try {
                 apiServer.stop();
