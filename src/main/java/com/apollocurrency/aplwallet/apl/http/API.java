@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.AppAsyncListener;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
@@ -82,7 +83,7 @@ public final class API {
     private static final String forwardedForHeader = Apl.getStringProperty("apl.forwardedForHeader");
 
     private static final Server apiServer;
-    private static Server serverSSE;
+
     private static URI welcomePageUri;
     private static URI serverRootUri;
     private static Thread serverKeysGenerator = new Thread(() -> {
@@ -160,7 +161,7 @@ public final class API {
             //
             // Create the HTTP connector
             //
-            serverSSE = new Server();
+
             if (!enableSSL || port != sslPort) {
                 HttpConfiguration configuration = new HttpConfiguration();
                 configuration.setSendDateHeader(false);
@@ -172,10 +173,6 @@ public final class API {
                 connector.setIdleTimeout(apiServerIdleTimeout);
                 connector.setReuseAddress(true);
                 apiServer.addConnector(connector);
-                ServerConnector connector1 = new ServerConnector(serverSSE, new HttpConnectionFactory());
-                connector1.setPort(7877);
-                connector1.setHost(host);
-                serverSSE.addConnector(connector1);
                 Logger.logMessage("API server using HTTP port " + port);
             }
             //
@@ -267,7 +264,8 @@ public final class API {
                 gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(com.apollocurrency.aplwallet.apl.peer.Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.setMinGzipSize(Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.addExcludedPaths("/blocks");
             apiHandler.setGzipHandler(gzipHandler);
 
             apiHandler.addServlet(APITestServlet.class, "/test");
@@ -277,7 +275,7 @@ public final class API {
             apiHandler.addEventListener(new AppAsyncListener());
             apiHandler.addEventListener(new AppContextListener());
             apiHandler.addServlet(SSE.class, "/record1").setAsyncSupported(true);
-//            apiHandler.addServlet(BlockEventSourceServlet.class, "/record2").setAsyncSupported(true);
+            apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
 
@@ -292,17 +290,16 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
-
+//            ServletContextHandler sseHandler = new ServletContextHandler();
+//            sseHandler.addServlet(BlockEventSourceServlet.class, "/record3").setAsyncSupported(true);
+//
             apiHandlers.addHandler(apiHandler);
+//            apiHandlers.addHandler(sseHandler);
             apiHandlers.addHandler(new DefaultHandler());
 
             apiServer.setHandler(apiHandlers);
             apiServer.setStopAtShutdown(true);
-            ServletContextHandler sseHandler = new ServletContextHandler();
-            sseHandler.addServlet(BlockEventSourceServlet.class, "/record3");
 
-            serverSSE.setHandler(sseHandler);
-            serverSSE.setStopAtShutdown(true);
             ThreadPool.runBeforeStart("UPnP ports init", () -> {
                 try {
                     serverKeysGenerator.start();
@@ -317,7 +314,6 @@ public final class API {
                     APIProxyServlet.initClass();
                     APITestServlet.initClass();
                     apiServer.start();
-                    serverSSE.start();
                     if (sslContextFactory != null) {
                         Logger.logDebugMessage("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
                         Logger.logDebugMessage("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
@@ -344,14 +340,6 @@ public final class API {
     public static void init() {}
 
     public static void shutdown() {
-        if (serverSSE != null) {
-            try {
-                serverSSE.stop();
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         if (apiServer != null) {
             try {
                 apiServer.stop();
