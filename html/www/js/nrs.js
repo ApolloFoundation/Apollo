@@ -456,7 +456,8 @@ var NRS = (function(NRS, $, undefined) {
 
 		NRS.serverConnect = true;
 		NRS.ledgerTrimKeep = response.ledgerTrimKeep;
-		$("#sidebar_block_link").html(NRS.getBlockLink(height));
+        NRS.updateBlockchainDownloadProgress();
+        $("#sidebar_block_link").html(NRS.getBlockLink(height));
 		if (firstTime) {
 			$("#nrs_version").html(NRS.state.version).removeClass("loading_dots");
 			NRS.getBlock(lastBlock, NRS.handleInitialBlocks);
