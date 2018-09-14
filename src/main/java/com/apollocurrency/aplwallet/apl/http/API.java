@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.AppAsyncListener;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -271,14 +270,10 @@ public final class API {
             apiHandler.addServlet(APITestServlet.class, "/test");
             apiHandler.addServlet(APITestServlet.class, "/test-proxy");
 
-            apiHandler.addServlet(SSEPublisher.class, "/record").setAsyncSupported(true);
-            apiHandler.addEventListener(new AppAsyncListener());
-            apiHandler.addEventListener(new AppContextListener());
-            apiHandler.addServlet(SSE.class, "/record1").setAsyncSupported(true);
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
-
+            apiHandler.addEventListener(new ApiContextListener());
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
                 filterHolder.setInitParameter("allowedHeaders", "*");
@@ -290,11 +285,8 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
-//            ServletContextHandler sseHandler = new ServletContextHandler();
-//            sseHandler.addServlet(BlockEventSourceServlet.class, "/record3").setAsyncSupported(true);
 //
             apiHandlers.addHandler(apiHandler);
-//            apiHandlers.addHandler(sseHandler);
             apiHandlers.addHandler(new DefaultHandler());
 
             apiServer.setHandler(apiHandlers);

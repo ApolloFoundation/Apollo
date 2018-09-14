@@ -88,7 +88,7 @@ public class TestClassLoader extends ClassLoader {
         if (useCache && cachedClasses.containsKey(name)) {
             return cachedClasses.get(name);
         }
-        try(InputStream in = ClassLoader.getSystemResourceAsStream(name.replaceAll("\\.", "\\\\") + ".class")) {
+        try(InputStream in = ClassLoader.getSystemResourceAsStream(name.replaceAll("\\.", "/") + ".class")) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             int nRead;
             byte[] data = new byte[1024];

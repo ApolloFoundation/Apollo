@@ -230,7 +230,7 @@
         <script src="js/nrs.mobile.js" type="text/javascript"></script>
         <script src="js/nrs.generators.js" type="text/javascript"></script>
     <script language="JavaScript">
-       var eventSource = new EventSource("http://localhost:7877/record3");
+       var eventSource = new EventSource("http://127.0.0.1:7876/blocks?account=9211698109297098287");
         console.log(eventSource);
      eventSource.onopen = function() {
        NRS.logConsole("SSE onopen");
