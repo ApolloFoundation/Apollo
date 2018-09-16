@@ -57,7 +57,7 @@
 	)
 
 :startJava	
-	start "Apollo wallet" "%javaDir%"\bin\java.exe -cp addons\classes;addons\lib\* -jar "%~dp0Apollo.jar"
+	"%javaDir%"\bin\java.exe -jar Apollo.jar  apl.Apl
 
 :endProcess 
 	endlocal
