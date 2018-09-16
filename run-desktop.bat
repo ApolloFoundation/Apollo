@@ -57,7 +57,7 @@
 	)
 
 :startJava	
-	start "Apollo wallet" "%javaDir%"\bin\java.exe -cp addons\classes;addons\lib\* -Dapl.runtime.mode=desktop -jar "%~dp0Apollo.jar"
+	start "Apollo wallet" "%javaDir%"\bin\java.exe -cp addons\classes;addons\lib\* -jar "%~dp0Apollo.jar"
 
 :endProcess 
 	endlocal
