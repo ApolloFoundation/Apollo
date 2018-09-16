@@ -12,7 +12,7 @@ public enum Platform {
     public static Platform current() {
         return
                SystemUtils.IS_OS_WINDOWS                          ? Platform.WINDOWS : // Windows
-               SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_UNIX  ? Platform.LINUX   : // Linux/Unix
+               SystemUtils.IS_OS_LINUX                            ? Platform.LINUX   : // Linux/Unix
                SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX ? Platform.OSX     : // Mac
                                                                     null;              // Other
     }

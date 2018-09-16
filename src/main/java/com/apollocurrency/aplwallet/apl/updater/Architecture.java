@@ -18,7 +18,7 @@ public enum Architecture {
             case "x86" :
                 return X86;
         }
-        if (osArch.startsWith("arm")) {
+        if (osArch.startsWith("arm") || osArch.startsWith("aarch64")) {
             return ARM;
         }
         return null;
