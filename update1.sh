@@ -21,6 +21,9 @@ then
     cd $1 
     chmod 755 *.sh
 
+    cd $1 
+    chmod 755 *.sh
+
     if [ $3 == true ]
     then
         echo Start desktop application
