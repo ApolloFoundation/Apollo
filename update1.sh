@@ -16,7 +16,10 @@ then
     done
 
     echo Copy update files
-    cp -TRa $2 $1
+    cp -vRa $2/* $1
+
+    cd $1 
+    chmod 755 *.sh
 
     cd $1 
     chmod 755 *.sh

@@ -41,20 +41,20 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	objShell.CurrentDirectory = WScript.Arguments(0)
 	if  ("true" = LCase(WScript.Arguments(2))) Then
         WScript.Echo "Start desktop application"
-	    objShell.Run "start-desktop.vbs"
+ 	objShell.Run chr(34) & WScript.Arguments(0) & "\start-desktop.vbs" & chr(34)
     else
         WScript.Echo "Start command line application"
-        objShell.Run "start.vbs"
+        objShell.Run chr(34) & WScript.Arguments(0) & "\start.vbs" & chr(34)
     End If
 	WScript.Echo "Exit"
 Else
 	WScript.Echo "Invalid input parameters:" & WScript.Arguments(0) & " " & WScript.Arguments(1) & " " & WScript.Arguments(2)
 End If
 
-
 Sub CopySubFolders(Folder)
     For Each Subfolder in Folder.SubFolders
-		targetFolderPath = Replace(SubFolder.Path, WScript.Arguments(1), WScript.Arguments(0))
+		targetFolderPath = Replace(LCase(SubFolder.Path), LCase(WScript.Arguments(1)), WScript.Arguments(0))
+		WScript.Echo targetFolderPath	
 		if (Not fso.FolderExists(targetFolderPath)) then
 			fso.CreateFolder targetFolderPath
 		End If
@@ -65,6 +65,7 @@ Sub CopySubFolders(Folder)
 
         For Each objFile in colFiles
 			targetFilePath = targetFolderPath & "\" & objFile.Name
+			Wscript.Echo targetFilePath
 			isReadonly = MakeReadWrite(targetFilePath)
 			fso.CopyFile objFile.Path, targetFolderPath & "\", True
 			if (isReadonly) then
