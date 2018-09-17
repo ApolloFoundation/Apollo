@@ -3,7 +3,6 @@ package com.apollocurrency.aplwallet.apl.http;
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.eclipse.jetty.servlets.EventSource;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -11,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class BlockEventSourceProcessor implements Runnable {
     private BlockEventSource eventSource;
@@ -30,16 +27,15 @@ public class BlockEventSourceProcessor implements Runnable {
         Block block = blockchain.getLastBlock();
         Block currentBlock;
         try {
-            TimeUnit.SECONDS.sleep(10);
             eventSource.emitEvent(getMessage());
             while (!eventSource.isShutdown()) {
 
 
                 currentBlock = blockchain.getLastBlock();
                 if (currentBlock.getHeight() > block.getHeight()) {
-                    JSONObject jsonObject = getBlockchainData(blockchain);
-                    jsonObject.put("block", currentBlock.getJSONObject());
-                    eventSource.emitEvent(jsonObject.toJSONString());
+
+                    eventSource.emitEvent(getMessage());
+
                     block = currentBlock;
                 }
                 TimeUnit.SECONDS.sleep(2);
@@ -63,7 +59,7 @@ public class BlockEventSourceProcessor implements Runnable {
         }
         JSONArray purchasesJSON = new JSONArray();
 
-        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 99)) {
+        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {
             while (purchases.hasNext()) {
                 purchasesJSON.add(JSONData.purchase(purchases.next()));
             }
@@ -71,15 +67,15 @@ public class BlockEventSourceProcessor implements Runnable {
         int sellerPurchaseCount = DigitalGoodsStore.Purchase.getSellerPurchaseCount(accountId, false, false);
         int aliasCount = Alias.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
-        try (DbIterator<Account.AccountAsset> accountAssets = Account.getAccountAssets(accountId, -1, 0, -1)) {
+        try (DbIterator<Account.AccountAsset> accountAssets = Account.getAccountAssets(accountId, -1, 0, 2)) {
             while (accountAssets.hasNext()) {
                 assetJson.add(JSONData.accountAsset(accountAssets.next(), false, true));
             }
         }
         JSONArray currencyJSON = new JSONArray();
-        try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getAccountCurrencies(accountId, -1, 0, -1)) {
+        try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getAccountCurrencies(accountId, -1, 0, 2)) {
             while (accountCurrencies.hasNext()) {
-                currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, false));
+                currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));
             }
         }
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);
@@ -93,7 +89,7 @@ public class BlockEventSourceProcessor implements Runnable {
         jsonObject.put("currencyCount", currencyCount);
         jsonObject.put("assetCount", assetCount);
         jsonObject.put("aliasCount", aliasCount);
-        jsonObject.put("assests", assetJson);
+        jsonObject.put("assets", assetJson);
         jsonObject.put("currencies", currencyJSON);
         jsonObject.put("messageCount", messageCount);
         jsonObject.put("account", accountJson);
@@ -101,8 +97,9 @@ public class BlockEventSourceProcessor implements Runnable {
     }
 
     public String getMessage() {
-        JSONObject jsonObject = getBlockchainData(Apl.getBlockchain());
-        jsonObject.put("block", Apl.getBlockchain().getLastBlock().getJSONObject());
+        Blockchain blockchain = Apl.getBlockchain();
+        JSONObject jsonObject = getBlockchainData(blockchain);
+        jsonObject.put("block", JSONData.block(Apl.getBlockchain().getLastBlock(), false, false));
         return jsonObject.toJSONString();
     }
 
