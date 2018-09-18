@@ -66,7 +66,7 @@ public class UpdaterCore {
                         UpdaterMediator.getInstance().setUpdateData(true, 0,
                                 transaction.getHeight(), Level.CRITICAL, expectedVersion);
                         startUpdater = false;
-                        Logger.logErrorMessage("Manual install required for critical update!");
+                        LOG.error("Manual install required for critical update!");
                     } else {
                         LOG.info("Skip uninstalled non-critical update");
                     }
