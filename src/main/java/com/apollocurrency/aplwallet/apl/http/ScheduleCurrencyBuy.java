@@ -20,27 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Currency;
-import com.apollocurrency.aplwallet.apl.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.TransactionScheduler;
+import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class ScheduleCurrencyBuy extends CreateTransaction {
+    private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
 
     private static class ScheduleCurrencyBuyHolder {
         private static final ScheduleCurrencyBuy INSTANCE = new ScheduleCurrencyBuy();
@@ -104,7 +99,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 transaction.validate();
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
                 if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
-                    Logger.logDebugMessage("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
+                    LOG.debug("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
                     Apl.getTransactionProcessor().broadcast(transaction);
                     response.put("broadcasted", true);
                     return response;
@@ -112,7 +107,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 try (DbIterator<? extends Transaction> unconfirmedTransactions = Apl.getTransactionProcessor().getAllUnconfirmedTransactions()) {
                     while (unconfirmedTransactions.hasNext()) {
                         if (filter.test(unconfirmedTransactions.next())) {
-                            Logger.logDebugMessage("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
+                            LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
                             Apl.getTransactionProcessor().broadcast(transaction);
                             response.put("broadcasted", true);
                             return response;
@@ -120,7 +115,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     }
                 }
                 if (API.checkPassword(req)) {
-                    Logger.logDebugMessage("Scheduling transaction " + transaction.getStringId());
+                    LOG.debug("Scheduling transaction " + transaction.getStringId());
                     TransactionScheduler.schedule(filter, transaction);
                     response.put("scheduled", true);
                 } else {

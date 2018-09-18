@@ -25,13 +25,17 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.tika.Tika;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Search {
+    private static final Logger LOG = getLogger(Search.class);
 
     private static final Analyzer analyzer = new StandardAnalyzer();
 
@@ -67,7 +71,7 @@ public final class Search {
         try {
             return tika.detect(data);
         } catch (NoClassDefFoundError e) {
-            Logger.logErrorMessage("Error running Tika parsers", e);
+            LOG.error("Error running Tika parsers", e);
             return null;
         }
     }

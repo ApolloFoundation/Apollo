@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,8 +20,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class Downloader {
+        private static final Logger LOG = getLogger(Downloader.class);
+
     private UpdaterMediator mediator = UpdaterMediator.getInstance();
     private DownloadExecutor defaultDownloadExecutor = new DefaultDownloadExecutor(TEMP_DIR_PREFIX, DOWNLOADED_FILE_NAME);
 
@@ -35,12 +38,12 @@ public class Downloader {
         try {
             byte[] actualHash = calclulateHash(file);
             String message = "Actual hash is " + Convert.toHexString(actualHash) + " for file " + file;
-            Logger.logDebugMessage(message);
+            LOG.debug(message);
 //            System.out.println(message);
             return Convert.toHexString(actualHash).equalsIgnoreCase(Convert.toHexString(hash));
         }
         catch (Exception e) {
-            Logger.logErrorMessage("Cannot calculate checksum for file: " + file, e);
+            LOG.error("Cannot calculate checksum for file: " + file, e);
         }
         return false;
     }
@@ -87,18 +90,18 @@ public class Downloader {
                     return downloadedFile;
                 } else {
                     mediator.setStatus(UpdateInfo.DownloadStatus.INCONSISTENT);
-                    Logger.logErrorMessage("Inconsistent file, downloaded from: " + uri);
+                    LOG.error("Inconsistent file, downloaded from: " + uri);
                 }
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
                 TimeUnit.SECONDS.sleep(NEXT_ATTEMPT_TIMEOUT);
             }
             catch (IOException e) {
-                Logger.logErrorMessage("Unable to download update from: " + uri, e);
+                LOG.error("Unable to download update from: " + uri, e);
                 mediator.setState(UpdateInfo.DownloadState.TIMEOUT);
                 mediator.setStatus(UpdateInfo.DownloadStatus.CONNECTION_FAILURE);
             }
             catch (InterruptedException e) {
-                Logger.logInfoMessage("Downloader was awakened", e);
+                LOG.info("Downloader was awakened", e);
             }
         }
         mediator.setState(UpdateInfo.DownloadState.FINISHED);

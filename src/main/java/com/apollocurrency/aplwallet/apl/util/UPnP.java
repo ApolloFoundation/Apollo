@@ -23,14 +23,18 @@ package com.apollocurrency.aplwallet.apl.util;
 import com.apollocurrency.aplwallet.apl.Apl;
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
+import org.slf4j.Logger;
 
 import java.net.InetAddress;
 import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Forward ports using the UPnP protocol.
  */
 public class UPnP {
+    private static final Logger LOG = getLogger(UPnP.class);
 
     /** Initialization done */
     private static boolean initDone = false;
@@ -65,12 +69,12 @@ public class UPnP {
         try {
             if (gateway.addPortMapping(port, port, localAddress.getHostAddress(), "TCP",
                                        Apl.APPLICATION + " " + Apl.VERSION)) {
-                Logger.logDebugMessage("Mapped port [" + externalAddress.getHostAddress() + "]:" + port);
+                LOG.debug("Mapped port [" + externalAddress.getHostAddress() + "]:" + port);
             } else {
-                Logger.logDebugMessage("Unable to map port " + port);
+                LOG.debug("Unable to map port " + port);
             }
         } catch (Exception exc) {
-            Logger.logErrorMessage("Unable to map port " + port + ": " + exc.toString());
+            LOG.error("Unable to map port " + port + ": " + exc.toString());
         }
     }
 
@@ -87,12 +91,12 @@ public class UPnP {
         //
         try {
             if (gateway.deletePortMapping(port, "TCP")) {
-                Logger.logDebugMessage("Mapping deleted for port " + port);
+                LOG.debug("Mapping deleted for port " + port);
             } else {
-                Logger.logDebugMessage("Unable to delete mapping for port " + port);
+                LOG.debug("Unable to delete mapping for port " + port);
             }
         } catch (Exception exc) {
-            Logger.logErrorMessage("Unable to delete mapping for port " + port + ": " + exc.toString());
+            LOG.error("Unable to delete mapping for port " + port + ": " + exc.toString());
         }
     }
 
@@ -128,28 +132,28 @@ public class UPnP {
         // Discover the gateway devices on the local network
         //
         try {
-            Logger.logInfoMessage("Looking for UPnP gateway device...");
+            LOG.info("Looking for UPnP gateway device...");
             GatewayDevice.setHttpReadTimeout(Apl.getIntProperty("apl.upnpGatewayTimeout", GatewayDevice.getHttpReadTimeout()));
             GatewayDiscover discover = new GatewayDiscover();
             discover.setTimeout(Apl.getIntProperty("apl.upnpDiscoverTimeout", discover.getTimeout()));
             Map<InetAddress, GatewayDevice> gatewayMap = discover.discover();
             if (gatewayMap == null || gatewayMap.isEmpty()) {
-                Logger.logDebugMessage("There are no UPnP gateway devices");
+                LOG.debug("There are no UPnP gateway devices");
             } else {
                 gatewayMap.forEach((addr, device) ->
-                        Logger.logDebugMessage("UPnP gateway device found on " + addr.getHostAddress()));
+                        LOG.debug("UPnP gateway device found on " + addr.getHostAddress()));
                 gateway = discover.getValidGateway();
                 if (gateway == null) {
-                    Logger.logDebugMessage("There is no connected UPnP gateway device");
+                    LOG.debug("There is no connected UPnP gateway device");
                 } else {
                     localAddress = gateway.getLocalAddress();
                     externalAddress = InetAddress.getByName(gateway.getExternalIPAddress());
-                    Logger.logDebugMessage("Using UPnP gateway device on " + localAddress.getHostAddress());
-                    Logger.logInfoMessage("External IP address is " + externalAddress.getHostAddress());
+                    LOG.debug("Using UPnP gateway device on " + localAddress.getHostAddress());
+                    LOG.info("External IP address is " + externalAddress.getHostAddress());
                 }
             }
         } catch (Exception exc) {
-            Logger.logErrorMessage("Unable to discover UPnP gateway devices: " + exc.toString());
+            LOG.error("Unable to discover UPnP gateway devices: " + exc.toString());
         }
     }
 }

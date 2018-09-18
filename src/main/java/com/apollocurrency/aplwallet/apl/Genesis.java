@@ -22,11 +22,11 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +37,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Genesis {
+    private static final Logger LOG = getLogger(Genesis.class);
 
     private static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
@@ -80,7 +83,7 @@ public final class Genesis {
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         String loadingPublicKeysString = "Loading public keys";
-        Logger.logDebugMessage(loadingPublicKeysString);
+        LOG.debug(loadingPublicKeysString);
         Apl.getRuntimeMode().updateAppStatus(loadingPublicKeysString + "...");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
@@ -90,11 +93,11 @@ public final class Genesis {
                 Db.db.commitTransaction();
             }
         }
-        Logger.logDebugMessage("Loaded " + publicKeys.size() + " public keys");
+        LOG.debug("Loaded " + publicKeys.size() + " public keys");
         count = 0;
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
         String loadingAmountsString = "Loading genesis amounts";
-        Logger.logDebugMessage(loadingAmountsString);
+        LOG.debug(loadingAmountsString);
         Apl.getRuntimeMode().updateAppStatus(loadingAmountsString + "...");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
@@ -108,7 +111,7 @@ public final class Genesis {
         if (total > Constants.MAX_BALANCE_ATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_ATM);
         }
-        Logger.logDebugMessage("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.COIN_SYMBOL);
+        LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.COIN_SYMBOL);
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);

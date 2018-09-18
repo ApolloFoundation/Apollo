@@ -20,26 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Appendix;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NO_MESSAGE;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ReadMessage extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(ReadMessage.class);
 
     private static class ReadMessageHolder {
         private static final ReadMessage INSTANCE = new ReadMessage();
@@ -123,7 +119,7 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
                     }
                     response.put("decryptedMessage", Convert.toString(decrypted, isText));
                 } catch (RuntimeException e) {
-                    Logger.logDebugMessage("Decryption of message to recipient failed: " + e.toString());
+                    LOG.debug("Decryption of message to recipient failed: " + e.toString());
                     JSONData.putException(response, e, "Wrong secretPhrase or sharedKey");
                 }
             }
@@ -133,7 +129,7 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
                     byte[] decrypted = Account.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), secretPhrase, encryptToSelfMessage.isCompressed());
                     response.put("decryptedMessageToSelf", Convert.toString(decrypted, encryptToSelfMessage.isText()));
                 } catch (RuntimeException e) {
-                    Logger.logDebugMessage("Decryption of message to self failed: " + e.toString());
+                    LOG.debug("Decryption of message to self failed: " + e.toString());
                 }
             }
         }

@@ -24,16 +24,18 @@ import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DecryptFrom extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(DecryptFrom.class);
 
     private static class DecryptFromHolder {
         private static final DecryptFrom INSTANCE = new DecryptFrom();
@@ -66,7 +68,7 @@ public final class DecryptFrom extends APIServlet.APIRequestHandler {
             response.put("decryptedMessage", isText ? Convert.toString(decrypted) : Convert.toHexString(decrypted));
             return response;
         } catch (RuntimeException e) {
-            Logger.logDebugMessage(e.toString());
+            LOG.debug(e.toString());
             return DECRYPTION_FAILED;
         }
     }

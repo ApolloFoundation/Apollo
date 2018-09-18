@@ -21,23 +21,16 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.sql.*;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 final class BlockDb {
+    private static final Logger LOG = getLogger(BlockDb.class);
 
     /** Block cache */
     static final int BLOCK_CACHE_SIZE = 10;
@@ -324,7 +317,7 @@ final class BlockDb {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        Logger.logDebugMessage("Deleting blocks starting from height %s", height);
+        LOG.debug("Deleting blocks starting from height %s", height);
         BlockDb.deleteBlocksFrom(blockId);
     }
 
@@ -392,7 +385,7 @@ final class BlockDb {
             }
             return;
         }
-        Logger.logMessage("Deleting blockchain...");
+        LOG.info("Deleting blockchain...");
         try (Connection con = Db.db.getConnection();
              Statement stmt = con.createStatement()) {
             try {

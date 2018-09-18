@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -34,10 +33,8 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 public final class SignTransactionJSON {
-
     public static void main(String[] args) {
         try {
-            Logger.setLevel(Logger.Level.ERROR);
             if (args.length == 0 || args.length > 2) {
                 System.out.println("Usage: SignTransactionJSON <unsigned transaction json file> <signed transaction json file>");
                 System.exit(1);

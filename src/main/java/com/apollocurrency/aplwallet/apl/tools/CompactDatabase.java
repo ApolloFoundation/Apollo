@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +30,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Compact and reorganize the NRS database.  The NRS application must not be
@@ -44,6 +46,7 @@ import java.sql.Statement;
  *   java -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop com.apollocurrency.aplwallet.apl.tools.CompactDatabase
  */
 public class CompactDatabase {
+    private static final Logger LOG = getLogger(CompactDatabase.class);
 
     /**
      * Compact the NRS database
@@ -51,18 +54,12 @@ public class CompactDatabase {
      * @param   args                Command line arguments
      */
     public static void main(String[] args) {
-        //
-        // Initialize Apl properties and logging
-        //
-        Logger.init();
+        Apl.main(null);
         //
         // Compact the database
         //
         int exitCode = compactDatabase();
-        //
-        // Shutdown the logger and exit
-        //
-        Logger.shutdown();
+
         System.exit(exitCode);
     }
 
@@ -77,7 +74,7 @@ public class CompactDatabase {
         String dbPrefix = Constants.isTestnet ? "apl.testDb" : "apl.db";
         String dbType = Apl.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
-            Logger.logErrorMessage("Database type must be 'h2'");
+            LOG.error("Database type must be 'h2'");
             return 1;
         }
         String dbUrl = Apl.getStringProperty(dbPrefix + "Url");
@@ -101,7 +98,7 @@ public class CompactDatabase {
             pos = dbUrl.indexOf(':', pos+1);
         }
         if (pos < 0) {
-            Logger.logErrorMessage("Malformed database URL: " + dbUrl);
+            LOG.error("Malformed database URL: " + dbUrl);
             return 1;
         }
         String dbDir;
@@ -132,11 +129,11 @@ public class CompactDatabase {
             endPos = pos;
         }
         if (endPos < 0) {
-            Logger.logErrorMessage("Malformed database URL: " + dbUrl);
+            LOG.error("Malformed database URL: " + dbUrl);
             return 1;
         }
         dbDir = dbDir.substring(0, endPos);
-        Logger.logInfoMessage("Database directory is '" + dbDir + '"');
+        LOG.info("Database directory is '" + dbDir + '"');
         //
         // Create our files
         //
@@ -146,7 +143,7 @@ public class CompactDatabase {
         if (!dbFile.exists()) {
             dbFile = new File(dbDir, "apl.mv.db");
             if (!dbFile.exists()) {
-                Logger.logErrorMessage("NRS database not found");
+                LOG.error("NRS database not found");
                 return 1;
             }
         }
@@ -155,7 +152,7 @@ public class CompactDatabase {
             //
             // Create the SQL script
             //
-            Logger.logInfoMessage("Creating the SQL script");
+            LOG.info("Creating the SQL script");
             if (sqlFile.exists()) {
                 if (!sqlFile.delete()) {
                     throw new IOException(String.format("Unable to delete '%s'", sqlFile.getPath()));
@@ -168,7 +165,7 @@ public class CompactDatabase {
             //
             // Create the new database
             //
-            Logger.logInfoMessage("Creating the new database");
+            LOG.info("Creating the new database");
             if (!dbFile.renameTo(oldFile)) {
                 throw new IOException(String.format("Unable to rename '%s' to '%s'",
                                                     dbFile.getPath(), oldFile.getPath()));
@@ -183,9 +180,9 @@ public class CompactDatabase {
             // New database has been created
             //
             phase = 2;
-            Logger.logInfoMessage("Database successfully compacted");
+            LOG.info("Database successfully compacted");
         } catch (Throwable exc) {
-            Logger.logErrorMessage("Unable to compact the database", exc);
+            LOG.error("Unable to compact the database", exc);
             exitCode = 1;
         } finally {
             switch (phase) {
@@ -195,7 +192,7 @@ public class CompactDatabase {
                     //
                     if (sqlFile.exists()) {
                         if (!sqlFile.delete()) {
-                            Logger.logErrorMessage(String.format("Unable to delete '%s'", sqlFile.getPath()));
+                            LOG.error(String.format("Unable to delete '%s'", sqlFile.getPath()));
                         }
                     }
                     break;
@@ -206,18 +203,18 @@ public class CompactDatabase {
                     File newFile = new File(dbDir, "apl.h2.db");
                     if (newFile.exists()) {
                         if (!newFile.delete()) {
-                            Logger.logErrorMessage(String.format("Unable to delete '%s'", newFile.getPath()));
+                            LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
                         }
                     } else {
                         newFile = new File(dbDir, "apl.mv.db");
                         if (newFile.exists()) {
                             if (!newFile.delete()) {
-                                Logger.logErrorMessage(String.format("Unable to delete '%s'", newFile.getPath()));
+                                LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
                             }
                         }
                     }
                     if (!oldFile.renameTo(dbFile)) {
-                        Logger.logErrorMessage(String.format("Unable to rename '%s' to '%s'",
+                        LOG.error(String.format("Unable to rename '%s' to '%s'",
                                                              oldFile.getPath(), dbFile.getPath()));
                     }
                     break;
@@ -226,10 +223,10 @@ public class CompactDatabase {
                     // New database created
                     //
                     if (!sqlFile.delete()) {
-                        Logger.logErrorMessage(String.format("Unable to delete '%s'", sqlFile.getPath()));
+                        LOG.error(String.format("Unable to delete '%s'", sqlFile.getPath()));
                     }
                     if (!oldFile.delete()) {
-                        Logger.logErrorMessage(String.format("Unable to delete '%s'", oldFile.getPath()));
+                        LOG.error(String.format("Unable to delete '%s'", oldFile.getPath()));
                     }
                     break;
             }
@@ -242,7 +239,7 @@ public class CompactDatabase {
             return DriverManager.getConnection(url, user, password);
         }
         catch (SQLException e) {
-            Logger.logErrorMessage("Unable to connect to database", e);
+            LOG.error("Unable to connect to database", e);
         }
         return null;
     }

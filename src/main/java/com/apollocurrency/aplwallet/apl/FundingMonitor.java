@@ -25,18 +25,16 @@ import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Monitor account balances based on account properties
@@ -47,6 +45,8 @@ import java.util.concurrent.Semaphore;
  * interval.
  */
 public final class FundingMonitor {
+    private static final Logger LOG = getLogger(FundingMonitor.class);
+
 
     /** Minimum monitor amount */
     public static final long MIN_FUND_AMOUNT = 1;
@@ -272,7 +272,7 @@ public final class FundingMonitor {
                     throw new RuntimeException("Maximum of " + MAX_MONITORS + " monitors already started");
                 }
                 if (monitors.contains(monitor)) {
-                    Logger.logDebugMessage(String.format("%s monitor already started for account %s, property '%s', holding %s",
+                    LOG.debug(String.format("%s monitor already started for account %s, property '%s', holding %s",
                             holdingType.name(), monitor.accountName, property, Long.toUnsignedString(holdingId)));
                     return false;
                 }
@@ -284,13 +284,13 @@ public final class FundingMonitor {
                     }
                     activeList.add(account);
                     pendingEvents.add(account);
-                    Logger.logDebugMessage(String.format("Created %s monitor for target account %s, property '%s', holding %s, "
+                    LOG.debug(String.format("Created %s monitor for target account %s, property '%s', holding %s, "
                                     + "amount %d, threshold %d, interval %d",
                             holdingType.name(), account.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId),
                             account.amount, account.threshold, account.interval));
                 });
                 monitors.add(monitor);
-                Logger.logInfoMessage(String.format("%s monitor started for funding account %s, property '%s', holding %s",
+                LOG.info(String.format("%s monitor started for funding account %s, property '%s', holding %s",
                         holdingType.name(), monitor.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId)));
             }
         } finally {
@@ -361,7 +361,7 @@ public final class FundingMonitor {
             monitors.clear();
             accounts.clear();
         }
-        Logger.logInfoMessage("All monitors stopped");
+        LOG.info("All monitors stopped");
         return stopCount;
     }
 
@@ -413,7 +413,7 @@ public final class FundingMonitor {
                         }
                     }
                 }
-                Logger.logInfoMessage(String.format("%s monitor stopped for fund account %s, property '%s', holding %d",
+                LOG.info(String.format("%s monitor stopped for fund account %s, property '%s', holding %d",
                     holdingType.name(), monitor.accountName, monitor.property, monitor.holdingId));
             }
         }
@@ -497,10 +497,10 @@ public final class FundingMonitor {
             // All done
             //
             started = true;
-            Logger.logDebugMessage("Account monitor initialization completed");
+            LOG.debug("Account monitor initialization completed");
         } catch (RuntimeException exc) {
             stopped = true;
-            Logger.logErrorMessage("Account monitor initialization failed", exc);
+            LOG.error("Account monitor initialization failed", exc);
             throw exc;
         }
     }
@@ -554,7 +554,7 @@ public final class FundingMonitor {
          */
         @Override
         public void run() {
-            Logger.logDebugMessage("Account monitor thread started");
+            LOG.debug("Account monitor thread started");
             List<MonitoredAccount> suspendedEvents = new ArrayList<>();
             try {
                 while (true) {
@@ -563,7 +563,7 @@ public final class FundingMonitor {
                     //
                     processSemaphore.acquire();
                     if (stopped) {
-                        Logger.logDebugMessage("Account monitor thread stopped");
+                        LOG.debug("Account monitor thread stopped");
                         break;
                     }
                     MonitoredAccount monitoredAccount;
@@ -576,10 +576,10 @@ public final class FundingMonitor {
                                     suspendedEvents.add(monitoredAccount);
                                 }
                             } else if (targetAccount == null) {
-                                Logger.logErrorMessage(String.format("Monitored account %s no longer exists",
+                                LOG.error(String.format("Monitored account %s no longer exists",
                                         monitoredAccount.accountName));
                             } else if (fundingAccount == null) {
-                                Logger.logErrorMessage(String.format("Funding account %s no longer exists",
+                                LOG.error(String.format("Funding account %s no longer exists",
                                         monitoredAccount.monitor.accountName));
                             } else {
                                 switch (monitoredAccount.monitor.holdingType) {
@@ -595,7 +595,7 @@ public final class FundingMonitor {
                                 }
                             }
                         } catch (Exception exc) {
-                            Logger.logErrorMessage(String.format("Unable to process %s event for account %s, property '%s', holding %s",
+                            LOG.error(String.format("Unable to process %s event for account %s, property '%s', holding %s",
                                     monitoredAccount.monitor.holdingType.name(), monitoredAccount.accountName,
                                     monitoredAccount.monitor.property, Long.toUnsignedString(monitoredAccount.monitor.holdingId)), exc);
                         }
@@ -606,9 +606,9 @@ public final class FundingMonitor {
                     }
                 }
             } catch (InterruptedException exc) {
-                Logger.logDebugMessage("Account monitor thread interrupted");
+                LOG.debug("Account monitor thread interrupted");
             } catch (Throwable exc) {
-                Logger.logErrorMessage("Account monitor thread terminated", exc);
+                LOG.error("Account monitor thread terminated", exc);
             }
         }
     }
@@ -631,12 +631,12 @@ public final class FundingMonitor {
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
-                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
+                LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
                 Apl.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Apl.getBlockchain().getHeight();
-                Logger.logDebugMessage(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
+                LOG.debug(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
                         Constants.COIN_SYMBOL, transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
                         Constants.COIN_SYMBOL, monitor.accountName, monitoredAccount.accountName));
             }
@@ -657,7 +657,7 @@ public final class FundingMonitor {
         Account.AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
         Account.AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
-            Logger.logWarningMessage(
+            LOG.warn(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
@@ -668,12 +668,12 @@ public final class FundingMonitor {
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
-                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
+                LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
                 Apl.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Apl.getBlockchain().getHeight();
-                Logger.logDebugMessage(String.format("ASSET funding transaction %s submitted for %d units from %s to %s",
+                LOG.debug(String.format("ASSET funding transaction %s submitted for %d units from %s to %s",
                         transaction.getStringId(), monitoredAccount.amount,
                         monitor.accountName, monitoredAccount.accountName));
             }
@@ -694,7 +694,7 @@ public final class FundingMonitor {
         Account.AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
         Account.AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.amount) {
-            Logger.logWarningMessage(
+            LOG.warn(
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
@@ -705,12 +705,12 @@ public final class FundingMonitor {
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
             Transaction transaction = builder.build(monitor.secretPhrase);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
-                Logger.logWarningMessage(String.format("Funding account %s has insufficient funds; funding transaction discarded",
+                LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
             } else {
                 Apl.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Apl.getBlockchain().getHeight();
-                Logger.logDebugMessage(String.format("CURRENCY funding transaction %s submitted for %d units from %s to %s",
+                LOG.debug(String.format("CURRENCY funding transaction %s submitted for %d units from %s to %s",
                         transaction.getStringId(), monitoredAccount.amount,
                         monitor.accountName, monitoredAccount.accountName));
             }
@@ -954,7 +954,7 @@ public final class FundingMonitor {
                                 account.threshold = newAccount.threshold;
                                 account.interval = newAccount.interval;
                                 pendingEvents.add(account);
-                                Logger.logDebugMessage(
+                                LOG.debug(
                                         String.format("Updated %s monitor for account %s, property '%s', holding %s, "
                                                 + "amount %d, threshold %d, interval %d",
                                                 account.monitor.holdingType.name(), account.accountName,
@@ -977,7 +977,7 @@ public final class FundingMonitor {
                                 }
                                 accountList.add(account);
                                 pendingEvents.add(account);
-                                Logger.logDebugMessage(
+                                LOG.debug(
                                         String.format("Created %s monitor for account %s, property '%s', holding %s, "
                                                 + "amount %d, threshold %d, interval %d",
                                                 monitor.holdingType.name(), account.accountName,
@@ -988,7 +988,7 @@ public final class FundingMonitor {
                     }
                 }
             } catch (Exception exc) {
-                Logger.logErrorMessage("Unable to process SET_PROPERTY event for account " + Convert.rsAccount(accountId), exc);
+                LOG.error("Unable to process SET_PROPERTY event for account " + Convert.rsAccount(accountId), exc);
             }
         }
     }
@@ -1017,7 +1017,7 @@ public final class FundingMonitor {
                         MonitoredAccount account = it.next();
                         if (account.monitor.property.equals(property.getProperty())) {
                             it.remove();
-                            Logger.logDebugMessage(
+                            LOG.debug(
                                     String.format("Deleted %s monitor for account %s, property '%s', holding %s",
                                             account.monitor.holdingType.name(), account.accountName,
                                             property.getProperty(), Long.toUnsignedString(account.monitor.holdingId)));

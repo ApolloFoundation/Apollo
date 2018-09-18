@@ -25,25 +25,19 @@ import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.sql.*;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Maintain a ledger of changes to selected accounts
  */
 public class AccountLedger {
+        private static final Logger LOG = getLogger(AccountLedger.class);
+
 
     /** Account ledger is enabled */
     private static final boolean ledgerEnabled;
@@ -78,19 +72,19 @@ public class AccountLedger {
         trackAllAccounts = ledgerAccounts.contains("*");
         if (ledgerEnabled) {
             if (trackAllAccounts) {
-                Logger.logInfoMessage("Account ledger is tracking all accounts");
+                LOG.info("Account ledger is tracking all accounts");
             } else {
                 for (String account : ledgerAccounts) {
                     try {
                         trackAccounts.add(Convert.parseAccountId(account));
-                        Logger.logInfoMessage("Account ledger is tracking account " + account);
+                        LOG.info("Account ledger is tracking account " + account);
                     } catch (RuntimeException e) {
-                        Logger.logErrorMessage("Account " + account + " is not valid; ignored");
+                        LOG.error("Account " + account + " is not valid; ignored");
                     }
                 }
             }
         } else {
-            Logger.logInfoMessage("Account ledger is not enabled");
+            LOG.info("Account ledger is not enabled");
         }
         int temp = Apl.getIntProperty("apl.ledgerLogUnconfirmed", 1);
         logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);

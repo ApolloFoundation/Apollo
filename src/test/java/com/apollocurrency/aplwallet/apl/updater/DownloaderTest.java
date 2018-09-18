@@ -8,13 +8,13 @@ import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.slf4j.Logger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
@@ -22,9 +22,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
 public class DownloaderTest {
+        private static final Logger LOG = getLogger(DownloaderTest.class);
 
     /**
      * Pre-calculated sha256 of "test-downloader-payload";

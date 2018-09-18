@@ -20,15 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
-import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
+    private static final Logger LOG = getLogger(GetMilestoneBlockIds.class);
+
 
     private static class GetMilestoneBlockIdsHolder {
         private static final GetMilestoneBlockIds INSTANCE = new GetMilestoneBlockIds();
@@ -95,7 +99,7 @@ final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
             response.put("milestoneBlockIds", milestoneBlockIds);
 
         } catch (RuntimeException e) {
-            Logger.logDebugMessage(e.toString());
+            LOG.debug(e.toString());
             return PeerServlet.error(e);
         }
 

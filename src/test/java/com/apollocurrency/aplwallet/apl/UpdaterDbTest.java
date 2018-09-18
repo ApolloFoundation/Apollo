@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,7 +29,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class, Logger.class})
+@PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class})
 @SuppressStaticInitializationFor({"com.apollocurrency.aplwallet.apl.Db","com.apollocurrency.aplwallet.apl.util.Logger", "com.apollocurrency.aplwallet.apl.db.TransactionalDb","com.apollocurrency" +
         ".aplwallet.apl.Constants", "com" +
         ".apollocurrency" +
@@ -47,7 +46,6 @@ public class UpdaterDbTest {
                 .build();
         mockStatic(Apl.class);
         mockStatic(Db.class);
-        mockStatic(Logger.class);
         mockStatic(TransactionalDb.class);
         mockStatic(Constants.class);
         TransactionalDb fakeDb = mock(TransactionalDb.class);

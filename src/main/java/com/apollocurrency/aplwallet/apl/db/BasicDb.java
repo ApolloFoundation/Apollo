@@ -21,14 +21,17 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.h2.jdbcx.JdbcConnectionPool;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class BasicDb {
+        private static final Logger LOG = getLogger(BasicDb.class);
 
     public static final class DbProperties {
 
@@ -154,7 +157,7 @@ public class BasicDb {
     }
 
     public void init(DbVersion dbVersion) {
-        Logger.logDebugMessage("Database jdbc url set to %s username %s", dbUrl, dbUsername);
+        LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         FullTextTrigger.setActive(true);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
@@ -179,9 +182,9 @@ public class BasicDb {
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
-            Logger.logShutdownMessage("Database shutdown completed");
+            LOG.info("Database shutdown completed");
         } catch (SQLException e) {
-            Logger.logShutdownMessage(e.toString(), e);
+            LOG.info(e.toString(), e);
         }
     }
 
@@ -205,7 +208,7 @@ public class BasicDb {
         int activeConnections = cp.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            Logger.logDebugMessage("Database connection pool current size: " + activeConnections);
+            LOG.debug("Database connection pool current size: " + activeConnections);
         }
         return con;
     }

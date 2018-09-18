@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
@@ -27,11 +29,9 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * <p>The EncodeQRCode API converts a UTF-8 string to a base64-encoded
@@ -82,6 +84,8 @@ import java.util.Map;
  */
 
 public final class EncodeQRCode extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(EncodeQRCode.class);
+
 
     private static class EncodeQRCodeHolder {
         private static final EncodeQRCode INSTANCE = new EncodeQRCode();
@@ -128,7 +132,7 @@ public final class EncodeQRCode extends APIServlet.APIRequestHandler {
             response.put("qrCodeBase64", base64);
         } catch(WriterException|IOException ex) {
             String errorMessage = "Error creating image from qrCodeData";
-            Logger.logErrorMessage(errorMessage, ex);
+            LOG.error(errorMessage, ex);
             JSONData.putException(response, ex, errorMessage);
         }
         return response;

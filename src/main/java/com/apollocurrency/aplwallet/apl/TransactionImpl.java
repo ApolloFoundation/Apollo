@@ -24,20 +24,18 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class TransactionImpl implements Transaction {
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
     static final class BuilderImpl implements Builder {
 
@@ -632,7 +630,7 @@ final class TransactionImpl implements Transaction {
                 bytes = buffer.array();
             } catch (RuntimeException e) {
                 if (signature != null) {
-                    Logger.logDebugMessage("Failed to get transaction bytes for transaction: " + getJSONObject().toJSONString());
+                    LOG.debug("Failed to get transaction bytes for transaction: " + getJSONObject().toJSONString());
                 }
                 throw e;
             }
@@ -713,7 +711,7 @@ final class TransactionImpl implements Transaction {
             }
             return builder;
         } catch (AplException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
+            LOG.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
             throw e;
         }
     }
@@ -852,7 +850,7 @@ final class TransactionImpl implements Transaction {
             }
             return builder;
         } catch (AplException.NotValidException|RuntimeException e) {
-            Logger.logDebugMessage("Failed to parse transaction: " + transactionData.toJSONString());
+            LOG.debug("Failed to parse transaction: " + transactionData.toJSONString());
             throw e;
         }
     }

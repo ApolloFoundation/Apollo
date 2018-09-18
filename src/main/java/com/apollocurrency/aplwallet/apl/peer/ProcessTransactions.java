@@ -25,8 +25,12 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 final class ProcessTransactions extends PeerServlet.PeerRequestHandler {
+    private static final Logger LOG = getLogger(ProcessTransactions.class);
 
     private static class ProcessTransactionsHolder {
         private static final ProcessTransactions INSTANCE = new ProcessTransactions();
@@ -46,7 +50,7 @@ final class ProcessTransactions extends PeerServlet.PeerRequestHandler {
             Apl.getTransactionProcessor().processPeerTransactions(request);
             return JSON.emptyJSON;
         } catch (RuntimeException | AplException.ValidationException e) {
-            //Logger.logDebugMessage("Failed to parse peer transactions: " + request.toJSONString());
+            //LOG.debug("Failed to parse peer transactions: " + request.toJSONString());
             peer.blacklist(e);
             return PeerServlet.error(e);
         }

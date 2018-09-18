@@ -22,11 +22,14 @@ package com.apollocurrency.aplwallet.apl.addons;
 
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class BeforeShutdown implements AddOn {
+        private static final Logger LOG = getLogger(BeforeShutdown.class);
 
     final String beforeShutdownScript = Apl.getStringProperty("apl.beforeShutdownScript");
 
@@ -36,13 +39,13 @@ public final class BeforeShutdown implements AddOn {
             try {
                 Runtime.getRuntime().exec(beforeShutdownScript);
             } catch (Exception e) {
-                Logger.logShutdownMessage("Failed to run before shutdown script: " + beforeShutdownScript, e);
+                LOG.info("Failed to run before shutdown script: " + beforeShutdownScript, e);
             }
         }
     }
 
     @Override
     public void processRequest(Map<String, String> params) {
-        Logger.logInfoMessage("Shutdown:", params.get("shutdownMessage"));
+        LOG.info("Shutdown:", params.get("shutdownMessage"));
     }
 }

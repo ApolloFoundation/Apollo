@@ -20,15 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
+    private static final Logger LOG = getLogger(PrunableDbTable.class);
 
     protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
@@ -61,7 +64,7 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
                 do {
                     deleted = pstmt.executeUpdate();
                     if (deleted > 0) {
-                        Logger.logDebugMessage("Deleted " + deleted + " expired prunable data from " + table);
+                        LOG.debug("Deleted " + deleted + " expired prunable data from " + table);
                     }
                     db.commitTransaction();
                 } while (deleted >= Constants.BATCH_COMMIT_SIZE);
