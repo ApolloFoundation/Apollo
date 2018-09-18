@@ -57,7 +57,7 @@ class WalletContextMenu implements EventHandler<ContextMenuEvent> {
                             ContextMenuContent cmc = (ContextMenuContent) ((Parent) bridge).getChildrenUnmodifiable().get(0);
                             VBox itemsContainer = cmc.getItemsContainer();
                             for (Node node : itemsContainer.getChildren()) {
-                                ContextMenuContent.MenuItemContainer item = (ContextMenuContent.MenuItemContainer)node;
+                                ContextMenuContent.MenuItemContainer item = (ContextMenuContent.MenuItemContainer) node;
                                 if (item.getItem().getText().equals("Copy")) {
                                     return;
                                 }

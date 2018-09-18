@@ -52,8 +52,7 @@ public class NodeClient {
         try {
             CLIENT.setConnectTimeout(15_000);
             CLIENT.start();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Http CLIENT could not initialized.", e);
             System.exit(0);
         }
@@ -76,8 +75,7 @@ public class NodeClient {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
             }
             return response.getContentAsString();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Cannot perform getRequest to " + uri.toString(), e);
         }
         return null;
@@ -95,8 +93,7 @@ public class NodeClient {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
             }
             return response.getContentAsString();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Cannot perform postRequest to " + uri.toString() + "/" + uri.getPath(), e);
         }
         return null;
@@ -121,7 +118,8 @@ public class NodeClient {
         String json = getPeers(url);
         JsonNode root = MAPPER.readTree(json);
         JsonNode peersArray = root.get("peers");
-        return MAPPER.readValue(peersArray.toString(), new TypeReference<List<Peer>>() {});
+        return MAPPER.readValue(peersArray.toString(), new TypeReference<List<Peer>>() {
+        });
     }
 
     public String getBlocks(String url, int from, int to, boolean includeTransactions, Long timestamp) {
@@ -169,7 +167,7 @@ public class NodeClient {
         if (subtype >= 0) {
             params.put("subtype", String.valueOf(subtype));
         }
-        String json =  getJson(uri, params);
+        String json = getJson(uri, params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode transactionsArray = root.get("transactions");
         try {
@@ -196,7 +194,8 @@ public class NodeClient {
         String json = getJson(uri, params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode peersArray = root.get("peers");
-        return MAPPER.readValue(peersArray.toString(), new TypeReference<List<String>>() {});
+        return MAPPER.readValue(peersArray.toString(), new TypeReference<List<String>>() {
+        });
     }
 
     public int getPeersCount(String url) throws ParseException {
@@ -288,7 +287,8 @@ public class NodeClient {
         String json = getBlocks(url, 0, 4, includeTransactions, timestamp);
         JsonNode root = MAPPER.readTree(json);
         JsonNode blocksArray = root.get("blocks");
-        return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {});
+        return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {
+        });
     }
 
     public String sendMoney(String url, String secretPhrase, String recipient, Long amountATM) {
@@ -395,7 +395,8 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("entries");
-        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {
+        });
     }
 
     public List<JSONTransaction> getUnconfirmedTransactions(String url, String rsAddress, int from, int to) throws
@@ -430,7 +431,8 @@ public class NodeClient {
         String json = getJson(createURI(url), parameters);
         JsonNode root = MAPPER.readTree(json);
         JsonNode entriesArray = root.get("entries");
-        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {});
+        return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<LedgerEntry>>() {
+        });
     }
 
     public JSONTransaction getPrivateTransaction(String url, String secretPhrase, String fullHash, String transactionId) throws IOException {
@@ -459,22 +461,22 @@ public class NodeClient {
     }
 
     public LedgerEntry getAccountLedgerEntry(String url, Long ledgerId, Boolean includeTransaction) throws IOException {
-            Map<String, String> parameters = new HashMap<>();
-            parameters.put("requestType", "getAccountLedgerEntry");
-            parameters.put("ledgerId", ledgerId.toString());
-            parameters.put("includeTransaction", includeTransaction.toString());
-            String json = getJson(createURI(url), parameters);
-            return MAPPER.readValue(json, LedgerEntry.class);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getAccountLedgerEntry");
+        parameters.put("ledgerId", ledgerId.toString());
+        parameters.put("includeTransaction", includeTransaction.toString());
+        String json = getJson(createURI(url), parameters);
+        return MAPPER.readValue(json, LedgerEntry.class);
     }
 
     public LedgerEntry getPrivateAccountLedgerEntry(String url, String secretPhrase, Long ledgerId, Boolean includeTransaction) throws IOException {
-            Map<String, String> parameters = new HashMap<>();
-            parameters.put("requestType", "getPrivateAccountLedgerEntry");
-            parameters.put("ledgerId", ledgerId.toString());
-            parameters.put("secretPhrase", secretPhrase);
-            parameters.put("includeTransaction", includeTransaction.toString());
-            String json = getJson(createURI(url), parameters);
-            return MAPPER.readValue(json, LedgerEntry.class);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "getPrivateAccountLedgerEntry");
+        parameters.put("ledgerId", ledgerId.toString());
+        parameters.put("secretPhrase", secretPhrase);
+        parameters.put("includeTransaction", includeTransaction.toString());
+        String json = getJson(createURI(url), parameters);
+        return MAPPER.readValue(json, LedgerEntry.class);
     }
 
 
@@ -482,7 +484,7 @@ public class NodeClient {
         return sendForgingRequest(url, secretPhrase, "startForging", null);
     }
 
-    private String sendForgingRequest(String url, String secretPhrase, String requestType,String adminPassword) throws IOException {
+    private String sendForgingRequest(String url, String secretPhrase, String requestType, String adminPassword) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", requestType);
         if (secretPhrase != null) {
@@ -499,7 +501,8 @@ public class NodeClient {
         String json = sendForgingRequest(url, secretPhrase, "getForging", adminPassword);
         JsonNode root = MAPPER.readTree(json);
         JsonNode gereratorsArray = root.get("generators");
-        return MAPPER.readValue(gereratorsArray.toString(), new TypeReference<List<ForgingDetails>>() {});
+        return MAPPER.readValue(gereratorsArray.toString(), new TypeReference<List<ForgingDetails>>() {
+        });
     }
 
     public String stopForging(String url, String secretPhrase) throws IOException {

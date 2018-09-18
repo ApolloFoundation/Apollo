@@ -69,7 +69,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
     }
 
     private PublishExchangeOffer() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",
                 "totalBuyLimit", "totalSellLimit", "initialBuySupply", "initialSellSupply", "expirationHeight");
     }
 
@@ -77,7 +77,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
         long buyRateATM = ParameterParser.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
-        long sellRateATM= ParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
+        long sellRateATM = ParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
         long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
         long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
         long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);

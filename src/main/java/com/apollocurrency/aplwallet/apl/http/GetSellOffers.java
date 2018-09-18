@@ -40,7 +40,7 @@ public final class GetSellOffers extends APIServlet.APIRequestHandler {
     }
 
     private GetSellOffers() {
-        super(new APITag[] {APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class GetSellOffers extends APIServlet.APIRequestHandler {
         JSONArray offerData = new JSONArray();
         response.put("offers", offerData);
 
-        DbIterator<CurrencySellOffer> offers= null;
+        DbIterator<CurrencySellOffer> offers = null;
         try {
             if (accountId == 0) {
                 offers = CurrencySellOffer.getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);

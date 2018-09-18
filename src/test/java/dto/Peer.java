@@ -131,14 +131,14 @@ public class Peer {
     @Override
     public String toString() {
         return "Peer{" +
-            "address='" + address + '\'' +
-            ", blockchainState=" + blockchainState +
-            ", lastUpdated=" + lastUpdated +
-            ", blacklisted=" + blacklisted +
-            ", announcedAddress='" + announcedAddress + '\'' +
-            ", apiPort=" + apiPort +
-            ", port=" + port +
-            '}';
+                "address='" + address + '\'' +
+                ", blockchainState=" + blockchainState +
+                ", lastUpdated=" + lastUpdated +
+                ", blacklisted=" + blacklisted +
+                ", announcedAddress='" + announcedAddress + '\'' +
+                ", apiPort=" + apiPort +
+                ", port=" + port +
+                '}';
     }
 
     public void setAnnouncedAddress(String announcedAddress) {

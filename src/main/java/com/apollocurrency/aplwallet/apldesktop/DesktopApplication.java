@@ -104,7 +104,7 @@ public class DesktopApplication extends Application {
     }
 
     public static void updateSplashScreenStatus(String newStatus) {
-         SPLASH_SCREEN.setLastStatus(newStatus);
+        SPLASH_SCREEN.setLastStatus(newStatus);
     }
 
     //rewrite (start on existing stage)
@@ -144,7 +144,7 @@ public class DesktopApplication extends Application {
     @SuppressWarnings("unused")
     public static void shutdown() {
         System.out.println("shutting down JavaFX platform");
-        Platform.runLater(()-> {
+        Platform.runLater(() -> {
             if (screenStage.isShowing()) {
                 screenStage.close();
             }
@@ -177,7 +177,8 @@ public class DesktopApplication extends Application {
         private AtomicBoolean shutdown = new AtomicBoolean(false);
         private volatile String lastStatus;
 
-        private SplashScreen() {}
+        private SplashScreen() {
+        }
 
         public static SplashScreen getInstance() {
             return instance;
@@ -252,7 +253,8 @@ public class DesktopApplication extends Application {
         private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
 
-        private MainApplication() {}
+        private MainApplication() {
+        }
 
         public static void refresh() {
             Platform.runLater(() -> showStage(true));
@@ -447,8 +449,7 @@ public class DesktopApplication extends Application {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
                         }
-                    }
-                    catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -472,8 +473,7 @@ public class DesktopApplication extends Application {
                             growl("Pruned message not currently available from any peer");
                             return;
                         }
-                    }
-                    catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -521,8 +521,7 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
             }
         }
@@ -550,7 +549,8 @@ public class DesktopApplication extends Application {
     private static class DbRecoveringUI {
         private static DbRecoveringUI instance = new DbRecoveringUI();
 
-        private DbRecoveringUI() {}
+        private DbRecoveringUI() {
+        }
 
         public static DbRecoveringUI getInstance() {
             return instance;

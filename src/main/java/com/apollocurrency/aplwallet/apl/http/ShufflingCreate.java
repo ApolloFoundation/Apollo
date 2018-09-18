@@ -40,7 +40,7 @@ public final class ShufflingCreate extends CreateTransaction {
     }
 
     private ShufflingCreate() {
-        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
+        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
                 "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }
 
@@ -54,7 +54,7 @@ public final class ShufflingCreate extends CreateTransaction {
         }
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
-        short registrationPeriod = (short)ParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
+        short registrationPeriod = (short) ParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
         Attachment attachment = new Attachment.ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
         Account account = ParameterParser.getSenderAccount(req);
         if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {

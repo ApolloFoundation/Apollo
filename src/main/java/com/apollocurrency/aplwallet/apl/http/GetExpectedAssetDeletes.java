@@ -44,7 +44,7 @@ public final class GetExpectedAssetDeletes extends APIServlet.APIRequestHandler 
     }
 
     private GetExpectedAssetDeletes() {
-        super(new APITag[] {APITag.AE}, "asset", "account", "includeAssetInfo");
+        super(new APITag[]{APITag.AE}, "asset", "account", "includeAssetInfo");
     }
 
     @Override
@@ -61,7 +61,7 @@ public final class GetExpectedAssetDeletes extends APIServlet.APIRequestHandler 
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
+            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

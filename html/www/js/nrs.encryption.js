@@ -1,17 +1,21 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2013-2016 The Nxt Core Developers.                             *
  * Copyright © 2016-2017 Jelurida IP B.V.                                     *
- * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
- * no part of the Apl software, including this file, may be copied, modified, *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
+ * no part of the Nxt software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
  *                                                                            *
  * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+ /******************************************************************************
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  ******************************************************************************/
 
@@ -761,7 +765,11 @@ var NRS = (function (NRS, $) {
         return decryptData(data, options);
 	};
 
-	function decryptData(data, options) {
+    NRS.decryptDataJava = function(data, options) {
+        return decryptDataJava(data, options);
+    };
+
+    function decryptDataJava(data, options) {
 		if (!options.sharedKey) {
 			options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
@@ -796,6 +804,25 @@ var NRS = (function (NRS, $) {
 
         return { message: message, sharedKey: converters.byteArrayToHexString(result.sharedKey) };
 	}
+
+    function decryptData(data, options) {
+        if (!options.sharedKey) {
+            options.sharedKey = getSharedSecret(options.privateKey, options.publicKey);
+        }
+
+        var result = aesDecrypt(data, options);
+        var binData = new Uint8Array(result.decrypted);
+        if (!(options.isCompressed === false)) {
+            binData = pako.inflate(binData);
+        }
+        var message;
+        if (!(options.isText === false)) {
+            message = converters.byteArrayToString(binData);
+        } else {
+            message = converters.byteArrayToHexString(binData);
+        }
+        return { message: message, sharedKey: converters.byteArrayToHexString(result.sharedKey) };
+    }
 
 	function getSharedSecret(key1, key2) {
         return converters.shortArrayToByteArray(curve25519_(converters.byteArrayToShortArray(key1), converters.byteArrayToShortArray(key2), null));

@@ -44,7 +44,7 @@ public final class GetExpectedExchangeRequests extends APIServlet.APIRequestHand
     }
 
     private GetExpectedExchangeRequests() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.MS}, "account", "currency", "includeCurrencyInfo");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.MS}, "account", "currency", "includeCurrencyInfo");
     }
 
     @Override
@@ -61,7 +61,7 @@ public final class GetExpectedExchangeRequests extends APIServlet.APIRequestHand
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange)transaction.getAttachment();
+            Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange) transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

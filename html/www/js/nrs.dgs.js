@@ -1,17 +1,21 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2013-2016 The Nxt Core Developers.                             *
  * Copyright © 2016-2017 Jelurida IP B.V.                                     *
- * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
- * no part of the Apl software, including this file, may be copied, modified, *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
+ * no part of the Nxt software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
  *                                                                            *
  * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+ /******************************************************************************
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  ******************************************************************************/
 
@@ -25,59 +29,66 @@ var NRS = (function(NRS, $) {
 		"page": "",
 		"searchStr": ""
 	};
+
+	NRS.bannedTransactions = [
+        4856879561128596338
+	];
+
     var missingImage = "img/no_image_available.png";
     NRS.dgsLoader = function() {
         console.log('loaded dgs');
     };
 	NRS.getMarketplaceItemHTML = function(good) {
-		var html = "";
-		var id = 'good_'+ NRS.escapeRespStr(good.goods);
-        var image = NRS.dgs_get_picture(good);
-		html += '<div id="' + id +'" style="border:1px solid #ccc;padding:12px;margin-top:12px;margin-bottom:12px;">';
-			html += "<table width='100%' style='table-layout:fixed;'>";
-				html += "<tr>";
-					html += "<td rowspan =20 style='vertical-align:top;width:100px;height:100px;'>";
-						html += image;
-					html += "</td>";
-					html += "<td style='width:10px'>&nbsp;</td>";
-					html += "<td>";
-						html += "<div style='float:right;color: #999999;background:white;padding:5px;border:1px solid #ccc;border-radius:3px'>";
-							html += "<strong>" + $.t("seller") + '</strong>: <span><a href="#" onclick="event.preventDefault();NRS.dgs_search_seller(\'' + NRS.getAccountFormatted(good, "seller") + '\')">' + NRS.getAccountTitle(good, "seller") + "</a></span> ";
-							html += "(<a href='#' data-user='" + NRS.getAccountFormatted(good, "seller") + "' class='show_account_modal_action user_info'>" + $.t('info') + "</a>)<br>";
-							html += "<strong>" + $.t("product_id") + "</strong>: &nbsp;<a href='#'' data-toggle='modal' data-target='#dgs_product_modal' data-goods='" + NRS.escapeRespStr(good.goods) + "'>" + NRS.escapeRespStr(good.goods) + "</a><br>";
-							html += "<strong>" + $.t("timestamp_listing") + "</strong>: " + NRS.formatTimestamp(good.timestamp);
-        				html += "</div>";
-						html += "<div><h3 class='title'><a href='#' data-goods='" + NRS.escapeRespStr(good.goods) + "' data-toggle='modal' data-target='#dgs_purchase_modal'>" + NRS.escapeRespStr(good.name) + "</a></h3></div>";
-						html += "<div class='price'><strong>" + NRS.formatAmount(good.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</strong></div>";
-						html += "<div class='showmore'><div class='moreblock description'>" + String(good.description).autoLink().nl2br() + "</div>";
-							if (good.numberOfPublicFeedbacks > 0) {
-								html += "<span style='float:right;clear:right;'><a href='#' class='feedback' data-goods='" + NRS.escapeRespStr(good.goods) + "' data-toggle='modal' data-target='#dgs_show_feedback_modal'>" + $.t('show_feedback', 'Show Feedback') + "</a></span>";
-							}
-						html += "</div>";
-						html += "<div>";
-							html += "<span class='quantity'><strong>" + $.t("quantity") + "</strong>: " + NRS.format(good.quantity) + "</span>&nbsp;&nbsp; ";
-							html += "<span class='tags' style='display:inline-block;'><strong>" + $.t("tags") + "</strong>: ";
+		if (NRS.bannedTransactions.infexOf(good.goods) === -1) {
+            var html = "";
+            var id = 'good_'+ NRS.escapeRespStr(good.goods);
+            var image = NRS.dgs_get_picture(good);
+            html += '<div id="' + id +'" style="border:1px solid #ccc;padding:12px;margin-top:12px;margin-bottom:12px;">';
+            html += "<table width='100%' style='table-layout:fixed;'>";
+            html += "<tr>";
+            html += "<td rowspan =20 style='vertical-align:top;width:100px;height:100px;'>";
+            html += image;
+            html += "</td>";
+            html += "<td style='width:10px'>&nbsp;</td>";
+            html += "<td>";
+            html += "<div style='float:right;color: #999999;background:white;padding:5px;border:1px solid #ccc;border-radius:3px'>";
+            html += "<strong>" + $.t("seller") + '</strong>: <span><a href="#" onclick="event.preventDefault();NRS.dgs_search_seller(\'' + NRS.getAccountFormatted(good, "seller") + '\')">' + NRS.getAccountTitle(good, "seller") + "</a></span> ";
+            html += "(<a href='#' data-user='" + NRS.getAccountFormatted(good, "seller") + "' class='show_account_modal_action user_info'>" + $.t('info') + "</a>)<br>";
+            html += "<strong>" + $.t("product_id") + "</strong>: &nbsp;<a href='#'' data-toggle='modal' data-target='#dgs_product_modal' data-goods='" + NRS.escapeRespStr(good.goods) + "'>" + NRS.escapeRespStr(good.goods) + "</a><br>";
+            html += "<strong>" + $.t("timestamp_listing") + "</strong>: " + NRS.formatTimestamp(good.timestamp);
+            html += "</div>";
+            html += "<div><h3 class='title'><a href='#' data-goods='" + NRS.escapeRespStr(good.goods) + "' data-toggle='modal' data-target='#dgs_purchase_modal'>" + NRS.escapeRespStr(good.name) + "</a></h3></div>";
+            html += "<div class='price'><strong>" + NRS.formatAmount(good.priceATM) + " " + NRS.constants.COIN_SYMBOL + "</strong></div>";
+            html += "<div class='showmore'><div class='moreblock description'>" + String(good.description).autoLink().nl2br() + "</div>";
+            if (good.numberOfPublicFeedbacks > 0) {
+                html += "<span style='float:right;clear:right;'><a href='#' class='feedback' data-goods='" + NRS.escapeRespStr(good.goods) + "' data-toggle='modal' data-target='#dgs_show_feedback_modal'>" + $.t('show_feedback', 'Show Feedback') + "</a></span>";
+            }
+            html += "</div>";
+            html += "<div>";
+            html += "<span class='quantity'><strong>" + $.t("quantity") + "</strong>: " + NRS.format(good.quantity) + "</span>&nbsp;&nbsp; ";
+            html += "<span class='tags' style='display:inline-block;'><strong>" + $.t("tags") + "</strong>: ";
 
-							var tags = good.parsedTags;
-							for (var i=0; i<tags.length; i++) {
-								html += '<span style="display:inline-block;background-color:#fff;padding:2px 5px 2px 5px;border:1px solid #f2f2f2;">';
-								html += '<a href="#" class="tags" onclick="event.preventDefault(); NRS.dgs_search_tag(\'' + NRS.escapeRespStr(tags[i]) + '\');">';
-								html += NRS.escapeRespStr(tags[i]) + '</a>';
-								html += '</span>';
-							}
+            var tags = good.parsedTags;
+            for (var i=0; i<tags.length; i++) {
+                html += '<span style="display:inline-block;background-color:#fff;padding:2px 5px 2px 5px;border:1px solid #f2f2f2;">';
+                html += '<a href="#" class="tags" onclick="event.preventDefault(); NRS.dgs_search_tag(\'' + NRS.escapeRespStr(tags[i]) + '\');">';
+                html += NRS.escapeRespStr(tags[i]) + '</a>';
+                html += '</span>';
+            }
 
-							html += "</span>";
+            html += "</span>";
 
-							if (good.numberOfPurchases>0) {
-								html +=	"<span class='purchases' style='float:right;clear:right;'><strong>" + $.t("purchases", "Purchases") + "</strong>: " + NRS.format(good.numberOfPurchases) + "</span>";
-							}
+            if (good.numberOfPurchases>0) {
+                html +=	"<span class='purchases' style='float:right;clear:right;'><strong>" + $.t("purchases", "Purchases") + "</strong>: " + NRS.format(good.numberOfPurchases) + "</span>";
+            }
 
-						html += '</div>';
-					html += "</td>";
-				html += "</tr>";
-			html += "</table>";
-        html += '</div>';
-		return html;
+            html += '</div>';
+            html += "</td>";
+            html += "</tr>";
+            html += "</table>";
+            html += '</div>';
+            return html;
+		}
 	};
 
 	NRS.getMarketplacePurchaseHTML = function(purchase, showBuyer) {

@@ -61,11 +61,11 @@ public final class VerifyTaggedData extends APIServlet.APIRequestHandler {
         Attachment.TaggedDataUpload taggedData = ParameterParser.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
-        if (! (attachment instanceof Attachment.TaggedDataUpload)) {
+        if (!(attachment instanceof Attachment.TaggedDataUpload)) {
             return INCORRECT_TRANSACTION;
         }
 
-        Attachment.TaggedDataUpload myTaggedData = (Attachment.TaggedDataUpload)attachment;
+        Attachment.TaggedDataUpload myTaggedData = (Attachment.TaggedDataUpload) attachment;
         if (!Arrays.equals(myTaggedData.getHash(), taggedData.getHash())) {
             return HASHES_MISMATCH;
         }

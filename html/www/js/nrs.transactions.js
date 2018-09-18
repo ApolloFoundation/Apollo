@@ -1,17 +1,21 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2013-2016 The Nxt Core Developers.                             *
  * Copyright © 2016-2017 Jelurida IP B.V.                                     *
- * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation *
- * no part of the Apl software, including this file, may be copied, modified, *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
+ * no part of the Nxt software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
  *                                                                            *
  * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+ /******************************************************************************
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  ******************************************************************************/
 
@@ -46,6 +50,7 @@ var NRS = (function(NRS, $, undefined) {
 		this.privateKey = null;
 		this.sharedKey = null;
 		this.serverKey = null;
+		this.blockHeight = null;
 
         $(this.target).parent().find('[data-transactions-pagination]').click(function(e) {
 
@@ -208,7 +213,7 @@ var NRS = (function(NRS, $, undefined) {
 
                                      options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
-                                     var decrypted =  NRS.decryptData(entry.encryptedLedgerEntry, options);
+                                     var decrypted =  NRS.decryptDataJava(entry.encryptedLedgerEntry, options);
                                      decrypted = decrypted.message;
                                      decrypted = converters.hexStringToString(decrypted);
                                      decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
@@ -318,9 +323,35 @@ var NRS = (function(NRS, $, undefined) {
 			var that = this;
         	setInterval(function() {
                 that.getItems();
+
             }, 60000)
 		};
-		
+		this.blocksPulling = function() {
+			var that = this;
+
+			setInterval(function(){
+                $.ajax({
+                    url: API + 'requestType=getBlock',
+                    type: 'GET',
+                    cache: false,
+                    success: function(data) {
+                    	data  = JSON.parse(data);
+
+                    	if (that.blockHeight && that.blockHeight !== data.height) {
+							that.blockHeight = data.height;
+							that.getItems();
+						}
+						if (!that.blockHeight) {
+							that.blockHeight = data.height;
+							that.getItems();
+						}
+                    },
+                    error: function(data) {
+                        console.log('err: ', data);
+                    }
+                });
+			},2000);
+		}
 		this.destroyTable = function() {
 			$('#transactions_table').find('tbody').empty();
 			
@@ -392,6 +423,8 @@ var NRS = (function(NRS, $, undefined) {
       
         this.renderItems();
         this.logPulling();
+
+        this.blocksPulling();
     };
 
     NRS.myTransactionPagination;
@@ -529,8 +562,6 @@ var NRS = (function(NRS, $, undefined) {
 		}
 		
 		NRS.sendRequest("getBlockchainTransactions", {
-
-
 			"account": NRS.account,
 			"firstIndex": 0,
 			"lastIndex": 16
@@ -903,7 +934,7 @@ var NRS = (function(NRS, $, undefined) {
             options.sharedKey = NRS.getSharedSecretJava(options.privateKey, options.publicKey);
 
 
-            var decrypted =  NRS.decryptData(t.encryptedTransaction, options);
+            var decrypted =  NRS.decryptDataJava(t.encryptedTransaction, options);
             decrypted = decrypted.message;
             decrypted = converters.hexStringToString(decrypted);
             decrypted = decrypted.slice(0, decrypted.lastIndexOf('}') + 1);
@@ -1316,9 +1347,10 @@ var NRS = (function(NRS, $, undefined) {
 			}
 			return NRS.formatAmount(entry.change);
 		});
+
 		decimalParams.holdingChangeDecimals = NRS.getNumberOfDecimals(entries, "change", function(entry) {
-			if (isHoldingEntry(entry)) {
-				return NRS.formatQuantity(entry.change, entry.holdingInfo.decimals);
+            if (isHoldingEntry(entry)) {
+					return NRS.formatQuantity(entry.change, entry.holdingInfo.decimals);
 			}
 			return "";
 		});
@@ -1330,7 +1362,7 @@ var NRS = (function(NRS, $, undefined) {
 		});
 		decimalParams.holdingBalanceDecimals = NRS.getNumberOfDecimals(entries, "balance", function(entry) {
 			if (isHoldingEntry(entry)) {
-				return NRS.formatQuantity(entry.balance, entry.holdingInfo.decimals);
+					return NRS.formatQuantity(entry.balance, entry.holdingInfo.decimals);
 			}
 			return "";
 		});

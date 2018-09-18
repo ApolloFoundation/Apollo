@@ -44,7 +44,7 @@ public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandle
     }
 
     private GetExpectedAssetTransfers() {
-        super(new APITag[] {APITag.AE}, "asset", "account", "includeAssetInfo");
+        super(new APITag[]{APITag.AE}, "asset", "account", "includeAssetInfo");
     }
 
     @Override
@@ -61,7 +61,7 @@ public final class GetExpectedAssetTransfers extends APIServlet.APIRequestHandle
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
                 return false;
             }
-            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
+            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

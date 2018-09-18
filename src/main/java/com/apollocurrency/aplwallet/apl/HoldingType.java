@@ -22,8 +22,7 @@ package com.apollocurrency.aplwallet.apl;
 
 public enum HoldingType {
 
-    APL((byte)0) {
-
+    APL((byte) 0) {
         @Override
         public long getBalance(Account account, long holdingId) {
             if (holdingId != 0) {
@@ -66,8 +65,7 @@ public enum HoldingType {
 
     },
 
-    ASSET((byte)1) {
-
+    ASSET((byte) 1) {
         @Override
         public long getBalance(Account account, long holdingId) {
             return account.getAssetBalanceATU(holdingId);
@@ -95,8 +93,7 @@ public enum HoldingType {
 
     },
 
-    CURRENCY((byte)2) {
-
+    CURRENCY((byte) 2) {
         @Override
         public long getBalance(Account account, long holdingId) {
             return account.getCurrencyUnits(holdingId);

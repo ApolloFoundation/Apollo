@@ -1,18 +1,21 @@
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ~ Copyright © 2013-2016 The Nxt Core Developers                           ~
-  ~ Copyright © 2016-2017 Jelurida IP B.V.
-  ~ Copyright © 2017-2018 Apollo Foundation                                    ~
+  ~ Copyright © 2013-2016 The Nxt Core Developers.                            ~
+  ~ Copyright © 2016-2017 Jelurida IP B.V.                                    ~
   ~                                                                           ~
   ~ See the LICENSE.txt file at the top-level directory of this distribution  ~
   ~ for licensing information.                                                ~
   ~                                                                           ~
-  ~ Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,
-  ~ no part of the Apl software, including this file, may be copied, modified,~
+  ~ Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+  ~ no part of the Nxt software, including this file, may be copied, modified,~
   ~ propagated, or distributed except according to the terms contained in the ~
   ~ LICENSE.txt file.                                                         ~
   ~                                                                           ~
   ~ Removal or modification of this copyright notice is prohibited.           ~
   ~                                                                           ~
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright © 2017-2018 Apollo Foundation                                    ~
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 <div class="modal fade" id="send_message_modal" data-transaction-type="1" data-transaction-subtype="0" tabindex="-1" role="dialog" aria-hidden="true">
@@ -80,9 +83,8 @@
                         <label for="messages_decrypt_password" data-i18n="passphrase">PASSPHRASE</label>
                         <input type="password" name="secretPhrase" id="messages_decrypt_password" class="form-control" placeholder="" tabindex="8">
                     </div>
-                    <div class="form-group" style="margin-bottom:0">
-                        <input type="checkbox" name="rememberPassword" id="messages_decrypt_remember_password" /> <span></span><label for="messages_decrypt_remember_password" style="font-weight:normal;" data-i18n="remember_decryption_passphrase">Remember passphrase for decryption</label>
-                    </div>
+                    <input type="hidden" value="true" name="rememberPassword" id="messages_decrypt_remember_password" />
+
                     <input type="hidden" name="request_type" value="decryptMessages" />
                     <div class="form-group">
                         <label for="messages_decrypt_shared_key" data-i18n="shared_key">Shared Key</label>
@@ -106,9 +108,8 @@
                 <label for="decrypt_note_form_password" data-i18n="phrase">PASSPHRASE</label>
                 <input type="password" name="secretPhrase" id="decrypt_note_form_password" class="form-control" placeholder="" tabindex="8">
             </div>
-            <div style="margin-bottom:10px"><input type="checkbox" name="rememberPassword" id="decrypt_note_remember_password"/>
-                &nbsp
-                <label for="decrypt_note_remember_password" style="font-weight:normal;" data-i18n="remember_decryption_passphrase">Remember passphrase for decryption</label>
+            <div style="margin-bottom:10px">
+                <input type="hidden" value="true" name="rememberPassword" id="decrypt_note_remember_password"/>
             </div>
         </div>
         <div class="form-group">

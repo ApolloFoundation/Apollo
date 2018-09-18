@@ -34,7 +34,8 @@ public class TestUtil {
         MAPPER.registerModule(module);
     }
 
-    private TestUtil() {} //never
+    private TestUtil() {
+    } //never
 
 
     public static  <T> void checkList(List<T> list) {
@@ -54,8 +55,7 @@ public class TestUtil {
     public static URI createURI(String url) {
         try {
             return new URI(url);
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e); //re-throw unchecked
         }
     }
@@ -89,7 +89,7 @@ public class TestUtil {
         return urls.get(RANDOM.nextInt(urls.size()));
     }
 
-    public static String getRandomRS(Map<String,String> accounts) {
+    public static String getRandomRS(Map<String, String> accounts) {
         return new ArrayList<>(accounts.keySet()).get(RANDOM.nextInt(accounts.size()));
     }
 
@@ -97,7 +97,7 @@ public class TestUtil {
         return accounts.get(getRandomRS(accounts));
     }
 
-    public static String getRandomRecipientRS(Map<String,String> accounts, String senderRS) {
+    public static String getRandomRecipientRS(Map<String, String> accounts, String senderRS) {
         return new ArrayList<>(accounts.keySet()).stream().filter(rs -> !senderRS.equalsIgnoreCase(rs)).collect(Collectors.toList()).get(RANDOM.nextInt(accounts.size() - 1));
     }
 }

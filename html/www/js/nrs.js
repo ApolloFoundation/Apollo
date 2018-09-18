@@ -1,17 +1,21 @@
 /******************************************************************************
- * Copyright © 2013-2016 The Nxt Core Developers                             *
+ * Copyright © 2013-2016 The Nxt Core Developers.                             *
  * Copyright © 2016-2017 Jelurida IP B.V.                                     *
- * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  * See the LICENSE.txt file at the top-level directory of this distribution   *
  * for licensing information.                                                 *
  *                                                                            *
- * Unless otherwise agreed in a custom licensing agreement with Apollo Foundation,*
- * no part of the Apl software, including this file, may be copied, modified, *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,*
+ * no part of the Nxt software, including this file, may be copied, modified, *
  * propagated, or distributed except according to the terms contained in the  *
  * LICENSE.txt file.                                                          *
  *                                                                            *
  * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+ /******************************************************************************
+ * Copyright © 2017-2018 Apollo Foundation                                    *
  *                                                                            *
  ******************************************************************************/
 
@@ -452,7 +456,8 @@ var NRS = (function(NRS, $, undefined) {
 
 		NRS.serverConnect = true;
 		NRS.ledgerTrimKeep = response.ledgerTrimKeep;
-		$("#sidebar_block_link").html(NRS.getBlockLink(height));
+        NRS.updateBlockchainDownloadProgress();
+        $("#sidebar_block_link").html(NRS.getBlockLink(height));
 		if (firstTime) {
 			$("#nrs_version").html(NRS.state.version).removeClass("loading_dots");
 			NRS.getBlock(lastBlock, NRS.handleInitialBlocks);
@@ -1646,50 +1651,54 @@ var NRS = (function(NRS, $, undefined) {
         var downloadingBlockchain = $('#downloading_blockchain');
         downloadingBlockchain.find('.last_num_blocks').html($.t('last_num_blocks', { "blocks": lastNumBlocks }));
 
-		if (NRS.state.isLightClient) {
-			downloadingBlockchain.hide();
-		} else if (!NRS.serverConnect || !NRS.peerConnect) {
-			downloadingBlockchain.show();
-			downloadingBlockchain.find(".db_active").hide();
-			downloadingBlockchain.find(".db_halted").show();
-		} else {
-			downloadingBlockchain.show();
-			downloadingBlockchain.find(".db_halted").hide();
-			downloadingBlockchain.find(".db_active").show();
+        if (NRS.state.isDownloading) {
+            if (NRS.state.isLightClient) {
+                downloadingBlockchain.hide();
+            } else if (!NRS.serverConnect || !NRS.peerConnect) {
+                downloadingBlockchain.show();
+                downloadingBlockchain.find(".db_active").hide();
+                downloadingBlockchain.find(".db_halted").show();
+            } else {
+                downloadingBlockchain.show();
+                downloadingBlockchain.find(".db_halted").hide();
+                downloadingBlockchain.find(".db_active").show();
 
-			var percentageTotal = 0;
-			var blocksLeft;
-			var percentageLast = 0;
-			if (NRS.state.lastBlockchainFeederHeight && NRS.state.numberOfBlocks <= NRS.state.lastBlockchainFeederHeight) {
-				percentageTotal = parseInt(Math.round((NRS.state.numberOfBlocks / NRS.state.lastBlockchainFeederHeight) * 100), 10);
-				blocksLeft = NRS.state.lastBlockchainFeederHeight - NRS.state.numberOfBlocks;
-				if (blocksLeft <= lastNumBlocks && NRS.state.lastBlockchainFeederHeight > lastNumBlocks) {
-					percentageLast = parseInt(Math.round(((lastNumBlocks - blocksLeft) / lastNumBlocks) * 100), 10);
-				}
-			}
-			if (!blocksLeft || blocksLeft < parseInt(lastNumBlocks / 2)) {
-				downloadingBlockchain.find(".db_progress_total").hide();
-			} else {
-				downloadingBlockchain.find(".db_progress_total").show();
-				downloadingBlockchain.find(".db_progress_total .progress-bar").css("width", percentageTotal + "%");
-				downloadingBlockchain.find(".db_progress_total .sr-only").html($.t("percent_complete", {
-					"percent": percentageTotal
-				}));
-			}
-			if (!blocksLeft || blocksLeft >= (lastNumBlocks * 2) || NRS.state.lastBlockchainFeederHeight <= lastNumBlocks) {
-				downloadingBlockchain.find(".db_progress_last").hide();
-			} else {
-				downloadingBlockchain.find(".db_progress_last").show();
-				downloadingBlockchain.find(".db_progress_last .progress-bar").css("width", percentageLast + "%");
-				downloadingBlockchain.find(".db_progress_last .sr-only").html($.t("percent_complete", {
-					"percent": percentageLast
-				}));
-			}
-			if (blocksLeft) {
-				downloadingBlockchain.find(".blocks_left_outer").show();
-				downloadingBlockchain.find(".blocks_left").html($.t("blocks_left", { "numBlocks": blocksLeft }));
-			}
-		}
+                var percentageTotal = 0;
+                var blocksLeft;
+                var percentageLast = 0;
+                if (NRS.state.lastBlockchainFeederHeight && NRS.state.numberOfBlocks <= NRS.state.lastBlockchainFeederHeight) {
+                    percentageTotal = parseInt(Math.round((NRS.state.numberOfBlocks / NRS.state.lastBlockchainFeederHeight) * 100), 10);
+                    blocksLeft = NRS.state.lastBlockchainFeederHeight - NRS.state.numberOfBlocks;
+                    if (blocksLeft <= lastNumBlocks && NRS.state.lastBlockchainFeederHeight > lastNumBlocks) {
+                        percentageLast = parseInt(Math.round(((lastNumBlocks - blocksLeft) / lastNumBlocks) * 100), 10);
+                    }
+                }
+                if (!blocksLeft || blocksLeft < parseInt(lastNumBlocks / 2)) {
+                    downloadingBlockchain.find(".db_progress_total").hide();
+                } else {
+                    downloadingBlockchain.find(".db_progress_total").show();
+                    downloadingBlockchain.find(".db_progress_total .progress-bar").css("width", percentageTotal + "%");
+                    downloadingBlockchain.find(".db_progress_total .sr-only").html($.t("percent_complete", {
+                        "percent": percentageTotal
+                    }));
+                }
+                if (!blocksLeft || blocksLeft >= (lastNumBlocks * 2) || NRS.state.lastBlockchainFeederHeight <= lastNumBlocks) {
+                    downloadingBlockchain.find(".db_progress_last").hide();
+                } else {
+                    downloadingBlockchain.find(".db_progress_last").show();
+                    downloadingBlockchain.find(".db_progress_last .progress-bar").css("width", percentageLast + "%");
+                    downloadingBlockchain.find(".db_progress_last .sr-only").html($.t("percent_complete", {
+                        "percent": percentageLast
+                    }));
+                }
+                if (blocksLeft) {
+                    downloadingBlockchain.find(".blocks_left_outer").show();
+                    downloadingBlockchain.find(".blocks_left").html($.t("blocks_left", { "numBlocks": blocksLeft }));
+                }
+            }
+		} else {
+            downloadingBlockchain.hide();
+        }
 	};
 
 	NRS.checkIfOnAFork = function() {

@@ -219,14 +219,14 @@ public class Block {
     @Override
     public String toString() {
         return "Block{" +
-            "height=" + height +
-            ", previousBlockHash='" + previousBlockHash + '\'' +
-            ", totalAmountATM=" + totalAmountATM +
-            ", generatorPublicKey='" + generatorPublicKey + '\'' +
-            ", blockSignature='" + blockSignature + '\'' +
-            ", numberOfTransactions=" + numberOfTransactions +
-            ", transactions=" + transactions +
-            ", totalFeeATM=" + totalFeeATM +
-            '}';
+                "height=" + height +
+                ", previousBlockHash='" + previousBlockHash + '\'' +
+                ", totalAmountATM=" + totalAmountATM +
+                ", generatorPublicKey='" + generatorPublicKey + '\'' +
+                ", blockSignature='" + blockSignature + '\'' +
+                ", numberOfTransactions=" + numberOfTransactions +
+                ", transactions=" + transactions +
+                ", totalFeeATM=" + totalFeeATM +
+                '}';
     }
 }
