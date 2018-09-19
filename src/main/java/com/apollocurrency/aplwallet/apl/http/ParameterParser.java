@@ -453,6 +453,18 @@ public final class ParameterParser {
         return account;
     }
 
+    public static String getStringParameter(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+        String parameter = Convert.emptyToNull(req.getParameter(name));
+        if (parameter == null && isMandatory) {
+            throw new ParameterException(JSONResponses.missing(name));
+        }
+        return parameter;
+    }
+
+    public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getStringParameter(req, "passphrase", isMandatory);
+    }
+
     public static List<Account> getAccounts(HttpServletRequest req) throws ParameterException {
         String[] accountValues = req.getParameterValues("account");
         if (accountValues == null || accountValues.length == 0) {

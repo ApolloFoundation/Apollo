@@ -79,6 +79,11 @@ public final class Crypto {
         return getMessageDigest("SHA-256");
     }
 
+    public static MessageDigest sha512() {
+        return getMessageDigest("SHA-512");
+    }
+
+
     public static MessageDigest ripemd160() {
         return new RIPEMD160.Digest();
     }
@@ -99,6 +104,15 @@ public final class Crypto {
     public static byte[] getPublicKey(byte[] keySeed) {
         byte[] publicKey = new byte[32];
         Curve25519.keygen(publicKey, null, Arrays.copyOf(keySeed, keySeed.length));
+        return publicKey;
+    }
+
+
+    public static byte[] getNewPublicKey(byte[] keySeed) {
+        byte[] publicKey = new byte[64];
+        for (int i = 0; i < keySeed.length; i++) {
+            publicKey[i] = keySeed[i];
+        }
         return publicKey;
     }
 
