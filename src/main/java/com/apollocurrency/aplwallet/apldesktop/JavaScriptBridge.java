@@ -23,11 +23,11 @@ package com.apollocurrency.aplwallet.apldesktop;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.awt.*;
 import java.io.IOException;
@@ -36,11 +36,15 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * The class itself and methods in this class are invoked from JavaScript therefore has to be public
  */
 @SuppressWarnings("WeakerAccess")
 public class JavaScriptBridge {
+        private static final Logger LOG = getLogger(JavaScriptBridge.class);
+
 
     DesktopApplication.MainApplication application;
     private Clipboard clipboard;
@@ -50,7 +54,7 @@ public class JavaScriptBridge {
     }
 
     public void log(String message) {
-        Logger.logInfoMessage(message);
+        LOG.info(message);
     }
 
     @SuppressWarnings("unused")
@@ -60,7 +64,7 @@ public class JavaScriptBridge {
             try {
                 Desktop.getDesktop().browse(new URI(url));
             } catch (Exception e) {
-                Logger.logInfoMessage("Cannot open " + API.getWelcomePageUri().toString() + " error " + e.getMessage());
+                LOG.info("Cannot open " + API.getWelcomePageUri().toString() + " error " + e.getMessage());
             }
         });
     }
@@ -72,7 +76,7 @@ public class JavaScriptBridge {
         try {
             bytes = Files.readAllBytes(Paths.get(Apl.getUserHomeDir(), fileName));
         } catch (IOException e) {
-            Logger.logInfoMessage("Cannot read file " + fileName + " error " + e.getMessage());
+            LOG.info("Cannot read file " + fileName + " error " + e.getMessage());
             JSONObject response = new JSONObject();
             response.put("error", "contacts_file_not_found");
             response.put("file", fileName);
@@ -83,7 +87,7 @@ public class JavaScriptBridge {
         try {
             return new String(bytes, "utf8");
         } catch (UnsupportedEncodingException e) {
-            Logger.logInfoMessage("Cannot parse file " + fileName + " content error " + e.getMessage());
+            LOG.info("Cannot parse file " + fileName + " content error " + e.getMessage());
             JSONObject response = new JSONObject();
             response.put("error", "unsupported_encoding");
             response.put("type", "2");

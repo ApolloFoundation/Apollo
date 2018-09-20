@@ -25,15 +25,18 @@ import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Demo implements AddOn {
+    private static final Logger LOG = getLogger(Demo.class);
 
     @Override
     public void init() {
-        Apl.getBlockchainProcessor().addListener(block -> Logger.logInfoMessage("Block " + block.getStringId()
+        Apl.getBlockchainProcessor().addListener(block -> LOG.info("Block " + block.getStringId()
                 + " has been forged by account " + Convert.rsAccount(block.getGeneratorId()) + " having effective balance of "
                 + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL()),
                 BlockchainProcessor.Event.BEFORE_BLOCK_APPLY);
@@ -41,11 +44,11 @@ public final class Demo implements AddOn {
 
     @Override
     public void shutdown() {
-        Logger.logInfoMessage("Goodbye!");
+        LOG.info("Goodbye!");
     }
 
     @Override
     public void processRequest(Map<String, String> params) {
-        Logger.logInfoMessage(params.get("demoMessage"));
+        LOG.info(params.get("demoMessage"));
     }
 }

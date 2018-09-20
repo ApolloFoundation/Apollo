@@ -5,9 +5,13 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class SecurityAlertSender {
+    private static final Logger LOG = getLogger(SecurityAlertSender.class);
+
     private static class SecurityAlertSenderHolder {
         private static final SecurityAlertSender INSTANCE = new SecurityAlertSender();
     }
@@ -17,11 +21,11 @@ public class SecurityAlertSender {
     }
 
     public void send(Transaction invalidUpdateTransaction) {
-        Logger.logInfoMessage("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
+        LOG.info("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
     }
     private SecurityAlertSender() {}
 
     public void send(String message) {
-        Logger.logWarningMessage(message);
+        LOG.warn(message);
     }
 }

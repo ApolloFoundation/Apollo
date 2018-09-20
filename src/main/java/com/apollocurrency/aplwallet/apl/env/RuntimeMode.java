@@ -40,4 +40,6 @@ public interface RuntimeMode {
     }
 
     default void updateAppStatus(String newStatus) {}
+
+    void displayError(String errorMessage);
 }

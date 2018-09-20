@@ -20,51 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.mint;
 
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.CurrencyMinting;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.slf4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class MintWorker {
+    private static final Logger LOG = getLogger(MintWorker.class);
 
     public static void main(String[] args) {
         MintWorker mintWorker = new MintWorker();
@@ -112,23 +88,23 @@ public class MintWorker {
         int threadPoolSize = Apl.getIntProperty("apl.mint.threadPoolSize");
         if (threadPoolSize == 0) {
             threadPoolSize = Runtime.getRuntime().availableProcessors();
-            Logger.logDebugMessage("Thread pool size " + threadPoolSize);
+            LOG.debug("Thread pool size " + threadPoolSize);
         }
         ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
-        Logger.logInfoMessage("Mint worker started");
+        LOG.info("Mint worker started");
         while (true) {
             counter++;
             try {
                 JSONObject response = mintImpl(secretPhrase, accountId, units, currencyId, algorithm, counter, target,
                     initialNonce, threadPoolSize, executorService, difficulty, isSubmitted);
-                Logger.logInfoMessage("currency mint response:" + response.toJSONString());
+                LOG.info("currency mint response:" + response.toJSONString());
             } catch (Exception e) {
-                Logger.logInfoMessage("mint error", e);
+                LOG.info("mint error", e);
                 if (isStopOnError) {
-                    Logger.logInfoMessage("stopping on error");
+                    LOG.info("stopping on error");
                     break;
                 } else {
-                    Logger.logInfoMessage("continue");
+                    LOG.info("continue");
                 }
             }
             mintingTarget = getMintingTarget(currencyId, rsAccount, units);
@@ -152,7 +128,7 @@ public class MintWorker {
         }
         long hashes = solution - initialNonce;
         float hashesPerDifficulty = BigInteger.valueOf(-1).equals(difficulty) ? 0 : (float) hashes / difficulty.floatValue();
-        Logger.logInfoMessage("solution nonce %d unitsATM %d counter %d computed hashes %d time [sec] %.2f hash rate [KH/Sec] %d actual time vs. expected %.2f is submitted %b",
+        LOG.info("solution nonce %d unitsATM %d counter %d computed hashes %d time [sec] %.2f hash rate [KH/Sec] %d actual time vs. expected %.2f is submitted %b",
                 solution, units, counter, hashes, (float) computationTime / 1000, hashes / computationTime, hashesPerDifficulty, isSubmitted);
         JSONObject response;
         if (isSubmitted) {
@@ -194,7 +170,7 @@ public class MintWorker {
             params.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
             return getJsonResponse(params);
         } catch (AplException.NotValidException e) {
-            Logger.logInfoMessage("local signing failed", e);
+            LOG.info("local signing failed", e);
             JSONObject response = new JSONObject();
             response.put("error", e.toString());
             return response;
@@ -241,7 +217,7 @@ public class MintWorker {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        int port = Constants.isTestnet ? API.TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
+        int port = Constants.isTestnet ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
         String urlParams = getUrlParams(params);
         URL url;
         try {
@@ -250,7 +226,7 @@ public class MintWorker {
             throw new IllegalStateException(e);
         }
         try {
-            Logger.logDebugMessage("Sending request to server: " + url.toString());
+            LOG.debug("Sending request to server: " + url.toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
@@ -262,7 +238,7 @@ public class MintWorker {
                 response = null;
             }
         } catch (RuntimeException | IOException e) {
-            Logger.logInfoMessage("Error connecting to server", e);
+            LOG.info("Error connecting to server", e);
             if (connection != null) {
                 connection.disconnect();
             }
@@ -330,7 +306,7 @@ public class MintWorker {
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] hash = CurrencyMinting.getHash(hashFunction, n, currencyId, units, counter, accountId);
                 if (CurrencyMinting.meetsTarget(hash, target)) {
-                    Logger.logDebugMessage("%s found solution hash %s nonce %d currencyId %d units %d counter %d accountId %d" +
+                    LOG.debug("%s found solution hash %s nonce %d currencyId %d units %d counter %d accountId %d" +
                             " hash %s meets target %s",
                             Thread.currentThread().getName(), hashFunction, n, currencyId, units, counter, accountId,
                             Arrays.toString(hash), Arrays.toString(target));
@@ -338,7 +314,7 @@ public class MintWorker {
                 }
                 n+=poolSize;
                 if (((n - nonce) % (poolSize * 1000000)) == 0) {
-                    Logger.logInfoMessage("%s computed %d [MH]", Thread.currentThread().getName(), (n - nonce) / poolSize / 1000000);
+                    LOG.info("%s computed %d [MH]", Thread.currentThread().getName(), (n - nonce) / poolSize / 1000000);
                 }
             }
             return null;

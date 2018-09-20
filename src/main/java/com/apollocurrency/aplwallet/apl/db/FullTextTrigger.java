@@ -21,15 +21,10 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 import com.apollocurrency.aplwallet.apl.Db;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.DateTools;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -44,20 +39,22 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.h2.api.Trigger;
 import org.h2.tools.SimpleResultSet;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * todo make backward compatibility for triggers in old database and new database
@@ -98,6 +95,8 @@ import java.util.stream.Stream;
  *   CREATE TRIGGER trigger_name AFTER INSERT,UPDATE,DELETE ON table_name FOR EACH ROW CALL "com.apollocurrency.aplwallet.apl.db.FullTextTrigger"
  */
 public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
+        private static final Logger LOG = getLogger(FullTextTrigger.class);
+
 
     /** NRS is active */
     private static volatile boolean isActive = false;
@@ -195,7 +194,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 }
             }
             if (triggersExist && alreadyInitialized) {
-                Logger.logInfoMessage("NRS fulltext support is already initialized");
+                LOG.info("NRS fulltext support is already initialized");
                 return;
             }
             //
@@ -213,14 +212,14 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             stmt.execute("DROP ALIAS IF EXISTS FTL_REINDEX");
             stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH");
             stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH_DATA");
-            Logger.logInfoMessage("H2 fulltext function aliases dropped");
+            LOG.info("H2 fulltext function aliases dropped");
             //
             // Create our schema and table
             //
             stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
             stmt.execute("CREATE TABLE IF NOT EXISTS FTL.INDEXES "
                     + "(SCHEMA VARCHAR, TABLE VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, TABLE))");
-            Logger.logInfoMessage("NRS fulltext schema created");
+            LOG.info("NRS fulltext schema created");
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
             // when it is created.  H2 has already initialized the existing triggers and they
@@ -247,9 +246,9 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             stmt.execute("CREATE ALIAS FTL_CREATE_INDEX FOR \"" + ourClassName + ".createIndex\"");
             stmt.execute("CREATE ALIAS FTL_DROP_INDEX FOR \"" + ourClassName + ".dropIndex\"");
             stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + ourClassName + ".search\"");
-            Logger.logInfoMessage("NRS fulltext aliases created");
+            LOG.info("NRS fulltext aliases created");
         } catch (SQLException exc) {
-            Logger.logErrorMessage("Unable to initialize NRS fulltext search support", exc);
+            LOG.error("Unable to initialize NRS fulltext search support", exc);
             throw new RuntimeException(exc.toString(), exc);
         }
     }
@@ -261,7 +260,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * @throws  SQLException        Unable to reindex tables
      */
     public static void reindex(Connection conn) throws SQLException {
-        Logger.logInfoMessage("Rebuilding the Lucene search index");
+        LOG.info("Rebuilding the Lucene search index");
         try {
             //
             // Delete the current Lucene index
@@ -276,7 +275,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         } catch (SQLException exc) {
             throw new SQLException("Unable to rebuild the Lucene index", exc);
         }
-        Logger.logInfoMessage("Lucene search index successfully rebuilt");
+        LOG.info("Lucene search index successfully rebuilt");
     }
 
     /**
@@ -315,13 +314,13 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         FullTextTrigger trigger = indexTriggers.get(tableName);
         if (trigger == null) {
-            Logger.logErrorMessage("NRS fulltext trigger for table " + tableName + " was not initialized");
+            LOG.error("NRS fulltext trigger for table " + tableName + " was not initialized");
         } else {
             try {
                 trigger.reindexTable(conn);
-                Logger.logInfoMessage("Lucene search index created for table " + tableName);
+                LOG.info("Lucene search index created for table " + tableName);
             } catch (SQLException exc) {
-                Logger.logErrorMessage("Unable to create Lucene search index for table " + tableName);
+                LOG.error("Unable to create Lucene search index for table " + tableName);
                 throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
             }
         }
@@ -452,10 +451,10 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                               hits[i].score);
             }
         } catch (ParseException exc) {
-            Logger.logDebugMessage("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
+            LOG.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
             throw new SQLException("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to search Lucene index", exc);
+            LOG.error("Unable to search Lucene index", exc);
             throw new SQLException("Unable to search Lucene index", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -514,7 +513,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 }
             }
             if (dbColumn < 0) {
-                Logger.logErrorMessage("DB_ID column not found for table " + tableName);
+                LOG.error("DB_ID column not found for table " + tableName);
                 return;
             }
             //
@@ -533,16 +532,16 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                             if (columnTypes.get(pos).equals("VARCHAR")) {
                                 indexColumns.add(pos);
                             } else {
-                                Logger.logErrorMessage("Indexed column " + column + " in table " + tableName + " is not a string");
+                                LOG.error("Indexed column " + column + " in table " + tableName + " is not a string");
                             }
                         } else {
-                            Logger.logErrorMessage("Indexed column " + column + " not found in table " + tableName);
+                            LOG.error("Indexed column " + column + " not found in table " + tableName);
                         }
                     }
                 }
             }
             if (indexColumns.isEmpty()) {
-                Logger.logErrorMessage("No indexed columns found for table " + tableName);
+                LOG.error("No indexed columns found for table " + tableName);
                 return;
             }
             //
@@ -551,7 +550,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             isEnabled = true;
             indexTriggers.put(tableName, this);
         } catch (SQLException exc) {
-            Logger.logErrorMessage("Unable to get table information", exc);
+            LOG.error("Unable to get table information", exc);
         }
     }
 
@@ -605,7 +604,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 commitRow(oldRow, newRow);
                 commitIndex();
             } catch (SQLException exc) {
-                Logger.logErrorMessage("Unable to update the Lucene index", exc);
+                LOG.error("Unable to update the Lucene index", exc);
             }
             return;
         }
@@ -653,7 +652,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 commitIndex();
             }
         } catch (SQLException exc) {
-            Logger.logErrorMessage("Unable to update the Lucene index", exc);
+            LOG.error("Unable to update the Lucene index", exc);
         }
     }
 
@@ -751,7 +750,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
             indexWriter.updateDocument(new Term("_QUERY", query), document);
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to index row", exc);
+            LOG.error("Unable to index row", exc);
             throw new SQLException("Unable to index row", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -770,7 +769,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         try {
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to delete indexed row", exc);
+            LOG.error("Unable to delete indexed row", exc);
             throw new SQLException("Unable to delete indexed row", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -793,7 +792,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 indexSearcher = new IndexSearcher(indexReader);
             }
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to commit Lucene index updates", exc);
+            LOG.error("Unable to commit Lucene index updates", exc);
             throw new SQLException("Unable to commit Lucene index updates", exc);
         } finally {
             indexLock.writeLock().unlock();
@@ -818,7 +817,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                         Files.createDirectory(indexPath);
                     }
                 } catch (IOException exc) {
-                    Logger.logErrorMessage("Unable to create the Lucene index directory", exc);
+                    LOG.error("Unable to create the Lucene index directory", exc);
                     throw new SQLException("Unable to create the Lucene index directory", exc);
                 }
             }
@@ -868,7 +867,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 }
             }
         } catch (IOException | SQLException exc) {
-            Logger.logErrorMessage("Unable to access the Lucene index", exc);
+            LOG.error("Unable to access the Lucene index", exc);
             throw new SQLException("Unable to access the Lucene index", exc);
         } finally {
             if (obtainedUpdateLock) {
@@ -895,7 +894,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 indexWriter = null;
             }
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to remove Lucene index access", exc);
+            LOG.error("Unable to remove Lucene index access", exc);
         } finally {
             indexLock.writeLock().unlock();
         }
@@ -924,13 +923,13 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                     Files.delete(path);
                 }
             }
-            Logger.logInfoMessage("Lucene search index deleted");
+            LOG.info("Lucene search index deleted");
             //
             // Get Lucene index access once more
             //
             getIndexAccess(conn);
         } catch (IOException exc) {
-            Logger.logErrorMessage("Unable to remove Lucene index files", exc);
+            LOG.error("Unable to remove Lucene index files", exc);
             throw new SQLException("Unable to remove Lucene index files", exc);
         } finally {
             indexLock.writeLock().unlock();

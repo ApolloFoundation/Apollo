@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -33,13 +32,17 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
+import org.slf4j.Logger;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Crypto {
+        private static final Logger LOG = getLogger(Crypto.class);
 
     private static final boolean useStrongSecureRandom = Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
@@ -51,7 +54,7 @@ public final class Crypto {
                 secureRandom.nextBoolean();
                 return secureRandom;
             } catch (NoSuchAlgorithmException e) {
-                Logger.logErrorMessage("No secure random provider available");
+                LOG.error("No secure random provider available");
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
@@ -67,7 +70,7 @@ public final class Crypto {
         try {
             return MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            Logger.logMessage("Missing message digest algorithm: " + algorithm);
+            LOG.info("Missing message digest algorithm: " + algorithm);
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -153,12 +156,12 @@ public final class Crypto {
                 return false;
             }
             if (!Curve25519.isCanonicalSignature(signature)) {
-                Logger.logDebugMessage("Rejecting non-canonical signature");
+                LOG.debug("Rejecting non-canonical signature");
                 return false;
             }
 
             if (!Curve25519.isCanonicalPublicKey(publicKey)) {
-                Logger.logDebugMessage("Rejecting non-canonical public key");
+                LOG.debug("Rejecting non-canonical public key");
                 return false;
             }
 
@@ -176,7 +179,7 @@ public final class Crypto {
 
             return Arrays.equals(h, h2);
         } catch (RuntimeException e) {
-            Logger.logErrorMessage("Error verifying signature", e);
+            LOG.error("Error verifying signature", e);
             return false;
         }
     }
@@ -199,7 +202,7 @@ public final class Crypto {
             Curve25519.curve(sharedSecret, myPrivateKey, theirPublicKey);
             return sharedSecret;
         } catch (RuntimeException e) {
-            Logger.logMessage("Error getting shared secret", e);
+            LOG.info("Error getting shared secret", e);
             throw e;
         }
     }
@@ -300,7 +303,7 @@ public final class Crypto {
             }
             return id;
         } catch (ReedSolomon.DecodeException e) {
-            Logger.logDebugMessage("Reed-Solomon decoding failed for " + rsString + ": " + e.toString());
+            LOG.debug("Reed-Solomon decoding failed for " + rsString + ": " + e.toString());
             throw new RuntimeException(e.toString(), e);
         }
     }

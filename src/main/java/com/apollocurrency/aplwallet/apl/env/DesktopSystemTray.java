@@ -20,15 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.env;
 
-import com.apollocurrency.aplwallet.apl.Block;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Db;
-import com.apollocurrency.aplwallet.apl.Generator;
-import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +36,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class DesktopSystemTray {
+    private static final Logger LOG = getLogger(DesktopSystemTray.class);
 
     public static final int DELAY = 1000;
 
@@ -57,7 +56,7 @@ public class DesktopSystemTray {
 
     void createAndShowGUI() {
         if (!SystemTray.isSupported()) {
-            Logger.logInfoMessage("SystemTray is not supported");
+            LOG.info("SystemTray is not supported");
             return;
         }
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
@@ -97,7 +96,7 @@ public class DesktopSystemTray {
         try {
             tray.add(trayIcon);
         } catch (AWTException e) {
-            Logger.logInfoMessage("TrayIcon could not be added", e);
+            LOG.info("TrayIcon could not be added", e);
             return;
         }
 
@@ -107,7 +106,7 @@ public class DesktopSystemTray {
             try {
                 Desktop.getDesktop().browse(dataProvider.getWallet());
             } catch (IOException ex) {
-                Logger.logInfoMessage("Cannot open wallet in browser", ex);
+                LOG.info("Cannot open wallet in browser", ex);
             }
         });
 
@@ -115,7 +114,7 @@ public class DesktopSystemTray {
             try {
                 Class.forName("com.apollocurrency.aplwallet.apldesktop.DesktopApplication").getMethod("launch").invoke(null);
             } catch (ReflectiveOperationException exception) {
-                Logger.logInfoMessage("apldesktop.DesktopApplication failed to launch", exception);
+                LOG.info("apldesktop.DesktopApplication failed to launch", exception);
             }
         });
 
@@ -123,7 +122,7 @@ public class DesktopSystemTray {
             try {
                 Class.forName("com.apollocurrency.aplwallet.apldesktop.DesktopApplication").getMethod("refreshMainApplication").invoke(null);
             } catch (ReflectiveOperationException exception) {
-                Logger.logInfoMessage("apldesktop.DesktopApplication failed to refresh", exception);
+                LOG.info("apldesktop.DesktopApplication failed to refresh", exception);
             }
         });
 
@@ -131,7 +130,7 @@ public class DesktopSystemTray {
             try {
                 Desktop.getDesktop().open(dataProvider.getLogFile());
             } catch (IOException ex) {
-                Logger.logInfoMessage("Cannot view log", ex);
+                LOG.info("Cannot view log", ex);
             }
         });
 
@@ -142,7 +141,7 @@ public class DesktopSystemTray {
                     "Sure you want to shutdown " + Apl.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
                     "Shutdown",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                Logger.logInfoMessage("Shutdown requested by System Tray");
+                LOG.info("Shutdown requested by System Tray");
                 System.exit(0); // Implicitly invokes shutdown using the shutdown hook
             }
         });

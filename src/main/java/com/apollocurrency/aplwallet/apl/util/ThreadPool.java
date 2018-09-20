@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +30,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class ThreadPool {
+    private static final Logger LOG = getLogger(ThreadPool.class);
+
     private static volatile ScheduledExecutorService scheduledThreadPool;
     private static Map<Runnable, Long> backgroundJobs = new HashMap<>();
     private static Map<Runnable, String> beforeStartJobs = new LinkedHashMap<>();
@@ -62,7 +67,7 @@ public final class ThreadPool {
         if (! Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
             backgroundJobs.put(runnable, timeUnit.toMillis(delay));
         } else {
-            Logger.logMessage("Will not run " + name + " thread");
+            LOG.info("Will not run " + name + " thread");
         }
     }
 
@@ -71,22 +76,22 @@ public final class ThreadPool {
             throw new IllegalStateException("Executor service already started");
         }
 
-        Logger.logDebugMessage("Running " + beforeStartJobs.size() + " tasks...");
+        LOG.debug("Running " + beforeStartJobs.size() + " tasks...");
         runAll(beforeStartJobs);
         beforeStartJobs = null;
 
-        Logger.logDebugMessage("Running " + lastBeforeStartJobs.size() + " final tasks...");
+        LOG.debug("Running " + lastBeforeStartJobs.size() + " final tasks...");
         runAll(lastBeforeStartJobs);
         lastBeforeStartJobs = null;
 
-        Logger.logDebugMessage("Starting " + backgroundJobs.size() + " background jobs");
+        LOG.debug("Starting " + backgroundJobs.size() + " background jobs");
         scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("scheduled background pool"));
         for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
             scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, Math.max(entry.getValue() / timeMultiplier, 1), TimeUnit.MILLISECONDS);
         }
         backgroundJobs = null;
 
-        Logger.logDebugMessage("Starting " + afterStartJobs.size() + " delayed tasks");
+        LOG.debug("Starting " + afterStartJobs.size() + " delayed tasks");
         Thread thread = new Thread(() -> {
             runAll(afterStartJobs);
             afterStartJobs = null;
@@ -97,15 +102,15 @@ public final class ThreadPool {
 
     public static void shutdown() {
         if (scheduledThreadPool != null) {
-	        Logger.logShutdownMessage("Stopping background jobs...");
+	        LOG.info("Stopping background jobs...");
             shutdownExecutor("scheduledThreadPool", scheduledThreadPool, 10);
             scheduledThreadPool = null;
-        	Logger.logShutdownMessage("...Done");
+        	LOG.info("...Done");
         }
     }
 
     public static void shutdownExecutor(String name, ExecutorService executor, int timeout) {
-        Logger.logShutdownMessage("shutting down " + name);
+        LOG.info("shutting down " + name);
         executor.shutdown();
         try {
             executor.awaitTermination(timeout, TimeUnit.SECONDS);
@@ -113,7 +118,7 @@ public final class ThreadPool {
             Thread.currentThread().interrupt();
         }
         if (! executor.isTerminated()) {
-            Logger.logShutdownMessage("some threads in " + name + " didn't terminate, forcing shutdown");
+            LOG.info("some threads in " + name + " didn't terminate, forcing shutdown");
             executor.shutdownNow();
         }
     }

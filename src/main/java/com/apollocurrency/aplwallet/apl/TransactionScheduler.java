@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,7 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class TransactionScheduler {
+    private static final Logger LOG = getLogger(TransactionScheduler.class);
 
     private static final Map<Transaction, TransactionScheduler> transactionSchedulers = new ConcurrentHashMap<>();
 
@@ -72,7 +75,7 @@ public class TransactionScheduler {
                 for (Transaction transaction : transactions) {
                     if (transactionScheduler.processEvent(transaction)) {
                         iterator.remove();
-                        Logger.logInfoMessage("Removed " + scheduledTransaction.getStringId() + " from transaction scheduler");
+                        LOG.info("Removed " + scheduledTransaction.getStringId() + " from transaction scheduler");
                         break;
                     }
                 }
@@ -90,7 +93,7 @@ public class TransactionScheduler {
 
     private boolean processEvent(Transaction unconfirmedTransaction) {
         if (transaction.getExpiration() < Apl.getEpochTime()) {
-            Logger.logInfoMessage("Expired transaction in transaction scheduler " + transaction.getSenderId());
+            LOG.info("Expired transaction in transaction scheduler " + transaction.getSenderId());
             return true;
         }
         if (!filter.test(unconfirmedTransaction)) {
@@ -100,7 +103,7 @@ public class TransactionScheduler {
             TransactionProcessorImpl.getInstance().broadcast(transaction);
             return true;
         } catch (AplException.ValidationException e) {
-            Logger.logInfoMessage("Failed to broadcast: " + e.getMessage());
+            LOG.info("Failed to broadcast: " + e.getMessage());
             return true;
         }
     }

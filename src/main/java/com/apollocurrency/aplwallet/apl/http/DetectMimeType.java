@@ -22,10 +22,10 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -33,8 +33,10 @@ import javax.servlet.http.Part;
 import java.io.IOException;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DetectMimeType extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(DetectMimeType.class);
 
     private static class DetectMimeTypeHolder {
         private static final DetectMimeType INSTANCE = new DetectMimeType();
@@ -67,7 +69,7 @@ public final class DetectMimeType extends APIServlet.APIRequestHandler {
                     filename = fileData.getFilename();
                 }
             } catch (IOException | ServletException e) {
-                Logger.logDebugMessage("error in reading file data", e);
+                LOG.debug("error in reading file data", e);
                 throw new ParameterException(INCORRECT_TAGGED_DATA_FILE);
             }
         } else {

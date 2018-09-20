@@ -25,14 +25,17 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.http.APITag;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class PopOffCounter implements AddOn {
+    private static final Logger LOG = getLogger(PopOffCounter.class);
 
     private volatile int numberOfPopOffs = 0;
 
@@ -64,6 +67,6 @@ public final class PopOffCounter implements AddOn {
 
     @Override
     public void processRequest(Map<String, String> params) {
-        Logger.logInfoMessage(params.get("popOffMessage"));
+        LOG.info(params.get("popOffMessage"));
     }
 }

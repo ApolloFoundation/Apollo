@@ -24,11 +24,15 @@ import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 final class GetInfo extends PeerServlet.PeerRequestHandler {
+    private static final Logger LOG = getLogger(GetInfo.class);
+
 
     private static class GetInfoHolder {
         private static final GetInfo INSTANCE = new GetInfo();
@@ -61,16 +65,16 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
                 announcedAddress = Peers.addressWithPort(announcedAddress.toLowerCase());
                 if (announcedAddress != null) {
                     if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
-                        Logger.logDebugMessage("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
+                        LOG.debug("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
-                            Logger.logDebugMessage("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
+                            LOG.debug("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             Peers.setAnnouncedAddress(peerImpl, null);
                         }
                         peerImpl.setState(Peer.State.NON_CONNECTED);
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
-                        Logger.logDebugMessage("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
+                        LOG.debug("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
                         if (peerImpl.getPort() != oldPort) {
@@ -94,7 +98,7 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
             version = Version.from((String)request.get("version"));
         }
         catch (Exception e) {
-            Logger.logErrorMessage("Cannot parse version.", e);
+            LOG.error("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
         peerImpl.setVersion(version);

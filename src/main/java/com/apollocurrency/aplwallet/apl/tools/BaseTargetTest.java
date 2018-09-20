@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -32,7 +32,10 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class BaseTargetTest {
+        private static final Logger LOG = getLogger(BaseTargetTest.class);
 
     private static final long MIN_BASE_TARGET = Constants.INITIAL_BASE_TARGET * 9 / 10;
     private static final long MAX_BASE_TARGET = Constants.INITIAL_BASE_TARGET * (Constants.isTestnet ? Constants.MAX_BALANCE_APL : 50);
@@ -201,18 +204,18 @@ public final class BaseTargetTest {
 
             }
 
-            Logger.logMessage("Cumulative difficulty " + cumulativeDifficulty.toString());
-            Logger.logMessage("Test cumulative difficulty " + testCumulativeDifficulty.toString());
-            Logger.logMessage("Cumulative difficulty difference " + (testCumulativeDifficulty.subtract(cumulativeDifficulty))
+            LOG.info("Cumulative difficulty " + cumulativeDifficulty.toString());
+            LOG.info("Test cumulative difficulty " + testCumulativeDifficulty.toString());
+            LOG.info("Cumulative difficulty difference " + (testCumulativeDifficulty.subtract(cumulativeDifficulty))
                     .multiply(BigInteger.valueOf(100)).divide(cumulativeDifficulty).toString());
-            Logger.logMessage("Max blocktime " + maxBlocktime);
-            Logger.logMessage("Max test blocktime " + maxTestBlocktime);
-            Logger.logMessage("Min blocktime " + minBlocktime);
-            Logger.logMessage("Min test blocktime " + minTestBlocktime);
-            Logger.logMessage("Average blocktime " + ((double)totalBlocktime) / count);
-            Logger.logMessage("Average test blocktime " + ((double)totalTestBlocktime) / count);
-            Logger.logMessage("Standard deviation of blocktime " + Math.sqrt(S / count));
-            Logger.logMessage("Standard deviation of test blocktime " + Math.sqrt(testS / count));
+            LOG.info("Max blocktime " + maxBlocktime);
+            LOG.info("Max test blocktime " + maxTestBlocktime);
+            LOG.info("Min blocktime " + minBlocktime);
+            LOG.info("Min test blocktime " + minTestBlocktime);
+            LOG.info("Average blocktime " + ((double)totalBlocktime) / count);
+            LOG.info("Average test blocktime " + ((double)totalTestBlocktime) / count);
+            LOG.info("Standard deviation of blocktime " + Math.sqrt(S / count));
+            LOG.info("Standard deviation of test blocktime " + Math.sqrt(testS / count));
 
         } catch (Exception e) {
             e.printStackTrace();

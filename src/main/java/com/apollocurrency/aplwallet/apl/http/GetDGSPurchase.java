@@ -21,20 +21,23 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
+    private static final Logger LOG = getLogger(GetDGSPurchase.class);
+
 
     private static class GetDGSPurchaseHolder {
         private static final GetDGSPurchase INSTANCE = new GetDGSPurchase();
@@ -82,7 +85,7 @@ public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
                 }
                 response.put("decryptedGoods", Convert.toString(decrypted, purchase.goodsIsText()));
             } catch (RuntimeException e) {
-                Logger.logDebugMessage(e.toString());
+                LOG.debug(e.toString());
                 return DECRYPTION_FAILED;
             }
         }

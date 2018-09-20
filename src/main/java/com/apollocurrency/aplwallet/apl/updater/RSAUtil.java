@@ -5,10 +5,10 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.Version;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
+import org.slf4j.Logger;
 import sun.security.rsa.RSACore;
 
 import javax.crypto.Cipher;
@@ -27,9 +27,12 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResource;
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class RSAUtil {
+    private static final Logger LOG = getLogger(RSAUtil.class);
+
     private static final String URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-%s.jar";
 
     public static DoubleByteArrayTuple doubleEncrypt(PrivateKey privateKey1, PrivateKey privateKey2, byte[] message) throws Exception {
@@ -149,17 +152,17 @@ public class RSAUtil {
                     String urlString = new String(RSAUtil.doubleDecrypt(pair.getFirstCertificate().getPublicKey(), pair.getSecondCertificate().getPublicKey
                             (), encryptedUrl));
                     if (urlString.matches(String.format(URL_TEMPLATE, updateVersion.toString()))) {
-                        Logger.logDebugMessage("Decrypted url using: " + pair);
+                        LOG.debug("Decrypted url using: " + pair);
                         return urlString;
                     }
                 }
                 catch (Exception e) {
-                      Logger.logDebugMessage("Cannot decrypt url.");
+                      LOG.debug("Cannot decrypt url.");
                 }
             }
         }
         catch (IOException | CertificateException | URISyntaxException e) {
-            Logger.logErrorMessage("Cannot read or load certificate", e);
+            LOG.error("Cannot read or load certificate", e);
         }
         return null;
     }

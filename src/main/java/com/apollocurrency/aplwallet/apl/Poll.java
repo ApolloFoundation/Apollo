@@ -21,13 +21,16 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.db.*;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Poll extends AbstractPoll {
+    private static final Logger LOG = getLogger(Poll.class);
 
     private static final boolean isPollsProcessing = Apl.getBooleanProperty("apl.processPolls");
 
@@ -194,9 +197,9 @@ public final class Poll extends AbstractPoll {
                 try {
                     List<OptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
                     pollResultsTable.insert(poll, results);
-                    Logger.logDebugMessage("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
+                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
                 } catch (RuntimeException e) {
-                    Logger.logErrorMessage("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
+                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
                 }
             }
         }
