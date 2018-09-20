@@ -236,8 +236,8 @@ public class DesktopApplication extends Application {
             AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
             screenStage.setScene(scene);
-            screenStage.setHeight(250);
-            screenStage.setWidth(400);
+            screenStage.setHeight(500);
+            screenStage.setWidth(217);
             screenStage.initStyle(StageStyle.UNDECORATED);
             screenStage.show();
             Runnable statusUpdater = () -> {
