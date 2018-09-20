@@ -946,12 +946,6 @@ var NRS = (function(NRS, $, undefined) {
 
         var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
 
-
-        console.log(t.type);
-        console.log(t.subtype);
-
-        console.log(transactionType);
-
         if (t.type === 8 && t.subtype === 0) {
             transactionType = 'Critical Update';
         }
