@@ -41,6 +41,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebEngine;
@@ -48,6 +49,7 @@ import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
@@ -74,8 +76,8 @@ import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApp
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopApplication extends Application {
-        private static final Logger LOG = getLogger(DesktopApplication.class);
-        
+    private static final Logger LOG = getLogger(DesktopApplication.class);
+
     private static final MainApplication MAIN_APPLICATION = MainApplication.getInstance();
     private static final SplashScreen SPLASH_SCREEN = SplashScreen.getInstance();
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
@@ -377,8 +379,35 @@ public class DesktopApplication extends Application {
             mainStage.initStyle(StageStyle.DECORATED);
             mainStage.setScene(scene);
             mainStage.sizeToScene();
+            mainStage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::showOnCloseWarnAlert);
             mainStage.show();
             Platform.setImplicitExit(false); // So that we can reopen the application in case the user closed it
+        }
+
+        public<T> void showOnCloseWarnAlert(T event) {
+            Alert warnAlert = new Alert(Alert.AlertType.WARNING);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(5, 5, 0, 5));
+            Text text = new Text("By closing desktop you will not stop apollo wallet completely. Apollo desktop app will work in tray (if " +
+                    "supported) or in browser mode in " +
+                    "background and will be available also in your browser at " + getUrl()+ ". If you want to close completely application -> " +
+                    "click " +
+                    "YES");
+            text.setFont(Font.font ("Verdana", 11));
+
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            hbox.setMaxSize(500, 250);
+            text.setWrappingWidth(350);
+            hbox.getChildren().add(text);
+            warnAlert.getButtonTypes().clear();
+            warnAlert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
+            warnAlert.getDialogPane().setContent(hbox);
+            warnAlert.setHeaderText("Apollo desktop app shutdown will not" + System.lineSeparator() + " cause shutdown of Apollo wallet");
+            ButtonType clickedButton = warnAlert.showAndWait().orElse(ButtonType.NO);
+            if (clickedButton == ButtonType.YES) {
+                System.exit(0);
+            }
         }
 
         private void updateClientState(BlockchainProcessor.Event blockEvent, Block block) {
@@ -472,7 +501,8 @@ public class DesktopApplication extends Application {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
                         }
-                    } catch (IllegalArgumentException e) {
+                    }
+                    catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -496,7 +526,8 @@ public class DesktopApplication extends Application {
                             growl("Pruned message not currently available from any peer");
                             return;
                         }
-                    } catch (IllegalArgumentException e) {
+                    }
+                    catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -544,7 +575,8 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
             }
         }
