@@ -947,12 +947,23 @@ var NRS = (function(NRS, $, undefined) {
         var transactionType = $.t(NRS.transactionTypes[t.type]['subTypes'][t.subtype]['i18nKeyTitle']);
 
 
-        if (transactionType === 'Unknown') {
+        console.log(t.type);
+        console.log(t.subtype);
 
+        console.log(transactionType);
 
+        if (t.type === 8 && t.subtype === 0) {
+            transactionType = 'Critical Update';
+        }
+        if (t.type === 8 && t.subtype === 0) {
+            transactionType = 'Important Update';
+        }
+        if (t.type === 8 && t.subtype === 0) {
+            transactionType = 'Minor Update';
+        }
+        if (t.type === 0 && t.subtype === 1) {
             transactionType = 'Private payment';
         }
-
 
         if (t.type == 1 && t.subtype == 6 && t.attachment.priceATM == "0") {
             if (t.sender == NRS.account && t.recipient == NRS.account) {
