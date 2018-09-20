@@ -236,11 +236,12 @@ public class DesktopApplication extends Application {
             versionText.setText("Wallet version " + ver);
             statusText.setId("status-text");
             statusText.setText("Apollo wallet is loading. Please, wait");
-            AnchorPane.setTopAnchor(versionText, 170.0);
-            AnchorPane.setLeftAnchor(versionText, 60.0);
+            AnchorPane.setTopAnchor(versionText, 130.0);
+            AnchorPane.setLeftAnchor(versionText, 190.0);
             AnchorPane.setTopAnchor(statusText, 200.0);
             AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
+            pane.getChildren().add(versionText);
             screenStage.setScene(scene);
             screenStage.setHeight(217);
             screenStage.setWidth(500);
