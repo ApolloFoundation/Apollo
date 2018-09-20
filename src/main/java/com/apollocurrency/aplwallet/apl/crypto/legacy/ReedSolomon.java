@@ -4,7 +4,7 @@
     Version: 1.0, license: Public Domain, coder: NxtChg (admin@nxtchg.com)
     Java Version: ChuckOne (ChuckOne@mail.de).
 */
-package com.apollocurrency.aplwallet.apl.crypto;
+package com.apollocurrency.aplwallet.apl.crypto.legacy;
 
 final class ReedSolomon {
 
