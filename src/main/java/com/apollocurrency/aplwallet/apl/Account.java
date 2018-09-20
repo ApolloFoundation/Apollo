@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.KeyStore512Impl;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
@@ -30,14 +29,10 @@ import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.SecureRandom;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,8 +42,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
-        private static final Logger LOG = getLogger(Account.class);
-    private static final KeyStore keystore = new KeyStore512Impl(Paths.get(Apl.getUserHomeDir()).resolve("keystore"));
+    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15, Paths.get("pass-words" +
+            ".txt"));
+    private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
+
+
+    private static final Logger LOG = getLogger(Account.class);
+    private static final KeyStore keystore =
+            new SimpleKeyStoreImpl(Apl.getKeystoreDir(
+                    Constants.isTestnet ?
+                            Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
+                            Apl.getStringProperty("apl.keystoreDir","keystore")));
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
         @Override
@@ -332,7 +336,6 @@ public final class Account {
             Apl.getBlockchainProcessor().addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
 
         }
-
     }
 
     private final long id;
@@ -626,10 +629,6 @@ public final class Account {
         return Convert.fullHashToId(publicKeyHash);
     }
 
-    public static long getNewId(byte[] publicKey) {
-        byte[] publicKeyHash = Crypto.sha512().digest(publicKey);
-        return Convert.fullHashToId(publicKeyHash);
-    }
 
     public static byte[] getPublicKey(long id) {
         DbKey dbKey = publicKeyDbKeyFactory.newKey(id);
@@ -1950,138 +1949,37 @@ public final class Account {
     }
 
     public static GeneratedAccount generateAccount(String passphrase) {
-
-        if (passphrase == null) {
-            passphrase = generatePassphrase();
-        }
-        byte[] randomBytes = new byte[64];
-        Crypto.getSecureRandom().nextBytes(randomBytes);
-        byte[] pkBytes = Crypto.getPrivateKey(randomBytes);
-        byte[] accountPublicKey = Crypto.getNewPublicKey(pkBytes);
-        long accountId = Account.getNewId(accountPublicKey);
+        GeneratedAccount account = accountGenerator.generate(passphrase);
         try {
-            keystore.savePrivateKey(passphrase, pkBytes);
+            keystore.saveKeySeed(account.getPassphrase(), account.getKeySeed());
         }
         catch (IOException e) {
-            LOG.error("Unable to save private key", e);
-            throw new RuntimeException("Unable to generate account");
+            LOG.error(e.toString(), e);
+            throw new RuntimeException("Unable to save generated account");
         }
-        return new GeneratedAccount(accountId, accountPublicKey, pkBytes, passphrase);
-
+        return account;
     }
 
-
-
-    public static GeneratedAccount generateAccount() {
-        String passphrase = generatePassphrase();
-
-        return generateAccount(passphrase);
-    }
-
-    public static String generatePassphrase() {
+    public static byte[] exportKeySeed(String passphrase, long accountId) {
         try {
-            StringBuilder passphraseBuilder = new StringBuilder(50);
-            List<String> words = loadPassphraseWords();
-            SecureRandom random = Crypto.getSecureRandom();
-            for (int i = 0; i < 5; i++) {
-                passphraseBuilder.append(words.get(random.nextInt(words.size()))).append(" ");
-            }
-            return passphraseBuilder.toString().trim();
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-
-    }
-
-    public static byte[] exportPrivateKey(String passphrase, long accountId) {
-
-        try {
-            return keystore.getPrivateKey(passphrase, accountId);
+            return keystore.getKeySeed(passphrase, accountId);
         }
         catch (IOException e) {
             LOG.error("Unable to export private key", e);
             return new byte[0];
         }
     }
-
-    public static List<String> loadPassphraseWords() throws IOException {
-        Path path = Paths.get("pass-words.txt");
-        return Files.readAllLines(path);
-    }
-public static class GeneratedAccount {
-        private long id;
-        private byte[] publicKey;
-        private byte[] privateKey;
-        private String passphrase;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GeneratedAccount)) return false;
-        GeneratedAccount that = (GeneratedAccount) o;
-        return id == that.id;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public byte[] getPublicKey() {
-        return publicKey;
-    }
-
-    public void setPublicKey(byte[] publicKey) {
-        this.publicKey = publicKey;
-    }
-
-    public byte[] getPrivateKey() {
-        return privateKey;
-    }
-
-    public void setPrivateKey(byte[] privateKey) {
-        this.privateKey = privateKey;
-    }
-
-    public String getPassphrase() {
-        return passphrase;
-    }
-
-    public void setPassphrase(String passphrase) {
-        this.passphrase = passphrase;
-    }
-
-    public GeneratedAccount(long id, byte[] publicKey, byte[] privateKey, String passphrase) {
-        this.id = id;
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
-        this.passphrase = passphrase;
-    }
-
-    public JSONObject toJSON(boolean includePrivateKey) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", id);
-        jsonObject.put("rsAddress", Convert.rsAccount(id));
-        if (publicKey != null) {
-            jsonObject.put("publicKey", Convert.toHexString(publicKey));
+    public static String importKeySeed(String passphrase, byte[] keySeed) {
+        try {
+            if (passphrase == null) {
+                passphrase = passphraseGenerator.generate();
+            }
+            keystore.saveKeySeed(passphrase, keySeed);
+            return passphrase;
         }
-        if (passphrase != null) {
-            jsonObject.put("passphrase", passphrase);
+        catch (IOException e) {
+            LOG.error("Unable to export private key", e);
+            return null;
         }
-        if (includePrivateKey && privateKey != null) {
-            jsonObject.put("privateKey", Convert.toHexString(privateKey));
-        }
-        return jsonObject;
     }
-}
-
 }

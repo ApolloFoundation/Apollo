@@ -300,7 +300,8 @@ public enum APIEnum {
     GET_TOTAL_SUPPLY("getTotalSupply", GetTotalSupply.getInstance()),
     GET_ACCOUNTS("getAccounts", GetAccounts.getInstance()),
     GENERATE_ACCOUNT("generateAccount", GenerateAccount.getInstance()),
-    EXPORT_ACCOUNT("exportAccount", ExportPrivateKey.getInstance()),
+    EXPORT_KEY("exportKey", ExportKey.getInstance()),
+    IMPORT_KEY("importKey", ImportKey.getInstance()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

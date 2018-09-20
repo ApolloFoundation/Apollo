@@ -66,6 +66,11 @@ public final class Convert {
         return bytes;
     }
 
+    public static long getId(byte[] publicKey) {
+        byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
+        return Convert.fullHashToId(publicKeyHash);
+    }
+
     public static String toHexString(byte[] bytes) {
         if (bytes == null) {
             return null;

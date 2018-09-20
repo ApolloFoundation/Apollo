@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -44,7 +43,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
 
-    private static final boolean useStrongSecureRandom = Apl.getBooleanProperty("apl.useStrongSecureRandom");
+    private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
     private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
         @Override
@@ -108,14 +107,6 @@ public final class Crypto {
     }
 
 
-    public static byte[] getNewPublicKey(byte[] keySeed) {
-        byte[] publicKey = new byte[64];
-        for (int i = 0; i < keySeed.length; i++) {
-            publicKey[i] = keySeed[i];
-        }
-        return publicKey;
-    }
-
     public static byte[] getPublicKey(String secretPhrase) {
         byte[] publicKey = new byte[32];
         Curve25519.keygen(publicKey, null, Crypto.sha256().digest(Convert.toBytes(secretPhrase)));
@@ -139,10 +130,14 @@ public final class Crypto {
     }
 
     public static byte[] sign(byte[] message, String secretPhrase) {
+        return sign(message, sha256().digest(Convert.toBytes(secretPhrase)));
+    }
+
+    public static byte[] sign(byte[] message, byte[] keySeed) {
         byte[] P = new byte[32];
         byte[] s = new byte[32];
         MessageDigest digest = Crypto.sha256();
-        Curve25519.keygen(P, s, digest.digest(Convert.toBytes(secretPhrase)));
+        Curve25519.keygen(P, s, keySeed);
 
         byte[] m = digest.digest(message);
 

@@ -12,15 +12,15 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class ExportPrivateKey extends APIServlet.APIRequestHandler {
+public class ExportKey extends APIServlet.APIRequestHandler {
     private static class ExportPrivateKeyHolder {
-        private static final ExportPrivateKey INSTANCE = new ExportPrivateKey();
+        private static final ExportKey INSTANCE = new ExportKey();
     }
 
-    public static ExportPrivateKey getInstance() {
+    public static ExportKey getInstance() {
         return ExportPrivateKeyHolder.INSTANCE;
     }
-    private ExportPrivateKey() {
+    private ExportKey() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account", "passphrase");
     }
 
@@ -28,10 +28,10 @@ public class ExportPrivateKey extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
-        byte[] privateKey = Account.exportPrivateKey(passphrase, accountId);
+        byte[] keySeed = Account.exportKeySeed(passphrase, accountId);
         JSONObject response = new JSONObject();
         response.put("account", Convert.rsAccount(accountId));
-        response.put("privateKey", Convert.toHexString(privateKey));
+        response.put("keySeed", Convert.toHexString(keySeed));
         return response;
     }
 

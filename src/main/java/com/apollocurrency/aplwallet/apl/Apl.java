@@ -565,6 +565,10 @@ public final class Apl {
     public static String getDbDir(String dbDir) {
         return dirProvider.getDbDir(dbDir);
     }
+    public static Path getKeystoreDir(String keystoreDir) {
+        return dirProvider.getKeystoreDir(keystoreDir).toPath();
+    }
+
 
     public static void updateLogFileHandler(Properties loggingProperties) {
         dirProvider.updateLogFileHandler(loggingProperties);
