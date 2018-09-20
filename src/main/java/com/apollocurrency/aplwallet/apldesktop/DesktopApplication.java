@@ -231,7 +231,7 @@ public class DesktopApplication extends Application {
             pane.getChildren().add(indicator);
             Text statusText = new Text();
             Text versionText = new Text();
-            Version ver = new Version();
+            Version ver = Apl.VERSION;
             versionText.setId("version-text");
             versionText.setText("Wallet version " + ver);
             statusText.setId("status-text");
