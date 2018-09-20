@@ -62,4 +62,14 @@ public class CommandLineMode implements RuntimeMode {
             System.exit(1);
         }
     }
+
+    @Override
+    public void updateAppStatus(String newStatus) {
+        LOG.info("Application status:", newStatus);
+    }
+
+    @Override
+    public void displayError(String errorMessage) {
+        LOG.error(errorMessage);
+    }
 }

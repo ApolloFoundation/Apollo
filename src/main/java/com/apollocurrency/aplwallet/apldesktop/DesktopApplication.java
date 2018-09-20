@@ -171,6 +171,25 @@ public class DesktopApplication extends Application {
         System.out.println("JavaFX platform shutdown complete");
     }
 
+    public static void showError(String message) {
+        Platform.runLater(() -> {
+            Text text = new Text(message);
+            text.setWrappingWidth(330);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(10, 10, 0, 10));
+            hbox.getChildren().add(text);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Multiple Apollo wallets were launched");
+            alert.setWidth(350);
+            alert.setHeight(200);
+            alert.getDialogPane().setContent(hbox);
+            alert.showAndWait() ;
+            System.exit(0);
+        });
+    }
+
     @Override
     public void start(Stage primaryStage) {
         mainStage = primaryStage;
