@@ -230,8 +230,14 @@ public class DesktopApplication extends Application {
             AnchorPane.setLeftAnchor(indicator, 225.0);
             pane.getChildren().add(indicator);
             Text statusText = new Text();
+            Text versionText = new Text();
+            Version ver = new Version();
+            versionText.setId("version-text");
+            versionText.setText("Wallet version " + ver);
             statusText.setId("status-text");
             statusText.setText("Apollo wallet is loading. Please, wait");
+            AnchorPane.setTopAnchor(versionText, 170.0);
+            AnchorPane.setLeftAnchor(versionText, 60.0);
             AnchorPane.setTopAnchor(statusText, 200.0);
             AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
