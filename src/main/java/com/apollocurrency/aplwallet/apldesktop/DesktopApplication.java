@@ -226,13 +226,13 @@ public class DesktopApplication extends Application {
             pane.setId("main-pane");
             ProgressIndicator indicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
             indicator.setId("progress-indicator");
-            AnchorPane.setTopAnchor(indicator, 130.0);
-            AnchorPane.setLeftAnchor(indicator, 175.0);
+            AnchorPane.setTopAnchor(indicator, 75.0);
+            AnchorPane.setLeftAnchor(indicator, 225.0);
             pane.getChildren().add(indicator);
             Text statusText = new Text();
             statusText.setId("status-text");
             statusText.setText("Apollo wallet is loading. Please, wait");
-            AnchorPane.setTopAnchor(statusText, 228.0);
+            AnchorPane.setTopAnchor(statusText, 200.0);
             AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
             screenStage.setScene(scene);
