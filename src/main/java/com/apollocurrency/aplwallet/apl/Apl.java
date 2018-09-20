@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -45,11 +46,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
+import static com.apollocurrency.aplwallet.apl.Constants.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Apl {
@@ -381,6 +380,7 @@ public final class Apl {
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
                 runtimeMode.updateAppStatus("Database initialization...");
+                checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
@@ -476,6 +476,60 @@ public final class Apl {
                 System.exit(1);
             }
         }
+
+        public static void checkPorts() {
+            Set<Integer> ports = collectWorkingPorts();
+            for (Integer port : ports) {
+                if (!isTcpPortAvailable(port)) {
+                    String portErrorMessage = "Port " + port + " is already in use. Please, shutdown all Apollo processes and restart application!";
+                    runtimeMode.displayError("ERROR!!! " + portErrorMessage);
+                    throw new RuntimeException(portErrorMessage);
+                }
+            }
+        }
+
+        static Set<Integer> collectWorkingPorts() {
+            final int port = Constants.isTestnet ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
+            final int sslPort = Constants.isTestnet ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
+            boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
+            int peerPort = -1;
+
+            String myAddress = Convert.emptyToNull(Apl.getStringProperty("apl.myAddress", "").trim());
+            if (myAddress != null) {
+                try {
+                    int portIndex = myAddress.lastIndexOf(":");
+                    if (portIndex != -1) {
+                        peerPort = Integer.parseInt(myAddress.substring(portIndex + 1));
+                    }
+                }
+                catch (NumberFormatException e) {
+                    LOG.error("Unable to parse port in '{}' address",myAddress);
+                }
+            }
+            if (peerPort == -1) {
+                peerPort = Constants.isTestnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+            }
+            int peerServerPort = Apl.getIntProperty("apl.peerServerPort");
+
+            Set<Integer> ports = new HashSet<>();
+            ports.add(port);
+            if (enableSSL) {
+                ports.add(sslPort);
+            }
+            ports.add(peerPort);
+            ports.add(Constants.isTestnet ? TESTNET_PEER_PORT : peerServerPort);
+            return ports;
+        }
+
+        public static boolean isTcpPortAvailable(int port) {
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+
+
 
         private static void init() {
             if (initialized) {

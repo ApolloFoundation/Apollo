@@ -30,6 +30,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -38,7 +40,9 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
@@ -163,6 +167,25 @@ public class DesktopApplication extends Application {
             }
         }
         System.out.println("JavaFX platform shutdown complete");
+    }
+
+    public static void showError(String message) {
+        Platform.runLater(() -> {
+            Text text = new Text(message);
+            text.setWrappingWidth(330);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(10, 10, 0, 10));
+            hbox.getChildren().add(text);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Multiple Apollo wallets were launched");
+            alert.setWidth(350);
+            alert.setHeight(200);
+            alert.getDialogPane().setContent(hbox);
+            alert.showAndWait() ;
+            System.exit(0);
+        });
     }
 
     @Override

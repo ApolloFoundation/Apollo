@@ -54,14 +54,14 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
 
-    public static final int TESTNET_API_PORT = 6876;
-    public static final int TESTNET_API_SSLPORT = 6877;
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;

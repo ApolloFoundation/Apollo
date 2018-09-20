@@ -118,4 +118,15 @@ public class DesktopMode implements RuntimeMode {
             throw new RuntimeException("Unable to update status on splash screen!", e);
         }
     }
+
+    @Override
+    public void displayError(String errorMessage) {
+        try {
+            desktopAppClass.getMethod("showError", String.class).invoke(null, errorMessage);
+        }
+        catch (Exception e) {
+            //rethrow
+            throw new RuntimeException("Unable to show gui error alert!", e);
+        }
+    }
 }
