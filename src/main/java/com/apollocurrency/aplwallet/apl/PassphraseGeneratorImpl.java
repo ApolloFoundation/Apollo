@@ -77,7 +77,7 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
                 throw new RuntimeException("Lack of words in dictionary: required - " + maxNumberOfWords + " but present - " + dictionary.size());
             }
             SecureRandom random = Crypto.getSecureRandom();
-            int numberOfWords = random.nextInt(5) + 10;
+            int numberOfWords = random.nextInt(maxNumberOfWords - minNumberOfWords) + minNumberOfWords;
             Set<String> passphraseWords = new LinkedHashSet<>();
             while (passphraseWords.size() != numberOfWords) {
                 passphraseWords.add(dictionary.get(random.nextInt(dictionary.size())));
