@@ -649,8 +649,8 @@ public class NodeClient {
 
     public GeneratedAccount generateAccount(String url, String passphrase) throws IOException {
         Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "generateAccount");
         if (passphrase != null && !passphrase.isEmpty()) {
-            parameters.put("requestType", "generateAccount");
             parameters.put("passphrase", passphrase);
         }
         String json = postJson(createURI(url), parameters, "");
@@ -671,6 +671,23 @@ public class NodeClient {
             throw new RuntimeException("No necessary json: " + json);
         }
         return accountKey;
+    }
+    public String importKey(String url, String passphrase, String keySeed) throws IOException {
+        Objects.requireNonNull(keySeed);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "importKey");
+        if (passphrase != null && !passphrase.isEmpty()) {
+            parameters.put("passphrase", passphrase);
+        }
+        parameters.put("keySeed", keySeed);
+
+        String json = postJson(createURI(url), parameters, "");
+        JsonNode jsonNode = MAPPER.readTree(json);
+        JsonNode passphraseNode = jsonNode.get("passphrase");
+        if (passphraseNode == null) {
+            throw new RuntimeException("No passphrase in response: " + json);
+        }
+        return passphraseNode.textValue();
     }
 
 }

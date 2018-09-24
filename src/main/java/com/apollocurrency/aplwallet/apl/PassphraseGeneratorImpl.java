@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,7 +95,12 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
             if (dictionaryURL == null) {
                 throw new RuntimeException("Dictionary " + DEFAULT_DICTIONARY_PATH + " is not exist");
             }
-            dictionaryPath = Paths.get(dictionaryURL.getPath());
+            try {
+                dictionaryPath = Paths.get(dictionaryURL.toURI());
+            }
+            catch (URISyntaxException e) {
+                throw new RuntimeException("Invalid path to dictionary", e);
+            }
         }
         return Files.readAllLines(dictionaryPath);
     }

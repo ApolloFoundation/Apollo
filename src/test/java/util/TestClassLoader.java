@@ -56,6 +56,7 @@ public class TestClassLoader extends ClassLoader {
         classNames.add(rootDirName + ".util.Logger");
         classNames.add(rootDirName + ".http.JSONResponses");
         classNames.add(rootDirName + ".http.VerifyPrunableMessage");
+        classNames.add(rootDirName + ".http.APIServlet");
         classNames.add(rootDirName + ".http.APIEnum");
         classNames.add(rootDirName + ".env.RuntimeEnvironment");
         classNames.add(rootDirName + ".http.APIProxy");

@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,8 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
-    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15, Paths.get("pass-words" +
-            ".txt"));
+    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
     private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
 
 

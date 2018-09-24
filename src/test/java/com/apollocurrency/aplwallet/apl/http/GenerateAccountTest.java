@@ -38,6 +38,8 @@ public class GenerateAccountTest {
     @Test
     public void testGenerateAccountWithoutPassphrase() throws IOException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TestData.TEST_LOCALHOST, null);
+        Assert.assertNotNull(generatedAccount.getPublicKey());
+        Assert.assertNotEquals(0, generatedAccount.getId());
         Assert.assertNotEquals(PASSPHRASE, generatedAccount.getPassphrase());
     }
 }

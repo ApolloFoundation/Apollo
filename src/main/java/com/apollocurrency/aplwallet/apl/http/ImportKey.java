@@ -21,7 +21,7 @@ public class ImportKey extends APIServlet.APIRequestHandler {
         return ImportKeyHolder.INSTANCE;
     }
     private ImportKey() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "keySeed", "passphrase", "");
+        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "keySeed", "passphrase");
     }
 
     @Override
