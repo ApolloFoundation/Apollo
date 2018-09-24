@@ -52,7 +52,7 @@ public final class Account {
             new SimpleKeyStoreImpl(Apl.getKeystoreDir(
                     Constants.isTestnet ?
                             Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
-                            Apl.getStringProperty("apl.keystoreDir","keystore")));
+                            Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
         @Override

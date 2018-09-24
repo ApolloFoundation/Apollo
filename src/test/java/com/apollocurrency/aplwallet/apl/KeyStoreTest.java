@@ -50,7 +50,7 @@ public class KeyStoreTest {
     public void setUp() throws Exception {
         Crypto.getSecureRandom().nextBytes(nonce);
         tempDirectory = Files.createTempDirectory("keystore-test");
-        keyStore = new SimpleKeyStoreImpl(tempDirectory);
+        keyStore = new SimpleKeyStoreImpl(tempDirectory, (byte) 0);
         Files.write(tempDirectory.resolve("---" + ACCOUNT), encryptedKeySeedJSON.getBytes());
     }
 

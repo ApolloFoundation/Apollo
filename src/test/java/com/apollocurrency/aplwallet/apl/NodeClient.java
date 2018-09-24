@@ -88,6 +88,7 @@ public class NodeClient {
                     .timeout(REQUEST_TIMEOUT, TimeUnit.SECONDS)
                     .content(new StringContentProvider(bodyJson, Charset.forName("utf-8")));
             parameters.forEach(request::param);
+
             ContentResponse response = request.send();
             if (response.getStatus() != HttpStatus.OK_200) {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
@@ -640,4 +641,15 @@ public class NodeClient {
         params.put("firstIndex", String.valueOf(firstIndex));
         params.put("lastIndex", String.valueOf(lastIndex));
     }
+
+    public GeneratedAccount generateAccount(String url, String passphrase) throws IOException {
+        Map<String, String> parameters = new HashMap<>();
+        if (passphrase != null && !passphrase.isEmpty()) {
+            parameters.put("requestType", "generateAccount");
+            parameters.put("passphrase", passphrase);
+        }
+        String json = postJson(createURI(url), parameters, "");
+        return MAPPER.readValue(json, GeneratedAccount.class);
+    }
+
 }

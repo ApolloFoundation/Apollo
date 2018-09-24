@@ -16,15 +16,24 @@
  import java.nio.file.Path;
  import java.nio.file.StandardOpenOption;
  import java.time.Instant;
+ import java.time.OffsetDateTime;
+ import java.time.ZoneOffset;
+ import java.time.format.DateTimeFormatter;
  import java.util.List;
  import java.util.Objects;
  import java.util.stream.Collectors;
 
  public class SimpleKeyStoreImpl implements KeyStore {
      private Path keystoreDirPath;
+     private byte version;
+     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+     private static final String format = "v%d_%s---%s";
 
-
-     public SimpleKeyStoreImpl(Path keyStoreDirPath) {
+     public SimpleKeyStoreImpl(Path keyStoreDirPath, byte version) {
+         if (version < 0) {
+             throw new IllegalArgumentException("version should be positive");
+         }
+         this.version = version;
          this.keystoreDirPath = keyStoreDirPath;
          if (!Files.exists(keyStoreDirPath)) {
              try {
@@ -112,12 +121,13 @@
          Objects.requireNonNull(passphrase);
          Objects.requireNonNull(keySeed);
          Instant instant = Instant.now();
+         OffsetDateTime utcTime = instant.atOffset( ZoneOffset.UTC );
          long accountId = Convert.getId(Crypto.getPublicKey(keySeed));
          List<Path> keySeedPaths = findKeySeedPaths(accountId);
          if (keySeedPaths.size() != 0) {
              throw new RuntimeException("Unable to save keySeed");
          }
-         Path keyPath = keystoreDirPath.resolve(instant.toString() + "---" + Convert.rsAccount(accountId));
+         Path keyPath = keystoreDirPath.resolve(String.format(format, version, formatter.format(utcTime), Convert.rsAccount(accountId)));
          byte[] nonce = generateBytes(16);
          byte[] key = Crypto.getKeySeed(passphrase, nonce);
          byte[] encryptedKeySeed = Crypto.aesEncrypt(keySeed, key);

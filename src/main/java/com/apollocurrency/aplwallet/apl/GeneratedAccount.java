@@ -46,12 +46,19 @@ public class GeneratedAccount {
         this.publicKey = publicKey;
     }
 
+    public void setPublicKey(String publicKey) {
+        this.publicKey = Convert.parseHexString(publicKey);
+    }
+
     public byte[] getPrivateKey() {
         return privateKey;
     }
 
     public void setPrivateKey(byte[] privateKey) {
         this.privateKey = privateKey;
+    }
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = Convert.parseHexString(privateKey);
     }
 
     public String getPassphrase() {
@@ -70,6 +77,13 @@ public class GeneratedAccount {
         this.keySeed = keySeed;
     }
 
+    public GeneratedAccount() {
+    }
+
+    public void setKeySeed(byte[] keySeed) {
+        this.keySeed = keySeed;
+    }
+
     public byte[] getKeySeed() {
         return keySeed;
     }
@@ -84,8 +98,8 @@ public class GeneratedAccount {
         if (passphrase != null) {
             jsonObject.put("passphrase", passphrase);
         }
-
         return jsonObject;
     }
+
 }
 
