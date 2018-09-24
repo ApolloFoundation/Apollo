@@ -112,6 +112,13 @@
             <version>${jackson.version}</version>
         </dependency>
 
+        <!--2fa api-->
+        <dependency>
+            <groupId>com.j256.two-factor-auth</groupId>
+            <artifactId>two-factor-auth</artifactId>
+            <version>1.0</version>
+        </dependency>
+
         <!--Jetty server-->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
