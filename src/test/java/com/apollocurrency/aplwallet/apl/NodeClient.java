@@ -52,7 +52,8 @@ public class NodeClient {
         try {
             CLIENT.setConnectTimeout(15_000);
             CLIENT.start();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOG.error("Http CLIENT could not initialized.", e);
             System.exit(0);
         }
@@ -75,7 +76,8 @@ public class NodeClient {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
             }
             return response.getContentAsString();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOG.error("Cannot perform getRequest to " + uri.toString(), e);
         }
         return null;
@@ -94,7 +96,8 @@ public class NodeClient {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
             }
             return response.getContentAsString();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             LOG.error("Cannot perform postRequest to " + uri.toString() + "/" + uri.getPath(), e);
         }
         return null;
@@ -257,7 +260,7 @@ public class NodeClient {
     }
 
     public JSONTransaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM,
-                                                      Long deadline) throws IOException, ParseException {
+                                                       Long deadline) throws IOException, ParseException {
         String json = sendMoneyPrivate(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
         return MAPPER.readValue(transactionJSON, JSONTransaction.class);
@@ -267,6 +270,7 @@ public class NodeClient {
             ParseException {
         return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
+
     public JSONTransaction sendMoneyTransaction(String url, String secretPhrase, String recipientPublicKey, int deadline, String recipient,
                                                 Long amountATM,
                                                 Long feeATM) throws IOException,
@@ -329,7 +333,7 @@ public class NodeClient {
         }
         byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), Convert.parseHexString(serverPublicKey.textValue()));
         List<JSONTransaction> transactions = new ArrayList<>();
-        for (final JsonNode transactionJson: transactionsArray) {
+        for (final JsonNode transactionJson : transactionsArray) {
             if (transactionJson.get("encryptedTransaction") != null) {
                 JsonNode encryptedTransaction = transactionJson.get("encryptedTransaction");
                 byte[] encryptedBytes = Convert.parseHexString(encryptedTransaction.textValue());
@@ -349,7 +353,7 @@ public class NodeClient {
         URI uri = createURI(url);
         params.put("requestType", "getPrivateBlockchainTransactions");
         params.put("secretPhrase", secretPhrase);
-        if (height >=0) {
+        if (height >= 0) {
             params.put("height", String.valueOf(height));
         }
         if (firstIndex != null) {
@@ -411,6 +415,7 @@ public class NodeClient {
         JsonNode entriesArray = root.get("unconfirmedTransactions");
         return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<JSONTransaction>>() {});
     }
+
     public List<JSONTransaction> getPrivateUnconfirmedTransactions(String url, String secretPhrase, int from, int to) throws
             Exception {
         Map<String, String> parameters = new HashMap<>();
@@ -519,7 +524,7 @@ public class NodeClient {
     }
 
     public JSONTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, DoubleByteArrayTuple updateUrl,
-                                              Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException, ParseException {
+                                                 Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException, ParseException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendUpdateTransaction");
         parameters.put("version", version.toString());
@@ -592,7 +597,7 @@ public class NodeClient {
     }
 
     public List<JSONTransaction> getAllTransactions(String url, int firstIndex, int lastIndex) throws IOException {
-        return getAllTransactions(url, firstIndex, lastIndex, (byte)-1, (byte)-1);
+        return getAllTransactions(url, firstIndex, lastIndex, (byte) -1, (byte) -1);
     }
 
     public List<JSONTransaction> getAllTransactions(String url, byte type, byte subtype) throws IOException {
@@ -600,7 +605,7 @@ public class NodeClient {
     }
 
     public List<JSONTransaction> getAllTransactions(String url) throws IOException {
-        return getAllTransactions(url, 0, -1, (byte)-1, (byte)-1);
+        return getAllTransactions(url, 0, -1, (byte) -1, (byte) -1);
     }
 
     public JSONTransaction sendTransaction(String url, String secretPhrase, long feeATM, long deadline, Map<String, String> specificParams) throws ParseException, IOException {
@@ -650,6 +655,22 @@ public class NodeClient {
         }
         String json = postJson(createURI(url), parameters, "");
         return MAPPER.readValue(json, GeneratedAccount.class);
+    }
+
+    public AccountKey exportKey(String url, String passphrase, String account) throws IOException {
+        Objects.requireNonNull(passphrase);
+        Objects.requireNonNull(account);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "exportKey");
+        parameters.put("passphrase", passphrase);
+        parameters.put("account", account);
+
+        String json = postJson(createURI(url), parameters, "");
+        AccountKey accountKey =  MAPPER.readValue(json, AccountKey.class);
+        if (accountKey == null || accountKey.getAccount() == null) {
+            throw new RuntimeException("No necessary json: " + json);
+        }
+        return accountKey;
     }
 
 }
