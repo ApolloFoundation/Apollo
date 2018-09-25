@@ -140,6 +140,10 @@ public final class Convert {
     public static String rsAccount(long accountId) {
         return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
     }
+    //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
+    public static String defaultRsAccount(long accountId) {
+        return  "APL-" + Crypto.rsEncode(accountId);
+    }
 
     public static long fullHashToId(byte[] hash) {
         if (hash == null || hash.length < 8) {

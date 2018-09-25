@@ -4,6 +4,8 @@
 
 package dto;
 
+import com.apollocurrency.aplwallet.apl.util.Convert;
+
 import java.util.Objects;
 
 public class Account {
@@ -11,7 +13,7 @@ public class Account {
     private long forgedBalanceATM;
     private String accountRS;
     private long unconfirmedBalanceATM;
-    private String account;
+    private long account;
     private double percentage;
 
     @Override
@@ -60,16 +62,23 @@ public class Account {
         return unconfirmedBalanceATM;
     }
 
-    public String getAccount() {
+    public long getAccount() {
         return account;
     }
 
-    public Account(long balanceATM, long forgedBalanceATM, String accountRS, long unconfirmedBalanceATM, String account, double percentage) {
+    public Account(long balanceATM, long forgedBalanceATM, String accountRS, long unconfirmedBalanceATM, long account, double percentage) {
         this.balanceATM = balanceATM;
         this.forgedBalanceATM = forgedBalanceATM;
         this.accountRS = accountRS;
         this.unconfirmedBalanceATM = unconfirmedBalanceATM;
         this.percentage = percentage;
+        this.account = account;
+    }
+    public Account(long balanceATM, long forgedBalanceATM, long unconfirmedBalanceATM, long account) {
+        this.balanceATM = balanceATM;
+        this.forgedBalanceATM = forgedBalanceATM;
+        this.accountRS = Convert.defaultRsAccount(account);
+        this.unconfirmedBalanceATM = unconfirmedBalanceATM;
         this.account = account;
     }
 

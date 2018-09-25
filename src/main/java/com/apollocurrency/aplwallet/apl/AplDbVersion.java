@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.db.DbBytesConverter;
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 
-class AplDbVersion extends DbVersion {
+public class AplDbVersion extends DbVersion {
 
     protected void update(int nextUpdate) {
         switch (nextUpdate) {

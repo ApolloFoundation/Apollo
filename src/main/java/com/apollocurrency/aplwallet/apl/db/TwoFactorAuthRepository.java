@@ -1,4 +1,7 @@
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet.apl.db;
+
+import com.apollocurrency.aplwallet.apl.AlreadyExistsException;
+import com.apollocurrency.aplwallet.apl.NotFoundException;
 
 public interface TwoFactorAuthRepository {
     /**
