@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.http;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
@@ -32,6 +31,7 @@ import org.eclipse.jetty.proxy.AsyncMiddleManServlet;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.UrlEncoded;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -45,8 +45,10 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_NOT_ALLOWED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class APIProxyServlet extends AsyncMiddleManServlet {
+    private static final Logger LOG = getLogger(APIProxyServlet.class);
 
     private static final String REMOTE_URL = APIProxyServlet.class.getName() + ".remoteUrl";
     private static final String REMOTE_SERVER_IDLE_TIMEOUT = APIProxyServlet.class.getName() + ".remoteServerIdleTimeout";
@@ -92,7 +94,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                         JSON.writeJSONString(responseJson, writer);
                     }
                 } catch(IOException e) {
-                    Logger.logInfoMessage("Failed to write response to client", e);
+                    LOG.info("Failed to write response to client", e);
                 }
             }
         }
@@ -209,7 +211,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         @Override
         public void onFailure(Response response, Throwable failure) {
             super.onFailure(response, failure);
-            Logger.logErrorMessage("proxy failed", failure);
+            LOG.error("proxy failed", failure);
             APIProxy.getInstance().blacklistHost(response.getRequest().getHost());
         }
     }

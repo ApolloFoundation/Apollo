@@ -22,14 +22,17 @@ package com.apollocurrency.aplwallet.apl.db;
 
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public abstract class EntityDbTable<T> extends DerivedDbTable {
+        private static final Logger LOG = getLogger(EntityDbTable.class);
 
     private final boolean multiversion;
     protected final DbKey.Factory<T> dbKeyFactory;
@@ -428,7 +431,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         if (cachedT == null) {
             db.getCache(table).put(dbKey, t);
         } else if (t != cachedT) { // not a bug
-            Logger.logDebugMessage("In cache : " + cachedT.toString() + ", inserting " + t.toString());
+            LOG.debug("In cache : " + cachedT.toString() + ", inserting " + t.toString());
             throw new IllegalStateException("Different instance found in Db cache, perhaps trying to save an object "
                     + "that was read outside the current transaction");
         }
@@ -467,7 +470,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
-            Logger.logDebugMessage("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
+            LOG.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
             FullTextTrigger.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }

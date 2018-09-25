@@ -23,17 +23,14 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffler {
+    private static final Logger LOG = getLogger(Shuffler.class);
 
     private static final int MAX_SHUFFLERS = Apl.getIntProperty("apl.maxNumberOfShufflers");
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
@@ -77,14 +74,14 @@ public final class Shuffler {
                     clearExpiration(shuffling);
                 }
                 map.put(accountId, shuffler);
-                Logger.logMessage(String.format("Started shuffler for account %s, shuffling %s",
+                LOG.info(String.format("Started shuffler for account %s, shuffling %s",
                         Long.toUnsignedString(accountId), Long.toUnsignedString(Convert.fullHashToId(shufflingFullHash))));
             } else if (!Arrays.equals(shuffler.recipientPublicKey, recipientPublicKey)) {
                 throw new DuplicateShufflerException("A shuffler with different recipientPublicKey already started");
             } else if (!Arrays.equals(shuffler.shufflingFullHash, shufflingFullHash)) {
                 throw new DuplicateShufflerException("A shuffler with different shufflingFullHash already started");
             } else {
-                Logger.logMessage("Shuffler already started");
+                LOG.info("Shuffler already started");
             }
             return shuffler;
         } finally {
@@ -194,7 +191,7 @@ public final class Shuffler {
                         try {
                             shuffler.submitRegister(shuffling);
                         } catch (RuntimeException e) {
-                            Logger.logErrorMessage(e.toString(), e);
+                            LOG.error(e.toString(), e);
                         }
                     }
                 });
@@ -210,7 +207,7 @@ public final class Shuffler {
                     try {
                         shuffler.submitProcess(shuffling);
                     } catch (RuntimeException e) {
-                        Logger.logErrorMessage(e.toString(), e);
+                        LOG.error(e.toString(), e);
                     }
                 }
                 clearExpiration(shuffling);
@@ -224,7 +221,7 @@ public final class Shuffler {
                     try {
                         shuffler.verify(shuffling);
                     } catch (RuntimeException e) {
-                        Logger.logErrorMessage(e.toString(), e);
+                        LOG.error(e.toString(), e);
                     }
                 });
                 clearExpiration(shuffling);
@@ -238,7 +235,7 @@ public final class Shuffler {
                     try {
                         shuffler.cancel(shuffling);
                     } catch (RuntimeException e) {
-                        Logger.logErrorMessage(e.toString(), e);
+                        LOG.error(e.toString(), e);
                     }
                 });
                 clearExpiration(shuffling);
@@ -418,25 +415,25 @@ public final class Shuffler {
     }
 
     private void submitRegister(Shuffling shuffling) {
-        Logger.logDebugMessage("Account %s registering for shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
+        LOG.debug("Account %s registering for shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
         Attachment.ShufflingRegistration attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
         submitTransaction(attachment);
     }
 
     private void submitProcess(Shuffling shuffling) {
-        Logger.logDebugMessage("Account %s processing shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
+        LOG.debug("Account %s processing shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
         Attachment.ShufflingAttachment attachment = shuffling.process(accountId, secretPhrase, recipientPublicKey);
         submitTransaction(attachment);
     }
 
     private void submitVerify(Shuffling shuffling) {
-        Logger.logDebugMessage("Account %s verifying shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
+        LOG.debug("Account %s verifying shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
         Attachment.ShufflingVerification attachment = new Attachment.ShufflingVerification(shuffling.getId(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
     private void submitCancel(Shuffling shuffling) {
-        Logger.logDebugMessage("Account %s cancelling shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
+        LOG.debug("Account %s cancelling shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
         Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretPhrase, shuffling.getAssigneeAccountId(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
@@ -444,13 +441,13 @@ public final class Shuffler {
     private void submitTransaction(Attachment.ShufflingAttachment attachment) {
         if (BlockchainProcessorImpl.getInstance().isProcessingBlock()) {
             if (hasUnconfirmedTransaction(attachment, TransactionProcessorImpl.getInstance().getWaitingTransactions())) {
-                Logger.logDebugMessage("Transaction already submitted");
+                LOG.debug("Transaction already submitted");
                 return;
             }
         } else {
             try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = TransactionProcessorImpl.getInstance().getAllUnconfirmedTransactions()) {
                 if (hasUnconfirmedTransaction(attachment, unconfirmedTransactions)) {
-                    Logger.logDebugMessage("Transaction already submitted");
+                    LOG.debug("Transaction already submitted");
                     return;
                 }
             }
@@ -466,17 +463,17 @@ public final class Shuffler {
             if (participantAccount == null || transaction.getFeeATM() > participantAccount.getUnconfirmedBalanceATM()) {
                 failedTransaction = transaction;
                 failureCause = new AplException.NotCurrentlyValidException("Insufficient balance");
-                Logger.logDebugMessage("Error submitting shuffler transaction", failureCause);
+                LOG.debug("Error submitting shuffler transaction", failureCause);
             }
             try {
                 TransactionProcessorImpl.getInstance().broadcast(transaction);
             } catch (AplException.NotCurrentlyValidException e) {
                 failedTransaction = transaction;
                 failureCause = e;
-                Logger.logDebugMessage("Error submitting shuffler transaction", e);
+                LOG.debug("Error submitting shuffler transaction", e);
             }
         } catch (AplException.ValidationException e) {
-            Logger.logErrorMessage("Fatal error submitting shuffler transaction", e);
+            LOG.error("Fatal error submitting shuffler transaction", e);
         }
     }
 

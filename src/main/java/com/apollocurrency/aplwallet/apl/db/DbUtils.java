@@ -20,17 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Arrays;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class DbUtils {
+    private static final Logger LOG = getLogger(DbUtils.class);
 
     public static void close(AutoCloseable... closeables) {
         for (AutoCloseable closeable : closeables) {
@@ -48,7 +46,7 @@ public final class DbUtils {
                 con.rollback();
             }
         } catch (SQLException e) {
-            Logger.logErrorMessage(e.toString(), e);
+            LOG.error(e.toString(), e);
         }
 
     }

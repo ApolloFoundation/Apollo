@@ -21,13 +21,13 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -38,7 +38,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class DumpPeers extends APIServlet.APIRequestHandler {
+        private static final Logger LOG = getLogger(DumpPeers.class);
 
     private static class DumpPeersHolder {
         private static final DumpPeers INSTANCE = new DumpPeers();
@@ -69,7 +72,7 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
             try {
                 service.invokeAll(connects);
             } catch (InterruptedException e) {
-                Logger.logMessage(e.toString(), e);
+                LOG.info(e.toString(), e);
             }
         }
         Set<String> addresses = new HashSet<>();

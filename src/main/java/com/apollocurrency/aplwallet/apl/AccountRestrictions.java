@@ -23,22 +23,22 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.AplException.AccountControlException;
 import com.apollocurrency.aplwallet.apl.VoteWeighting.VotingModel;
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
-import static com.apollocurrency.aplwallet.apl.TransactionType.AccountControl.*;
+
+import static com.apollocurrency.aplwallet.apl.TransactionType.AccountControl.SET_PHASING_ONLY;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AccountRestrictions {
+        private static final Logger LOG = getLogger(AccountRestrictions.class);
+
 
     public static final class PhasingOnly {
 
@@ -147,7 +147,7 @@ public final class AccountRestrictions {
             try {
                 phasingParams.checkApprovable();
             } catch (AplException.NotCurrentlyValidException e) {
-                Logger.logDebugMessage("Account control no longer valid: " + e.getMessage());
+                LOG.debug("Account control no longer valid: " + e.getMessage());
                 return;
             }
             Appendix.Phasing phasingAppendix = transaction.getPhasing();

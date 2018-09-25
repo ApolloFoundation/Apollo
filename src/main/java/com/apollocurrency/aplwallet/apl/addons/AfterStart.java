@@ -22,12 +22,15 @@ package com.apollocurrency.aplwallet.apl.addons;
 
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import org.slf4j.Logger;
 
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class AfterStart implements AddOn {
+    private static final Logger LOG = getLogger(AfterStart.class);
 
     @Override
     public void init() {
@@ -37,7 +40,7 @@ public final class AfterStart implements AddOn {
                 try {
                     Runtime.getRuntime().exec(afterStartScript);
                 } catch (Exception e) {
-                    Logger.logErrorMessage("Failed to run after start script: " + afterStartScript, e);
+                    LOG.error("Failed to run after start script: " + afterStartScript, e);
                 }
             });
         }
@@ -45,6 +48,6 @@ public final class AfterStart implements AddOn {
 
     @Override
     public void processRequest(Map<String, String> map) {
-        Logger.logInfoMessage(map.get("afterStartMessage"));
+        LOG.info(map.get("afterStartMessage"));
     }
 }

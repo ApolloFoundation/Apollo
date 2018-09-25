@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -44,6 +43,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -55,12 +55,14 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class API {
+    private static final Logger LOG = getLogger(API.class);
 
-    public static final int TESTNET_API_PORT = 6876;
-    public static final int TESTNET_API_SSLPORT = 6877;
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
@@ -128,7 +130,7 @@ public final class API {
                     try {
                         nets.add(new NetworkAddress(host));
                     } catch (UnknownHostException e) {
-                        Logger.logErrorMessage("Unknown network " + host, e);
+                        LOG.error("Unknown network " + host, e);
                         throw new RuntimeException(e.toString(), e);
                     }
                 } else {
@@ -172,7 +174,7 @@ public final class API {
                 connector.setIdleTimeout(apiServerIdleTimeout);
                 connector.setReuseAddress(true);
                 apiServer.addConnector(connector);
-                Logger.logMessage("API server using HTTP port " + port);
+                LOG.info("API server using HTTP port " + port);
             }
             //
             // Create the HTTPS connector
@@ -187,7 +189,7 @@ public final class API {
                 https_config.addCustomizer(new SecureRequestCustomizer());
                 sslContextFactory = new SslContextFactory();
                 String keyStorePath = Paths.get(Apl.getUserHomeDir()).resolve(Paths.get(Apl.getStringProperty("apl.keyStorePath"))).toString();
-                Logger.logInfoMessage("Using keystore: " + keyStorePath);
+                LOG.info("Using keystore: " + keyStorePath);
                 sslContextFactory.setKeyStorePath(keyStorePath);
                 sslContextFactory.setKeyStorePassword(Apl.getStringProperty("apl.keyStorePassword", null, true));
                 sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
@@ -206,7 +208,7 @@ public final class API {
                 connector.setIdleTimeout(apiServerIdleTimeout);
                 connector.setReuseAddress(true);
                 apiServer.addConnector(connector);
-                Logger.logMessage("API server using HTTPS port " + sslPort);
+                LOG.info("API server using HTTPS port " + sslPort);
             } else {
                 sslContextFactory = null;
             }
@@ -215,7 +217,7 @@ public final class API {
                 welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/index.html", null, null);
                 serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
             } catch (URISyntaxException e) {
-                Logger.logInfoMessage("Cannot resolve browser URI", e);
+                LOG.info("Cannot resolve browser URI", e);
             }
             openAPIPort = !Constants.isLightClient && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
             openAPISSLPort = !Constants.isLightClient && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
@@ -307,12 +309,12 @@ public final class API {
                     APITestServlet.initClass();
                     apiServer.start();
                     if (sslContextFactory != null) {
-                        Logger.logDebugMessage("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
-                        Logger.logDebugMessage("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
+                        LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
+                        LOG.debug("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
                     }
-                    Logger.logMessage("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
+                    LOG.info("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
                 } catch (Exception e) {
-                    Logger.logErrorMessage("Failed to start API server", e);
+                    LOG.error("Failed to start API server", e);
                     throw new RuntimeException(e.toString(), e);
                 }
 
@@ -324,7 +326,7 @@ public final class API {
             openAPIPort = 0;
             openAPISSLPort = 0;
             isOpenAPI = false;
-            Logger.logMessage("API server not enabled");
+            LOG.info("API server not enabled");
         }
 
     }
@@ -343,7 +345,7 @@ public final class API {
                     }
                 }
             } catch (Exception e) {
-                Logger.logShutdownMessage("Failed to stop API server", e);
+                LOG.info("Failed to stop API server", e);
             }
         }
     }
@@ -394,7 +396,7 @@ public final class API {
         synchronized(incorrectPasswords) {
             PasswordCount passwordCount = incorrectPasswords.get(remoteHost);
             if (passwordCount != null && passwordCount.count >= 25 && now - passwordCount.time < 60*60) {
-                Logger.logWarningMessage("Too many incorrect admin password attempts from " + remoteHost);
+                LOG.warn("Too many incorrect admin password attempts from " + remoteHost);
                 throw new ParameterException(LOCKED_ADMIN_PASSWORD);
             }
             String adminPassword = Convert.nullToEmpty(req.getParameter("adminPassword"));
@@ -412,7 +414,7 @@ public final class API {
                     }
                     passwordCount.count++;
                     passwordCount.time = now;
-                    Logger.logWarningMessage("Incorrect adminPassword from " + remoteHost);
+                    LOG.warn("Incorrect adminPassword from " + remoteHost);
                     throw new ParameterException(INCORRECT_ADMIN_PASSWORD);
                 } else {
                     throw new ParameterException(MISSING_ADMIN_PASSWORD);
@@ -437,7 +439,7 @@ public final class API {
             }
         } catch (UnknownHostException e) {
             // can't resolve, disallow
-            Logger.logMessage("Unknown remote host " + remoteHost);
+            LOG.info("Unknown remote host " + remoteHost);
         }
         return false;
 

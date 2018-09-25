@@ -25,12 +25,15 @@ import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class DownloadTimer implements AddOn {
+        private static final Logger LOG = getLogger(DownloadTimer.class);
 
     private PrintWriter writer = null;
 
@@ -80,7 +83,7 @@ public final class DownloadTimer implements AddOn {
             }, BlockchainProcessor.Event.BLOCK_PUSHED);
 
         } catch (IOException e) {
-            Logger.logErrorMessage(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
 
     }
@@ -95,6 +98,6 @@ public final class DownloadTimer implements AddOn {
 
     @Override
     public void processRequest(Map<String, String> params) {
-        Logger.logInfoMessage(params.get("downloadTimerMessage"));
+        LOG.info(params.get("downloadTimerMessage"));
     }
 }

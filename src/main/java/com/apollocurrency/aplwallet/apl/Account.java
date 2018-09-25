@@ -29,15 +29,18 @@ import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
+        private static final Logger LOG = getLogger(Account.class);
 
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
@@ -336,7 +339,7 @@ public final class Account {
 
     private Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
-            Logger.logMessage("CRITICAL ERROR: Reed-Solomon encoding fails for " + id);
+            LOG.info("CRITICAL ERROR: Reed-Solomon encoding fails for " + id);
         }
         this.id = id;
         this.dbKey = accountDbKeyFactory.newKey(this.id);

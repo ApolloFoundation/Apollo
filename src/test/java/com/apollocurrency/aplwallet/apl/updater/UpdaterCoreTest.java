@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +37,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
-@PrepareForTest(value = {UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, Logger.class, UpdaterDb.class })
+@PrepareForTest(value = {UpdaterUtil.class, AuthorityChecker.class, RSAUtil.class, UpdaterCore.class, UpdaterMediator.class, Downloader.class, PlatformDependentUpdater.class, Unpacker.class, UpdaterDb.class })
 public class UpdaterCoreTest {
 
     private Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
@@ -63,7 +62,6 @@ public class UpdaterCoreTest {
 
     @Before
     public void setUp() throws Exception {
-        mockStatic(Logger.class);
         mockStatic(UpdaterMediator.class);
         BDDMockito.given(UpdaterMediator.getInstance()).willReturn(fakeMediatorInstance);
         mockStatic(Downloader.class);

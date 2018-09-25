@@ -20,16 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.db.VersionedPrunableDbTable;
-import com.apollocurrency.aplwallet.apl.db.VersionedValuesDbTable;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Search;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,7 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class TaggedData {
+    private static final Logger LOG = getLogger(TaggedData.class);
 
     private static final DbKey.LongKeyFactory<TaggedData> taggedDataKeyFactory = new DbKey.LongKeyFactory<TaggedData>("id") {
 
@@ -232,11 +228,11 @@ public class TaggedData {
                     pstmt.setInt(1, entry.getValue());
                     pstmt.setString(2, entry.getKey());
                     pstmt.executeUpdate();
-                    Logger.logDebugMessage("Reduced tag count for " + entry.getKey() + " by " + entry.getValue());
+                    LOG.debug("Reduced tag count for " + entry.getKey() + " by " + entry.getValue());
                 }
                 int deleted = pstmtDelete.executeUpdate();
                 if (deleted > 0) {
-                    Logger.logDebugMessage("Deleted " + deleted + " tags");
+                    LOG.debug("Deleted " + deleted + " tags");
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);

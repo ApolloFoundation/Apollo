@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.1.0</version>
+    <version>1.20.4</version>
     <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
@@ -61,6 +61,23 @@
         <spring.version>5.0.7.RELEASE</spring.version>
         <jersey.version>2.26</jersey.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <exclude.path>${project.build.testSourceDirectory}</exclude.path>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>arm64</id>
+            <properties>
+                <exclude.path>com/apollocurrency/aplwallet/apldesktop/*</exclude.path>
+            </properties>
+        </profile>
+    </profiles>
 
 
     <dependencies>
@@ -473,6 +490,15 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>${exclude.path}</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

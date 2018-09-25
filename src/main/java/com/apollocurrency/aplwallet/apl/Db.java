@@ -22,13 +22,17 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class Db {
+    private static final Logger LOG = getLogger(Db.class);
+
 
     public static final String PREFIX = Constants.isTestnet ? "apl.testDb" : "apl.db";
     public static final TransactionalDb db = new TransactionalDb(new BasicDb.DbProperties()
@@ -57,10 +61,10 @@ public final class Db {
 
     public static void tryToDeleteDb() throws IOException {
             db.shutdown();
-            Logger.logInfoMessage("Removing db...");
+            LOG.info("Removing db...");
             Path dbPath = Paths.get(Apl.getDbDir(Apl.getStringProperty(PREFIX + "Dir"))).getParent();
             removeDb(dbPath);
-            Logger.logInfoMessage("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
+            LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }
     private static void removeDb(Path dbPath) throws IOException {
         Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {

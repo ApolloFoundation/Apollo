@@ -24,17 +24,15 @@ import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public interface Appendix {
 
@@ -1199,6 +1197,7 @@ public interface Appendix {
     }
 
     final class Phasing extends AbstractAppendix {
+        private static final Logger LOG = getLogger(Phasing.class);
 
         private static final String appendixName = "Phasing";
 
@@ -1416,7 +1415,7 @@ public interface Appendix {
                 }
             });
             TransactionProcessorImpl.getInstance().notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
-            Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been released");
+            LOG.debug("Transaction " + transaction.getStringId() + " has been released");
         }
 
         void reject(TransactionImpl transaction) {
@@ -1426,7 +1425,7 @@ public interface Appendix {
                                                      transaction.getAmountATM());
             TransactionProcessorImpl.getInstance()
                     .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
-            Logger.logDebugMessage("Transaction " + transaction.getStringId() + " has been rejected");
+            LOG.debug("Transaction " + transaction.getStringId() + " has been rejected");
         }
 
         void countVotes(TransactionImpl transaction) {
@@ -1440,7 +1439,7 @@ public interface Appendix {
                 try {
                     release(transaction);
                 } catch (RuntimeException e) {
-                    Logger.logErrorMessage("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                    LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
                     reject(transaction);
                 }
             } else {
@@ -1456,16 +1455,16 @@ public interface Appendix {
                     try {
                         release(transaction);
                         poll.finish(result);
-                        Logger.logDebugMessage("Early finish of transaction " + transaction.getStringId() + " at height " + Apl.getBlockchain().getHeight());
+                        LOG.debug("Early finish of transaction " + transaction.getStringId() + " at height " + Apl.getBlockchain().getHeight());
                     } catch (RuntimeException e) {
-                        Logger.logErrorMessage("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                        LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
                     }
                 } else {
-                    Logger.logDebugMessage("At height " + Apl.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()
+                    LOG.debug("At height " + Apl.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()
                             + " is duplicate, cannot finish early");
                 }
             } else {
-                Logger.logDebugMessage("At height " + Apl.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()
+                LOG.debug("At height " + Apl.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()
                         + " does not yet meet quorum, cannot finish early");
             }
         }

@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,9 +38,12 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.util.Comparator.*;
+import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
+import static org.slf4j.LoggerFactory.getLogger;
 
 final class TransactionProcessorImpl implements TransactionProcessor {
+    private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
     private static final boolean enableTransactionRebroadcasting = Apl.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static final boolean testUnconfirmedTransactions = Apl.getBooleanProperty("apl.testUnconfirmedTransactions");
@@ -144,7 +148,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
             }
             if (size() > maxUnconfirmedTransactions) {
                 UnconfirmedTransaction removed = remove();
-                //Logger.logDebugMessage("Dropped unconfirmed transaction " + removed.getJSONObject().toJSONString());
+                //LOG.debug("Dropped unconfirmed transaction " + removed.getJSONObject().toJSONString());
             }
             return true;
         }
@@ -178,7 +182,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                             }
                             Db.db.commitTransaction();
                         } catch (Exception e) {
-                            Logger.logErrorMessage(e.toString(), e);
+                            LOG.error(e.toString(), e);
                             Db.db.rollbackTransaction();
                             throw e;
                         } finally {
@@ -189,10 +193,10 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
             } catch (Exception e) {
-                Logger.logMessage("Error removing unconfirmed transactions", e);
+                LOG.info("Error removing unconfirmed transactions", e);
             }
         } catch (Throwable t) {
-            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
             t.printStackTrace();
             System.exit(1);
         }
@@ -221,10 +225,10 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
             } catch (Exception e) {
-                Logger.logMessage("Error in transaction re-broadcasting thread", e);
+                LOG.info("Error in transaction re-broadcasting thread", e);
             }
         } catch (Throwable t) {
-            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
             t.printStackTrace();
             System.exit(1);
         }
@@ -262,10 +266,10 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     peer.blacklist(e);
                 }
             } catch (Exception e) {
-                Logger.logMessage("Error processing unconfirmed transactions", e);
+                LOG.info("Error processing unconfirmed transactions", e);
             }
         } catch (Throwable t) {
-            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
             t.printStackTrace();
             System.exit(1);
         }
@@ -281,10 +285,10 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 processWaitingTransactions();
             } catch (Exception e) {
-                Logger.logMessage("Error processing waiting transactions", e);
+                LOG.info("Error processing waiting transactions", e);
             }
         } catch (Throwable t) {
-            Logger.logErrorMessage("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
             t.printStackTrace();
             System.exit(1);
         }
@@ -403,15 +407,15 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         BlockchainImpl.getInstance().writeLock();
         try {
             if (TransactionDb.hasTransaction(transaction.getId())) {
-                Logger.logMessage("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
+                LOG.info("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
                 return;
             }
             if (getUnconfirmedTransaction(((TransactionImpl)transaction).getDbKey()) != null) {
                 if (enableTransactionRebroadcasting) {
                     broadcastedTransactions.add((TransactionImpl) transaction);
-                    Logger.logMessage("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
+                    LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
                 } else {
-                    Logger.logMessage("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will not broadcast again");
+                    LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will not broadcast again");
                 }
                 return;
             }
@@ -421,10 +425,10 @@ final class TransactionProcessorImpl implements TransactionProcessor {
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
                 broadcastedTransactions.add((TransactionImpl) transaction);
-                Logger.logDebugMessage("Will broadcast new transaction later " + transaction.getStringId());
+                LOG.debug("Will broadcast new transaction later " + transaction.getStringId());
             } else {
                 processTransaction(unconfirmedTransaction);
-                Logger.logDebugMessage("Accepted new transaction " + transaction.getStringId());
+                LOG.debug("Accepted new transaction " + transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
                 Peers.sendToSomePeers(acceptedTransactions);
                 transactionListeners.notify(acceptedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
@@ -459,7 +463,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 unconfirmedTransactionTable.truncate();
                 Db.db.commitTransaction();
             } catch (Exception e) {
-                Logger.logErrorMessage(e.toString(), e);
+                LOG.error(e.toString(), e);
                 Db.db.rollbackTransaction();
                 throw e;
             } finally {
@@ -485,7 +489,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     requeueAllUnconfirmedTransactions();
                     Db.db.commitTransaction();
                 } catch (Exception e) {
-                    Logger.logErrorMessage(e.toString(), e);
+                    LOG.error(e.toString(), e);
                     Db.db.rollbackTransaction();
                     throw e;
                 } finally {
@@ -519,7 +523,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
             try (DbIterator<UnconfirmedTransaction> oldNonBroadcastedTransactions = getAllUnconfirmedTransactions()) {
                 for (UnconfirmedTransaction unconfirmedTransaction : oldNonBroadcastedTransactions) {
                     if (unconfirmedTransaction.getTransaction().isUnconfirmedDuplicate(unconfirmedDuplicates)) {
-                        Logger.logDebugMessage("Skipping duplicate unconfirmed transaction " + unconfirmedTransaction.getTransaction().getJSONObject().toString());
+                        LOG.debug("Skipping duplicate unconfirmed transaction " + unconfirmedTransaction.getTransaction().getJSONObject().toString());
                     } else if (enableTransactionRebroadcasting) {
                         broadcastedTransactions.add(unconfirmedTransaction.getTransaction());
                     }
@@ -537,7 +541,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 removeUnconfirmedTransaction(transaction);
                 Db.db.commitTransaction();
             } catch (Exception e) {
-                Logger.logErrorMessage(e.toString(), e);
+                LOG.error(e.toString(), e);
                 Db.db.rollbackTransaction();
                 throw e;
             } finally {
@@ -555,7 +559,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 transactionListeners.notify(Collections.singletonList(transaction), Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
             }
         } catch (SQLException e) {
-            Logger.logErrorMessage(e.toString(), e);
+            LOG.error(e.toString(), e);
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -635,7 +639,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (broadcastedTransactions.contains(transaction)) {
-                    Logger.logDebugMessage("Received back transaction " + transaction.getStringId()
+                    LOG.debug("Received back transaction " + transaction.getStringId()
                             + " that we broadcasted, will not forward again to peers");
                 } else {
                     sendToPeersTransactions.add(transaction);
@@ -644,7 +648,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
             } catch (AplException.NotCurrentlyValidException ignore) {
             } catch (AplException.ValidationException|RuntimeException e) {
-                Logger.logDebugMessage(String.format("Invalid transaction from peer: %s", ((JSONObject) transactionData).toJSONString()), e);
+                LOG.debug(String.format("Invalid transaction from peer: %s", ((JSONObject) transactionData).toJSONString()), e);
                 exceptions.add(e);
             }
         }
@@ -792,7 +796,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                                     if (myAppendage.getClass() == appendage.getClass()) {
                                         myAppendage.loadPrunable(myTransaction, true);
                                         if (((Appendix.Prunable)myAppendage).hasPrunableData()) {
-                                            Logger.logDebugMessage(String.format("Already have prunable data for transaction %s %s appendage",
+                                            LOG.debug(String.format("Already have prunable data for transaction %s %s appendage",
                                                     myTransaction.getStringId(), myAppendage.getAppendixName()));
                                             continue appendageLoop;
                                         }
@@ -803,7 +807,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                                 // Load the prunable data
                                 //
                                 if (((Appendix.Prunable)appendage).hasPrunableData()) {
-                                    Logger.logDebugMessage(String.format("Loading prunable data for transaction %s %s appendage",
+                                    LOG.debug(String.format("Loading prunable data for transaction %s %s appendage",
                                             Long.toUnsignedString(transaction.getId()), appendage.getAppendixName()));
                                     ((Appendix.Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
                                 } else {

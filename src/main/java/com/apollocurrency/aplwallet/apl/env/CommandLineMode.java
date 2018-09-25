@@ -21,16 +21,21 @@
 package com.apollocurrency.aplwallet.apl.env;
 
 import com.apollocurrency.aplwallet.apl.Db;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class CommandLineMode implements RuntimeMode {
+    private static Logger LOG;
 
     @Override
-    public void init() {}
+    public void init() {
+        LOG = getLogger(CommandLineMode.class);
+    }
 
     @Override
     public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {}
@@ -49,12 +54,22 @@ public class CommandLineMode implements RuntimeMode {
         //simple db removing
         try {
             Db.tryToDeleteDb();
-            Logger.logInfoMessage("Db was removed successfully. Please, restart the application!");
+            LOG.info("Db was removed successfully. Please, restart the application!");
             System.exit(0);
         }
         catch (IOException e) {
-            Logger.logErrorMessage("Cannot delete db", e);
+            LOG.error("Cannot delete db", e);
             System.exit(1);
         }
+    }
+
+    @Override
+    public void updateAppStatus(String newStatus) {
+        LOG.info("Application status:", newStatus);
+    }
+
+    @Override
+    public void displayError(String errorMessage) {
+        LOG.error(errorMessage);
     }
 }

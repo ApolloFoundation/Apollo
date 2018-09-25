@@ -1,9 +1,14 @@
 #!/bin/sh
 CP="target/lib/*:target/classes"
 SP=src/main/java/
-
+# first param is a profile for building project via maven or another custom option specified like -Dmaven.test.skip=true
 echo "compiling and packaging Apollo wallet..."
-mvn clean package -Dmaven.test.skip=true
+if [ -z "$1" ]; then
+    mvn clean package -Dmaven.test.skip=true
+else
+    mvn clean package -Dmaven.test.skip=true "$1"
+fi
+
 echo "Apollo wallet was compiled successfully"
 
 rm -f "Apollo.jar"

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl;
 
 import ch.qos.logback.core.PropertyDefinerBase;
 
+import java.io.File;
 import java.nio.file.Paths;
 
 public class LogDirPropertyDefiner extends PropertyDefinerBase {
@@ -13,7 +14,11 @@ public class LogDirPropertyDefiner extends PropertyDefinerBase {
 
     @Override
     public String getPropertyValue() {
-        return Apl.getLogDir().toPath().resolve(Paths.get(logfile)).toString();
+        File logDir = Apl.getLogDir();
+        if (logDir != null) {
+            return logDir.toPath().resolve(Paths.get(logfile)).toString();
+        }
+        return Paths.get("").resolve("logs").resolve(logfile).toAbsolutePath().toString();
     }
 
     public void setLogfile(String logfile) {

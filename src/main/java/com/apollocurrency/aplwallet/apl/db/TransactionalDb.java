@@ -21,8 +21,8 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import net.sf.log4jdbc.ConnectionSpy;
+import org.slf4j.Logger;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -30,7 +30,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class TransactionalDb extends BasicDb {
+    private static final Logger LOG = getLogger(TransactionalDb.class);
 
     private static final DbFactory factory = new DbFactory();
     private static final long stmtThreshold;
@@ -161,7 +164,7 @@ public class TransactionalDb extends BasicDb {
                 }
             }
             if (logStats)
-                Logger.logDebugMessage(String.format("Average database transaction time is %.3f seconds",
+                LOG.debug(String.format("Average database transaction time is %.3f seconds",
                                                      (double)times/1000.0/(double)count));
         }
         DbUtils.close(con);
@@ -214,7 +217,7 @@ public class TransactionalDb extends BasicDb {
                 sb.append('\n');
             sb.append("  ").append(line);
         }
-        Logger.logDebugMessage(sb.toString());
+        LOG.debug(sb.toString());
     }
 
     private final class DbConnection extends FilteredConnection {

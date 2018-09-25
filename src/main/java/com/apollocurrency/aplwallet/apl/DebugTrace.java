@@ -22,23 +22,17 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DebugTrace {
+    private static final Logger LOG = getLogger(DebugTrace.class);
+
 
     static final String QUOTE = Apl.getStringProperty("apl.debugTraceQuote", "\"");
     static final String SEPARATOR = Apl.getStringProperty("apl.debugTraceSeparator", "\t");
@@ -60,7 +54,7 @@ public final class DebugTrace {
         }
         final DebugTrace debugTrace = addDebugTrace(accountIds, logName);
         Apl.getBlockchainProcessor().addListener(block -> debugTrace.resetLog(), BlockchainProcessor.Event.RESCAN_BEGIN);
-        Logger.logDebugMessage("Debug tracing of " + (accountIdStrings.contains("*") ? "ALL"
+        LOG.debug("Debug tracing of " + (accountIdStrings.contains("*") ? "ALL"
                 : String.valueOf(accountIds.size())) + " accounts enabled");
     }
 
@@ -132,7 +126,7 @@ public final class DebugTrace {
         try {
             log = new PrintWriter((new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logName)))), true);
         } catch (IOException e) {
-            Logger.logDebugMessage("Debug tracing to " + logName + " not possible", e);
+            LOG.debug("Debug tracing to " + logName + " not possible", e);
             throw new RuntimeException(e);
         }
         this.log(headers);
