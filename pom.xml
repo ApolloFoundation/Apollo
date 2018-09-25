@@ -59,6 +59,7 @@
         <mockito.version>1.10.19</mockito.version>
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
+        <jersey.version>2.26</jersey.version>
     </properties>
     <profiles>
         <profile>
@@ -204,6 +205,25 @@
             <version>${json-unit.version}</version>
             <scope>test</scope>
         </dependency>
+<!--Jersey SSE client-->
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-sse</artifactId>
+            <version>${jersey.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>${jersey.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -345,6 +365,12 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
             <version>${tika.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.cxf</groupId>
+                    <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

@@ -68,30 +68,36 @@ public class WalletRunner {
         return urls;
     }
 
-    public void run() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
-        Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
-        method.setAccessible(true);
-        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
-        System.setProperty("apl.runtime.mode", "desktop");
+    public void run() throws IOException {
 
-        //change config for test purposes
-            Map<String, String> parameters = new HashMap<>();
-        if (isTestnet) {
-            parameters.put("apl.isTestnet", "true");
-        } else {
-            parameters.put("apl.isTestnet", "false");
-        }
-        parameters.put("apl.adminPassword", ADMIN_PASS);
-        savedStandartPropertiesPath = changeProperties(parameters);
         try {
+            Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
+
+            method.setAccessible(true);
+            method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
+            System.setProperty("apl.runtime.mode", "desktop");
+
+            //change config for test purposes
+            Map<String, String> parameters = new HashMap<>();
+            if (isTestnet) {
+                parameters.put("apl.isTestnet", "true");
+            } else {
+                parameters.put("apl.isTestnet", "false");
+            }
+            parameters.put("apl.adminPassword", ADMIN_PASS);
+            savedStandartPropertiesPath = changeProperties(parameters);
             //run application
             String[] args = {""};
             mainClass = loader.loadClass("com.apollocurrency.aplwallet.apl.Apl");
             Object[] param = {args};
             Method main = mainClass.getMethod("main", args.getClass());
             main.invoke(null, param);
-        //restore config
-        } finally {
+            //restore config
+        }
+        catch (NoSuchMethodException | InvocationTargetException | ClassNotFoundException | IllegalAccessException e) {
+            LOG.error("Cannot start wallet", e);
+        }
+        finally {
             restoreProperties(savedStandartPropertiesPath);
         }
     }

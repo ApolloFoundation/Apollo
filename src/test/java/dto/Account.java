@@ -7,11 +7,21 @@ package dto;
 import java.util.Objects;
 
 public class Account {
+    private long id;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
     private long balanceATM;
     private long forgedBalanceATM;
     private String accountRS;
     private long unconfirmedBalanceATM;
-    private String account;
+    private long account;
     private double percentage;
 
     @Override
@@ -60,11 +70,11 @@ public class Account {
         return unconfirmedBalanceATM;
     }
 
-    public String getAccount() {
+    public long getAccount() {
         return account;
     }
 
-    public Account(long balanceATM, long forgedBalanceATM, String accountRS, long unconfirmedBalanceATM, String account, double percentage) {
+    public Account(long balanceATM, long forgedBalanceATM, String accountRS, long unconfirmedBalanceATM, long account, double percentage) {
         this.balanceATM = balanceATM;
         this.forgedBalanceATM = forgedBalanceATM;
         this.accountRS = accountRS;
