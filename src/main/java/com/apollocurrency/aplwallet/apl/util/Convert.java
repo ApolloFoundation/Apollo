@@ -117,6 +117,26 @@ public final class Convert {
         }
     }
 
+    public static byte[] longToBytes(long l) {
+        int longSize = Long.BYTES;
+        byte[] result = new byte[longSize];
+        for (int i = longSize - 1; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= longSize;
+        }
+        return result;
+    }
+
+    public static long bytesToLong(byte[] b) {
+        int longSize = Long.BYTES;
+        long result = 0;
+        for (int i = 0; i < longSize; i++) {
+            result <<= longSize;
+            result |= (b[i] & 0xFF);
+        }
+        return result;
+    }
+
     public static String rsAccount(long accountId) {
         return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
     }

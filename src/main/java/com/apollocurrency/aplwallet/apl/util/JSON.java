@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -38,7 +39,17 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+
 public final class JSON {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    static {
+        MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    public static ObjectMapper getMapper() {
+        return MAPPER;
+    }
 
     private JSON() {} //never
 
