@@ -9,6 +9,7 @@ import dto.Account;
 import org.apache.commons.codec.binary.Base32;
 
 public class TwoFactorAuthTestData {
+    public static final int MAX_2FA_ATTEMPTS = 2;
     public static final Account ACCOUNT1 = new Account(100_000_000L, 0, 100_000_000L, 100);
     public static final Account ACCOUNT2 = new Account(250_000_000L, 0, 200_000_000L, 200);
     public static final String ACCOUNT1_2FA_SECRET_HEX = "a3f312570b65671a7101";

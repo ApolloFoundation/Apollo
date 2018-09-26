@@ -1,31 +1,28 @@
 package com.apollocurrency.aplwallet.apl.db;
 
-import com.apollocurrency.aplwallet.apl.AlreadyExistsException;
-import com.apollocurrency.aplwallet.apl.NotFoundException;
-
 public interface TwoFactorAuthRepository {
     /**
-     * Retrieves secret word for account if exists, if not exists throw exception
-     * @param account - id of account, which secret word should be retrieved
-     * @return - account secret word byte array
-     * @throws NotFoundException if no secret word exist for this account
+     * Retrieves secret word for account if exists
+     * @param account id of account, which secret word should be retrieved
+     * @return account secret word byte array or null if secret word for this account is not exist
+     *
      */
-    byte[] getSecret(long account) throws NotFoundException;
+    byte[] getSecret(long account);
 
     /**
-     * Save new secret word, which will be associated with this account. If
-     * this account already has secret word, AlreadyExistsException will be thrown
-     * @param account - id of account which should be saved with associated secret word
-     * @param secret - secret word bytes
-     * @throws AlreadyExistsException if account already has secret word
+     * Save new secret word, which will be associated with this account.
+     * @param account id of account which should be saved with associated secret word
+     * @param secret secret word bytes
+     * @return true if new secret word was saved successfully, false if secret word for account already exists in db
+     *
      */
-    void saveSecret(long account, byte[] secret) throws AlreadyExistsException;
+    boolean saveSecret(long account, byte[] secret);
 
     /**
-     * Deletes assciated with this account secret word entry, if account does not have secret word throw exception
-     * @param account - id of account which secret word entry should be deleted
-     * @throws NotFoundException - if no entries found for this account
+     * Deletes associated with this account secret word entry
+     * @param account id of account which secret word entry should be deleted
+     * @return true if at least one entry was deleted, otherwise - false
      */
-    void delete(long account) throws NotFoundException;
+    boolean delete(long account);
 
 }

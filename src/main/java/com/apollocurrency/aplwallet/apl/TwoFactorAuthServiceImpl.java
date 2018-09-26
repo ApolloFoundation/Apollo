@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
+import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyEnabledException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
@@ -30,11 +32,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     public TwoFactorAuthDetails enable(long accountId) {
         String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(50);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
-        try {
-            repository.saveSecret(accountId, base32Bytes);
-        }
-        catch (AlreadyExistsException e) {
-            throw new RuntimeException("Already enabled");
+        boolean saved = repository.saveSecret(accountId, base32Bytes);
+        if (!saved) {
+            throw new TwoFactoAuthAlreadyEnabledException("Account already has 2fa");
         }
         String qrCodeUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(Convert.rsAccount(accountId), base32Secret);
         return new TwoFactorAuthDetails(qrCodeUrl, base32Secret);
@@ -43,21 +43,17 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     @Override
     public void disable(long accountId, long authCode) {
         if (tryAuth(accountId, authCode)) {
+            //account with 2fa already exist
             repository.delete(accountId);
         } else {
-            throw new RuntimeException("2fa authentication error");
+            throw new InvalidTwoFactorAuthCredentialsException("2fa was failed");
         }
     }
 
     @Override
     public boolean isEnabled(long accountId) {
-        try {
-            byte[] secret = repository.getSecret(accountId);
-            return secret != null && secret.length != 0;
-        }
-        catch (NotFoundException e) {
-            return false;
-        }
+        byte[] secret = repository.getSecret(accountId);
+        return secret != null && secret.length != 0;
     }
 
     @Override
@@ -65,12 +61,11 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         boolean succeed = false;
         try {
             byte[] secret = repository.getSecret(accountId);
-            long temporalCode = TimeBasedOneTimePasswordUtil.generateNumber(BASE_32.encodeToString(secret), System.currentTimeMillis(),
-                    DEFAULT_TIME_STEP_SECONDS);
-            succeed = temporalCode == authCode;
-        }
-        catch (NotFoundException e) {
-            LOG.error("Account has not 2fa");
+            if (secret != null) {
+                long temporalCode = TimeBasedOneTimePasswordUtil.generateNumber(BASE_32.encodeToString(secret), System.currentTimeMillis(),
+                        DEFAULT_TIME_STEP_SECONDS);
+                succeed = temporalCode == authCode;
+            }
         }
         catch (GeneralSecurityException e) {
             LOG.error("Unable to create temporal code", e);

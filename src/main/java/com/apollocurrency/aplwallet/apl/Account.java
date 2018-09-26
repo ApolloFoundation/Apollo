@@ -272,6 +272,7 @@ public final class Account {
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
+    private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(new TwoFactorAuthRepositoryImpl(Db.db));
     static {
 
         Apl.getBlockchainProcessor().addListener(block -> {
@@ -1515,6 +1516,8 @@ public final class Account {
         this.addToBalanceATM(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
+
+
 
     @Override
     public String toString() {
