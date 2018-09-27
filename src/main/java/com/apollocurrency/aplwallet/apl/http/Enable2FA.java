@@ -31,8 +31,8 @@ public class Enable2FA extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         TwoFactorAuthDetails twoFactorAuthDetails = Account.enable2FA(accountId, passphrase);
         JSONData.putAccount(response, "account", accountId);
-        response.put("2faSecretCode", twoFactorAuthDetails.getSecret());
-        response.put("qrCodeImageUrl", twoFactorAuthDetails.getQrCodeUrl());
+        response.put("secret", twoFactorAuthDetails.getSecret());
+        response.put("qrCodeUrl", twoFactorAuthDetails.getQrCodeUrl());
         return response;
     }
 }

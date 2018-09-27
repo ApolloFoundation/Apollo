@@ -25,7 +25,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testEnable() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT2.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT2);
+        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT2.getAccountRS());
         Assert.assertTrue(service.isEnabled(ACCOUNT2.getAccount()));
 
     }

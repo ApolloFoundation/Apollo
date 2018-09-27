@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import org.junit.Assert;
 import org.junit.Test;
+import util.TestUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,19 +51,7 @@ public class UnpackerTest {
             Files.deleteIfExists(tempJar);
             Files.deleteIfExists(tempDirectory);
             if (unpackedFile != null) {
-                Files.walkFileTree(unpackedFile, new SimpleFileVisitor<Path>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        Files.delete(file);
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                        Files.delete(dir);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
+                TestUtil.deleteDir(unpackedFile, path -> true);
             }
         }
     }
