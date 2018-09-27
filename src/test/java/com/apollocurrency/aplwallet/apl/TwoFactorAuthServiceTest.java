@@ -38,7 +38,9 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testEnable() {
         doReturn(true).when(repository).saveSecret(anyLong(), any(byte[].class));
-        service.enable(ACCOUNT2.getAccount());
+        TwoFactorAuthDetails twoFactorAuthDetails = service.enable(ACCOUNT1.getAccount());
+        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, ACCOUNT1);
+
         verify(repository, times(1)).saveSecret(anyLong(), any(byte[].class));
     }
 

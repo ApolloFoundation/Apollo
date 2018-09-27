@@ -546,7 +546,7 @@ public class NodeClient {
         return Version.from(versionString.asText());
     }
 
-    public List<Chat.ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
+    public List<ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getChats");
         params.put("account", account);
@@ -554,10 +554,10 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode chatString = root.get("chats");
-        return MAPPER.readValue(chatString.toString(), new TypeReference<List<Chat.ChatInfo>>() {});
+        return MAPPER.readValue(chatString.toString(), new TypeReference<List<ChatInfo>>() {});
     }
 
-    public List<Chat.ChatInfo> getChatInfo(String url, String account) throws IOException {
+    public List<ChatInfo> getChatInfo(String url, String account) throws IOException {
         return getChatInfo(url, account, 0, -1);
     }
 

@@ -12,6 +12,8 @@ import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 
 import static com.j256.twofactorauth.TimeBasedOneTimePasswordUtil.DEFAULT_TIME_STEP_SECONDS;
@@ -20,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
+    private static final String ISSUER_URL_PART = "&issuer=Apollo Wallet";
 
     private TwoFactorAuthRepository repository;
 
@@ -36,8 +39,18 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         if (!saved) {
             throw new TwoFactoAuthAlreadyEnabledException("Account already has 2fa");
         }
-        String qrCodeUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(Convert.rsAccount(accountId), base32Secret);
+        String qrCodeUrl = getQrCodeUrl(Convert.rsAccount(accountId), base32Secret);
         return new TwoFactorAuthDetails(qrCodeUrl, base32Secret);
+    }
+
+    private String getQrCodeUrl(String rsAccount, String base32Secret) {
+        String baseUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(rsAccount, base32Secret);
+        try {
+            return baseUrl + URLEncoder.encode(ISSUER_URL_PART, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e.toString());
+        }
     }
 
     @Override

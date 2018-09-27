@@ -4,8 +4,11 @@
 
 package util;
 
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import dto.Account;
+import org.junit.Assert;
 
 import java.security.GeneralSecurityException;
 
@@ -23,5 +26,11 @@ public class TwoFactorAuthUtil {
         }
 
         return authenticated;
+    }
+
+    public static void verifySecretCode(TwoFactorAuthDetails details, Account account) {
+        Assert.assertTrue(details.getQrCodeUrl().contains(details.getSecret()));
+        Assert.assertTrue(details.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(account.getAccountRS(),
+                details.getSecret())));
     }
 }
