@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Genesis;
-import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 import java.io.ByteArrayInputStream;
@@ -31,13 +31,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -70,6 +64,11 @@ public final class Convert {
             bytes[i] = (byte)((char1 << 4) + char2);
         }
         return bytes;
+    }
+
+    public static long getId(byte[] publicKey) {
+        byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
+        return Convert.fullHashToId(publicKeyHash);
     }
 
     public static String toHexString(byte[] bytes) {
@@ -118,6 +117,26 @@ public final class Convert {
         }
     }
 
+    public static byte[] longToBytes(long l) {
+        int longSize = Long.BYTES;
+        byte[] result = new byte[longSize];
+        for (int i = longSize - 1; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= longSize;
+        }
+        return result;
+    }
+
+    public static long bytesToLong(byte[] b) {
+        int longSize = Long.BYTES;
+        long result = 0;
+        for (int i = 0; i < longSize; i++) {
+            result <<= longSize;
+            result |= (b[i] & 0xFF);
+        }
+        return result;
+    }
+
     public static String rsAccount(long accountId) {
         return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
     }
@@ -129,7 +148,27 @@ public final class Convert {
         BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
         return bigInteger.longValue();
     }
+//    public static void main(String[] args) throws IOException {
+//        Path path = Paths.get("words");
+//        List<String> strings = Files.readAllLines(path);
+//        List<String> targetWords = strings.stream().filter(str -> {
+//                    if (str.length() >= 3 && str.length() <= 8 && !str.startsWith("#") && !str.contains("penis") && !str.startsWith("porn") && !str.startsWith("vagin") && !str.startsWith("dick") && !str.startsWith("puss")) {
+//                        for (int i = 0; i < str.length(); i++) {
+//                            if (str.charAt(i) < 'a' || str.charAt(i) > 'z') {
+//                                return false;
+//                            }
+//                        }
+//                    } else
+//                        return false;
+//                    return true;
+//                }
+//        ).collect(Collectors.toList());
+//        Files.write(Paths.get("pass-words.txt"), targetWords);
+//
+//    }
+public static void main(String[] args) {
 
+}
     public static long fromEpochTime(int epochTime) {
         return epochTime * 1000L + Genesis.EPOCH_BEGINNING - 500L;
     }

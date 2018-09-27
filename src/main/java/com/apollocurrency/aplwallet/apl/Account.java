@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,8 +41,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
-        private static final Logger LOG = getLogger(Account.class);
+    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
+    private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
 
+
+    private static final Logger LOG = getLogger(Account.class);
+    private static final KeyStore keystore =
+            new SimpleKeyStoreImpl(Apl.getKeystoreDir(
+                    Constants.isTestnet ?
+                            Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
+                            Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
         @Override
@@ -325,7 +334,6 @@ public final class Account {
             Apl.getBlockchainProcessor().addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
 
         }
-
     }
 
     private final long id;
@@ -618,6 +626,7 @@ public final class Account {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
         return Convert.fullHashToId(publicKeyHash);
     }
+
 
     public static byte[] getPublicKey(long id) {
         DbKey dbKey = publicKeyDbKeyFactory.newKey(id);
@@ -1935,5 +1944,40 @@ public final class Account {
             }
         }
 
+    }
+
+    public static GeneratedAccount generateAccount(String passphrase) {
+        GeneratedAccount account = accountGenerator.generate(passphrase);
+        try {
+            keystore.saveKeySeed(account.getPassphrase(), account.getKeySeed());
+        }
+        catch (IOException e) {
+            LOG.error(e.toString(), e);
+            throw new RuntimeException("Unable to save generated account");
+        }
+        return account;
+    }
+
+    public static byte[] exportKeySeed(String passphrase, long accountId) {
+        try {
+            return keystore.getKeySeed(passphrase, accountId);
+        }
+        catch (IOException e) {
+            LOG.error("Unable to export private key", e);
+            return new byte[0];
+        }
+    }
+    public static String importKeySeed(String passphrase, byte[] keySeed) {
+        try {
+            if (passphrase == null) {
+                passphrase = passphraseGenerator.generate();
+            }
+            keystore.saveKeySeed(passphrase, keySeed);
+            return passphrase;
+        }
+        catch (IOException e) {
+            LOG.error("Unable to export private key", e);
+            return null;
+        }
     }
 }
