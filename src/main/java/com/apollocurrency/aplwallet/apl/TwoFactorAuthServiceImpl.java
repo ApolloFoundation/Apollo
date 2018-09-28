@@ -16,13 +16,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 
-import static com.j256.twofactorauth.TimeBasedOneTimePasswordUtil.DEFAULT_TIME_STEP_SECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
     private static final String ISSUER_URL_PART = "&issuer=Apollo Wallet";
+    private static final int SECRET_LENGTH = 32;
 
     private TwoFactorAuthRepository repository;
 
@@ -33,7 +33,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     @Override
     public TwoFactorAuthDetails enable(long accountId) {
-        String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(50);
+        //length of Base32Secret should aliquot 8 (length % 8 == 0); e.g. 8, 16, 24, 32, etc.
+        //
+        String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(SECRET_LENGTH);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
         boolean saved = repository.saveSecret(accountId, base32Bytes);
         if (!saved) {
@@ -54,7 +56,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public void disable(long accountId, long authCode) {
+    public void disable(long accountId, int authCode) {
         if (tryAuth(accountId, authCode)) {
             //account with 2fa already exist
             repository.delete(accountId);
@@ -70,14 +72,15 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public boolean tryAuth(long accountId, long authCode) {
+    public boolean tryAuth(long accountId, int authCode) {
         boolean succeed = false;
         try {
             byte[] secret = repository.getSecret(accountId);
             if (secret != null) {
-                long temporalCode = TimeBasedOneTimePasswordUtil.generateNumber(BASE_32.encodeToString(secret), System.currentTimeMillis(),
-                        DEFAULT_TIME_STEP_SECONDS);
-                succeed = temporalCode == authCode;
+                String base32Secret = BASE_32.encodeToString(secret);
+                //window millis should be 0, other parameters will not work properly
+                succeed = TimeBasedOneTimePasswordUtil.validateCurrentNumber(
+                        base32Secret, authCode, 0);
             }
         }
         catch (GeneralSecurityException e) {

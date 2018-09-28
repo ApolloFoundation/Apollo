@@ -776,7 +776,7 @@ public final class Account {
     }
 
 
-    public static void disable2FA(long accountId, String passphrase, long code) {
+    public static void disable2FA(long accountId, String passphrase, int code) {
         findAccount(accountId, passphrase);
         service2FA.disable(accountId, code);
 
@@ -792,7 +792,7 @@ public final class Account {
         }
     }
 
-    public static void auth2FA(String passphrase, long accountId, long code) throws InvalidTwoFactorAuthCredentialsException {
+    public static void auth2FA(String passphrase, long accountId, int code) throws InvalidTwoFactorAuthCredentialsException {
         findAccount(accountId, passphrase);
         if (!service2FA.tryAuth(accountId, code)) {
             throw new InvalidTwoFactorAuthCredentialsException("2fa was failed");

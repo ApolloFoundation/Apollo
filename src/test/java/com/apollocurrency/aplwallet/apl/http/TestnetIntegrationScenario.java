@@ -26,13 +26,13 @@ import static com.apollocurrency.aplwallet.apl.TestData.ADMIN_PASS;
 import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
 import static org.slf4j.LoggerFactory.getLogger;
 import static util.TestUtil.atm;
-
+@Ignore
 public class TestnetIntegrationScenario {
     private static final Map<String, String> ACCOUNTS = new HashMap<>(TestUtil.loadKeys(TestData.TEST_FILE));
     private static final NodeClient CLIENT = new NodeClient();
     private static final Logger LOG = getLogger(TestnetIntegrationScenario.class);
     private static final Random RANDOM = new Random();
-    private WalletRunner runner;
+    private volatile WalletRunner runner;
 
     @After
     public  void tearDown() throws Exception {

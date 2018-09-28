@@ -28,8 +28,8 @@ public class TestClassLoader extends ClassLoader {
 
     private static final String rootDirName = "com.apollocurrency.aplwallet.apl";
 
-    private static final Set<String> classNames = new HashSet<>();
-    static {
+    private final Set<String> classNames = new HashSet<>();
+    {
         classNames.add(rootDirName + ".Apl");
         classNames.add(rootDirName + ".TransactionProcessor");
         classNames.add(rootDirName + ".CurrencyExchangeOffer");

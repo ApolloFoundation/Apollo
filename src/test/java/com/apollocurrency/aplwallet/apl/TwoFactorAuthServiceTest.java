@@ -97,7 +97,7 @@ public class TwoFactorAuthServiceTest {
     public void testTryAuth() throws GeneralSecurityException {
         doReturn(ACCOUNT1_2FA_SECRET_BYTES).when(repository).getSecret(ACCOUNT1.getAccount());
 
-        boolean authenticated = TwoFactorAuthUtil.tryAuth(service);
+        boolean authenticated = TwoFactorAuthUtil.tryAuth(service, ACCOUNT1.getAccount(), ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
         verify(repository, atMost(MAX_2FA_ATTEMPTS)).getSecret(ACCOUNT1.getAccount());
 
         Assert.assertTrue(authenticated);
@@ -107,7 +107,7 @@ public class TwoFactorAuthServiceTest {
     public void testTryAuthCodesNotEquals() throws GeneralSecurityException {
         doReturn(ACCOUNT1_2FA_SECRET_BYTES).when(repository).getSecret(ACCOUNT1.getAccount());
 
-        long currentNumber = new Random().nextLong();
+        int currentNumber = new Random().nextInt();
         boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), currentNumber);
 
         verify(repository, times(1)).getSecret(ACCOUNT1.getAccount());
@@ -118,7 +118,7 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testTryAuthNotFoundSecretForAccount() throws GeneralSecurityException {
 
-        long currentNumber = TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
+        int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
         boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), currentNumber);
 
         verify(repository, times(1)).getSecret(ACCOUNT1.getAccount());

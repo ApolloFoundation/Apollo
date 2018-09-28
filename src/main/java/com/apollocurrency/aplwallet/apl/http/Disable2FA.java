@@ -28,7 +28,7 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
-        long code = ParameterParser.getLong(request, "code", Long.MIN_VALUE, Long.MAX_VALUE, true);
+        int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
         JSONObject response = new JSONObject();
         Account.disable2FA(accountId, passphrase, code);
         JSONData.putAccount(response, "account", accountId);

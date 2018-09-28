@@ -39,7 +39,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testDisable() throws GeneralSecurityException {
         TwoFactorAuthService spy = spy(service);
-        long currentCode = TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
+        int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
         spy.disable(ACCOUNT1.getAccount(), currentCode);
         verify(spy, times(1)).tryAuth(ACCOUNT1.getAccount(), currentCode);
 
@@ -70,14 +70,14 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
 
     @Test
     public void testTryAuth() throws GeneralSecurityException {
-        boolean authenticated = TwoFactorAuthUtil.tryAuth(service);
+        boolean authenticated = TwoFactorAuthUtil.tryAuth(service, ACCOUNT1.getAccount(), ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
 
         Assert.assertTrue(authenticated);
     }
 
     @Test
     public void testTryAuthCodesNotEquals() {
-        long fakeNumber = new Random().nextLong();
+        int fakeNumber = new Random().nextInt();
         boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), fakeNumber);
 
         Assert.assertFalse(authenticated);
@@ -85,7 +85,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
 
     @Test
     public void testTryAuthNotFoundSecret() {
-        long fakeNumber = new Random().nextLong();
+        int fakeNumber = new Random().nextInt();
         boolean authenticated = service.tryAuth(ACCOUNT2.getAccount(), fakeNumber);
 
         Assert.assertFalse(authenticated);

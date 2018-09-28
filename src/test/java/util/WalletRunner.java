@@ -125,6 +125,8 @@ public class WalletRunner {
     public void shutdown() {
         try {
             mainClass.getMethod("shutdown").invoke(null);
+            // make possible to run again
+            this.loader = new TestClassLoader();
         }
         catch (Throwable e) {
             LOG.error("Shutdown error! " + e.getLocalizedMessage());
