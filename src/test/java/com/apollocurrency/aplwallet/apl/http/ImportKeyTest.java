@@ -4,34 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.NodeClient;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import util.WalletRunner;
 
 import java.io.IOException;
 import java.util.Random;
 
 import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
 
-public class ImportKeyTest {
-    private static WalletRunner runner = new WalletRunner(true);
-    private static final NodeClient nodeClient = new NodeClient();
-    private static final String PASSPHRASE = "mypassphrase";
-    @AfterClass
-    public static void tearDown() throws Exception {
-        runner.shutdown();
-    }
-
-    @BeforeClass
-    public static void setUp() throws Exception {
-        runner.run();
-        runner.disableReloading();
-    }
-
+public class ImportKeyTest extends DeleteGeneratedAccountsTest {
     @Test
     public void testImportKey() throws IOException {
         Random random = new Random();
@@ -39,6 +22,7 @@ public class ImportKeyTest {
         random.nextBytes(keySeed);
 
         String passphrase = nodeClient.importKey(TEST_LOCALHOST, PASSPHRASE, Convert.toHexString(keySeed));
+        generatedAccounts.add(Convert.rsAccount(Convert.getId(Crypto.getPublicKey(keySeed))));
 
         Assert.assertEquals(PASSPHRASE, passphrase);
     }
@@ -49,7 +33,7 @@ public class ImportKeyTest {
         random.nextBytes(keySeed);
 
         String passphrase = nodeClient.importKey(TEST_LOCALHOST, null, Convert.toHexString(keySeed));
-
+        generatedAccounts.add(Convert.rsAccount(Convert.getId(Crypto.getPublicKey(keySeed))));
         Assert.assertNotEquals(PASSPHRASE, passphrase);
         String[] passphraseWords = passphrase.split(" ");
         Assert.assertTrue(passphraseWords.length >=10 && passphraseWords.length <=15);

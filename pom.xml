@@ -37,6 +37,7 @@
         <!--Tools-->
         <apache-commons-lang.version>3.7</apache-commons-lang.version>
         <apache-commons-io.version>1.4</apache-commons-io.version>
+        <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
 
@@ -63,6 +64,18 @@
 
 
     <dependencies>
+        <!--Apache-commons-->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${apache-commons-codec.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${apache-commons-lang.version}</version>
+        </dependency>
+        <!--Qr code-->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
@@ -73,11 +86,7 @@
             <artifactId>bcprov-jdk15on</artifactId>
             <version>${bcprov.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${apache-commons-lang.version}</version>
-        </dependency>
+
 
         <dependency>
             <groupId>com.h2database</groupId>
@@ -110,6 +119,13 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <!--2fa api-->
+        <dependency>
+            <groupId>com.j256.two-factor-auth</groupId>
+            <artifactId>two-factor-auth</artifactId>
+            <version>1.0</version>
         </dependency>
 
         <!--Jetty server-->

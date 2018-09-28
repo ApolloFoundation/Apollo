@@ -43,7 +43,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
-            "ecBlockId", "ecBlockHeight"};
+            "ecBlockId", "ecBlockHeight", "passphrase", "code2FA"};
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);

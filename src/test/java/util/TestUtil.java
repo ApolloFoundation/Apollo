@@ -4,6 +4,7 @@
 
 package util;
 
+import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,9 +15,16 @@ import org.slf4j.Logger;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
@@ -99,5 +107,30 @@ public class TestUtil {
 
     public static String getRandomRecipientRS(Map<String, String> accounts, String senderRS) {
         return new ArrayList<>(accounts.keySet()).stream().filter(rs -> !senderRS.equalsIgnoreCase(rs)).collect(Collectors.toList()).get(RANDOM.nextInt(accounts.size() - 1));
+    }
+
+    public static void deleteDir(Path dir, Predicate<Path> deleteFilter) throws IOException {
+        Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (deleteFilter.test(file)) {
+                    Files.delete(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (deleteFilter.test(dir)) {
+                    Files.delete(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    public static void deleteInKeystore(List<String> accounts) throws IOException {
+        deleteDir(Apl.getKeystoreDir(Apl.getStringProperty("apl.testnetKeystoreDir")),
+                (path -> accounts.stream().anyMatch(acc -> path.getFileName().toString().contains(acc))));
     }
 }

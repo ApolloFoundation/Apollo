@@ -140,6 +140,10 @@ public final class Convert {
     public static String rsAccount(long accountId) {
         return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
     }
+    //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
+    public static String defaultRsAccount(long accountId) {
+        return  "APL-" + Crypto.rsEncode(accountId);
+    }
 
     public static long fullHashToId(byte[] hash) {
         if (hash == null || hash.length < 8) {
@@ -148,27 +152,7 @@ public final class Convert {
         BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
         return bigInteger.longValue();
     }
-//    public static void main(String[] args) throws IOException {
-//        Path path = Paths.get("words");
-//        List<String> strings = Files.readAllLines(path);
-//        List<String> targetWords = strings.stream().filter(str -> {
-//                    if (str.length() >= 3 && str.length() <= 8 && !str.startsWith("#") && !str.contains("penis") && !str.startsWith("porn") && !str.startsWith("vagin") && !str.startsWith("dick") && !str.startsWith("puss")) {
-//                        for (int i = 0; i < str.length(); i++) {
-//                            if (str.charAt(i) < 'a' || str.charAt(i) > 'z') {
-//                                return false;
-//                            }
-//                        }
-//                    } else
-//                        return false;
-//                    return true;
-//                }
-//        ).collect(Collectors.toList());
-//        Files.write(Paths.get("pass-words.txt"), targetWords);
-//
-//    }
-public static void main(String[] args) {
 
-}
     public static long fromEpochTime(int epochTime) {
         return epochTime * 1000L + Genesis.EPOCH_BEGINNING - 500L;
     }

@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -272,6 +273,7 @@ public final class Account {
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
+    private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(new TwoFactorAuthRepositoryImpl(Db.db));
     static {
 
         Apl.getBlockchainProcessor().addListener(block -> {
@@ -766,6 +768,35 @@ public final class Account {
     public static long getAssetBalanceATU(long accountId, long assetId, int height) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId), height);
         return accountAsset == null ? 0 : accountAsset.quantityATU;
+    }
+
+    public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) {
+            findAccount(accountId, passphrase);
+            return service2FA.enable(accountId);
+    }
+
+
+    public static void disable2FA(long accountId, String passphrase, int code) {
+        findAccount(accountId, passphrase);
+        service2FA.disable(accountId, code);
+
+    }
+
+    public static void findAccount(long accountId, String passphrase) {
+        try {
+            byte[] keySeed = keystore.getKeySeed(passphrase, accountId);
+        }
+        catch (IOException e) {
+            LOG.error(e.toString(), e);
+            throw new RuntimeException("No such account found");
+        }
+    }
+
+    public static void auth2FA(String passphrase, long accountId, int code) throws InvalidTwoFactorAuthCredentialsException {
+        findAccount(accountId, passphrase);
+        if (!service2FA.tryAuth(accountId, code)) {
+            throw new InvalidTwoFactorAuthCredentialsException("2fa was failed");
+        }
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId) {
@@ -1515,6 +1546,8 @@ public final class Account {
         this.addToBalanceATM(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
+
+
 
     @Override
     public String toString() {

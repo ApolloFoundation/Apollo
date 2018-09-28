@@ -53,6 +53,7 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
+        runner.disableReloading();
         runner.run();
     }
 

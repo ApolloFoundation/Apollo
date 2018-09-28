@@ -4,8 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import com.apollocurrency.aplwallet.apl.JSONTransaction;
+import com.apollocurrency.aplwallet.apl.NodeClient;
+import com.apollocurrency.aplwallet.apl.TestAccount;
+import com.apollocurrency.aplwallet.apl.TestDataGenerator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import dto.ChatInfo;
 import org.junit.*;
 import util.TestUtil;
 import util.WalletRunner;
@@ -56,7 +60,7 @@ public class ChatTest {
     }
     @Test
     public void testGetChats() throws IOException {
-        List<Chat.ChatInfo> chatInfo = client.getChatInfo(TEST_LOCALHOST, chatAcc.getRS());
+        List<ChatInfo> chatInfo = client.getChatInfo(TEST_LOCALHOST, chatAcc.getRS());
 //        List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, "APL-NFCE-2L6E-6NKP-8FH59");
         checkList(chatInfo);
         Assert.assertEquals(chats.size(), chatInfo.size());

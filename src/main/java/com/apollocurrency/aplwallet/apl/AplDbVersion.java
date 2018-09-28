@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.db.DbBytesConverter;
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 
-class AplDbVersion extends DbVersion {
+public class AplDbVersion extends DbVersion {
 
     protected void update(int nextUpdate) {
         switch (nextUpdate) {
@@ -667,6 +667,13 @@ class AplDbVersion extends DbVersion {
                 PublicKeyMigration.init();
                 apply(null);
             case 242:
+                apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
+                            + "db_id IDENTITY, "
+                            + "account BIGINT NOT NULL UNIQUE,"
+                            + "secret VARBINARY"
+                            + ")"
+                );
+            case 243:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

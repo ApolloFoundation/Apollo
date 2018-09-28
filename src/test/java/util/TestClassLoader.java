@@ -28,8 +28,8 @@ public class TestClassLoader extends ClassLoader {
 
     private static final String rootDirName = "com.apollocurrency.aplwallet.apl";
 
-    private static final Set<String> classNames = new HashSet<>();
-    static {
+    private final Set<String> classNames = new HashSet<>();
+    {
         classNames.add(rootDirName + ".Apl");
         classNames.add(rootDirName + ".TransactionProcessor");
         classNames.add(rootDirName + ".CurrencyExchangeOffer");
@@ -88,7 +88,7 @@ public class TestClassLoader extends ClassLoader {
         if (useCache && cachedClasses.containsKey(name)) {
             return cachedClasses.get(name);
         }
-        try(InputStream in = ClassLoader.getSystemResourceAsStream(name.replaceAll("\\.", "\\\\") + ".class")) {
+        try(InputStream in = ClassLoader.getSystemResourceAsStream(name.replaceAll("\\.", "/") + ".class")) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             int nRead;
             byte[] data = new byte[1024];

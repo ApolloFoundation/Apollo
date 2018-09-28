@@ -18,7 +18,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
@@ -72,7 +71,6 @@ public class RSAUtilTest {
 
     @Test
     public void testDecryptUrl() throws Exception {
-        mockStatic(Logger.class);
         PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
         PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
 

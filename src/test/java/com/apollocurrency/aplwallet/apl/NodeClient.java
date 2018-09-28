@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.*;
+import dto.Account;
 import dto.Block;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -546,7 +547,7 @@ public class NodeClient {
         return Version.from(versionString.asText());
     }
 
-    public List<Chat.ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
+    public List<ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getChats");
         params.put("account", account);
@@ -554,10 +555,10 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode chatString = root.get("chats");
-        return MAPPER.readValue(chatString.toString(), new TypeReference<List<Chat.ChatInfo>>() {});
+        return MAPPER.readValue(chatString.toString(), new TypeReference<List<ChatInfo>>() {});
     }
 
-    public List<Chat.ChatInfo> getChatInfo(String url, String account) throws IOException {
+    public List<ChatInfo> getChatInfo(String url, String account) throws IOException {
         return getChatInfo(url, account, 0, -1);
     }
 
@@ -690,4 +691,36 @@ public class NodeClient {
         return passphraseNode.textValue();
     }
 
+    public AccountTwoFactorAuthDetails enable2FA(String url, String account,String passphrase) throws IOException {
+        Objects.requireNonNull(passphrase);
+        Objects.requireNonNull(account);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "enable2FA");
+        parameters.put("passphrase", passphrase);
+        parameters.put("account", account);
+
+        String json = postJson(createURI(url), parameters, "");
+        AccountTwoFactorAuthDetails details2FA = MAPPER.readValue(json, AccountTwoFactorAuthDetails.class);
+        if (details2FA.getSecret() == null) {
+            throw new RuntimeException("No 2fa key in response");
+        }
+        return details2FA;
+    }
+
+    public Account disable2FA(String url, String account,String passphrase, long code) throws IOException {
+        Objects.requireNonNull(passphrase);
+        Objects.requireNonNull(account);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "disable2FA");
+        parameters.put("passphrase", passphrase);
+        parameters.put("account", account);
+        parameters.put("code", String.valueOf(code));
+
+        String json = postJson(createURI(url), parameters, "");
+        Account returnedAcc = MAPPER.readValue(json, Account.class);
+        if (returnedAcc.getAccount() == 0) {
+            throw new RuntimeException("2fa not disabled");
+        }
+        return returnedAcc;
+    }
 }
