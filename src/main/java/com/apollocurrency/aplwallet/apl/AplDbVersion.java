@@ -668,9 +668,9 @@ public class AplDbVersion extends DbVersion {
                 apply(null);
             case 242:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
-                            + "db_id IDENTITY, "
-                            + "account BIGINT NOT NULL UNIQUE,"
-                            + "secret VARBINARY"
+                            + "account BIGINT PRIMARY KEY,"
+                            + "secret VARBINARY,"
+                            + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
                             + ")"
                 );
             case 243:

@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import dto.JSONTransaction;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
+package dto;
 
 import com.apollocurrency.aplwallet.apl.util.Convert;
 

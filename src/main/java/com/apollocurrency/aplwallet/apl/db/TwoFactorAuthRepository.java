@@ -2,25 +2,32 @@ package com.apollocurrency.aplwallet.apl.db;
 
 public interface TwoFactorAuthRepository {
     /**
-     * Retrieves secret word for account if exists
-     * @param account id of account, which secret word should be retrieved
-     * @return account secret word byte array or null if secret word for this account is not exist
+     * Retrieves 2fa data by id of account
+     * @param account id of account, which 2fa entry should be retrieved
+     * @return 2fa entry of this account or null if not exist
      *
      */
-    byte[] getSecret(long account);
+    TwoFactorAuthEntity get(long account);
 
     /**
-     * Save new secret word, which will be associated with this account.
-     * @param account id of account which should be saved with associated secret word
-     * @param secret secret word bytes
-     * @return true if new secret word was saved successfully, false if secret word for account already exists in db
+     * Save new 2fa entry
+     * @param entity2FA object, which should contain 2fa data for saving
+     * @return true if entity2FA was saved successfully, false in other cases
      *
      */
-    boolean saveSecret(long account, byte[] secret);
+    boolean add(TwoFactorAuthEntity entity2FA);
 
     /**
-     * Deletes associated with this account secret word entry
-     * @param account id of account which secret word entry should be deleted
+     * Update existing 2fa entry
+     * @param entity2FA object, which should contain 2fa data for saving
+     * @return true if entity2FA was updated successfully, false in other cases
+     *
+     */
+    boolean update(TwoFactorAuthEntity entity2FA);
+
+    /**
+     * Deletes associated with this account 2fa entry
+     * @param account id of account which 2fa entry should be deleted
      * @return true if at least one entry was deleted, otherwise - false
      */
     boolean delete(long account);

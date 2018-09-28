@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.AccountKey;
+import dto.AccountKey;
 import com.apollocurrency.aplwallet.apl.GeneratedAccount;
 import com.apollocurrency.aplwallet.apl.TestData;
 import com.apollocurrency.aplwallet.apl.util.Convert;

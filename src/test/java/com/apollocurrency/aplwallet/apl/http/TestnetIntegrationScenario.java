@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.Block;
 import dto.ForgingDetails;
+import dto.JSONTransaction;
 import org.junit.*;
 import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;

@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 import com.apollocurrency.aplwallet.apl.DbIntegrationTest;
-import org.apache.commons.codec.binary.Base32;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,36 +13,48 @@ import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.*;
 
 public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
     private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
-    private static final String BASE32_SECRET = "IKH7F4ZCOB7T6X2I";
+
 
 
     @Test
-    public void testGetSecret() {
-        byte[] secret = repository.getSecret(ACCOUNT1.getAccount());
-        Assert.assertArrayEquals(ACCOUNT1_2FA_SECRET_BYTES, secret);
+    public void testGet() {
+        TwoFactorAuthEntity entity = repository.get(ACCOUNT1.getAccount());
+        Assert.assertEquals(ENTITY1, entity);
     }
 
     @Test
-    public void testGetSecretNotFound() {
+    public void testGetNotFound() {
 
-        byte[] secret = repository.getSecret(ACCOUNT2.getAccount());
-        Assert.assertNull(secret);
+        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getAccount());
+        Assert.assertNull(entity);
     }
 
     @Test
-    public void testSaveSecret() {
-        byte[] secretBytes = new Base32().decode(BASE32_SECRET);
-        boolean saved = repository.saveSecret(ACCOUNT2.getAccount(), secretBytes);
+    public void testAdd() {
+        boolean saved = repository.add(ENTITY3);
         Assert.assertTrue(saved);
-        byte[] actualSecretBytes = repository.getSecret(ACCOUNT2.getAccount());
-        Assert.assertArrayEquals(secretBytes, actualSecretBytes);
+        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getAccount());
+        Assert.assertEquals(ENTITY3, entity);
 
     }
 
     @Test
-    public void testSaveSecretAlreadyExist() {
-        byte[] secretBytes = new Base32().decode(BASE32_SECRET);
-        boolean saved = repository.saveSecret(ACCOUNT1.getAccount(), secretBytes);
+    public void testAddAlreadyExist() {
+        boolean saved = repository.add(ENTITY2);
+        Assert.assertFalse(saved);
+    }
+
+    @Test
+    public void testUpdate() {
+        TwoFactorAuthEntity entity = new TwoFactorAuthEntity(ENTITY2.getAccount(), ENTITY2.getSecret(), false);
+        boolean saved = repository.update(entity);
+        Assert.assertTrue(saved);
+        Assert.assertEquals(repository.get(ACCOUNT2.getAccount()), entity);
+    }
+    @Test
+    public void testUpdateNotExist() {
+        TwoFactorAuthEntity entity = new TwoFactorAuthEntity(ENTITY3.getAccount(), ENTITY3.getSecret(), false);
+        boolean saved = repository.update(entity);
         Assert.assertFalse(saved);
     }
 
@@ -55,7 +66,7 @@ public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
 
     @Test
     public void testDeleteNothingToDelete() {
-        boolean deleted = repository.delete(ACCOUNT2.getAccount());
+        boolean deleted = repository.delete(ACCOUNT3.getAccount());
         Assert.assertFalse(deleted);
     }
 }

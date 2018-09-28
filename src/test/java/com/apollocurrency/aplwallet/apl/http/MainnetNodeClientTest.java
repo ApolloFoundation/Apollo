@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.JSONTransaction;
+import dto.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestData;
 import com.apollocurrency.aplwallet.apl.TransactionType;

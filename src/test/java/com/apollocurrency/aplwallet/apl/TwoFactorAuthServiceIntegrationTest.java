@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
-import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyEnabledException;
+import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyRegisteredException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,14 +24,13 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository);
     @Test
     public void testEnable() {
-        TwoFactorAuthDetails authDetails = service.enable(ACCOUNT2.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT2.getAccountRS());
-        Assert.assertTrue(service.isEnabled(ACCOUNT2.getAccount()));
-
+        TwoFactorAuthDetails authDetails = service.enable(ACCOUNT3.getAccount());
+        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT3.getAccountRS());
+        Assert.assertFalse(service.isEnabled(ACCOUNT3.getAccount()));
     }
 
-    @Test(expected = TwoFactoAuthAlreadyEnabledException.class)
-    public void testEnableAlreadyEnabled() {
+    @Test(expected = TwoFactoAuthAlreadyRegisteredException.class)
+    public void testEnableAlreadyRegistered() {
 
         service.enable(ACCOUNT1.getAccount());
     }

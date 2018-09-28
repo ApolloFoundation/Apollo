@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyRegisteredException;
+
 public interface TwoFactorAuthService {
     /**
      * Enable 2fa for account specified by accountId and return url for representation via QR code and plain secret word
@@ -13,7 +15,7 @@ public interface TwoFactorAuthService {
      * <li>QR code url for creating QR code and scan it by QR code reader</li>
      * <li>plain 2fa secret word</li>
      * </ul>
-     * @throws com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyEnabledException if 2fa was already enabled
+     * @throws TwoFactoAuthAlreadyRegisteredException if 2fa was already enabled
      */
     TwoFactorAuthDetails enable(long accountId);
 
@@ -41,4 +43,5 @@ public interface TwoFactorAuthService {
      */
     boolean tryAuth(long accountId, int authCode);
 
+    boolean confirmEnabling(long accountId, int authCode);
 }

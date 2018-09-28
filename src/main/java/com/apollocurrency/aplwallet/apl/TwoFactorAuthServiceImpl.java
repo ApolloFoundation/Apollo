@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
-import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyEnabledException;
+import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyRegisteredException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
@@ -37,9 +38,14 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         //
         String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(SECRET_LENGTH);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
-        boolean saved = repository.saveSecret(accountId, base32Bytes);
+        TwoFactorAuthEntity entity = repository.get(accountId);
+        if (entity != null) {
+            return new TwoFactorAuthDetails(getQrCodeUrl(Convert.rsAccount(entity.getAccount()), base32Secret), base32Secret);
+        }
+
+        boolean saved = repository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false));
         if (!saved) {
-            throw new TwoFactoAuthAlreadyEnabledException("Account already has 2fa");
+            throw new TwoFactoAuthAlreadyRegisteredException("Account already register 2fa");
         }
         String qrCodeUrl = getQrCodeUrl(Convert.rsAccount(accountId), base32Secret);
         return new TwoFactorAuthDetails(qrCodeUrl, base32Secret);
@@ -57,7 +63,8 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     @Override
     public void disable(long accountId, int authCode) {
-        if (tryAuth(accountId, authCode)) {
+        TwoFactorAuthEntity entity = repository.get(accountId);
+        if (authEntity(entity, authCode)) {
             //account with 2fa already exist
             repository.delete(accountId);
         } else {
@@ -67,25 +74,40 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     @Override
     public boolean isEnabled(long accountId) {
-        byte[] secret = repository.getSecret(accountId);
-        return secret != null && secret.length != 0;
+        TwoFactorAuthEntity entity = repository.get(accountId);
+        return entity != null && entity.isConfirmed() && entity.getSecret() != null;
     }
 
     @Override
     public boolean tryAuth(long accountId, int authCode) {
-        boolean succeed = false;
+        TwoFactorAuthEntity entity = repository.get(accountId);
+        return authEntity(entity, authCode) && entity.isConfirmed();
+    }
+
+    private boolean authEntity(TwoFactorAuthEntity entity, int authCode) {
+
+        boolean success = false;
         try {
-            byte[] secret = repository.getSecret(accountId);
-            if (secret != null) {
-                String base32Secret = BASE_32.encodeToString(secret);
+            if (entity != null) {
+                String base32Secret = BASE_32.encodeToString(entity.getSecret());
                 //window millis should be 0, other parameters will not work properly
-                succeed = TimeBasedOneTimePasswordUtil.validateCurrentNumber(
+                success = TimeBasedOneTimePasswordUtil.validateCurrentNumber(
                         base32Secret, authCode, 0);
             }
         }
         catch (GeneralSecurityException e) {
             LOG.error("Unable to create temporal code", e);
         }
-        return succeed;
+        return success;
+    }
+
+    @Override
+    public boolean confirmEnabling(long accountId, int authCode) {
+        TwoFactorAuthEntity entity = repository.get(accountId);
+        if (!entity.isConfirmed() && authEntity(entity, authCode)) {
+            entity.setConfirmed(true);
+            repository.update(entity);
+            return true;
+        } else return false;
     }
 }

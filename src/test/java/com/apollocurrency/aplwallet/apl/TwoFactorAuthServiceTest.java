@@ -4,9 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
-import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyEnabledException;
+import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyRegisteredException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,7 +23,6 @@ import java.util.Random;
 
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -37,16 +38,16 @@ public class TwoFactorAuthServiceTest {
 
     @Test
     public void testEnable() {
-        doReturn(true).when(repository).saveSecret(anyLong(), any(byte[].class));
-        TwoFactorAuthDetails twoFactorAuthDetails = service.enable(ACCOUNT1.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, ACCOUNT1.getAccountRS());
+        doReturn(true).when(repository).add(any(TwoFactorAuthEntity.class));
+        TwoFactorAuthDetails twoFactorAuthDetails = service.enable(ENTITY3.getAccount());
+        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert.rsAccount(ENTITY3.getAccount()));
 
-        verify(repository, times(1)).saveSecret(anyLong(), any(byte[].class));
+        verify(repository, times(1)).add(any(TwoFactorAuthEntity.class));
     }
 
-    @Test(expected = TwoFactoAuthAlreadyEnabledException.class)
+    @Test(expected = TwoFactoAuthAlreadyRegisteredException.class)
     public void testEnableAlreadyEnabled() {
-        doReturn(false).when(repository).saveSecret(anyLong(), any(byte[].class));
+        doReturn(false).when(repository).add(any(TwoFactorAuthEntity.class));
 
         service.enable(ACCOUNT2.getAccount());
     }
@@ -73,11 +74,11 @@ public class TwoFactorAuthServiceTest {
 
     @Test
     public void testIsEnabledTrue() {
-        doReturn(ACCOUNT1_2FA_SECRET_BYTES).when(repository).getSecret(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
 
         boolean enabled = service.isEnabled(ACCOUNT1.getAccount());
 
-        verify(repository, times(1)).getSecret(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getAccount());
 
         Assert.assertTrue(enabled);
     }
@@ -87,7 +88,17 @@ public class TwoFactorAuthServiceTest {
 
         boolean enabled = service.isEnabled(ACCOUNT1.getAccount());
 
-        verify(repository, times(1)).getSecret(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+
+        Assert.assertFalse(enabled);
+    }
+    @Test
+    public void testIsEnabledFalseWhen2faWasNotConfirmed() throws CloneNotSupportedException {
+        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getAccount());
+
+        boolean enabled = service.isEnabled(ACCOUNT2.getAccount());
+
+        verify(repository, times(1)).get(ACCOUNT2.getAccount());
 
         Assert.assertFalse(enabled);
     }
@@ -95,34 +106,65 @@ public class TwoFactorAuthServiceTest {
 
     @Test
     public void testTryAuth() throws GeneralSecurityException {
-        doReturn(ACCOUNT1_2FA_SECRET_BYTES).when(repository).getSecret(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
 
         boolean authenticated = TwoFactorAuthUtil.tryAuth(service, ACCOUNT1.getAccount(), ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
-        verify(repository, atMost(MAX_2FA_ATTEMPTS)).getSecret(ACCOUNT1.getAccount());
+        verify(repository, atMost(MAX_2FA_ATTEMPTS)).get(ACCOUNT1.getAccount());
 
         Assert.assertTrue(authenticated);
     }
 
     @Test
     public void testTryAuthCodesNotEquals() throws GeneralSecurityException {
-        doReturn(ACCOUNT1_2FA_SECRET_BYTES).when(repository).getSecret(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
 
         int currentNumber = new Random().nextInt();
         boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), currentNumber);
 
-        verify(repository, times(1)).getSecret(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getAccount());
 
         Assert.assertFalse(authenticated);
     }
 
     @Test
     public void testTryAuthNotFoundSecretForAccount() throws GeneralSecurityException {
-
+//        just to make sure that 2fa code is correct
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
         boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), currentNumber);
 
-        verify(repository, times(1)).getSecret(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getAccount());
 
         Assert.assertFalse(authenticated);
+    }
+    @Test
+    public void testTryAuthForNotConfirmedAccount() throws GeneralSecurityException, CloneNotSupportedException {
+        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getAccount());
+        int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
+        boolean authenticated = service.tryAuth(ACCOUNT2.getAccount(), currentNumber);
+
+        verify(repository, times(1)).get(ACCOUNT2.getAccount());
+
+        Assert.assertFalse(authenticated);
+    }
+    @Test
+    public void testConfirmEnabling() throws GeneralSecurityException, CloneNotSupportedException {
+        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getAccount());
+        int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
+        boolean confirmed = service.confirmEnabling(ACCOUNT2.getAccount(), currentNumber);
+
+        verify(repository, times(1)).get(ACCOUNT2.getAccount());
+
+        Assert.assertTrue(confirmed);
+    }
+
+    @Test
+    public void testConfirmEnablingForAlreadyEnabledAccount() throws GeneralSecurityException, CloneNotSupportedException {
+        doReturn(ENTITY1.clone()).when(repository).get(ACCOUNT1.getAccount());
+        int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
+        boolean confirmed = service.confirmEnabling(ACCOUNT1.getAccount(), currentNumber);
+
+        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+
+        Assert.assertFalse(confirmed);
     }
 }
