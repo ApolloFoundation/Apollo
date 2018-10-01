@@ -34,14 +34,18 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
 
         service.enable(ACCOUNT1.getAccount());
     }
+    @Test
+    public void testEnableNotConfirmed() {
+        TwoFactorAuthDetails authDetails = service.enable(ACCOUNT2.getAccount());
+        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT2.getAccountRS());
+        Assert.assertFalse(service.isEnabled(ACCOUNT2.getAccount()));
+    }
 
     @Test
     public void testDisable() throws GeneralSecurityException {
         TwoFactorAuthService spy = spy(service);
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
         spy.disable(ACCOUNT1.getAccount(), currentCode);
-        verify(spy, times(1)).tryAuth(ACCOUNT1.getAccount(), currentCode);
-
     }
 
     @Test(expected = InvalidTwoFactorAuthCredentialsException.class)
@@ -60,10 +64,15 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     }
 
     @Test
-    public void testIsEnabledFalse() {
+    public void testIsEnabledFalseWhenAccountIsNotExists() {
 
+        boolean enabled = service.isEnabled(ACCOUNT3.getAccount());
+        Assert.assertFalse(enabled);
+    }
+
+    @Test
+    public void testIsEnabledFalseWhenAccountIsNotConfirmed() {
         boolean enabled = service.isEnabled(ACCOUNT2.getAccount());
-
         Assert.assertFalse(enabled);
     }
 
@@ -88,5 +97,28 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
         boolean authenticated = service.tryAuth(ACCOUNT2.getAccount(), fakeNumber);
 
         Assert.assertFalse(authenticated);
+    }
+
+    @Test
+    public void testConfirm() throws GeneralSecurityException {
+        int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
+        boolean confirm = service.confirm(ACCOUNT2.getAccount(), currentCode);
+        Assert.assertTrue(confirm);
+        Assert.assertTrue(service.isEnabled(ACCOUNT2.getAccount()));
+    }
+    @Test
+    public void testConfirmAlreadyConfirmed() throws GeneralSecurityException {
+        int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
+        boolean confirm = service.confirm(ACCOUNT1.getAccount(), currentCode);
+        Assert.assertFalse(confirm);
+        Assert.assertTrue(service.isEnabled(ACCOUNT1.getAccount()));
+    }
+
+    @Test
+    public void testConfirmNotExists() throws GeneralSecurityException {
+        int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
+        boolean confirm = service.confirm(ACCOUNT3.getAccount(), currentCode);
+        Assert.assertFalse(confirm);
+        Assert.assertFalse(service.isEnabled(ACCOUNT3.getAccount()));
     }
 }

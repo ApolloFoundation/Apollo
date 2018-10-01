@@ -43,5 +43,5 @@ public interface TwoFactorAuthService {
      */
     boolean tryAuth(long accountId, int authCode);
 
-    boolean confirmEnabling(long accountId, int authCode);
+    boolean confirm(long accountId, int authCode);
 }

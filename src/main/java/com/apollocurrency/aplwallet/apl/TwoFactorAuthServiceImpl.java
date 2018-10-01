@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
 import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyRegisteredException;
+import com.apollocurrency.aplwallet.apl.util.exception.UnknownTwoFactorAuthException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
@@ -33,19 +34,27 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
+//    transaction management required
     public TwoFactorAuthDetails enable(long accountId) {
-        //length of Base32Secret should aliquot 8 (length % 8 == 0); e.g. 8, 16, 24, 32, etc.
+//        check existing and not confirmed 2fa
+        TwoFactorAuthEntity entity = repository.get(accountId);
+        if (entity != null) {
+            if (!entity.isConfirmed()) {
+
+            String existingBase32Secret = BASE_32.encodeToString(entity.getSecret());
+            return new TwoFactorAuthDetails(getQrCodeUrl(Convert.rsAccount(entity.getAccount()), existingBase32Secret),
+                    existingBase32Secret);
+            } else {
+                throw new TwoFactoAuthAlreadyRegisteredException("Account has already enabled 2fa");
+            }
+        }
+        //length of Base32Secret should be multiple 8 (length % 8 == 0); e.g. 8, 16, 24, 32, etc.
         //
         String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(SECRET_LENGTH);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
-        TwoFactorAuthEntity entity = repository.get(accountId);
-        if (entity != null) {
-            return new TwoFactorAuthDetails(getQrCodeUrl(Convert.rsAccount(entity.getAccount()), base32Secret), base32Secret);
-        }
-
         boolean saved = repository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false));
         if (!saved) {
-            throw new TwoFactoAuthAlreadyRegisteredException("Account already register 2fa");
+            throw new UnknownTwoFactorAuthException("Unable to enable 2fa");
         }
         String qrCodeUrl = getQrCodeUrl(Convert.rsAccount(accountId), base32Secret);
         return new TwoFactorAuthDetails(qrCodeUrl, base32Secret);
@@ -102,12 +111,11 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public boolean confirmEnabling(long accountId, int authCode) {
+    public boolean confirm(long accountId, int authCode) {
         TwoFactorAuthEntity entity = repository.get(accountId);
-        if (!entity.isConfirmed() && authEntity(entity, authCode)) {
+        if (entity != null && !entity.isConfirmed() && authEntity(entity, authCode)) {
             entity.setConfirmed(true);
-            repository.update(entity);
-            return true;
+            return repository.update(entity);
         } else return false;
     }
 }
