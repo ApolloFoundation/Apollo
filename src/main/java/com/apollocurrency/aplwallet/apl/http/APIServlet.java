@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
@@ -112,6 +109,7 @@ public final class APIServlet extends HttpServlet {
         }
 
         protected boolean logRequestTime() { return false; }
+
     }
 
     private static final boolean enforcePost = Apl.getBooleanProperty("apl.apiServerEnforcePOST");

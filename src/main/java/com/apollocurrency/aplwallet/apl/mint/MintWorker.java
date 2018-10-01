@@ -52,10 +52,20 @@ public class MintWorker {
         if (currencyCode == null) {
             throw new IllegalArgumentException("apl.mint.currencyCode not specified");
         }
+        byte[] keySeed = null;
         String secretPhrase = Convert.emptyToNull(Apl.getStringProperty("apl.mint.secretPhrase", null, true));
         if (secretPhrase == null) {
-            throw new IllegalArgumentException("apl.mint.secretPhrase not specified");
+            String ks = Convert.emptyToNull(Apl.getStringProperty("apl.mint.keySeed", null, true));
+            if (ks == null) {
+                throw new IllegalArgumentException("either apl.mint.secretPhrase or apl.mint.keySeed should be specified");
+            } else {
+                keySeed = Convert.parseHexString(ks);
+            }
+        } else {
+            keySeed = Crypto.getKeySeed(secretPhrase);
         }
+
+
         boolean isSubmitted = Apl.getBooleanProperty("apl.mint.isSubmitted");
         boolean isStopOnError = Apl.getBooleanProperty("apl.mint.stopOnError");
         byte[] publicKeyHash = Crypto.sha256().digest(Crypto.getPublicKey(secretPhrase));
@@ -95,7 +105,7 @@ public class MintWorker {
         while (true) {
             counter++;
             try {
-                JSONObject response = mintImpl(secretPhrase, accountId, units, currencyId, algorithm, counter, target,
+                JSONObject response = mintImpl(keySeed, accountId, units, currencyId, algorithm, counter, target,
                     initialNonce, threadPoolSize, executorService, difficulty, isSubmitted);
                 LOG.info("currency mint response:" + response.toJSONString());
             } catch (Exception e) {
@@ -113,7 +123,7 @@ public class MintWorker {
         }
     }
 
-    private JSONObject mintImpl(String secretPhrase, long accountId, long units, long currencyId, byte algorithm,
+    private JSONObject mintImpl(byte[] keySeed, long accountId, long units, long currencyId, byte algorithm,
                                 long counter, byte[] target, long initialNonce, int threadPoolSize, ExecutorService executorService, BigInteger difficulty, boolean isSubmitted) {
         long startTime = System.currentTimeMillis();
         List<Callable<Long>> workersList = new ArrayList<>();
@@ -132,7 +142,7 @@ public class MintWorker {
                 solution, units, counter, hashes, (float) computationTime / 1000, hashes / computationTime, hashesPerDifficulty, isSubmitted);
         JSONObject response;
         if (isSubmitted) {
-            response = currencyMint(secretPhrase, currencyId, solution, units, counter);
+            response = currencyMint(keySeed, currencyId, solution, units, counter);
         } else {
             response = new JSONObject();
             response.put("message", "apl.mint.isSubmitted=false therefore currency mint transaction is not submitted");
@@ -155,16 +165,16 @@ public class MintWorker {
         }
     }
 
-    private JSONObject currencyMint(String secretPhrase, long currencyId, long nonce, long units, long counter) {
+    private JSONObject currencyMint(byte[] keySeed, long currencyId, long nonce, long units, long counter) {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new Attachment.MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
-        Transaction.Builder builder = Apl.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, Constants.ONE_APL,
+        Transaction.Builder builder = Apl.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
                 (short) 120, attachment)
                 .timestamp(((Long) ecBlock.get("timestamp")).intValue())
                 .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
                 .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {
-            Transaction transaction = builder.build(secretPhrase);
+            Transaction transaction = builder.build(keySeed);
             Map<String, String> params = new HashMap<>();
             params.put("requestType", "broadcastTransaction");
             params.put("transactionBytes", Convert.toHexString(transaction.getBytes()));

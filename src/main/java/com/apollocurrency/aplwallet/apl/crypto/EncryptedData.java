@@ -30,13 +30,13 @@ public final class EncryptedData {
 
     public static final EncryptedData EMPTY_DATA = new EncryptedData(new byte[0], new byte[0]);
 
-    public static EncryptedData encrypt(byte[] plaintext, String secretPhrase, byte[] theirPublicKey) {
+    public static EncryptedData encrypt(byte[] plaintext, byte[] keySeed, byte[] theirPublicKey) {
         if (plaintext.length == 0) {
             return EMPTY_DATA;
         }
         byte[] nonce = new byte[32];
         Crypto.getSecureRandom().nextBytes(nonce);
-        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), theirPublicKey, nonce);
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(keySeed), theirPublicKey, nonce);
         byte[] data = Crypto.aesEncrypt(plaintext, sharedKey);
         return new EncryptedData(data, nonce);
     }

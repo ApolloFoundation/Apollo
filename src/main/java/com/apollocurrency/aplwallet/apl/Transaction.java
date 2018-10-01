@@ -58,7 +58,7 @@ public interface Transaction {
 
         Transaction build() throws AplException.NotValidException;
 
-        Transaction build(String secretPhrase) throws AplException.NotValidException;
+        Transaction build(byte[] keySeed) throws AplException.NotValidException;
 
     }
 

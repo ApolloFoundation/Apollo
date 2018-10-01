@@ -358,7 +358,7 @@ public final class ParameterParser {
         return new EncryptedData(data, nonce);
     }
 
-    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req) throws ParameterException {
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long sendId) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -373,10 +373,10 @@ public final class ParameterParser {
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
             }
-            String secretPhrase = getSecretPhrase(req, false);
-            if (secretPhrase != null) {
-                byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, secretPhrase, compress);
+            byte[] keySeed = getKeySeed(req, sendId, false);
+            if (keySeed != null) {
+                byte[] publicKey = Crypto.getPublicKey(keySeed);
+                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -384,6 +384,26 @@ public final class ParameterParser {
         } else {
             return new Appendix.UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
         }
+    }
+
+    public static byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
+        String secretPhrase = getSecretPhrase(req, false);
+        if (secretPhrase != null) {
+            return Crypto.getKeySeed(secretPhrase);
+        }
+        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
+        if (passphrase != null) {
+            try {
+                return Account.findKeySeed(senderId, passphrase);
+            }
+            catch (RuntimeException e) {
+                if (isMandatory) {
+                    throw new ParameterException("Secret phrase or passphrase + accountId required", e, JSONResponses.missing("secretPhrase",
+                            "passphrase"));
+                }
+            }
+        }
+        return null;
     }
 
     public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
@@ -414,7 +434,13 @@ public final class ParameterParser {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
-                    throw new ParameterException(missing(secretPhraseParam, publicKeyParam));
+                    long accountId = ParameterParser.getAccountId(req, prefix == null ? "account" : prefix + "Account",false);
+                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, prefix == null ? "passphrase" : prefix + "Passphrase",false));
+                    if (accountId == 0 || passphrase == null) {
+                        throw new ParameterException(missing(secretPhraseParam, publicKeyParam, "accountId and passphrase"));
+                    } else {
+                        publicKey = Crypto.getPublicKey(Account.findKeySeed(accountId, passphrase));
+                    }
                 }
                 if (!Crypto.isCanonicalPublicKey(publicKey)) {
                     throw new ParameterException(incorrect(publicKeyParam));
@@ -463,6 +489,9 @@ public final class ParameterParser {
 
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getStringParameter(req, "passphrase", isMandatory);
+    }
+    public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
+        return getStringParameter(req, parameterName, isMandatory);
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
@@ -663,7 +692,7 @@ public final class ParameterParser {
         }
     }
 
-    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, boolean prunable) throws ParameterException {
+    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, long senderId, boolean prunable) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
         byte[] plainMessageBytes = null;
@@ -709,9 +738,9 @@ public final class ParameterParser {
             if (recipientPublicKey == null) {
                 throw new ParameterException(MISSING_RECIPIENT_PUBLIC_KEY);
             }
-            String secretPhrase = getSecretPhrase(req, false);
-            if (secretPhrase != null) {
-                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, secretPhrase, compress);
+            byte[] keySeed = getKeySeed(req, senderId, false);
+            if (keySeed != null) {
+                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {

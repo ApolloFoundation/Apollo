@@ -456,7 +456,7 @@ public final class Shuffler {
             Transaction.Builder builder = Apl.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, 0,
                     (short) 1440, attachment);
             builder.timestamp(Apl.getBlockchain().getLastBlockTimestamp());
-            Transaction transaction = builder.build(secretPhrase);
+            Transaction transaction = builder.build(Crypto.getKeySeed(secretPhrase));
             failedTransaction = null;
             failureCause = null;
             Account participantAccount = Account.getAccount(this.accountId);

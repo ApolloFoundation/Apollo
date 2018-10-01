@@ -26,12 +26,15 @@ import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.*;
+import com.apollocurrency.aplwallet.apl.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
 import org.slf4j.Logger;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
@@ -771,20 +774,23 @@ public final class Account {
     }
 
     public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) {
-            findAccount(accountId, passphrase);
+            findKeySeed(accountId, passphrase);
             return service2FA.enable(accountId);
     }
 
 
     public static void disable2FA(long accountId, String passphrase, int code) {
-        findAccount(accountId, passphrase);
+        findKeySeed(accountId, passphrase);
         service2FA.disable(accountId, code);
-
     }
 
-    public static void findAccount(long accountId, String passphrase) {
+    public static boolean isEnabled2FA(long accountId) {
+        return service2FA.isEnabled(accountId);
+    }
+
+    public static byte[] findKeySeed(long accountId, String passphrase) {
         try {
-            byte[] keySeed = keystore.getKeySeed(passphrase, accountId);
+            return keystore.getKeySeed(passphrase, accountId);
         }
         catch (IOException e) {
             LOG.error(e.toString(), e);
@@ -792,10 +798,27 @@ public final class Account {
         }
     }
 
-    public static void auth2FA(String passphrase, long accountId, int code) throws InvalidTwoFactorAuthCredentialsException {
-        findAccount(accountId, passphrase);
+    public static void confirm2FA(long accountId, String passphrase, int code) {
+        findKeySeed(accountId, passphrase);
+        if (!service2FA.confirm(accountId, code)) {
+            throw new RuntimeException("2fa not enabled or already confirmed or bad credentials");
+        }
+    }
+
+    public static void verify2FA(HttpServletRequest request) throws ParameterException {
+        long accountId = ParameterParser.getAccountId(request, false);
+        byte[] publicKey = ParameterParser.getPublicKey(request);
+        if (Convert.getId(publicKey) == accountId) {
+            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, true));
+            int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            auth2FA(passphrase, accountId, code);
+        }
+    }
+
+    public static void auth2FA(String passphrase, long accountId, int code) throws ParameterException {
+        findKeySeed(accountId, passphrase);
         if (!service2FA.tryAuth(accountId, code)) {
-            throw new InvalidTwoFactorAuthCredentialsException("2fa was failed");
+            throw new ParameterException("2fa required", null, JSONResponses.REQUIRED_2FA);
         }
     }
 
@@ -830,11 +853,11 @@ public final class Account {
 
     static void init() {}
 
-    public static EncryptedData encryptTo(byte[] publicKey, byte[] data, String senderSecretPhrase, boolean compress) {
+    public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {
             data = Convert.compress(data);
         }
-        return EncryptedData.encrypt(data, senderSecretPhrase, publicKey);
+        return EncryptedData.encrypt(data, keySeed, publicKey);
     }
 
     public static byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, String recipientSecretPhrase, boolean uncompress) {
@@ -924,12 +947,12 @@ public final class Account {
         return accountLeaseTable.get(accountDbKeyFactory.newKey(this));
     }
 
-    public EncryptedData encryptTo(byte[] data, String senderSecretPhrase, boolean compress) {
+    public EncryptedData encryptTo(byte[] data, byte[] keySeed, boolean compress) {
         byte[] key = getPublicKey(this.id);
         if (key == null) {
             throw new IllegalArgumentException("Recipient account doesn't have a public key set");
         }
-        return Account.encryptTo(key, data, senderSecretPhrase, compress);
+        return Account.encryptTo(key, data, keySeed, compress);
     }
 
     public byte[] decryptFrom(EncryptedData encryptedData, String recipientSecretPhrase, boolean uncompress) {

@@ -235,6 +235,14 @@ public final class JSONResponses {
         POST_REQUIRED = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware REQUIRED_2FA;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 1);
+        response.put("errorDescription", "This request require successfully 2FA passing");
+        REQUIRED_2FA = JSON.prepare(response);
+    }
+
     public static final JSONStreamAware FEATURE_NOT_AVAILABLE;
     static {
         JSONObject response = new JSONObject();
@@ -367,7 +375,7 @@ public final class JSONResponses {
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
-        response.put("errorDescription", "secretPhrase not specified or not submitted to the remote node");
+        response.put("errorDescription", "neither secretPhrase nor passphrase were not specified or submitted to the remote node");
         MISSING_SECRET_PHRASE = JSON.prepare(response);
     }
 
