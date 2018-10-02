@@ -96,8 +96,8 @@ public class GeneratedAccount {
 
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", id);
-        jsonObject.put("rsAddress", Convert.rsAccount(id));
+        jsonObject.put("account", id);
+        jsonObject.put("accountRS", Convert.rsAccount(id));
         if (publicKey != null) {
             jsonObject.put("publicKey", Convert.toHexString(publicKey));
         }
