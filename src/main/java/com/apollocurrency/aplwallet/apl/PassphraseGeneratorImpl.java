@@ -6,13 +6,12 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,16 +22,16 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
     private int minNumberOfWords = 10;
     private int maxNumberOfWords = 15;
     private List<String> dictionary;
-    private Path dictionaryPath;
+    private URL dictionaryURL;
 
     public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords, List<String> dictionary) {
         this(minNumberOfWords, maxNumberOfWords);
         this.dictionary = dictionary;
     }
 
-    public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords, Path dictionaryPath) {
+    public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords, URL dictionaryURL) {
         this(minNumberOfWords, maxNumberOfWords);
-        this.dictionaryPath = dictionaryPath;
+        this.dictionaryURL = dictionaryURL;
     }
 
     public int getMinNumberOfWords() {
@@ -89,19 +88,20 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
     protected List<String> loadDictionary() throws IOException {
-        if (dictionaryPath == null) {
-            URL dictionaryURL = getClass().getClassLoader().getResource(DEFAULT_DICTIONARY_PATH);
+        if (dictionaryURL == null) {
+            dictionaryURL = getClass().getClassLoader().getResource(DEFAULT_DICTIONARY_PATH);
             if (dictionaryURL == null) {
                 throw new RuntimeException("Dictionary " + DEFAULT_DICTIONARY_PATH + " is not exist");
             }
-            try {
-                dictionaryPath = Paths.get(dictionaryURL.toURI());
-            }
-            catch (URISyntaxException e) {
-                throw new RuntimeException("Invalid path to dictionary", e);
+        }
+        List<String> words = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(dictionaryURL.openStream()))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                words.add(line);
             }
         }
-        return Files.readAllLines(dictionaryPath);
+        return words;
     }
 }
