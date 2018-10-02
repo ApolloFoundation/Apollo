@@ -44,12 +44,12 @@ public final class EncryptTo extends APIServlet.APIRequestHandler {
 
     private EncryptTo() {
         super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase"
-                , "sender");
+                , "account");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long senderId = ParameterParser.getAccountId(req, "sender", false);
+        long senderAccountId = ParameterParser.getAccountId(req, "account", false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", true);
         byte[] recipientPublicKey = Account.getPublicKey(recipientId);
         if (recipientPublicKey == null) {
@@ -67,7 +67,7 @@ public final class EncryptTo extends APIServlet.APIRequestHandler {
         } catch (RuntimeException e) {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
-        byte[] keySeed = ParameterParser.getKeySeed(req, senderId, true);
+        byte[] keySeed = ParameterParser.getKeySeed(req, senderAccountId, true);
         EncryptedData encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 

@@ -28,13 +28,11 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
@@ -802,16 +800,6 @@ public final class Account {
         findKeySeed(accountId, passphrase);
         if (!service2FA.confirm(accountId, code)) {
             throw new RuntimeException("2fa not enabled or already confirmed or bad credentials");
-        }
-    }
-
-    public static void verify2FA(HttpServletRequest request) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(request, false);
-        byte[] publicKey = ParameterParser.getPublicKey(request);
-        if (Convert.getId(publicKey) == accountId) {
-            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, true));
-            int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
-            auth2FA(passphrase, accountId, code);
         }
     }
 

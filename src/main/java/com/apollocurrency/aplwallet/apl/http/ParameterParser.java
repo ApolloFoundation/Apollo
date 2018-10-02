@@ -358,7 +358,7 @@ public final class ParameterParser {
         return new EncryptedData(data, nonce);
     }
 
-    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long sendId) throws ParameterException {
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -373,7 +373,7 @@ public final class ParameterParser {
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
             }
-            byte[] keySeed = getKeySeed(req, sendId, false);
+            byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
                 encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
@@ -397,11 +397,12 @@ public final class ParameterParser {
                 return Account.findKeySeed(senderId, passphrase);
             }
             catch (RuntimeException e) {
-                if (isMandatory) {
-                    throw new ParameterException("Secret phrase or passphrase + accountId required", e, JSONResponses.missing("secretPhrase",
-                            "passphrase"));
-                }
+//                ignore
             }
+        }
+        if (isMandatory) {
+            throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
+                    "passphrase"));
         }
         return null;
     }
@@ -427,17 +428,24 @@ public final class ParameterParser {
     }
 
     public static byte[] getPublicKey(HttpServletRequest req, String prefix) throws ParameterException {
+        return getPublicKey(req, prefix, 0);
+    }
+
+    public static byte[] getPublicKey(HttpServletRequest req, long accountId) throws ParameterException {
+        return getPublicKey(req, null, accountId);
+    }
+    public static byte[] getPublicKey(HttpServletRequest req, String prefix, long accountId) throws ParameterException {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
+        String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
         String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParam));
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
-                    long accountId = ParameterParser.getAccountId(req, prefix == null ? "account" : prefix + "Account",false);
-                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, prefix == null ? "passphrase" : prefix + "Passphrase",false));
+                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, passphraseParam,false));
                     if (accountId == 0 || passphrase == null) {
-                        throw new ParameterException(missing(secretPhraseParam, publicKeyParam, "accountId and passphrase"));
+                        throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                     } else {
                         publicKey = Crypto.getPublicKey(Account.findKeySeed(accountId, passphrase));
                     }
@@ -454,15 +462,20 @@ public final class ParameterParser {
         }
     }
 
-    public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
-        byte[] publicKey = getPublicKey(req);
+
+    public static Account getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
+        String accountParam = accountName == null ? "sender" : accountName;
+        long accountId = ParameterParser.getAccountId(req, accountParam, false);
+        byte[] publicKey = getPublicKey(req, accountId);
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
         return account;
     }
-
+    public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
+        return getSenderAccount(req, null);
+    }
     public static Account getAccount(HttpServletRequest req) throws ParameterException {
         return getAccount(req, true);
     }

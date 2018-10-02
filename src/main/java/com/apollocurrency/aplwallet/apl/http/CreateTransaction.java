@@ -42,7 +42,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
-            "ecBlockId", "ecBlockHeight", "passphrase", "code"};
+            "ecBlockId", "ecBlockHeight", "passphrase", "code", "sender"};
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
@@ -198,7 +198,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
-        byte[] publicKey = ParameterParser.getPublicKey(req);
+        byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
         try {
             Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountATM, feeATM,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
