@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -32,6 +33,7 @@ public class ImportKey extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
         response.put("imported", true);
         response.put("passphrase", passphrase);
+        JSONData.putAccount(response,"account", Convert.getId(Crypto.getPublicKey(keySeed)));
         return response;
     }
 }
