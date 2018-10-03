@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -501,6 +502,7 @@ public final class JSONResponses {
         response.put("errorDescription", "Unknown account");
         response.put("account", Long.toUnsignedString(id));
         response.put("accountRS", Convert.rsAccount(id));
+        response.put("is2FA", Account.isEnabled2FA(id));
         return JSON.prepare(response);
     }
 

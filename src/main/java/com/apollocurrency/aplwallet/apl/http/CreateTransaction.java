@@ -42,7 +42,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
-            "ecBlockId", "ecBlockHeight", "passphrase", "code", "sender"};
+            "ecBlockId", "ecBlockHeight"};
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
@@ -126,12 +126,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                             long amountATM, Attachment attachment) throws AplException {
-        long id = senderAccount.getId();
-        if (Account.isEnabled2FA(id)) {
-            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-            int code = ParameterParser.getInt(req,"code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
-            Account.auth2FA(passphrase, id, code);
-        }
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
@@ -260,6 +254,11 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     @Override
     protected final boolean requirePost() {
         return true;
+    }
+
+    @Override
+    protected String accountName2FA() {
+        return "sender";
     }
 
     @Override

@@ -61,6 +61,12 @@ public final class APIServlet extends HttpServlet {
                 parameters.add("requireBlock");
                 parameters.add("requireLastBlock");
             }
+            String accountName2FA = accountName2FA();
+            if (accountName2FA != null && !accountName2FA.isEmpty()) {
+                parameters.add(accountName2FA);
+                parameters.add("code");
+                parameters.add("passphrase");
+            }
             this.parameters = Collections.unmodifiableList(parameters);
             this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
             this.fileParameter = fileParameter;
@@ -110,6 +116,9 @@ public final class APIServlet extends HttpServlet {
 
         protected boolean logRequestTime() { return false; }
 
+        protected String accountName2FA() {
+            return null;
+        }
     }
 
     private static final boolean enforcePost = Apl.getBooleanProperty("apl.apiServerEnforcePOST");
@@ -218,6 +227,10 @@ public final class APIServlet extends HttpServlet {
 
             if (apiRequestHandler.requirePassword()) {
                 API.verifyPassword(req);
+            }
+            String accountName2FA = apiRequestHandler.accountName2FA();
+            if (accountName2FA != null && !accountName2FA.isEmpty()) {
+                Account.verify2FA(req, accountName2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                     ParameterParser.getUnsignedLong(req, "requireBlock", false) : 0;

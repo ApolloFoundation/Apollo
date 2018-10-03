@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class Disable2FA extends APIServlet.APIRequestHandler {
     private Disable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "code");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH});
     }
 
     private static class Disable2FAHolder {
@@ -34,6 +34,11 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
         JSONData.putAccount(response, "account", accountId);
         response.put("2FAdisabled", true);
         return response;
+    }
+
+    @Override
+    protected String accountName2FA() {
+        return "account";
     }
 }
 

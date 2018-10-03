@@ -50,7 +50,7 @@ public final class Generator implements Comparable<Generator> {
     private static volatile boolean suspendForging = false;
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
-    private static final ConcurrentMap<String, Generator> generators = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Long, Generator> generators = new ConcurrentHashMap<>();
     private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;
@@ -150,12 +150,12 @@ public final class Generator implements Comparable<Generator> {
         return listeners.removeListener(listener, eventType);
     }
 
-    public static Generator startForging(String secretPhrase) {
+    public static Generator startForging(byte[] keySeed) {
         if (generators.size() >= MAX_FORGERS) {
             throw new RuntimeException("Cannot forge with more than " + MAX_FORGERS + " accounts on the same node");
         }
-        Generator generator = new Generator(secretPhrase);
-        Generator old = generators.putIfAbsent(secretPhrase, generator);
+        Generator generator = new Generator(keySeed);
+        Generator old = generators.putIfAbsent(generator.getAccountId(), generator);
         if (old != null) {
             LOG.debug(old + " is already forging");
             return old;
@@ -165,8 +165,8 @@ public final class Generator implements Comparable<Generator> {
         return generator;
     }
 
-    public static Generator stopForging(String secretPhrase) {
-        Generator generator = generators.remove(secretPhrase);
+    public static Generator stopForging(byte[] keySeed) {
+        Generator generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null) {
             Apl.getBlockchain().updateLock();
             try {
@@ -198,8 +198,8 @@ public final class Generator implements Comparable<Generator> {
         return count;
     }
 
-    public static Generator getGenerator(String secretPhrase) {
-        return generators.get(secretPhrase);
+    public static Generator getGenerator(long id) {
+        return generators.get(id);
     }
 
     public static int getGeneratorCount() {
@@ -270,22 +270,22 @@ public final class Generator implements Comparable<Generator> {
 
 
     private final long accountId;
-    private final String secretPhrase;
+    private final byte[] keySeed;
     private final byte[] publicKey;
     private volatile long hitTime;
     private volatile BigInteger hit;
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
-    private Generator(long accountId, String secretPhrase, byte[] publicKey) {
+    private Generator(long accountId, byte[] keySeed, byte[] publicKey) {
         this.accountId = accountId;
-        this.secretPhrase = secretPhrase;
+        this.keySeed = keySeed;
         this.publicKey = publicKey;
     }
 
-    private Generator(String secretPhrase) {
-        this.secretPhrase = secretPhrase;
-        this.publicKey = Crypto.getPublicKey(secretPhrase);
+    private Generator(byte[] keySeed) {
+        this.keySeed = keySeed;
+        this.publicKey = Crypto.getPublicKey(keySeed);
         this.accountId = Account.getId(publicKey);
         Apl.getBlockchain().updateLock();
         try {
@@ -356,7 +356,7 @@ public final class Generator implements Comparable<Generator> {
         int start = Apl.getEpochTime();
         while (true) {
             try {
-                BlockchainProcessorImpl.getInstance().generateBlock(secretPhrase, timestamp);
+                BlockchainProcessorImpl.getInstance().generateBlock(keySeed, timestamp);
                 setDelay(Constants.FORGING_DELAY);
                 return true;
             } catch (BlockchainProcessor.TransactionNotAcceptedException e) {

@@ -28,11 +28,13 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.*;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
@@ -784,6 +786,15 @@ public final class Account {
 
     public static boolean isEnabled2FA(long accountId) {
         return service2FA.isEnabled(accountId);
+    }
+
+    public static void verify2FA(HttpServletRequest req, String accountName) throws ParameterException {
+        long accountId = ParameterParser.getAccountId(req, accountName, false);
+        if (Account.isEnabled2FA(accountId)) {
+            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            int code = ParameterParser.getInt(req,"code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            Account.auth2FA(passphrase, accountId, code);
+        }
     }
 
     public static byte[] findKeySeed(long accountId, String passphrase) {

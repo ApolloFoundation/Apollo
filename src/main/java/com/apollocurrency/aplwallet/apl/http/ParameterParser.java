@@ -434,7 +434,11 @@ public final class ParameterParser {
     public static byte[] getPublicKey(HttpServletRequest req, long accountId) throws ParameterException {
         return getPublicKey(req, null, accountId);
     }
-    public static byte[] getPublicKey(HttpServletRequest req, String prefix, long accountId) throws ParameterException {
+
+    public static byte[] getPublicKey(HttpServletRequest request, String prefix, long accountId) throws ParameterException {
+        return getPublicKey(request, prefix, accountId, true);
+    }
+    public static byte[] getPublicKey(HttpServletRequest req, String prefix, long accountId, boolean isMandatory) throws ParameterException {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
@@ -445,21 +449,42 @@ public final class ParameterParser {
                 if (publicKey == null) {
                     String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, passphraseParam,false));
                     if (accountId == 0 || passphrase == null) {
-                        throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
+                        if (isMandatory) {
+                            throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
+                        }
                     } else {
-                        publicKey = Crypto.getPublicKey(Account.findKeySeed(accountId, passphrase));
+                        try {
+                            return Crypto.getPublicKey(Account.findKeySeed(accountId, passphrase));
+                        }
+                        catch (RuntimeException e) {
+                            if (isMandatory) {
+                                throw new ParameterException("Bad credentials ", e, JSONResponses.incorrect("passphrase"));
+                            }
+                        }
+                    }
+                } else {
+
+                    if (!Crypto.isCanonicalPublicKey(publicKey)) {
+                        if (isMandatory) {
+                            throw new ParameterException(incorrect(publicKeyParam));
+                        }
+                    } else {
+                        return publicKey;
                     }
                 }
-                if (!Crypto.isCanonicalPublicKey(publicKey)) {
+            } catch (RuntimeException e) {
+                if (isMandatory) {
                     throw new ParameterException(incorrect(publicKeyParam));
                 }
-                return publicKey;
-            } catch (RuntimeException e) {
-                throw new ParameterException(incorrect(publicKeyParam));
             }
         } else {
             return Crypto.getPublicKey(secretPhrase);
         }
+        return null;
+    }
+
+    public static byte[] getPublicKey(HttpServletRequest request, boolean isMandatory) throws ParameterException {
+        return getPublicKey(request, null, 0, isMandatory);
     }
 
 

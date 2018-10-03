@@ -21,7 +21,7 @@ public class ExportKey extends APIServlet.APIRequestHandler {
         return ExportPrivateKeyHolder.INSTANCE;
     }
     private ExportKey() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account", "passphrase");
+        super(new APITag[] {APITag.UTILS, APITag.ACCOUNTS});
     }
 
     @Override
@@ -30,7 +30,7 @@ public class ExportKey extends APIServlet.APIRequestHandler {
         long accountId = ParameterParser.getAccountId(request, true);
         byte[] keySeed = Account.exportKeySeed(passphrase, accountId);
         JSONObject response = new JSONObject();
-        response.put("account", Convert.rsAccount(accountId));
+        JSONData.putAccount(response, "account", accountId);
         response.put("keySeed", Convert.toHexString(keySeed));
         return response;
     }
@@ -40,4 +40,8 @@ public class ExportKey extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected String accountName2FA() {
+        return "account";
+    }
 }
