@@ -30,4 +30,5 @@ public class TwoFactorAuthTestData {
     public static final TwoFactorAuthEntity ENTITY2 = new TwoFactorAuthEntity(ACCOUNT2.getId(), ACCOUNT2_2FA_SECRET_BYTES, false);
     public static final TwoFactorAuthEntity ENTITY3 = new TwoFactorAuthEntity(ACCOUNT3.getId(), ACCOUNT3_2FA_SECRET_BYTES, false);
     public static final int INVALID_CODE = 100200;
+    public static final String INVALID_PASSPHRASE = "InvalidPassphrase";
 }
