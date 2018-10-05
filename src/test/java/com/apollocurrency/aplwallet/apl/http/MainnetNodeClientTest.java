@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import dto.JSONTransaction;
+import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.NodeClient;
-import com.apollocurrency.aplwallet.apl.TestData;
+import com.apollocurrency.aplwallet.apl.TestConstants;
 import com.apollocurrency.aplwallet.apl.TransactionType;
 import dto.Block;
+import dto.JSONTransaction;
 import dto.Peer;
 import org.eclipse.jetty.util.StringUtil;
 import org.junit.*;
@@ -31,7 +32,7 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
     private static WalletRunner runner = new WalletRunner(false);
 
     public MainnetNodeClientTest() {
-        super(TestData.MAIN_LOCALHOST, TestData.MAIN_FILE, runner.getUrls());
+        super(TestConstants.MAIN_LOCALHOST, TestConstants.MAIN_FILE, runner.getUrls());
     }
 
     @Override
@@ -214,7 +215,7 @@ public class MainnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(TestUtil.atm(1), transaction.getFeeATM());
         Assert.assertEquals(TestUtil.atm(902000), transaction.getAmountATM());
         Assert.assertEquals(TransactionType.Payment.ORDINARY, transaction.getType());
-        Assert.assertEquals("APL-NZKH-MZRE-2CTT-98NPZ", transaction.getSenderRS());
+        Assert.assertEquals(new BasicAccount("APL-NZKH-MZRE-2CTT-98NPZ"), transaction.getSender());
     }
 
 }

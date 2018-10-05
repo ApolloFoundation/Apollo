@@ -4,6 +4,8 @@
 
 package dto;
 
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -12,11 +14,10 @@ public class Block {
     private Long payloadLength;
     private Long totalAmountATM;
     private String generationSignature;
-    private String generator;
+    private BasicAccount generator;
     private String generatorPublicKey;
     private Long baseTarget;
     private String payloadHash;
-    private String generatorRS;
     private Long numberOfTransactions;
     private String blockSignature;
     private List<JSONTransaction> transactions;
@@ -41,7 +42,6 @@ public class Block {
                 Objects.equals(generatorPublicKey, block1.generatorPublicKey) &&
                 Objects.equals(baseTarget, block1.baseTarget) &&
                 Objects.equals(payloadHash, block1.payloadHash) &&
-                Objects.equals(generatorRS, block1.generatorRS) &&
                 Objects.equals(numberOfTransactions, block1.numberOfTransactions) &&
                 Objects.equals(blockSignature, block1.blockSignature) &&
                 Objects.equals(transactions, block1.transactions) &&
@@ -58,7 +58,7 @@ public class Block {
     public int hashCode() {
 
         return Objects.hash(previousBlockHash, payloadLength, totalAmountATM, generationSignature, generator, generatorPublicKey, baseTarget,
-                payloadHash, generatorRS, numberOfTransactions, blockSignature, transactions, version, totalFeeATM, previousBlock, cumulativeDifficulty, block, height, timestamp);
+                payloadHash, numberOfTransactions, blockSignature, transactions, version, totalFeeATM, previousBlock, cumulativeDifficulty, block, height, timestamp);
     }
 
     public String getPreviousBlockHash() {
@@ -93,12 +93,12 @@ public class Block {
         this.generationSignature = generationSignature;
     }
 
-    public String getGenerator() {
+    public BasicAccount getGenerator() {
         return generator;
     }
 
     public void setGenerator(String generator) {
-        this.generator = generator;
+        this.generator = new BasicAccount(generator);
     }
 
     public String getGeneratorPublicKey() {
@@ -123,14 +123,6 @@ public class Block {
 
     public void setPayloadHash(String payloadHash) {
         this.payloadHash = payloadHash;
-    }
-
-    public String getGeneratorRS() {
-        return generatorRS;
-    }
-
-    public void setGeneratorRS(String generatorRS) {
-        this.generatorRS = generatorRS;
     }
 
     public Long getNumberOfTransactions() {

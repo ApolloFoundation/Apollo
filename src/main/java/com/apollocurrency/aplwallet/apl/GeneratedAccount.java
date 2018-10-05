@@ -5,17 +5,18 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.json.simple.JSONObject;
 
 import java.util.Objects;
 
 
-public class GeneratedAccount {
-    private long id;
+public class GeneratedAccount extends BasicAccount {
     private byte[] publicKey;
+    @JsonIgnore
     private byte[] privateKey;
     private String passphrase;
+    @JsonIgnore
     private byte[] keySeed;
 
     @Override
@@ -29,19 +30,6 @@ public class GeneratedAccount {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    @JsonSetter("id")
-    public void setStringId(String id) {
-        this.id = Convert.parseAccountId(id);
     }
 
     public byte[] getPublicKey() {
@@ -106,6 +94,5 @@ public class GeneratedAccount {
         }
         return jsonObject;
     }
-
 }
 

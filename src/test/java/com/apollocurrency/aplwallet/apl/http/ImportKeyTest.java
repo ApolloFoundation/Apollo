@@ -12,7 +12,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Random;
 
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
 
 public class ImportKeyTest extends DeleteGeneratedAccountsTest {
     @Test

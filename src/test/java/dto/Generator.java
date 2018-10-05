@@ -4,20 +4,20 @@
 
 package dto;
 
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+
 import java.util.Objects;
 
 public class Generator {
-    Long effectiveBalanceAPL;
-    String accountRS;
-    Long deadline;
-    String account;
-    Long hitTime;
+    private Long effectiveBalanceAPL;
+    private Long deadline;
+    private Long hitTime;
+    private BasicAccount account;
 
-    public Generator(Long effectiveBalanceAPL, String accountRS, Long deadline, String account, Long hitTime) {
+    public Generator(Long effectiveBalanceAPL, Long deadline, String account, Long hitTime) {
         this.effectiveBalanceAPL = effectiveBalanceAPL;
-        this.accountRS = accountRS;
         this.deadline = deadline;
-        this.account = account;
+        this.account = new BasicAccount(account);
         this.hitTime = hitTime;
     }
 
@@ -32,19 +32,10 @@ public class Generator {
         this.effectiveBalanceAPL = effectiveBalanceAPL;
     }
 
-    public String getAccountRS() {
-        return accountRS;
-    }
-
-    public void setAccountRS(String accountRS) {
-        this.accountRS = accountRS;
-    }
-
     @Override
     public String toString() {
         return "Generator{" +
                 "effectiveBalanceAPL=" + effectiveBalanceAPL +
-                ", accountRS='" + accountRS + '\'' +
                 ", deadline=" + deadline +
                 ", account='" + account + '\'' +
                 ", hitTime=" + hitTime +
@@ -57,7 +48,6 @@ public class Generator {
         if (!(o instanceof Generator)) return false;
         Generator generator = (Generator) o;
         return Objects.equals(effectiveBalanceAPL, generator.effectiveBalanceAPL) &&
-                Objects.equals(accountRS, generator.accountRS) &&
                 Objects.equals(deadline, generator.deadline) &&
                 Objects.equals(account, generator.account) &&
                 Objects.equals(hitTime, generator.hitTime);
@@ -66,7 +56,7 @@ public class Generator {
     @Override
     public int hashCode() {
 
-        return Objects.hash(effectiveBalanceAPL, accountRS, deadline, account, hitTime);
+        return Objects.hash(effectiveBalanceAPL, deadline, account, hitTime);
     }
 
     public Long getDeadline() {
@@ -77,12 +67,12 @@ public class Generator {
         this.deadline = deadline;
     }
 
-    public String getAccount() {
+    public BasicAccount getAccount() {
         return account;
     }
 
     public void setAccount(String account) {
-        this.account = account;
+        this.account = new BasicAccount(account);
     }
 
     public Long getHitTime() {

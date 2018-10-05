@@ -21,7 +21,7 @@ public class ExportKey extends APIServlet.APIRequestHandler {
         return ExportPrivateKeyHolder.INSTANCE;
     }
     private ExportKey() {
-        super(new APITag[] {APITag.UTILS, APITag.ACCOUNTS});
+        super(new APITag[] {APITag.ACCOUNTS});
     }
 
     @Override

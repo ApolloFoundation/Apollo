@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
 import static org.slf4j.LoggerFactory.getLogger;
 import static util.TestUtil.atm;
 
@@ -69,13 +69,13 @@ public class TestDataGenerator {
     }
 
     public static JSONTransaction generateChatTransaction(TestAccount sender, TestAccount recipient) throws IOException, ParseException {
-        return client.sendChatTransaction(TEST_LOCALHOST, "Test message", sender.getSecretPhrase(), 60, Convert.rsAccount(recipient.getId()), atm(1));
+        return client.sendChatTransaction(TEST_LOCALHOST, "Test message", sender.getSecretPhrase(), 60, recipient.getAccountRS(), atm(1));
     }
 
     public static List<JSONTransaction> generateChatTransactions(TestAccount sender, TestAccount recipient, int numberOfReceivedTransactions,
                                                                  int numberOfSentTransactions) throws Exception {
         List<JSONTransaction> transactions = new ArrayList<>();
-        LOG.debug("Generating chat transaction between accounts: {} and {}", sender.getRS(), recipient.getRS());
+        LOG.debug("Generating chat transaction between accounts: {} and {}", sender.getAccountRS(), recipient.getAccountRS());
         for (int i = 0; i < Math.min(numberOfReceivedTransactions, numberOfSentTransactions); i++) {
             transactions.add(generateChatTransaction(sender, recipient));
             TimeUnit.SECONDS.sleep(1);
@@ -99,8 +99,8 @@ public class TestDataGenerator {
     public static void fundAcc(TestAccount account, TestAccount fundingAcc, long amount) throws Exception {
         JSONTransaction jsonTransaction = client.sendMoneyTransaction(TEST_LOCALHOST, fundingAcc.getSecretPhrase(),
                 Convert.toHexString(account.getPublicKey()),60,
-                Convert.rsAccount(account.getId()), atm(amount), atm(1L));
-        LOG.debug("Funding acc: {} -> {}", fundingAcc.getRS(), account.getRS());
+                account.getAccountRS(), atm(amount), atm(1L));
+        LOG.debug("Funding acc: {} -> {}", fundingAcc.getAccountRS(), account.getAccountRS());
         waitForConfirmation(jsonTransaction);
 
     }

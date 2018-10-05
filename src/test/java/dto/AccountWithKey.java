@@ -4,26 +4,22 @@
 
 package dto;
 
+import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
-public class AccountKey {
-    private String account;
+public class AccountWithKey extends BasicAccount {
     private byte[] keySeed;
 
-    public AccountKey(String account, byte[] keySeed) {
-        this.account = account;
+    public AccountWithKey(String account, byte[] keySeed) {
+        super(account);
+        this.keySeed = keySeed;
+    }
+    public AccountWithKey(long account, byte[] keySeed) {
+        super(account);
         this.keySeed = keySeed;
     }
 
-    public AccountKey() {
-    }
-
-    public String getAccount() {
-        return account;
-    }
-
-    public void setAccount(String account) {
-        this.account = account;
+    public AccountWithKey() {
     }
 
     public byte[] getKeySeed() {
@@ -33,6 +29,7 @@ public class AccountKey {
     public void setKeySeed(byte[] keySeed) {
         this.keySeed = keySeed;
     }
+
     public void setKeySeed(String keySeed) {
         this.keySeed = Convert.parseHexString(keySeed);
     }

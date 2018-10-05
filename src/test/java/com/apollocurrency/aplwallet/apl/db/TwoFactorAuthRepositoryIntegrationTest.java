@@ -18,14 +18,14 @@ public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
 
     @Test
     public void testGet() {
-        TwoFactorAuthEntity entity = repository.get(ACCOUNT1.getAccount());
+        TwoFactorAuthEntity entity = repository.get(ACCOUNT1.getId());
         Assert.assertEquals(ENTITY1, entity);
     }
 
     @Test
     public void testGetNotFound() {
 
-        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getAccount());
+        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getId());
         Assert.assertNull(entity);
     }
 
@@ -33,7 +33,7 @@ public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
     public void testAdd() {
         boolean saved = repository.add(ENTITY3);
         Assert.assertTrue(saved);
-        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getAccount());
+        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getId());
         Assert.assertEquals(ENTITY3, entity);
 
     }
@@ -49,7 +49,7 @@ public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
         TwoFactorAuthEntity entity = new TwoFactorAuthEntity(ENTITY2.getAccount(), ENTITY2.getSecret(), false);
         boolean saved = repository.update(entity);
         Assert.assertTrue(saved);
-        Assert.assertEquals(repository.get(ACCOUNT2.getAccount()), entity);
+        Assert.assertEquals(repository.get(ACCOUNT2.getId()), entity);
     }
     @Test
     public void testUpdateNotExist() {
@@ -60,13 +60,13 @@ public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
 
     @Test
     public void testDelete() {
-        boolean deleted = repository.delete(ACCOUNT1.getAccount());
+        boolean deleted = repository.delete(ACCOUNT1.getId());
         Assert.assertTrue(deleted);
     }
 
     @Test
     public void testDeleteNothingToDelete() {
-        boolean deleted = repository.delete(ACCOUNT3.getAccount());
+        boolean deleted = repository.delete(ACCOUNT3.getId());
         Assert.assertFalse(deleted);
     }
 }

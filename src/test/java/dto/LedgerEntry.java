@@ -5,6 +5,7 @@
 package dto;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.BasicAccount;
 
 import java.util.Objects;
 
@@ -12,18 +13,18 @@ import java.util.Objects;
  * "ledgerId":"176","isTransactionEvent":true,"balance":"10000000000000","holdingType":"UNCONFIRMED_APL_BALANCE","change":"10000000000000","block":"2383565938233337990","eventType":"ORDINARY_PAYMENT","event":"4125735318134947539","account":"1855669503552333464","height":10422,"timestamp":9486050}
  */
 public class LedgerEntry {
-    Long ledgerId;
-    boolean isTransactionEvent;
-    Long balance;
-    AccountLedger.LedgerHolding holdingType;
-    Long change;
-    String block;
-    AccountLedger.LedgerEvent eventType;
-    String event;
-    String account;
-    Long height;
-    Long timestamp;
-    JSONTransaction transaction;
+    private Long ledgerId;
+    private boolean isTransactionEvent;
+    private Long balance;
+    private AccountLedger.LedgerHolding holdingType;
+    private Long change;
+    private String block;
+    private AccountLedger.LedgerEvent eventType;
+    private String event;
+    private BasicAccount account;
+    private Long height;
+    private Long timestamp;
+    private JSONTransaction transaction;
 
     public Long getLedgerId() {
         return ledgerId;
@@ -89,12 +90,12 @@ public class LedgerEntry {
         this.event = event;
     }
 
-    public String getAccount() {
+    public BasicAccount getAccount() {
         return account;
     }
 
     public void setAccount(String account) {
-        this.account = account;
+        this.account = new BasicAccount(account);
     }
 
     public Long getHeight() {

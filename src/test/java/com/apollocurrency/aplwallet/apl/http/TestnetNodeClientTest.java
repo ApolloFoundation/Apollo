@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
 import static util.TestUtil.*;
 
 /**
@@ -36,17 +36,17 @@ import static util.TestUtil.*;
 public class TestnetNodeClientTest extends AbstractNodeClientTest {
     public static final String TRANSACTION_HASH = "0619d7f4e0f8d2dab76f28e320c5ca819b2a08dc2294e53151bf14d318d5cefa";
     public static final String PRIVATE_TRANSACTION_HASH = "6c55253438130d20e70834ed67d7fcfc11c79528d1cdfbff3d6398bf67357fad";
-    public static final String PRIVATE_TRANSACTION_SENDER = "APL-PP8M-TPRN-ARNZ-5ZUVF";
-    public static final String MESSAGE_SENDER = "APL-KL45-8GRF-BKPM-E58NH";
+    public static final BasicAccount PRIVATE_TRANSACTION_SENDER = new BasicAccount("APL-PP8M-TPRN-ARNZ-5ZUVF");
+    public static final BasicAccount MESSAGE_SENDER = new BasicAccount("APL-KL45-8GRF-BKPM-E58NH");
 
-    public static final Long PRIVATE_TRANSACTION_SENDER_ID = 3958487933422064851L;
+    public static final BasicAccount PRIVATE_TRANSACTION_ID_SENDER = new BasicAccount(3958487933422064851L);
     public static final String PRIVATE_TRANSACTION_ID = "2309523316024890732";
     public static final int BLOCK_HEIGHT = 7446;
     public static final int PRIVATE_BLOCK_HEIGHT = 16847;
-    public static final String PRIVATE_TRANSACTION_RECIPIENT = "APL-4QN7-PNGP-SZFV-59XZL";
+    public static final BasicAccount PRIVATE_TRANSACTION_RECIPIENT = new BasicAccount("APL-4QN7-PNGP-SZFV-59XZL");
 
     public TestnetNodeClientTest() {
-        super(TestData.TEST_LOCALHOST, TEST_FILE, runner.getUrls());
+        super(TestConstants.TEST_LOCALHOST, TEST_FILE, runner.getUrls());
     }
 
     private static WalletRunner runner = new WalletRunner();
@@ -72,7 +72,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Block block = MAPPER.readValue(json, Block.class);
         Assert.assertNotNull(block);
         Assert.assertEquals(BLOCK_HEIGHT, block.getHeight());
-        Assert.assertEquals(TestData.MAIN_RS, block.getGeneratorRS());
+        Assert.assertEquals(TestConstants.MAIN_ACCOUNT, block.getGenerator());
         Assert.assertEquals(3, block.getNumberOfTransactions().intValue());
         Assert.assertEquals(atm(3), block.getTotalFeeATM().longValue());
         Assert.assertEquals(atm(58_000), block.getTotalAmountATM().longValue());
@@ -129,7 +129,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(3, blockTransactionsList.size());
         blockTransactionsList.forEach(transaction -> {
             Assert.assertEquals(BLOCK_HEIGHT, transaction.getHeight());
-            Assert.assertEquals(TestData.MAIN_RS, transaction.getSenderRS());
+            Assert.assertEquals(TestConstants.MAIN_ACCOUNT, transaction.getSender());
         });
     }
 
@@ -171,7 +171,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(atm(20_000), transaction.getAmountATM());
         Assert.assertFalse(transaction.isPrivate());
         Assert.assertEquals(TransactionType.Payment.ORDINARY, transaction.getType());
-        Assert.assertEquals(TestData.MAIN_RS, transaction.getSenderRS());
+        Assert.assertEquals(TestConstants.MAIN_ACCOUNT, transaction.getSender());
 //        Assert.assertEquals(RS4, transaction.getRecipientRS());
     }
 
@@ -182,7 +182,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
             JSONTransaction transaction = entry.getTransaction();
-            if (transaction != null && !transaction.getSenderRS().equalsIgnoreCase(accountRs) && !transaction.getRecipientRS().equalsIgnoreCase(accountRs)) {
+            if (transaction != null && !transaction.isOwnedBy(accountRs)) {
                 Assert.fail("Not this user ledger!");
             }
             if (transaction != null && transaction.isPrivate()) {
@@ -198,7 +198,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
             JSONTransaction transaction = entry.getTransaction();
-            if (transaction != null && !accountRs.equalsIgnoreCase(transaction.getSenderRS()) && !accountRs.equalsIgnoreCase(transaction.getRecipientRS())) {
+            if (transaction != null && !transaction.isOwnedBy(accountRs)) {
                 Assert.fail("Not this user ledger!");
             }
         });
@@ -214,14 +214,14 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateTransaction() throws Exception {
-        JSONTransaction privateTransaction1 = client.getPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_HASH,
+        JSONTransaction privateTransaction1 = client.getPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), PRIVATE_TRANSACTION_HASH,
                 null);
-        JSONTransaction privateTransaction2 = client.getPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), null,
+        JSONTransaction privateTransaction2 = client.getPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), null,
                 PRIVATE_TRANSACTION_ID);
         Assert.assertEquals(privateTransaction1, privateTransaction2);
-        Assert.assertEquals(privateTransaction1.getSenderRS(), PRIVATE_TRANSACTION_SENDER);
+        Assert.assertEquals(privateTransaction1.getSender(), PRIVATE_TRANSACTION_SENDER);
         Assert.assertEquals(privateTransaction1.getFullHash(), PRIVATE_TRANSACTION_HASH);
-        Assert.assertEquals(privateTransaction1.getRecipientRS(), "APL-8BNS-LMPW-3KHL-3B7JM");
+        Assert.assertEquals(privateTransaction1.getRecipient(), new BasicAccount("APL-8BNS-LMPW-3KHL-3B7JM"));
         Assert.assertEquals(privateTransaction1.getAmountATM(), atm(2));
         Assert.assertEquals(privateTransaction1.getFeeATM(), atm(1));
         Assert.assertTrue(privateTransaction1.isPrivate());
@@ -234,12 +234,13 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateBlockTransactions() throws Exception {
-        List<JSONTransaction> transactionsList = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_BLOCK_HEIGHT, null, null);
+        List<JSONTransaction> transactionsList = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()),
+                PRIVATE_BLOCK_HEIGHT, null, null);
         checkList(transactionsList);
         Assert.assertEquals(4, transactionsList.size());
         transactionsList.forEach(transaction -> {
             Assert.assertEquals(PRIVATE_BLOCK_HEIGHT, transaction.getHeight());
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
+            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSender());
         });
         List<JSONTransaction> publicTransactions = client.getBlockTransactionsList(url, PRIVATE_BLOCK_HEIGHT);
         Assert.assertEquals(4, publicTransactions.size());
@@ -250,14 +251,14 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetEncryptedPrivateBlockTransactions() throws Exception {
-        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS());
         byte[] publicKey = Crypto.getPublicKey(secretPhrase);
         List<JSONTransaction> transactionsList = client.getEncryptedPrivateBlockchainTransactionsList(url, PRIVATE_BLOCK_HEIGHT, null, null, secretPhrase, Convert.toHexString(publicKey));
         checkList(transactionsList);
         Assert.assertEquals(4, transactionsList.size());
         transactionsList.forEach(transaction -> {
             Assert.assertEquals(PRIVATE_BLOCK_HEIGHT, transaction.getHeight());
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
+            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSender());
         });
         List<JSONTransaction> publicTransactions = client.getBlockTransactionsList(url, PRIVATE_BLOCK_HEIGHT);
         Assert.assertEquals(4, publicTransactions.size());
@@ -273,27 +274,27 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetEncryptedPrivateBlockchainTransactionsWithPagination() throws Exception {
-        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER);
+        String secretPhrase = accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS());
         byte[] publicKey = Crypto.getPublicKey(secretPhrase);
         List<JSONTransaction> transactionsList1 = client.getEncryptedPrivateBlockchainTransactionsList(url, -1, 5L, 9L, secretPhrase,
                 Convert.toHexString(publicKey));
         checkList(transactionsList1);
         Assert.assertEquals(5, transactionsList1.size());
-        checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
+        verifyOwner(transactionsList1, PRIVATE_TRANSACTION_SENDER.getAccountRS());
 
         List<JSONTransaction> transactionsList2 = client.getEncryptedPrivateBlockchainTransactionsList(url, -1, null, 10L, secretPhrase,
                 Convert.toHexString(publicKey));
         checkList(transactionsList2);
         Assert.assertEquals(11, transactionsList2.size());
         Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
-        checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
+        verifyOwner(transactionsList2, PRIVATE_TRANSACTION_SENDER);
 
         List<JSONTransaction> transactionsList3 = client.getEncryptedPrivateBlockchainTransactionsList(url, -1, 5L, null, secretPhrase,
                 Convert.toHexString(publicKey));
         checkList(transactionsList3);
         Assert.assertTrue(transactionsList3.size() > 5);
         Assert.assertTrue(transactionsList3.containsAll(transactionsList1));
-        checkAddress(transactionsList3, PRIVATE_TRANSACTION_SENDER);
+        verifyOwner(transactionsList3, PRIVATE_TRANSACTION_SENDER);
     }
 
     @Test
@@ -302,21 +303,21 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
                 9L);
         checkList(transactionsList1);
         Assert.assertEquals(5, transactionsList1.size());
-        checkAddress(transactionsList1, PRIVATE_TRANSACTION_SENDER);
+        verifyOwner(transactionsList1, PRIVATE_TRANSACTION_SENDER);
 
         List<JSONTransaction> transactionsList2 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), -1,
                 null, 10L);
         checkList(transactionsList2);
         Assert.assertEquals(11, transactionsList2.size());
         Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
-        checkAddress(transactionsList2, PRIVATE_TRANSACTION_SENDER);
+        verifyOwner(transactionsList2, PRIVATE_TRANSACTION_SENDER);
 
         List<JSONTransaction> transactionsList3 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), -1, 5L,
                 null);
         checkList(transactionsList3);
         Assert.assertTrue(transactionsList3.size() > 5);
         Assert.assertTrue(transactionsList3.containsAll(transactionsList1));
-        checkAddress(transactionsList3, PRIVATE_TRANSACTION_SENDER);
+        verifyOwner(transactionsList3, PRIVATE_TRANSACTION_SENDER);
     }
 
     @Test
@@ -330,8 +331,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         blockTransactionsList1.forEach(tr1 ->
                 blockTransactionsList2.forEach(tr2 -> {
                     if (tr2.getFullHash().equalsIgnoreCase(tr1.getFullHash())) {
-                        Assert.assertFalse(tr1.getSenderRS().equalsIgnoreCase(tr2.getSenderRS()));
-                        Assert.assertFalse(tr1.getRecipientRS().equalsIgnoreCase(tr2.getRecipientRS()));
+                        Assert.assertNotEquals(tr1.getSender(), (tr2.getSender()));
+                        Assert.assertNotEquals(tr1.getRecipient(), (tr2.getRecipient()));
                         Assert.assertNotSame(tr1.getAmountATM(), (tr2.getAmountATM()));
                     }
                 }));
@@ -339,7 +340,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetTransactionsWithPagination() throws Exception {
-        List<JSONTransaction> accountTransactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 1, 15, -1, -100);
+        List<JSONTransaction> accountTransactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 1, 15, -1, -100);
         checkList(accountTransactions);
         Assert.assertEquals(15, accountTransactions.size());
         accountTransactions.forEach(transaction -> {
@@ -350,11 +351,11 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testAccountLedgerWithPagination() throws Exception {
-        List<LedgerEntry> accountLedgerEntries = client.getAccountLedger(url, PRIVATE_TRANSACTION_SENDER, true, 1, 15);
+        List<LedgerEntry> accountLedgerEntries = client.getAccountLedger(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), true, 1, 15);
         checkList(accountLedgerEntries);
         Assert.assertEquals(15, accountLedgerEntries.size());
         accountLedgerEntries.forEach(ledgerEntry -> {
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER_ID.longValue(), Long.parseLong(ledgerEntry.getAccount()));
+            Assert.assertEquals(PRIVATE_TRANSACTION_ID_SENDER, ledgerEntry.getAccount());
             Assert.assertFalse(ledgerEntry.isPrivate());
         });
     }
@@ -366,25 +367,27 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         pars.put("amountATM", String.valueOf(atm(1L)));
         pars.put("recipient", TestUtil.getRandomRS(accounts));
 
-        client.sendTransaction(url, "test5", atm(1L), 100, pars);
+        client.sendTransaction(url, "test4", atm(1L), 100, pars);
     }
 
     @Test
     public void testGetUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i));
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), PRIVATE_TRANSACTION_RECIPIENT.getAccountRS(), atm(i));
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i) * 2, NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), PRIVATE_TRANSACTION_RECIPIENT.getAccountRS(),
+                    atm(i) * 2,
+                    NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
-        List<JSONTransaction> unconfirmedTransactions = client.getUnconfirmedTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 3);
+        List<JSONTransaction> unconfirmedTransactions = client.getUnconfirmedTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 3);
         checkList(unconfirmedTransactions);
         Assert.assertEquals(4, unconfirmedTransactions.size());
         for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
             JSONTransaction transaction = unconfirmedTransactions.get(i - 1);
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
-            Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
+            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSender());
+            Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipient());
             Assert.assertEquals(atm(i), transaction.getAmountATM());
             Assert.assertFalse(transaction.isPrivate());
         }
@@ -393,9 +396,12 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     public void testGetPrivateUnconfirmedTransactions() throws Exception {
         for (int i = 1; i <= 6; i++) {
-            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i), NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
+            client.sendMoney(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), PRIVATE_TRANSACTION_RECIPIENT.getAccountRS(), atm(i),
+                    NodeClient.DEFAULT_FEE,
+                    NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
-            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), PRIVATE_TRANSACTION_RECIPIENT, atm(i) * 2,
+            client.sendMoneyPrivateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), PRIVATE_TRANSACTION_RECIPIENT.getAccountRS(),
+                    atm(i) * 2,
                     NodeClient.DEFAULT_FEE, NodeClient.DEFAULT_DEADLINE);
             TimeUnit.SECONDS.sleep(1);
         }
@@ -405,8 +411,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Assert.assertEquals(10, unconfirmedTransactions.size());
         for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
             JSONTransaction transaction = unconfirmedTransactions.get(i - 1);
-            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSenderRS());
-            Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipientRS());
+            Assert.assertEquals(PRIVATE_TRANSACTION_SENDER, transaction.getSender());
+            Assert.assertEquals(PRIVATE_TRANSACTION_RECIPIENT, transaction.getRecipient());
             if (i % 2 != 0) {
                 Assert.assertEquals(atm(i / 2 + 1), transaction.getAmountATM());
                 Assert.assertFalse(transaction.isPrivate());
@@ -446,7 +452,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetTransactionsWithType() throws IOException {
-        List<JSONTransaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 99, 0, -1);
+        List<JSONTransaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 99, 0, -1);
         checkList(transactions);
         Assert.assertEquals(100, transactions.size());
         transactions.forEach(transaction -> {
@@ -460,7 +466,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetTransactionsWithSubtype() throws IOException {
-        List<JSONTransaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, -71, 1);
+        List<JSONTransaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 49, -71, 1);
         checkList(transactions);
         Assert.assertEquals(50, transactions.size());
         transactions.forEach(transaction -> {
@@ -474,7 +480,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetTransactionsWithTypeAndSubtype() throws IOException {
-        List<JSONTransaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, 0, 0);
+        List<JSONTransaction> transactions = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 49, 0, 0);
         checkList(transactions);
         Assert.assertEquals(50, transactions.size());
         transactions.forEach(transaction -> {
@@ -488,11 +494,11 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetPrivateTransactionsThroughGetPublicTransactions() throws IOException {
-        List<JSONTransaction> transactions1 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, 0, 1);
+        List<JSONTransaction> transactions1 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 49, 0, 1);
         Assert.assertTrue("List contains Private transactions!", transactions1.isEmpty());
         //do request for each type
         for (int i = 0; i < 20; i++) {
-            List<JSONTransaction> transactions2 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, i, -1);
+            List<JSONTransaction> transactions2 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 49, i, -1);
             int type = i;
             transactions2.forEach(transaction -> {
                 Assert.assertTrue("Not this user: " + PRIVATE_TRANSACTION_SENDER + " transaction: " + transaction, transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER));
@@ -500,7 +506,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
             });
             //do request for each subtype
             for (int j = 0; j < 20; j++) {
-                List<JSONTransaction> transactions3 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER, 0, 49, i, j);
+                List<JSONTransaction> transactions3 = client.getAccountTransactions(url, PRIVATE_TRANSACTION_SENDER.getAccountRS(), 0, 49, i, j);
                 int subtype = j;
                 transactions3.forEach(transaction -> {
                     Assert.assertTrue("Not this user: " + PRIVATE_TRANSACTION_SENDER + " transaction: " + transaction, transaction.isOwnedBy(PRIVATE_TRANSACTION_SENDER));
@@ -527,13 +533,13 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         Platform platform = Platform.WINDOWS;
         Architecture architecture = Architecture.AMD64;
         Version version = Version.from("1.0.8");
-        JSONTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 100_000_000, 0, updateUrl,
+        JSONTransaction updateTransaction = client.sendUpdateTransaction(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), 100_000_000, 0, updateUrl,
                 version, architecture, platform, hash, 5);
         Attachment.UpdateAttachment expectedAttachment = Attachment.UpdateAttachment.getAttachment(platform, architecture, updateUrl, version,
                 Convert.parseHexString(hash)
                 , (byte) 0);
         Assert.assertEquals(TransactionType.Update.CRITICAL, updateTransaction.getType());
-        Assert.assertNull(updateTransaction.getRecipientRS());
+        Assert.assertNull(updateTransaction.getRecipient());
         Assert.assertEquals(100_000_000, updateTransaction.getFeeATM());
         Assert.assertEquals(expectedAttachment, updateTransaction.getAttachment());
     }

@@ -5,10 +5,11 @@
 package util;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import dto.JSONTransaction;
+import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import dto.JSONTransaction;
 import org.junit.Assert;
 import org.slf4j.Logger;
 
@@ -51,12 +52,15 @@ public class TestUtil {
         Assert.assertFalse(list.isEmpty());
     }
 
-    public static void checkAddress(List<JSONTransaction> transactions, String address) {
+    public static void verifyOwner(List<JSONTransaction> transactions, BasicAccount account) {
         transactions.forEach(transaction -> {
-            if (!transaction.getSenderRS().equalsIgnoreCase(address) && !transaction.getRecipientRS().equalsIgnoreCase(address)) {
-                Assert.fail(transaction.toString() + " is not for this address \'" + address + "\'");
+            if (!transaction.isOwnedBy(account)) {
+                Assert.fail(transaction.toString() + " is not for this address \'" + account + "\'");
             }
         });
+    }
+    public static void verifyOwner(List<JSONTransaction> transactions, String account) {
+       verifyOwner(transactions, new BasicAccount(account));
     }
 
 

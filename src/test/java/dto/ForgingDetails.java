@@ -3,16 +3,16 @@
  */
 package dto;
 
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+
 import java.util.Objects;
 
 public class ForgingDetails {
-    Long deadline;
-    Long hitTime;
-    Long remaining;
-    Boolean foundAndStopped;
-    String account;
-    String accountRS;
-
+    private Long deadline;
+    private Long hitTime;
+    private Long remaining;
+    private Boolean foundAndStopped;
+    private BasicAccount account;
     public ForgingDetails() {
     }
 
@@ -25,8 +25,7 @@ public class ForgingDetails {
                 Objects.equals(hitTime, that.hitTime) &&
                 Objects.equals(remaining, that.remaining) &&
                 Objects.equals(foundAndStopped, that.foundAndStopped) &&
-                Objects.equals(account, that.account) &&
-                Objects.equals(accountRS, that.accountRS);
+                Objects.equals(account, that.account);
     }
 
     @Override
@@ -37,14 +36,13 @@ public class ForgingDetails {
                 ", remaining=" + remaining +
                 ", foundAndStopped=" + foundAndStopped +
                 ", account=" + account +
-                ", accountRS='" + accountRS + '\'' +
                 '}';
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(deadline, hitTime, remaining, foundAndStopped, account, accountRS);
+        return Objects.hash(deadline, hitTime, remaining, foundAndStopped, account);
     }
 
     public Long getDeadline() {
@@ -80,28 +78,19 @@ public class ForgingDetails {
         this.foundAndStopped = foundAndStopped;
     }
 
-    public String getAccount() {
+    public BasicAccount getAccount() {
         return account;
     }
 
     public void setAccount(String account) {
-        this.account = account;
+        this.account = new BasicAccount(account);
     }
 
-    public String getAccountRS() {
-        return accountRS;
-    }
-
-    public void setAccountRS(String accountRS) {
-        this.accountRS = accountRS;
-    }
-
-    public ForgingDetails(Long deadline, Long hitTime, Long remaining, Boolean foundAndStopped, String account, String accountRS) {
+    public ForgingDetails(Long deadline, Long hitTime, Long remaining, Boolean foundAndStopped, String account) {
         this.deadline = deadline;
         this.hitTime = hitTime;
         this.remaining = remaining;
         this.foundAndStopped = foundAndStopped;
-        this.account = account;
-        this.accountRS = accountRS;
+        this.account = new BasicAccount(account);
     }
 }

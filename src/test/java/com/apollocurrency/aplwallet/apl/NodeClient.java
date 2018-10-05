@@ -658,7 +658,7 @@ public class NodeClient {
         return MAPPER.readValue(json, GeneratedAccount.class);
     }
 
-    public AccountKey exportKey(String url, String passphrase, String account) throws IOException {
+    public AccountWithKey exportKey(String url, String passphrase, String account) throws IOException {
         Objects.requireNonNull(passphrase);
         Objects.requireNonNull(account);
         Map<String, String> parameters = new HashMap<>();
@@ -667,11 +667,11 @@ public class NodeClient {
         parameters.put("account", account);
 
         String json = postJson(createURI(url), parameters, "");
-        AccountKey accountKey =  MAPPER.readValue(json, AccountKey.class);
-        if (accountKey == null || accountKey.getAccount() == null) {
-            throw new RuntimeException("No necessary json: " + json);
+        AccountWithKey accountWithKey =  MAPPER.readValue(json, AccountWithKey.class);
+        if (accountWithKey == null || accountWithKey.getId() == 0) {
+            throw new RuntimeException("Account is null. Bad json: " + json);
         }
-        return accountKey;
+        return accountWithKey;
     }
     public String importKey(String url, String passphrase, String keySeed) throws IOException {
         Objects.requireNonNull(keySeed);
@@ -691,7 +691,7 @@ public class NodeClient {
         return passphraseNode.textValue();
     }
 
-    public AccountTwoFactorAuthDetails enable2FA(String url, String account,String passphrase) throws IOException {
+    public TwoFactorAuthAccountDetails enable2FA(String url, String account, String passphrase) throws IOException {
         Objects.requireNonNull(passphrase);
         Objects.requireNonNull(account);
         Map<String, String> parameters = new HashMap<>();
@@ -700,8 +700,8 @@ public class NodeClient {
         parameters.put("account", account);
 
         String json = postJson(createURI(url), parameters, "");
-        AccountTwoFactorAuthDetails details2FA = MAPPER.readValue(json, AccountTwoFactorAuthDetails.class);
-        if (details2FA.getSecret() == null) {
+        TwoFactorAuthAccountDetails details2FA = MAPPER.readValue(json, TwoFactorAuthAccountDetails.class);
+        if (details2FA.getDetails().getSecret() == null) {
             throw new RuntimeException("No 2fa key in response");
         }
         return details2FA;
@@ -718,7 +718,7 @@ public class NodeClient {
 
         String json = postJson(createURI(url), parameters, "");
         Account returnedAcc = MAPPER.readValue(json, Account.class);
-        if (returnedAcc.getAccount() == 0) {
+        if (returnedAcc.getId() == 0) {
             throw new RuntimeException("2fa not disabled");
         }
         return returnedAcc;

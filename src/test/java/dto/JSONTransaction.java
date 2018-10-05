@@ -6,7 +6,6 @@ package dto;
 
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.Block;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -154,20 +153,24 @@ public class JSONTransaction implements Transaction {
         this.transaction = transaction;
     }
 
-    public String getSenderRS() {
-        return Convert.rsAccount(transaction.getSenderId());
+    public BasicAccount getSender() {
+        return new BasicAccount(transaction.getSenderId());
     }
 
-    public String getRecipientRS() {
-        return Convert.rsAccount(transaction.getRecipientId());
+    public BasicAccount getRecipient() {
+        return new BasicAccount(transaction.getRecipientId());
     }
 
     public boolean isPrivate() {
         return getType() == TransactionType.Payment.PRIVATE;
     }
 
-    public boolean isOwnedBy(String rsAccount) {
-        return getRecipientRS().equalsIgnoreCase(rsAccount) || getSenderRS().equalsIgnoreCase(rsAccount);
+    public boolean isOwnedBy(String ownerAccount) {
+        BasicAccount ownerBasicAccount = new BasicAccount(ownerAccount);
+        return isOwnedBy(ownerBasicAccount);
+    }
+    public boolean isOwnedBy(BasicAccount ownerAccount) {
+        return getRecipient().equals(ownerAccount) || getSender().equals(ownerAccount);
     }
 
     @Override

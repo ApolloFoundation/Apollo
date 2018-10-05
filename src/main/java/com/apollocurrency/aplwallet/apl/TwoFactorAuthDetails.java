@@ -4,15 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class TwoFactorAuthDetails {
     private String qrCodeUrl;
     private String secret;
 
-    public TwoFactorAuthDetails(String qrCodeUrl, String secret) {
+    @JsonCreator
+    public TwoFactorAuthDetails(@JsonProperty("qrCodeUrl") String qrCodeUrl, @JsonProperty("secret") String secret) {
         this.qrCodeUrl = qrCodeUrl;
         this.secret = secret;
+    }
+
+    public TwoFactorAuthDetails() {
     }
 
     public String getSecret() {

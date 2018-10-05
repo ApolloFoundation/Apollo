@@ -47,16 +47,16 @@ public class TwoFactorAuthServiceTest {
 
     @Test(expected = TwoFactoAuthAlreadyRegisteredException.class)
     public void testEnableAlreadyEnabled() {
-        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
-        service.enable(ACCOUNT1.getAccount());
+        service.enable(ACCOUNT1.getId());
     }
     @Test
     public void testEnableNotConfirmed() {
-        doReturn(ENTITY2).when(repository).get(ACCOUNT2.getAccount());
+        doReturn(ENTITY2).when(repository).get(ACCOUNT2.getId());
 
-        TwoFactorAuthDetails details = service.enable(ACCOUNT2.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(details, Convert.rsAccount(ACCOUNT2.getAccount()));
+        TwoFactorAuthDetails details = service.enable(ACCOUNT2.getId());
+        TwoFactorAuthUtil.verifySecretCode(details, Convert.rsAccount(ACCOUNT2.getId()));
         Assert.assertEquals(ACCOUNT2_2FA_SECRET_BASE32, details.getSecret());
     }
 
@@ -65,30 +65,30 @@ public class TwoFactorAuthServiceTest {
     public void testDisable() throws GeneralSecurityException {
         TwoFactorAuthService spy = spy(service);
         int code = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
-        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
-        spy.disable(ACCOUNT1.getAccount(), code);
+        spy.disable(ACCOUNT1.getId(), code);
 
-        verify(repository, times(1)).get(ACCOUNT1.getAccount());
-        verify(repository, times(1)).delete(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getId());
+        verify(repository, times(1)).delete(ACCOUNT1.getId());
     }
 
     @Test(expected = InvalidTwoFactorAuthCredentialsException.class)
     public void testDisableFailAuth() {
         TwoFactorAuthService spy = spy(service);
-        doReturn(false).when(spy).tryAuth(ACCOUNT1.getAccount(), INVALID_CODE);
+        doReturn(false).when(spy).tryAuth(ACCOUNT1.getId(), INVALID_CODE);
 
-        spy.disable(ACCOUNT1.getAccount(), INVALID_CODE);
+        spy.disable(ACCOUNT1.getId(), INVALID_CODE);
     }
 
 
     @Test
     public void testIsEnabledTrue() {
-        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
-        boolean enabled = service.isEnabled(ACCOUNT1.getAccount());
+        boolean enabled = service.isEnabled(ACCOUNT1.getId());
 
-        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getId());
 
         Assert.assertTrue(enabled);
     }
@@ -96,19 +96,19 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testIsEnabledFalse() {
 
-        boolean enabled = service.isEnabled(ACCOUNT1.getAccount());
+        boolean enabled = service.isEnabled(ACCOUNT1.getId());
 
-        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getId());
 
         Assert.assertFalse(enabled);
     }
     @Test
     public void testIsEnabledFalseWhen2faWasNotConfirmed() throws CloneNotSupportedException {
-        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getAccount());
+        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getId());
 
-        boolean enabled = service.isEnabled(ACCOUNT2.getAccount());
+        boolean enabled = service.isEnabled(ACCOUNT2.getId());
 
-        verify(repository, times(1)).get(ACCOUNT2.getAccount());
+        verify(repository, times(1)).get(ACCOUNT2.getId());
 
         Assert.assertFalse(enabled);
     }
@@ -116,22 +116,22 @@ public class TwoFactorAuthServiceTest {
 
     @Test
     public void testTryAuth() throws GeneralSecurityException {
-        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
-        boolean authenticated = TwoFactorAuthUtil.tryAuth(service, ACCOUNT1.getAccount(), ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
-        verify(repository, atMost(MAX_2FA_ATTEMPTS)).get(ACCOUNT1.getAccount());
+        boolean authenticated = TwoFactorAuthUtil.tryAuth(service, ACCOUNT1.getId(), ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
+        verify(repository, atMost(MAX_2FA_ATTEMPTS)).get(ACCOUNT1.getId());
 
         Assert.assertTrue(authenticated);
     }
 
     @Test
     public void testTryAuthCodesNotEquals() throws GeneralSecurityException {
-        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getAccount());
+        doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
         int currentNumber = new Random().nextInt();
-        boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), currentNumber);
+        boolean authenticated = service.tryAuth(ACCOUNT1.getId(), currentNumber);
 
-        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getId());
 
         Assert.assertFalse(authenticated);
     }
@@ -140,32 +140,32 @@ public class TwoFactorAuthServiceTest {
     public void testTryAuthNotFoundSecretForAccount() throws GeneralSecurityException {
 //        just to make sure that 2fa code is correct
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
-        boolean authenticated = service.tryAuth(ACCOUNT1.getAccount(), currentNumber);
+        boolean authenticated = service.tryAuth(ACCOUNT1.getId(), currentNumber);
 
-        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getId());
 
         Assert.assertFalse(authenticated);
     }
     @Test
     public void testTryAuthForNotConfirmedAccount() throws GeneralSecurityException, CloneNotSupportedException {
-        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getAccount());
+        doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getId());
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
-        boolean authenticated = service.tryAuth(ACCOUNT2.getAccount(), currentNumber);
+        boolean authenticated = service.tryAuth(ACCOUNT2.getId(), currentNumber);
 
-        verify(repository, times(1)).get(ACCOUNT2.getAccount());
+        verify(repository, times(1)).get(ACCOUNT2.getId());
 
         Assert.assertFalse(authenticated);
     }
     @Test
     public void testConfirm() throws GeneralSecurityException, CloneNotSupportedException {
         TwoFactorAuthEntity clone = ENTITY2.clone();
-        doReturn(clone).when(repository).get(ACCOUNT2.getAccount());
+        doReturn(clone).when(repository).get(ACCOUNT2.getId());
         doReturn(true).when(repository).update(clone);
 
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
-        boolean confirmed = service.confirm(ACCOUNT2.getAccount(), currentNumber);
+        boolean confirmed = service.confirm(ACCOUNT2.getId(), currentNumber);
 
-        verify(repository, times(1)).get(ACCOUNT2.getAccount());
+        verify(repository, times(1)).get(ACCOUNT2.getId());
         verify(repository, times(1)).update(clone);
 
         Assert.assertTrue(confirmed);
@@ -173,11 +173,11 @@ public class TwoFactorAuthServiceTest {
 
     @Test
     public void testConfirmForAlreadyEnabledAccount() throws GeneralSecurityException, CloneNotSupportedException {
-        doReturn(ENTITY1.clone()).when(repository).get(ACCOUNT1.getAccount());
+        doReturn(ENTITY1.clone()).when(repository).get(ACCOUNT1.getId());
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
-        boolean confirmed = service.confirm(ACCOUNT1.getAccount(), currentNumber);
+        boolean confirmed = service.confirm(ACCOUNT1.getId(), currentNumber);
 
-        verify(repository, times(1)).get(ACCOUNT1.getAccount());
+        verify(repository, times(1)).get(ACCOUNT1.getId());
 
         Assert.assertFalse(confirmed);
     }

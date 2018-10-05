@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import dto.JSONTransaction;
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestAccount;
 import com.apollocurrency.aplwallet.apl.TestDataGenerator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.ChatInfo;
+import dto.JSONTransaction;
 import org.junit.*;
 import util.TestUtil;
 import util.WalletRunner;
@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_FILE;
-import static com.apollocurrency.aplwallet.apl.TestData.TEST_LOCALHOST;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
 import static util.TestUtil.checkList;
 @Ignore
 public class ChatTest {
@@ -60,12 +60,13 @@ public class ChatTest {
     }
     @Test
     public void testGetChats() throws IOException {
-        List<ChatInfo> chatInfo = client.getChatInfo(TEST_LOCALHOST, chatAcc.getRS());
+        List<ChatInfo> chatInfo = client.getChatInfo(TEST_LOCALHOST, chatAcc.getAccountRS());
 //        List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, "APL-NFCE-2L6E-6NKP-8FH59");
         checkList(chatInfo);
         Assert.assertEquals(chats.size(), chatInfo.size());
         chatInfo.forEach(c -> {
-            List<TestAccount> matchedAcc = chats.keySet().stream().filter(acc -> c.getAccount() == acc.getId()).collect(Collectors.toList());
+            List<TestAccount> matchedAcc =
+                    chats.keySet().stream().filter(acc -> c.getAccount().equals(acc)).collect(Collectors.toList());
             Assert.assertNotNull(matchedAcc);
             Assert.assertEquals(1, matchedAcc.size());
             Optional<JSONTransaction> first = chats.get(matchedAcc.get(0)).stream().max(Comparator.comparingLong(JSONTransaction::getTimestamp));
@@ -76,7 +77,7 @@ public class ChatTest {
 
     @Test
     public void testGetChatHistory() throws IOException {
-        List<JSONTransaction> chatTransactions = client.getChatHistory(TEST_LOCALHOST, chatAcc.getRS(), randomChatAccount.getRS(), 0, 5);
+        List<JSONTransaction> chatTransactions = client.getChatHistory(TEST_LOCALHOST, chatAcc.getAccountRS(), randomChatAccount.getAccountRS(), 0, 5);
         checkList(chatTransactions);
         Assert.assertEquals(chats.get(randomChatAccount).size() - 1, chatTransactions.size());
         for (int i = 0; i < chats.get(randomChatAccount).subList(0, 6).size(); i++) {
@@ -84,8 +85,8 @@ public class ChatTest {
             JSONTransaction actual = chatTransactions.get(i);
             Assert.assertEquals(expected.getHeight(), actual.getHeight());
             Assert.assertEquals(expected.getTimestamp(), actual.getTimestamp());
-            Assert.assertEquals(expected.getSenderRS(), actual.getSenderRS());
-            Assert.assertEquals(expected.getRecipientRS(), actual.getRecipientRS());
+            Assert.assertEquals(expected.getSender(), actual.getSender());
+            Assert.assertEquals(expected.getRecipient(), actual.getRecipient());
             Assert.assertEquals(Convert.toString(expected.getMessage().getMessage(), true), Convert.toString(actual.getMessage().getMessage(), true));
         }
     }

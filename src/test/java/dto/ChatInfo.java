@@ -4,25 +4,18 @@
 
 package dto;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class ChatInfo {
-    private long account;
-    private String accountRS;
+    private BasicAccount account;
     private long lastMessageTime;
-
-    public ChatInfo(long account, String accountRS, long lastMessageTime) {
-        this.account = account;
-        this.accountRS = accountRS;
+    @JsonCreator
+    public ChatInfo(String account, long lastMessageTime) {
+        this.account = new BasicAccount(account);
         this.lastMessageTime = lastMessageTime;
     }
-    public ChatInfo(long account, long lastMessageTime) {
-        this.account = account;
-        this.accountRS = Convert.rsAccount(account);
-        this.lastMessageTime = lastMessageTime;
-    }
-
-    public long getAccount() {
+    public BasicAccount getAccount() {
             return account;
         }
 
@@ -33,12 +26,8 @@ public class ChatInfo {
         public ChatInfo() {
         }
 
-    public void setAccount(long account) {
-        this.account = account;
-    }
-
-    public void setAccountRS(String accountRS) {
-        this.accountRS = accountRS;
+    public void setAccount(String account) {
+        this.account = new BasicAccount(account);
     }
 
     public void setLastMessageTime(long lastMessageTime) {
