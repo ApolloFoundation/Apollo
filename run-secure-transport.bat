@@ -56,9 +56,10 @@ rem	@echo off
 		echo using Java home directory "%javaDir%"
 	)
 
-:startJava	
-	start secureTransport\runClient.bat -f %systemdrive%%homepath%\torrc
-
+:startJava
+	cd secureTransport	
+	start runClient.bat 
+	cd ..
 	"%javaDir%"\bin\java.exe -jar -DsocksProxyHost=10.0.0.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop Apollo.jar apl.Apl
 
 :endProcess 
