@@ -20,7 +20,57 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_DESCRIPTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_FILENAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_PROPERTY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_RECIPIENT_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_TRANSACTION_BYTES_OR_JSON;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ALIAS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ASSET;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_CURRENCY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_GOODS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_OFFER;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_SHUFFLING;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.either;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.missing;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Asset;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Currency;
+import com.apollocurrency.aplwallet.apl.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.Poll;
+import com.apollocurrency.aplwallet.apl.Shuffling;
+import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -40,9 +90,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
@@ -880,17 +927,16 @@ public final class ParameterParser {
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
         byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        boolean encrypt;
-        //prefer public key
-        if (secretPhrase != null && publicKey == null) {
-            publicKey = Crypto.getPublicKey(secretPhrase);
-            encrypt = false;
-        } else {
-            encrypt = true;
-        }
-        if (publicKey == null) {
+        long account = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, account, false);
+        if (keySeed == null && publicKey == null) {
             return null;
+        }
+        boolean encrypt = publicKey != null;
+        // if public key specified in request -> encrypt private data
+        // if keySeed is not null -> do not encrypt private data
+        if (!encrypt) {
+            publicKey = Crypto.getPublicKey(keySeed);
         }
         long accountId = Account.getId(publicKey);
         byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
