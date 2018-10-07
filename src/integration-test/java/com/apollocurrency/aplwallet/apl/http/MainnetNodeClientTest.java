@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
+import static util.TestUtil.checkList;
+
 import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestConstants;
@@ -12,7 +15,11 @@ import dto.Block;
 import dto.JSONTransaction;
 import dto.Peer;
 import org.eclipse.jetty.util.StringUtil;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import util.TestUtil;
 import util.WalletRunner;
 
@@ -20,9 +27,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
-import static util.TestUtil.checkList;
 
 /**
  * Test scenarios on mainnet for {@link NodeClient}

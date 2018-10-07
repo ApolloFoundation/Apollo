@@ -4,18 +4,38 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
+import static util.TestUtil.atm;
+import static util.TestUtil.checkList;
+import static util.TestUtil.getRandomRS;
+import static util.TestUtil.verifyOwner;
+
+import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+import com.apollocurrency.aplwallet.apl.NodeClient;
+import com.apollocurrency.aplwallet.apl.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.TestConstants;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.*;
 import dto.Account;
+import dto.AccountsStatistic;
 import dto.Block;
+import dto.JSONTransaction;
+import dto.LedgerEntry;
+import dto.Peer;
 import org.json.simple.parser.ParseException;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import util.TestUtil;
 import util.WalletRunner;
 
@@ -26,9 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
-import static util.TestUtil.*;
 
 /**
  * Test scenarios on testnet for {@link NodeClient}
@@ -54,6 +71,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @BeforeClass
     public static void setUp() throws Exception {
         runner.run();
+        runner.disableReloading();
     }
 
     @AfterClass
@@ -192,13 +210,14 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
+    @Ignore
     public void testGetPrivateAccountLedger() throws Exception {
         String accountRs = getRandomRS(accounts);
         List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 49);
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
             JSONTransaction transaction = entry.getTransaction();
-            if (transaction != null && !transaction.isOwnedBy(accountRs)) {
+            if (transaction != null && !transaction.isOwnedBy(accountRs) && transaction.getType() != ShufflingTransaction.SHUFFLING_CREATION) {
                 Assert.fail("Not this user ledger!");
             }
         });
@@ -406,7 +425,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
             TimeUnit.SECONDS.sleep(1);
         }
         TimeUnit.SECONDS.sleep(3);
-        List<JSONTransaction> unconfirmedTransactions = client.getPrivateUnconfirmedTransactions(url, accounts.get(PRIVATE_TRANSACTION_SENDER), 0, 9);
+        List<JSONTransaction> unconfirmedTransactions = client.getPrivateUnconfirmedTransactions(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), 0,
+                9);
         checkList(unconfirmedTransactions);
         Assert.assertEquals(10, unconfirmedTransactions.size());
         for (int i = 1; i <= unconfirmedTransactions.size(); i++) {
@@ -440,6 +460,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
+    @Ignore
     public void testGetPrivateAccountLedgerEntry() throws Exception {
         String accountRs = getRandomRS(accounts);
         List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 500);

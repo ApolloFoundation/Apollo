@@ -4,13 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
+import static util.TestUtil.checkList;
+
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestAccount;
 import com.apollocurrency.aplwallet.apl.TestDataGenerator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.ChatInfo;
 import dto.JSONTransaction;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import util.TestUtil;
 import util.WalletRunner;
 
@@ -20,10 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
-import static util.TestUtil.checkList;
 @Ignore
 public class ChatTest {
     public static TestAccount randomChatAccount;

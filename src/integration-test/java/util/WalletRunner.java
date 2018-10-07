@@ -4,6 +4,9 @@
 
 package util;
 
+import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -17,10 +20,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
-
-import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class WalletRunner {
 
@@ -82,6 +87,7 @@ public class WalletRunner {
             parameters.put("apl.isTestnet", "false");
         }
         parameters.put("apl.adminPassword", ADMIN_PASS);
+        parameters.put("apl.allowUpdates", String.valueOf(false));
         savedStandartPropertiesPath = changeProperties(parameters);
         try {
             //run application
