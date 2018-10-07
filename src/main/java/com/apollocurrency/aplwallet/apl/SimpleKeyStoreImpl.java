@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
  public class SimpleKeyStoreImpl implements KeyStore {
-     private final SecurityException INCORRECT_PASSPHRASE_EXCEPTION = new SecurityException("Passphrase is incorrect");
+     private final String BAD_CREDENTIALS = "Bad credentials";
      private Path keystoreDirPath;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -58,12 +58,12 @@ import java.util.stream.Collectors;
 
              long actualAccId = Convert.getId(Crypto.getPublicKey(decryptedKeySeed));
              if (accountId != actualAccId) {
-                 throw INCORRECT_PASSPHRASE_EXCEPTION;
+                 throw new SecurityException(BAD_CREDENTIALS);
              }
              return decryptedKeySeed;
          }
          catch (RuntimeException e) {
-             throw INCORRECT_PASSPHRASE_EXCEPTION;
+             throw new SecurityException(BAD_CREDENTIALS);
          }
 
      }

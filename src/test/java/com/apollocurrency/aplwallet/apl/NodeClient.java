@@ -723,4 +723,19 @@ public class NodeClient {
         }
         return returnedAcc;
     }
+
+    public ConfirmedAccount confirm2FA(String url, BasicAccount account, String passphrase, long code) throws IOException {
+        Objects.requireNonNull(passphrase);
+        Objects.requireNonNull(account);
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "confirm2FA");
+        parameters.put("passphrase", passphrase);
+        parameters.put("account", account.getAccountRS());
+        parameters.put("code", String.valueOf(code));
+
+        String json = postJson(createURI(url), parameters, "");
+
+        return MAPPER.readValue(json, ConfirmedAccount.class);
+    }
+
 }
