@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
  public class SimpleKeyStoreImpl implements KeyStore {
-     private final String BAD_CREDENTIALS = "Bad credentials";
+     private static final String BAD_CREDENTIALS = "Bad credentials";
      private Path keystoreDirPath;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -49,18 +49,18 @@ import java.util.stream.Collectors;
      public byte[] getKeySeed(String passphrase, long accountId) throws IOException, SecurityException {
          Objects.requireNonNull(passphrase);
 
-         Path privateKeyPath = verifyExistOnlyOne(findKeySeedPaths(accountId), accountId);
-         EncryptedKeySeedDetails keySeedDetails = JSON.getMapper().readValue(privateKeyPath.toFile(), EncryptedKeySeedDetails.class);
+         Path privateKeyPath = verifyExistOnlyOne(findSecretPaths(accountId), accountId);
+         EncryptedSecretBytesDetails secretBytesDetails = JSON.getMapper().readValue(privateKeyPath.toFile(), EncryptedSecretBytesDetails.class);
 
-         byte[] key = Crypto.getKeySeed(passphrase, keySeedDetails.getNonce(), Convert.longToBytes(keySeedDetails.getTimestamp()));
+         byte[] key = Crypto.getKeySeed(passphrase, secretBytesDetails.getNonce(), Convert.longToBytes(secretBytesDetails.getTimestamp()));
          try {
-             byte[] decryptedKeySeed = Crypto.aesDecrypt(keySeedDetails.getEncryptedKeySeed(), key);
+             byte[] decryptedSecretBytes = Crypto.aesDecrypt(secretBytesDetails.getEncryptedSecretBytes(), key);
 
-             long actualAccId = Convert.getId(Crypto.getPublicKey(decryptedKeySeed));
+             long actualAccId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(decryptedSecretBytes)));
              if (accountId != actualAccId) {
                  throw new SecurityException(BAD_CREDENTIALS);
              }
-             return decryptedKeySeed;
+             return decryptedSecretBytes;
          }
          catch (RuntimeException e) {
              throw new SecurityException(BAD_CREDENTIALS);
@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
      }
 
 
-     protected List<Path> findKeySeedPaths(long accountId) throws IOException {
+     protected List<Path> findSecretPaths(long accountId) throws IOException {
          return
                  Files.list(keystoreDirPath).filter(path -> {
                      String stringPath = path.toString();
@@ -87,34 +87,34 @@ import java.util.stream.Collectors;
                  }).collect(Collectors.toList());
      }
 
-     protected Path verifyExistOnlyOne(List<Path> keySeedFiles, long accountId) {
-         if (keySeedFiles.size() == 0) {
+     protected Path verifyExistOnlyOne(List<Path> secretBytesFiles, long accountId) {
+         if (secretBytesFiles.size() == 0) {
              throw new RuntimeException("No private key, associated with id = " + accountId);
          }
-         if (keySeedFiles.size() > 1) {
-             throw new RuntimeException("Found " + keySeedFiles.size() + " private keys associated with id ="
+         if (secretBytesFiles.size() > 1) {
+             throw new RuntimeException("Found " + secretBytesFiles.size() + " private keys associated with id ="
                      + accountId + " . Expected only 1.");
          }
-         return keySeedFiles.get(0);
+         return secretBytesFiles.get(0);
      }
 
      @Override
-     public void saveKeySeed(String passphrase, byte[] keySeed) throws IOException {
+     public void saveSecretBytes(String passphrase, byte[] secretBytes) throws IOException {
          Objects.requireNonNull(passphrase);
-         Objects.requireNonNull(keySeed);
+         Objects.requireNonNull(secretBytes);
 
-         long accountId = Convert.getId(Crypto.getPublicKey(keySeed));
+         long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
          Path keyPath = makeTargetPath(accountId);
-         EncryptedKeySeedDetails keySeedDetails = makeEncryptedKeySeedDetails(passphrase, keySeed, accountId);
-         storeJSONKeySeed(keyPath, keySeedDetails);
+         EncryptedSecretBytesDetails secretBytesDetails = makeEncryptedSecretBytesDetails(passphrase, secretBytes, accountId);
+         storeJSONSecretBytes(keyPath, secretBytesDetails);
      }
 
-     private EncryptedKeySeedDetails makeEncryptedKeySeedDetails(String passphrase, byte[] keySeed, long accountId) {
+     private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
          byte[] nonce = generateBytes(16);
          long timestamp = System.currentTimeMillis();
          byte[] key = Crypto.getKeySeed(passphrase, nonce, Convert.longToBytes(timestamp));
-         byte[] encryptedKeySeed = Crypto.aesEncrypt(keySeed, key);
-         return new EncryptedKeySeedDetails(encryptedKeySeed, accountId, keySeed.length, version, nonce, timestamp);
+         byte[] encryptedSecretBytes = Crypto.aesEncrypt(secretBytes, key);
+         return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, secretBytes.length, version, nonce, timestamp);
      }
 
      private Path makeTargetPath(long accountId) throws IOException {
@@ -125,16 +125,16 @@ import java.util.stream.Collectors;
      }
 
      private void requireNewAccount(long accountId) throws IOException {
-         List<Path> keySeedPaths = findKeySeedPaths(accountId);
-         if (keySeedPaths.size() != 0) {
-             throw new RuntimeException("Unable to save keySeed");
+         List<Path> secretBytesPaths = findSecretPaths(accountId);
+         if (secretBytesPaths.size() != 0) {
+             throw new RuntimeException("Unable to save secretBytes");
          }
      }
 
-     protected void storeJSONKeySeed(Path keyPath, EncryptedKeySeedDetails keySeedDetails) throws IOException {
+     protected void storeJSONSecretBytes(Path keyPath, EncryptedSecretBytesDetails secretBytesDetails) throws IOException {
          ObjectMapper mapper = JSON.getMapper();
          ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
          Files.createFile(keyPath);
-         writer.writeValue(keyPath.toFile(), keySeedDetails);
+         writer.writeValue(keyPath.toFile(), secretBytesDetails);
      }
  }

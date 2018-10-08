@@ -441,7 +441,7 @@ public final class ParameterParser {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
             try {
-                return Account.findKeySeed(senderId, passphrase);
+                return Crypto.getKeySeed(Account.findKeySeed(senderId, passphrase));
             }
             catch (RuntimeException e) {
 //                ignore
@@ -501,7 +501,7 @@ public final class ParameterParser {
                         }
                     } else {
                         try {
-                            return Crypto.getPublicKey(Account.findKeySeed(accountId, passphrase));
+                            return Crypto.getPublicKey(Crypto.getKeySeed(Account.findKeySeed(accountId, passphrase)));
                         }
                         catch (RuntimeException e) {
                             if (isMandatory) {

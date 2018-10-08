@@ -20,12 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.db.*;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.http.ParameterParser;
@@ -36,12 +45,19 @@ import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
@@ -2004,7 +2020,7 @@ public final class Account {
     public static GeneratedAccount generateAccount(String passphrase) {
         GeneratedAccount account = accountGenerator.generate(passphrase);
         try {
-            keystore.saveKeySeed(account.getPassphrase(), account.getKeySeed());
+            keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
         }
         catch (IOException e) {
             LOG.error(e.toString(), e);
@@ -2027,7 +2043,7 @@ public final class Account {
             if (passphrase == null) {
                 passphrase = passphraseGenerator.generate();
             }
-            keystore.saveKeySeed(passphrase, keySeed);
+            keystore.saveSecretBytes(passphrase, keySeed);
             return passphrase;
         }
         catch (IOException e) {

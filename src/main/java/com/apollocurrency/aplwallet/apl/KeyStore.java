@@ -19,6 +19,6 @@ public interface KeyStore {
      * @param keySeed - secret array of bytes which will be stored into keystore
      * @throws IOException when unable to store encrypted keySeed
      */
-    void saveKeySeed(String passphrase, byte[] keySeed) throws IOException;
+    void saveSecretBytes(String passphrase, byte[] keySeed) throws IOException;
 
 }

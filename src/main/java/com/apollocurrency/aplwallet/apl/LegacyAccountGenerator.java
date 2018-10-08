@@ -25,13 +25,13 @@ public class LegacyAccountGenerator implements AccountGenerator {
             }
             passphrase = passphraseGenerator.generate();
         }
-        byte[] randomBytes = new byte[32];
-        Crypto.getSecureRandom().nextBytes(randomBytes);
-        byte[] keySeed = Crypto.sha256().digest(randomBytes);
+        byte[] secretBytes = new byte[32];
+        Crypto.getSecureRandom().nextBytes(secretBytes);
+        byte[] keySeed = Crypto.getKeySeed(secretBytes);
         byte[] privateKey = Crypto.getPrivateKey(keySeed);
         byte[] accountPublicKey = Crypto.getPublicKey((keySeed));
         long accountId = Convert.getId(accountPublicKey);
-        return new GeneratedAccount(accountId, accountPublicKey, privateKey, passphrase, keySeed);
+        return new GeneratedAccount(accountId, accountPublicKey, privateKey, passphrase, secretBytes);
     }
 //-7883855003351141204
     public PassphraseGenerator getPassphraseGenerator() {

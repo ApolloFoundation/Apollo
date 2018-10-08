@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -37,8 +39,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
@@ -92,8 +92,11 @@ public final class Crypto {
     }
 
     public static byte[] getKeySeed(String secretPhrase, byte[]... nonces) {
+        return getKeySeed(Convert.toBytes(secretPhrase), nonces);
+    }
+    public static byte[] getKeySeed(byte[] secretBytes, byte[]... nonces) {
         MessageDigest digest = Crypto.sha256();
-        digest.update(Convert.toBytes(secretPhrase));
+        digest.update(secretBytes);
         for (byte[] nonce : nonces) {
             digest.update(nonce);
         }

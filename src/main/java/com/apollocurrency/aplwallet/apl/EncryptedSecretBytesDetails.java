@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class EncryptedKeySeedDetails {
-    private byte[] encryptedKeySeed;
+public class EncryptedSecretBytesDetails {
+    private byte[] encryptedSecretBytes;
     private String accountRS;
     private long account;
     private int size;
@@ -18,11 +18,11 @@ public class EncryptedKeySeedDetails {
     private byte[] nonce;
     private long timestamp;
 
-    public EncryptedKeySeedDetails() {
+    public EncryptedSecretBytesDetails() {
     }
 
-    public EncryptedKeySeedDetails(byte[] encryptedKeySeed, String accountRS, long account, int size, byte version, byte[] nonce, long timestamp) {
-        this.encryptedKeySeed = encryptedKeySeed;
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, long account, int size, byte version, byte[] nonce, long timestamp) {
+        this.encryptedSecretBytes = encryptedSecretBytes;
         this.accountRS = accountRS;
         this.account = account;
         this.size = size;
@@ -31,8 +31,8 @@ public class EncryptedKeySeedDetails {
         this.timestamp = timestamp;
     }
 
-    public EncryptedKeySeedDetails(byte[] encryptedKeySeed, long account, int size, byte version, byte[] nonce, long timestamp) {
-        this.encryptedKeySeed = encryptedKeySeed;
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, int size, byte version, byte[] nonce, long timestamp) {
+        this.encryptedSecretBytes = encryptedSecretBytes;
         this.accountRS = Convert.rsAccount(account);
         this.account = account;
         this.size = size;
@@ -40,8 +40,8 @@ public class EncryptedKeySeedDetails {
         this.nonce = nonce;
         this.timestamp = timestamp;
     }
-    public EncryptedKeySeedDetails(byte[] encryptedKeySeed, String accountRS, int size, byte version, byte[] nonce, long timestamp) {
-        this.encryptedKeySeed = encryptedKeySeed;
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, int size, byte version, byte[] nonce, long timestamp) {
+        this.encryptedSecretBytes = encryptedSecretBytes;
         this.accountRS = accountRS;
         this.account = Convert.parseAccountId(accountRS);
         this.size = size;
@@ -50,12 +50,12 @@ public class EncryptedKeySeedDetails {
         this.timestamp = timestamp;
     }
 
-    public byte[] getEncryptedKeySeed() {
-        return encryptedKeySeed;
+    public byte[] getEncryptedSecretBytes() {
+        return encryptedSecretBytes;
     }
 
-    public void setEncryptedKeySeed(byte[] encryptedKeySeed) {
-        this.encryptedKeySeed = encryptedKeySeed;
+    public void setEncryptedSecretBytes(byte[] encryptedSecretBytes) {
+        this.encryptedSecretBytes = encryptedSecretBytes;
     }
 
     public String getAccountRS() {
@@ -109,13 +109,13 @@ public class EncryptedKeySeedDetails {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof EncryptedKeySeedDetails)) return false;
-        EncryptedKeySeedDetails that = (EncryptedKeySeedDetails) o;
+        if (!(o instanceof EncryptedSecretBytesDetails)) return false;
+        EncryptedSecretBytesDetails that = (EncryptedSecretBytesDetails) o;
         return account == that.account &&
                 size == that.size &&
                 version == that.version &&
                 timestamp == that.timestamp &&
-                Arrays.equals(encryptedKeySeed, that.encryptedKeySeed) &&
+                Arrays.equals(encryptedSecretBytes, that.encryptedSecretBytes) &&
                 Objects.equals(accountRS, that.accountRS) &&
                 Arrays.equals(nonce, that.nonce);
     }
@@ -123,7 +123,7 @@ public class EncryptedKeySeedDetails {
     @Override
     public int hashCode() {
         int result = Objects.hash(accountRS, account, size, version, timestamp);
-        result = 31 * result + Arrays.hashCode(encryptedKeySeed);
+        result = 31 * result + Arrays.hashCode(encryptedSecretBytes);
         result = 31 * result + Arrays.hashCode(nonce);
         return result;
     }

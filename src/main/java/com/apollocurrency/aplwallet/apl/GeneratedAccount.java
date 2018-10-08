@@ -17,7 +17,7 @@ public class GeneratedAccount extends BasicAccount {
     private byte[] privateKey;
     private String passphrase;
     @JsonIgnore
-    private byte[] keySeed;
+    private byte[] secretBytes;
 
     @Override
     public boolean equals(Object o) {
@@ -63,23 +63,23 @@ public class GeneratedAccount extends BasicAccount {
         this.passphrase = passphrase;
     }
 
-    public GeneratedAccount(long id, byte[] publicKey, byte[] privateKey, String passphrase, byte[] keySeed) {
+    public GeneratedAccount(long id, byte[] publicKey, byte[] privateKey, String passphrase, byte[] secretBytes) {
         this.id = id;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.passphrase = passphrase;
-        this.keySeed = keySeed;
+        this.secretBytes = secretBytes;
     }
 
     public GeneratedAccount() {
     }
 
-    public void setKeySeed(byte[] keySeed) {
-        this.keySeed = keySeed;
+    public void setSecretBytes(byte[] secretBytes) {
+        this.secretBytes = secretBytes;
     }
 
-    public byte[] getKeySeed() {
-        return keySeed;
+    public byte[] getSecretBytes() {
+        return secretBytes;
     }
 
     public JSONObject toJSON() {
