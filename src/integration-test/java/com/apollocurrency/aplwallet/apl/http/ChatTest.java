@@ -8,19 +8,15 @@ import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_FILE;
 import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
 import static util.TestUtil.checkList;
 
-import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestAccount;
 import com.apollocurrency.aplwallet.apl.TestDataGenerator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.ChatInfo;
 import dto.JSONTransaction;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import util.TestUtil;
-import util.WalletRunner;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -28,21 +24,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-@Ignore
-public class ChatTest {
+
+public class ChatTest extends APITest {
     public static TestAccount randomChatAccount;
     private static TestAccount chatAcc;
     private static Map<TestAccount, List<JSONTransaction>> chats;
-    private NodeClient client = new NodeClient();
     public ChatTest() {
 
     }
 
-    private static WalletRunner runner = new WalletRunner();
 
     @BeforeClass
     public static void setUp() throws Exception {
-        runner.run();
         try {
             chatAcc = TestDataGenerator.generateAccount("chat_acc");
             TestDataGenerator.fundAcc(chatAcc, new TestAccount(TestUtil.getRandomSecretPhrase(TestUtil.loadKeys(TEST_FILE))), 50);
@@ -58,13 +51,9 @@ public class ChatTest {
         }
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        runner.shutdown();
-    }
     @Test
     public void testGetChats() throws IOException {
-        List<ChatInfo> chatInfo = client.getChatInfo(TEST_LOCALHOST, chatAcc.getAccountRS());
+        List<ChatInfo> chatInfo = nodeClient.getChatInfo(TEST_LOCALHOST, chatAcc.getAccountRS());
 //        List<Chat.ChatInfo> chatInfo = client.getChatInfo(url, "APL-NFCE-2L6E-6NKP-8FH59");
         checkList(chatInfo);
         Assert.assertEquals(chats.size(), chatInfo.size());
@@ -81,7 +70,7 @@ public class ChatTest {
 
     @Test
     public void testGetChatHistory() throws IOException {
-        List<JSONTransaction> chatTransactions = client.getChatHistory(TEST_LOCALHOST, chatAcc.getAccountRS(), randomChatAccount.getAccountRS(), 0, 5);
+        List<JSONTransaction> chatTransactions = nodeClient.getChatHistory(TEST_LOCALHOST, chatAcc.getAccountRS(), randomChatAccount.getAccountRS(), 0, 5);
         checkList(chatTransactions);
         Assert.assertEquals(chats.get(randomChatAccount).size() - 1, chatTransactions.size());
         for (int i = 0; i < chats.get(randomChatAccount).subList(0, 6).size(); i++) {

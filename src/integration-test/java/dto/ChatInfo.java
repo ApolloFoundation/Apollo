@@ -5,15 +5,19 @@
 package dto;
 
 import com.apollocurrency.aplwallet.apl.BasicAccount;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 public class ChatInfo {
+    @JsonAlias("accountRS")
     private BasicAccount account;
     private long lastMessageTime;
-    @JsonCreator
-    public ChatInfo(String account, long lastMessageTime) {
-        this.account = new BasicAccount(account);
+
+    public ChatInfo(BasicAccount account, long lastMessageTime) {
+        this.account = account;
         this.lastMessageTime = lastMessageTime;
+    }
+    public ChatInfo(String account, long lastMessageTime) {
+        this(new BasicAccount(account), lastMessageTime);
     }
     public BasicAccount getAccount() {
             return account;

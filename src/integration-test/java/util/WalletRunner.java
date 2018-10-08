@@ -7,6 +7,7 @@ package util;
 import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -29,27 +30,47 @@ import java.util.Properties;
 
 public class WalletRunner {
 
-    private static final String PROPERTIES_PATH = "conf/apl.properties";
-    private static final String DEFAULT_PROPERTIES_PATH = "conf/apl-default.properties";
+    private static final String PROPERTIES_FILENAME = "apl.properties";
+    private static final String DEFAULT_PROPERTIES_FILENAME = "apl-default.properties";
+    private static final String DEFAULT_PROPERTIES_DIR = "conf";
     private static final Logger LOG = getLogger(WalletRunner.class);
+
+    private final String workingDirectory;
+    private final String propertiesDir;
+
     private final List<String> urls;
-    private Path savedStandartPropertiesPath;
     private Properties standartProperties;
     private Properties defaultProperties;
     private boolean isTestnet;
     private TestClassLoader loader;
     private Class mainClass;
+    private String propertiesPath;
+    private String defaultPropertiesPath;
 
-    public WalletRunner(boolean isTestnet) {
+    public WalletRunner(boolean isTestnet, String workingDirectory, String propertiesDir) {
         this.isTestnet = isTestnet;
         this.loader = new TestClassLoader();
-        this.standartProperties = readProperties(PROPERTIES_PATH);
-        this.defaultProperties = readProperties(DEFAULT_PROPERTIES_PATH);
+        this.workingDirectory = Convert.nullToEmpty(workingDirectory);
+        this.propertiesDir = Convert.nullToEmpty(propertiesDir);
+
+        this.propertiesPath = this.workingDirectory + "/" + this.propertiesDir + "/" + PROPERTIES_FILENAME;
+
+        this.standartProperties = readProperties(propertiesPath);
+        this.defaultPropertiesPath = this.workingDirectory + "/" + this.propertiesDir + "/" + DEFAULT_PROPERTIES_FILENAME;
+        this.defaultProperties =
+                readProperties(defaultPropertiesPath);
         this.urls = Collections.unmodifiableList(loadUrls());
     }
 
+    public WalletRunner(boolean isTestnet) {
+        this(isTestnet, Convert.nullToEmpty(System.getProperty("walletWorkingDir")), DEFAULT_PROPERTIES_DIR);
+    }
     public WalletRunner() {
-        this(true);
+        this(true, Convert.nullToEmpty(System.getProperty("walletWorkingDir")), DEFAULT_PROPERTIES_DIR);
+    }
+
+    public WalletRunner(boolean isTestnet, String workingDirectory) {
+        this(isTestnet, workingDirectory, DEFAULT_PROPERTIES_DIR);
     }
 
     private List<String> loadUrls() {
@@ -64,7 +85,7 @@ public class WalletRunner {
             if (peersValue != null) {
                 ips = peersValue.split(";");
             } else
-                throw new RuntimeException("Cannot load peers ips from " + PROPERTIES_PATH + " and from " + DEFAULT_PROPERTIES_PATH);
+                throw new RuntimeException("Cannot load peers ips from " + propertiesPath + " and from " + defaultPropertiesPath);
         }
         List<String> urls = new ArrayList<>();
         for (String ip : ips) {
@@ -76,11 +97,11 @@ public class WalletRunner {
     public void run() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
         Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
         method.setAccessible(true);
-        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
+        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("target/conf/").toAbsolutePath().toFile().toURL());
         System.setProperty("apl.runtime.mode", "desktop");
 
         //change config for test purposes
-            Map<String, String> parameters = new HashMap<>();
+        Map<String, String> parameters = new HashMap<>();
         if (isTestnet) {
             parameters.put("apl.isTestnet", "true");
         } else {
@@ -88,7 +109,7 @@ public class WalletRunner {
         }
         parameters.put("apl.adminPassword", ADMIN_PASS);
         parameters.put("apl.allowUpdates", String.valueOf(false));
-        savedStandartPropertiesPath = changeProperties(parameters);
+        Path savedStandartPropertiesPath = changeProperties(parameters);
         try {
             //run application
             String[] args = {""};
@@ -96,35 +117,36 @@ public class WalletRunner {
             Object[] param = {args};
             Method main = mainClass.getMethod("main", args.getClass());
             main.invoke(null, param);
-        //restore config
-        } finally {
+            //restore config
+        }
+        finally {
             restoreProperties(savedStandartPropertiesPath);
         }
     }
 
     private void restoreProperties(Path propertiesFilePath) throws IOException {
-        Path changedPropertiesPath = Paths.get(PROPERTIES_PATH).toAbsolutePath();
+        Path changedPropertiesPath = Paths.get(propertiesPath).toAbsolutePath();
+        try (
         InputStream inputStream = Files.newInputStream(propertiesFilePath);
-        OutputStream outputStream = Files.newOutputStream(changedPropertiesPath);
-        byte[] buff = new byte[1024];
-        int count;
-        while ((count = inputStream.read(buff)) != -1) {
-            outputStream.write(buff, 0, count);
+        OutputStream outputStream = Files.newOutputStream(changedPropertiesPath)) {
+
+            byte[] buff = new byte[1024];
+            int count;
+            while ((count = inputStream.read(buff)) != -1) {
+                outputStream.write(buff, 0, count);
+            }
         }
-        inputStream.close();
-        outputStream.close();
         Files.deleteIfExists(propertiesFilePath);
     }
 
     private Path changeProperties(Map<String, String> newProperties) throws IOException {
         Path tempPropertiesFile = Files.createTempFile("apl", "");
-        Files.delete(tempPropertiesFile);
-        Files.copy(Paths.get(PROPERTIES_PATH), tempPropertiesFile, StandardCopyOption.REPLACE_EXISTING);
-        Properties aplProperties = readProperties(PROPERTIES_PATH);
+        Files.copy(Paths.get(propertiesPath), tempPropertiesFile, StandardCopyOption.REPLACE_EXISTING);
+        Properties aplProperties = readProperties(propertiesPath);
         newProperties.forEach((name, value) -> {
             aplProperties.setProperty(name, value);
         });
-        writeProperties(aplProperties, PROPERTIES_PATH);
+        writeProperties(aplProperties, propertiesPath);
         return tempPropertiesFile;
     }
 

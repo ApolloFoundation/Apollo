@@ -475,6 +475,9 @@
                                 Skips integration tests if the value of skip.integration.tests
                                 property is true
                             -->
+                            <systemPropertyVariables>
+                                <walletWorkingDir>${project.build.directory}</walletWorkingDir>
+                            </systemPropertyVariables>
                             <includes>
                                 <include>com.apollocurrency.aplwallet.apl.http.*</include>
                             </includes>
