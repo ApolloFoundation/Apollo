@@ -307,6 +307,21 @@ public final class JSONData {
         return json;
     }
 
+    public static JSONObject genesisBalancesJson(int firstIndex, int lastIndex) {
+        JSONObject result = new JSONObject();
+        List<Map.Entry<String, Long>> genesisBalances = Account.getGenesisBalances(firstIndex, lastIndex);
+        JSONArray accountArray = new JSONArray();
+        for (int i = 0; i < genesisBalances.size(); i++) {
+            Map.Entry<String, Long> accountBalanceEntry = genesisBalances.get(i);
+            JSONObject accountBalanceJson = new JSONObject();
+            putAccount(accountBalanceJson, "account", Convert.parseAccountId(accountBalanceEntry.getKey()));
+            accountBalanceJson.put("balanceATM", accountBalanceEntry.getValue());
+            accountArray.add(accountBalanceJson);
+        }
+        result.put("accounts", accountArray);
+        return result;
+    }
+
     static JSONObject getAccountsStatistic(int numberOfAccounts) {
         //using one connection for 4 queries
         Connection con = null;

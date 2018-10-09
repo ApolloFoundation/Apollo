@@ -20,27 +20,45 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.db.*;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
         private static final Logger LOG = getLogger(Account.class);
+    private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
+            Genesis.loadGenesisAccounts();
 
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
@@ -379,6 +397,21 @@ public final class Account {
     public static boolean addCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
         return currencyListeners.addListener(listener, eventType);
     }
+
+    public static List<Map.Entry<String, Long>> getGenesisBalances(int firstIndex, int lastIndex) {
+        //skip first entry
+        firstIndex = Math.max(firstIndex, 1);
+        lastIndex = Math.max(lastIndex, 1);
+        if (lastIndex <= firstIndex) {
+            lastIndex = 100;
+        }
+        if (lastIndex - firstIndex > 100) {
+            lastIndex = firstIndex + 100;
+        }
+        return initialGenesisAccountsBalances.subList(firstIndex, lastIndex);
+    }
+
+
 
     public static boolean removeCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
         return currencyListeners.removeListener(listener, eventType);
