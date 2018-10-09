@@ -66,5 +66,4 @@ public final class ShufflingCreate extends CreateTransaction {
             return JSONResponses.notEnoughHolding(holdingType);
         }
     }
-
 }

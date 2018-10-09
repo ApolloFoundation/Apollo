@@ -2029,7 +2029,7 @@ public final class Account {
         return account;
     }
 
-    public static byte[] exportKeySeed(String passphrase, long accountId) {
+    public static byte[] exportSecretBytes(String passphrase, long accountId) {
         try {
             return keystore.getKeySeed(passphrase, accountId);
         }

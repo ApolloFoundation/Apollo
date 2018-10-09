@@ -28,10 +28,10 @@ public class ExportKey extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
-        byte[] keySeed = Account.exportKeySeed(passphrase, accountId);
+        byte[] secretBytes = Account.exportSecretBytes(passphrase, accountId);
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
-        response.put("keySeed", Convert.toHexString(keySeed));
+        response.put("secretBytes", Convert.toHexString(secretBytes));
         return response;
     }
 

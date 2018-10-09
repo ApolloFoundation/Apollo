@@ -47,8 +47,9 @@ public final class ShufflingCancel extends CreateTransaction {
         Shuffling shuffling = ParameterParser.getShuffling(req);
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
         byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
-        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretPhrase, cancellingAccountId, shufflingStateHash);
+        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
+        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash);
         Account account = ParameterParser.getSenderAccount(req);
         return createTransaction(req, account, attachment);
     }

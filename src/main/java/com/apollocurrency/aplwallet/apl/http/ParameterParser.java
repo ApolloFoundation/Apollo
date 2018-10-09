@@ -434,14 +434,17 @@ public final class ParameterParser {
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
+        return Crypto.getKeySeed(getSecretBytes(req, senderId, isMandatory));
+    }
+    public static byte[] getSecretBytes(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
         String secretPhrase = getSecretPhrase(req, false);
         if (secretPhrase != null) {
-            return Crypto.getKeySeed(secretPhrase);
+            return Convert.toBytes(secretPhrase);
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
             try {
-                return Crypto.getKeySeed(Account.findKeySeed(senderId, passphrase));
+                return Account.findKeySeed(senderId, passphrase);
             }
             catch (RuntimeException e) {
 //                ignore

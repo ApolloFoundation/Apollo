@@ -28,12 +28,12 @@ public class ImportKey extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, false));
-        byte[] keySeed = ParameterParser.getKeySeed(request, "keySeed", true);
-        passphrase = Account.importKeySeed(passphrase, keySeed);
+        byte[] secretBytes = ParameterParser.getBytes(request, "secretBytes", true);
+        passphrase = Account.importKeySeed(passphrase, secretBytes);
         JSONObject response = new JSONObject();
         response.put("imported", true);
         response.put("passphrase", passphrase);
-        JSONData.putAccount(response,"account", Convert.getId(Crypto.getPublicKey(keySeed)));
+        JSONData.putAccount(response, "account", Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes))));
         return response;
     }
 }

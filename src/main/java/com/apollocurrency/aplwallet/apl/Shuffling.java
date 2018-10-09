@@ -20,9 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.db.*;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -33,9 +39,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class Shuffling {
     private static final Logger LOG = getLogger(Shuffling.class);
@@ -439,7 +448,7 @@ public final class Shuffling {
         return TransactionDb.getFullHash(id);
     }
 
-    public Attachment.ShufflingAttachment process(final long accountId, final String secretPhrase, final byte[] recipientPublicKey) {
+    public Attachment.ShufflingAttachment process(final long accountId, final byte[] secretBytes, final byte[] recipientPublicKey) {
         byte[][] data = Convert.EMPTY_BYTES;
         byte[] shufflingStateHash = null;
         int participantIndex = 0;
@@ -467,7 +476,7 @@ public final class Shuffling {
         for (byte[] bytes : data) {
             AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.readEncryptedData(bytes);
             try {
-                byte[] decrypted = encryptedData.decrypt(secretPhrase);
+                byte[] decrypted = encryptedData.decrypt(secretBytes);
                 outputDataList.add(decrypted);
             } catch (Exception e) {
                 LOG.info("Decryption failed", e);
@@ -482,7 +491,7 @@ public final class Shuffling {
         for (int i = shufflingParticipants.size() - 1; i > participantIndex; i--) {
             ShufflingParticipant participant = shufflingParticipants.get(i);
             byte[] participantPublicKey = Account.getPublicKey(participant.getAccountId());
-            AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, secretPhrase, participantPublicKey, nonce);
+            AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, secretBytes, participantPublicKey, nonce);
             bytesToEncrypt = encryptedData.getBytes();
         }
         outputDataList.add(bytesToEncrypt);
@@ -518,7 +527,7 @@ public final class Shuffling {
         }
     }
 
-    public Attachment.ShufflingCancellation revealKeySeeds(final String secretPhrase, long cancellingAccountId, byte[] shufflingStateHash) {
+    public Attachment.ShufflingCancellation revealKeySeeds(final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
         Apl.getBlockchain().readLock();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             if (cancellingAccountId != this.assigneeAccountId) {
@@ -528,7 +537,7 @@ public final class Shuffling {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, getStateHash())) {
                 throw new RuntimeException("Current shuffling state hash does not match");
             }
-            long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+            long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
             byte[][] data = null;
             while (participants.hasNext()) {
                 ShufflingParticipant participant = participants.next();
@@ -546,7 +555,7 @@ public final class Shuffling {
             final byte[] nonce = Convert.toBytes(this.id);
             final List<byte[]> keySeeds = new ArrayList<>();
             byte[] nextParticipantPublicKey = Account.getPublicKey(participants.next().getAccountId());
-            byte[] keySeed = Crypto.getKeySeed(secretPhrase, nextParticipantPublicKey, nonce);
+            byte[] keySeed = Crypto.getKeySeed(secretBytes, nextParticipantPublicKey, nonce);
             keySeeds.add(keySeed);
             byte[] publicKey = Crypto.getPublicKey(keySeed);
             byte[] decryptedBytes = null;
@@ -566,7 +575,7 @@ public final class Shuffling {
             // decrypt all iteratively, adding the key seeds to the result
             while (participants.hasNext()) {
                 nextParticipantPublicKey = Account.getPublicKey(participants.next().getAccountId());
-                keySeed = Crypto.getKeySeed(secretPhrase, nextParticipantPublicKey, nonce);
+                keySeed = Crypto.getKeySeed(secretBytes, nextParticipantPublicKey, nonce);
                 keySeeds.add(keySeed);
                 AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.readEncryptedData(decryptedBytes);
                 decryptedBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
