@@ -91,11 +91,11 @@ public final class EncryptedData {
         this.nonce = nonce;
     }
 
-    public byte[] decrypt(String secretPhrase, byte[] theirPublicKey) {
+    public byte[] decrypt(byte[] keySeed, byte[] theirPublicKey) {
         if (data.length == 0) {
             return data;
         }
-        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), theirPublicKey, nonce);
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(keySeed), theirPublicKey, nonce);
         return Crypto.aesDecrypt(data, sharedKey);
     }
 

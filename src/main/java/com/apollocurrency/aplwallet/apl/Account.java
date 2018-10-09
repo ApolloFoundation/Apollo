@@ -875,8 +875,8 @@ public final class Account {
         return EncryptedData.encrypt(data, keySeed, publicKey);
     }
 
-    public static byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, String recipientSecretPhrase, boolean uncompress) {
-        byte[] decrypted = encryptedData.decrypt(recipientSecretPhrase, publicKey);
+    public static byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
+        byte[] decrypted = encryptedData.decrypt(recipientKeySeed, publicKey);
         if (uncompress && decrypted.length > 0) {
             decrypted = Convert.uncompress(decrypted);
         }
@@ -970,12 +970,12 @@ public final class Account {
         return Account.encryptTo(key, data, keySeed, compress);
     }
 
-    public byte[] decryptFrom(EncryptedData encryptedData, String recipientSecretPhrase, boolean uncompress) {
+    public byte[] decryptFrom(EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
         byte[] key = getPublicKey(this.id);
         if (key == null) {
             throw new IllegalArgumentException("Sender account doesn't have a public key set");
         }
-        return Account.decryptFrom(key, encryptedData, recipientSecretPhrase, uncompress);
+        return Account.decryptFrom(key, encryptedData, recipientKeySeed, uncompress);
     }
 
     public long getBalanceATM() {
