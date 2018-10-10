@@ -399,19 +399,19 @@ public final class Account {
     }
 
     public static List<Map.Entry<String, Long>> getGenesisBalances(int firstIndex, int lastIndex) {
-        //skip first entry
-        firstIndex = Math.max(firstIndex, 1);
-        lastIndex = Math.max(lastIndex, 1);
-        if (lastIndex <= firstIndex) {
-            lastIndex = 100;
+        firstIndex = Math.max(firstIndex, 0);
+        lastIndex = Math.max(lastIndex, 0);
+        if (lastIndex < firstIndex) {
+            throw new IllegalArgumentException("firstIndex should be less or equal lastIndex ");
         }
-        if (lastIndex - firstIndex > 100) {
-            lastIndex = firstIndex + 100;
+        if (firstIndex >= initialGenesisAccountsBalances.size() || lastIndex > initialGenesisAccountsBalances.size()) {
+            throw new IllegalArgumentException("firstIndex and lastIndex should be less than " + initialGenesisAccountsBalances.size());
         }
-        return initialGenesisAccountsBalances.subList(firstIndex, lastIndex);
+        if (lastIndex - firstIndex > 99) {
+            lastIndex = firstIndex + 99;
+        }
+        return initialGenesisAccountsBalances.subList(firstIndex, lastIndex + 1);
     }
-
-
 
     public static boolean removeCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
         return currencyListeners.removeListener(listener, eventType);
