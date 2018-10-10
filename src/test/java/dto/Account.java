@@ -21,7 +21,6 @@ public class Account {
     private long forgedBalanceATM;
     private String accountRS;
     private long unconfirmedBalanceATM;
-    private long account;
     private double percentage;
 
     @Override
@@ -31,7 +30,6 @@ public class Account {
                 ", forgedBalanceATM=" + forgedBalanceATM +
                 ", accountRS='" + accountRS + '\'' +
                 ", unconfirmedBalanceATM=" + unconfirmedBalanceATM +
-                ", account='" + account + '\'' +
                 ", percentage=" + percentage +
                 '}';
     }
@@ -45,13 +43,12 @@ public class Account {
                 forgedBalanceATM == account1.forgedBalanceATM &&
                 unconfirmedBalanceATM == account1.unconfirmedBalanceATM &&
                 Double.compare(account1.percentage, percentage) == 0 &&
-                Objects.equals(accountRS, account1.accountRS) &&
-                Objects.equals(account, account1.account);
+                Objects.equals(accountRS, account1.accountRS);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(balanceATM, forgedBalanceATM, accountRS, unconfirmedBalanceATM, account, percentage);
+        return Objects.hash(balanceATM, forgedBalanceATM, accountRS, unconfirmedBalanceATM, percentage);
     }
 
     public long getBalanceATM() {
@@ -70,17 +67,13 @@ public class Account {
         return unconfirmedBalanceATM;
     }
 
-    public long getAccount() {
-        return account;
-    }
 
-    public Account(long balanceATM, long forgedBalanceATM, String accountRS, long unconfirmedBalanceATM, long account, double percentage) {
+    public Account(long balanceATM, long forgedBalanceATM, String accountRS, long unconfirmedBalanceATM, double percentage) {
         this.balanceATM = balanceATM;
         this.forgedBalanceATM = forgedBalanceATM;
         this.accountRS = accountRS;
         this.unconfirmedBalanceATM = unconfirmedBalanceATM;
         this.percentage = percentage;
-        this.account = account;
     }
 
     public Account() {

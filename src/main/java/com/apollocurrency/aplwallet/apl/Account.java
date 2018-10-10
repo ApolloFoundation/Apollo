@@ -413,6 +413,10 @@ public final class Account {
         return initialGenesisAccountsBalances.subList(firstIndex, lastIndex + 1);
     }
 
+    public static int getGenesisBalancesNumber() {
+        return initialGenesisAccountsBalances.size();
+    }
+
     public static boolean removeCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
         return currencyListeners.removeListener(listener, eventType);
     }

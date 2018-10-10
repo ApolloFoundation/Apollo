@@ -1,6 +1,13 @@
 package com.apollocurrency.aplwallet.apl;
 
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.SSEDataHolder;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -18,10 +25,6 @@ import javax.ws.rs.sse.SseEventSource;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class BlockSSETest {
     private volatile boolean closeSource = false;
@@ -55,7 +58,7 @@ public class BlockSSETest {
                         LOG.debug("Got sseEvent: {}", sseEvent.readData());
                         SSEDataHolder sseDataHolder = TestUtil.getMAPPER().readValue(sseEvent.readData(), SSEDataHolder.class);
                         Assert.assertNotNull(sseDataHolder);
-                        Assert.assertEquals(sseDataHolder.getAccount().getAccount(), 9211698109297098287L);
+                        Assert.assertEquals(sseDataHolder.getAccount().getAccountRS(), Convert.rsAccount(9211698109297098287L));
 
                         Assert.assertTrue("Number of transactions should be eq or less than 10", sseDataHolder.getTransactions().size() <= 10);
                         Assert.assertTrue("Number of currencies should be eq or less than 3", sseDataHolder.getCurrencies().size() <= 3);

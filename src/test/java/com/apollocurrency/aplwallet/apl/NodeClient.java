@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.createURI;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.http.MainnetNodeClientTest;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
@@ -13,8 +16,13 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.*;
+import dto.Account;
+import dto.AccountsStatistic;
 import dto.Block;
+import dto.ForgingDetails;
+import dto.LedgerEntry;
+import dto.NextGenerators;
+import dto.Peer;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -32,11 +40,12 @@ import util.TestUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
-import static util.TestUtil.createURI;
 
 public class NodeClient {
     public static final Long DEFAULT_FEE = 100_000_000L; //1 APL
@@ -479,6 +488,25 @@ public class NodeClient {
         return MAPPER.readValue(json, LedgerEntry.class);
     }
 
+    public List<Account> getGenesisBalances(String url, int firstIndex, int lastIndex) throws IOException {
+        String json = getGenesisBalancesJSON(url, firstIndex, lastIndex);
+        JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<Account>>(){});
+    }
+    public String getGenesisBalancesJSON(String url, int firstIndex, int lastIndex) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getGenesisBalances");
+        params.put("firstIndex", String.valueOf(firstIndex));
+        params.put("lastIndex", String.valueOf(lastIndex));
+        return getJson(createURI(url), params);
+    }
+    public List<Account> getGenesisBalances(String url) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getGenesisBalances");
+        String json = getJson(createURI(url), params);
+        JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<Account>>(){});
+    }
 
     public String startForging(String url, String secretPhrase) throws IOException {
         return sendForgingRequest(url, secretPhrase, "startForging", null);

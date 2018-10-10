@@ -319,7 +319,7 @@ public final class JSONData {
             accountArray.add(accountBalanceJson);
         }
         result.put("accounts", accountArray);
-        result.put("total", genesisBalances.size());
+        result.put("total", Account.getGenesisBalancesNumber());
         return result;
     }
 
