@@ -255,7 +255,7 @@ public final class PrunableMessage {
         }
         byte[] publicKey = senderId == Account.getId(Crypto.getPublicKey(secretPhrase))
                 ? Account.getPublicKey(recipientId) : Account.getPublicKey(senderId);
-        return Account.decryptFrom(publicKey, encryptedData, secretPhrase, isCompressed);
+        return Account.decryptFrom(publicKey, encryptedData, Crypto.getKeySeed(secretPhrase), isCompressed);
     }
 
     public byte[] decrypt(byte[] sharedKey) {
