@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,8 +14,6 @@ import dto.JSONTransaction;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class TransactionDeserializer extends StdDeserializer<JSONTransaction> {
     private static final Logger LOG = getLogger(TransactionDeserializer.class);

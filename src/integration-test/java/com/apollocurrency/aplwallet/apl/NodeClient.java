@@ -4,8 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.createURI;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.http.MainnetNodeClientTest;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
@@ -13,9 +15,18 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.*;
 import dto.Account;
+import dto.AccountWithKey;
+import dto.AccountsStatistic;
 import dto.Block;
+import dto.ChatInfo;
+import dto.ConfirmedAccount;
+import dto.ForgingDetails;
+import dto.JSONTransaction;
+import dto.LedgerEntry;
+import dto.NextGenerators;
+import dto.Peer;
+import dto.TwoFactorAuthAccountDetails;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -33,17 +44,19 @@ import util.TestUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
-import static util.TestUtil.createURI;
 
 public class NodeClient {
     public static final Long DEFAULT_FEE = 100_000_000L; //1 APL
     public static final Long DEFAULT_AMOUNT = 100_000_000L; //1 APL
     public static final Long DEFAULT_DEADLINE = 60L; //1 hour
-    private static final Logger LOG = getLogger(MainnetNodeClientTest.class);
+    private static final Logger LOG = getLogger(NodeClient.class);
     private static final int REQUEST_TIMEOUT = 15;
     private static final HttpClient CLIENT = new HttpClient(new SslContextFactory());
     private static final ObjectMapper MAPPER = TestUtil.getMAPPER();
