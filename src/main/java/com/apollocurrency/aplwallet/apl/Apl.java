@@ -648,11 +648,9 @@ public final class Apl {
 
     private static void initUpdater() {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
-            Logger.logInfoMessage("Updater was disabled");
             return;
         }
         try {
-            Logger.logInfoMessage("Init updater");
             Class<?> aClass = Class.forName("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
             //force load lazy updater instance
             aClass.getMethod("getInstance").invoke(null);
