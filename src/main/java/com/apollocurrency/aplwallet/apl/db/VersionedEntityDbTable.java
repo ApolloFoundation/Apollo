@@ -30,7 +30,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -85,9 +87,11 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                     }
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
+        }
+        finally {
             if (!keepInCache) {
                 db.getCache(table).remove(dbKey);
             }
@@ -115,7 +119,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 }
             }
 
-            if (dbKeys.size() > 0 ) {
+            if (dbKeys.size() > 0) {
                 LOG.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
@@ -133,10 +137,11 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 pstmtSetLatest.executeUpdate();
                 //Db.getCache(table).remove(dbKey);
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-         LOG.debug("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        LOG.debug("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
     static void trim(final TransactionalDb db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
@@ -148,11 +153,18 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
              //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + dbKeyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + dbKeyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1");
-//             delete record by id
-             PreparedStatement pstmtDelete =
+//             delete record by ids
+             PreparedStatement pstmtDeleteByIds =
                      con.prepareStatement("DELETE FROM " + table + " WHERE db_id IN (SELECT * FROM table(x bigint = ? ))");
-
-
+             PreparedStatement selectDbIdStatement =
+                     con.prepareStatement("SELECT db_id, height FROM " + table + " " + dbKeyFactory.getPKClause());
+//             delete record by id
+             PreparedStatement pstmtDeletedById =
+                     con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
+             PreparedStatement pstmtSelectDeleteDeletedIds = con.prepareStatement("SELECT " + dbKeyFactory.getPKColumns() + " FROM " + table + " WHERE height >= ?");
+             PreparedStatement pstmtSelectDeleteDeletedCandidates =
+                     con.prepareStatement("SELECT DB_ID, " + dbKeyFactory.getPKColumns() + " FROM " + table + " WHERE height < ? AND height >= 0 " +
+                             "AND latest = FALSE ");
              PreparedStatement pstmtDeleteDeleted = con.prepareStatement("DELETE FROM " + table + " WHERE height < ? AND height >= 0 AND latest = FALSE "
                      + " AND (" + dbKeyFactory.getPKColumns() + ") NOT IN (SELECT (" + dbKeyFactory.getPKColumns() + ") FROM "
                      + table + " WHERE height >= ?) LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
@@ -166,8 +178,6 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 startDeleteTime = System.currentTimeMillis();
                 while (rs.next()) {
                     DbKey dbKey = dbKeyFactory.newKey(rs);
-                    PreparedStatement selectDbIdStatement =
-                            con.prepareStatement("SELECT db_id, height FROM " + table + " " + dbKeyFactory.getPKClause() );
                     dbKey.setPK(selectDbIdStatement);
                     List<Long> keys = new ArrayList<>();
                     int maxHeight = rs.getInt("max_height");
@@ -180,8 +190,8 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                         }
                     }
                     if (!keys.isEmpty()) {
-                        pstmtDelete.setObject(1, keys.toArray());
-                        deleted +=pstmtDelete.executeUpdate();
+                        pstmtDeleteByIds.setObject(1, keys.toArray());
+                        deleted += pstmtDeleteByIds.executeUpdate();
                         deleteStm++;
                         if (deleted % 100 == 0) {
                             db.commitTransaction();
@@ -191,23 +201,64 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 db.commitTransaction();
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
+                // changed algo - select all dbkeys from query and insert to hashset, create index for height and latest and select db_key and
+                // db_id from table using index. Next filter each account_id from set and delete it.
 
-                pstmtDeleteDeleted.setInt(1, height);
-                pstmtDeleteDeleted.setInt(2, height);
                 long startDeleteDeletedTime = System.currentTimeMillis();
-                do {
-                    deleted = pstmtDeleteDeleted.executeUpdate();
-                    db.commitTransaction();
-                } while (deleted >= Constants.BATCH_COMMIT_SIZE);
-                LOG.trace("Delete deleted time for table {} is: {}", table, System.currentTimeMillis() - startDeleteDeletedTime);
+//                int totalDeleteDeleted = deleteDeletedOldAlgo(pstmtDeleteDeleted, height);
+                int totalDeleteDeleted = deleteDeletedNewAlgo(pstmtSelectDeleteDeletedIds, pstmtSelectDeleteDeletedCandidates, pstmtDeletedById,
+                        dbKeyFactory, height);
+                LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > TRIM_TRANSACTION_TIME_THRESHHOLD) {
                 LOG.debug("Trim for table {} took {} ms", table, trimTime);
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
+    private static int deleteDeletedNewAlgo(PreparedStatement pstmtSelectDeleteDeletedIds,
+                                            PreparedStatement pstmtSelectDeleteDeletedCandidates,
+                                            PreparedStatement pstmtDeletedById, DbKey.Factory dbKeyFactory,
+                                            int height) throws SQLException {
+        int deleted = 0;
+        pstmtSelectDeleteDeletedIds.setInt(1, height);
+        Set<DbKey> ids = new HashSet<>();
+        try (ResultSet idsRs = pstmtSelectDeleteDeletedIds.executeQuery()) {
+            while (idsRs.next()) {
+                ids.add(dbKeyFactory.newKey(idsRs));
+            }
+        }
+        pstmtSelectDeleteDeletedCandidates.setInt(1, height);
+        try (ResultSet candidatesRs = pstmtSelectDeleteDeletedCandidates.executeQuery()) {
+            while (candidatesRs.next()) {
+                DbKey dbKey = dbKeyFactory.newKey(candidatesRs);
+                if (!ids.contains(dbKey)) {
+                    pstmtDeletedById.setLong(1, candidatesRs.getLong(1));
+                    pstmtDeletedById.executeUpdate();
+                    if (++deleted % 100 == 0) {
+                        db.commitTransaction();
+                    }
+                }
+            }
+        }
+        db.commitTransaction();
+        return deleted;
+    }
+
+    private static int deleteDeletedOldAlgo(PreparedStatement pstm, int height) throws SQLException {
+        int deleted;
+        int totalDeleted = 0;
+        pstm.setInt(1, height);
+        pstm.setInt(2, height);
+        do {
+            deleted = pstm.executeUpdate();
+            totalDeleted += deleted;
+            db.commitTransaction();
+        } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+        return totalDeleted;
+    }
 }
