@@ -10,7 +10,7 @@ import org.junit.BeforeClass;
 import util.WalletRunner;
 
 public abstract class APITest {
-    protected static WalletRunner runner = new WalletRunner(true);
+    protected static WalletRunner runner = new WalletRunner();
     protected static final NodeClient nodeClient = new NodeClient();
     protected static final String PASSPHRASE = "mypassphrase";
     @AfterClass

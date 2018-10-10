@@ -4,7 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
+import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.atm;
+
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.NodeClient;
+import com.apollocurrency.aplwallet.apl.TestConstants;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
@@ -12,21 +22,25 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.Block;
 import dto.ForgingDetails;
 import dto.JSONTransaction;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 import util.TestUtil;
 import util.WalletRunner;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
-import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
-import static org.slf4j.LoggerFactory.getLogger;
-import static util.TestUtil.atm;
 @Ignore
 public class TestnetIntegrationScenario {
     private static final Map<String, String> ACCOUNTS = new HashMap<>(TestUtil.loadKeys(TestConstants.TEST_FILE));

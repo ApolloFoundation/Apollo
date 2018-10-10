@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.1.2</version>
+    <version>1.20.4</version>
     <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
@@ -61,6 +61,76 @@
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>arm64</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>com/apollocurrency/aplwallet/apldesktop/*</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+            <!-- The Configuration of the development profile -->
+            <profile>
+                <id>dev</id>
+                <activation>
+                    <activeByDefault>true</activeByDefault>
+                </activation>
+                <properties>
+                    <!--
+                        Specifies the build.profile.id property that must be equal than the name of
+                        the directory that contains the profile specific configuration file.
+                        Because the name of the directory that contains the configuration file of the
+                        development profile is dev, we must set the value of the build.profile.id
+                        property to dev.
+                    -->
+                        <!--Do not exclude nothing! But this property should be specified for successful build-->
+                        <!--<exclude.path>${project.build.testSourceDirectory}</exclude.path>-->
+                    <build.profile.id>dev</build.profile.id>
+                    <!--
+                        Only unit tests are run when the development profile is active
+                    -->
+                    <skip.integration.tests>true</skip.integration.tests>
+                    <skip.unit.tests>false</skip.unit.tests>
+                </properties>
+            </profile>
+            <!-- The Configuration of the integration-test profile -->
+            <profile>
+                <id>integration-test</id>
+                <properties>
+                    <!--
+                        Specifies the build.profile.id property that must be equal than the name of
+                        the directory that contains the profile specific configuration file.
+                        Because the name of the directory that contains the configuration file of the
+                        integration-test profile is integration-test, we must set the value of the
+                        build.profile.id property to integration-test.
+                    -->
+                    <build.profile.id>integration-test</build.profile.id>
+                    <!--
+                        Only integration tests are run when the integration-test profile is active
+                    -->
+                    <skip.integration.tests>false</skip.integration.tests>
+                    <skip.unit.tests>true</skip.unit.tests>
+                </properties>
+            </profile>
+        <!--Profile for running all tests-->
+        <profile>
+            <id>test-all</id>
+            <properties>
+                <build.profile.id>test-all</build.profile.id>
+                <skip.integration.tests>false</skip.integration.tests>
+                <skip.unit.tests>false</skip.unit.tests>
+            </properties>
+        </profile>
+    </profiles>
 
 
     <dependencies>
@@ -384,6 +454,96 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.19.1</version>
+
+                <executions>
+                    <!--
+                        Invokes both the integration-test and the verify goals of the
+                        Failsafe Maven plugin
+                    -->
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <!--
+                                Skips integration tests if the value of skip.integration.tests
+                                property is true
+                            -->
+                            <systemPropertyVariables>
+                                <walletWorkingDir>${project.build.directory}</walletWorkingDir>
+                            </systemPropertyVariables>
+                            <includes>
+                                <include>com.apollocurrency.aplwallet.apl.http.*</include>
+                            </includes>
+                            <skipTests>${skip.integration.tests}</skipTests>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Excludes integration tests when unit tests are run -->
+                    <excludes>
+                        <exclude>com.apollocurrency.aplwallet.apl.http.*, **/*IntegrationTest.java, **/IT*.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <!-- Add a new source directory to our build -->
+                    <execution>
+                        <id>add-integration-test-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Configures the source directory of our integration tests -->
+                            <sources>
+                                <source>src/integration-test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <!-- Add a new resource directory to our build -->
+                    <execution>
+                        <id>add-integration-test-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Configures the resource directory of our integration tests -->
+                            <resources>
+                                <!--
+                                    Placeholders that are found from the files located in the configured resource
+                                    directories are replaced with the property values found from the profile
+                                    specific configuration file.
+                                -->
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>src/integration-test/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
