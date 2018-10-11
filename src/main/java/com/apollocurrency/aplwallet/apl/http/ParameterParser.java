@@ -434,7 +434,9 @@ public final class ParameterParser {
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
-        return Crypto.getKeySeed(getSecretBytes(req, senderId, isMandatory));
+
+        byte[] secretBytes = getSecretBytes(req, senderId, isMandatory);
+        return secretBytes == null ? null : Crypto.getKeySeed(secretBytes);
     }
     public static byte[] getSecretBytes(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
         String secretPhrase = getSecretPhrase(req, false);
