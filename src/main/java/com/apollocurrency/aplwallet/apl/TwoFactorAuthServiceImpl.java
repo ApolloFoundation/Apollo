@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.exception.InvalidTwoFactorAuthCredentialsException;
-import com.apollocurrency.aplwallet.apl.util.exception.TwoFactoAuthAlreadyRegisteredException;
-import com.apollocurrency.aplwallet.apl.util.exception.UnknownTwoFactorAuthException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
@@ -17,8 +16,6 @@ import org.slf4j.Logger;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
@@ -43,21 +40,21 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
             String existingBase32Secret = BASE_32.encodeToString(entity.getSecret());
             return new TwoFactorAuthDetails(getQrCodeUrl(Convert.rsAccount(entity.getAccount()), existingBase32Secret),
-                    existingBase32Secret);
-            } else {
-                throw new TwoFactoAuthAlreadyRegisteredException("Account has already enabled 2fa");
+                    existingBase32Secret, Status2FA.OK);
             }
+            return new TwoFactorAuthDetails(null, null, Status2FA.ALREADY_ENABLED);
         }
         //length of Base32Secret should be multiple 8 (length % 8 == 0); e.g. 8, 16, 24, 32, etc.
-        //
+
         String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(SECRET_LENGTH);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
         boolean saved = repository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false));
         if (!saved) {
-            throw new UnknownTwoFactorAuthException("Unable to enable 2fa");
+            return new TwoFactorAuthDetails(null, null, Status2FA.INTERNAL_ERROR);
         }
+
         String qrCodeUrl = getQrCodeUrl(Convert.rsAccount(accountId), base32Secret);
-        return new TwoFactorAuthDetails(qrCodeUrl, base32Secret);
+        return new TwoFactorAuthDetails(qrCodeUrl, base32Secret, Status2FA.OK);
     }
 
     private String getQrCodeUrl(String rsAccount, String base32Secret) {
@@ -71,14 +68,13 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public void disable(long accountId, int authCode) {
+    public Status2FA disable(long accountId, int authCode) {
         TwoFactorAuthEntity entity = repository.get(accountId);
-        if (authEntity(entity, authCode)) {
-            //account with 2fa already exist
-            repository.delete(accountId);
-        } else {
-            throw new InvalidTwoFactorAuthCredentialsException("2fa was failed");
+        Status2FA status2Fa = process2FAEntity(entity, true, authCode);
+        if (status2Fa != Status2FA.OK) {
+            return status2Fa;
         }
+        return repository.delete(accountId) ? Status2FA.OK : Status2FA.INTERNAL_ERROR;
     }
 
     @Override
@@ -88,9 +84,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public boolean tryAuth(long accountId, int authCode) {
+    public Status2FA tryAuth(long accountId, int authCode) {
         TwoFactorAuthEntity entity = repository.get(accountId);
-        return authEntity(entity, authCode) && entity.isConfirmed();
+        return process2FAEntity(entity, true, authCode);
     }
 
     private boolean authEntity(TwoFactorAuthEntity entity, int authCode) {
@@ -111,11 +107,33 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public boolean confirm(long accountId, int authCode) {
+    public Status2FA confirm(long accountId, int authCode) {
         TwoFactorAuthEntity entity = repository.get(accountId);
-        if (entity != null && !entity.isConfirmed() && authEntity(entity, authCode)) {
-            entity.setConfirmed(true);
-            return repository.update(entity);
-        } else return false;
+        Status2FA analyzedStatus = process2FAEntity(entity, false, authCode);
+        if (analyzedStatus != Status2FA.OK) {
+            return analyzedStatus;
+        }
+        entity.setConfirmed(true);
+        boolean updated = repository.update(entity);
+        if (!updated) {
+            return Status2FA.INTERNAL_ERROR;
+        }
+        return Status2FA.OK;
+    }
+
+    private Status2FA process2FAEntity(TwoFactorAuthEntity entity, boolean shouldBeConfirmed, int authCode) {
+        if (entity == null) {
+            return Status2FA.NOT_ENABLED;
+        }
+        if (!shouldBeConfirmed && entity.isConfirmed()) {
+            return Status2FA.ALREADY_CONFIRMED;
+        }
+        if (shouldBeConfirmed && !entity.isConfirmed()) {
+            return Status2FA.NOT_CONFIRMED;
+        }
+        if (!authEntity(entity, authCode)) {
+            return Status2FA.INCORRECT_CODE;
+        }
+        return Status2FA.OK;
     }
 }

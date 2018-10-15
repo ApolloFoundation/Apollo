@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -26,13 +27,18 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        String passphrase = ParameterParser.getPassphrase(request, true);
-        long accountId = ParameterParser.getAccountId(request, true);
+        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
         int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+
+        TwoFactorAuthService.Status2FA status2FA;
+        if (params2FA.isPassphrasePresent()) {
+            status2FA = Account.disable2FA(params2FA.accountId, params2FA.passphrase, code);
+        } else {
+            status2FA = Account.disable2FA(params2FA.secretPhrase, code);
+        }
         JSONObject response = new JSONObject();
-        Account.disable2FA(accountId, passphrase, code);
-        JSONData.putAccount(response, "account", accountId);
-        response.put("2FAdisabled", true);
+        JSONData.putAccount(response, "account", params2FA.accountId);
+        response.put("status", status2FA);
         return response;
     }
 

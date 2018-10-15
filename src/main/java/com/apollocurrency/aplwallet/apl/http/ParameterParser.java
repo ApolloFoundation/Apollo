@@ -69,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.HoldingType;
 import com.apollocurrency.aplwallet.apl.Poll;
+import com.apollocurrency.aplwallet.apl.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -445,12 +446,8 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            try {
-                return Account.findKeySeed(senderId, passphrase);
-            }
-            catch (RuntimeException e) {
-//                ignore
-            }
+            SecretBytesDetails secretBytes = Account.findSecretBytes(senderId, passphrase, isMandatory);
+            return secretBytes == null ? null : secretBytes.getSecretBytes();
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
@@ -505,13 +502,9 @@ public final class ParameterParser {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-                        try {
-                            return Crypto.getPublicKey(Crypto.getKeySeed(Account.findKeySeed(accountId, passphrase)));
-                        }
-                        catch (RuntimeException e) {
-                            if (isMandatory) {
-                                throw new ParameterException("Bad credentials ", e, JSONResponses.incorrect("passphrase"));
-                            }
+                        SecretBytesDetails secretBytesDetails = Account.findSecretBytes(accountId, passphrase, isMandatory);
+                        if (secretBytesDetails != null && secretBytesDetails.getSecretBytes() != null) {
+                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytesDetails.getSecretBytes()));
                         }
                     }
                 } else {
@@ -947,6 +940,32 @@ public final class ParameterParser {
         byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
+
+    public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req, String accountName, boolean isMandatory) throws ParameterException {
+        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
+        String secretPhrase = Convert.emptyToNull(ParameterParser.getSecretPhrase(req, false));
+
+        if (isMandatory && secretPhrase == null && passphrase == null) {
+            throw new ParameterException(JSONResponses.missing("secretPhrase", "passphrase"));
+        }
+        if (secretPhrase != null && passphrase != null) {
+            throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
+        }
+        long accountId = 0;
+        if (passphrase != null) {
+            accountId = ParameterParser.getAccountId(req, accountName, true);
+        } else if (secretPhrase != null){
+            accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        }
+        return new TwoFactorAuthParameters(accountId, passphrase, secretPhrase);
+
+    }
+
+    public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req) throws ParameterException {
+        return parse2FARequest(req, "account", true);
+
+    }
+
     private ParameterParser() {} // never
 
     public static class PrivateTransactionsAPIData {
@@ -1001,6 +1020,44 @@ public final class ParameterParser {
             return publicKey != null;
         }
     }
+
+    public static class TwoFactorAuthParameters {
+        long accountId;
+        String passphrase;
+        String secretPhrase;
+
+        public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
+            if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
+                throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
+            }
+        }
+        public long getAccountId() {
+            return accountId;
+        }
+
+        public String getPassphrase() {
+            return passphrase;
+        }
+
+        public String getSecretPhrase() {
+            return secretPhrase;
+        }
+
+        public boolean isSecretPhrasePresent() {
+            return secretPhrase != null;
+        }
+
+        public boolean isPassphrasePresent() {
+            return passphrase != null;
+        }
+
+        public TwoFactorAuthParameters(long accountId, String passphrase, String secretPhrase) {
+            this.accountId = accountId;
+            this.passphrase = passphrase;
+            this.secretPhrase = secretPhrase;
+        }
+    }
+
 
     public static class FileData {
         private final Part part;

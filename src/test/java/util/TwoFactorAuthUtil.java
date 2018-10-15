@@ -16,12 +16,14 @@ public class TwoFactorAuthUtil {
 
     public static boolean tryAuth(TwoFactorAuthService service, long account, String secret, int maxAttempts) throws GeneralSecurityException {
         // TimeBased code sometimes expire before calling tryAuth method, which will generate another code
-        boolean authenticated = false;
         for (int i = 0; i < maxAttempts; i++) {
             int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(secret);
-             authenticated = service.tryAuth(account, currentNumber);
+            TwoFactorAuthService.Status2FA status2FA = service.tryAuth(account, currentNumber);
+            if (status2FA == TwoFactorAuthService.Status2FA.OK) {
+                return true;
+            }
         }
-        return authenticated;
+        return false;
     }
 
     public static void verifySecretCode(TwoFactorAuthDetails details, String accountRS) {

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -13,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class Confirm2FA extends APIServlet.APIRequestHandler {
     private Confirm2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "code");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "code", "secretPhrase");
     }
 
     private static class Confirm2FAHolder {
@@ -25,13 +26,20 @@ public class Confirm2FA extends APIServlet.APIRequestHandler {
     }
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        String passphrase = ParameterParser.getPassphrase(request, true);
-        long accountId = ParameterParser.getAccountId(request, true);
+        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
         int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+
         JSONObject response = new JSONObject();
-        Account.confirm2FA(accountId, passphrase, code);
-        JSONData.putAccount(response, "account", accountId);
-        response.put("confirmed", true);
+
+        TwoFactorAuthService.Status2FA confirmStatus;
+        if (params2FA.isPassphrasePresent()) {
+            confirmStatus = Account.confirm2FA(params2FA.accountId, params2FA.passphrase, code);
+        } else {
+            confirmStatus = Account.confirm2FA(params2FA.secretPhrase, code);
+        }
+
+        JSONData.putAccount(response, "account", params2FA.accountId);
+        response.put("status", confirmStatus);
         return response;
     }
 }

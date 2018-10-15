@@ -1,24 +1,20 @@
 package com.apollocurrency.aplwallet.apl;
 
-import java.io.IOException;
-
 public interface KeyStore {
     /**
-     * Return key seed bytes if private key exists for accountId and can be decrypted by passphrase
+     * Return secret bytes if key exists for accountId and can be decrypted by passphrase
      * @param passphrase - string, which consist of random words for keySeed decryption
      * @param accountId - id of account, which keySeed should be decrypted
-     * @return bytes of encrypted keySeed
-     * @throws IOException when unable to read or load encrypted keySeed
-     * @throws SecurityException when passphrase is incorrect
+     * @return decrypted secret bytes with status OK or null with fail status
      */
-    byte[] getKeySeed(String passphrase, long accountId) throws IOException, SecurityException;
+    SecretBytesDetails getSecretBytes(String passphrase, long accountId);
 
     /**
-     * Save encrypted by passphrase keySeed to keystore
-     * @param passphrase - string, which consist of random words for keySeed encryption
-     * @param keySeed - secret array of bytes which will be stored into keystore
-     * @throws IOException when unable to store encrypted keySeed
+     * Save encrypted by passphrase secretBytes to keystore
+     * @param passphrase - string, which consist of random words for encryption
+     * @param secretBytes - secret array of bytes which will be stored into keystore
+     * @return true - if secretBytes were saved successfully, otherwise - false
      */
-    void saveSecretBytes(String passphrase, byte[] keySeed) throws IOException;
+    boolean saveSecretBytes(String passphrase, byte[] secretBytes);
 
 }

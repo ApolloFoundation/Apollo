@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class Enable2FA extends APIServlet.APIRequestHandler {
     private Enable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "secretPhrase");
     }
 
     private static class Enable2FAHolder {
@@ -26,11 +26,16 @@ public class Enable2FA extends APIServlet.APIRequestHandler {
     }
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        String passphrase = ParameterParser.getPassphrase(request, true);
-        long accountId = ParameterParser.getAccountId(request, true);
+        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
+
+        TwoFactorAuthDetails twoFactorAuthDetails;
+        if (params2FA.isPassphrasePresent()) {
+            twoFactorAuthDetails = Account.enable2FA(params2FA.accountId, params2FA.passphrase);
+        } else {
+            twoFactorAuthDetails = Account.enable2FA(params2FA.secretPhrase);
+        }
         JSONObject response = new JSONObject();
-        TwoFactorAuthDetails twoFactorAuthDetails = Account.enable2FA(accountId, passphrase);
-        JSONData.putAccount(response, "account", accountId);
+        JSONData.putAccount(response, "account", params2FA.accountId);
         response.put("secret", twoFactorAuthDetails.getSecret());
         response.put("qrCodeUrl", twoFactorAuthDetails.getQrCodeUrl());
         return response;

@@ -15,12 +15,11 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Account;
+import dto.Account2FA;
 import dto.AccountWithKey;
 import dto.AccountsStatistic;
 import dto.Block;
 import dto.ChatInfo;
-import dto.ConfirmedAccount;
 import dto.ForgingDetails;
 import dto.JSONTransaction;
 import dto.LedgerEntry;
@@ -686,14 +685,14 @@ public class NodeClient {
         }
         return accountWithKey;
     }
-    public String importKey(String url, String passphrase, String keySeed) throws IOException {
-        Objects.requireNonNull(keySeed);
+    public String importKey(String url, String passphrase, String secretBytes) throws IOException {
+        Objects.requireNonNull(secretBytes);
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "importKey");
         if (passphrase != null && !passphrase.isEmpty()) {
             parameters.put("passphrase", passphrase);
         }
-        parameters.put("keySeed", keySeed);
+        parameters.put("secretBytes", secretBytes);
 
         String json = postJson(createURI(url), parameters, "");
         JsonNode jsonNode = MAPPER.readTree(json);
@@ -720,7 +719,15 @@ public class NodeClient {
         return details2FA;
     }
 
-    public Account disable2FA(String url, String account,String passphrase, long code) throws IOException {
+    public Account2FA disable2FA(String url, String account,String passphrase, long code) throws IOException {
+        String json = disable2FAJson(url, account, passphrase, code);
+        Account2FA returnedAcc = MAPPER.readValue(json, Account2FA.class);
+        if (returnedAcc.getId() == 0) {
+            throw new RuntimeException("2fa not disabled");
+        }
+        return returnedAcc;
+    }
+    public String disable2FAJson(String url, String account,String passphrase, long code) throws IOException {
         Objects.requireNonNull(passphrase);
         Objects.requireNonNull(account);
         Map<String, String> parameters = new HashMap<>();
@@ -729,15 +736,10 @@ public class NodeClient {
         parameters.put("account", account);
         parameters.put("code", String.valueOf(code));
 
-        String json = postJson(createURI(url), parameters, "");
-        Account returnedAcc = MAPPER.readValue(json, Account.class);
-        if (returnedAcc.getId() == 0) {
-            throw new RuntimeException("2fa not disabled");
-        }
-        return returnedAcc;
+        return  postJson(createURI(url), parameters, "");
     }
 
-    public ConfirmedAccount confirm2FA(String url, BasicAccount account, String passphrase, long code) throws IOException {
+    public Account2FA confirm2FA(String url, BasicAccount account, String passphrase, long code) throws IOException {
         Objects.requireNonNull(passphrase);
         Objects.requireNonNull(account);
         Map<String, String> parameters = new HashMap<>();
@@ -748,7 +750,7 @@ public class NodeClient {
 
         String json = postJson(createURI(url), parameters, "");
 
-        return MAPPER.readValue(json, ConfirmedAccount.class);
+        return MAPPER.readValue(json, Account2FA.class);
     }
 
 }

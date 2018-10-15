@@ -196,6 +196,14 @@ public final class JSONResponses {
         NOT_ENOUGH_CURRENCY = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware ACCOUNT_GENERATION_ERROR;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 6);
+        response.put("errorDescription", "Error occurred during account generation");
+        ACCOUNT_GENERATION_ERROR = JSON.prepare(response);
+    }
+
     public static final JSONStreamAware ERROR_NOT_ALLOWED;
     static {
         JSONObject response = new JSONObject();

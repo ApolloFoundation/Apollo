@@ -35,16 +35,15 @@ import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -789,15 +788,22 @@ public final class Account {
         return accountAsset == null ? 0 : accountAsset.quantityATU;
     }
 
-    public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) {
-            findKeySeed(accountId, passphrase);
+    public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) throws ParameterException {
+            findSecretBytes(accountId, passphrase, true);
             return service2FA.enable(accountId);
+    }
+    public static TwoFactorAuthDetails enable2FA(String secretPhrase) throws ParameterException {
+        return service2FA.enable(Convert.getId(Crypto.getPublicKey(secretPhrase)));
     }
 
 
-    public static void disable2FA(long accountId, String passphrase, int code) {
-        findKeySeed(accountId, passphrase);
-        service2FA.disable(accountId, code);
+    public static TwoFactorAuthService.Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
+        findSecretBytes(accountId, passphrase, true);
+        return service2FA.disable(accountId, code);
+    }
+
+    public static TwoFactorAuthService.Status2FA disable2FA(String secretPhrase, int code) throws ParameterException {
+        return service2FA.disable(Convert.getId(Crypto.getPublicKey(secretPhrase)), code);
     }
 
     public static boolean isEnabled2FA(long accountId) {
@@ -805,36 +811,63 @@ public final class Account {
     }
 
     public static void verify2FA(HttpServletRequest req, String accountName) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, accountName, false);
-        if (Account.isEnabled2FA(accountId)) {
-            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
+
+        if (Account.isEnabled2FA(params2FA.getAccountId())) {
+            ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
             int code = ParameterParser.getInt(req,"code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
-            Account.auth2FA(passphrase, accountId, code);
+            TwoFactorAuthService.Status2FA status2FA;
+            if (params2FA.isPassphrasePresent()) {
+                 status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
+            } else {
+                status2FA = Account.auth2FA(params2FA.getSecretPhrase(), code);
+            }
+            if (status2FA != TwoFactorAuthService.Status2FA.OK) {
+                LOG.debug("2fa failed for acc {} - {}", params2FA.getAccountId(), status2FA);
+                JSONObject errorObject = new JSONObject();
+                errorObject.put("error", status2FA);
+                throw new ParameterException("2fa failed", null, errorObject);
+            }
         }
     }
 
-    public static byte[] findKeySeed(long accountId, String passphrase) {
-        try {
-            return keystore.getKeySeed(passphrase, accountId);
-        }
-        catch (IOException e) {
-            LOG.error(e.toString(), e);
-            throw new RuntimeException("No such account found");
-        }
+    public static SecretBytesDetails findSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
+            SecretBytesDetails secretBytes = keystore.getSecretBytes(passphrase, accountId);
+            if (secretBytes.getExtractStatus() == SecretBytesDetails.ExtractStatus.OK) {
+                return secretBytes;
+            } else {
+                LOG.debug("No appropriate secret bytes for account {} - {}", accountId, secretBytes.getExtractStatus());
+                if (isMandatory) {
+                    JSONObject errorObject = new JSONObject();
+                    errorObject.put("error", secretBytes.getExtractStatus());
+                    errorObject.put("description", "Key not found");
+                    throw new ParameterException("Key not found for account - " + accountId, null, errorObject);
+                }
+                return secretBytes;
+            }
     }
 
-    public static void confirm2FA(long accountId, String passphrase, int code) {
-        findKeySeed(accountId, passphrase);
-        if (!service2FA.confirm(accountId, code)) {
-            throw new RuntimeException("2fa not enabled or already confirmed or bad credentials");
-        }
+    public static TwoFactorAuthService.Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
+        findSecretBytes(accountId, passphrase, true);
+        return service2FA.confirm(accountId, code);
+    }
+    public static TwoFactorAuthService.Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
+        return service2FA.confirm(Convert.getId(Crypto.getPublicKey(secretPhrase)), code);
     }
 
-    public static void auth2FA(String passphrase, long accountId, int code) throws ParameterException {
-        findKeySeed(accountId, passphrase);
-        if (!service2FA.tryAuth(accountId, code)) {
-            throw new ParameterException("2fa required", null, JSONResponses.REQUIRED_2FA);
+    public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
+        SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, false);
+        if (secretBytes.getExtractStatus() != SecretBytesDetails.ExtractStatus.OK) {
+            JSONObject jsonError = new JSONObject();
+            jsonError.put("error", secretBytes.getExtractStatus());
+            jsonError.put("description", "Extract exception");
+            throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null, jsonError);
         }
+        return service2FA.tryAuth(accountId, code);
+    }
+
+    public static TwoFactorAuthService.Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
+        return service2FA.tryAuth(Convert.getId(Crypto.getPublicKey(secretPhrase)), code);
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId) {
@@ -2019,36 +2052,26 @@ public final class Account {
 
     public static GeneratedAccount generateAccount(String passphrase) {
         GeneratedAccount account = accountGenerator.generate(passphrase);
-        try {
-            keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
-        }
-        catch (IOException e) {
-            LOG.error(e.toString(), e);
-            throw new RuntimeException("Unable to save generated account");
+        boolean saved = keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
+        if (!saved) {
+            LOG.debug("Cannot save account");
+            return null;
         }
         return account;
     }
 
-    public static byte[] exportSecretBytes(String passphrase, long accountId) {
-        try {
-            return keystore.getKeySeed(passphrase, accountId);
-        }
-        catch (IOException e) {
-            LOG.error("Unable to export private key", e);
-            return new byte[0];
-        }
+    public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {
+        return findSecretBytes(accountId, passphrase, true).getSecretBytes();
     }
-    public static String importKeySeed(String passphrase, byte[] keySeed) {
-        try {
-            if (passphrase == null) {
-                passphrase = passphraseGenerator.generate();
-            }
-            keystore.saveSecretBytes(passphrase, keySeed);
-            return passphrase;
+    public static String importSecretBytes(String passphrase, byte[] secretBytes) {
+        if (passphrase == null) {
+            passphrase = passphraseGenerator.generate();
         }
-        catch (IOException e) {
-            LOG.error("Unable to export private key", e);
+        boolean saved = keystore.saveSecretBytes(passphrase, secretBytes);
+        if (!saved) {
+            LOG.debug("Unable to save secret bytes");
             return null;
         }
+        return passphrase;
     }
 }

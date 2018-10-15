@@ -8,29 +8,29 @@ import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public class AccountWithKey extends BasicAccount {
-    private byte[] keySeed;
+    private byte[] secretBytes;
 
-    public AccountWithKey(String account, byte[] keySeed) {
+    public AccountWithKey(String account, byte[] secretBytes) {
         super(account);
-        this.keySeed = keySeed;
+        this.secretBytes = secretBytes;
     }
-    public AccountWithKey(long account, byte[] keySeed) {
+    public AccountWithKey(long account, byte[] secretBytes) {
         super(account);
-        this.keySeed = keySeed;
+        this.secretBytes = secretBytes;
     }
 
     public AccountWithKey() {
     }
 
-    public byte[] getKeySeed() {
-        return keySeed;
+    public byte[] getSecretBytes() {
+        return secretBytes;
     }
 
-    public void setKeySeed(byte[] keySeed) {
-        this.keySeed = keySeed;
+    public void setSecretBytes(byte[] secretBytes) {
+        this.secretBytes = secretBytes;
     }
 
     public void setKeySeed(String keySeed) {
-        this.keySeed = Convert.parseHexString(keySeed);
+        this.secretBytes = Convert.parseHexString(keySeed);
     }
 }

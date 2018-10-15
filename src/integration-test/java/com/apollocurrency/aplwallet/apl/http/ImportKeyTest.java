@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.junit.Assert;
@@ -12,17 +14,15 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Random;
 
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
-
 public class ImportKeyTest extends DeleteGeneratedAccountsTest {
     @Test
     public void testImportKey() throws IOException {
         Random random = new Random();
-        byte[] keySeed = new byte[32];
-        random.nextBytes(keySeed);
+        byte[] secretBytes = new byte[32];
+        random.nextBytes(secretBytes);
 
-        String passphrase = nodeClient.importKey(TEST_LOCALHOST, PASSPHRASE, Convert.toHexString(keySeed));
-        generatedAccounts.add(Convert.rsAccount(Convert.getId(Crypto.getPublicKey(keySeed))));
+        String passphrase = nodeClient.importKey(TEST_LOCALHOST, PASSPHRASE, Convert.toHexString(secretBytes));
+        generatedAccounts.add(Convert.rsAccount(Convert.getId(Crypto.getPublicKey(secretBytes))));
 
         Assert.assertEquals(PASSPHRASE, passphrase);
     }

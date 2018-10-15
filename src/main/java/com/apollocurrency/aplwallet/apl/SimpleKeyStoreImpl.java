@@ -4,12 +4,15 @@
 
  package com.apollocurrency.aplwallet.apl;
 
- import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+ import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,7 +26,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
  public class SimpleKeyStoreImpl implements KeyStore {
-     private static final String BAD_CREDENTIALS = "Bad credentials";
+         private static final Logger LOG = getLogger(SimpleKeyStoreImpl.class);
      private Path keystoreDirPath;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -46,26 +49,38 @@ import java.util.stream.Collectors;
      }
 
      @Override
-     public byte[] getKeySeed(String passphrase, long accountId) throws IOException, SecurityException {
+     public SecretBytesDetails getSecretBytes(String passphrase, long accountId)  {
          Objects.requireNonNull(passphrase);
 
-         Path privateKeyPath = verifyExistOnlyOne(findSecretPaths(accountId), accountId);
-         EncryptedSecretBytesDetails secretBytesDetails = JSON.getMapper().readValue(privateKeyPath.toFile(), EncryptedSecretBytesDetails.class);
+         List<Path> secretPaths = findSecretPaths(accountId);
+
+         if (secretPaths.size() == 0) {
+             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.NOT_FOUND);
+         } else if (secretPaths.size() > 1) {
+             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.DUPLICATE_FOUND);
+         }
+
+         Path privateKeyPath = secretPaths.get(0);
+         try {
+             EncryptedSecretBytesDetails secretBytesDetails =
+                     JSON.getMapper().readValue(privateKeyPath.toFile(), EncryptedSecretBytesDetails.class);
 
          byte[] key = Crypto.getKeySeed(passphrase, secretBytesDetails.getNonce(), Convert.longToBytes(secretBytesDetails.getTimestamp()));
-         try {
              byte[] decryptedSecretBytes = Crypto.aesDecrypt(secretBytesDetails.getEncryptedSecretBytes(), key);
 
              long actualAccId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(decryptedSecretBytes)));
              if (accountId != actualAccId) {
-                 throw new SecurityException(BAD_CREDENTIALS);
+                 return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.BAD_CREDENTIALS);
              }
-             return decryptedSecretBytes;
+             return new SecretBytesDetails(decryptedSecretBytes, SecretBytesDetails.ExtractStatus.OK);
+
+         }
+         catch (IOException e) {
+             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.READ_ERROR);
          }
          catch (RuntimeException e) {
-             throw new SecurityException(BAD_CREDENTIALS);
+             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.DECRYPTION_ERROR);
          }
-
      }
 
      private byte[] generateBytes(int size) {
@@ -75,38 +90,36 @@ import java.util.stream.Collectors;
      }
 
 
-     protected List<Path> findSecretPaths(long accountId) throws IOException {
-         return
-                 Files.list(keystoreDirPath).filter(path -> {
-                     String stringPath = path.toString();
-                     int beginIndex = stringPath.indexOf("---");
-                     if (beginIndex == -1) {
-                         return false;
-                     }
-                     return stringPath.substring(beginIndex + 3).equalsIgnoreCase(String.valueOf(Convert.rsAccount(accountId)));
-                 }).collect(Collectors.toList());
-     }
-
-     protected Path verifyExistOnlyOne(List<Path> secretBytesFiles, long accountId) {
-         if (secretBytesFiles.size() == 0) {
-             throw new RuntimeException("No private key, associated with id = " + accountId);
+     protected List<Path> findSecretPaths(long accountId) {
+         try {
+             return
+                     Files.list(keystoreDirPath).filter(path -> {
+                         String stringPath = path.toString();
+                         int beginIndex = stringPath.indexOf("---");
+                         if (beginIndex == -1) {
+                             return false;
+                         }
+                         return stringPath.substring(beginIndex + 3).equalsIgnoreCase(String.valueOf(Convert.rsAccount(accountId)));
+                     }).collect(Collectors.toList());
          }
-         if (secretBytesFiles.size() > 1) {
-             throw new RuntimeException("Found " + secretBytesFiles.size() + " private keys associated with id ="
-                     + accountId + " . Expected only 1.");
+         catch (IOException e) {
+             LOG.debug("KeyStore exception: {}", e.getMessage());
+             return null;
          }
-         return secretBytesFiles.get(0);
      }
 
      @Override
-     public void saveSecretBytes(String passphrase, byte[] secretBytes) throws IOException {
+     public boolean saveSecretBytes(String passphrase, byte[] secretBytes) {
          Objects.requireNonNull(passphrase);
          Objects.requireNonNull(secretBytes);
 
          long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
          Path keyPath = makeTargetPath(accountId);
+         if (keyPath == null) {
+             return false;
+         }
          EncryptedSecretBytesDetails secretBytesDetails = makeEncryptedSecretBytesDetails(passphrase, secretBytes, accountId);
-         storeJSONSecretBytes(keyPath, secretBytesDetails);
+         return storeJSONSecretBytes(keyPath, secretBytesDetails);
      }
 
      private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
@@ -117,24 +130,33 @@ import java.util.stream.Collectors;
          return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, secretBytes.length, version, nonce, timestamp);
      }
 
-     private Path makeTargetPath(long accountId) throws IOException {
-         requireNewAccount(accountId);
+     private Path makeTargetPath(long accountId) {
+         boolean isNew = isNewAccount(accountId);
+         if (!isNew) {
+             LOG.debug("Account already exist");
+             return null;
+         }
          Instant instant = Instant.now();
          OffsetDateTime utcTime = instant.atOffset( ZoneOffset.UTC );
          return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.rsAccount(accountId)));
      }
 
-     private void requireNewAccount(long accountId) throws IOException {
+     private boolean isNewAccount(long accountId) {
          List<Path> secretBytesPaths = findSecretPaths(accountId);
-         if (secretBytesPaths.size() != 0) {
-             throw new RuntimeException("Unable to save secretBytes");
-         }
+         return secretBytesPaths != null && secretBytesPaths.size() == 0;
      }
 
-     protected void storeJSONSecretBytes(Path keyPath, EncryptedSecretBytesDetails secretBytesDetails) throws IOException {
-         ObjectMapper mapper = JSON.getMapper();
-         ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
-         Files.createFile(keyPath);
-         writer.writeValue(keyPath.toFile(), secretBytesDetails);
+     protected boolean storeJSONSecretBytes(Path keyPath, EncryptedSecretBytesDetails secretBytesDetails) {
+         try {
+             ObjectMapper mapper = JSON.getMapper();
+             ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
+             Files.createFile(keyPath);
+             writer.writeValue(keyPath.toFile(), secretBytesDetails);
+             return true;
+         }
+         catch (IOException e) {
+             LOG.debug("Unable to save secretBytes: {}", e.getMessage());
+             return false;
+         }
      }
  }

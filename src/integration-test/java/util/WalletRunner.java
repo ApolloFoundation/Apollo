@@ -53,10 +53,10 @@ public class WalletRunner {
         this.workingDirectory = Convert.nullToEmpty(workingDirectory);
         this.propertiesDir = Convert.nullToEmpty(propertiesDir);
 
-        this.propertiesPath = this.workingDirectory + "/" + this.propertiesDir + "/" + PROPERTIES_FILENAME;
+        this.propertiesPath = Paths.get(this.workingDirectory, this.propertiesDir, PROPERTIES_FILENAME).toString();
 
         this.standartProperties = readProperties(propertiesPath);
-        this.defaultPropertiesPath = this.workingDirectory + "/" + this.propertiesDir + "/" + DEFAULT_PROPERTIES_FILENAME;
+        this.defaultPropertiesPath = Paths.get(this.workingDirectory, this.propertiesDir, DEFAULT_PROPERTIES_FILENAME).toString();
         this.defaultProperties =
                 readProperties(defaultPropertiesPath);
         this.urls = Collections.unmodifiableList(loadUrls());
