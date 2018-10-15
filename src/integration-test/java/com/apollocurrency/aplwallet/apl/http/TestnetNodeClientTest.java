@@ -10,6 +10,14 @@ import static util.TestUtil.checkList;
 import static util.TestUtil.getRandomRS;
 import static util.TestUtil.verifyOwner;
 
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.BasicAccount;
@@ -38,14 +46,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import util.TestUtil;
 import util.WalletRunner;
-
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Test scenarios on testnet for {@link NodeClient}
@@ -105,6 +105,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
+    @Ignore
     @Override
     public void testGetPeersList() throws Exception {
         List<Peer> peersList = client.getPeersList(url);
@@ -152,9 +153,10 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     }
 
     @Test
+    @Ignore
     @Override
     public void testGetPeersCount() throws Exception {
-        Assert.assertEquals(5, client.getPeersCount(url));
+        Assert.assertEquals(Math.ceil(0.51 * runner.getUrls().size()), client.getPeersCount(url));
     }
 
 
@@ -200,7 +202,7 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         checkList(accountLedger);
         accountLedger.forEach(entry -> {
             JSONTransaction transaction = entry.getTransaction();
-            if (transaction != null && !transaction.isOwnedBy(accountRs)) {
+            if (transaction != null && !transaction.isOwnedBy(accountRs) && transaction.getType().getType() != ShufflingTransaction.SHUFFLING_PROCESSING.getType()) {
                 Assert.fail("Not this user ledger!");
             }
             if (transaction != null && transaction.isPrivate()) {
@@ -318,20 +320,23 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
 
     @Test
     public void testGetEncryptedPrivateBlockTransactionsWithPagination() throws Exception {
-        List<JSONTransaction> transactionsList1 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), -1, 5L,
+        List<JSONTransaction> transactionsList1 = client.getPrivateBlockchainTransactionsList(url,
+                accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), -1,
+                5L,
                 9L);
         checkList(transactionsList1);
         Assert.assertEquals(5, transactionsList1.size());
         verifyOwner(transactionsList1, PRIVATE_TRANSACTION_SENDER);
 
-        List<JSONTransaction> transactionsList2 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), -1,
+        List<JSONTransaction> transactionsList2 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), -1,
                 null, 10L);
         checkList(transactionsList2);
         Assert.assertEquals(11, transactionsList2.size());
         Assert.assertTrue(transactionsList2.containsAll(transactionsList1));
         verifyOwner(transactionsList2, PRIVATE_TRANSACTION_SENDER);
 
-        List<JSONTransaction> transactionsList3 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER), -1, 5L,
+        List<JSONTransaction> transactionsList3 = client.getPrivateBlockchainTransactionsList(url, accounts.get(PRIVATE_TRANSACTION_SENDER.getAccountRS()), -1,
+                5L,
                 null);
         checkList(transactionsList3);
         Assert.assertTrue(transactionsList3.size() > 5);
@@ -462,10 +467,30 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
     @Test
     @Ignore
     public void testGetPrivateAccountLedgerEntry() throws Exception {
-        String accountRs = getRandomRS(accounts);
-        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRs), true, 0, 500);
+        String accountRS = PRIVATE_TRANSACTION_SENDER.getAccountRS();
+//        create private ledger entry
+        JSONTransaction jsonTransaction = client.sendMoneyPrivateTransaction(url, accounts.get(accountRS),
+                PRIVATE_TRANSACTION_RECIPIENT.getAccountRS(), atm(2L), atm(1L), 60L);
+        int timeToWait = 180;
+//        wait confirmation
+        while (timeToWait-- >= 0) {
+            try {
+                JSONTransaction transaction = client.getTransaction(url, jsonTransaction.getFullHash());
+                if (transaction != null) {
+                    break;
+                }
+            }
+            catch (IOException e) {
+
+            }
+            TimeUnit.SECONDS.sleep(1L);
+        }
+//        get private ledger (private transaction + fee)
+        List<LedgerEntry> accountLedger = client.getPrivateAccountLedger(url, accounts.get(accountRS), true, 0,
+                1);
         LedgerEntry expectedPrivateLedgerEntry = accountLedger.stream().filter(LedgerEntry::isPrivate).findFirst().get();
-        LedgerEntry actualLedgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(accountRs), expectedPrivateLedgerEntry.getLedgerId(), true);
+        LedgerEntry actualLedgerEntry = client.getPrivateAccountLedgerEntry(url, accounts.get(accountRS), expectedPrivateLedgerEntry.getLedgerId(),
+                true);
         Assert.assertFalse(actualLedgerEntry.isNull());
         Assert.assertEquals(AccountLedger.LedgerEvent.PRIVATE_PAYMENT, actualLedgerEntry.getEventType());
         Assert.assertEquals(expectedPrivateLedgerEntry, actualLedgerEntry);

@@ -27,6 +27,10 @@ public class Account2FA extends BasicAccount {
         this.status = status2FA;
     }
 
+    public TwoFactorAuthService.Status2FA getStatus() {
+        return status;
+    }
+
     @Override
     public String toString() {
         return "Account2FA{" +

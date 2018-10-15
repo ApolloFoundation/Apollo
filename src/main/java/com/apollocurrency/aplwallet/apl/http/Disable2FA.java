@@ -4,17 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
-
 public class Disable2FA extends APIServlet.APIRequestHandler {
     private Disable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH});
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "code", "secretPhrase", "account", "passphrase");
     }
 
     private static class Disable2FAHolder {
@@ -42,9 +42,5 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
         return response;
     }
 
-    @Override
-    protected String accountName2FA() {
-        return "account";
-    }
 }
 

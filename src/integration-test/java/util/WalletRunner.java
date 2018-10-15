@@ -4,9 +4,6 @@
 
 package util;
 
-import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
 
@@ -21,12 +18,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+
+import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class WalletRunner {
 
@@ -97,7 +92,7 @@ public class WalletRunner {
     public void run() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
         Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
         method.setAccessible(true);
-        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("target/conf/").toAbsolutePath().toFile().toURL());
+        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get(workingDirectory,DEFAULT_PROPERTIES_DIR).toAbsolutePath().toFile().toURL());
         System.setProperty("apl.runtime.mode", "desktop");
 
         //change config for test purposes
@@ -152,12 +147,16 @@ public class WalletRunner {
 
     public void shutdown() {
         try {
-            mainClass.getMethod("shutdown").invoke(null);
+            Method removeShutdownHook = mainClass.getDeclaredMethod("removeShutdownHook");
+            removeShutdownHook.setAccessible(true);
+            removeShutdownHook.invoke(null);
+
+            mainClass.getDeclaredMethod("shutdown").invoke(null);
             // make possible to run again
             this.loader = new TestClassLoader();
         }
         catch (Throwable e) {
-            LOG.error("Shutdown error! " + e.getLocalizedMessage());
+            LOG.error("Shutdown error! ", e);
         }
     }
 

@@ -5,21 +5,27 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.GeneratedAccount;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.TwoFactorAuthAccountDetails;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import util.TwoFactorAuthUtil;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
 
 public class Enable2FATest extends DeleteGeneratedAccountsTest {
+    @Before
+    public void setUp() {
+        runner.disableReloading();
+    }
+    private static final String SECRET_PHRASE = "Test_Secret_Phrase";
     @Test
-    public void testEnable2FA() throws IOException, GeneralSecurityException {
+    public void testEnable2FASureWallet() throws IOException {
 
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TEST_LOCALHOST, PASSPHRASE);
         generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
@@ -27,12 +33,21 @@ public class Enable2FATest extends DeleteGeneratedAccountsTest {
         Assert.assertEquals(generatedAccount.getId(), details.getAccount().getId());
         TwoFactorAuthUtil.verifySecretCode(details.getDetails(), Convert.rsAccount(generatedAccount.getId()));
     }
+    @Test
+    public void testEnable2FAOnlineWallet() throws IOException {
+
+        TwoFactorAuthAccountDetails details = nodeClient.enable2FA(TEST_LOCALHOST, SECRET_PHRASE);
+        long accountId = Convert.getId(Crypto.getPublicKey(SECRET_PHRASE));
+        Assert.assertEquals(accountId, details.getAccount().getId());
+        TwoFactorAuthUtil.verifySecretCode(details.getDetails(), Convert.rsAccount(accountId));
+    }
+
     @Test(expected = RuntimeException.class)
-    public void testEnable2FANoSuchAccount() throws IOException {
+    public void testEnable2FANoSuchAccountSureWallet() throws IOException {
        nodeClient.enable2FA(TEST_LOCALHOST, TwoFactorAuthTestData.ACCOUNT1.getAccountRS(), PASSPHRASE);
     }
     @Test(expected = RuntimeException.class)
-    public void testEnable2FAInvalidPassphrase() throws IOException {
+    public void testEnable2FAInvalidPassphraseSureWallet() throws IOException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TEST_LOCALHOST, PASSPHRASE);
         generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
         nodeClient.enable2FA(TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()), "anotherpass");

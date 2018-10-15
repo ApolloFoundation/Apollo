@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
-
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.junit.Assert;
@@ -13,6 +11,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Random;
+
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
 
 public class ImportKeyTest extends DeleteGeneratedAccountsTest {
     @Test

@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import static org.slf4j.LoggerFactory.getLogger;
-import static util.TestUtil.createURI;
-
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
@@ -15,17 +12,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Account2FA;
-import dto.AccountWithKey;
-import dto.AccountsStatistic;
+import dto.*;
 import dto.Block;
-import dto.ChatInfo;
-import dto.ForgingDetails;
-import dto.JSONTransaction;
-import dto.LedgerEntry;
-import dto.NextGenerators;
-import dto.Peer;
-import dto.TwoFactorAuthAccountDetails;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -43,13 +31,11 @@ import util.TestUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.createURI;
 
 public class NodeClient {
     public static final Long DEFAULT_FEE = 100_000_000L; //1 APL
@@ -703,13 +689,15 @@ public class NodeClient {
         return passphraseNode.textValue();
     }
 
-    public TwoFactorAuthAccountDetails enable2FA(String url, String account, String passphrase) throws IOException {
-        Objects.requireNonNull(passphrase);
-        Objects.requireNonNull(account);
+    TwoFactorAuthAccountDetails enable2FA(String url, String account, String passphrase, String secretPhrase) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "enable2FA");
-        parameters.put("passphrase", passphrase);
-        parameters.put("account", account);
+        if (secretPhrase == null) {
+            parameters.put("passphrase", passphrase);
+            parameters.put("account", account);
+        } else {
+            parameters.put("secretPhrase", secretPhrase);
+        }
 
         String json = postJson(createURI(url), parameters, "");
         TwoFactorAuthAccountDetails details2FA = MAPPER.readValue(json, TwoFactorAuthAccountDetails.class);
@@ -718,39 +706,63 @@ public class NodeClient {
         }
         return details2FA;
     }
-
-    public Account2FA disable2FA(String url, String account,String passphrase, long code) throws IOException {
-        String json = disable2FAJson(url, account, passphrase, code);
-        Account2FA returnedAcc = MAPPER.readValue(json, Account2FA.class);
-        if (returnedAcc.getId() == 0) {
-            throw new RuntimeException("2fa not disabled");
-        }
-        return returnedAcc;
+    public TwoFactorAuthAccountDetails enable2FA(String url, String secretPhrase) throws IOException {
+        return enable2FA(url, null, null, secretPhrase);
     }
-    public String disable2FAJson(String url, String account,String passphrase, long code) throws IOException {
-        Objects.requireNonNull(passphrase);
-        Objects.requireNonNull(account);
+    public TwoFactorAuthAccountDetails enable2FA(String url, String account, String passphrase) throws IOException {
+        return enable2FA(url, account, passphrase, null);
+    }
+
+    public Account2FA disable2FA(String url, String account,String passphrase, String secretPhrase, long code) throws IOException {
+        String json = disable2FAJson(url, account, passphrase, secretPhrase, code);
+        return MAPPER.readValue(json, Account2FA.class);
+    }
+    String disable2FAJson(String url, String account,String passphrase, String secretPhrase, long code) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "disable2FA");
-        parameters.put("passphrase", passphrase);
-        parameters.put("account", account);
+        if (secretPhrase == null) {
+
+            parameters.put("passphrase", passphrase);
+            parameters.put("account", account);
+        } else {
+            parameters.put("secretPhrase", secretPhrase);
+        }
         parameters.put("code", String.valueOf(code));
 
         return  postJson(createURI(url), parameters, "");
     }
 
-    public Account2FA confirm2FA(String url, BasicAccount account, String passphrase, long code) throws IOException {
-        Objects.requireNonNull(passphrase);
-        Objects.requireNonNull(account);
+    public String disable2FAJson(String url, String account, String passphrase, long code) throws IOException {
+        return disable2FAJson(url, account, passphrase, null, code);
+    }
+
+    public String disable2FAJson(String url, String secretPhrase, long code) throws IOException {
+        return disable2FAJson(url, null, null, secretPhrase, code);
+    }
+
+    Account2FA confirm2FA(String url, BasicAccount account, String passphrase, String secretPhrase, long code) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "confirm2FA");
-        parameters.put("passphrase", passphrase);
-        parameters.put("account", account.getAccountRS());
+        if (secretPhrase == null) {
+            parameters.put("passphrase", passphrase);
+            parameters.put("account", account.getAccountRS());
+        } else {
+            parameters.put("secretPhrase", secretPhrase);
+        }
         parameters.put("code", String.valueOf(code));
 
         String json = postJson(createURI(url), parameters, "");
 
         return MAPPER.readValue(json, Account2FA.class);
     }
+
+    public Account2FA confirm2FA(String url, String secretPhrase, long code) throws IOException {
+        return confirm2FA(url, null, null, secretPhrase, code);
+    }
+
+    public Account2FA confirm2FA(String url,BasicAccount account, String passphrase, long code) throws IOException {
+        return confirm2FA(url, account, passphrase, null, code);
+    }
+
 
 }
