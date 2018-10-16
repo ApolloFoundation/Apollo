@@ -20,11 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Genesis;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -40,6 +35,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Genesis;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 public final class Convert {
 
@@ -255,7 +255,7 @@ public final class Convert {
     }
 
     public static long parseAPL(String apl) {
-        return parseStringFraction(apl, 8, Constants.MAX_BALANCE_APL);
+        return parseStringFraction(apl, 8, Constants.getMaxBalanceAPL());
     }
 
     private static long parseStringFraction(String value, int decimals, long maxValue) {

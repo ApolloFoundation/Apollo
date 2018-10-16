@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ALREADY_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_DISCOUNT;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_GOODS;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONStreamAware;
 
 public final class DGSDelivery extends CreateTransaction {
 
@@ -73,7 +73,7 @@ public final class DGSDelivery extends CreateTransaction {
             return INCORRECT_DGS_DISCOUNT;
         }
         if (discountATM < 0
-                || discountATM > Constants.MAX_BALANCE_ATM
+                || discountATM > Constants.getMaxBalanceATM()
                 || discountATM > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())) {
             return INCORRECT_DGS_DISCOUNT;
         }

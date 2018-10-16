@@ -20,6 +20,35 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.management.ManagementFactory;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.AccessControlException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
@@ -32,24 +61,11 @@ import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-
-import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.AccessControlException;
-import java.sql.SQLException;
-import java.util.*;
-
-import static com.apollocurrency.aplwallet.apl.Constants.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Apl {
     private static Logger LOG;
@@ -367,6 +383,22 @@ public final class Apl {
         Apl.shutdown = true;
     }
 
+    public static List<Chain> readChains() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(new File("conf/chains.json"), new TypeReference<List<Chain>>() {});
+    }
+
+    public static Chain getActiveChain() throws IOException {
+        List<Chain> chains = readChains();
+        List<Chain> activeChains = chains.stream().filter(Chain::isActive).collect(Collectors.toList());
+        if (activeChains.size() == 0) {
+            throw new RuntimeException("No active blockchain to connect!");
+        } else if (activeChains.size() > 1) {
+            throw new RuntimeException("Only one blockchain can be active at the moment!");
+        }
+        return activeChains.get(0);
+    }
+
 
     private static class Init {
 
@@ -376,16 +408,19 @@ public final class Apl {
             try {
 
                 long startTime = System.currentTimeMillis();
+                Constants.init(getActiveChain());
                 setSystemProperties();
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
                 runtimeMode.updateAppStatus("Database initialization...");
+
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
                 ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
+                Constants.updateToHeight();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -618,22 +653,22 @@ public final class Apl {
         return "";
     }
 
-    public static String getDbDir(String dbDir, int chainId) {
+    public static String getDbDir(String dbDir, UUID chainId) {
         return dirProvider.getDbDir(dbDir, chainId);
     }
 
     public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, Constants.CHAIN_ID);
+        return dirProvider.getDbDir(dbDir, Constants.chain.getChainId());
     }
 
-    public static String getOldDbDir(String dbDir, int chainId) {
+    public static String getOldDbDir(String dbDir,  UUID chainId) {
         return dirProvider
                 .getDbDir(dbDir, chainId)
                 .replace(String.valueOf(chainId) + File.separator, "");
     }
 
     public static String getOldDbDir(String dbDir) {
-        return getOldDbDir(dbDir, Constants.CHAIN_ID);
+        return getOldDbDir(dbDir, Constants.chain.getChainId());
     }
 
     public static void updateLogFileHandler(Properties loggingProperties) {

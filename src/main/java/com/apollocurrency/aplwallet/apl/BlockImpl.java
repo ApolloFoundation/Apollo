@@ -20,12 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -36,7 +31,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
@@ -56,7 +56,7 @@ final class BlockImpl implements Block {
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty = BigInteger.ZERO;
-    private long baseTarget = Constants.INITIAL_BASE_TARGET;
+    private long baseTarget = Constants.getInitialBaseTarget();
     private volatile long nextBlockId;
     private int height = -1;
     private volatile long id;
@@ -441,17 +441,22 @@ final class BlockImpl implements Block {
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);
             int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
-            if (blocktimeAverage > Constants.BLOCK_TIME) {
-                baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, Constants.MAX_BLOCKTIME_LIMIT)) / Constants.BLOCK_TIME;
+            int blockTime = Constants.getBlockTime();
+            if (blocktimeAverage > blockTime) {
+                int maxBlocktimeLimit = Constants.getMaxBlocktimeLimit();
+                baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, maxBlocktimeLimit)) / blockTime;
             } else {
+                int minBlocktimeLimit = Constants.getMinBlocktimeLimit();
                 baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
-                        * (Constants.BLOCK_TIME - Math.max(blocktimeAverage, Constants.MIN_BLOCKTIME_LIMIT)) / (100 * Constants.BLOCK_TIME);
+                        * (blockTime - Math.max(blocktimeAverage, minBlocktimeLimit)) / (100 * blockTime);
             }
-            if (baseTarget < 0 || baseTarget > Constants.MAX_BASE_TARGET) {
-                baseTarget = Constants.MAX_BASE_TARGET;
+            long maxBaseTarget = Constants.getMaxBaseTarget();
+            if (baseTarget < 0 || baseTarget > maxBaseTarget) {
+                baseTarget = maxBaseTarget;
             }
-            if (baseTarget < Constants.MIN_BASE_TARGET) {
-                baseTarget = Constants.MIN_BASE_TARGET;
+            long minBaseTarget = Constants.getMinBaseTarget();
+            if (baseTarget < minBaseTarget) {
+                baseTarget = Constants.getMinBaseTarget();
             }
         } else {
             baseTarget = prevBaseTarget;

@@ -20,22 +20,31 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.db.*;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.slf4j.Logger;
 
 public final class Shuffling {
     private static final Logger LOG = getLogger(Shuffling.class);
@@ -154,8 +163,8 @@ public final class Shuffling {
 
     static {
         Apl.getBlockchainProcessor().addListener(block -> {
-            if (block.getTransactions().size() == Constants.MAX_NUMBER_OF_TRANSACTIONS
-                    || block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH - Constants.MIN_TRANSACTION_SIZE) {
+            if (block.getTransactions().size() == Constants.getMaxNumberOfTransactions()
+                    || block.getPayloadLength() > Constants.getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
@@ -865,7 +874,7 @@ public final class Shuffling {
         } else { // must use same for PROCESSING/VERIFICATION/BLAME
             transactionSize = 16384; // max observed was 15647 for 30 participants
         }
-        return block.getPayloadLength() + transactionSize > Constants.MAX_PAYLOAD_LENGTH;
+        return block.getPayloadLength() + transactionSize > Constants.getMaxPayloadLength();
     }
 
     private static byte[] getParticipantsHash(Iterable<ShufflingParticipant> participants) {

@@ -22,17 +22,6 @@ package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,6 +32,17 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 
 public final class Genesis {
     private static final Logger LOG = getLogger(Genesis.class);
@@ -117,8 +117,9 @@ public final class Genesis {
                 Db.getDb().commitTransaction();
             }
         }
-        if (total > Constants.MAX_BALANCE_ATM) {
-            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + Constants.MAX_BALANCE_ATM);
+        long maxBalanceATM = Constants.getMaxBalanceATM();
+        if (total > maxBalanceATM) {
+            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.COIN_SYMBOL);
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);

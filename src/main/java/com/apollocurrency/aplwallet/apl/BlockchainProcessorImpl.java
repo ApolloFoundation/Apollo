@@ -20,6 +20,35 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
@@ -27,20 +56,16 @@ import com.apollocurrency.aplwallet.apl.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 final class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
@@ -1359,10 +1384,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!block.verifyBlockSignature()) {
             throw new BlockNotAcceptedException("Block signature verification failed", block);
         }
-        if (block.getTransactions().size() > Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+        if (block.getTransactions().size() > Constants.getMaxNumberOfTransactions()) {
             throw new BlockNotAcceptedException("Invalid block transaction count " + block.getTransactions().size(), block);
         }
-        if (block.getPayloadLength() > Constants.MAX_PAYLOAD_LENGTH || block.getPayloadLength() < 0) {
+        if (block.getPayloadLength() > Constants.getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
     }
@@ -1652,11 +1677,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
-        while (payloadLength <= Constants.MAX_PAYLOAD_LENGTH && sortedTransactions.size() <= Constants.MAX_NUMBER_OF_TRANSACTIONS) {
+        int maxPayloadLength = Constants.getMaxPayloadLength();
+        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= Constants.getMaxNumberOfTransactions()) {
             int prevNumberOfNewTransactions = sortedTransactions.size();
             for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
                 int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
-                if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > Constants.MAX_PAYLOAD_LENGTH) {
+                if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                     continue;
                 }
                 if (unconfirmedTransaction.getVersion() != getTransactionVersion(previousBlock.getHeight())) {

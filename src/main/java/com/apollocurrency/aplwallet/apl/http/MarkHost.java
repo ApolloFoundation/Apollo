@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.peer.Hallmark;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DATE;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_HOST;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_WEIGHT;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_DATE;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_HOST;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_WEIGHT;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.peer.Hallmark;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 
 public final class MarkHost extends APIServlet.APIRequestHandler {
@@ -72,7 +72,7 @@ public final class MarkHost extends APIServlet.APIRequestHandler {
         int weight;
         try {
             weight = Integer.parseInt(weightValue);
-            if (weight <= 0 || weight > Constants.MAX_BALANCE_APL) {
+            if (weight <= 0 || weight > Constants.getMaxBalanceAPL()) {
                 return INCORRECT_WEIGHT;
             }
         } catch (NumberFormatException e) {

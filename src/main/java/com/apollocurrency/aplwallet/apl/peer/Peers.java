@@ -22,30 +22,6 @@ package com.apollocurrency.aplwallet.apl.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.http.API;
-import com.apollocurrency.aplwallet.apl.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.UPnP;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.DoSFilter;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
-
 import javax.servlet.DispatcherType;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
@@ -74,6 +50,37 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.http.API;
+import com.apollocurrency.aplwallet.apl.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.DoSFilter;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 public final class Peers {
     private static final Logger LOG = getLogger(Peers.class);
@@ -262,7 +269,7 @@ public final class Peers {
         json.put("application", Apl.APPLICATION);
         json.put("version", Apl.VERSION.toString());
         json.put("platform", Peers.myPlatform);
-        json.put("chainId", Constants.CHAIN_ID);
+        json.put("chainId", Constants.chain.getChainId());
         json.put("shareAddress", Peers.shareMyAddress);
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             servicesList.add(Peer.Service.PRUNABLE);
@@ -310,12 +317,10 @@ public final class Peers {
         LOG.debug("My peer info:\n" + json.toJSONString());
         myPeerInfo = json;
 
-        final List<String> defaultPeers = Constants.isTestnet ? Apl.getStringListProperty("apl.defaultTestnetPeers")
-                : Apl.getStringListProperty("apl.defaultPeers");
-        wellKnownPeers = Collections.unmodifiableList(Constants.isTestnet ? Apl.getStringListProperty("apl.testnetPeers")
-                : Apl.getStringListProperty("apl.wellKnownPeers"));
+        final List<String> defaultPeers = Constants.chain.getDefaultPeers();
+        wellKnownPeers = Constants.chain.getWellKnownPeers();
 
-        List<String> knownBlacklistedPeersList = Apl.getStringListProperty("apl.knownBlacklistedPeers");
+        List<String> knownBlacklistedPeersList = Constants.chain.getBlacklistedPeers();
         if (knownBlacklistedPeersList.isEmpty()) {
             knownBlacklistedPeers = Collections.emptySet();
         } else {
@@ -1225,7 +1230,8 @@ public final class Peers {
     private static void checkBlockchainState() {
         Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
                 (Apl.getBlockchainProcessor().isDownloading() || Apl.getBlockchain().getLastBlockTimestamp() < Apl.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (Apl.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 && !Constants.isTestnet) ? Peer.BlockchainState.FORK :
+                        (Apl.getBlockchain().getLastBlock().getBaseTarget() / Constants.getInitialBaseTarget() > 10 && !Constants.isTestnet) ?
+                                Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {
             JSONObject json = new JSONObject(myPeerInfo);

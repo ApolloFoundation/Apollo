@@ -20,18 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 final class BlockchainImpl implements Blockchain {
 
@@ -595,7 +600,7 @@ final class BlockchainImpl implements Blockchain {
             }
         }
         try (
-            Connection con = Db.db.getConnection();
+            Connection con = Db.getDb().getConnection();
             PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
             statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());

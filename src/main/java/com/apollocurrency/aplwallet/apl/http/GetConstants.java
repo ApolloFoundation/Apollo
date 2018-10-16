@@ -20,7 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.Map;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.CurrencyType;
+import com.apollocurrency.aplwallet.apl.Genesis;
+import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.Shuffling;
+import com.apollocurrency.aplwallet.apl.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -28,12 +44,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class GetConstants extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
@@ -59,7 +69,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("genesisBlockId", Long.toUnsignedString(Apl.getBlockchainProcessor().getGenesisBlockId()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
-                response.put("maxBlockPayloadLength", Constants.MAX_PAYLOAD_LENGTH);
+                response.put("maxBlockPayloadLength", Constants.getMaxPayloadLength());
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
 
@@ -197,7 +207,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
                 response.put("proxyNotForwardedRequests", notForwardedRequests);
 
-                response.put("initialBaseTarget", Long.toUnsignedString(Constants.INITIAL_BASE_TARGET));
+                response.put("initialBaseTarget", Long.toUnsignedString(Constants.getInitialBaseTarget()));
 
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {

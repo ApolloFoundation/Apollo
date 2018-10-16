@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONObject;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONObject;
 
 public abstract class ShufflingTransaction extends TransactionType {
 
@@ -113,7 +113,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = attachment.getHoldingType();
             long amount = attachment.getAmount();
             if (holdingType == HoldingType.APL) {
-                if (amount < Constants.SHUFFLING_DEPOSIT_ATM || amount > Constants.MAX_BALANCE_ATM) {
+                if (amount < Constants.SHUFFLING_DEPOSIT_ATM || amount > Constants.getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid ATM amount " + amount
                             + ", minimum is " + Constants.SHUFFLING_DEPOSIT_ATM);
                 }
