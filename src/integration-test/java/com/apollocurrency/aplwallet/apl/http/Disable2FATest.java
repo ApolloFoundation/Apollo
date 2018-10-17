@@ -4,7 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.INVALID_CODE;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+import com.apollocurrency.aplwallet.apl.GeneratedAccount;
+import com.apollocurrency.aplwallet.apl.PassphraseGenerator;
+import com.apollocurrency.aplwallet.apl.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.apl.SecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -14,13 +26,6 @@ import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.INVALID_CODE;
 
 public class Disable2FATest extends DeleteGeneratedAccountsTest {
     private static PassphraseGenerator generator = new PassphraseGeneratorImpl();
@@ -50,7 +55,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
     public void testDisable2FANoAccountSureWallet() throws IOException, GeneralSecurityException {
         String json = nodeClient.disable2FAJson(TEST_LOCALHOST, ACCOUNT1.getAccountRS(), PASSPHRASE, 100L);
         JsonFluentAssert.assertThatJson(json)
-                .node("error")
+                .node("errorDescription")
                 .isPresent()
                 .isEqualTo(SecretBytesDetails.ExtractStatus.NOT_FOUND);
     }
@@ -68,7 +73,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
                 TimeBasedOneTimePasswordUtil.generateCurrentNumber(details.getDetails().getSecret()));
 
         JsonFluentAssert.assertThatJson(disable2FAJson)
-                .node("error")
+                .node("errorDescription")
                 .isPresent()
                 .isEqualTo(SecretBytesDetails.ExtractStatus.DECRYPTION_ERROR);
     }

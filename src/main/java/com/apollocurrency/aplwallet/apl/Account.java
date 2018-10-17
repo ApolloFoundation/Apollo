@@ -22,27 +22,6 @@ package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
-import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
-
 import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -57,6 +36,28 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
@@ -824,9 +825,7 @@ public final class Account {
             }
             if (status2FA != TwoFactorAuthService.Status2FA.OK) {
                 LOG.debug("2fa failed for acc {} - {}", params2FA.getAccountId(), status2FA);
-                JSONObject errorObject = new JSONObject();
-                errorObject.put("error", status2FA);
-                throw new ParameterException("2fa failed", null, errorObject);
+                throw new ParameterException("2fa failed", null, JSONResponses.error2FA(status2FA));
             }
         }
     }

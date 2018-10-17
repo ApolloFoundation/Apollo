@@ -20,15 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import java.util.Arrays;
 
 public final class JSONResponses {
 
@@ -554,6 +555,13 @@ public final class JSONResponses {
         response.put("errorCode", 5);
         response.put("errorDescription", "Account monitor already started");
         MONITOR_ALREADY_STARTED = JSON.prepare(response);
+    }
+
+    public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA) {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 21);
+        response.put("errorDescription", status2FA);
+        return JSON.prepare(response);
     }
 
     public static final JSONStreamAware MONITOR_NOT_STARTED;
