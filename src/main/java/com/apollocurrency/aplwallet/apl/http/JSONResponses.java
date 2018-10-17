@@ -564,6 +564,13 @@ public final class JSONResponses {
         return JSON.prepare(response);
     }
 
+    public static JSONStreamAware notFound(String parameter, String details) {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 22);
+        response.put("errorDescription", parameter  + " not found: " + details);
+        return JSON.prepare(response);
+    }
+
     public static final JSONStreamAware MONITOR_NOT_STARTED;
     static {
         JSONObject response = new JSONObject();

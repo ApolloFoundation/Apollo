@@ -56,7 +56,6 @@ import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
@@ -837,10 +836,8 @@ public final class Account {
             } else {
                 LOG.debug("No appropriate secret bytes for account {} - {}", accountId, secretBytes.getExtractStatus());
                 if (isMandatory) {
-                    JSONObject errorObject = new JSONObject();
-                    errorObject.put("error", secretBytes.getExtractStatus());
-                    errorObject.put("description", "Key not found");
-                    throw new ParameterException("Key not found for account - " + accountId, null, errorObject);
+                    throw new ParameterException("Key not found for account - " + accountId, null, JSONResponses.notFound("Account",
+                            String.valueOf(secretBytes.getExtractStatus())));
                 }
                 return secretBytes;
             }
@@ -857,10 +854,8 @@ public final class Account {
     public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
         SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, false);
         if (secretBytes.getExtractStatus() != SecretBytesDetails.ExtractStatus.OK) {
-            JSONObject jsonError = new JSONObject();
-            jsonError.put("error", secretBytes.getExtractStatus());
-            jsonError.put("description", "Extract exception");
-            throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null, jsonError);
+            throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null, JSONResponses.notFound("Account",
+                    String.valueOf(secretBytes.getExtractStatus())));
         }
         return service2FA.tryAuth(accountId, code);
     }
