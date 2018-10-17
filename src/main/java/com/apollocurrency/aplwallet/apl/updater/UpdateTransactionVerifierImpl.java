@@ -4,16 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.regex.Pattern;
 
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 
 public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier {
+        private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
+
     public static final String VERSION_PLACEHOLDER = "$version$";
     public static final String PLATFORM_PLACEHOLDER = "$platform$";
     private static final String DEFAULT_URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-" + VERSION_PLACEHOLDER + "-" + PLATFORM_PLACEHOLDER + ".jar";
@@ -34,7 +38,7 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
     @Override
     public UpdateData process(Transaction transaction) {
         if (updaterMediator.isUpdateTransaction(transaction)) {
-            Logger.logDebugMessage("Processing update transaction " + transaction.getId());
+            LOG.debug("Processing update transaction " + transaction.getId());
             Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
             if (attachment.getAppVersion().greaterThan(updaterMediator.getWalletVersion())) {
                 Platform currentPlatform = Platform.current();
@@ -48,11 +52,11 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
                         if (updaterService.verifyCertificates(UpdaterConstants.CERTIFICATE_DIRECTORY)) {
                             return new UpdateData(transaction, url);
                         } else {
-                            Logger.logErrorMessage("Cannot verify certificates!");
+                            LOG.error("Cannot verify certificates!");
                             updaterService.sendSecurityAlert("Certificate verification error" + transaction.getJSONObject().toJSONString());
                         }
                     } else {
-                        Logger.logErrorMessage("Cannot decrypt url for update transaction:" + transaction.getId());
+                        LOG.error("Cannot decrypt url for update transaction:" + transaction.getId());
                         updaterService.sendSecurityAlert("Cannot decrypt url for update transaction:" + transaction.getId());
                     }
                 }

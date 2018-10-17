@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
@@ -13,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.Logger;
 import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
@@ -27,14 +30,10 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class, Logger.class})
+@PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class})
 @SuppressStaticInitializationFor({
-        "com.apollocurrency.aplwallet.apl.Db", "com.apollocurrency.aplwallet.apl.util.Logger", "com.apollocurrency.aplwallet.apl.db.TransactionalDb", "com.apollocurrency" +
+        "com.apollocurrency.aplwallet.apl.Db", "com.apollocurrency.aplwallet.apl.db.TransactionalDb", "com.apollocurrency" +
         ".aplwallet.apl.Constants", "com" +
         ".apollocurrency" +
         ".aplwallet.apl.Apl"})

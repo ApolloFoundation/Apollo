@@ -4,15 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.updater.downloader;
 
-import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
-import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
+import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
+import org.slf4j.Logger;
+
 public class DownloaderImpl implements Downloader {
+    private static final Logger LOG = getLogger(DownloaderImpl.class);
+
     private DownloadExecutor defaultDownloadExecutor;
     private DownloadInfo info;
     private int timeout;
@@ -52,18 +56,18 @@ public class DownloaderImpl implements Downloader {
                     return downloadedFile;
                 } else {
                     info.setDownloadStatus(DownloadInfo.DownloadStatus.INCONSISTENT);
-                    Logger.logErrorMessage("Inconsistent file, downloaded from: " + uri);
+                    LOG.error("Inconsistent file, downloaded from: " + uri);
                 }
                 info.setDownloadState(DownloadInfo.DownloadState.TIMEOUT);
                 TimeUnit.SECONDS.sleep(timeout);
             }
             catch (IOException e) {
-                Logger.logErrorMessage("Unable to download update from: " + uri, e);
+                LOG.error("Unable to download update from: " + uri, e);
                 info.setDownloadState(DownloadInfo.DownloadState.TIMEOUT);
                 info.setDownloadStatus(DownloadInfo.DownloadStatus.CONNECTION_FAILURE);
             }
             catch (InterruptedException e) {
-                Logger.logInfoMessage("Downloader was awakened", e);
+                LOG.info("Downloader was awakened", e);
             }
         }
         info.setDownloadState(DownloadInfo.DownloadState.FINISHED);
