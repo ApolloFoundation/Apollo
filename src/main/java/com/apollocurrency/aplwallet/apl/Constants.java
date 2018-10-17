@@ -20,14 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.util.Listener;
+import org.slf4j.Logger;
 
 public final class Constants {
     private static Chain chain;
@@ -60,6 +64,22 @@ public final class Constants {
             this.minBaseTarget = initialBaseTarget * 9 / 10;
             this.minBlocktimeLimit = blockTime - 7;
             this.maxBlocktimeLimit = blockTime + 7;
+        }
+
+        @Override
+        public String toString() {
+            return "ChangeableConstants{" +
+                    "maxNumberOfTransactions=" + maxNumberOfTransactions +
+                    ", maxPayloadLength=" + maxPayloadLength +
+                    ", maxBalanceApl=" + maxBalanceApl +
+                    ", maxBalanceAtm=" + maxBalanceAtm +
+                    ", blockTime=" + blockTime +
+                    ", initialBaseTarget=" + initialBaseTarget +
+                    ", maxBaseTarget=" + maxBaseTarget +
+                    ", minBaseTarget=" + minBaseTarget +
+                    ", minBlocktimeLimit=" + minBlocktimeLimit +
+                    ", maxBlocktimeLimit=" + maxBlocktimeLimit +
+                    '}';
         }
     }
     private static String coinSymbol;
@@ -213,7 +233,7 @@ public final class Constants {
                 blockchainProperties
                         .keySet()
                         .stream()
-                        .filter(height -> Apl.getBlockchain().getHeight() > height)
+                        .filter(height -> BlockDb.findLastBlock().getHeight() > height && height != 0)
                         .max(Comparator.naturalOrder());
         return maxHeight
                 .map(height -> new ChangeableConstants(blockchainProperties.get(height)))
@@ -321,6 +341,8 @@ public final class Constants {
     }
 
     private static class ConstantsChangeListener implements Listener<Block> {
+            private static final Logger LOG = getLogger(ConstantsChangeListener.class);
+
 
         private Map<Integer, BlockchainProperties> propertiesMap;
         private Set<Integer> targetHeights;
@@ -328,13 +350,19 @@ public final class Constants {
         public ConstantsChangeListener(Map<Integer, BlockchainProperties> propertiesMap) {
             this.propertiesMap = propertiesMap;
             targetHeights = propertiesMap.keySet();
+            String stringConstantsChangeHeights = targetHeights.stream().filter(height -> height > BlockDb.findLastBlock().getHeight()).map(Object::toString).collect(Collectors.joining(
+                    ","));
+            LOG.debug("Available constants updates at height: {}",
+                    stringConstantsChangeHeights.isEmpty() ? "none" : stringConstantsChangeHeights);
         }
 
         @Override
         public void notify(Block block) {
             int currentHeight = block.getHeight();
             if (targetHeights.contains(currentHeight)) {
+                LOG.info("Updating constants at height {}", currentHeight);
                 changeableConstants = new ChangeableConstants(propertiesMap.get(currentHeight));
+                LOG.info("New constants applied: {}", changeableConstants);
                 targetHeights.remove(currentHeight);
             }
         }
