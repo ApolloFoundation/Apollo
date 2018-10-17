@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountLessors extends APIServlet.APIRequestHandler {
 
@@ -65,7 +65,7 @@ public final class GetAccountLessors extends APIServlet.APIRequestHandler {
                     Account lessor = lessors.next();
                     JSONObject lessorJSON = new JSONObject();
                     JSONData.putAccount(lessorJSON, "lessor", lessor.getId());
-                    lessorJSON.put("guaranteedBalanceATM", String.valueOf(lessor.getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
+                    lessorJSON.put("guaranteedBalanceATM", String.valueOf(lessor.getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), height)));
                     lessorsJSON.add(lessorJSON);
                 }
             }

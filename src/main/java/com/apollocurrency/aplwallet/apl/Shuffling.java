@@ -596,7 +596,7 @@ public final class Shuffling {
         this.registrantCount += 1;
         // Check if participant registration is complete and if so update the shuffling
         if (this.registrantCount == this.participantCount) {
-            setStage(Stage.PROCESSING, this.issuerId, Constants.SHUFFLING_PROCESSING_DEADLINE);
+            setStage(Stage.PROCESSING, this.issuerId, Constants.getShufflingProcessingDeadline());
         } else {
             this.assigneeAccountId = participantId;
         }
@@ -618,7 +618,7 @@ public final class Shuffling {
             return;
         }
         this.assigneeAccountId = participant.getNextAccountId();
-        this.blocksRemaining = Constants.SHUFFLING_PROCESSING_DEADLINE;
+        this.blocksRemaining = Constants.getShufflingProcessingDeadline();
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
     }
@@ -641,7 +641,7 @@ public final class Shuffling {
                 Account.addOrGetAccount(recipientId).apply(recipientPublicKey);
             }
         }
-        setStage(Stage.VERIFICATION, 0, (short)(Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
+        setStage(Stage.VERIFICATION, 0, (short)(Constants.getShufflingProcessingDeadline() + participantCount));
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_FINISHED);
     }
@@ -657,7 +657,7 @@ public final class Shuffling {
         participant.cancel(blameData, keySeeds);
         boolean startingBlame = this.stage != Stage.BLAME;
         if (startingBlame) {
-            setStage(Stage.BLAME, participant.getAccountId(), (short) (Constants.SHUFFLING_PROCESSING_DEADLINE + participantCount));
+            setStage(Stage.BLAME, participant.getAccountId(), (short) (Constants.getShufflingProcessingDeadline() + participantCount));
         }
         shufflingTable.insert(this);
         if (startingBlame) {
@@ -688,7 +688,7 @@ public final class Shuffling {
                 Account participantAccount = Account.getAccount(participant.getAccountId());
                 holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                 if (holdingType != HoldingType.APL) {
-                    participantAccount.addToBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
+                    participantAccount.addToBalanceATM(event, this.id, -Constants.getShufflingDepositAtm());
                 }
             }
         }
@@ -698,7 +698,7 @@ public final class Shuffling {
             recipientAccount.apply(recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
-                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
+                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, Constants.getShufflingDepositAtm());
             }
         }
         setStage(Stage.DONE, 0, (short)0);
@@ -719,30 +719,31 @@ public final class Shuffling {
                 holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                 if (participantAccount.getId() != blamedAccountId) {
                     if (holdingType != HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, Constants.SHUFFLING_DEPOSIT_ATM);
+                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, Constants.getShufflingDepositAtm());
                     }
                 } else {
                     if (holdingType == HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
+                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -Constants.getShufflingDepositAtm());
                     }
-                    participantAccount.addToBalanceATM(event, this.id, -Constants.SHUFFLING_DEPOSIT_ATM);
+                    participantAccount.addToBalanceATM(event, this.id, -Constants.getShufflingDepositAtm());
                 }
             }
         }
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
-            long fee = Constants.SHUFFLING_DEPOSIT_ATM / 4;
+            long fee = Constants.getShufflingDepositAtm() / 4;
             for (int i = 0; i < 3; i++) {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
-                LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight() - i - 1);
+                LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(),
+                        block.getHeight() - i - 1);
             }
-            fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
+            fee = Constants.getShufflingDepositAtm() - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
             blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             blockGeneratorAccount.addToForgedBalanceATM(fee);
-            LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.COIN_SYMBOL, block.getHeight());
+            LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(), block.getHeight());
         }
         setStage(Stage.CANCELLED, blamedAccountId, (short)0);
         shufflingTable.insert(this);

@@ -20,9 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Constants;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +29,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 /**
  * Compact and reorganize the NRS database.  The NRS application must not be
@@ -71,7 +71,7 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-        String dbPrefix = Constants.isTestnet ? "apl.testDb" : "apl.db";
+        String dbPrefix = Constants.isTestnet() ? "apl.testDb" : "apl.db";
         String dbType = Apl.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");

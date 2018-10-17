@@ -71,7 +71,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
 
 
-    private static final byte[] CHECKSUM_1 = Constants.isTestnet ?
+    private static final byte[] CHECKSUM_1 = Constants.isTestnet() ?
             null
             :
             null;
@@ -87,7 +87,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
     private final boolean trimDerivedTables = Apl.getBooleanProperty("apl.trimDerivedTables");
-    private final int defaultNumberOfForkConfirmations = Apl.getIntProperty(Constants.isTestnet
+    private final int defaultNumberOfForkConfirmations = Apl.getIntProperty(Constants.isTestnet()
             ? "apl.testnetNumberOfForkConfirmations" : "apl.numberOfForkConfirmations");
     private final boolean simulateEndlessDownload = Apl.getBooleanProperty("apl.simulateEndlessDownload");
 
@@ -1139,7 +1139,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         try (Connection con = Db.getDb().getConnection()) {
             int now = Apl.getEpochTime();
             int minTimestamp = Math.max(1, now - Constants.MAX_PRUNABLE_LIFETIME);
-            int maxTimestamp = Math.max(minTimestamp, now - Constants.MIN_PRUNABLE_LIFETIME) - 1;
+            int maxTimestamp = Math.max(minTimestamp, now - Constants.getMinPrunableLifetime()) - 1;
             List<TransactionDb.PrunableTransaction> transactionList =
                     TransactionDb.findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {

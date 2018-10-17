@@ -1004,7 +1004,8 @@ final class TransactionImpl implements Transaction {
             long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
             if (feeATM < minimumFeeATM) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                        ((double) feeATM) / Constants.ONE_APL, Constants.COIN_SYMBOL, ((double) minimumFeeATM) / Constants.ONE_APL, Constants.COIN_SYMBOL, blockchainHeight));
+                        ((double) feeATM) / Constants.ONE_APL, Constants.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, Constants.getCoinSymbol(),
+                        blockchainHeight));
             }
             if (ecBlockId != 0) {
                 if (blockchainHeight < ecBlockHeight) {
@@ -1039,7 +1040,7 @@ final class TransactionImpl implements Transaction {
         }
         if (referencedTransactionFullHash != null) {
             senderAccount.addToUnconfirmedBalanceATM(getType().getLedgerEvent(), getId(),
-                    0, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
+                    0, Constants.getUnconfirmedPoolDepositAtm());
         }
         if (attachmentIsPhased()) {
             senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeATM);

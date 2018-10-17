@@ -38,7 +38,7 @@ public final class BaseTargetTest {
         private static final Logger LOG = getLogger(BaseTargetTest.class);
 
     private static final long MIN_BASE_TARGET = Constants.getInitialBaseTarget() * 9 / 10;
-    private static final long MAX_BASE_TARGET = Constants.getInitialBaseTarget() * (Constants.isTestnet ? Constants.getMaxBalanceAPL() : 50);
+    private static final long MAX_BASE_TARGET = Constants.getInitialBaseTarget() * (Constants.isTestnet() ? Constants.getMaxBalanceAPL() : 50);
 
     private static final int MIN_BLOCKTIME_LIMIT = Constants.getBlockTime() - 7;
     private static final int MAX_BLOCKTIME_LIMIT = Constants.getBlockTime() + 7;
@@ -114,7 +114,7 @@ public final class BaseTargetTest {
 
             int count = 0;
 
-            String dbLocation = Constants.isTestnet ? "apl_test_db" : "apl_db";
+            String dbLocation = Constants.isTestnet() ? "apl_test_db" : "apl_db";
 
             try (Connection con = DriverManager.getConnection("jdbc:h2:./" + dbLocation + "/apl;DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE", "sa", "sa");
                  PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM block WHERE height > " + height + " ORDER BY db_id ASC");

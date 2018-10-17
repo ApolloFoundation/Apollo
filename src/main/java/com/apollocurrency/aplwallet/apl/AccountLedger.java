@@ -20,17 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
-
-import java.sql.*;
-import java.util.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Maintain a ledger of changes to selected accounts
@@ -204,7 +214,7 @@ public class AccountLedger {
         if (!isUnconfirmed && logUnconfirmed == 2) {
             return false;
         }
-        if (trimKeep > 0 && blockchain.getHeight() <= Constants.LAST_KNOWN_BLOCK - trimKeep) {
+        if (trimKeep > 0 && blockchain.getHeight() <= Constants.getLastKnownBlock() - trimKeep) {
             return false;
         }
         //

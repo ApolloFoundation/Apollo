@@ -237,7 +237,7 @@ public abstract class TransactionType {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
+            feeATM = Math.addExact(feeATM, Constants.getUnconfirmedPoolDepositAtm());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
@@ -275,7 +275,7 @@ public abstract class TransactionType {
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
             senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), 0,
-                    Constants.UNCONFIRMED_POOL_DEPOSIT_ATM);
+                    Constants.getUnconfirmedPoolDepositAtm());
         }
     }
 
@@ -1346,7 +1346,7 @@ public abstract class TransactionType {
                     throw new AplException.NotValidException("Invalid account property: " + attachment.getJSONObject());
                 }
                 if (transaction.getAmountATM() != 0) {
-                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + Constants.COIN_SYMBOL);
+                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + Constants.getCoinSymbol());
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new AplException.NotValidException("Setting Genesis account properties not allowed");
@@ -1414,7 +1414,7 @@ public abstract class TransactionType {
                             + " does not belong to " + Long.toUnsignedString(transaction.getRecipientId()));
                 }
                 if (transaction.getAmountATM() != 0) {
-                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + Constants.COIN_SYMBOL);
+                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + Constants.getCoinSymbol());
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new AplException.NotValidException("Deleting Genesis account properties not allowed");
@@ -2842,7 +2842,7 @@ public abstract class TransactionType {
                 if (transaction.getAmountATM() != 0) {
                     throw new AplException.NotValidException("Transaction amount must be 0 for effective balance leasing");
                 }
-                if (attachment.getPeriod() < Constants.LEASING_DELAY || attachment.getPeriod() > 65535) {
+                if (attachment.getPeriod() < Constants.getLeasingDelay() || attachment.getPeriod() > 65535) {
                     throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
                 }
                 byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
@@ -2905,7 +2905,8 @@ public abstract class TransactionType {
                 long maxFees = attachment.getMaxFees();
                 long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_APL;
                 if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > Constants.getMaxBalanceATM()) {
-                    throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double)maxFees)/Constants.ONE_APL, Constants.COIN_SYMBOL));
+                    throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double)maxFees)/Constants.ONE_APL,
+                            Constants.getCoinSymbol()));
                 }
                 short minDuration = attachment.getMinDuration();
                 if (minDuration < 0 || (minDuration > 0 && minDuration < 3) || minDuration >= Constants.MAX_PHASING_DURATION) {
@@ -3022,7 +3023,7 @@ public abstract class TransactionType {
             @Override
             void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
-                if (attachment.getData() == null && Apl.getEpochTime() - transaction.getTimestamp() < Constants.MIN_PRUNABLE_LIFETIME) {
+                if (attachment.getData() == null && Apl.getEpochTime() - transaction.getTimestamp() < Constants.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 if (attachment.getData() != null) {
@@ -3093,7 +3094,7 @@ public abstract class TransactionType {
             @Override
             void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
-                if ((attachment.jsonIsPruned() || attachment.getData() == null) && Apl.getEpochTime() - transaction.getTimestamp() < Constants.MIN_PRUNABLE_LIFETIME) {
+                if ((attachment.jsonIsPruned() || attachment.getData() == null) && Apl.getEpochTime() - transaction.getTimestamp() < Constants.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 TransactionImpl uploadTransaction = TransactionDb.findTransaction(attachment.getTaggedDataId(), Apl.getBlockchain().getHeight());
@@ -3112,7 +3113,7 @@ public abstract class TransactionType {
                     }
                 }
                 TaggedData taggedData = TaggedData.getData(attachment.getTaggedDataId());
-                if (taggedData != null && taggedData.getTransactionTimestamp() > Apl.getEpochTime() + 6 * Constants.MIN_PRUNABLE_LIFETIME) {
+                if (taggedData != null && taggedData.getTransactionTimestamp() > Apl.getEpochTime() + 6 * Constants.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }
             }

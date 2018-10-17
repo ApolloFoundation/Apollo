@@ -397,14 +397,14 @@ final class BlockImpl implements Block {
                 }
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, Constants.COIN_SYMBOL,
+                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, Constants.getCoinSymbol(),
                         this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, Constants.COIN_SYMBOL, this.height);
+            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, Constants.getCoinSymbol(), this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
         generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);

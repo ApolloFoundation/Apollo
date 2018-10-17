@@ -20,6 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -29,12 +39,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Monitor account balances based on account properties
@@ -637,8 +641,8 @@ public final class FundingMonitor {
                 Apl.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Apl.getBlockchain().getHeight();
                 LOG.debug(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        Constants.COIN_SYMBOL, transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
-                        Constants.COIN_SYMBOL, monitor.accountName, monitoredAccount.accountName));
+                        Constants.getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
+                        Constants.getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
             }
         }
     }

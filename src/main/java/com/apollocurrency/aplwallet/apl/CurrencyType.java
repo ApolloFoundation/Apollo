@@ -268,7 +268,7 @@ public enum CurrencyType {
 
     private static void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
-            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", Constants.COIN_SYMBOL));
+            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", Constants.getCoinSymbol()));
         }
 
         final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
@@ -310,7 +310,7 @@ public enum CurrencyType {
                 throw new AplException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
             }
         }
-        if (code.contains(Constants.COIN_SYMBOL) || Constants.COIN_SYMBOL.toLowerCase().equals(normalizedName)) {
+        if (code.contains(Constants.getCoinSymbol()) || Constants.getCoinSymbol().toLowerCase().equals(normalizedName)) {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;

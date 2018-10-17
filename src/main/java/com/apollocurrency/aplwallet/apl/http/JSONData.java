@@ -20,9 +20,56 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AccountLedger;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Asset;
+import com.apollocurrency.aplwallet.apl.AssetDelete;
+import com.apollocurrency.aplwallet.apl.AssetDividend;
+import com.apollocurrency.aplwallet.apl.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Currency;
+import com.apollocurrency.aplwallet.apl.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.CurrencyType;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.Exchange;
+import com.apollocurrency.aplwallet.apl.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.FundingMonitor;
+import com.apollocurrency.aplwallet.apl.Generator;
+import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.Order;
+import com.apollocurrency.aplwallet.apl.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.PhasingVote;
+import com.apollocurrency.aplwallet.apl.Poll;
+import com.apollocurrency.aplwallet.apl.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.Shuffler;
+import com.apollocurrency.aplwallet.apl.Shuffling;
+import com.apollocurrency.aplwallet.apl.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.TaggedData;
+import com.apollocurrency.aplwallet.apl.Token;
+import com.apollocurrency.aplwallet.apl.Trade;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Vote;
+import com.apollocurrency.aplwallet.apl.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
@@ -33,10 +80,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
 
 public final class JSONData {
 
@@ -82,7 +125,7 @@ public final class JSONData {
             json.put("forgedBalanceATM", String.valueOf(account.getForgedBalanceATM()));
             if (includeEffectiveBalance) {
                 json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height));
-                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
+                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), height)));
             }
         }
         return json;

@@ -27,6 +27,7 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
+    "genesisLocation": "data/genesisAccounts.json",
     "blockchainProperties": [
       {
         "height": 0,
@@ -54,7 +55,7 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "genesisLocation": "data/genesisAccounts-testnet.json",
     "blockchainProperties": [
       {
         "height": 0,

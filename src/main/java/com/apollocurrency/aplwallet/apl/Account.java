@@ -22,6 +22,21 @@ package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
@@ -38,21 +53,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
@@ -87,7 +87,7 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            if (height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+            if (height <= Constants.getGuaranteedBalanceConfirmations()) {
                 return;
             }
             super.trim(height);
@@ -95,7 +95,7 @@ public final class Account {
 
         @Override
         public void checkAvailable(int height) {
-            if (height > Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+            if (height > Constants.getGuaranteedBalanceConfirmations()) {
                 super.checkAvailable(height);
                 return;
             }
@@ -239,7 +239,7 @@ public final class Account {
             try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmtDelete.setInt(1, height - Constants.GUARANTEED_BALANCE_CONFIRMATIONS);
+                pstmtDelete.setInt(1, height - Constants.getGuaranteedBalanceConfirmations());
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
@@ -964,7 +964,7 @@ public final class Account {
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
-                effectiveBalanceATM += getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
+                effectiveBalanceATM += getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), height);
             }
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
@@ -993,7 +993,7 @@ public final class Account {
                      + (height < blockchainHeight ? " AND height <= ? " : "")
                      + " GROUP BY account_id ORDER BY account_id")) {
             pstmt.setObject(1, lessorIds);
-            pstmt.setInt(2, height - Constants.GUARANTEED_BALANCE_CONFIRMATIONS);
+            pstmt.setInt(2, height - Constants.getGuaranteedBalanceConfirmations());
             if (height < blockchainHeight) {
                 pstmt.setInt(3, height);
             }
@@ -1029,14 +1029,14 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM() {
-        return getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, Apl.getBlockchain().getHeight());
+        return getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), Apl.getBlockchain().getHeight());
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
         Apl.getBlockchain().readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + Constants.GUARANTEED_BALANCE_CONFIRMATIONS < Apl.getBlockchainProcessor().getMinRollbackHeight()
+            if (height + Constants.getGuaranteedBalanceConfirmations() < Apl.getBlockchainProcessor().getMinRollbackHeight()
                     || height > Apl.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
@@ -1143,15 +1143,15 @@ public final class Account {
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));
         if (accountLease == null) {
             accountLease = new AccountLease(id,
-                    height + Constants.LEASING_DELAY,
-                    height + Constants.LEASING_DELAY + period,
+                    height + Constants.getLeasingDelay(),
+                    height + Constants.getLeasingDelay() + period,
                     lesseeId);
         } else if (accountLease.currentLesseeId == 0) {
-            accountLease.currentLeasingHeightFrom = height + Constants.LEASING_DELAY;
-            accountLease.currentLeasingHeightTo = height + Constants.LEASING_DELAY + period;
+            accountLease.currentLeasingHeightFrom = height + Constants.getLeasingDelay();
+            accountLease.currentLeasingHeightTo = height + Constants.getLeasingDelay() + period;
             accountLease.currentLesseeId = lesseeId;
         } else {
-            accountLease.nextLeasingHeightFrom = height + Constants.LEASING_DELAY;
+            accountLease.nextLeasingHeightFrom = height + Constants.getLeasingDelay();
             if (accountLease.nextLeasingHeightFrom < accountLease.currentLeasingHeightTo) {
                 accountLease.nextLeasingHeightFrom = accountLease.currentLeasingHeightTo;
             }

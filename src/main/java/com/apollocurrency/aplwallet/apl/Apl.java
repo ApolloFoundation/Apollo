@@ -420,7 +420,7 @@ public final class Apl {
                 Db.init();
                 ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
-                Constants.updateToHeight();
+                Constants.updateToLatestConstants();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -461,7 +461,7 @@ public final class Apl {
                 API.init();
                 initUpdater();
                 DebugTrace.init();
-                int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
+                int timeMultiplier = (Constants.isTestnet() && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), Apl.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
@@ -489,7 +489,7 @@ public final class Apl {
                     runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
-                if (Constants.isTestnet) {
+                if (Constants.isTestnet()) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
             }
@@ -526,8 +526,8 @@ public final class Apl {
         }
 
         static Set<Integer> collectWorkingPorts() {
-            final int port = Constants.isTestnet ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
-            final int sslPort = Constants.isTestnet ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
+            final int port = Constants.isTestnet() ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
+            final int sslPort = Constants.isTestnet() ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
             boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
@@ -544,7 +544,7 @@ public final class Apl {
                 }
             }
             if (peerPort == -1) {
-                peerPort = Constants.isTestnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+                peerPort = Constants.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
             }
             int peerServerPort = Apl.getIntProperty("apl.peerServerPort");
 
@@ -554,7 +554,7 @@ public final class Apl {
                 ports.add(sslPort);
             }
             ports.add(peerPort);
-            ports.add(Constants.isTestnet ? TESTNET_PEER_PORT : peerServerPort);
+            ports.add(Constants.isTestnet() ? TESTNET_PEER_PORT : peerServerPort);
             return ports;
         }
 
@@ -658,7 +658,7 @@ public final class Apl {
     }
 
     public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, Constants.chain.getChainId());
+        return dirProvider.getDbDir(dbDir, Constants.getChain().getChainId());
     }
 
     public static String getOldDbDir(String dbDir,  UUID chainId) {
@@ -668,7 +668,7 @@ public final class Apl {
     }
 
     public static String getOldDbDir(String dbDir) {
-        return getOldDbDir(dbDir, Constants.chain.getChainId());
+        return getOldDbDir(dbDir, Constants.getChain().getChainId());
     }
 
     public static void updateLogFileHandler(Properties loggingProperties) {

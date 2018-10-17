@@ -21,40 +21,58 @@
 package com.apollocurrency.aplwallet.apl;
 
 import java.math.BigInteger;
+import java.util.Comparator;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.util.Listener;
 
 public final class Constants {
-    //TODO: consider stamped lock or inner volatile static class to increase performance
-    private static final ReadWriteLock LOCK = new ReentrantReadWriteLock();
-    public static Chain chain;
-    public static boolean isTestnet = Apl.getBooleanProperty("apl.isTestnet");
+    private static Chain chain;
+    private static boolean testnet;
     public static final boolean isOffline = Apl.getBooleanProperty("apl.isOffline");
     public static final boolean isLightClient = Apl.getBooleanProperty("apl.isLightClient");
     public static final String customLoginWarning = Apl.getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
+    private volatile static ChangeableConstants changeableConstants;
+    private static class ChangeableConstants {
+        public final int maxNumberOfTransactions;
 
-    public static String COIN_SYMBOL = "Apollo";
-    public static String ACCOUNT_PREFIX = "APL";
-    public static String PROJECT_NAME = "Apollo";
-    private static int MAX_NUMBER_OF_TRANSACTIONS = Apl.getIntProperty("apl.maxNumberOfTransactions", 255);
-    public static final int MIN_TRANSACTION_SIZE = 176;
-    private static int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
-    private static long MAX_BALANCE_APL = 30000000000L;
+        public final int maxPayloadLength;
+        public final long maxBalanceApl;
+        public final long maxBalanceAtm;
+        public final int blockTime;
+        public final long initialBaseTarget;
+        public final long maxBaseTarget;
+        public final long minBaseTarget;
+        public final int minBlocktimeLimit;
+        public final int maxBlocktimeLimit;
+
+        private ChangeableConstants(BlockchainProperties bp) {
+            this.maxNumberOfTransactions = bp.getMaxNumberOfTransactions();
+            this.maxBalanceApl = bp.getMaxBalance();
+            this.blockTime = bp.getBlockTime();
+            this.maxPayloadLength = maxNumberOfTransactions * MIN_TRANSACTION_SIZE;
+            this.maxBalanceAtm = maxBalanceApl * ONE_APL;
+            this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(blockTime * maxBalanceApl)).longValue();
+            this.maxBaseTarget = initialBaseTarget * (testnet ? maxBalanceApl : 50);
+            this.minBaseTarget = initialBaseTarget * 9 / 10;
+            this.minBlocktimeLimit = blockTime - 7;
+            this.maxBlocktimeLimit = blockTime + 7;
+        }
+    }
+    private static String coinSymbol;
+    private static String accountPrefix;
+    private static String projectName;
+
     public static final long ONE_APL = 100000000;
-    private static long MAX_BALANCE_ATM = MAX_BALANCE_APL * ONE_APL;
 
-    private static int BLOCK_TIME = 60;
-    private static long INITIAL_BASE_TARGET = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(BLOCK_TIME * MAX_BALANCE_APL)).longValue();
-    //153722867;
-    private static long MAX_BASE_TARGET = INITIAL_BASE_TARGET * (isTestnet ? MAX_BALANCE_APL : 50);
-    private static long MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
-    private static int MIN_BLOCKTIME_LIMIT = BLOCK_TIME - 7;
-    private static int MAX_BLOCKTIME_LIMIT = BLOCK_TIME + 7;
+    public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
     public static final int MAX_ROLLBACK = Math.max(Apl.getIntProperty("apl.maxRollback"), 720);
-    public static final int GUARANTEED_BALANCE_CONFIRMATIONS = isTestnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
-    public static int LEASING_DELAY = isTestnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
+    private static int GUARANTEED_BALANCE_CONFIRMATIONS;
+    private static int leasingDelay = testnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
@@ -78,13 +96,13 @@ public final class Constants {
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
 
-    public static int MIN_PRUNABLE_LIFETIME = isTestnet ? 1440 * 60 : 14 * 1440 * 60;
+    private static int minPrunableLifetime;
     public static final int MAX_PRUNABLE_LIFETIME;
     public static final boolean ENABLE_PRUNING;
     static {
         int maxPrunableLifetime = Apl.getIntProperty("apl.maxPrunableLifetime");
         ENABLE_PRUNING = maxPrunableLifetime >= 0;
-        MAX_PRUNABLE_LIFETIME = ENABLE_PRUNING ? Math.max(maxPrunableLifetime, MIN_PRUNABLE_LIFETIME) : Integer.MAX_VALUE;
+        MAX_PRUNABLE_LIFETIME = ENABLE_PRUNING ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
     }
     public static final boolean INCLUDE_EXPIRED_PRUNABLE = Apl.getBooleanProperty("apl.includeExpiredPrunable");
 
@@ -128,7 +146,7 @@ public final class Constants {
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51
     public static final short MAX_SHUFFLING_REGISTRATION_PERIOD = (short)1440 * 7;
-    public static short SHUFFLING_PROCESSING_DEADLINE = (short)(isTestnet ? 10 : 100);
+    private static short shufflingProcessingDeadline;
 
     public static final int MAX_TAGGED_DATA_NAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DESCRIPTION_LENGTH = 1000;
@@ -150,8 +168,8 @@ public final class Constants {
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
 
     public static final int LAST_CHECKSUM_BLOCK = 0;
-    // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
-    public static int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
+    // lastKnownBlock must also be set in html/www/js/nrs.constants.js
+    private static int lastKnownBlock;
 
     public static final Version MIN_VERSION = new Version(1, 0, 0);
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
@@ -163,8 +181,8 @@ public final class Constants {
     public static final int DEFAULT_PEER_PORT = 47874;
     public static final int TESTNET_PEER_PORT = 46874;
 
-    static long UNCONFIRMED_POOL_DEPOSIT_ATM = (isTestnet ? 50 : 100) * ONE_APL;
-    public static long SHUFFLING_DEPOSIT_ATM = (isTestnet ? 7 : 1000) * ONE_APL;
+    private static long unconfirmedPoolDepositAtm;
+    private static long shufflingDepositAtm;
 
     public static final boolean correctInvalidFees = Apl.getBooleanProperty("apl.correctInvalidFees");
 
@@ -175,149 +193,150 @@ public final class Constants {
 
     public static void init(Chain chain) {
         Constants.chain = chain;
-        Constants.isTestnet = chain.isTestnet();
-        Constants.PROJECT_NAME = chain.getProject();
-        Constants.ACCOUNT_PREFIX = chain.getPrefix();
-        Constants.COIN_SYMBOL = chain.getSymbol();
-        Constants.LEASING_DELAY = isTestnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
-        Constants.MIN_PRUNABLE_LIFETIME = isTestnet ? 1440 * 60 : 14 * 1440 * 60;
-        Constants.SHUFFLING_PROCESSING_DEADLINE = (short)(isTestnet ? 10 : 100);
-        Constants.LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
-        Constants.UNCONFIRMED_POOL_DEPOSIT_ATM = (isTestnet ? 50 : 100) * ONE_APL;
-        Constants.SHUFFLING_DEPOSIT_ATM = (isTestnet ? 7 : 1000) * ONE_APL;
-        updateConstants(chain.getBlockchainProperties().get(0));
+        Constants.testnet = chain.isTestnet();
+        Constants.projectName = chain.getProject();
+        Constants.accountPrefix = chain.getPrefix();
+        Constants.coinSymbol = chain.getSymbol();
+        Constants.leasingDelay = testnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
+        Constants.minPrunableLifetime = testnet ? 1440 * 60 : 14 * 1440 * 60;
+        Constants.shufflingProcessingDeadline = (short)(testnet ? 10 : 100);
+        Constants.lastKnownBlock = testnet ? 0 : 0;
+        Constants.unconfirmedPoolDepositAtm = (testnet ? 50 : 100) * ONE_APL;
+        Constants.shufflingDepositAtm = (testnet ? 7 : 1000) * ONE_APL;
+        Constants.GUARANTEED_BALANCE_CONFIRMATIONS = testnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
+        changeableConstants = new ChangeableConstants(chain.getBlockchainProperties().get(0));
     }
 
-
-    static synchronized void updateConstants(BlockchainProperties bp) {
-        LOCK.writeLock().lock();
-        try {
-            Constants.MAX_NUMBER_OF_TRANSACTIONS = bp.getMaxNumberOfTransactions();
-            Constants.MAX_BALANCE_APL = bp.getMaxBalance();
-            Constants.BLOCK_TIME = bp.getBlockTime();
-            calculateConstants();
-        } finally {
-            LOCK.writeLock().unlock();
-        }
-    }
-//
-    static void updateToHeight() {
+    private static ChangeableConstants getLatest(Chain chain) {
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        blockchainProperties.forEach((height, properties)-> {
-            int currentHeight = Apl.getBlockchain().getHeight();
-            if (currentHeight > height) {
-                updateConstants(properties);
-            }
-        });
+        Optional<Integer> maxHeight =
+                blockchainProperties
+                        .keySet()
+                        .stream()
+                        .filter(height -> Apl.getBlockchain().getHeight() > height)
+                        .max(Comparator.naturalOrder());
+        return maxHeight
+                .map(height -> new ChangeableConstants(blockchainProperties.get(height)))
+                .orElse(null);
     }
 
-
-    private static void calculateConstants() {
-        Constants.MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
-        Constants.MAX_BALANCE_ATM = MAX_BALANCE_APL * ONE_APL;
-        Constants.INITIAL_BASE_TARGET = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(BLOCK_TIME * MAX_BALANCE_APL)).longValue();
-        Constants.MAX_BASE_TARGET = INITIAL_BASE_TARGET * (isTestnet ? MAX_BALANCE_APL : 50);
-        Constants.MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
-        Constants.MIN_BLOCKTIME_LIMIT = BLOCK_TIME - 7;
-        Constants.MAX_BLOCKTIME_LIMIT = BLOCK_TIME + 7;
+    public static int getGuaranteedBalanceConfirmations() {
+        return GUARANTEED_BALANCE_CONFIRMATIONS;
     }
 
-    public static String getAccountPrefix() {
-        LOCK.readLock().lock();
-        try {
-            return ACCOUNT_PREFIX;
-        } finally {
-            LOCK.readLock().unlock();
+    static void updateToLatestConstants() {
+        Objects.requireNonNull(chain);
+
+        ChangeableConstants latestConstants = getLatest(chain);
+        if (latestConstants != null) {
+            changeableConstants = latestConstants;
         }
+        BlockchainProcessorImpl.getInstance().addListener(new ConstantsChangeListener(chain.getBlockchainProperties()), BlockchainProcessor.Event.BLOCK_PUSHED);
+    }
+
+    public static Chain getChain() {
+        return chain;
     }
 
     public static int getMaxNumberOfTransactions() {
-        LOCK.readLock().lock();
-        try {
-            return MAX_NUMBER_OF_TRANSACTIONS;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.maxNumberOfTransactions;
     }
 
+
     public static int getMaxPayloadLength() {
-        LOCK.readLock().lock();
-        try {
-            return MAX_PAYLOAD_LENGTH;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.maxPayloadLength;
     }
 
     public static long getMaxBalanceAPL() {
-        LOCK.readLock().lock();
-        try {
-            return MAX_BALANCE_APL;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.maxBalanceApl;
     }
 
     public static long getMaxBalanceATM() {
-        LOCK.readLock().lock();
-        try {
-            return MAX_BALANCE_ATM;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.maxBalanceAtm;
     }
 
     public static int getBlockTime() {
-        LOCK.readLock().lock();
-        try {
-            return BLOCK_TIME;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.blockTime;
     }
 
     public static long getInitialBaseTarget() {
-        LOCK.readLock().lock();
-        try {
-            return INITIAL_BASE_TARGET;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.initialBaseTarget;
     }
 
     public static long getMaxBaseTarget() {
-        LOCK.readLock().lock();
-        try {
-            return MAX_BASE_TARGET;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.maxBaseTarget;
     }
 
     public static long getMinBaseTarget() {
-        LOCK.readLock().lock();
-        try {
-            return MIN_BASE_TARGET;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.minBaseTarget;
     }
 
     public static int getMinBlocktimeLimit() {
-        LOCK.readLock().lock();
-        try {
-            return MIN_BLOCKTIME_LIMIT;
-        } finally {
-            LOCK.readLock().unlock();
-        }
+        return changeableConstants.minBlocktimeLimit;
     }
 
     public static int getMaxBlocktimeLimit() {
-        LOCK.readLock().lock();
-        try {
-            return MAX_BLOCKTIME_LIMIT;
-        } finally {
-            LOCK.readLock().unlock();
+        return changeableConstants.maxBlocktimeLimit;
+    }
+
+    // Protect non-final constants from modification
+    public static boolean isTestnet() {
+        return testnet;
+    }
+
+    public static String getCoinSymbol() {
+        return coinSymbol;
+    }
+
+    public static String getAccountPrefix() {
+        return accountPrefix;
+    }
+
+    public static String getProjectName() {
+        return projectName;
+    }
+
+    public static int getLeasingDelay() {
+        return leasingDelay;
+    }
+
+    public static int getMinPrunableLifetime() {
+        return minPrunableLifetime;
+    }
+
+    public static short getShufflingProcessingDeadline() {
+        return shufflingProcessingDeadline;
+    }
+
+    public static int getLastKnownBlock() {
+        return lastKnownBlock;
+    }
+
+    public static long getUnconfirmedPoolDepositAtm() {
+        return unconfirmedPoolDepositAtm;
+    }
+
+    public static long getShufflingDepositAtm() {
+        return shufflingDepositAtm;
+    }
+
+    private static class ConstantsChangeListener implements Listener<Block> {
+
+        private Map<Integer, BlockchainProperties> propertiesMap;
+        private Set<Integer> targetHeights;
+
+        public ConstantsChangeListener(Map<Integer, BlockchainProperties> propertiesMap) {
+            this.propertiesMap = propertiesMap;
+            targetHeights = propertiesMap.keySet();
+        }
+
+        @Override
+        public void notify(Block block) {
+            int currentHeight = block.getHeight();
+            if (targetHeights.contains(currentHeight)) {
+                changeableConstants = new ChangeableConstants(propertiesMap.get(currentHeight));
+                targetHeights.remove(currentHeight);
+            }
         }
     }
 }

@@ -673,7 +673,7 @@ final class PeerImpl implements Peer {
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));
                 Object chainIdObject = response.get("chainId");
-                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(Constants.chain.getChainId())) {
+                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(Constants.getChain().getChainId())) {
                     blacklist(String.format("Peer %s has different chainId %d", getAnnouncedAddress(), this.chainId));
                     return;
                 }

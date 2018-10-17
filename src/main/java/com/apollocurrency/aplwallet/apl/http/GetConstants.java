@@ -63,9 +63,9 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
-                response.put("coinSymbol", Constants.COIN_SYMBOL);
-                response.put("accountPrefix", Constants.ACCOUNT_PREFIX);
-                response.put("projectName", Constants.PROJECT_NAME);
+                response.put("coinSymbol", Constants.getCoinSymbol());
+                response.put("accountPrefix", Constants.getAccountPrefix());
+                response.put("projectName", Constants.getProjectName());
                 response.put("genesisBlockId", Long.toUnsignedString(Apl.getBlockchainProcessor().getGenesisBlockId()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);

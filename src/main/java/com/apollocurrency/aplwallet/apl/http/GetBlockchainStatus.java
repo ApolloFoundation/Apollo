@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
 
@@ -64,7 +64,7 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
         response.put("isDownloading", blockchainProcessor.isDownloading());
         response.put("maxRollback", Constants.MAX_ROLLBACK);
         response.put("currentMinRollbackHeight", Apl.getBlockchainProcessor().getMinRollbackHeight());
-        response.put("isTestnet", Constants.isTestnet);
+        response.put("isTestnet", Constants.isTestnet());
         response.put("maxPrunableLifetime", Constants.MAX_PRUNABLE_LIFETIME);
         response.put("includeExpiredPrunable", Constants.INCLUDE_EXPIRED_PRUNABLE);
         response.put("correctInvalidFees", Constants.correctInvalidFees);

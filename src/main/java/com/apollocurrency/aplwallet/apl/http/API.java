@@ -20,6 +20,42 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -30,7 +66,13 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -44,21 +86,6 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
-
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.*;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
@@ -146,8 +173,8 @@ public final class API {
 
         boolean enableAPIServer = Apl.getBooleanProperty("apl.enableAPIServer");
         if (enableAPIServer) {
-            final int port = Constants.isTestnet ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
-            final int sslPort = Constants.isTestnet ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
+            final int port = Constants.isTestnet() ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
+            final int sslPort = Constants.isTestnet() ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
             final String host = Apl.getStringProperty("apl.apiServerHost");
             disableAdminPassword = Apl.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
             int maxThreadPoolSize = Apl.getIntProperty("apl.threadPoolMaxSize");

@@ -20,21 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+
 import com.apollocurrency.aplwallet.apl.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
 
-    public static final String PREFIX = Constants.isTestnet ? "apl.testDb" : "apl.db";
+    public static final String PREFIX = Constants.isTestnet() ? "apl.testDb" : "apl.db";
     private static BasicDb.DbProperties dbProperties;
     private static TransactionalDb db;
 

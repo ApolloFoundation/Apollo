@@ -119,7 +119,7 @@ public final class Convert {
     }
 
     public static String rsAccount(long accountId) {
-        return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
+        return Constants.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }
 
     public static long fullHashToId(byte[] hash) {

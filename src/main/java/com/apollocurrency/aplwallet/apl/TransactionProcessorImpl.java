@@ -20,27 +20,43 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.apollocurrency.aplwallet.apl.db.DbClause;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.Comparator.comparingInt;
-import static java.util.Comparator.comparingLong;
-import static org.slf4j.LoggerFactory.getLogger;
 
 final class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
@@ -617,7 +633,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (Apl.getBlockchain().getHeight() <= Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
+        if (Apl.getBlockchain().getHeight() <= Constants.getLastKnownBlock() && !testUnconfirmedTransactions) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -681,7 +697,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             try {
                 Db.getDb().beginTransaction();
-                if (Apl.getBlockchain().getHeight() < Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
+                if (Apl.getBlockchain().getHeight() < Constants.getLastKnownBlock() && !testUnconfirmedTransactions) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
 
