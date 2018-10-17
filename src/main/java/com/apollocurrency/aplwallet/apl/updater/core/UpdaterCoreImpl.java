@@ -4,17 +4,27 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.updater.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Level;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.updater.Startable;
+import com.apollocurrency.aplwallet.apl.updater.UpdateData;
+import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifier;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifierImpl;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
-
-import java.util.List;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class UpdaterCoreImpl implements UpdaterCore {
@@ -123,7 +133,8 @@ public class UpdaterCoreImpl implements UpdaterCore {
 
     private void performUpdate(UpdateData data) {
         lastUpdater = updaterFactory.getUpdater(data);
-        lastUpdater.processUpdate();
+        UpdateInfo.UpdateState updateState = lastUpdater.processUpdate();
+        LOG.info("Update state: {}", updateState);
     }
     
 
