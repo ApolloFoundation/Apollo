@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -16,8 +14,15 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class UpdaterUtil {
     public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
@@ -111,6 +116,14 @@ public class UpdaterUtil {
                 })
                 .collect(Collectors.toSet());
     }
+
+    public static DoubleByteArrayTuple split(byte[] arr) {
+        byte[] first = ArrayUtils.subarray(arr, 0,arr.length / 2);
+        byte[] second = ArrayUtils.subarray(arr, arr.length / 2, arr.length);
+        return new DoubleByteArrayTuple(first,
+                second);
+    }
+
     private UpdaterUtil(){}
 
     public static class CertificatePair {

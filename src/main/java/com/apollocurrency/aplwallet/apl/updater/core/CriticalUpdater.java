@@ -25,4 +25,9 @@ public class CriticalUpdater extends AbstractUpdater {
     public Level getLevel() {
         return Level.CRITICAL;
     }
+
+    @Override
+    protected boolean resumeBlockchainOnError() {
+        return false;
+    }
 }

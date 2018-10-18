@@ -4,19 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.updater.*;
-import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
-import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
-import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;
-import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.updater.Platform;
+import com.apollocurrency.aplwallet.apl.updater.UpdateData;
+import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
+import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
+import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;
+import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
+import org.slf4j.Logger;
 
 public abstract class AbstractUpdater implements Updater {
     private static final Logger LOG = getLogger(AbstractUpdater.class);
@@ -35,9 +40,9 @@ public abstract class AbstractUpdater implements Updater {
 
     public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait) {
         this.updateData = updateData;
-        this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getHeight() + blocksWait,
+        this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getId(), updateData.getTransaction().getHeight() + blocksWait,
                 updateData.getTransaction().getHeight(), getLevel(),
-                ((Attachment.UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
+                ((Attachment.UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion());
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;
         this.blocksWait = blocksWait;
@@ -47,7 +52,7 @@ public abstract class AbstractUpdater implements Updater {
     public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait,
                            PlatformDependentUpdaterFactory pduFactory) {
         this.updateData = updateData;
-        this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getHeight() + blocksWait,
+        this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getId(), updateData.getTransaction().getHeight() + blocksWait,
                 updateData.getTransaction().getHeight(), getLevel(),
                 ((Attachment.UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
         this.updaterMediator = updaterMediator;
@@ -66,10 +71,14 @@ public abstract class AbstractUpdater implements Updater {
         if (tryUpdate()) {
             LOG.info("{} was installed successfully");
             updaterService.update(new UpdateTransaction(updateData.getTransaction(), true));
+            updateInfo.setUpdateState(UpdateInfo.UpdateState.FINISHED);
             return UpdateInfo.UpdateState.FINISHED;
         } else {
             LOG.error("Error occurred while installing {} update", getLevel());
-            updaterMediator.resumeBlockchain();
+            if (resumeBlockchainOnError()) {
+                updaterMediator.resumeBlockchain();
+            }
+            updateInfo.setUpdateState(getFailUpdateState());
             return getFailUpdateState();
         }
     }
@@ -113,6 +122,10 @@ public abstract class AbstractUpdater implements Updater {
                 LOG.error(e.getMessage(), e);
             }
         }
+    }
+
+    protected boolean resumeBlockchainOnError() {
+        return true;
     }
 
     abstract protected UpdateInfo.UpdateState getFailUpdateState();

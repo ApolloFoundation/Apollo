@@ -1,8 +1,9 @@
 package dto;
 
-import com.apollocurrency.aplwallet.apl.JSONTransaction;
 
 import java.util.List;
+
+import dto.transaction.JSONTransaction;
 
 public class SSEDataHolder{
     private List<JSONTransaction> transactions;

@@ -4,15 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,6 +18,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+//import org.powermock.api.mockito.PowerMockito;
+//TODO rewrite withour powermock
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(UpdaterUtil.class)
 public class UpdaterUtilTest {
@@ -47,12 +48,12 @@ public class UpdaterUtilTest {
 
         Path directoryPath = Paths.get(directory);
 
-        PowerMockito.spy(UpdaterUtil.class);
-        PowerMockito.doReturn(directoryPath).when(UpdaterUtil.class, "loadResourcePath", directory) ;
-        PowerMockito.mockStatic(Files.class);
-        PowerMockito.when(Files.walk(directoryPath, 1)).thenReturn(createPathStream(files), createPathStream(files));
-        PowerMockito.mockStatic(CertificateFactory.class);
-        PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
+//        PowerMockito.spy(UpdaterUtil.class);
+//        PowerMockito.doReturn(directoryPath).when(UpdaterUtil.class, "loadResourcePath", directory) ;
+//        PowerMockito.mockStatic(Files.class);
+//        PowerMockito.when(Files.walk(directoryPath, 1)).thenReturn(createPathStream(files), createPathStream(files));
+//        PowerMockito.mockStatic(CertificateFactory.class);
+//        PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
 
         // create certificate mock for each filename
         createCertificateMocksForFiles(certificateFactoryMock, files);
@@ -86,10 +87,10 @@ public class UpdaterUtilTest {
 
         String[] files = new String[]{"cert1", "cert2", "cert3"};
 
-        PowerMockito.mockStatic(Files.class);
-
-        PowerMockito.mockStatic(CertificateFactory.class);
-        PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
+//        PowerMockito.mockStatic(Files.class);
+//
+//        PowerMockito.mockStatic(CertificateFactory.class);
+//        PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
 
         // create certificate mock for each filename
         createCertificateMocksForFiles(certificateFactoryMock, files);
@@ -121,7 +122,7 @@ public class UpdaterUtilTest {
             InputStream inputStreamMock = Mockito.mock(InputStream.class);
             Certificate certificateMock = Mockito.mock(Certificate.class);
 
-            PowerMockito.when(Files.newInputStream(Paths.get(filename))).thenReturn(inputStreamMock);
+            Mockito.when(Files.newInputStream(Paths.get(filename))).thenReturn(inputStreamMock);
 
             Mockito.when(certificateFactoryMock.generateCertificate(inputStreamMock)).thenReturn(certificateMock);
             Mockito.when(certificateMock.toString()).thenReturn(CERTIFICATE_MOCK_PREFIX + filename);

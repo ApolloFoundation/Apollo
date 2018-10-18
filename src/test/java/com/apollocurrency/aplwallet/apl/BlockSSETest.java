@@ -1,14 +1,9 @@
 package com.apollocurrency.aplwallet.apl;
 
 
-import dto.SSEDataHolder;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import util.TestUtil;
-import util.WalletRunner;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -19,9 +14,16 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.TestData;
+import dto.SSEDataHolder;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.slf4j.Logger;
+import util.TestUtil;
+import util.WalletRunner;
 
 public class BlockSSETest {
     private volatile boolean closeSource = false;
@@ -91,12 +93,12 @@ public class BlockSSETest {
 
         WebTarget target = client.target(url);
 
-        Consumer consumer = mock(Consumer.class);
+        Consumer consumer = Mockito.mock(Consumer.class);
         try (SseEventSource source = SseEventSource.target(target).build()) {
             source.register(consumer);
             source.open();
             TimeUnit.SECONDS.sleep(10);
-            verify(consumer, never()).accept(any());
+            Mockito.verify(consumer, never()).accept(any());
         }
     }
 }

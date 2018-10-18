@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
@@ -22,21 +24,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class})
-@SuppressStaticInitializationFor({
-        "com.apollocurrency.aplwallet.apl.Db", "com.apollocurrency.aplwallet.apl.db.TransactionalDb", "com.apollocurrency" +
-        ".aplwallet.apl.Constants", "com" +
-        ".apollocurrency" +
-        ".aplwallet.apl.Apl"})
 public class UpdaterDbTest {
     private EmbeddedDatabase db;
     private UpdaterRepository repository = new UpdaterDbRepository(new MockUpdaterMediator());
@@ -48,7 +39,6 @@ public class UpdaterDbTest {
                 .addScript("db/schema.sql")
                 .addScript("db/data.sql")
                 .build();
-
     }
 
     @After
@@ -169,6 +159,27 @@ public class UpdaterDbTest {
                     return false;
                 }
             };
+        }
+
+        @Override
+        public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
+            try {
+                int height = rs.getInt("height");
+                long id = rs.getLong("id");
+                byte type = rs.getByte("type");
+                byte subType = rs.getByte("subtype");
+                byte[] attachmentBytes = rs.getBytes("attachment_bytes");
+                TransactionType transactionType = TransactionType.findTransactionType(type, subType);
+
+                ByteBuffer buffer = ByteBuffer.wrap(attachmentBytes);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transactionType.parseAttachment(buffer);
+                return new dto.transaction.UpdateTransaction(id, transactionType, 0, 0, 0, 0, height, attachment);
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
     class IdTransaction implements Transaction {

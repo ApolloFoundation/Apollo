@@ -3,24 +3,24 @@
  */
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+public final class StartAvailableUpdate extends APIServlet.APIRequestHandler {
 
-public final class StartMinorUpdate extends APIServlet.APIRequestHandler {
-
-    private static class StartMinorUpdateHolder {
-        private static final StartMinorUpdate INSTANCE = new StartMinorUpdate();
+    private static class StartAvailableUpdateHolder {
+        private static final StartAvailableUpdate INSTANCE = new StartAvailableUpdate();
     }
 
-    public static StartMinorUpdate getInstance() {
-        return StartMinorUpdateHolder.INSTANCE;
+    public static StartAvailableUpdate getInstance() {
+        return StartAvailableUpdateHolder.INSTANCE;
     }
 
-    private StartMinorUpdate() {
+    private StartAvailableUpdate() {
         super(new APITag[] {APITag.UPDATE});
     }
 

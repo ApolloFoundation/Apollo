@@ -4,10 +4,10 @@
 
 package dto.transaction;
 
+import java.util.Objects;
+
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.TransactionType;
-
-import java.util.Objects;
 
 public class UpdateTransaction extends SimpleTransactionImpl {
     private Attachment attachment;
@@ -31,12 +31,12 @@ public class UpdateTransaction extends SimpleTransactionImpl {
     }
 
     public UpdateTransaction(TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, Attachment attachment) {
-        super(type, recipientId, senderId, feeATM, amountATM);
-        this.attachment = attachment;
+        this(0, type, recipientId, senderId, feeATM, amountATM, 0, attachment);
     }
 
-    public UpdateTransaction(TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height, Attachment attachment) {
-        super(type, recipientId, senderId, feeATM, amountATM, height);
+    public UpdateTransaction(long id, TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height,
+                             Attachment attachment) {
+        super(id, type, recipientId, senderId, feeATM, amountATM, height);
         this.attachment = attachment;
     }
 

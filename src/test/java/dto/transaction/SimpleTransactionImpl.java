@@ -4,13 +4,19 @@
 
 package dto.transaction;
 
-import com.apollocurrency.aplwallet.apl.*;
+import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
-import java.util.List;
-
 public class SimpleTransactionImpl implements Transaction {
+    private long id;
     private TransactionType type;
     private long recipientId;
     private long senderId;
@@ -19,7 +25,8 @@ public class SimpleTransactionImpl implements Transaction {
     private long height;
     private Attachment attachment;
 
-    public SimpleTransactionImpl(TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height) {
+    public SimpleTransactionImpl(long id, TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height) {
+        this.id = id;
         this.type = type;
         this.recipientId = recipientId;
         this.senderId = senderId;
@@ -35,7 +42,7 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public long getId() {
-        return 0;
+        return id;
     }
 
     @Override

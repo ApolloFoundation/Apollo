@@ -46,7 +46,7 @@ public class ImportantUpdater extends AbstractUpdater {
             waitHeight(updateHeight);
             currentState = super.processUpdate();
             }
-        return currentState;
+        return currentState == getFailUpdateState() ? UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL : currentState;
     }
 
     @Override

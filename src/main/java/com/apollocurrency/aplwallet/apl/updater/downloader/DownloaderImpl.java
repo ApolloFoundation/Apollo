@@ -82,6 +82,7 @@ public class DownloaderImpl implements Downloader {
      * @param hash
      * @return
      */
+    @Override
     public Path tryDownload(String uri, byte[] hash) {
         return tryDownload(uri, hash, defaultDownloadExecutor);
     }
