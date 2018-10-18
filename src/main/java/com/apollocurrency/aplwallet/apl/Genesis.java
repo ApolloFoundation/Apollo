@@ -138,6 +138,7 @@ public final class Genesis {
                 return map.entrySet()
                         .stream()
                         .sorted((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()))
+                        .skip(1)
                         .collect(Collectors.toList());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to load genesis accounts", e);
