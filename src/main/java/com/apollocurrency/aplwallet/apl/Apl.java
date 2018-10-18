@@ -55,7 +55,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class Apl {
     private static Logger LOG;
 
-    public static final Version VERSION = Version.from("1.1.2");
+    public static final Version VERSION = Version.from("1.20.5");
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
