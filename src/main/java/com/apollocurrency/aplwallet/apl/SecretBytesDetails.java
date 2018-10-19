@@ -9,9 +9,9 @@ import java.util.Objects;
 
 public class SecretBytesDetails {
     private byte[] secretBytes;
-    private ExtractStatus extractStatus;
+    private KeyStore.Status extractStatus;
 
-    public SecretBytesDetails(byte[] secretBytes, ExtractStatus extractStatus) {
+    public SecretBytesDetails(byte[] secretBytes, KeyStore.Status extractStatus) {
         this.secretBytes = secretBytes;
         this.extractStatus = extractStatus;
     }
@@ -32,7 +32,7 @@ public class SecretBytesDetails {
         return secretBytes;
     }
 
-    public ExtractStatus getExtractStatus() {
+    public KeyStore.Status getExtractStatus() {
         return extractStatus;
     }
 
@@ -43,12 +43,5 @@ public class SecretBytesDetails {
         return result;
     }
 
-    public enum ExtractStatus {
-        NOT_FOUND,
-        DUPLICATE_FOUND,
-        BAD_CREDENTIALS,
-        READ_ERROR,
-        DECRYPTION_ERROR,
-        OK
-    }
+
 }

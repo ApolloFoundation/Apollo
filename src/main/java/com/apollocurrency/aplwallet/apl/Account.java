@@ -854,7 +854,7 @@ public final class Account {
 
     public static SecretBytesDetails findSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
             SecretBytesDetails secretBytes = keystore.getSecretBytes(passphrase, accountId);
-            if (secretBytes.getExtractStatus() == SecretBytesDetails.ExtractStatus.OK) {
+            if (secretBytes.getExtractStatus() == KeyStore.Status.OK) {
                 return secretBytes;
             } else {
                 LOG.debug("No appropriate secret bytes for account {} - {}", accountId, secretBytes.getExtractStatus());
@@ -864,6 +864,19 @@ public final class Account {
                 }
                 return secretBytes;
             }
+    }
+
+    public static KeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
+        if (isEnabled2FA(accountId)) {
+            TwoFactorAuthService.Status2FA status2FA = disable2FA(accountId, passphrase, code);
+            validate2FASratus(status2FA, accountId);
+        }
+        KeyStore.Status status = keystore.deleteSecretBytes(passphrase, accountId);
+        if (status != KeyStore.Status.OK) {
+            throw new ParameterException("Sure wallet not deleted for account " + accountId, null, JSONResponses.notDeletedSureWallet(accountId,
+                    String.valueOf(status)));
+        }
+        return status;
     }
 
     public static TwoFactorAuthService.Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
@@ -890,7 +903,7 @@ public final class Account {
 
     public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
         SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, false);
-        if (secretBytes.getExtractStatus() != SecretBytesDetails.ExtractStatus.OK) {
+        if (secretBytes.getExtractStatus() != KeyStore.Status.OK) {
             throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null,
                     JSONResponses.notFoundSureWallet(accountId,
                     String.valueOf(secretBytes.getExtractStatus())));

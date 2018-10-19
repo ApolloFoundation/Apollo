@@ -17,4 +17,22 @@ public interface KeyStore {
      */
     boolean saveSecretBytes(String passphrase, byte[] secretBytes);
 
+    /**
+     * Remove secret bytes from keystore if secret bytes exist for accountId and can be decrypted by passphrase
+     * @param passphrase - string, which consist of random words for secret bytes decryption
+     * @param accountId - id of account, which secretBytes should be deleted
+     * @return status of deletion
+     */
+     Status deleteSecretBytes(String passphrase, long accountId);
+
+
+    enum Status {
+        NOT_FOUND,
+        DELETE_ERROR,
+        DUPLICATE_FOUND,
+        BAD_CREDENTIALS,
+        READ_ERROR,
+        DECRYPTION_ERROR,
+        OK
+    }
 }
