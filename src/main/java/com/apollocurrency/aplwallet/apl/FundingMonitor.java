@@ -103,7 +103,7 @@ public final class FundingMonitor {
     private final String accountName;
 
     /** Fund account secret phrase */
-    private final String secretPhrase;
+    private final byte[] keySeed;
 
     /** Fund account public key */
     private final byte[] publicKey;
@@ -118,11 +118,11 @@ public final class FundingMonitor {
      * @param   threshold           Fund threshold
      * @param   interval            Fund interval
      * @param   accountId           Fund account identifier
-     * @param   secretPhrase        Fund account secret phrase
+     * @param   keySeed             Fund account key seed
      */
     private FundingMonitor(HoldingType holdingType, long holdingId, String property,
                                     long amount, long threshold, int interval,
-                                    long accountId, String secretPhrase) {
+                                    long accountId, byte[] keySeed) {
         this.holdingType = holdingType;
         this.holdingId = (holdingType != HoldingType.APL ? holdingId : 0);
         this.property = property;
@@ -131,11 +131,12 @@ public final class FundingMonitor {
         this.interval = interval;
         this.accountId = accountId;
         this.accountName = Convert.rsAccount(accountId);
-        this.secretPhrase = secretPhrase;
-        this.publicKey = Crypto.getPublicKey(secretPhrase);
+        this.keySeed = keySeed;
+        this.publicKey = Crypto.getPublicKey(keySeed);
     }
 
-    private FundingMonitor(HoldingType holdingType, long holdingId, String property, long amount, long threshold, int interval, long accountId, String accountName, String secretPhrase, byte[] publicKey) {
+    private FundingMonitor(HoldingType holdingType, long holdingId, String property, long amount, long threshold, int interval, long accountId,
+                           String accountName, byte[] keySeed, byte[] publicKey) {
         this.holdingType = holdingType;
         this.holdingId = holdingId;
         this.property = property;
@@ -144,7 +145,7 @@ public final class FundingMonitor {
         this.interval = interval;
         this.accountId = accountId;
         this.accountName = accountName;
-        this.secretPhrase = secretPhrase;
+        this.keySeed = keySeed;
         this.publicKey = publicKey;
     }
 
@@ -232,23 +233,23 @@ public final class FundingMonitor {
      * @param   amount              Fund amount
      * @param   threshold           Fund threshold
      * @param   interval            Fund interval
-     * @param   secretPhrase        Fund account secret phrase
+     * @param   keySeed             Fund account keySeed
      * @return                      TRUE if the monitor was started
      */
     public static boolean startMonitor(HoldingType holdingType, long holdingId, String property,
-                                    long amount, long threshold, int interval, String secretPhrase) {
+                                    long amount, long threshold, int interval, byte[] keySeed) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
         // instead of during NRS initialization so we don't start the monitor thread if it
         // won't be used.
         //
         init();
-        long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+        long accountId = Account.getId(Crypto.getPublicKey(keySeed));
         //
         // Create the monitor
         //
         FundingMonitor monitor = new FundingMonitor(holdingType, holdingId, property,
-                amount, threshold, interval, accountId, secretPhrase);
+                amount, threshold, interval, accountId, keySeed);
         Apl.getBlockchain().readLock();
         try {
             //
@@ -629,7 +630,7 @@ public final class FundingMonitor {
                     monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
-            Transaction transaction = builder.build(monitor.secretPhrase);
+            Transaction transaction = builder.build(monitor.keySeed);
             if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -666,7 +667,7 @@ public final class FundingMonitor {
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
-            Transaction transaction = builder.build(monitor.secretPhrase);
+            Transaction transaction = builder.build(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -703,7 +704,7 @@ public final class FundingMonitor {
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
                    .timestamp(Apl.getBlockchain().getLastBlockTimestamp());
-            Transaction transaction = builder.build(monitor.secretPhrase);
+            Transaction transaction = builder.build(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));

@@ -55,7 +55,7 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
 
         JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance);
         JSONData.putAccount(response, "account", account.getId());
-
+        response.put("is2FA", Account.isEnabled2FA(account.getId()));
         byte[] publicKey = Account.getPublicKey(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));

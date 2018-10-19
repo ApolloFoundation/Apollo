@@ -38,7 +38,7 @@ public class GetChats extends APIServlet.APIRequestHandler {
             while (iter.hasNext()) {
                 Chat.ChatInfo chat = iter.next();
                 JSONObject chatJson = new JSONObject();
-                chatJson.put("account", chat.getAccount());
+                JSONData.putAccount(chatJson, "account", chat.getAccount());
                 chatJson.put("lastMessageTime", chat.getLastMessageTime());
                 chatJsonArray.add(chatJson);
             }

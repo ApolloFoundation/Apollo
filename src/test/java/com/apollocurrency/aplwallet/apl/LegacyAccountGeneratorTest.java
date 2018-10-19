@@ -18,6 +18,9 @@ public class LegacyAccountGeneratorTest {
     @Test
     public void testGenerateAccount() {
         GeneratedAccount actualAcc = accountGenerator.generate(PASSPHRASE);
+        byte[] keySeed = Crypto.getKeySeed(actualAcc.getSecretBytes());
+        Assert.assertArrayEquals(actualAcc.getPrivateKey(), Crypto.getPrivateKey(keySeed));
+        Assert.assertArrayEquals(actualAcc.getPublicKey(), Crypto.getPublicKey(keySeed));
         byte[] signature = Crypto.sign(MESSAGE.getBytes(), actualAcc.getPrivateKey());
         Assert.assertTrue(Crypto.verify(signature, MESSAGE.getBytes(), actualAcc.getPublicKey()));
         Assert.assertEquals(PASSPHRASE, actualAcc.getPassphrase());

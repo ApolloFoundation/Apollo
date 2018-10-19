@@ -43,11 +43,11 @@ public final class StopForging extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
         JSONObject response = new JSONObject();
-        if (secretPhrase != null) {
-            Generator generator = Generator.stopForging(secretPhrase);
+        if (keySeed != null) {
+            Generator generator = Generator.stopForging(keySeed);
             response.put("foundAndStopped", generator != null);
             response.put("forgersCount", Generator.getGeneratorCount());
         } else {
@@ -73,4 +73,9 @@ public final class StopForging extends APIServlet.APIRequestHandler {
         return true;
     }
 
+
+    @Override
+    protected String accountName2FA() {
+        return "account";
+    }
 }

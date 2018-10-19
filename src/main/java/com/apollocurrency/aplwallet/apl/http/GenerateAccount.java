@@ -26,10 +26,10 @@ public class GenerateAccount extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-
         String passphrase = request.getParameter("passphrase");
         GeneratedAccount generatedAccount = Account.generateAccount(passphrase);
-        return generatedAccount.toJSON();
+        if (generatedAccount != null) { return generatedAccount.toJSON();}
+        return JSONResponses.ACCOUNT_GENERATION_ERROR;
     }
 
     @Override

@@ -5,17 +5,19 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.json.simple.JSONObject;
 
 import java.util.Objects;
 
 
-public class GeneratedAccount {
-    private long id;
+public class GeneratedAccount extends BasicAccount {
     private byte[] publicKey;
+    @JsonIgnore
     private byte[] privateKey;
     private String passphrase;
-    private byte[] keySeed;
+    @JsonIgnore
+    private byte[] secretBytes;
 
     @Override
     public boolean equals(Object o) {
@@ -28,14 +30,6 @@ public class GeneratedAccount {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
     }
 
     public byte[] getPublicKey() {
@@ -69,29 +63,29 @@ public class GeneratedAccount {
         this.passphrase = passphrase;
     }
 
-    public GeneratedAccount(long id, byte[] publicKey, byte[] privateKey, String passphrase, byte[] keySeed) {
+    public GeneratedAccount(long id, byte[] publicKey, byte[] privateKey, String passphrase, byte[] secretBytes) {
         this.id = id;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.passphrase = passphrase;
-        this.keySeed = keySeed;
+        this.secretBytes = secretBytes;
     }
 
     public GeneratedAccount() {
     }
 
-    public void setKeySeed(byte[] keySeed) {
-        this.keySeed = keySeed;
+    public void setSecretBytes(byte[] secretBytes) {
+        this.secretBytes = secretBytes;
     }
 
-    public byte[] getKeySeed() {
-        return keySeed;
+    public byte[] getSecretBytes() {
+        return secretBytes;
     }
 
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", id);
-        jsonObject.put("rsAddress", Convert.rsAccount(id));
+        jsonObject.put("account", id);
+        jsonObject.put("accountRS", Convert.rsAccount(id));
         if (publicKey != null) {
             jsonObject.put("publicKey", Convert.toHexString(publicKey));
         }
@@ -100,6 +94,5 @@ public class GeneratedAccount {
         }
         return jsonObject;
     }
-
 }
 

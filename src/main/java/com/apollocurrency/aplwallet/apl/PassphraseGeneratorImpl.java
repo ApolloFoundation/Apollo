@@ -6,33 +6,35 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class PassphraseGeneratorImpl implements PassphraseGenerator {
     private static final String DEFAULT_DICTIONARY_PATH = "pass-words.txt";
-    private int minNumberOfWords = 10;
-    private int maxNumberOfWords = 15;
-    private List<String> dictionary;
-    private Path dictionaryPath;
+    private static final int DEFAULT_MIN_NUMBER_OF_WORDS = 14;
+    private static final int DEFAULT_MAX_NUMBER_OF_WORDS = 18;
+
+    private int minNumberOfWords;
+    private int maxNumberOfWords;
+    private volatile List<String> dictionary;
+    private URL dictionaryURL;
 
     public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords, List<String> dictionary) {
         this(minNumberOfWords, maxNumberOfWords);
         this.dictionary = dictionary;
     }
 
-    public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords, Path dictionaryPath) {
+    public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords, URL dictionaryURL) {
         this(minNumberOfWords, maxNumberOfWords);
-        this.dictionaryPath = dictionaryPath;
+        this.dictionaryURL = dictionaryURL;
     }
 
     public int getMinNumberOfWords() {
@@ -65,15 +67,26 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
         }
         this.minNumberOfWords = minNumberOfWords;
         this.maxNumberOfWords = maxNumberOfWords;
+        this.dictionaryURL = getClass().getClassLoader().getResource(DEFAULT_DICTIONARY_PATH);
     }
 
+
     public PassphraseGeneratorImpl() {
+        this(DEFAULT_MIN_NUMBER_OF_WORDS, DEFAULT_MAX_NUMBER_OF_WORDS);
     }
 
     @Override
     public String generate() {
         try {
-            dictionary = dictionary == null ? loadDictionary() : dictionary;
+            // load dictionary if not loaded yet
+            // ensure thread-safe
+            if (dictionary == null) {
+                synchronized (this) {
+                    if (dictionary == null) {
+                        dictionary = loadDictionary();
+                    }
+                }
+            }
             if (dictionary.size() < maxNumberOfWords) {
                 throw new RuntimeException("Lack of words in dictionary: required - " + maxNumberOfWords + " but present - " + dictionary.size());
             }
@@ -83,25 +96,23 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
             while (passphraseWords.size() != numberOfWords) {
                 passphraseWords.add(dictionary.get(random.nextInt(dictionary.size())));
             }
-            return passphraseWords.stream().collect(Collectors.joining(" "));
+            return String.join(" ", passphraseWords);
         }
         catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
     protected List<String> loadDictionary() throws IOException {
-        if (dictionaryPath == null) {
-            URL dictionaryURL = getClass().getClassLoader().getResource(DEFAULT_DICTIONARY_PATH);
             if (dictionaryURL == null) {
                 throw new RuntimeException("Dictionary " + DEFAULT_DICTIONARY_PATH + " is not exist");
             }
-            try {
-                dictionaryPath = Paths.get(dictionaryURL.toURI());
-            }
-            catch (URISyntaxException e) {
-                throw new RuntimeException("Invalid path to dictionary", e);
+        List<String> words = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(dictionaryURL.openStream()))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                words.add(line);
             }
         }
-        return Files.readAllLines(dictionaryPath);
+        return Collections.unmodifiableList(words);
     }
 }

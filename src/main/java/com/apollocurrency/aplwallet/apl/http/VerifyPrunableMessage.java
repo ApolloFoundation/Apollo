@@ -64,7 +64,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
     private VerifyPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction",
                 "message", "messageIsText",
-                "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt");
+                "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt", "account");
     }
 
     @Override
@@ -75,9 +75,10 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-
+        long account = ParameterParser.getAccountId(req, "account", false);
         Appendix.PrunablePlainMessage plainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
-        Appendix.PrunableEncryptedMessage encryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null, true);
+        Appendix.PrunableEncryptedMessage encryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null,
+                account,true);
 
         if (plainMessage == null && encryptedMessage == null) {
             return MISSING_MESSAGE_ENCRYPTED_MESSAGE;

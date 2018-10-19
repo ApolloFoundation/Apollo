@@ -38,7 +38,7 @@ public class PassphraseGeneratorTest {
         Path dictionaryPath = Paths.get("tempDictionary");
         try {
             Files.write(dictionaryPath, dictionary);
-            PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(5, 9, dictionaryPath);
+            PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(5, 9, dictionaryPath.toUri().toURL());
             String passphrase = passphraseGenerator.generate();
             Assert.assertNotNull(passphrase);
             String[] words = passphrase.split(" ");

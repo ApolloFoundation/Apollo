@@ -20,6 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
@@ -31,9 +34,6 @@ import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(GetDGSPurchase.class);
@@ -76,7 +76,7 @@ public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
                         byte[] buyerPublicKey = Account.getPublicKey(purchase.getBuyerId());
                         byte[] publicKey = Arrays.equals(sellerPublicKey, readerPublicKey) ? buyerPublicKey : sellerPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, purchase.getEncryptedGoods(), secretPhrase, true);
+                            decrypted = Account.decryptFrom(publicKey, purchase.getEncryptedGoods(), Crypto.getKeySeed(secretPhrase), true);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(purchase.getEncryptedGoods().getData(), sharedKey);

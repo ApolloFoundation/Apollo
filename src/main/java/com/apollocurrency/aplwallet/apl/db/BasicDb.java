@@ -21,17 +21,76 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
+import javax.sql.DataSource;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class BasicDb {
-        private static final Logger LOG = getLogger(BasicDb.class);
+public class BasicDb implements DataSource {
+    private static final Logger LOG = getLogger(BasicDb.class);
+    private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
+    private static final DbException DB_NOT_INITIALIZED_EXCEPTION = new DbException(DB_INITIALIZATION_ERROR_TEXT);
+
+    @Override
+    public Connection getConnection(String username, String password) {
+        throw new UnsupportedOperationException("Cannot get connection using different username and password instead of default");
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        requireInitialization();
+        return cp.unwrap(iface);
+    }
+
+    private void requireInitialization() {
+        if (!initialized) {
+            throw DB_NOT_INITIALIZED_EXCEPTION;
+        }
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        requireInitialization();
+        return cp.isWrapperFor(iface);
+    }
+
+    @Override
+    public PrintWriter getLogWriter() {
+        requireInitialization();
+        return this.cp.getLogWriter();
+    }
+
+    @Override
+    public void setLogWriter(PrintWriter out) {
+        requireInitialization();
+        this.cp.setLogWriter(out);
+    }
+
+    @Override
+    public void setLoginTimeout(int seconds) {
+        requireInitialization();
+        this.cp.setLoginTimeout(seconds);
+    }
+
+    @Override
+    public int getLoginTimeout() {
+        requireInitialization();
+        return this.cp.getLoginTimeout();
+    }
+
+    @Override
+    public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        requireInitialization();
+        return this.cp.getParentLogger();
+    }
 
     public static final class DbProperties {
 
@@ -196,7 +255,7 @@ public class BasicDb {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
+    @Override
     public Connection getConnection() throws SQLException {
         Connection con = getPooledConnection();
         con.setAutoCommit(true);

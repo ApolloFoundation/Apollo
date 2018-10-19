@@ -4,7 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +31,7 @@ public class Unpacker {
 
     public Path unpack(Path jarFilePath) throws IOException {
         Path destDirPath = Files.createTempDirectory("apollo-unpacked");
-        JarFile jar = new JarFile(jarFilePath.toFile());
+        try (JarFile jar = new JarFile(jarFilePath.toFile())) {
 
         // fist get all directories,
         // then make those directory on the destination Path
@@ -59,6 +62,7 @@ public class Unpacker {
             }
         }
             return destDirPath;
+        }
     }
 
 
