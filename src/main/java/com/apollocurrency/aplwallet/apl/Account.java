@@ -824,7 +824,7 @@ public final class Account {
             }
             if (status2FA != TwoFactorAuthService.Status2FA.OK) {
                 LOG.debug("2fa failed for acc {} - {}", params2FA.getAccountId(), status2FA);
-                throw new ParameterException("2fa failed", null, JSONResponses.error2FA(status2FA));
+                throw new ParameterException("2fa failed", null, JSONResponses.error2FA(status2FA, params2FA.getAccountId()));
             }
         }
     }
@@ -836,7 +836,7 @@ public final class Account {
             } else {
                 LOG.debug("No appropriate secret bytes for account {} - {}", accountId, secretBytes.getExtractStatus());
                 if (isMandatory) {
-                    throw new ParameterException("Key not found for account - " + accountId, null, JSONResponses.notFound("Account",
+                    throw new ParameterException("Key not found for account - " + accountId, null, JSONResponses.notFoundSureWallet(accountId,
                             String.valueOf(secretBytes.getExtractStatus())));
                 }
                 return secretBytes;
@@ -845,23 +845,41 @@ public final class Account {
 
     public static TwoFactorAuthService.Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
         findSecretBytes(accountId, passphrase, true);
-        return service2FA.confirm(accountId, code);
+        TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
+        validate2FASratus(status2FA, accountId);
+        return status2FA;
     }
     public static TwoFactorAuthService.Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
-        return service2FA.confirm(Convert.getId(Crypto.getPublicKey(secretPhrase)), code);
+        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
+        validate2FASratus(status2FA, accountId);
+        return status2FA;
+    }
+
+    private static void validate2FASratus(TwoFactorAuthService.Status2FA status2FA, long account) throws ParameterException {
+        if (status2FA != TwoFactorAuthService.Status2FA.OK) {
+            throw new ParameterException("Confirm 2fa error", null, JSONResponses.error2FA(status2FA, account));
+        }
+    }
+    private static void validate2FASratus(TwoFactorAuthService.Status2FA status2FA) throws ParameterException {
+        validate2FASratus(status2FA, 0);
     }
 
     public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
         SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, false);
         if (secretBytes.getExtractStatus() != SecretBytesDetails.ExtractStatus.OK) {
-            throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null, JSONResponses.notFound("Account",
+            throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null,
+                    JSONResponses.notFoundSureWallet(accountId,
                     String.valueOf(secretBytes.getExtractStatus())));
         }
         return service2FA.tryAuth(accountId, code);
     }
 
     public static TwoFactorAuthService.Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
-        return service2FA.tryAuth(Convert.getId(Crypto.getPublicKey(secretPhrase)), code);
+        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        TwoFactorAuthService.Status2FA status2FA = service2FA.tryAuth(accountId, code);
+        validate2FASratus(status2FA, accountId);
+        return status2FA;
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId) {

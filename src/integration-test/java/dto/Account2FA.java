@@ -6,10 +6,12 @@ package dto;
 
 import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Account2FA extends BasicAccount {
+    @JsonAlias("errorDescription")
     private TwoFactorAuthService.Status2FA status;
 
     @JsonCreator

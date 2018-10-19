@@ -558,16 +558,23 @@ public final class JSONResponses {
     }
 
     public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA) {
+        return error2FA(status2FA, 0);
+    }
+    public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA, long accountId) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 21);
         response.put("errorDescription", status2FA);
+        if (accountId != 0) {
+            JSONData.putAccount(response, "account", accountId);
+        }
         return JSON.prepare(response);
     }
 
-    public static JSONStreamAware notFound(String parameter, String details) {
+    public static JSONStreamAware notFoundSureWallet(long accountId, String details) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 22);
-        response.put("errorDescription", parameter  + " not found: " + details);
+        response.put("errorDescription", "Sure wallet for account not found: " + details);
+        JSONData.putAccount(response, "account", accountId);
         return JSON.prepare(response);
     }
 

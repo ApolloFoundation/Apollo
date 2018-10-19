@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class ImportKey extends APIServlet.APIRequestHandler {
     private static class ImportKeyHolder {
@@ -22,7 +22,7 @@ public class ImportKey extends APIServlet.APIRequestHandler {
         return ImportKeyHolder.INSTANCE;
     }
     private ImportKey() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "keySeed", "passphrase");
+        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "secretBytes", "passphrase");
     }
 
     @Override

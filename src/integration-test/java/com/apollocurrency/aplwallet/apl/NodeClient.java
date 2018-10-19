@@ -4,6 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.createURI;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
@@ -12,8 +26,17 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.*;
+import dto.Account2FA;
+import dto.AccountWithKey;
+import dto.AccountsStatistic;
 import dto.Block;
+import dto.ChatInfo;
+import dto.ForgingDetails;
+import dto.JSONTransaction;
+import dto.LedgerEntry;
+import dto.NextGenerators;
+import dto.Peer;
+import dto.TwoFactorAuthAccountDetails;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -27,15 +50,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import util.TestUtil;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
-import static util.TestUtil.createURI;
 
 public class NodeClient {
     public static final Long DEFAULT_FEE = 100_000_000L; //1 APL
@@ -666,7 +680,7 @@ public class NodeClient {
 
         String json = postJson(createURI(url), parameters, "");
         AccountWithKey accountWithKey =  MAPPER.readValue(json, AccountWithKey.class);
-        if (accountWithKey == null || accountWithKey.getId() == 0) {
+        if (accountWithKey == null || accountWithKey.getId() == 0 || accountWithKey.getSecretBytes() == null) {
             throw new RuntimeException("Account is null. Bad json: " + json);
         }
         return accountWithKey;
