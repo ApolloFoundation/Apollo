@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -67,9 +68,8 @@ public class UpdaterCoreTest {
 //   UpdaterCoreImpl Init tests
 
     @Test
-//    TODO rewrite
     public void testInitNotUpdatedTransaction() throws Exception {
-        Transaction mockTransaction = new SimpleTransactionImpl(TransactionType.Update.CRITICAL, 1, 2, 3, 4);
+        Transaction mockTransaction = new SimpleTransactionImpl(0, TransactionType.Update.CRITICAL, 1, 2, 3, 4, 5, attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(mockTransaction, decryptedUrl));
@@ -77,7 +77,7 @@ public class UpdaterCoreTest {
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
-
+        TimeUnit.SECONDS.sleep(2);
         verify(spy, times(1)).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
         verify(transactionVerifier, times(1)).process(any(Transaction.class));
@@ -86,7 +86,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedMinorTransaction() throws Exception {
-        Transaction mockTransaction = new SimpleTransactionImpl(TransactionType.Update.MINOR, 1, 2, 3, 4);
+        Transaction mockTransaction = new SimpleTransactionImpl(0, TransactionType.Update.MINOR, 1, 2, 3, 4,5, attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(mockTransaction, decryptedUrl));
@@ -94,8 +94,8 @@ public class UpdaterCoreTest {
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
-
-        verify(spy, times(1)).startUpdate(any(UpdateData.class));
+        TimeUnit.SECONDS.sleep(1);
+        verify(spy, never()).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
         verify(transactionVerifier, times(1)).process(any(Transaction.class));
         verify(updaterMediatorInstance, times(1)).addUpdateListener(any(Listener.class));
@@ -190,13 +190,14 @@ public class UpdaterCoreTest {
 
     //    UpdaterCoreImpl startAvailableUpdate
     @Test
-//    TODO: rewrite
     public void testStartMinorUpdate() throws InterruptedException {
         SimpleTransactionImpl mockTransaction = new SimpleTransactionImpl(TransactionType.Update.MINOR, 1, 2, 3, 4);
         mockTransaction.setAttachment(attachment);
         UpdateData updateData = new UpdateData(mockTransaction, decryptedUrl);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
                 transactionVerifier);
+        doReturn(new UpdateTransaction(mockTransaction, false)).when(updaterService).getLast();
+        doReturn(updateData).when(transactionVerifier).process(mockTransaction);
         UpdaterCore spy = spy(updaterCore);
 
         boolean started = spy.startAvailableUpdate();
@@ -205,6 +206,10 @@ public class UpdaterCoreTest {
         TimeUnit.SECONDS.sleep(1);
         Mockito.verify(updaterMediatorInstance, times(1)).suspendBlockchain();
         Mockito.verify(updaterMediatorInstance, times(1)).resumeBlockchain();
+        UpdateInfo updateInfo = updaterCore.getUpdateInfo();
+        Assert.assertEquals(updateInfo.getLevel(), Level.MINOR);
+        Assert.assertEquals(updateInfo.getUpdateState(), UpdateInfo.UpdateState.FAILED_REQUIRED_START);
+
     }
 
     private List<Transaction> getRandomTransactions(int numberOfTransactions) {

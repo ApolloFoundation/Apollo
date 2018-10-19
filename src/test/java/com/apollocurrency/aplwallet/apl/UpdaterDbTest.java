@@ -9,7 +9,6 @@ import java.nio.ByteOrder;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
@@ -18,8 +17,7 @@ import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
+import dto.transaction.SimpleTransactionImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -71,7 +69,7 @@ public class UpdaterDbTest {
     @Test
     public void testSaveUpdateTransaction() throws Exception {
         repository.clear();
-        repository.save(new UpdateTransaction(new IdTransaction(-4081443370478530685L), false));
+        repository.save(new UpdateTransaction(new SimpleTransactionImpl(-4081443370478530685L), false));
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(TransactionType.Update.CRITICAL, transaction.getType());
@@ -85,7 +83,7 @@ public class UpdaterDbTest {
 
     @Test
     public void testClearAndSaveUpdateTransaction() {
-        repository.clearAndSave(new UpdateTransaction(new IdTransaction(-4081443370478530685L), false));
+        repository.clearAndSave(new UpdateTransaction(new SimpleTransactionImpl(-4081443370478530685L), false));
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(-4081443370478530685L, transaction.getId());
@@ -95,7 +93,7 @@ public class UpdaterDbTest {
 
     @Test(expected = RuntimeException.class)
     public void testSaveTwoUpdateTransactions() {
-        repository.save(new UpdateTransaction(new IdTransaction(-4081443370478530685L), false));
+        repository.save(new UpdateTransaction(new SimpleTransactionImpl(-4081443370478530685L), false));
         UpdateTransaction last = repository.getLast();
     }
     private class MockUpdaterMediator extends UpdaterMediatorImpl {
@@ -180,212 +178,6 @@ public class UpdaterDbTest {
                 e.printStackTrace();
             }
             return null;
-        }
-    }
-    class IdTransaction implements Transaction {
-        private long id;
-
-        public IdTransaction(long id) {
-            this.id = id;
-        }
-
-        public IdTransaction(Transaction tr) {
-            this.id = tr.getId();
-        }
-
-        @Override
-        public long getId() {
-            return id;
-        }
-
-        @Override
-        public String getStringId() {
-            return null;
-        }
-
-        @Override
-        public long getSenderId() {
-            return 0;
-        }
-
-        @Override
-        public byte[] getSenderPublicKey() {
-            return new byte[0];
-        }
-
-        @Override
-        public long getRecipientId() {
-            return 0;
-        }
-
-        @Override
-        public int getHeight() {
-            return 0;
-        }
-
-        @Override
-        public long getBlockId() {
-            return 0;
-        }
-
-        @Override
-        public Block getBlock() {
-            return null;
-        }
-
-        @Override
-        public short getIndex() {
-            return 0;
-        }
-
-        @Override
-        public int getTimestamp() {
-            return 0;
-        }
-
-        @Override
-        public int getBlockTimestamp() {
-            return 0;
-        }
-
-        @Override
-        public short getDeadline() {
-            return 0;
-        }
-
-        @Override
-        public int getExpiration() {
-            return 0;
-        }
-
-        @Override
-        public long getAmountATM() {
-            return 0;
-        }
-
-        @Override
-        public long getFeeATM() {
-            return 0;
-        }
-
-        @Override
-        public String getReferencedTransactionFullHash() {
-            return null;
-        }
-
-        @Override
-        public byte[] getSignature() {
-            return new byte[0];
-        }
-
-        @Override
-        public String getFullHash() {
-            return null;
-        }
-
-        @Override
-        public TransactionType getType() {
-            return null;
-        }
-
-        @Override
-        public Attachment getAttachment() {
-            return null;
-        }
-
-        @Override
-        public boolean verifySignature() {
-            return false;
-        }
-
-        @Override
-        public void validate() throws AplException.ValidationException {
-
-        }
-
-        @Override
-        public byte[] getBytes() {
-            return new byte[0];
-        }
-
-        @Override
-        public byte[] getUnsignedBytes() {
-            return new byte[0];
-        }
-
-        @Override
-        public JSONObject getJSONObject() {
-            return null;
-        }
-
-        @Override
-        public JSONObject getPrunableAttachmentJSON() {
-            return null;
-        }
-
-        @Override
-        public byte getVersion() {
-            return 0;
-        }
-
-        @Override
-        public int getFullSize() {
-            return 0;
-        }
-
-        @Override
-        public Appendix.Message getMessage() {
-            return null;
-        }
-
-        @Override
-        public Appendix.EncryptedMessage getEncryptedMessage() {
-            return null;
-        }
-
-        @Override
-        public Appendix.EncryptToSelfMessage getEncryptToSelfMessage() {
-            return null;
-        }
-
-        @Override
-        public Appendix.Phasing getPhasing() {
-            return null;
-        }
-
-        @Override
-        public Appendix.PrunablePlainMessage getPrunablePlainMessage() {
-            return null;
-        }
-
-        @Override
-        public Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage() {
-            return null;
-        }
-
-        @Override
-        public List<? extends Appendix> getAppendages() {
-            return null;
-        }
-
-        @Override
-        public List<? extends Appendix> getAppendages(boolean includeExpiredPrunable) {
-            return null;
-        }
-
-        @Override
-        public List<? extends Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-            return null;
-        }
-
-        @Override
-        public int getECBlockHeight() {
-            return 0;
-        }
-
-        @Override
-        public long getECBlockId() {
-            return 0;
         }
     }
 }

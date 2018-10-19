@@ -25,7 +25,8 @@ public class SimpleTransactionImpl implements Transaction {
     private long height;
     private Attachment attachment;
 
-    public SimpleTransactionImpl(long id, TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height) {
+    public SimpleTransactionImpl(long id, TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height,
+                                 Attachment attachment) {
         this.id = id;
         this.type = type;
         this.recipientId = recipientId;
@@ -33,6 +34,14 @@ public class SimpleTransactionImpl implements Transaction {
         this.feeATM = feeATM;
         this.amountATM = amountATM;
         this.height = height;
+        this.attachment = attachment;
+    }
+
+    public SimpleTransactionImpl(long id, TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long heigh) {
+        this(id, type, recipientId, senderId, feeATM, amountATM, heigh, null);
+    }
+    public SimpleTransactionImpl(long id) {
+        this(id, null, 0, 0, 0, 0, 0);
     }
 
     public void setHeight(long height) {

@@ -33,6 +33,6 @@ public class UpdateData {
     }
 
     public boolean isAutomaticUpdate() {
-        return transaction.getType() == TransactionType.Update.MINOR;
+        return transaction.getType() != TransactionType.Update.MINOR;
     }
 }

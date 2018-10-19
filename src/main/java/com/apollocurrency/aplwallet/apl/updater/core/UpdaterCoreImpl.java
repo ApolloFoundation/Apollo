@@ -8,6 +8,7 @@ import static com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl.Upda
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Level;
@@ -38,16 +39,16 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private UpdateTransactionVerifier updateTransactionVerifier;
     private UpdateTransactionProcessingListener updateTransactionProcessingListener;
     private Listener<UpdateData> updatePerformingListener;
-    private volatile UpdateInfo updateInfo;
+    private AtomicReference<UpdateInfo> updateInfo;
 
 
     private void setUpdateInfo(UpdateInfo updateInfo) {
-        this.updateInfo = updateInfo;
+        this.updateInfo.getAndSet(updateInfo);
     }
 
     @Override
     public UpdateInfo getUpdateInfo() {
-        return updateInfo;
+        return updateInfo.get();
     }
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator) {
@@ -71,7 +72,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
         this.updateTransactionVerifier = updateTransactionVerifier;
         this.updateTransactionProcessingListener = new UpdateTransactionProcessingListener(updateTransactionVerifier);
         this.updatePerformingListener = new UpdatePerformingListener();
-        this.updateInfo = DEFAULT_UPDATE_INFO.clone();
+        this.updateInfo = new AtomicReference<>(DEFAULT_UPDATE_INFO.clone());
     }
     
     @Override
