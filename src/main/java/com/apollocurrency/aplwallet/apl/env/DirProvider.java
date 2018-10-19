@@ -36,6 +36,10 @@ public interface DirProvider {
 
     File getConfDir();
 
+    default File getKeystoreDir(String keystoreDir) {
+        return new File(getUserHomeDir(), keystoreDir);
+    }
+
     String getUserHomeDir();
 
     default File getBinDirectory() {

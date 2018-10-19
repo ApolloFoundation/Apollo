@@ -4,7 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.CERTIFICATE_DIRECTORY;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.CERTIFICATE_SUFFIX;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_BLOCKS_WAITING;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MIN_BLOCKS_WAITING;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Level;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.UpdaterDb;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
@@ -18,9 +35,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class UpdaterCore {

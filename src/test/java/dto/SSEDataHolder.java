@@ -1,6 +1,5 @@
 package dto;
 
-import com.apollocurrency.aplwallet.apl.JSONTransaction;
 
 import java.util.List;
 

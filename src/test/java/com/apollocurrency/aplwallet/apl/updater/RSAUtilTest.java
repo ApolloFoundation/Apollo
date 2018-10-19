@@ -4,26 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.decrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.doubleDecrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.doubleEncrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.encrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.getPrivateKey;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.getPublicKeyFromCertificate;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.slf4j.LoggerFactory.getLogger;
 
-@SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.crypto.*" })
 public class RSAUtilTest {
     private static final Logger LOG = getLogger(RSAUtilTest.class);
 
@@ -72,7 +70,6 @@ public class RSAUtilTest {
 
     @Test
     public void testDecryptUrl() throws Exception {
-        mockStatic(Logger.class);
         PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
         PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
 

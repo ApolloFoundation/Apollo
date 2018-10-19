@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.20.4</version>
+    <version>1.20.5</version>
     <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
@@ -37,6 +37,7 @@
         <!--Tools-->
         <apache-commons-lang.version>3.7</apache-commons-lang.version>
         <apache-commons-io.version>1.4</apache-commons-io.version>
+        <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
 
@@ -52,35 +53,100 @@
         <log4jdbc.version>1.2</log4jdbc.version>
 
         <!--Tests-->
-        <jackson.version>2.8.3</jackson.version>
+        <jackson.version>2.9.3</jackson.version>
         <json-simple.version>1.1.1</json-simple.version>
         <json-unit.version>1.20.0</json-unit.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
-        <jersey.version>2.26</jersey.version>
+        <jersey.version>2.27</jersey.version>
     </properties>
     <profiles>
         <profile>
-            <id>dev</id>
-            <properties>
-                <exclude.path>${project.build.testSourceDirectory}</exclude.path>
-            </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-        </profile>
-        <profile>
             <id>arm64</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>com/apollocurrency/aplwallet/apldesktop/*</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+            <!-- The Configuration of the development profile -->
+            <profile>
+                <id>dev</id>
+                <activation>
+                    <activeByDefault>true</activeByDefault>
+                </activation>
+                <properties>
+                    <!--
+                        Specifies the build.profile.id property that must be equal than the name of
+                        the directory that contains the profile specific configuration file.
+                        Because the name of the directory that contains the configuration file of the
+                        development profile is dev, we must set the value of the build.profile.id
+                        property to dev.
+                    -->
+                        <!--Do not exclude nothing! But this property should be specified for successful build-->
+                        <!--<exclude.path>${project.build.testSourceDirectory}</exclude.path>-->
+                    <build.profile.id>dev</build.profile.id>
+                    <!--
+                        Only unit tests are run when the development profile is active
+                    -->
+                    <skip.integration.tests>true</skip.integration.tests>
+                    <skip.unit.tests>false</skip.unit.tests>
+                </properties>
+            </profile>
+            <!-- The Configuration of the integration-test profile -->
+            <profile>
+                <id>integration-test</id>
+                <properties>
+                    <!--
+                        Specifies the build.profile.id property that must be equal than the name of
+                        the directory that contains the profile specific configuration file.
+                        Because the name of the directory that contains the configuration file of the
+                        integration-test profile is integration-test, we must set the value of the
+                        build.profile.id property to integration-test.
+                    -->
+                    <build.profile.id>integration-test</build.profile.id>
+                    <!--
+                        Only integration tests are run when the integration-test profile is active
+                    -->
+                    <skip.integration.tests>false</skip.integration.tests>
+                    <skip.unit.tests>true</skip.unit.tests>
+                </properties>
+            </profile>
+        <!--Profile for running all tests-->
+        <profile>
+            <id>test-all</id>
             <properties>
-                <exclude.path>com/apollocurrency/aplwallet/apldesktop/*</exclude.path>
+                <build.profile.id>test-all</build.profile.id>
+                <skip.integration.tests>false</skip.integration.tests>
+                <skip.unit.tests>false</skip.unit.tests>
             </properties>
         </profile>
     </profiles>
 
 
     <dependencies>
+        <!--Apache-commons-->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${apache-commons-codec.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${apache-commons-lang.version}</version>
+        </dependency>
+        <!--Qr code-->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
@@ -91,11 +157,7 @@
             <artifactId>bcprov-jdk15on</artifactId>
             <version>${bcprov.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${apache-commons-lang.version}</version>
-        </dependency>
+
 
         <dependency>
             <groupId>com.h2database</groupId>
@@ -128,6 +190,13 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <!--2fa api-->
+        <dependency>
+            <groupId>com.j256.two-factor-auth</groupId>
+            <artifactId>two-factor-auth</artifactId>
+            <version>1.0</version>
         </dependency>
 
         <!--Jetty server-->
@@ -413,6 +482,96 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.19.1</version>
+
+                <executions>
+                    <!--
+                        Invokes both the integration-test and the verify goals of the
+                        Failsafe Maven plugin
+                    -->
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <!--
+                                Skips integration tests if the value of skip.integration.tests
+                                property is true
+                            -->
+                            <systemPropertyVariables>
+                                <walletWorkingDir>${project.build.directory}</walletWorkingDir>
+                            </systemPropertyVariables>
+                            <includes>
+                                <include>com.apollocurrency.aplwallet.apl.http.*</include>
+                            </includes>
+                            <skipTests>${skip.integration.tests}</skipTests>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Excludes integration tests when unit tests are run -->
+                    <excludes>
+                        <exclude>com.apollocurrency.aplwallet.apl.http.*, **/*IntegrationTest.java, **/IT*.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <!-- Add a new source directory to our build -->
+                    <execution>
+                        <id>add-integration-test-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Configures the source directory of our integration tests -->
+                            <sources>
+                                <source>src/integration-test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <!-- Add a new resource directory to our build -->
+                    <execution>
+                        <id>add-integration-test-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Configures the resource directory of our integration tests -->
+                            <resources>
+                                <!--
+                                    Placeholders that are found from the files located in the configured resource
+                                    directories are replaced with the property values found from the profile
+                                    specific configuration file.
+                                -->
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>src/integration-test/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <finalName>Apollo</finalName>
@@ -487,15 +646,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>${exclude.path}</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>

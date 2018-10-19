@@ -29,7 +29,7 @@ public enum APITag {
     CREATE_TRANSACTION("Create Transaction"), DGS("Digital Goods Store"), FORGING("Forging"), MESSAGES("Messages"),
     MS("Monetary System"), NETWORK("Networking"), PHASING("Phasing"), SEARCH("Search"), INFO("Server Info"),
     SHUFFLING("Shuffling"), DATA("Tagged Data"), TOKENS("Tokens"), TRANSACTIONS("Transactions"), VS("Voting System"),
-    UTILS("Utils"), DEBUG("Debug"), ADDONS("Add-ons"), UPDATE("Update");
+    UTILS("Utils"), DEBUG("Debug"), ADDONS("Add-ons"), UPDATE("Update"), TWO_FACTOR_AUTH("2FA");
 
     private static final Map<String, APITag> apiTags = new HashMap<>();
     static {

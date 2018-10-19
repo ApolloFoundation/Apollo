@@ -39,7 +39,8 @@ public final class SignTransaction extends APIServlet.APIRequestHandler {
     }
 
     private SignTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase", "validate");
+        super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase",
+                "validate", "sender");
     }
 
     @Override
@@ -48,15 +49,15 @@ public final class SignTransaction extends APIServlet.APIRequestHandler {
         String transactionJSON = Convert.emptyToNull(req.getParameter("unsignedTransactionJSON"));
         String transactionBytes = Convert.emptyToNull(req.getParameter("unsignedTransactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
-
+        long senderId = ParameterParser.getAccountId(req, "sender", false);
         Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
 
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        byte[] keySeed = ParameterParser.getKeySeed(req, senderId, true);
         boolean validate = !"false".equalsIgnoreCase(req.getParameter("validate"));
 
         JSONObject response = new JSONObject();
         try {
-            Transaction transaction = builder.build(secretPhrase);
+            Transaction transaction = builder.build(keySeed);
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
             if (validate) {
                 transaction.validate();

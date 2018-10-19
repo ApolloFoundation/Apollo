@@ -20,9 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PUBLIC_KEY;
+
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 import com.apollocurrency.aplwallet.apl.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -31,8 +33,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
 public final class ShufflingProcess extends CreateTransaction {
 
@@ -76,13 +76,14 @@ public final class ShufflingProcess extends CreateTransaction {
             return JSON.prepare(response);
         }
 
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient");
         if (Account.getAccount(recipientPublicKey) != null) {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 
-        Attachment.ShufflingAttachment attachment = shuffling.process(senderId, secretPhrase, recipientPublicKey);
+        Attachment.ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
         return createTransaction(req, senderAccount, attachment);
     }
 
