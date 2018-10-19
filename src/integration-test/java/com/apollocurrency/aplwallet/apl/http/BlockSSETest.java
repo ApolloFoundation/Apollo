@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet.apl.http;
 
 
 import static org.mockito.Matchers.any;
@@ -6,16 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import dto.SSEDataHolder;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import util.TestUtil;
-import util.WalletRunner;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -25,6 +15,17 @@ import javax.ws.rs.sse.SseEventSource;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import com.apollocurrency.aplwallet.apl.TestConstants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import dto.SSEDataHolder;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.slf4j.Logger;
+import util.TestUtil;
+import util.WalletRunner;
 
 public class BlockSSETest {
     private volatile boolean closeSource = false;
@@ -46,7 +47,7 @@ public class BlockSSETest {
     public void testSSE() throws InterruptedException {
         Client client = ClientBuilder.newClient();
 
-        WebTarget target = client.target(url + TestData.MAIN_RS);
+        WebTarget target = client.target(url + TestConstants.MAIN_ACCOUNT);
 
         try (SseEventSource source = SseEventSource.target(target).build()) {
             source.register(new Consumer<InboundSseEvent>() {

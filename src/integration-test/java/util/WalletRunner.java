@@ -4,8 +4,8 @@
 
 package util;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,10 +18,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
-import static com.apollocurrency.aplwallet.apl.TestConstants.ADMIN_PASS;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.slf4j.Logger;
 
 public class WalletRunner {
 
@@ -98,31 +103,33 @@ public class WalletRunner {
             method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
             System.setProperty("apl.runtime.mode", "desktop");
 
-        //change config for test purposes
-        Map<String, String> parameters = new HashMap<>();
-        if (isTestnet) {
-            parameters.put("apl.isTestnet", "true");
-        } else {
-            parameters.put("apl.isTestnet", "false");
-        }
-        parameters.put("apl.adminPassword", ADMIN_PASS);
-        parameters.put("apl.allowUpdates", String.valueOf(false));
-        Path savedStandartPropertiesPath = changeProperties(parameters);
-        try {
-            //run application
-            String[] args = {""};
-            mainClass = loader.loadClass("com.apollocurrency.aplwallet.apl.Apl");
-            Object[] param = {args};
-            Method main = mainClass.getMethod("main", args.getClass());
-            main.invoke(null, param);
-            //restore config
+            //change config for test purposes
+            Map<String, String> parameters = new HashMap<>();
+            if (isTestnet) {
+                parameters.put("apl.isTestnet", "true");
+            } else {
+                parameters.put("apl.isTestnet", "false");
+            }
+            parameters.put("apl.adminPassword", ADMIN_PASS);
+            parameters.put("apl.allowUpdates", String.valueOf(false));
+            Path savedStandartPropertiesPath = changeProperties(parameters);
+            try {
+                //run application
+                String[] args = {""};
+                mainClass = loader.loadClass("com.apollocurrency.aplwallet.apl.Apl");
+                Object[] param = {args};
+                Method main = mainClass.getMethod("main", args.getClass());
+                main.invoke(null, param);
+                //restore config
+            }
+
+            finally {
+                restoreProperties(savedStandartPropertiesPath);
+            }
         }
         catch (NoSuchMethodException | InvocationTargetException | ClassNotFoundException | IllegalAccessException e) {
-            LOG.error("Cannot start wallet", e);
-        }
-        finally {
-            restoreProperties(savedStandartPropertiesPath);
-        }
+                LOG.error("Cannot start wallet", e);
+            }
     }
 
     private void restoreProperties(Path propertiesFilePath) throws IOException {
@@ -137,8 +144,6 @@ public class WalletRunner {
                 outputStream.write(buff, 0, count);
             }
         }
-        inputStream.close();
-        outputStream.close();
         Files.deleteIfExists(propertiesFilePath);
     }
 
@@ -164,7 +169,7 @@ public class WalletRunner {
             this.loader = new TestClassLoader();
         }
         catch (Throwable e) {
-            LOG.error("Shutdown error! ", e);
+            LOG.error("Shutdown error! " + e.getLocalizedMessage());
         }
     }
 

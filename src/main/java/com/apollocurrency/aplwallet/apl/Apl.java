@@ -20,6 +20,33 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.management.ManagementFactory;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.AccessControlException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
@@ -35,24 +62,6 @@ import com.apollocurrency.aplwallet.apl.util.Time;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-
-import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.AccessControlException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-
-import static com.apollocurrency.aplwallet.apl.Constants.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Apl {
     private static Logger LOG;

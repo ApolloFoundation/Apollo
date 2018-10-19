@@ -492,10 +492,10 @@ public class NodeClient {
         return MAPPER.readValue(json, LedgerEntry.class);
     }
 
-    public List<Account> getGenesisBalances(String url, int firstIndex, int lastIndex) throws IOException {
+    public List<dto.Account> getGenesisBalances(String url, int firstIndex, int lastIndex) throws IOException {
         String json = getGenesisBalancesJSON(url, firstIndex, lastIndex);
         JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
-        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<Account>>(){});
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<dto.Account>>(){});
     }
     public String getGenesisBalancesJSON(String url, int firstIndex, int lastIndex) throws IOException {
         Map<String, String> params = new HashMap<>();
@@ -504,12 +504,12 @@ public class NodeClient {
         params.put("lastIndex", String.valueOf(lastIndex));
         return getJson(createURI(url), params);
     }
-    public List<Account> getGenesisBalances(String url) throws IOException {
+    public List<dto.Account> getGenesisBalances(String url) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getGenesisBalances");
         String json = getJson(createURI(url), params);
         JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
-        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<Account>>(){});
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<dto.Account>>(){});
     }
 
     public String startForging(String url, String secretPhrase) throws IOException {
@@ -572,7 +572,7 @@ public class NodeClient {
         return Version.from(versionString.asText());
     }
 
-    public List<Chat.ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
+    public List<ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getChats");
         params.put("account", account);
@@ -580,10 +580,10 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode chatString = root.get("chats");
-        return MAPPER.readValue(chatString.toString(), new TypeReference<List<Chat.ChatInfo>>() {});
+        return MAPPER.readValue(chatString.toString(), new TypeReference<List<ChatInfo>>() {});
     }
 
-    public List<Chat.ChatInfo> getChatInfo(String url, String account) throws IOException {
+    public List<ChatInfo> getChatInfo(String url, String account) throws IOException {
         return getChatInfo(url, account, 0, -1);
     }
 

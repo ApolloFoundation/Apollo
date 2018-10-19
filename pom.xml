@@ -60,7 +60,7 @@
         <mockito.version>1.10.19</mockito.version>
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
-        <jersey.version>2.26</jersey.version>
+        <jersey.version>2.27</jersey.version>
     </properties>
     <profiles>
         <profile>
@@ -646,15 +646,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>${exclude.path}</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>
