@@ -47,16 +47,27 @@ import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
@@ -70,6 +81,9 @@ public final class Account {
                     Constants.isTestnet ?
                             Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
                             Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
+    private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
+            Genesis.loadGenesisAccounts();
+
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
         @Override
@@ -354,6 +368,7 @@ public final class Account {
             Apl.getBlockchainProcessor().addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
 
         }
+
     }
 
     private final long id;
@@ -406,6 +421,25 @@ public final class Account {
 
     public static boolean addCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
         return currencyListeners.addListener(listener, eventType);
+    }
+
+    public static List<Map.Entry<String, Long>> getGenesisBalances(int firstIndex, int lastIndex) {
+        firstIndex = Math.max(firstIndex, 0);
+        lastIndex = Math.max(lastIndex, 0);
+        if (lastIndex < firstIndex) {
+            throw new IllegalArgumentException("firstIndex should be less or equal lastIndex ");
+        }
+        if (firstIndex >= initialGenesisAccountsBalances.size() || lastIndex > initialGenesisAccountsBalances.size()) {
+            throw new IllegalArgumentException("firstIndex and lastIndex should be less than " + initialGenesisAccountsBalances.size());
+        }
+        if (lastIndex - firstIndex > 99) {
+            lastIndex = firstIndex + 99;
+        }
+        return initialGenesisAccountsBalances.subList(firstIndex, lastIndex + 1);
+    }
+
+    public static int getGenesisBalancesNumber() {
+        return initialGenesisAccountsBalances.size();
     }
 
     public static boolean removeCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
@@ -646,7 +680,6 @@ public final class Account {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
         return Convert.fullHashToId(publicKeyHash);
     }
-
 
     public static byte[] getPublicKey(long id) {
         DbKey dbKey = publicKeyDbKeyFactory.newKey(id);
@@ -1629,8 +1662,6 @@ public final class Account {
         this.addToBalanceATM(LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
-
-
 
     @Override
     public String toString() {

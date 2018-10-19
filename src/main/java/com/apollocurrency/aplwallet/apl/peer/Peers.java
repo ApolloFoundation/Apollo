@@ -36,13 +36,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Peers {
@@ -76,8 +77,7 @@ public final class Peers {
     static final boolean useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
     static final boolean isGzipEnabled;
 
-    private static final int DEFAULT_PEER_PORT = 47874;
-    private static final int TESTNET_PEER_PORT = 46874;
+
     private static final String myPlatform;
     private static final String myAddress;
     private static final int myPeerServerPort;

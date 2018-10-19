@@ -85,6 +85,50 @@ a:focus {
   
 }
 
+.server-works {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 30px;
+  background: rgba(255,255,255, 0.8);
+  border: 1px solid darkgray;
+  border-radius: 6px;
+  width: 350px;
+}
+
+.server-works .server-works-header {
+}
+
+.server-works .server-works-header .server-works-image{
+  height: 150px;
+}
+
+.server-works .server-works-header .server-works-image img{
+  height: 100%;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+  padding-bottom: 30px;
+  padding-left: 45px;
+}
+
+.server-works .server-works-content {
+  font-size: 16px;
+  /*font-weight: bold;*/
+}
+
+.server-works .server-works-content .server-works-top-content{
+  text-align: center;
+  padding-bottom: 28px;
+  /*font-weight: bold;*/
+}
+
+.server-works .server-works-content .server-works-bottom-content{
+  text-align: center;
+  /*font-weight: bold;*/
+}
+
 /* Header */
 body > .header {
   position: absolute;

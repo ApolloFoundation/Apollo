@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.mint;
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import org.json.simple.JSONObject;
@@ -37,6 +36,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class MintWorker {
@@ -227,7 +227,7 @@ public class MintWorker {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        int port = Constants.isTestnet ? API.TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
+        int port = Constants.isTestnet ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
         String urlParams = getUrlParams(params);
         URL url;
         try {

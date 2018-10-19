@@ -150,6 +150,13 @@ public final class Constants {
     public static final Version MIN_VERSION = new Version(1, 0, 0);
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
+//    Testnet ports
+    public static final int TESTNET_API_PORT = 6876;
+    public static final int TESTNET_API_SSLPORT = 6877;
+//    Peer ports
+    public static final int DEFAULT_PEER_PORT = 47874;
+    public static final int TESTNET_PEER_PORT = 46874;
+
     static final long UNCONFIRMED_POOL_DEPOSIT_ATM = (isTestnet ? 50 : 100) * ONE_APL;
     public static final long SHUFFLING_DEPOSIT_ATM = (isTestnet ? 7 : 1000) * ONE_APL;
 

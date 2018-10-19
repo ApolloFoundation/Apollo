@@ -65,8 +65,7 @@ public class NodeClient {
         try {
             CLIENT.setConnectTimeout(15_000);
             CLIENT.start();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Http CLIENT could not initialized.", e);
             System.exit(0);
         }
@@ -89,8 +88,7 @@ public class NodeClient {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
             }
             return response.getContentAsString();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Cannot perform getRequest to " + uri.toString(), e);
         }
         return null;
@@ -103,14 +101,12 @@ public class NodeClient {
                     .timeout(REQUEST_TIMEOUT, TimeUnit.SECONDS)
                     .content(new StringContentProvider(bodyJson, Charset.forName("utf-8")));
             parameters.forEach(request::param);
-
             ContentResponse response = request.send();
             if (response.getStatus() != HttpStatus.OK_200) {
                 throw new RuntimeException("Request is not successful! Status= " + response.getStatus());
             }
             return response.getContentAsString();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Cannot perform postRequest to " + uri.toString() + "/" + uri.getPath(), e);
         }
         return null;
@@ -273,7 +269,7 @@ public class NodeClient {
     }
 
     public JSONTransaction sendMoneyPrivateTransaction(String url, String secretPhrase, String recipient, Long amountATM, Long feeATM,
-                                                       Long deadline) throws IOException, ParseException {
+                                                      Long deadline) throws IOException, ParseException {
         String json = sendMoneyPrivate(url, secretPhrase, recipient, amountATM, feeATM, deadline);
         String transactionJSON = ((JSONObject) ((JSONObject) PARSER.parse(json)).get("transactionJSON")).toJSONString();
         return MAPPER.readValue(transactionJSON, JSONTransaction.class);
@@ -283,7 +279,6 @@ public class NodeClient {
             ParseException {
         return sendMoneyTransaction(url, secretPhrase, recipient, amountATM, feeATM, DEFAULT_DEADLINE);
     }
-
     public JSONTransaction sendMoneyTransaction(String url, String secretPhrase, String recipientPublicKey, int deadline, String recipient,
                                                 Long amountATM,
                                                 Long feeATM) throws IOException,
@@ -346,7 +341,7 @@ public class NodeClient {
         }
         byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), Convert.parseHexString(serverPublicKey.textValue()));
         List<JSONTransaction> transactions = new ArrayList<>();
-        for (final JsonNode transactionJson : transactionsArray) {
+        for (final JsonNode transactionJson: transactionsArray) {
             if (transactionJson.get("encryptedTransaction") != null) {
                 JsonNode encryptedTransaction = transactionJson.get("encryptedTransaction");
                 byte[] encryptedBytes = Convert.parseHexString(encryptedTransaction.textValue());
@@ -428,7 +423,6 @@ public class NodeClient {
         JsonNode entriesArray = root.get("unconfirmedTransactions");
         return MAPPER.readValue(entriesArray.toString(), new TypeReference<List<JSONTransaction>>() {});
     }
-
     public List<JSONTransaction> getPrivateUnconfirmedTransactions(String url, String secretPhrase, int from, int to) throws
             Exception {
         Map<String, String> parameters = new HashMap<>();
@@ -498,6 +492,25 @@ public class NodeClient {
         return MAPPER.readValue(json, LedgerEntry.class);
     }
 
+    public List<Account> getGenesisBalances(String url, int firstIndex, int lastIndex) throws IOException {
+        String json = getGenesisBalancesJSON(url, firstIndex, lastIndex);
+        JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<Account>>(){});
+    }
+    public String getGenesisBalancesJSON(String url, int firstIndex, int lastIndex) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getGenesisBalances");
+        params.put("firstIndex", String.valueOf(firstIndex));
+        params.put("lastIndex", String.valueOf(lastIndex));
+        return getJson(createURI(url), params);
+    }
+    public List<Account> getGenesisBalances(String url) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("requestType", "getGenesisBalances");
+        String json = getJson(createURI(url), params);
+        JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<Account>>(){});
+    }
 
     public String startForging(String url, String secretPhrase) throws IOException {
         return sendForgingRequest(url, secretPhrase, "startForging", null);
@@ -537,7 +550,7 @@ public class NodeClient {
     }
 
     public JSONTransaction sendUpdateTransaction(String url, String secretPhrase, long feeATM, int level, DoubleByteArrayTuple updateUrl,
-                                                 Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException, ParseException {
+                                              Version version, Architecture architecture, Platform platform, String hash, int deadline) throws IOException, ParseException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "sendUpdateTransaction");
         parameters.put("version", version.toString());
@@ -559,7 +572,7 @@ public class NodeClient {
         return Version.from(versionString.asText());
     }
 
-    public List<ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
+    public List<Chat.ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getChats");
         params.put("account", account);
@@ -567,10 +580,10 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode chatString = root.get("chats");
-        return MAPPER.readValue(chatString.toString(), new TypeReference<List<ChatInfo>>() {});
+        return MAPPER.readValue(chatString.toString(), new TypeReference<List<Chat.ChatInfo>>() {});
     }
 
-    public List<ChatInfo> getChatInfo(String url, String account) throws IOException {
+    public List<Chat.ChatInfo> getChatInfo(String url, String account) throws IOException {
         return getChatInfo(url, account, 0, -1);
     }
 

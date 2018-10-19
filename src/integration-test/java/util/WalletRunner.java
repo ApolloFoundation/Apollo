@@ -89,11 +89,14 @@ public class WalletRunner {
         return urls;
     }
 
-    public void run() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException {
-        Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
-        method.setAccessible(true);
-        method.invoke(ClassLoader.getSystemClassLoader(), Paths.get(workingDirectory,DEFAULT_PROPERTIES_DIR).toAbsolutePath().toFile().toURL());
-        System.setProperty("apl.runtime.mode", "desktop");
+    public void run() throws IOException {
+
+        try {
+            Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] {URL.class});
+
+            method.setAccessible(true);
+            method.invoke(ClassLoader.getSystemClassLoader(), Paths.get("conf/").toAbsolutePath().toFile().toURL());
+            System.setProperty("apl.runtime.mode", "desktop");
 
         //change config for test purposes
         Map<String, String> parameters = new HashMap<>();
@@ -114,6 +117,9 @@ public class WalletRunner {
             main.invoke(null, param);
             //restore config
         }
+        catch (NoSuchMethodException | InvocationTargetException | ClassNotFoundException | IllegalAccessException e) {
+            LOG.error("Cannot start wallet", e);
+        }
         finally {
             restoreProperties(savedStandartPropertiesPath);
         }
@@ -131,6 +137,8 @@ public class WalletRunner {
                 outputStream.write(buff, 0, count);
             }
         }
+        inputStream.close();
+        outputStream.close();
         Files.deleteIfExists(propertiesFilePath);
     }
 

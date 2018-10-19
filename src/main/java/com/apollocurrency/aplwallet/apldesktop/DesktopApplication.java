@@ -30,6 +30,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -38,12 +40,16 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
@@ -70,8 +76,8 @@ import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApp
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopApplication extends Application {
-        private static final Logger LOG = getLogger(DesktopApplication.class);
-        
+    private static final Logger LOG = getLogger(DesktopApplication.class);
+
     private static final MainApplication MAIN_APPLICATION = MainApplication.getInstance();
     private static final SplashScreen SPLASH_SCREEN = SplashScreen.getInstance();
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
@@ -165,6 +171,25 @@ public class DesktopApplication extends Application {
         System.out.println("JavaFX platform shutdown complete");
     }
 
+    public static void showError(String message) {
+        Platform.runLater(() -> {
+            Text text = new Text(message);
+            text.setWrappingWidth(330);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(10, 10, 0, 10));
+            hbox.getChildren().add(text);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("Multiple Apollo wallets were launched");
+            alert.setWidth(350);
+            alert.setHeight(200);
+            alert.getDialogPane().setContent(hbox);
+            alert.showAndWait() ;
+            System.exit(0);
+        });
+    }
+
     @Override
     public void start(Stage primaryStage) {
         mainStage = primaryStage;
@@ -201,18 +226,25 @@ public class DesktopApplication extends Application {
             pane.setId("main-pane");
             ProgressIndicator indicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
             indicator.setId("progress-indicator");
-            AnchorPane.setTopAnchor(indicator, 130.0);
-            AnchorPane.setLeftAnchor(indicator, 175.0);
+            AnchorPane.setTopAnchor(indicator, 75.0);
+            AnchorPane.setLeftAnchor(indicator, 225.0);
             pane.getChildren().add(indicator);
             Text statusText = new Text();
+            Text versionText = new Text();
+            Version ver = Apl.VERSION;
+            versionText.setId("version-text");
+            versionText.setText("Wallet version " + ver);
             statusText.setId("status-text");
             statusText.setText("Apollo wallet is loading. Please, wait");
-            AnchorPane.setTopAnchor(statusText, 228.0);
+            AnchorPane.setTopAnchor(versionText, 130.0);
+            AnchorPane.setLeftAnchor(versionText, 190.0);
+            AnchorPane.setTopAnchor(statusText, 200.0);
             AnchorPane.setLeftAnchor(statusText, 60.0);
             pane.getChildren().add(statusText);
+            pane.getChildren().add(versionText);
             screenStage.setScene(scene);
-            screenStage.setHeight(250);
-            screenStage.setWidth(400);
+            screenStage.setHeight(217);
+            screenStage.setWidth(500);
             screenStage.initStyle(StageStyle.UNDECORATED);
             screenStage.show();
             Runnable statusUpdater = () -> {
@@ -354,8 +386,35 @@ public class DesktopApplication extends Application {
             mainStage.initStyle(StageStyle.DECORATED);
             mainStage.setScene(scene);
             mainStage.sizeToScene();
+            mainStage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::showOnCloseWarnAlert);
             mainStage.show();
             Platform.setImplicitExit(false); // So that we can reopen the application in case the user closed it
+        }
+
+        public<T> void showOnCloseWarnAlert(T event) {
+            Alert warnAlert = new Alert(Alert.AlertType.WARNING);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(5, 5, 0, 5));
+            Text text = new Text("By closing desktop you will not stop apollo wallet completely. Apollo desktop app will work in tray (if " +
+                    "supported) or in browser mode in " +
+                    "background and will be available also in your browser at " + getUrl()+ ". If you want to close completely application -> " +
+                    "click " +
+                    "YES");
+            text.setFont(Font.font ("Verdana", 11));
+
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            hbox.setMaxSize(500, 250);
+            text.setWrappingWidth(350);
+            hbox.getChildren().add(text);
+            warnAlert.getButtonTypes().clear();
+            warnAlert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
+            warnAlert.getDialogPane().setContent(hbox);
+            warnAlert.setHeaderText("Apollo desktop app shutdown will not" + System.lineSeparator() + " cause shutdown of Apollo wallet");
+            ButtonType clickedButton = warnAlert.showAndWait().orElse(ButtonType.NO);
+            if (clickedButton == ButtonType.YES) {
+                System.exit(0);
+            }
         }
 
         private void updateClientState(BlockchainProcessor.Event blockEvent, Block block) {
@@ -449,7 +508,8 @@ public class DesktopApplication extends Application {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
                         }
-                    } catch (IllegalArgumentException e) {
+                    }
+                    catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -473,7 +533,8 @@ public class DesktopApplication extends Application {
                             growl("Pruned message not currently available from any peer");
                             return;
                         }
-                    } catch (IllegalArgumentException e) {
+                    }
+                    catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
                     }
@@ -521,7 +582,8 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
             }
         }
