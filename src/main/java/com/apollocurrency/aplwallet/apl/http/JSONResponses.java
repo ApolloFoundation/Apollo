@@ -571,9 +571,17 @@ public final class JSONResponses {
     }
 
     public static JSONStreamAware notFoundSureWallet(long accountId, String details) {
+        return  accountError(accountId, "Sure wallet for account not found: " + details);
+    }
+
+    public static JSONStreamAware notDeletedSureWallet(long accountId, String details) {
+        return accountError(accountId,  "Sure wallet for account " + Convert.rsAccount(accountId) + " not deleted : " + details);
+    }
+
+    public static JSONStreamAware accountError(long accountId, String errorDetails) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 22);
-        response.put("errorDescription", "Sure wallet for account not found: " + details);
+        response.put("errorDescription", errorDetails);
         JSONData.putAccount(response, "account", accountId);
         return JSON.prepare(response);
     }

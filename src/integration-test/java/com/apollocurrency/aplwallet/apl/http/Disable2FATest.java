@@ -13,9 +13,9 @@ import java.security.GeneralSecurityException;
 
 import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.GeneratedAccount;
+import com.apollocurrency.aplwallet.apl.KeyStore;
 import com.apollocurrency.aplwallet.apl.PassphraseGenerator;
 import com.apollocurrency.aplwallet.apl.PassphraseGeneratorImpl;
-import com.apollocurrency.aplwallet.apl.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -60,7 +60,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         JsonFluentAssert.assertThatJson(json)
                 .node("errorDescription")
                 .isPresent()
-                .matches(createStringMatcher(SecretBytesDetails.ExtractStatus.NOT_FOUND));
+                .matches(createStringMatcher(KeyStore.Status.NOT_FOUND));
     }
 
     @Test
@@ -78,10 +78,10 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         JsonFluentAssert.assertThatJson(disable2FAJson)
                 .node("errorDescription")
                 .isPresent()
-                .matches(createStringMatcher(SecretBytesDetails.ExtractStatus.DECRYPTION_ERROR));
+                .matches(createStringMatcher(KeyStore.Status.DECRYPTION_ERROR));
     }
 
-    private Matcher createStringMatcher(SecretBytesDetails.ExtractStatus extractStatus) {
+    private Matcher createStringMatcher(KeyStore.Status extractStatus) {
         return new BaseMatcher<Object>() {
             @Override
             public boolean matches(Object item) {

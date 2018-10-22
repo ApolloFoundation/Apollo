@@ -6,14 +6,6 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,8 +17,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import org.slf4j.Logger;
+
  public class SimpleKeyStoreImpl implements KeyStore {
-         private static final Logger LOG = getLogger(SimpleKeyStoreImpl.class);
+     private static final Logger LOG = getLogger(SimpleKeyStoreImpl.class);
      private Path keystoreDirPath;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -55,9 +55,9 @@ import java.util.stream.Collectors;
          List<Path> secretPaths = findSecretPaths(accountId);
 
          if (secretPaths.size() == 0) {
-             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.NOT_FOUND);
+             return new SecretBytesDetails(null, Status.NOT_FOUND);
          } else if (secretPaths.size() > 1) {
-             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.DUPLICATE_FOUND);
+             return new SecretBytesDetails(null, Status.DUPLICATE_FOUND);
          }
 
          Path privateKeyPath = secretPaths.get(0);
@@ -70,16 +70,16 @@ import java.util.stream.Collectors;
 
              long actualAccId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(decryptedSecretBytes)));
              if (accountId != actualAccId) {
-                 return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.BAD_CREDENTIALS);
+                 return new SecretBytesDetails(null, Status.BAD_CREDENTIALS);
              }
-             return new SecretBytesDetails(decryptedSecretBytes, SecretBytesDetails.ExtractStatus.OK);
+             return new SecretBytesDetails(decryptedSecretBytes, Status.OK);
 
          }
          catch (IOException e) {
-             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.READ_ERROR);
+             return new SecretBytesDetails(null, Status.READ_ERROR);
          }
          catch (RuntimeException e) {
-             return new SecretBytesDetails(null, SecretBytesDetails.ExtractStatus.DECRYPTION_ERROR);
+             return new SecretBytesDetails(null, Status.DECRYPTION_ERROR);
          }
      }
 
@@ -114,12 +114,29 @@ import java.util.stream.Collectors;
          Objects.requireNonNull(secretBytes);
 
          long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-         Path keyPath = makeTargetPath(accountId);
+         Path keyPath = makeTargetPathForNewAccount(accountId);
          if (keyPath == null) {
              return false;
          }
          EncryptedSecretBytesDetails secretBytesDetails = makeEncryptedSecretBytesDetails(passphrase, secretBytes, accountId);
          return storeJSONSecretBytes(keyPath, secretBytesDetails);
+     }
+
+     @Override
+     public Status deleteSecretBytes(String passphrase, long accountId) {
+         SecretBytesDetails secretBytes = getSecretBytes(passphrase, accountId);
+         if (secretBytes.getExtractStatus() != Status.OK) {
+             return secretBytes.getExtractStatus();
+         }
+         Path secretBytesPath = findSecretPaths(accountId).get(0);
+         try {
+             Files.delete(secretBytesPath);
+         }
+         catch (IOException e) {
+             LOG.debug("Unable to delete secret bytes", e.toString());
+             return Status.DELETE_ERROR;
+         }
+         return Status.OK;
      }
 
      private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
@@ -130,12 +147,17 @@ import java.util.stream.Collectors;
          return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, secretBytes.length, version, nonce, timestamp);
      }
 
-     private Path makeTargetPath(long accountId) {
+     private Path makeTargetPathForNewAccount(long accountId) {
          boolean isNew = isNewAccount(accountId);
          if (!isNew) {
              LOG.debug("Account already exist");
              return null;
          }
+         return makeTargetPath(accountId);
+
+     }
+
+     private Path makeTargetPath(long accountId) {
          Instant instant = Instant.now();
          OffsetDateTime utcTime = instant.atOffset( ZoneOffset.UTC );
          return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.rsAccount(accountId)));

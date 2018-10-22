@@ -306,6 +306,7 @@ public enum APIEnum {
     DISABLE_2FA("disable2FA", Disable2FA.getInstance()),
     CONFIRM_2FA("confirm2FA", Confirm2FA.getInstance()),
     GET_GENESIS_BALANCES("getGenesisBalances", GetGenesisBalances.getInstance()),
+    DELETE_KEY("deleteKey", DeleteKey.getInstance()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
