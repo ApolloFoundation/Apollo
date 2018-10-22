@@ -39,4 +39,9 @@ public class ImportKey extends APIServlet.APIRequestHandler {
         JSONData.putAccount(response, "account", Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes))));
         return response;
     }
+
+    @Override
+    protected boolean requirePost() {
+        return true;
+    }
 }

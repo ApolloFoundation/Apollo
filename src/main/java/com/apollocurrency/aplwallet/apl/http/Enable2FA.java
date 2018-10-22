@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthDetails;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class Enable2FA extends APIServlet.APIRequestHandler {
     private Enable2FA() {
@@ -39,5 +39,10 @@ public class Enable2FA extends APIServlet.APIRequestHandler {
         response.put("secret", twoFactorAuthDetails.getSecret());
         response.put("qrCodeUrl", twoFactorAuthDetails.getQrCodeUrl());
         return response;
+    }
+
+    @Override
+    protected boolean requirePost() {
+        return true;
     }
 }

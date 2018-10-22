@@ -40,4 +40,9 @@ public class DeleteKey extends APIServlet.APIRequestHandler {
     protected String accountName2FA() {
         return "account";
     }
+
+    @Override
+    protected boolean requirePost() {
+        return true;
+    }
 }
