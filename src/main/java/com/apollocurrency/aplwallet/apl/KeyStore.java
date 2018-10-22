@@ -13,9 +13,9 @@ public interface KeyStore {
      * Save encrypted by passphrase secretBytes to keystore
      * @param passphrase - string, which consist of random words for encryption
      * @param secretBytes - secret array of bytes which will be stored into keystore
-     * @return true - if secretBytes were saved successfully, otherwise - false
+     * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
      */
-    boolean saveSecretBytes(String passphrase, byte[] secretBytes);
+    Status saveSecretBytes(String passphrase, byte[] secretBytes);
 
     /**
      * Remove secret bytes from keystore if secret bytes exist for accountId and can be decrypted by passphrase
@@ -32,6 +32,7 @@ public interface KeyStore {
         DUPLICATE_FOUND,
         BAD_CREDENTIALS,
         READ_ERROR,
+        WRITE_ERROR,
         DECRYPTION_ERROR,
         OK
     }

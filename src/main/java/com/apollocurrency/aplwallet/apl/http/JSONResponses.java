@@ -25,6 +25,7 @@ import java.util.Arrays;
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.KeyStore;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -557,32 +558,37 @@ public final class JSONResponses {
         MONITOR_ALREADY_STARTED = JSON.prepare(response);
     }
 
-    public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA) {
-        return error2FA(status2FA, 0);
-    }
     public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA, long accountId) {
-        JSONObject response = new JSONObject();
-        response.put("errorCode", 21);
-        response.put("errorDescription", status2FA);
-        if (accountId != 0) {
-            JSONData.putAccount(response, "account", accountId);
-        }
-        return JSON.prepare(response);
+        return accountError(accountId, String.valueOf(status2FA));
     }
 
-    public static JSONStreamAware notFoundSureWallet(long accountId, String details) {
-        return  accountError(accountId, "Sure wallet for account not found: " + details);
+    public static JSONStreamAware notImportedSureWallet(long accountId, KeyStore.Status status) {
+        return  sureWalletError(accountId, "imported", String.valueOf(status));
     }
 
-    public static JSONStreamAware notDeletedSureWallet(long accountId, String details) {
-        return accountError(accountId,  "Sure wallet for account " + Convert.rsAccount(accountId) + " not deleted : " + details);
+    public static JSONStreamAware notGeneratedSureWallet(long accountId, KeyStore.Status status) {
+        return  sureWalletError(accountId, "generated", String.valueOf(status));
+    }
+
+    public static JSONStreamAware notFoundSureWallet(long accountId, KeyStore.Status status) {
+        return  sureWalletError(accountId, "found", String.valueOf(status));
+    }
+
+    public static JSONStreamAware notDeletedSureWallet(long accountId, KeyStore.Status status) {
+        return sureWalletError(accountId,  "deleted", String.valueOf(status));
+    }
+
+    public static JSONStreamAware sureWalletError(long accountId, String notPerformedAction, String errorDetails) {
+        return accountError(accountId, String.format("Sure wallet for account was not %s : %s", notPerformedAction, errorDetails));
     }
 
     public static JSONStreamAware accountError(long accountId, String errorDetails) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 22);
         response.put("errorDescription", errorDetails);
-        JSONData.putAccount(response, "account", accountId);
+        if (accountId != 0) {
+            JSONData.putAccount(response, "account", accountId);
+        }
         return JSON.prepare(response);
     }
 

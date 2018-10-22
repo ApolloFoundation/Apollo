@@ -7,15 +7,6 @@ package util;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.BasicAccount;
-import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import dto.JSONTransaction;
-import org.junit.Assert;
-import org.slf4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -35,6 +26,18 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.BasicAccount;
+import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import dto.JSONTransaction;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.Assert;
+import org.slf4j.Logger;
 
 public class TestUtil {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -141,5 +144,19 @@ public class TestUtil {
     public static void deleteInKeystore(List<String> accounts) throws IOException {
         deleteDir(Apl.getKeystoreDir(Apl.getStringProperty("apl.testnetKeystoreDir")),
                 (path -> accounts.stream().anyMatch(acc -> path.getFileName().toString().contains(acc))));
+    }
+
+    public static Matcher createStringMatcher(Object object) {
+        return new BaseMatcher<Object>() {
+            @Override
+            public boolean matches(Object item) {
+                return item.toString().contains(String.valueOf(object));
+            }
+
+            @Override
+            public void describeTo(Description description) {
+
+            }
+        };
     }
 }

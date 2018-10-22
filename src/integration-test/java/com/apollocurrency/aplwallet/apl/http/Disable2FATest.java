@@ -23,12 +23,10 @@ import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import dto.Account2FA;
 import dto.TwoFactorAuthAccountDetails;
 import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import util.TestUtil;
 
 public class Disable2FATest extends DeleteGeneratedAccountsTest {
     private static PassphraseGenerator generator = new PassphraseGeneratorImpl();
@@ -60,7 +58,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         JsonFluentAssert.assertThatJson(json)
                 .node("errorDescription")
                 .isPresent()
-                .matches(createStringMatcher(KeyStore.Status.NOT_FOUND));
+                .matches(TestUtil.createStringMatcher(KeyStore.Status.NOT_FOUND));
     }
 
     @Test
@@ -78,22 +76,10 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         JsonFluentAssert.assertThatJson(disable2FAJson)
                 .node("errorDescription")
                 .isPresent()
-                .matches(createStringMatcher(KeyStore.Status.DECRYPTION_ERROR));
+                .matches(TestUtil.createStringMatcher(KeyStore.Status.DECRYPTION_ERROR));
     }
 
-    private Matcher createStringMatcher(KeyStore.Status extractStatus) {
-        return new BaseMatcher<Object>() {
-            @Override
-            public boolean matches(Object item) {
-                return item.toString().contains(String.valueOf(extractStatus));
-            }
 
-            @Override
-            public void describeTo(Description description) {
-
-            }
-        };
-    }
 
     @Test
     public void testDisable2FAIncorrectCodeSureWallet() throws IOException, GeneralSecurityException {

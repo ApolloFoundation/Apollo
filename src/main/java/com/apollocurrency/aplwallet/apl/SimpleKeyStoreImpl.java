@@ -109,17 +109,19 @@ import org.slf4j.Logger;
      }
 
      @Override
-     public boolean saveSecretBytes(String passphrase, byte[] secretBytes) {
+     public Status saveSecretBytes(String passphrase, byte[] secretBytes) {
          Objects.requireNonNull(passphrase);
          Objects.requireNonNull(secretBytes);
 
          long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
          Path keyPath = makeTargetPathForNewAccount(accountId);
          if (keyPath == null) {
-             return false;
+             return Status.DUPLICATE_FOUND;
          }
          EncryptedSecretBytesDetails secretBytesDetails = makeEncryptedSecretBytesDetails(passphrase, secretBytes, accountId);
-         return storeJSONSecretBytes(keyPath, secretBytesDetails);
+         boolean saved = storeJSONSecretBytes(keyPath, secretBytesDetails);
+
+         return saved ? Status.OK : Status.WRITE_ERROR;
      }
 
      @Override
@@ -129,14 +131,23 @@ import org.slf4j.Logger;
              return secretBytes.getExtractStatus();
          }
          Path secretBytesPath = findSecretPaths(accountId).get(0);
+
+         return deleteFileWithStatus(secretBytesPath);
+     }
+
+     protected Status deleteFileWithStatus(Path path) {
          try {
-             Files.delete(secretBytesPath);
+             deleteFile(path);
          }
          catch (IOException e) {
-             LOG.debug("Unable to delete secret bytes", e.toString());
+             LOG.debug("Unable to delete file", e.toString());
              return Status.DELETE_ERROR;
          }
          return Status.OK;
+     }
+
+     protected void deleteFile(Path path) throws IOException {
+         Files.delete(path);
      }
 
      private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
