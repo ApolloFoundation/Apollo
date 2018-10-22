@@ -60,7 +60,8 @@
         <mockito.version>1.10.19</mockito.version>
         <powermock.version>1.7.4</powermock.version>
         <spring.version>5.0.7.RELEASE</spring.version>
-        <jersey.version>2.27</jersey.version>
+        <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
+        <okhttp.version>2.7.5</okhttp.version>
     </properties>
     <profiles>
         <profile>
@@ -271,23 +272,17 @@
             <version>${json-unit.version}</version>
             <scope>test</scope>
         </dependency>
-<!--Jersey SSE client-->
+<!--OkHttp SSE client-->
         <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-sse</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>com.squareup.okhttp</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-common</artifactId>
-            <version>${jersey.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>com.launchdarkly</groupId>
+            <artifactId>okhttp-eventsource</artifactId>
+            <version>${okhttp-eventsource.version}</version>
             <scope>test</scope>
         </dependency>
 
