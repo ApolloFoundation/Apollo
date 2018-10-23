@@ -36,7 +36,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
     }
 
     @Test
-    public void testDisable2FASureWallet() throws IOException, GeneralSecurityException {
+    public void testDisable2FAVaultWallet() throws IOException, GeneralSecurityException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TEST_LOCALHOST, PASSPHRASE);
         generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
 
@@ -53,7 +53,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         Assert.assertEquals(TwoFactorAuthService.Status2FA.OK, account.getStatus2FA());
     }
     @Test
-    public void testDisable2FANoAccountSureWallet() throws IOException, GeneralSecurityException {
+    public void testDisable2FANoAccountVaultWallet() throws IOException, GeneralSecurityException {
         String json = nodeClient.disable2FAJson(TEST_LOCALHOST, ACCOUNT1.getAccountRS(), PASSPHRASE, 100L);
         JsonFluentAssert.assertThatJson(json)
                 .node("errorDescription")
@@ -62,7 +62,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
     }
 
     @Test
-    public void testDisable2FAIncorrectPassphraseSureWallet() throws IOException, GeneralSecurityException {
+    public void testDisable2FAIncorrectPassphraseVaultWallet() throws IOException, GeneralSecurityException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TEST_LOCALHOST, PASSPHRASE);
         generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
 
@@ -82,7 +82,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
 
 
     @Test
-    public void testDisable2FAIncorrectCodeSureWallet() throws IOException, GeneralSecurityException {
+    public void testDisable2FAIncorrectCodeVaultWallet() throws IOException, GeneralSecurityException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TEST_LOCALHOST, PASSPHRASE);
         generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
 

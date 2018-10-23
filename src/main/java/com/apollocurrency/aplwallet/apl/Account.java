@@ -824,11 +824,16 @@ public final class Account {
 
     public static TwoFactorAuthService.Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
         findSecretBytes(accountId, passphrase, true);
-        return service2FA.disable(accountId, code);
+        TwoFactorAuthService.Status2FA status2FA = service2FA.disable(accountId, code);
+        validate2FAStatus(status2FA, accountId);
+        return status2FA;
     }
 
     public static TwoFactorAuthService.Status2FA disable2FA(String secretPhrase, int code) throws ParameterException {
-        return service2FA.disable(Convert.getId(Crypto.getPublicKey(secretPhrase)), code);
+        long id = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        TwoFactorAuthService.Status2FA status2FA = service2FA.disable(id, code);
+        validate2FAStatus(status2FA, id);
+        return status2FA;
     }
 
     public static boolean isEnabled2FA(long accountId) {
@@ -2093,8 +2098,8 @@ public final class Account {
 
     private static void validateKeyStoreStatus(long accountId, KeyStore.Status status, String notPerformedAction) throws ParameterException {
         if (status != KeyStore.Status.OK) {
-            LOG.debug( "Sure wallet not " + notPerformedAction + " {} - {}", Convert.rsAccount(accountId), status);
-            throw new ParameterException("Unable to generate account", null, JSONResponses.sureWalletError(accountId, notPerformedAction,
+            LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert.rsAccount(accountId), status);
+            throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
                     String.valueOf(status)));
         }
     }
