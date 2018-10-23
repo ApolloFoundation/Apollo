@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.simple.JSONAware;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,7 +36,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import org.json.simple.JSONAware;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 public final class JSON {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -302,5 +304,11 @@ public final class JSON {
             sb.append(string);
         else if (start < string.length())
             sb.append(string.substring(start));
+    }
+
+    public static <T> void writeJson(Path path, T object) throws IOException {
+            ObjectMapper mapper = JSON.getMapper();
+            ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
+            writer.writeValue(path.toFile(), object);
     }
 }
