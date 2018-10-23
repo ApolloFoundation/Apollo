@@ -64,7 +64,6 @@ import org.slf4j.Logger;
          try {
              EncryptedSecretBytesDetails secretBytesDetails =
                      JSON.getMapper().readValue(privateKeyPath.toFile(), EncryptedSecretBytesDetails.class);
-
          byte[] key = Crypto.getKeySeed(passphrase, secretBytesDetails.getNonce(), Convert.longToBytes(secretBytesDetails.getTimestamp()));
              byte[] decryptedSecretBytes = Crypto.aesDecrypt(secretBytesDetails.getEncryptedSecretBytes(), key);
 
@@ -73,7 +72,6 @@ import org.slf4j.Logger;
                  return new SecretBytesDetails(null, Status.BAD_CREDENTIALS);
              }
              return new SecretBytesDetails(decryptedSecretBytes, Status.OK);
-
          }
          catch (IOException e) {
              return new SecretBytesDetails(null, Status.READ_ERROR);
@@ -155,7 +153,7 @@ import org.slf4j.Logger;
          long timestamp = System.currentTimeMillis();
          byte[] key = Crypto.getKeySeed(passphrase, nonce, Convert.longToBytes(timestamp));
          byte[] encryptedSecretBytes = Crypto.aesEncrypt(secretBytes, key);
-         return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, secretBytes.length, version, nonce, timestamp);
+         return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, version, nonce, timestamp);
      }
 
      private Path makeTargetPathForNewAccount(long accountId) {

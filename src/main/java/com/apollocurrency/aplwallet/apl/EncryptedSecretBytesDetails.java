@@ -4,16 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
-
 import java.util.Arrays;
 import java.util.Objects;
+
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public class EncryptedSecretBytesDetails {
     private byte[] encryptedSecretBytes;
     private String accountRS;
     private long account;
-    private int size;
     private byte version;
     private byte[] nonce;
     private long timestamp;
@@ -21,33 +20,20 @@ public class EncryptedSecretBytesDetails {
     public EncryptedSecretBytesDetails() {
     }
 
-    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, long account, int size, byte version, byte[] nonce, long timestamp) {
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, long account, byte version, byte[] nonce, long timestamp) {
         this.encryptedSecretBytes = encryptedSecretBytes;
         this.accountRS = accountRS;
         this.account = account;
-        this.size = size;
         this.version = version;
         this.nonce = nonce;
         this.timestamp = timestamp;
     }
 
-    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, int size, byte version, byte[] nonce, long timestamp) {
-        this.encryptedSecretBytes = encryptedSecretBytes;
-        this.accountRS = Convert.rsAccount(account);
-        this.account = account;
-        this.size = size;
-        this.version = version;
-        this.nonce = nonce;
-        this.timestamp = timestamp;
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, byte version, byte[] nonce, long timestamp) {
+        this(encryptedSecretBytes, Convert.rsAccount(account), version, nonce, timestamp);
     }
-    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, int size, byte version, byte[] nonce, long timestamp) {
-        this.encryptedSecretBytes = encryptedSecretBytes;
-        this.accountRS = accountRS;
-        this.account = Convert.parseAccountId(accountRS);
-        this.size = size;
-        this.version = version;
-        this.nonce = nonce;
-        this.timestamp = timestamp;
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, byte version, byte[] nonce, long timestamp) {
+        this(encryptedSecretBytes, accountRS, Convert.parseAccountId(accountRS), version, nonce, timestamp);
     }
 
     public byte[] getEncryptedSecretBytes() {
@@ -72,14 +58,6 @@ public class EncryptedSecretBytesDetails {
 
     public void setAccount(long account) {
         this.account = account;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
     }
 
     public byte getVersion() {
@@ -112,7 +90,6 @@ public class EncryptedSecretBytesDetails {
         if (!(o instanceof EncryptedSecretBytesDetails)) return false;
         EncryptedSecretBytesDetails that = (EncryptedSecretBytesDetails) o;
         return account == that.account &&
-                size == that.size &&
                 version == that.version &&
                 timestamp == that.timestamp &&
                 Arrays.equals(encryptedSecretBytes, that.encryptedSecretBytes) &&
@@ -122,7 +99,7 @@ public class EncryptedSecretBytesDetails {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(accountRS, account, size, version, timestamp);
+        int result = Objects.hash(accountRS, account, version, timestamp);
         result = 31 * result + Arrays.hashCode(encryptedSecretBytes);
         result = 31 * result + Arrays.hashCode(nonce);
         return result;

@@ -34,7 +34,6 @@ public class DeleteKeyTest extends DeleteGeneratedAccountsTest {
                 .node("errorDescription")
                 .isPresent()
                 .matches(TestUtil.createStringMatcher(KeyStore.Status.NOT_FOUND));
-
     }
 
     @Test
@@ -46,7 +45,6 @@ public class DeleteKeyTest extends DeleteGeneratedAccountsTest {
                 .node("errorDescription")
                 .isPresent()
                 .matches(TestUtil.createStringMatcher(KeyStore.Status.DECRYPTION_ERROR));
-
     }
 
     @Test
