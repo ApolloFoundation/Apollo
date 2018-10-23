@@ -30,9 +30,11 @@ import java.util.stream.Collectors;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.BasicAccount;
 import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import dto.JSONTransaction;
+import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -158,5 +160,30 @@ public class TestUtil {
 
             }
         };
+    }
+
+    public static void verifyJsonAccount(String json, String account, String jsonNode) {
+        JsonFluentAssert.assertThatJson(json)
+                .node(jsonNode)
+                .isPresent()
+                .isStringEqualTo(account);
+    }
+    public static void verifyJsonAccountRS(String json, String account) {
+        verifyJsonAccount(json, account, "accountRS");
+    }
+    public static void verifyJsonAccountId(String json, long accountId) {
+        verifyJsonAccountRS(json, Convert.rsAccount(accountId));
+    }
+
+    public static void verifyJsonNodeContains(String json, Object object, String node) {
+
+        JsonFluentAssert.assertThatJson(json)
+                .node(node)
+                .isPresent()
+                .matches(TestUtil.createStringMatcher(object));
+    }
+
+    public static void verifyErrorDescriptionJsonNodeContains(String json, Object object) {
+        verifyJsonNodeContains(json, object, "errorDescription");
     }
 }

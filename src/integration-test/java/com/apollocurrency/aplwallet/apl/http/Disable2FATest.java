@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import dto.Account2FA;
 import dto.TwoFactorAuthAccountDetails;
-import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,10 +54,8 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
     @Test
     public void testDisable2FANoAccountVaultWallet() throws IOException, GeneralSecurityException {
         String json = nodeClient.disable2FAJson(TEST_LOCALHOST, ACCOUNT1.getAccountRS(), PASSPHRASE, 100L);
-        JsonFluentAssert.assertThatJson(json)
-                .node("errorDescription")
-                .isPresent()
-                .matches(TestUtil.createStringMatcher(KeyStore.Status.NOT_FOUND));
+        TestUtil.verifyJsonAccountId(json, ACCOUNT1.getId());
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, KeyStore.Status.NOT_FOUND);
     }
 
     @Test
@@ -70,13 +67,10 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         nodeClient.confirm2FA(TEST_LOCALHOST, new BasicAccount(generatedAccount.getAccountRS()), PASSPHRASE,
                 TimeBasedOneTimePasswordUtil.generateCurrentNumber(details.getDetails().getSecret()));
 
-        String disable2FAJson = nodeClient.disable2FAJson(TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()), PASSPHRASE + "1",
+        String json = nodeClient.disable2FAJson(TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()), PASSPHRASE + "1",
                 TimeBasedOneTimePasswordUtil.generateCurrentNumber(details.getDetails().getSecret()));
-
-        JsonFluentAssert.assertThatJson(disable2FAJson)
-                .node("errorDescription")
-                .isPresent()
-                .matches(TestUtil.createStringMatcher(KeyStore.Status.DECRYPTION_ERROR));
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, KeyStore.Status.DECRYPTION_ERROR);
+        TestUtil.verifyJsonAccountId(json, generatedAccount.getId());
     }
 
 
@@ -90,8 +84,9 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         nodeClient.confirm2FA(TEST_LOCALHOST, new BasicAccount(generatedAccount.getAccountRS()), PASSPHRASE,
                 TimeBasedOneTimePasswordUtil.generateCurrentNumber(twoFactorAuthAccountDetails.getDetails().getSecret()));
 
-        Account2FA account = nodeClient.disable2FA(TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()), PASSPHRASE, null, 100);
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.INCORRECT_CODE, account.getStatus2FA());
+        String json = nodeClient.disable2FAJson(TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()), PASSPHRASE, 100);
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, TwoFactorAuthService.Status2FA.INCORRECT_CODE);
+        TestUtil.verifyJsonAccountId(json, generatedAccount.getId());
     }
     @Test
     public void testDisable2FAOnlineWallet() throws IOException, GeneralSecurityException {
@@ -120,27 +115,28 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
         long code = TimeBasedOneTimePasswordUtil.generateCurrentNumber(details.getDetails().getSecret());
         nodeClient.confirm2FA(TEST_LOCALHOST, secretPhrase, code);
 
-        Account2FA account = nodeClient.disable2FA(TEST_LOCALHOST, null, null, secretPhrase, INVALID_CODE);
-
-        Assert.assertEquals(details.getAccount().getAccountRS(), account.getAccountRS());
-        Assert.assertEquals(id, account.getId());
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.INCORRECT_CODE, account.getStatus2FA());
+        String json = nodeClient.disable2FAJson(TEST_LOCALHOST, secretPhrase, INVALID_CODE);
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, TwoFactorAuthService.Status2FA.INCORRECT_CODE);
+        TestUtil.verifyJsonAccountId(json, id);
     }
     @Test
     public void testDisable2FANotEnabledOnlineWallet() throws IOException, GeneralSecurityException {
         String secretPhrase = generator.generate();
-        Account2FA account2FA = nodeClient.disable2FA(TEST_LOCALHOST, null, null, secretPhrase, INVALID_CODE);
-        Assert.assertEquals(Convert.getId(Crypto.getPublicKey(secretPhrase)), account2FA.getId());
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_ENABLED, account2FA.getStatus2FA());
+
+
+        long id = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        String json = nodeClient.disable2FAJson(TEST_LOCALHOST, secretPhrase, INVALID_CODE);
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, TwoFactorAuthService.Status2FA.NOT_ENABLED);
+        TestUtil.verifyJsonAccountId(json, id);
     }
     @Test
     public void testDisable2FANotConfirmedAccountOnlineWallet() throws IOException, GeneralSecurityException {
         String secretPhrase = generator.generate();
-        TwoFactorAuthAccountDetails details = nodeClient.enable2FA(TEST_LOCALHOST, secretPhrase);
-        Account2FA account2FA = nodeClient.disable2FA(TEST_LOCALHOST, null, null, secretPhrase, INVALID_CODE);
-        Assert.assertEquals(Convert.getId(Crypto.getPublicKey(secretPhrase)), account2FA.getId());
-        Assert.assertEquals(account2FA.getId(), details.getAccount().getId());
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_CONFIRMED, account2FA.getStatus2FA());
+        nodeClient.enable2FA(TEST_LOCALHOST, secretPhrase);
+        long id = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        String json = nodeClient.disable2FAJson(TEST_LOCALHOST, secretPhrase, INVALID_CODE);
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, TwoFactorAuthService.Status2FA.NOT_CONFIRMED);
+        TestUtil.verifyJsonAccountId(json, id);
     }
 
 
