@@ -42,5 +42,9 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected boolean requirePost() {
+        return true;
+    }
 }
 

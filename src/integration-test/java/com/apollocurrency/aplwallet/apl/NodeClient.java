@@ -698,8 +698,18 @@ public class NodeClient {
         }
         return accountWithKey;
     }
+
     public String importKey(String url, String passphrase, String secretBytes) throws IOException {
-        Objects.requireNonNull(secretBytes);
+        String json = importKeyJson(url, passphrase, secretBytes);
+        JsonNode jsonNode = MAPPER.readTree(json);
+        JsonNode passphraseNode = jsonNode.get("passphrase");
+        if (passphraseNode == null) {
+            throw new RuntimeException("No passphrase in response: " + json);
+        }
+        return passphraseNode.textValue();
+    }
+
+    public String importKeyJson(String url, String passphrase, String secretBytes) throws IOException {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("requestType", "importKey");
         if (passphrase != null && !passphrase.isEmpty()) {
@@ -708,12 +718,7 @@ public class NodeClient {
         parameters.put("secretBytes", secretBytes);
 
         String json = postJson(createURI(url), parameters, "");
-        JsonNode jsonNode = MAPPER.readTree(json);
-        JsonNode passphraseNode = jsonNode.get("passphrase");
-        if (passphraseNode == null) {
-            throw new RuntimeException("No passphrase in response: " + json);
-        }
-        return passphraseNode.textValue();
+        return json;
     }
 
     TwoFactorAuthAccountDetails enable2FA(String url, String account, String passphrase, String secretPhrase) throws IOException {
@@ -791,5 +796,22 @@ public class NodeClient {
         return confirm2FA(url, account, passphrase, null, code);
     }
 
+    public String deleteKeyJson(String url, long accountId, String passphrase, long code) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("requestType", "deleteKey");
+        parameters.put("passphrase", passphrase);
+        parameters.put("account", String.valueOf(accountId));
+        if (code != 0) {
+            parameters.put("code", String.valueOf(code));
+        }
+
+        String json = postJson(createURI(url), parameters, "");
+        return json;
+    }
+
+    public BasicAccount deleteKey(String url, long accountId, String passphrase, long code) throws IOException {
+        String json = deleteKeyJson(url, accountId, passphrase, code);
+        return MAPPER.readValue(json, BasicAccount.class);
+    }
 
 }

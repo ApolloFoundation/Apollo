@@ -57,6 +57,8 @@ import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
@@ -845,76 +847,62 @@ public final class Account {
             } else {
                 status2FA = Account.auth2FA(params2FA.getSecretPhrase(), code);
             }
-            if (status2FA != TwoFactorAuthService.Status2FA.OK) {
-                LOG.debug("2fa failed for acc {} - {}", params2FA.getAccountId(), status2FA);
-                throw new ParameterException("2fa failed", null, JSONResponses.error2FA(status2FA, params2FA.getAccountId()));
-            }
+            validate2FAStatus(status2FA);
         }
     }
 
     public static SecretBytesDetails findSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
-            SecretBytesDetails secretBytes = keystore.getSecretBytes(passphrase, accountId);
-            if (secretBytes.getExtractStatus() == KeyStore.Status.OK) {
-                return secretBytes;
-            } else {
-                LOG.debug("No appropriate secret bytes for account {} - {}", accountId, secretBytes.getExtractStatus());
-                if (isMandatory) {
-                    throw new ParameterException("Key not found for account - " + accountId, null, JSONResponses.notFoundSureWallet(accountId,
-                            String.valueOf(secretBytes.getExtractStatus())));
-                }
-                return secretBytes;
-            }
+        SecretBytesDetails secretBytes = keystore.getSecretBytes(passphrase, accountId);
+
+        if (isMandatory) {
+            validateKeyStoreStatus(accountId, secretBytes.getExtractStatus(), "found");
+        }
+
+        return secretBytes;
     }
 
     public static KeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
         if (isEnabled2FA(accountId)) {
             TwoFactorAuthService.Status2FA status2FA = disable2FA(accountId, passphrase, code);
-            validate2FASratus(status2FA, accountId);
+            validate2FAStatus(status2FA, accountId);
         }
         KeyStore.Status status = keystore.deleteSecretBytes(passphrase, accountId);
-        if (status != KeyStore.Status.OK) {
-            throw new ParameterException("Sure wallet not deleted for account " + accountId, null, JSONResponses.notDeletedSureWallet(accountId,
-                    String.valueOf(status)));
-        }
+        validateKeyStoreStatus(accountId, status, "deleted");
         return status;
     }
 
     public static TwoFactorAuthService.Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
         findSecretBytes(accountId, passphrase, true);
         TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
-        validate2FASratus(status2FA, accountId);
+        validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
     public static TwoFactorAuthService.Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
         long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
         TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
-        validate2FASratus(status2FA, accountId);
+        validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
 
-    private static void validate2FASratus(TwoFactorAuthService.Status2FA status2FA, long account) throws ParameterException {
+    private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA, long account) throws ParameterException {
         if (status2FA != TwoFactorAuthService.Status2FA.OK) {
-            throw new ParameterException("Confirm 2fa error", null, JSONResponses.error2FA(status2FA, account));
+            LOG.debug("2fa error: {}-{}", Convert.rsAccount(account), status2FA);
+            throw new ParameterException("2fa error", null, JSONResponses.error2FA(status2FA, account));
         }
     }
-    private static void validate2FASratus(TwoFactorAuthService.Status2FA status2FA) throws ParameterException {
-        validate2FASratus(status2FA, 0);
+    private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA) throws ParameterException {
+        validate2FAStatus(status2FA, 0);
     }
 
     public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
-        SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, false);
-        if (secretBytes.getExtractStatus() != KeyStore.Status.OK) {
-            throw new ParameterException("No appropriate account found: " + secretBytes.getExtractStatus(), null,
-                    JSONResponses.notFoundSureWallet(accountId,
-                    String.valueOf(secretBytes.getExtractStatus())));
-        }
+        SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, true);
         return service2FA.tryAuth(accountId, code);
     }
 
     public static TwoFactorAuthService.Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
         long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
         TwoFactorAuthService.Status2FA status2FA = service2FA.tryAuth(accountId, code);
-        validate2FASratus(status2FA, accountId);
+        validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
 
@@ -2096,28 +2084,31 @@ public final class Account {
 
     }
 
-    public static GeneratedAccount generateAccount(String passphrase) {
+    public static GeneratedAccount generateAccount(String passphrase) throws ParameterException {
         GeneratedAccount account = accountGenerator.generate(passphrase);
-        boolean saved = keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
-        if (!saved) {
-            LOG.debug("Cannot save account");
-            return null;
-        }
+        KeyStore.Status status = keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
+        validateKeyStoreStatus(account.getId(), status, "generated");
         return account;
+    }
+
+    private static void validateKeyStoreStatus(long accountId, KeyStore.Status status, String notPerformedAction) throws ParameterException {
+        if (status != KeyStore.Status.OK) {
+            LOG.debug( "Sure wallet not " + notPerformedAction + " {} - {}", Convert.rsAccount(accountId), status);
+            throw new ParameterException("Unable to generate account", null, JSONResponses.sureWalletError(accountId, notPerformedAction,
+                    String.valueOf(status)));
+        }
     }
 
     public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {
         return findSecretBytes(accountId, passphrase, true).getSecretBytes();
     }
-    public static String importSecretBytes(String passphrase, byte[] secretBytes) {
+    public static Pair<KeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
         if (passphrase == null) {
             passphrase = passphraseGenerator.generate();
         }
-        boolean saved = keystore.saveSecretBytes(passphrase, secretBytes);
-        if (!saved) {
-            LOG.debug("Unable to save secret bytes");
-            return null;
-        }
-        return passphrase;
+        KeyStore.Status status = keystore.saveSecretBytes(passphrase, secretBytes);
+        long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
+        validateKeyStoreStatus(accountId, status, "imported");
+        return new ImmutablePair<>(status, passphrase);
     }
 }

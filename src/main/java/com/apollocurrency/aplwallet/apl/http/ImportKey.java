@@ -8,8 +8,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.KeyStore;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.apache.commons.lang3.tuple.Pair;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -29,14 +31,17 @@ public class ImportKey extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, false));
         byte[] secretBytes = ParameterParser.getBytes(request, "secretBytes", true);
-        passphrase = Account.importSecretBytes(passphrase, secretBytes);
-        boolean imported = passphrase != null;
+
+        Pair<KeyStore.Status, String> statusPassphrasePair = Account.importSecretBytes(passphrase, secretBytes);
         JSONObject response = new JSONObject();
-        response.put("imported", imported);
-        if (imported) {
-            response.put("passphrase", passphrase);
-        }
+        response.put("status", statusPassphrasePair.getLeft());
+        response.put("passphrase", statusPassphrasePair.getRight());
         JSONData.putAccount(response, "account", Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes))));
         return response;
+    }
+
+    @Override
+    protected boolean requirePost() {
+        return true;
     }
 }
