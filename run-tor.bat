@@ -1,4 +1,4 @@
-	@echo off
+rem	@echo off
 	if exist jre ( 
 		set "javaDir=jre"
 		goto startJava
@@ -57,7 +57,13 @@
 	)
 
 :startJava	
-	"%javaDir%"\bin\java.exe -jar -Dapl.runtime.mode=desktop Apollo.jar 
+	echo ClientTransportPlugin obfs4 exec %cd%\tor\tor\obfs4proxy > %systemdrive%%homepath%\torrc
+	echo GeoIPFile %cd%\tor\data\tor\geoip >> %systemdrive%%homepath%\torrc
+	echo GeoIPv6File %cd%\tor\data\tor\geoip6 >> %systemdrive%%homepath%\torrc
+	echo RunAsDaemon 1 >> %systemdrive%%homepath%\torrc
+	start tor\tor\tor.exe -f %systemdrive%%homepath%\torrc
+
+	"%javaDir%"\bin\java.exe -jar -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop Apollo.jar
 
 :endProcess 
 	endlocal
