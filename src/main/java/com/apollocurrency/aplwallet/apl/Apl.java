@@ -635,6 +635,10 @@ public final class Apl {
         return dirProvider.getKeystoreDir(keystoreDir).toPath();
     }
 
+    public static Path get2FADir(String dir2FA) {
+        return Paths.get(dirProvider.getUserHomeDir(), dir2FA);
+    }
+
 
     public static void updateLogFileHandler(Properties loggingProperties) {
         dirProvider.updateLogFileHandler(loggingProperties);

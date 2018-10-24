@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
@@ -297,7 +298,15 @@ public final class Account {
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
-    private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(new TwoFactorAuthRepositoryImpl(Db.db));
+    private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
+            Apl.getBooleanProperty("apl.store2FAInFileSystem") ?
+                    new TwoFactorAuthFileSystemRepository(Apl.get2FADir(
+                            Constants.isTestnet ?
+                                    Apl.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
+                                    Apl.getStringProperty("apl.dir2FA", "2fa")
+                    )) :
+                    new TwoFactorAuthRepositoryImpl(Db.db));
+
     static {
 
         Apl.getBlockchainProcessor().addListener(block -> {
