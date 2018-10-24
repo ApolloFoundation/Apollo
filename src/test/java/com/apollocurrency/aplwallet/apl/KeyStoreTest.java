@@ -169,5 +169,44 @@ public class KeyStoreTest {
         Assert.assertEquals(KeyStore.Status.DELETE_ERROR, status);
         verify(spiedKeyStore, times(1)).deleteFile(any(Path.class));
     }
+
+    @Test
+    public void testDeleteNotAvailable() throws IOException {
+        Path path = tempDirectory.resolve(".local");
+        try {
+            Files.createFile(path);
+            KeyStore.Status status = keyStore.deleteSecretBytes(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+            Assert.assertEquals(KeyStore.Status.NOT_AVAILABLE, status);
+
+        } finally {
+            Files.deleteIfExists(path);
+        }
+    }
+
+    @Test
+    public void testSaveNotAvailable() throws IOException {
+        Path path = tempDirectory.resolve(".local");
+        try {
+            Files.createFile(path);
+            KeyStore.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+            Assert.assertEquals(KeyStore.Status.NOT_AVAILABLE, status);
+
+        } finally {
+            Files.deleteIfExists(path);
+        }
+    }
+    @Test
+    public void testGetNotAvailable() throws IOException {
+        Path path = tempDirectory.resolve(".local");
+        try {
+            Files.createFile(path);
+            SecretBytesDetails secretBytes = keyStore.getSecretBytes(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+            Assert.assertEquals(KeyStore.Status.OK, secretBytes.getExtractStatus());
+            Assert.assertEquals(SECRET_BYTES_1, Convert.toHexString(secretBytes.getSecretBytes()));
+
+        } finally {
+            Files.deleteIfExists(path);
+        }
+    }
 }
 

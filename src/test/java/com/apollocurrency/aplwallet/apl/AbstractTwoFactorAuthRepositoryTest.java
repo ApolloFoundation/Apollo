@@ -2,19 +2,33 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.db;
+package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.DbIntegrationTest;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT3;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY1;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY2;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY3;
+
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.*;
+public abstract class AbstractTwoFactorAuthRepositoryTest {
+    protected TwoFactorAuthRepository repository;
 
+    public AbstractTwoFactorAuthRepositoryTest(TwoFactorAuthRepository repository) {
+        this.repository = repository;
+    }
 
-public class TwoFactorAuthRepositoryIntegrationTest extends DbIntegrationTest {
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
+    public void setRepository(TwoFactorAuthRepository repository) {
+        this.repository = repository;
+    }
 
-
+    protected AbstractTwoFactorAuthRepositoryTest() {
+    }
 
     @Test
     public void testGet() {

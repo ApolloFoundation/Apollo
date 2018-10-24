@@ -2109,7 +2109,7 @@ public final class Account {
         if (status != KeyStore.Status.OK) {
             LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert.rsAccount(accountId), status);
             throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
-                    String.valueOf(status)));
+                    status.message));
         }
     }
 

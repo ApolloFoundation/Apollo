@@ -2,23 +2,31 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet.apl.db;
 
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.AbstractTwoFactorAuthRepositoryTest;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import util.DbManipulator;
 
-public class DbIntegrationTest {
+
+public class TwoFactorAuthRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {
     private static final DbManipulator manipulator = new DbManipulator();
-    protected static final BasicDb db = manipulator.getDb();
-    @BeforeClass
-    public static void init() throws SQLException {
+static {
+    try {
         manipulator.init();
     }
+    catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+    public TwoFactorAuthRepositoryTest() {
+
+        super(new TwoFactorAuthRepositoryImpl(manipulator.getDb()));
+    }
+
     @AfterClass
     public static void shutdown() throws Exception {
         manipulator.shutdown();
@@ -28,4 +36,6 @@ public class DbIntegrationTest {
     public void setUp() throws Exception {
         manipulator.populate();
     }
+
+
 }

@@ -55,7 +55,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
     public void testDisable2FANoAccountVaultWallet() throws IOException, GeneralSecurityException {
         String json = nodeClient.disable2FAJson(TEST_LOCALHOST, ACCOUNT1.getAccountRS(), PASSPHRASE, 100L);
         TestUtil.verifyJsonAccountId(json, ACCOUNT1.getId());
-        TestUtil.verifyErrorDescriptionJsonNodeContains(json, KeyStore.Status.NOT_FOUND);
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, KeyStore.Status.NOT_FOUND.message);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class Disable2FATest extends DeleteGeneratedAccountsTest {
 
         String json = nodeClient.disable2FAJson(TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()), PASSPHRASE + "1",
                 TimeBasedOneTimePasswordUtil.generateCurrentNumber(details.getDetails().getSecret()));
-        TestUtil.verifyErrorDescriptionJsonNodeContains(json, KeyStore.Status.DECRYPTION_ERROR);
+        TestUtil.verifyErrorDescriptionJsonNodeContains(json, KeyStore.Status.DECRYPTION_ERROR.message);
         TestUtil.verifyJsonAccountId(json, generatedAccount.getId());
     }
 
