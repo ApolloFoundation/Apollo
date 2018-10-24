@@ -14,7 +14,7 @@ import org.json.simple.JSONStreamAware;
 
 public class Disable2FA extends APIServlet.APIRequestHandler {
     private Disable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "code", "secretPhrase", "account", "passphrase");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "code2FA", "secretPhrase", "account", "passphrase");
     }
 
     private static class Disable2FAHolder {
@@ -28,7 +28,7 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
-        int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+        int code = ParameterParser.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 
         TwoFactorAuthService.Status2FA status2FA;
         if (params2FA.isPassphrasePresent()) {

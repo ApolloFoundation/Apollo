@@ -28,7 +28,7 @@ public class DeleteKey extends APIServlet.APIRequestHandler {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         long accountId = ParameterParser.getAccountId(request, true);
         String passphrase = ParameterParser.getPassphrase(request, true);
-        int code = ParameterParser.getInt(request, "code", 0, Integer.MAX_VALUE, false);
+        int code = ParameterParser.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
         KeyStore.Status status = Account.deleteAccount(accountId, passphrase, code);
         JSONObject response = new JSONObject();
         response.put("status", status);

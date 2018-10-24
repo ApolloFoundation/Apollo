@@ -759,7 +759,7 @@ public class NodeClient {
         } else {
             parameters.put("secretPhrase", secretPhrase);
         }
-        parameters.put("code", String.valueOf(code));
+        parameters.put("code2FA", String.valueOf(code));
 
         return  postJson(createURI(url), parameters, "");
     }
@@ -781,7 +781,7 @@ public class NodeClient {
         } else {
             parameters.put("secretPhrase", secretPhrase);
         }
-        parameters.put("code", String.valueOf(code));
+        parameters.put("code2FA", String.valueOf(code));
 
         String json = postJson(createURI(url), parameters, "");
 
@@ -802,7 +802,7 @@ public class NodeClient {
         parameters.put("passphrase", passphrase);
         parameters.put("account", String.valueOf(accountId));
         if (code != 0) {
-            parameters.put("code", String.valueOf(code));
+            parameters.put("code2FA", String.valueOf(code));
         }
 
         String json = postJson(createURI(url), parameters, "");

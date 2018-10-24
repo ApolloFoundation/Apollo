@@ -20,12 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_DISABLED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_INCORRECT_REQUEST;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_NOT_ALLOWED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.LIGHT_CLIENT_DISABLED_API;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.POST_REQUIRED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.REQUIRED_BLOCK_NOT_FOUND;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.REQUIRED_LAST_BLOCK_NOT_FOUND;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -33,10 +35,26 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
@@ -64,7 +82,7 @@ public final class APIServlet extends HttpServlet {
             String accountName2FA = accountName2FA();
             if (accountName2FA != null && !accountName2FA.isEmpty()) {
                 parameters.add(accountName2FA);
-                parameters.add("code");
+                parameters.add("code2FA");
                 parameters.add("passphrase");
             }
             this.parameters = Collections.unmodifiableList(parameters);
