@@ -854,7 +854,7 @@ public final class Account {
 
         if (Account.isEnabled2FA(params2FA.getAccountId())) {
             ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
-            int code = ParameterParser.getInt(req,"code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             TwoFactorAuthService.Status2FA status2FA;
             if (params2FA.isPassphrasePresent()) {
                  status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);

@@ -14,7 +14,7 @@ import org.json.simple.JSONStreamAware;
 
 public class Confirm2FA extends APIServlet.APIRequestHandler {
     private Confirm2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "code", "secretPhrase");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "code2FA", "secretPhrase");
     }
 
     private static class Confirm2FAHolder {
@@ -27,7 +27,7 @@ public class Confirm2FA extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
-        int code = ParameterParser.getInt(request, "code", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+        int code = ParameterParser.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 
         JSONObject response = new JSONObject();
 
