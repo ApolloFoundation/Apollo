@@ -48,6 +48,11 @@ import org.slf4j.Logger;
          }
      }
 
+     private boolean isAvailable() {
+         Path path = keystoreDirPath.resolve(".local");
+         return !Files.exists(path);
+     }
+
      @Override
      public SecretBytesDetails getSecretBytes(String passphrase, long accountId)  {
          Objects.requireNonNull(passphrase);
@@ -108,9 +113,11 @@ import org.slf4j.Logger;
 
      @Override
      public Status saveSecretBytes(String passphrase, byte[] secretBytes) {
+         if (!isAvailable()) {
+             return Status.NOT_AVAILABLE;
+         }
          Objects.requireNonNull(passphrase);
          Objects.requireNonNull(secretBytes);
-
          long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
          Path keyPath = makeTargetPathForNewAccount(accountId);
          if (keyPath == null) {
@@ -124,6 +131,9 @@ import org.slf4j.Logger;
 
      @Override
      public Status deleteSecretBytes(String passphrase, long accountId) {
+         if (!isAvailable()) {
+             return Status.NOT_AVAILABLE;
+         }
          SecretBytesDetails secretBytes = getSecretBytes(passphrase, accountId);
          if (secretBytes.getExtractStatus() != Status.OK) {
              return secretBytes.getExtractStatus();

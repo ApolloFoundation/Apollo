@@ -47,7 +47,7 @@ public class ImportKeyTest extends DeleteGeneratedAccountsTest {
                 .isPresent()
                 .node("errorDescription")
                 .isPresent()
-                .matches(TestUtil.createStringMatcher(KeyStore.Status.DUPLICATE_FOUND));
+                .matches(TestUtil.createStringMatcher(KeyStore.Status.DUPLICATE_FOUND.message));
     }
 
     private byte[] importWithoutPassphrase() throws IOException {

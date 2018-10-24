@@ -27,13 +27,18 @@ public interface KeyStore {
 
 
     enum Status {
-        NOT_FOUND,
-        DELETE_ERROR,
-        DUPLICATE_FOUND,
-        BAD_CREDENTIALS,
-        READ_ERROR,
-        WRITE_ERROR,
-        DECRYPTION_ERROR,
-        OK
+        NOT_FOUND("Bad credentials"),
+        DELETE_ERROR("Internal delete error"),
+        DUPLICATE_FOUND("Already exist"),
+        BAD_CREDENTIALS ("Bad credentials"),
+        READ_ERROR("Internal read error"),
+        WRITE_ERROR("Internal write error"),
+        DECRYPTION_ERROR("Bad credentials"),
+        NOT_AVAILABLE("Something went wrong"),
+        OK("OK");
+        Status(String message) {
+            this.message = message;
+        }
+        public String message;
     }
 }
