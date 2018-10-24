@@ -34,7 +34,6 @@ public class KeyStoreTest {
                     "  \"encryptedSecretBytes\" : \"8qWMzLfNJt4wT0q2n7YuyMouj08hbfzx9z9HuIBZf2tGHqajPXfHpwzV6EwKYTWMDa2j3copDxujx2SLmFXwdA==\",\n" +
                     "  \"accountRS\" : \"APL-299N-Y6F7-TZ8A-GYAB8\",\n" +
                     "  \"account\" : -2079221632084206348,\n" +
-                    "  \"size\" : 32,\n" +
                     "  \"version\" : 0,\n" +
                     "  \"nonce\" : \"PET2LeUQDMfgrCIvM0j0tA==\",\n" +
                     "  \"timestamp\" : 1539036932840\n" +

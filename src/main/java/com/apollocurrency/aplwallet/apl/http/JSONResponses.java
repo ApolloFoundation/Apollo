@@ -25,7 +25,6 @@ import java.util.Arrays;
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
-import com.apollocurrency.aplwallet.apl.KeyStore;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -562,24 +561,8 @@ public final class JSONResponses {
         return accountError(accountId, String.valueOf(status2FA));
     }
 
-    public static JSONStreamAware notImportedSureWallet(long accountId, KeyStore.Status status) {
-        return  sureWalletError(accountId, "imported", String.valueOf(status));
-    }
-
-    public static JSONStreamAware notGeneratedSureWallet(long accountId, KeyStore.Status status) {
-        return  sureWalletError(accountId, "generated", String.valueOf(status));
-    }
-
-    public static JSONStreamAware notFoundSureWallet(long accountId, KeyStore.Status status) {
-        return  sureWalletError(accountId, "found", String.valueOf(status));
-    }
-
-    public static JSONStreamAware notDeletedSureWallet(long accountId, KeyStore.Status status) {
-        return sureWalletError(accountId,  "deleted", String.valueOf(status));
-    }
-
-    public static JSONStreamAware sureWalletError(long accountId, String notPerformedAction, String errorDetails) {
-        return accountError(accountId, String.format("Sure wallet for account was not %s : %s", notPerformedAction, errorDetails));
+    public static JSONStreamAware vaultWalletError(long accountId, String notPerformedAction, String errorDetails) {
+        return accountError(accountId, String.format("Vault wallet for account was not %s : %s", notPerformedAction, errorDetails));
     }
 
     public static JSONStreamAware accountError(long accountId, String errorDetails) {
