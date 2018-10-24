@@ -63,7 +63,7 @@ rem	@echo off
 	echo RunAsDaemon 1 >> %systemdrive%%homepath%\torrc
 	start tor\tor\tor.exe -f %systemdrive%%homepath%\torrc
 
-	"%javaDir%"\bin\java.exe -jar -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop Apollo.jar apl.Apl
+	"%javaDir%"\bin\java.exe -jar -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop Apollo.jar
 
 :endProcess 
 	endlocal
