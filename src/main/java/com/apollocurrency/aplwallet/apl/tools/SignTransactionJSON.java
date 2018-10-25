@@ -20,6 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
@@ -27,10 +36,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 
 public final class SignTransactionJSON {
     public static void main(String[] args) {
@@ -70,34 +75,34 @@ public final class SignTransactionJSON {
     }
 
     public static byte[] readKeySeed() {
-        String keySeedString;
-        byte[] keySeed = null;
+        String secretPhraseString;
+        byte[] secret = null;
         Console console = System.console();
         if (console == null) {
             try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
-                System.out.println("Enter secretPhrase, if you have keySeed press enter:");
-                keySeedString = in.readLine();
-                System.out.println("Enter keySeed in hexadecimal fotmat: ");
-                if (keySeedString.isEmpty()) {
-                    keySeedString = in.readLine();
-                    keySeed = Convert.parseHexString(keySeedString);
+                System.out.println("Enter secretPhrase, if you have secretKey press enter:");
+                secretPhraseString = in.readLine();
+                System.out.println("Enter secret key in hexadecimal format: ");
+                if (secretPhraseString.isEmpty()) {
+                    String s = in.readLine();
+                    secret = Convert.parseHexString(s);
                 } else {
-                    keySeed = Crypto.getKeySeed(keySeedString);
+                    secret = Convert.toBytes(secretPhraseString);
                 }
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            keySeedString = new String(console.readPassword("Secret phrase, skip if you have keySeed : "));
-            if (keySeedString.isEmpty()) {
-                keySeedString = new String(console.readPassword("Enter keySeed in hexadecimal fotmat: "));
-                keySeed = Convert.parseHexString(keySeedString);
+            secretPhraseString = new String(console.readPassword("Secret phrase, skip if you have secretKey : "));
+            if (secretPhraseString.isEmpty()) {
+                String s = new String(console.readPassword("Enter secretKey in hexadecimal format: "));
+                secret = Convert.parseHexString(s);
             } else {
-                keySeed = Crypto.getKeySeed(keySeedString);
+                secret = Convert.toBytes(secretPhraseString);
             }
         }
-        return keySeed;
+        return Crypto.getKeySeed(secret);
     }
 
     private static String signTransaction(JSONObject transactionJson, byte[] keySeed) throws AplException.NotValidException {

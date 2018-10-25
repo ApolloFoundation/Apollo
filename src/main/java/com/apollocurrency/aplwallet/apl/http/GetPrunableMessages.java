@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetPrunableMessages extends APIServlet.APIRequestHandler {
 
@@ -40,13 +40,13 @@ public final class GetPrunableMessages extends APIServlet.APIRequestHandler {
     }
 
     private GetPrunableMessages() {
-        super(new APITag[] {APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp");
+        super(new APITag[] {APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp", "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long accountId = ParameterParser.getAccountId(req, true);
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         final int timestamp = ParameterParser.getTimestamp(req);
@@ -63,7 +63,7 @@ public final class GetPrunableMessages extends APIServlet.APIRequestHandler {
                 if (prunableMessage.getBlockTimestamp() < timestamp) {
                     break;
                 }
-                jsonArray.add(JSONData.prunableMessage(prunableMessage, secretPhrase, null));
+                jsonArray.add(JSONData.prunableMessage(prunableMessage, keySeed, null));
             }
         }
         return response;

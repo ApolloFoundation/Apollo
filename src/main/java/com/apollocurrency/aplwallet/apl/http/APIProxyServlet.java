@@ -20,18 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.peer.Peer;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.api.Response;
-import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.proxy.AsyncMiddleManServlet;
-import org.eclipse.jetty.util.MultiMap;
-import org.eclipse.jetty.util.UrlEncoded;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_NOT_ALLOWED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -44,8 +34,18 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_NOT_ALLOWED;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.peer.Peer;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.proxy.AsyncMiddleManServlet;
+import org.eclipse.jetty.util.MultiMap;
+import org.eclipse.jetty.util.UrlEncoded;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 public final class APIProxyServlet extends AsyncMiddleManServlet {
     private static final Logger LOG = getLogger(APIProxyServlet.class);
@@ -73,7 +73,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
             MultiMap<String> parameters = getRequestParameters(request);
             String requestType = getRequestType(parameters);
             if (APIProxy.isActivated() && isForwardable(requestType)) {
-                if (parameters.containsKey("secretPhrase") || parameters.containsKey("adminPassword") || parameters.containsKey("sharedKey")) {
+                if (parameters.containsKey("secretPhrase") || parameters.containsKey("adminPassword") || parameters.containsKey("sharedKey") || parameters.containsKey("passphrase")) {
                     throw new ParameterException(JSONResponses.PROXY_SECRET_DATA_DETECTED);
                 }
                 if (!initRemoteRequest(request, requestType)) {
@@ -283,7 +283,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                     os.write(b);
                     allInput = ByteBuffer.wrap(os.toByteArray());
                 }
-                int tokenPos = PasswordFinder.process(allInput, new String[] { "secretPhrase=", "adminPassword=", "sharedKey=" });
+                int tokenPos = PasswordFinder.process(allInput, new String[] { "secretPhrase=", "adminPassword=", "sharedKey=", "passphrase=" });
                 if (tokenPos >= 0) {
                     JSONStreamAware error = JSONResponses.PROXY_SECRET_DATA_DETECTED;
                     throw new PasswordDetectedException(error);

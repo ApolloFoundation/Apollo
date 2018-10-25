@@ -20,7 +20,45 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.net.ssl.HttpsURLConnection;
+import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.TaggedData;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -52,28 +90,6 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
-
-import javax.net.ssl.HttpsURLConnection;
-import java.awt.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -555,7 +571,7 @@ public class DesktopApplication extends Application {
                         if (secretPhrase != null) {
                             data = prunableMessage.decrypt(secretPhrase);
                         } else if (sharedKey.length > 0) {
-                            data = prunableMessage.decrypt(sharedKey);
+                            data = prunableMessage.decryptUsingSharedKey(sharedKey);
                         } else {
                             data = prunableMessage.getMessage();
                         }
