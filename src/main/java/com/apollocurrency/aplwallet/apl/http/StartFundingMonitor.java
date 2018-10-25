@@ -74,7 +74,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
 
     private StartFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
-                "interval", "secretPhrase");
+                "interval", "secretPhrase", "account", "passphrase");
     }
 
     /**
@@ -86,6 +86,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+        long accountId = ParameterParser.getAccountId(req, false);
         HoldingType holdingType = ParameterParser.getHoldingType(req);
         long holdingId = ParameterParser.getHoldingId(req, holdingType);
         String property = ParameterParser.getAccountProperty(req, true);
@@ -98,7 +99,7 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
             throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD));
         }
         int interval = ParameterParser.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
         switch (holdingType) {
             case ASSET:
                 Asset asset = Asset.getAsset(holdingId);
@@ -113,11 +114,11 @@ public final class StartFundingMonitor extends APIServlet.APIRequestHandler {
                 }
                 break;
         }
-        Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
+        Account account = Account.getAccount(Crypto.getPublicKey(keySeed));
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
-        if (FundingMonitor.startMonitor(holdingType, holdingId, property, amount, threshold, interval, secretPhrase)) {
+        if (FundingMonitor.startMonitor(holdingType, holdingId, property, amount, threshold, interval, keySeed)) {
             JSONObject response = new JSONObject();
             response.put("started", true);
             return response;

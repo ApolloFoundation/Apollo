@@ -60,16 +60,8 @@ public final class SignTransactionJSON {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
                 byte[] publicKeyHash = Crypto.sha256().digest(Convert.parseHexString((String) json.get("senderPublicKey")));
                 String senderRS = Convert.rsAccount(Convert.fullHashToId(publicKeyHash));
-                String secretPhrase;
-                Console console = System.console();
-                if (console == null) {
-                    try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in))) {
-                        secretPhrase = inputReader.readLine();
-                    }
-                } else {
-                    secretPhrase = new String(console.readPassword("Secret phrase for account " + senderRS + ": "));
-                }
-                Files.write(signed.toPath(), signTransaction(json, secretPhrase).getBytes(), StandardOpenOption.CREATE);
+                byte[] keySeed = readKeySeed();
+                Files.write(signed.toPath(), signTransaction(json, keySeed).getBytes(), StandardOpenOption.CREATE);
                 System.out.println("Signed transaction JSON saved as: " + signed.getAbsolutePath());
             }
         } catch (Exception e) {
@@ -77,9 +69,40 @@ public final class SignTransactionJSON {
         }
     }
 
-    private static String signTransaction(JSONObject transactionJson, String secretPhrase) throws AplException.NotValidException {
+    public static byte[] readKeySeed() {
+        String keySeedString;
+        byte[] keySeed = null;
+        Console console = System.console();
+        if (console == null) {
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
+                System.out.println("Enter secretPhrase, if you have keySeed press enter:");
+                keySeedString = in.readLine();
+                System.out.println("Enter keySeed in hexadecimal fotmat: ");
+                if (keySeedString.isEmpty()) {
+                    keySeedString = in.readLine();
+                    keySeed = Convert.parseHexString(keySeedString);
+                } else {
+                    keySeed = Crypto.getKeySeed(keySeedString);
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            keySeedString = new String(console.readPassword("Secret phrase, skip if you have keySeed : "));
+            if (keySeedString.isEmpty()) {
+                keySeedString = new String(console.readPassword("Enter keySeed in hexadecimal fotmat: "));
+                keySeed = Convert.parseHexString(keySeedString);
+            } else {
+                keySeed = Crypto.getKeySeed(keySeedString);
+            }
+        }
+        return keySeed;
+    }
+
+    private static String signTransaction(JSONObject transactionJson, byte[] keySeed) throws AplException.NotValidException {
         Transaction.Builder builder = Apl.newTransactionBuilder(transactionJson);
-        Transaction transaction = builder.build(secretPhrase);
+        Transaction transaction = builder.build(keySeed);
         return transaction.getJSONObject().toJSONString();
     }
 

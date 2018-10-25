@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -131,18 +130,20 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
-        boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && secretPhrase != null;
+        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
+        boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && (secretPhrase != null || passphrase != null);
         Appendix.EncryptedMessage encryptedMessage = null;
         Appendix.PrunableEncryptedMessage prunableEncryptedMessage = null;
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
             Account recipient = Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
-                prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, true);
+                prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient,
+                        senderAccount.getId(),true);
             } else {
-                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, false);
+                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, senderAccount.getId(), false);
             }
         }
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req);
+        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, senderAccount.getId());
         Appendix.Message message = null;
         Appendix.PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
@@ -162,7 +163,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             phasing = parsePhasing(req);
         }
 
-        if (secretPhrase == null && publicKeyValue == null) {
+        if (secretPhrase == null && publicKeyValue == null && passphrase == null) {
             return MISSING_SECRET_PHRASE;
         } else if (deadlineValue == null) {
             return MISSING_DEADLINE;
@@ -191,8 +192,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
-        byte[] publicKey = secretPhrase != null ? Crypto.getPublicKey(secretPhrase) : Convert.parseHexString(publicKeyValue);
-
+        byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
         try {
             Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountATM, feeATM,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
@@ -210,7 +210,8 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 builder.ecBlockId(ecBlockId);
                 builder.ecBlockHeight(ecBlockHeight);
             }
-            Transaction transaction = builder.build(secretPhrase);
+            byte[] keySeed = ParameterParser.getKeySeed(req, senderAccount.getId(), false);
+            Transaction transaction = builder.build(keySeed);
             try {
                 if (Math.addExact(amountATM, transaction.getFeeATM()) > senderAccount.getUnconfirmedBalanceATM()) {
                     return NOT_ENOUGH_FUNDS;
@@ -223,7 +224,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             try {
                 response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
             } catch (AplException.NotYetEncryptedException ignore) {}
-            if (secretPhrase != null) {
+            if (keySeed != null) {
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transactionJSON.get("fullHash"));
                 response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
@@ -250,10 +251,14 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return response;
 
     }
-
     @Override
     protected final boolean requirePost() {
         return true;
+    }
+
+    @Override
+    protected String accountName2FA() {
+        return "sender";
     }
 
     @Override

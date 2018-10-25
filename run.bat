@@ -57,7 +57,7 @@
 	)
 
 :startJava	
-	"%javaDir%"\bin\java.exe -jar Apollo.jar  apl.Apl
+	"%javaDir%"\bin\java.exe -jar Apollo.jar 
 
 :endProcess 
 	endlocal

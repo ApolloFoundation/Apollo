@@ -20,8 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -35,9 +40,9 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.stream.Collectors;
 
 public final class Genesis {
     private static final Logger LOG = getLogger(Genesis.class);
@@ -45,6 +50,10 @@ public final class Genesis {
     private static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
     public static final long EPOCH_BEGINNING;
+    private static final String GENESIS_ACCOUNTS_JSON_PATH = "data/genesisAccounts";
+    private static final String GENESIS_ACCOUNTS_JSON_PATH_TESTNET_SUFFIX = "-testnet.json";
+    private static final String GENESIS_ACCOUNTS_JSON_PATH_MAINNET_SUFFIX = ".json";
+
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
@@ -62,7 +71,7 @@ public final class Genesis {
     private static byte[] loadGenesisAccountsJSON() {
         MessageDigest digest = Crypto.sha256();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
-                ClassLoader.getSystemResourceAsStream("data/genesisAccounts" + (Constants.isTestnet ? "-testnet.json" : ".json")), digest))) {
+                ClassLoader.getSystemResourceAsStream(GENESIS_ACCOUNTS_JSON_PATH + (Constants.isTestnet ? GENESIS_ACCOUNTS_JSON_PATH_TESTNET_SUFFIX : GENESIS_ACCOUNTS_JSON_PATH_MAINNET_SUFFIX)), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
         } catch (IOException|ParseException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
@@ -117,6 +126,24 @@ public final class Genesis {
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
     }
+
+        public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
+            try (InputStreamReader is = new InputStreamReader(
+                    Genesis.class.getClassLoader().getResourceAsStream(GENESIS_ACCOUNTS_JSON_PATH + (Constants.isTestnet ? GENESIS_ACCOUNTS_JSON_PATH_TESTNET_SUFFIX : GENESIS_ACCOUNTS_JSON_PATH_MAINNET_SUFFIX)))) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode root = objectMapper.readTree(is);
+                JsonNode balancesArray = root.get("balances");
+                Map<String, Long> map = objectMapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});
+
+                return map.entrySet()
+                        .stream()
+                        .sorted((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()))
+                        .skip(1)
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load genesis accounts", e);
+            }
+        }
 
     private Genesis() {} // never
 

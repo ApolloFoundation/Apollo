@@ -20,27 +20,62 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.db.*;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
-
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
-        private static final Logger LOG = getLogger(Account.class);
+    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
+    private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
+
+
+    private static final Logger LOG = getLogger(Account.class);
+    private static final KeyStore keystore =
+            new SimpleKeyStoreImpl(Apl.getKeystoreDir(
+                    Constants.isTestnet ?
+                            Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
+                            Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
+    private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
+            Genesis.loadGenesisAccounts();
 
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
@@ -263,6 +298,15 @@ public final class Account {
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
+    private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
+            Apl.getBooleanProperty("apl.store2FAInFileSystem") ?
+                    new TwoFactorAuthFileSystemRepository(Apl.get2FADir(
+                            Constants.isTestnet ?
+                                    Apl.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
+                                    Apl.getStringProperty("apl.dir2FA", "2fa")
+                    )) :
+                    new TwoFactorAuthRepositoryImpl(Db.db));
+
     static {
 
         Apl.getBlockchainProcessor().addListener(block -> {
@@ -378,6 +422,25 @@ public final class Account {
 
     public static boolean addCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
         return currencyListeners.addListener(listener, eventType);
+    }
+
+    public static List<Map.Entry<String, Long>> getGenesisBalances(int firstIndex, int lastIndex) {
+        firstIndex = Math.max(firstIndex, 0);
+        lastIndex = Math.max(lastIndex, 0);
+        if (lastIndex < firstIndex) {
+            throw new IllegalArgumentException("firstIndex should be less or equal lastIndex ");
+        }
+        if (firstIndex >= initialGenesisAccountsBalances.size() || lastIndex > initialGenesisAccountsBalances.size()) {
+            throw new IllegalArgumentException("firstIndex and lastIndex should be less than " + initialGenesisAccountsBalances.size());
+        }
+        if (lastIndex - firstIndex > 99) {
+            lastIndex = firstIndex + 99;
+        }
+        return initialGenesisAccountsBalances.subList(firstIndex, lastIndex + 1);
+    }
+
+    public static int getGenesisBalancesNumber() {
+        return initialGenesisAccountsBalances.size();
     }
 
     public static boolean removeCurrencyListener(Listener<AccountCurrency> listener, Event eventType) {
@@ -759,6 +822,104 @@ public final class Account {
         return accountAsset == null ? 0 : accountAsset.quantityATU;
     }
 
+    public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) throws ParameterException {
+            findSecretBytes(accountId, passphrase, true);
+            return service2FA.enable(accountId);
+    }
+    public static TwoFactorAuthDetails enable2FA(String secretPhrase) throws ParameterException {
+        return service2FA.enable(Convert.getId(Crypto.getPublicKey(secretPhrase)));
+    }
+
+
+    public static TwoFactorAuthService.Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
+        findSecretBytes(accountId, passphrase, true);
+        TwoFactorAuthService.Status2FA status2FA = service2FA.disable(accountId, code);
+        validate2FAStatus(status2FA, accountId);
+        return status2FA;
+    }
+
+    public static TwoFactorAuthService.Status2FA disable2FA(String secretPhrase, int code) throws ParameterException {
+        long id = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        TwoFactorAuthService.Status2FA status2FA = service2FA.disable(id, code);
+        validate2FAStatus(status2FA, id);
+        return status2FA;
+    }
+
+    public static boolean isEnabled2FA(long accountId) {
+        return service2FA.isEnabled(accountId);
+    }
+
+    public static void verify2FA(HttpServletRequest req, String accountName) throws ParameterException {
+        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
+
+        if (Account.isEnabled2FA(params2FA.getAccountId())) {
+            ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
+            int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            TwoFactorAuthService.Status2FA status2FA;
+            if (params2FA.isPassphrasePresent()) {
+                 status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
+            } else {
+                status2FA = Account.auth2FA(params2FA.getSecretPhrase(), code);
+            }
+            validate2FAStatus(status2FA);
+        }
+    }
+
+    public static SecretBytesDetails findSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
+        SecretBytesDetails secretBytes = keystore.getSecretBytes(passphrase, accountId);
+
+        if (isMandatory) {
+            validateKeyStoreStatus(accountId, secretBytes.getExtractStatus(), "found");
+        }
+
+        return secretBytes;
+    }
+
+    public static KeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
+        if (isEnabled2FA(accountId)) {
+            TwoFactorAuthService.Status2FA status2FA = disable2FA(accountId, passphrase, code);
+            validate2FAStatus(status2FA, accountId);
+        }
+        KeyStore.Status status = keystore.deleteSecretBytes(passphrase, accountId);
+        validateKeyStoreStatus(accountId, status, "deleted");
+        return status;
+    }
+
+    public static TwoFactorAuthService.Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
+        findSecretBytes(accountId, passphrase, true);
+        TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
+        validate2FAStatus(status2FA, accountId);
+        return status2FA;
+    }
+    public static TwoFactorAuthService.Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
+        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
+        validate2FAStatus(status2FA, accountId);
+        return status2FA;
+    }
+
+    private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA, long account) throws ParameterException {
+        if (status2FA != TwoFactorAuthService.Status2FA.OK) {
+            LOG.debug("2fa error: {}-{}", Convert.rsAccount(account), status2FA);
+            throw new ParameterException("2fa error", null, JSONResponses.error2FA(status2FA, account));
+        }
+    }
+    private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA) throws ParameterException {
+        validate2FAStatus(status2FA, 0);
+    }
+
+    public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
+        SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, true);
+        return service2FA.tryAuth(accountId, code);
+    }
+
+    public static TwoFactorAuthService.Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
+        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        TwoFactorAuthService.Status2FA status2FA = service2FA.tryAuth(accountId, code);
+        validate2FAStatus(status2FA, accountId);
+        return status2FA;
+    }
+
     public static long getAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.quantityATU;
@@ -790,15 +951,15 @@ public final class Account {
 
     static void init() {}
 
-    public static EncryptedData encryptTo(byte[] publicKey, byte[] data, String senderSecretPhrase, boolean compress) {
+    public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {
             data = Convert.compress(data);
         }
-        return EncryptedData.encrypt(data, senderSecretPhrase, publicKey);
+        return EncryptedData.encrypt(data, keySeed, publicKey);
     }
 
-    public static byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, String recipientSecretPhrase, boolean uncompress) {
-        byte[] decrypted = encryptedData.decrypt(recipientSecretPhrase, publicKey);
+    public static byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
+        byte[] decrypted = encryptedData.decrypt(recipientKeySeed, publicKey);
         if (uncompress && decrypted.length > 0) {
             decrypted = Convert.uncompress(decrypted);
         }
@@ -884,20 +1045,20 @@ public final class Account {
         return accountLeaseTable.get(accountDbKeyFactory.newKey(this));
     }
 
-    public EncryptedData encryptTo(byte[] data, String senderSecretPhrase, boolean compress) {
+    public EncryptedData encryptTo(byte[] data, byte[] keySeed, boolean compress) {
         byte[] key = getPublicKey(this.id);
         if (key == null) {
             throw new IllegalArgumentException("Recipient account doesn't have a public key set");
         }
-        return Account.encryptTo(key, data, senderSecretPhrase, compress);
+        return Account.encryptTo(key, data, keySeed, compress);
     }
 
-    public byte[] decryptFrom(EncryptedData encryptedData, String recipientSecretPhrase, boolean uncompress) {
+    public byte[] decryptFrom(EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
         byte[] key = getPublicKey(this.id);
         if (key == null) {
             throw new IllegalArgumentException("Sender account doesn't have a public key set");
         }
-        return Account.decryptFrom(key, encryptedData, recipientSecretPhrase, uncompress);
+        return Account.decryptFrom(key, encryptedData, recipientKeySeed, uncompress);
     }
 
     public long getBalanceATM() {
@@ -1935,5 +2096,33 @@ public final class Account {
             }
         }
 
+    }
+
+    public static GeneratedAccount generateAccount(String passphrase) throws ParameterException {
+        GeneratedAccount account = accountGenerator.generate(passphrase);
+        KeyStore.Status status = keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
+        validateKeyStoreStatus(account.getId(), status, "generated");
+        return account;
+    }
+
+    private static void validateKeyStoreStatus(long accountId, KeyStore.Status status, String notPerformedAction) throws ParameterException {
+        if (status != KeyStore.Status.OK) {
+            LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert.rsAccount(accountId), status);
+            throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
+                    status.message));
+        }
+    }
+
+    public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {
+        return findSecretBytes(accountId, passphrase, true).getSecretBytes();
+    }
+    public static Pair<KeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
+        if (passphrase == null) {
+            passphrase = passphraseGenerator.generate();
+        }
+        KeyStore.Status status = keystore.saveSecretBytes(passphrase, secretBytes);
+        long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
+        validateKeyStoreStatus(accountId, status, "imported");
+        return new ImmutablePair<>(status, passphrase);
     }
 }

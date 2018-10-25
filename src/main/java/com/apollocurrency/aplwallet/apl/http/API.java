@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.http;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -83,6 +84,7 @@ public final class API {
     private static final String forwardedForHeader = Apl.getStringProperty("apl.forwardedForHeader");
 
     private static final Server apiServer;
+
     private static URI welcomePageUri;
     private static URI serverRootUri;
     private static Thread serverKeysGenerator = new Thread(() -> {
@@ -160,6 +162,7 @@ public final class API {
             //
             // Create the HTTP connector
             //
+
             if (!enableSSL || port != sslPort) {
                 HttpConfiguration configuration = new HttpConfiguration();
                 configuration.setSendDateHeader(false);
@@ -262,14 +265,17 @@ public final class API {
                 gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(com.apollocurrency.aplwallet.apl.peer.Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.setMinGzipSize(Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.addExcludedPaths("/blocks");
             apiHandler.setGzipHandler(gzipHandler);
 
             apiHandler.addServlet(APITestServlet.class, "/test");
             apiHandler.addServlet(APITestServlet.class, "/test-proxy");
 
-//            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
+            apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
+//            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
+            apiHandler.addEventListener(new ApiContextListener());
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
                 filterHolder.setInitParameter("allowedHeaders", "*");
@@ -281,7 +287,7 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
-
+//
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
 

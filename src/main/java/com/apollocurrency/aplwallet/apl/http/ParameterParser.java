@@ -20,7 +20,58 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_DESCRIPTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_FILENAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_PROPERTY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_RECIPIENT_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_TRANSACTION_BYTES_OR_JSON;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ALIAS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ASSET;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_CURRENCY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_GOODS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_OFFER;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_SHUFFLING;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.either;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.missing;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Asset;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Currency;
+import com.apollocurrency.aplwallet.apl.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.Poll;
+import com.apollocurrency.aplwallet.apl.SecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.Shuffling;
+import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -40,9 +91,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
@@ -358,7 +406,7 @@ public final class ParameterParser {
         return new EncryptedData(data, nonce);
     }
 
-    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req) throws ParameterException {
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -373,10 +421,10 @@ public final class ParameterParser {
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
             }
-            String secretPhrase = getSecretPhrase(req, false);
-            if (secretPhrase != null) {
-                byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, secretPhrase, compress);
+            byte[] keySeed = getKeySeed(req, senderId, false);
+            if (keySeed != null) {
+                byte[] publicKey = Crypto.getPublicKey(keySeed);
+                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -384,6 +432,28 @@ public final class ParameterParser {
         } else {
             return new Appendix.UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
         }
+    }
+
+    public static byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
+
+        byte[] secretBytes = getSecretBytes(req, senderId, isMandatory);
+        return secretBytes == null ? null : Crypto.getKeySeed(secretBytes);
+    }
+    public static byte[] getSecretBytes(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
+        String secretPhrase = getSecretPhrase(req, false);
+        if (secretPhrase != null) {
+            return Convert.toBytes(secretPhrase);
+        }
+        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
+        if (passphrase != null) {
+            SecretBytesDetails secretBytes = Account.findSecretBytes(senderId, passphrase, isMandatory);
+            return secretBytes == null ? null : secretBytes.getSecretBytes();
+        }
+        if (isMandatory) {
+            throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
+                    "passphrase"));
+        }
+        return null;
     }
 
     public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
@@ -407,36 +477,75 @@ public final class ParameterParser {
     }
 
     public static byte[] getPublicKey(HttpServletRequest req, String prefix) throws ParameterException {
+        return getPublicKey(req, prefix, 0);
+    }
+
+    public static byte[] getPublicKey(HttpServletRequest req, long accountId) throws ParameterException {
+        return getPublicKey(req, null, accountId);
+    }
+
+    public static byte[] getPublicKey(HttpServletRequest request, String prefix, long accountId) throws ParameterException {
+        return getPublicKey(request, prefix, accountId, true);
+    }
+    public static byte[] getPublicKey(HttpServletRequest req, String prefix, long accountId, boolean isMandatory) throws ParameterException {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
+        String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
         String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParam));
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
-                    throw new ParameterException(missing(secretPhraseParam, publicKeyParam));
+                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, passphraseParam,false));
+                    if (accountId == 0 || passphrase == null) {
+                        if (isMandatory) {
+                            throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
+                        }
+                    } else {
+                        SecretBytesDetails secretBytesDetails = Account.findSecretBytes(accountId, passphrase, isMandatory);
+                        if (secretBytesDetails != null && secretBytesDetails.getSecretBytes() != null) {
+                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytesDetails.getSecretBytes()));
+                        }
+                    }
+                } else {
+
+                    if (!Crypto.isCanonicalPublicKey(publicKey)) {
+                        if (isMandatory) {
+                            throw new ParameterException(incorrect(publicKeyParam));
+                        }
+                    } else {
+                        return publicKey;
+                    }
                 }
-                if (!Crypto.isCanonicalPublicKey(publicKey)) {
+            } catch (RuntimeException e) {
+                if (isMandatory) {
                     throw new ParameterException(incorrect(publicKeyParam));
                 }
-                return publicKey;
-            } catch (RuntimeException e) {
-                throw new ParameterException(incorrect(publicKeyParam));
             }
         } else {
             return Crypto.getPublicKey(secretPhrase);
         }
+        return null;
     }
 
-    public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
-        byte[] publicKey = getPublicKey(req);
+    public static byte[] getPublicKey(HttpServletRequest request, boolean isMandatory) throws ParameterException {
+        return getPublicKey(request, null, 0, isMandatory);
+    }
+
+
+    public static Account getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
+        String accountParam = accountName == null ? "sender" : accountName;
+        long accountId = ParameterParser.getAccountId(req, accountParam, false);
+        byte[] publicKey = getPublicKey(req, accountId);
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
         return account;
     }
-
+    public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
+        return getSenderAccount(req, null);
+    }
     public static Account getAccount(HttpServletRequest req) throws ParameterException {
         return getAccount(req, true);
     }
@@ -451,6 +560,33 @@ public final class ParameterParser {
             throw new ParameterException(JSONResponses.unknownAccount(accountId));
         }
         return account;
+    }
+
+    public static String getStringParameter(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+        String parameter = Convert.emptyToNull(req.getParameter(name));
+        if (parameter == null && isMandatory) {
+            throw new ParameterException(JSONResponses.missing(name));
+        }
+        return parameter;
+    }
+
+    public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getStringParameter(req, "passphrase", isMandatory);
+    }
+    public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
+        return getStringParameter(req, parameterName, isMandatory);
+    }
+
+    public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
+        String parameter = Convert.emptyToNull(getStringParameter(req, parameterName, isMandatory));
+        if (parameter == null) {
+            return null;
+        }
+        byte[] keySeed = Convert.parseHexString(parameter);
+        if (keySeed.length != 32) {
+            throw new ParameterException(incorrect(parameterName, "32 bytes in hex format required"));
+        }
+        return keySeed;
     }
 
     public static List<Account> getAccounts(HttpServletRequest req) throws ParameterException {
@@ -639,7 +775,7 @@ public final class ParameterParser {
         }
     }
 
-    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, boolean prunable) throws ParameterException {
+    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, long senderId, boolean prunable) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
         byte[] plainMessageBytes = null;
@@ -685,9 +821,9 @@ public final class ParameterParser {
             if (recipientPublicKey == null) {
                 throw new ParameterException(MISSING_RECIPIENT_PUBLIC_KEY);
             }
-            String secretPhrase = getSecretPhrase(req, false);
-            if (secretPhrase != null) {
-                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, secretPhrase, compress);
+            byte[] keySeed = getKeySeed(req, senderId, false);
+            if (keySeed != null) {
+                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -789,22 +925,47 @@ public final class ParameterParser {
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
         byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        boolean encrypt;
-        //prefer public key
-        if (secretPhrase != null && publicKey == null) {
-            publicKey = Crypto.getPublicKey(secretPhrase);
-            encrypt = false;
-        } else {
-            encrypt = true;
-        }
-        if (publicKey == null) {
+        long account = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, account, false);
+        if (keySeed == null && publicKey == null) {
             return null;
+        }
+        boolean encrypt = publicKey != null;
+        // if public key specified in request -> encrypt private data
+        // if keySeed is not null -> do not encrypt private data
+        if (!encrypt) {
+            publicKey = Crypto.getPublicKey(keySeed);
         }
         long accountId = Account.getId(publicKey);
         byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
+
+    public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req, String accountName, boolean isMandatory) throws ParameterException {
+        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
+        String secretPhrase = Convert.emptyToNull(ParameterParser.getSecretPhrase(req, false));
+
+        if (isMandatory && secretPhrase == null && passphrase == null) {
+            throw new ParameterException(JSONResponses.missing("secretPhrase", "passphrase"));
+        }
+        if (secretPhrase != null && passphrase != null) {
+            throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
+        }
+        long accountId = 0;
+        if (passphrase != null) {
+            accountId = ParameterParser.getAccountId(req, accountName, true);
+        } else if (secretPhrase != null){
+            accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        }
+        return new TwoFactorAuthParameters(accountId, passphrase, secretPhrase);
+
+    }
+
+    public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req) throws ParameterException {
+        return parse2FARequest(req, "account", true);
+
+    }
+
     private ParameterParser() {} // never
 
     public static class PrivateTransactionsAPIData {
@@ -859,6 +1020,44 @@ public final class ParameterParser {
             return publicKey != null;
         }
     }
+
+    public static class TwoFactorAuthParameters {
+        long accountId;
+        String passphrase;
+        String secretPhrase;
+
+        public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
+            if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
+                throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
+            }
+        }
+        public long getAccountId() {
+            return accountId;
+        }
+
+        public String getPassphrase() {
+            return passphrase;
+        }
+
+        public String getSecretPhrase() {
+            return secretPhrase;
+        }
+
+        public boolean isSecretPhrasePresent() {
+            return secretPhrase != null;
+        }
+
+        public boolean isPassphrasePresent() {
+            return passphrase != null;
+        }
+
+        public TwoFactorAuthParameters(long accountId, String passphrase, String secretPhrase) {
+            this.accountId = accountId;
+            this.passphrase = passphrase;
+            this.secretPhrase = secretPhrase;
+        }
+    }
+
 
     public static class FileData {
         private final Part part;

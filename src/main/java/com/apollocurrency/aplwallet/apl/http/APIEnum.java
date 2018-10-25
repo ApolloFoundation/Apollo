@@ -299,6 +299,14 @@ public enum APIEnum {
     GET_CHAT_HISTORY("getChatHistory", GetChatHistory.getInstance()),
     GET_TOTAL_SUPPLY("getTotalSupply", GetTotalSupply.getInstance()),
     GET_ACCOUNTS("getAccounts", GetAccounts.getInstance()),
+    GENERATE_ACCOUNT("generateAccount", GenerateAccount.getInstance()),
+    EXPORT_KEY("exportKey", ExportKey.getInstance()),
+    IMPORT_KEY("importKey", ImportKey.getInstance()),
+    ENABLE_2FA("enable2FA", Enable2FA.getInstance()),
+    DISABLE_2FA("disable2FA", Disable2FA.getInstance()),
+    CONFIRM_2FA("confirm2FA", Confirm2FA.getInstance()),
+    GET_GENESIS_BALANCES("getGenesisBalances", GetGenesisBalances.getInstance()),
+    DELETE_KEY("deleteKey", DeleteKey.getInstance()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

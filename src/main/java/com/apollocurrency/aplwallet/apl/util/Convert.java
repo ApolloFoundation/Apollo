@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Genesis;
-import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 import java.io.ByteArrayInputStream;
@@ -31,13 +31,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -70,6 +64,11 @@ public final class Convert {
             bytes[i] = (byte)((char1 << 4) + char2);
         }
         return bytes;
+    }
+
+    public static long getId(byte[] publicKey) {
+        byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
+        return Convert.fullHashToId(publicKeyHash);
     }
 
     public static String toHexString(byte[] bytes) {
@@ -118,8 +117,32 @@ public final class Convert {
         }
     }
 
+    public static byte[] longToBytes(long l) {
+        int longSize = Long.BYTES;
+        byte[] result = new byte[longSize];
+        for (int i = longSize - 1; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= longSize;
+        }
+        return result;
+    }
+
+    public static long bytesToLong(byte[] b) {
+        int longSize = Long.BYTES;
+        long result = 0;
+        for (int i = 0; i < longSize; i++) {
+            result <<= longSize;
+            result |= (b[i] & 0xFF);
+        }
+        return result;
+    }
+
     public static String rsAccount(long accountId) {
         return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
+    }
+    //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
+    public static String defaultRsAccount(long accountId) {
+        return  "APL-" + Crypto.rsEncode(accountId);
     }
 
     public static long fullHashToId(byte[] hash) {

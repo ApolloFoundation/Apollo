@@ -949,10 +949,10 @@ var NRS = (function(NRS, $, undefined) {
         if (t.type === 8 && t.subtype === 0) {
             transactionType = 'Critical Update';
         }
-        if (t.type === 8 && t.subtype === 0) {
+        if (t.type === 8 && t.subtype === 1) {
             transactionType = 'Important Update';
         }
-        if (t.type === 8 && t.subtype === 0) {
+        if (t.type === 8 && t.subtype === 2) {
             transactionType = 'Minor Update';
         }
         if (t.type === 0 && t.subtype === 1) {
