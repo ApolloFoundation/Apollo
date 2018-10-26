@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -252,7 +253,7 @@ public final class Generator implements Comparable<Generator> {
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         return hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
-                || (Constants.isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
+//                || (Constants.isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
                 || Constants.isOffline);
     }
 
@@ -363,10 +364,21 @@ public final class Generator implements Comparable<Generator> {
         int start = Apl.getEpochTime();
         while (true) {
             try {
+                int actualBlockTime = timestamp - Apl.getBlockchain().getLastBlockTimestamp();
+                SortedSet<UnconfirmedTransaction> unconfirmedTransactions =
+                        BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, timestamp);
+                boolean noUnconfirmedTransaction =
+                        unconfirmedTransactions.size() == 0;
+                LOG.debug("unconfirmed: {}", unconfirmedTransactions.toString());
+                LOG.debug("Actual blockTime {} - unc {}", actualBlockTime, noUnconfirmedTransaction);
+                if (noUnconfirmedTransaction && actualBlockTime < 60) {
+                    return true;
+                }
                 BlockchainProcessorImpl.getInstance().generateBlock(secretPhrase, timestamp);
                 setDelay(Constants.FORGING_DELAY);
                 return true;
-            } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
+            }
+            catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                 // the bad transaction has been expunged, try again
                 if (Apl.getEpochTime() - start > 10) { // give up after trying for 10 s
                     throw e;

@@ -1390,6 +1390,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getPayloadLength() > Constants.getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
+        int actualBlockTime = block.getTimestamp() - previousLastBlock.getTimestamp();
+//        if (block.getTransactions().size() == 0 && actualBlockTime < 60) {
+//            throw new BlockNotAcceptedException("Invalid empty block. Time since previous block should be greater than " + 60 + ", but got " + actualBlockTime, block);
+//        }
     }
 
     private void validateTransactions(BlockImpl block, BlockImpl previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
@@ -1716,8 +1720,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingInt(UnconfirmedTransaction::getHeight)
             .thenComparingLong(UnconfirmedTransaction::getId);
 
-    void generateBlock(String secretPhrase, int blockTimestamp) throws BlockNotAcceptedException {
-
+    public SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(blockchain.getHeight() + 1)) {
             for (TransactionImpl phasedTransaction : phasedTransactions) {
@@ -1728,10 +1731,17 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
         }
-
-        BlockImpl previousBlock = blockchain.getLastBlock();
+//        validate and insert in unconfirmed_transaction db table all waiting transaction
         TransactionProcessorImpl.getInstance().processWaitingTransactions();
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp);
+        return sortedTransactions;
+    }
+
+
+    void generateBlock(String secretPhrase, int blockTimestamp) throws BlockNotAcceptedException {
+
+        BlockImpl previousBlock = blockchain.getLastBlock();
+        SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp);
         List<TransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;
@@ -1974,18 +1984,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    public boolean validateUpdateTransaction(Transaction transaction) throws InvalidTransactionException {
-        if (!TransactionType.Update.isUpdate(transaction.getType())) {
-            throw new InvalidTransactionException("Not an update transaction", (BlockImpl) transaction.getBlock());
-        }
-        if (transaction.getRecipientId() != 0) {
-            throw new InvalidTransactionException("Update transaction should has no recipient", (BlockImpl) transaction.getBlock());
-        }
-        if (transaction.getAmountATM() != 0) {
-            throw new InvalidTransactionException("Update transaction should has no amount");
-        }
-        return true;
-    }
 
     public void suspendBlockchainDownloading() {
         getMoreBlocks = false;

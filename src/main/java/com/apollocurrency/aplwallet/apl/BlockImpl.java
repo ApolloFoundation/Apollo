@@ -438,6 +438,11 @@ final class BlockImpl implements Block {
     private void calculateBaseTarget(BlockImpl previousBlock) {
         long prevBaseTarget = previousBlock.baseTarget;
         int blockchainHeight = previousBlock.height;
+        int blockTimeAcc = this.getTimestamp() - previousBlock.getTimestamp();
+        LOG.debug("CalculateBaseTarget blocktime {}", blockTimeAcc);
+        if (blockTimeAcc >= 60 && getTransactions().size() == 0) {
+            this.baseTarget = (long) (prevBaseTarget * 1.5);
+        }
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);
             int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
