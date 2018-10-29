@@ -1,8 +1,7 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright © 2018 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.dbmodel;
 
 import com.apollocurrency.aplwallet.apl.Db;
@@ -12,17 +11,21 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
 import static org.slf4j.LoggerFactory.getLogger;
+
+//TODO: Refactor as ORM
 
 public class Option {
     private static final Logger LOG = getLogger(Option.class);
 
     public static String get(String optionName) 
     {
-        try (Connection con = Db.db.getConnection();
-                Statement stmt = con.createStatement()) {
-            String query = String.format("SELECT * FROM option WHERE name = '%s'", optionName);
-            try (ResultSet rs = stmt.executeQuery(query)) {
+        try (Connection con = Db.db.getConnection()) 
+        {
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
+            stmt.setString(1, optionName);
+            try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getString("value");
                 }
@@ -39,10 +42,12 @@ public class Option {
     {
         if (get(optionName) == null)
         {
-            try (Connection con = Db.db.getConnection();
-                    Statement stmt = con.createStatement()) {
-                String query = String.format("INSERT INTO option (name, value) VALUES ('%s', '%s')", optionName, optionValue);
-                stmt.execute(query);
+            try (Connection con = Db.db.getConnection())
+            {
+                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
+                stmt.setString(1, optionName);
+                stmt.setString(2, optionValue);
+                stmt.execute();
             }
             catch (SQLException e)
             {
@@ -51,10 +56,12 @@ public class Option {
         }
         else
         {
-            try (Connection con = Db.db.getConnection();
-                    Statement stmt = con.createStatement()) {
-                String query = String.format("UPDATE option set value = '%s' WHERE name = '%s'", optionValue, optionName);
-                stmt.execute(query);
+            try (Connection con = Db.db.getConnection())
+            {
+                PreparedStatement stmt = con.prepareStatement("UPDATE option set value = ? WHERE name = ?");
+                stmt.setString(1, optionValue);
+                stmt.setString(2, optionName);
+                stmt.execute();
             }
             catch (SQLException e)
             {
@@ -72,10 +79,9 @@ public class Option {
         }
         else
         {
-            try (Connection con = Db.db.getConnection();
-                    Statement stmt = con.createStatement()) {
-                String query = String.format("DELETE FROM option WHERE name = '%s'", optionName);
-                stmt.execute(query);
+            try (Connection con = Db.db.getConnection()) {
+                PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");
+                stmt.setString(1, optionName);
             }
             catch (SQLException e)
             {

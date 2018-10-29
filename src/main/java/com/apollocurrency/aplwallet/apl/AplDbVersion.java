@@ -667,17 +667,17 @@ public class AplDbVersion extends DbVersion {
                 PublicKeyMigration.init();
                 apply(null);
             case 242:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
-            case 243:
-                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
-                break;
-            case 244:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
                             + "account BIGINT PRIMARY KEY,"
                             + "secret VARBINARY,"
                             + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
                             + ")"
                 );
+                
+            case 243:
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
+                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
+            case 244:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
