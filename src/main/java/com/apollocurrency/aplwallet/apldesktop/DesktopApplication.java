@@ -406,7 +406,6 @@ public class DesktopApplication extends Application {
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
             browser.setOnContextMenuRequested(new WalletContextMenu());
-            WebView invisible = new WebView();
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 500);
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 720);
