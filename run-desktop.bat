@@ -57,7 +57,7 @@
 	)
 
 :startJava	
-	"%javaDir%"\bin\java.exe -jar -Dapl.runtime.mode=desktop Apollo.jar  apl.Apl
+	"%javaDir%"\bin\java.exe -jar -Dapl.runtime.mode=desktop Apollo.jar 
 
 :endProcess 
 	endlocal

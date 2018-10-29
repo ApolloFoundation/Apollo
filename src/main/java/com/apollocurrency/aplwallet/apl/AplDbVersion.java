@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.db.DbBytesConverter;
 import com.apollocurrency.aplwallet.apl.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 
-class AplDbVersion extends DbVersion {
+public class AplDbVersion extends DbVersion {
 
     protected void update(int nextUpdate) {
         switch (nextUpdate) {
@@ -672,6 +672,12 @@ class AplDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
                 break;
             case 244:
+                apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
+                            + "account BIGINT PRIMARY KEY,"
+                            + "secret VARBINARY,"
+                            + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
+                            + ")"
+                );
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

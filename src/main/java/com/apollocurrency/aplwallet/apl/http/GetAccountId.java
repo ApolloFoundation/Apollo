@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountId extends APIServlet.APIRequestHandler {
 

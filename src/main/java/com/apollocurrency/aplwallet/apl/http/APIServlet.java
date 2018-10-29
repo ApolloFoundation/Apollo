@@ -20,6 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_DISABLED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_INCORRECT_REQUEST;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ERROR_NOT_ALLOWED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.LIGHT_CLIENT_DISABLED_API;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.POST_REQUIRED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.REQUIRED_BLOCK_NOT_FOUND;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.REQUIRED_LAST_BLOCK_NOT_FOUND;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Constants;
@@ -29,17 +55,6 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.*;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
@@ -63,6 +78,12 @@ public final class APIServlet extends HttpServlet {
             if (allowRequiredBlockParameters()) {
                 parameters.add("requireBlock");
                 parameters.add("requireLastBlock");
+            }
+            String accountName2FA = accountName2FA();
+            if (accountName2FA != null && !accountName2FA.isEmpty()) {
+                parameters.add(accountName2FA);
+                parameters.add("code2FA");
+                parameters.add("passphrase");
             }
             this.parameters = Collections.unmodifiableList(parameters);
             this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
@@ -112,6 +133,10 @@ public final class APIServlet extends HttpServlet {
         }
 
         protected boolean logRequestTime() { return false; }
+
+        protected String accountName2FA() {
+            return null;
+        }
     }
 
     private static final boolean enforcePost = Apl.getBooleanProperty("apl.apiServerEnforcePOST");
@@ -220,6 +245,10 @@ public final class APIServlet extends HttpServlet {
 
             if (apiRequestHandler.requirePassword()) {
                 API.verifyPassword(req);
+            }
+            String accountName2FA = apiRequestHandler.accountName2FA();
+            if (accountName2FA != null && !accountName2FA.isEmpty()) {
+                Account.verify2FA(req, accountName2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                     ParameterParser.getUnsignedLong(req, "requireBlock", false) : 0;

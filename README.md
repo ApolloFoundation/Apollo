@@ -1,28 +1,17 @@
-----
-# Apollo Blockchain Platform #
-
-
+# Apollo Blockchain Platform 
 Apollo is being being developed by the Apollo Foundation and supporting members of the community.
 
-
-# Requirements #
-
-
+## Requirements
 Java 8 is required to run the desktop clients.
 
 
+
 # Links #
-
-
-Website:  https://Apollocurrency.com
-
-Twitter:  https://Twitter.com/Apollocurrency
-
-Telegram: https://T.me/apollocommunity
-
-Facebook: https://www.facebook.com/Apolloprivacycoin
-
-Youtube:  https://www.youtube.com/channel/UCZbB3PAUlkSKuBYEMG-l_CQ
+- [website](https://Apollocurrency.com)
+- [twitter](https://Twitter.com/Apollocurrency)
+- [telegram](https://T.me/apollocommunity)
+- [facebook](https://www.facebook.com/Apolloprivacycoin)
+- [youtube](https://www.youtube.com/channel/UCZbB3PAUlkSKuBYEMG-l_CQ)
 
 
 # Specifications #
@@ -97,5 +86,6 @@ __Preparation steps section__
    * find ___run-desktop.bat___ and run it
    * application should start in desktop mode
    * if you require command line mode -> use ___run.bat___ instead of ___run-desktop.bat___
+
 
 

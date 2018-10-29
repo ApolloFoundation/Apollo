@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TRANSACTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_TRANSACTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
@@ -13,8 +18,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
 
 public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
 
@@ -27,7 +30,7 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
     }
 
     private GetPrivateTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey", "account", "passphrase");
     }
 
     @Override
