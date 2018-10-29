@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
+import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -137,7 +138,12 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
+        if (!Apl.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        {
+            Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
+            Option.set("Previous launch APP Version", Apl.VERSION.toString());
+            
+        }
     }
 
     //start javaFx splash screen
