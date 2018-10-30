@@ -70,7 +70,6 @@ import org.slf4j.Logger;
 final class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
 
-
     private static final byte[] CHECKSUM_1 = Constants.isTestnet() ?
             null
             :
@@ -1391,9 +1390,10 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
         int actualBlockTime = block.getTimestamp() - previousLastBlock.getTimestamp();
-//        if (block.getTransactions().size() == 0 && actualBlockTime < 60) {
-//            throw new BlockNotAcceptedException("Invalid empty block. Time since previous block should be greater than " + 60 + ", but got " + actualBlockTime, block);
-//        }
+        if (Constants.isAdaptiveForgingEnabled() && actualBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() && block.getTransactions().size() == 0) {
+            throw new BlockNotAcceptedException("Invalid empty block. Time since previous block should be greater than " + Constants.getAdaptiveForgingEmptyBlockTime() + ", but " +
+                    "got " + actualBlockTime, null);
+        }
     }
 
     private void validateTransactions(BlockImpl block, BlockImpl previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
@@ -1738,7 +1738,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
 
-    void generateBlock(String secretPhrase, int blockTimestamp) throws BlockNotAcceptedException {
+    void generateBlock(String secretPhrase, int blockTimestamp, int timeout) throws BlockNotAcceptedException {
 
         BlockImpl previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp);
@@ -1762,7 +1762,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
-                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, secretPhrase);
+                payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, secretPhrase);
 
         try {
             pushBlock(block);

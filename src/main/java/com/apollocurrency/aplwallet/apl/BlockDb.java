@@ -20,8 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -37,7 +36,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import org.slf4j.Logger;
 final class BlockDb {
     private static final Logger LOG = getLogger(BlockDb.class);
 
@@ -248,9 +248,12 @@ final class BlockDb {
             byte[] blockSignature = rs.getBytes("block_signature");
             byte[] payloadHash = rs.getBytes("payload_hash");
             long id = rs.getLong("id");
+            int timeout = rs.getInt("timeout");
             return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
-                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, loadTransactions ? TransactionDb.findBlockTransactions(con, id) : null);
+                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, loadTransactions ? TransactionDb.findBlockTransactions(con,
+                    id) :
+                    null);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -260,8 +263,8 @@ final class BlockDb {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
-                    + "base_target, height, generation_signature, block_signature, payload_hash, generator_id) "
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
@@ -279,6 +282,7 @@ final class BlockDb {
                 pstmt.setBytes(++i, block.getBlockSignature());
                 pstmt.setBytes(++i, block.getPayloadHash());
                 pstmt.setLong(++i, block.getGeneratorId());
+                pstmt.setInt(++i, block.getTimeout());
                 pstmt.executeUpdate();
                 TransactionDb.saveTransactions(con, block.getTransactions());
             }
@@ -419,7 +423,4 @@ final class BlockDb {
         }
     }
 
-    public static void deleteLastBlock() {
-        deleteBlocksFromHeight(BlockchainImpl.getInstance().getHeight());
-    }
 }

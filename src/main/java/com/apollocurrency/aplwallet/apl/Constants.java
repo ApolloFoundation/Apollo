@@ -30,6 +30,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.apollocurrency.aplwallet.apl.chainid.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.chainid.Chain;
+import com.apollocurrency.aplwallet.apl.chainid.Consensus;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
 
@@ -42,7 +45,6 @@ public final class Constants {
     private volatile static ChangeableConstants changeableConstants;
     private static class ChangeableConstants {
         public final int maxNumberOfTransactions;
-
         public final int maxPayloadLength;
         public final long maxBalanceApl;
         public final long maxBalanceAtm;
@@ -52,6 +54,9 @@ public final class Constants {
         public final long minBaseTarget;
         public final int minBlocktimeLimit;
         public final int maxBlocktimeLimit;
+        public final boolean isAdaptiveForgingEnabled;
+        public final int adaptiveForgingEmptyBlockTime;
+        public final Consensus.Type consensusType;
 
         private ChangeableConstants(BlockchainProperties bp) {
             this.maxNumberOfTransactions = bp.getMaxNumberOfTransactions();
@@ -62,8 +67,11 @@ public final class Constants {
             this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(blockTime * maxBalanceApl)).longValue();
             this.maxBaseTarget = initialBaseTarget * (testnet ? maxBalanceApl : 50);
             this.minBaseTarget = initialBaseTarget * 9 / 10;
-            this.minBlocktimeLimit = blockTime - 7;
-            this.maxBlocktimeLimit = blockTime + 7;
+            this.minBlocktimeLimit = blockTime - 2;
+            this.maxBlocktimeLimit = blockTime + 2;
+            this.isAdaptiveForgingEnabled = bp.getConsensus().getAdaptiveForgingSettings().isEnabled();
+            this.adaptiveForgingEmptyBlockTime = bp.getConsensus().getAdaptiveForgingSettings().getEmptyBlockTime();
+            this.consensusType = bp.getConsensus().getType();
         }
 
         @Override
@@ -79,6 +87,9 @@ public final class Constants {
                     ", minBaseTarget=" + minBaseTarget +
                     ", minBlocktimeLimit=" + minBlocktimeLimit +
                     ", maxBlocktimeLimit=" + maxBlocktimeLimit +
+                    ", isAdaptiveForgingEnabled=" + isAdaptiveForgingEnabled +
+                    ", adaptiveForgingEmptyBlockTime=" + adaptiveForgingEmptyBlockTime +
+                    ", consensusType=" + consensusType +
                     '}';
         }
     }
@@ -297,6 +308,18 @@ public final class Constants {
 
     public static int getMaxBlocktimeLimit() {
         return changeableConstants.maxBlocktimeLimit;
+    }
+
+    public static int getAdaptiveForgingEmptyBlockTime() {
+        return changeableConstants.adaptiveForgingEmptyBlockTime;
+    }
+
+    public static boolean isAdaptiveForgingEnabled() {
+        return changeableConstants.isAdaptiveForgingEnabled;
+    }
+
+    public static Consensus.Type getConsesusType() {
+        return changeableConstants.consensusType;
     }
 
     // Protect non-final constants from modification

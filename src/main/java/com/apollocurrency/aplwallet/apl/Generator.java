@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +88,7 @@ public final class Generator implements Comparable<Generator> {
                                 for (Generator generator : generators.values()) {
                                     generator.setLastBlock(previousBlock);
                                     int timestamp = generator.getTimestamp(generationLimit);
-                                    if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp()) {
+                                    if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
                                         LOG.debug("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
                                         List<BlockImpl> poppedOffBlock = BlockchainProcessorImpl.getInstance().popOffTo(previousBlock);
                                         for (BlockImpl block : poppedOffBlock) {
@@ -253,7 +252,7 @@ public final class Generator implements Comparable<Generator> {
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         return hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
-//                || (Constants.isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
+                || (Constants.isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
                 || Constants.isOffline);
     }
 
@@ -357,24 +356,19 @@ public final class Generator implements Comparable<Generator> {
 
     boolean forge(Block lastBlock, int generationLimit) throws BlockchainProcessor.BlockNotAcceptedException {
         int timestamp = getTimestamp(generationLimit);
+        int timeout = getBlockTimeout(timestamp, generationLimit, lastBlock);
+        if (timeout <= -1) {
+            return false;
+        }
         if (!verifyHit(hit, effectiveBalance, lastBlock, timestamp)) {
-            LOG.debug(this.toString() + " failed to forge at " + timestamp + " height " + lastBlock.getHeight() + " last timestamp " + lastBlock.getTimestamp());
+            LOG.debug(this.toString() + " failed to forge at " + (timestamp + timeout) + " height " + lastBlock.getHeight() + " last timestamp " + lastBlock.getTimestamp());
             return false;
         }
         int start = Apl.getEpochTime();
         while (true) {
             try {
-                int actualBlockTime = timestamp - Apl.getBlockchain().getLastBlockTimestamp();
-                SortedSet<UnconfirmedTransaction> unconfirmedTransactions =
-                        BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, timestamp);
-                boolean noUnconfirmedTransaction =
-                        unconfirmedTransactions.size() == 0;
-                LOG.debug("unconfirmed: {}", unconfirmedTransactions.toString());
-                LOG.debug("Actual blockTime {} - unc {}", actualBlockTime, noUnconfirmedTransaction);
-                if (noUnconfirmedTransaction && actualBlockTime < 60) {
-                    return true;
-                }
-                BlockchainProcessorImpl.getInstance().generateBlock(secretPhrase, timestamp);
+
+                BlockchainProcessorImpl.getInstance().generateBlock(secretPhrase, timestamp + timeout, timeout);
                 setDelay(Constants.FORGING_DELAY);
                 return true;
             }
@@ -385,6 +379,42 @@ public final class Generator implements Comparable<Generator> {
                 }
             }
         }
+    }
+
+    /**
+     * Return block timestamp shift
+     * @return 0 - when adaptive forging is disabled or forging process should be continued
+     *         -1 - when adaptive forging is enabled and forging process should be terminated for current attempt
+     *         >0 - when adaptive forging is enabled and new block should be generated with timestamp = calculated timestamp + returned value
+     */
+    private int getBlockTimeout(int timestamp, int generationLimit, Block lastBlock) {
+        // transactions at generator hit time
+        boolean noTransactionsAtTimestamp =
+                BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, timestamp).size() == 0;
+        // transactions at current time
+        boolean noTransactionsAtGenerationLimit =
+                BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, generationLimit).size() == 0;
+        int planedBlockTime = timestamp - lastBlock.getTimestamp();
+        LOG.debug("Planed blockTime {} - uncg {}, unct {}", planedBlockTime,
+                noTransactionsAtGenerationLimit, noTransactionsAtTimestamp);
+        if (Constants.isAdaptiveForgingEnabled() // try to calculate timeout only when adaptive forging enabled
+                && noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
+                && planedBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() // calculate timeout only for faster than predefined empty block
+        ) {
+            int actualBlockTime = generationLimit - lastBlock.getTimestamp();
+            LOG.debug("Act time:" + actualBlockTime);
+            if (actualBlockTime >= Constants.getAdaptiveForgingEmptyBlockTime() // empty block can be generated by timeout
+//                    block with transactions can be generated (unc transactions exist at current time, required timeout)
+                    || !noTransactionsAtGenerationLimit && actualBlockTime >= planedBlockTime
+            ) {
+                int timeout = (generationLimit - timestamp);
+                LOG.debug("Timeout:" + timeout);
+                return timeout;
+            } else {
+                return -1;
+            }
+        }
+        return 0;
     }
 
     private int getTimestamp(int generationLimit) {

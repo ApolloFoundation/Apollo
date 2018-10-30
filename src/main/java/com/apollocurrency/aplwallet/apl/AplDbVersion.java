@@ -672,6 +672,10 @@ class AplDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
                 break;
             case 244:
+                apply("ALTER TABLE block ADD timeout INT NOT NULL DEFAULT 0");
+            case 245:
+                apply("ALTER TABLE block ADD CONSTRAINT chk_timeout CHECK (timeout >= 0)");
+            case 246:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

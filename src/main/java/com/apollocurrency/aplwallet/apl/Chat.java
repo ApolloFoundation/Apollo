@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
 
 public class Chat {
     public static DbIterator<ChatInfo> getChatAccounts(long accountId, int from, int to) {
