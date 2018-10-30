@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+
+import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
@@ -455,7 +457,7 @@ public final class Apl {
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
                 LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
                 LOG.info("Copyright © 2017-2018 Apollo Foundation.");
-                LOG.info("Distributed under the Apollo Foundation Public License version 1.0 for the Apl Public Blockchain Platform, with ABSOLUTELY NO WARRANTY.");
+                LOG.info("See LICENSE.txt for more information");
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
@@ -464,9 +466,11 @@ public final class Apl {
                     runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
+                
                 if (Constants.isTestnet) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
+
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
@@ -535,6 +539,7 @@ public final class Apl {
 
         public static boolean isTcpPortAvailable(int port) {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
+                serverSocket.setReuseAddress(true);
                 return true;
             } catch (Exception ex) {
                 return false;
