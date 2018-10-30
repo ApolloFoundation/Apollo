@@ -676,9 +676,13 @@ public class AplDbVersion extends DbVersion {
                 
             case 243:
                 apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
-                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
+            
             case 244:
+                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
+            
+            case 245:
                 return;
+            
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
