@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler {
         private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
@@ -47,7 +47,7 @@ public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler 
     }
 
     private DownloadPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save");
+        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save", "account", "passphrase");
     }
 
     @Override
@@ -61,24 +61,25 @@ public final class DownloadPrunableMessage extends APIServlet.APIRequestHandler 
             }
             prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
         }
-        String secretPhrase = ParameterParser.getSecretPhrase(request, false);
+        long accountId = ParameterParser.getAccountId(request, false);
+        byte[] keySeed = ParameterParser.getKeySeed(request, accountId, false);
         byte[] sharedKey = ParameterParser.getBytes(request, "sharedKey", false);
-        if (sharedKey.length != 0 && secretPhrase != null) {
-            return JSONResponses.either("secretPhrase", "sharedKey");
+        if (sharedKey.length != 0 && keySeed != null) {
+            return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }
         byte[] data = null;
         if (prunableMessage != null) {
             try {
-                if (secretPhrase != null) {
-                    data = prunableMessage.decrypt(secretPhrase);
+                if (keySeed != null) {
+                    data = prunableMessage.decryptUsingKeySeed(keySeed);
                 } else if (sharedKey.length > 0) {
-                    data = prunableMessage.decrypt(sharedKey);
+                    data = prunableMessage.decryptUsingSharedKey(sharedKey);
                 } else {
                     data = prunableMessage.getMessage();
                 }
             } catch (RuntimeException e) {
                 LOG.debug("Decryption of message to recipient failed: " + e.toString());
-                return JSONResponses.error("Wrong secretPhrase or sharedKey");
+                return JSONResponses.error("Wrong secretPhrase or sharedKey or passphrase");
             }
         }
         if (data == null) {

@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
 
 public final class EncryptTo extends APIServlet.APIRequestHandler {
 
@@ -44,7 +44,7 @@ public final class EncryptTo extends APIServlet.APIRequestHandler {
 
     private EncryptTo() {
         super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase"
-                , "account");
+                , "account", "passphrase");
     }
 
     @Override

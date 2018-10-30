@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Token;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_FILE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TOKEN;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import java.io.IOException;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_FILE;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_TOKEN;
+import com.apollocurrency.aplwallet.apl.Token;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 
 public final class GenerateFileToken extends APIServlet.APIRequestHandler {
@@ -44,12 +44,13 @@ public final class GenerateFileToken extends APIServlet.APIRequestHandler {
     }
 
     private GenerateFileToken() {
-        super("file", new APITag[] {APITag.TOKENS}, "secretPhrase");
+        super("file", new APITag[] {APITag.TOKENS}, "secretPhrase", "account", "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
         byte[] data;
         try {
             Part part = req.getPart("file");
@@ -62,7 +63,7 @@ public final class GenerateFileToken extends APIServlet.APIRequestHandler {
             throw new ParameterException(INCORRECT_FILE);
         }
         try {
-            String tokenString = Token.generateToken(secretPhrase, data);
+            String tokenString = Token.generateToken(keySeed, data);
             JSONObject response = JSONData.token(Token.parseToken(tokenString, data));
             response.put("token", tokenString);
             return response;

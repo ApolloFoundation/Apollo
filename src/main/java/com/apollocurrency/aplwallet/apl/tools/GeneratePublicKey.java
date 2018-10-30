@@ -20,24 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.slf4j.Logger;
+//TODO: add vault wallets support
 public class GeneratePublicKey {
     private static final Logger LOG = getLogger(GeneratePublicKey.class);
 
 
     public static void main(String[] args) {
         if (args.length > 0) {
-            System.out.println("Usage: java apl.tools.GeneratePublicKey");
+            System.out.println("Usage: java com.apollocurrency.aplwallet.apl.tools.GeneratePublicKey");
             System.exit(1);
         }
         String secretPhrase;
