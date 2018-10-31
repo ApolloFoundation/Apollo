@@ -4,6 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.INTERMEDIATE_CERTIFICATE_NAME;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificate;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificates;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.updater.downloader.DefaultDownloadExecutor;
 import org.slf4j.Logger;
 
@@ -19,11 +26,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
 import java.util.jar.JarFile;
-
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.*;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificate;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificates;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class AuthorityCheckerImpl implements AuthorityChecker {
     private static final Logger LOG = getLogger(AuthorityCheckerImpl.class);
@@ -80,6 +82,9 @@ public class AuthorityCheckerImpl implements AuthorityChecker {
         try {
             Set<Certificate> ordinaryCertificates = readCertificates(certificateDirectory, certificateSuffix, certificatePrefixes);
             Certificate intermediateCertificate = readCertificate(certificateDirectory + "/" + intermediateCertificateName);
+            if (intermediateCertificate == null) {
+                return false;
+            }
             for (Certificate certificate : ordinaryCertificates) {
                 certificate.verify(intermediateCertificate.getPublicKey());
             }

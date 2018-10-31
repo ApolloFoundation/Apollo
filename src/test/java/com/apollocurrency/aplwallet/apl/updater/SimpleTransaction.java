@@ -2,40 +2,58 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package dto.transaction;
+package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.*;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public class SimpleTransactionImpl implements Transaction {
+public class SimpleTransaction implements Transaction {
+    private long id;
+    private int height;
     private TransactionType type;
-    private long recipientId;
-    private long senderId;
-    private long feeATM;
-    private long amountATM;
-    private long height;
     private Attachment attachment;
 
-    public SimpleTransactionImpl(TransactionType type, long recipientId, long senderId, long feeATM, long amountATM, long height) {
-        this.type = type;
-        this.recipientId = recipientId;
-        this.senderId = senderId;
-        this.feeATM = feeATM;
-        this.amountATM = amountATM;
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setHeight(int height) {
         this.height = height;
     }
 
-    public void setHeight(long height) {
+    public void setType(TransactionType type) {
+        this.type = type;
+    }
 
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
+    }
+
+    public SimpleTransaction(long id, TransactionType type, int height) {
+        this.id = id;
+        this.type = type;
         this.height = height;
+    }
+
+    public SimpleTransaction(long id, TransactionType type) {
+        this(id, type, 0);
+    }
+
+    public SimpleTransaction(Transaction tr) {
+        this(tr.getId(), tr.getType(), tr.getHeight());
     }
 
     @Override
     public long getId() {
-        return 0;
+        return id;
     }
 
     @Override
@@ -45,7 +63,7 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public long getSenderId() {
-        return senderId;
+        return 0;
     }
 
     @Override
@@ -55,12 +73,12 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public long getRecipientId() {
-        return recipientId;
+        return 0;
     }
 
     @Override
     public int getHeight() {
-        return (int) height;
+        return height;
     }
 
     @Override
@@ -100,12 +118,12 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public long getAmountATM() {
-        return amountATM;
+        return 0;
     }
 
     @Override
     public long getFeeATM() {
-        return feeATM;
+        return 0;
     }
 
     @Override
@@ -123,37 +141,6 @@ public class SimpleTransactionImpl implements Transaction {
         return null;
     }
 
-    public SimpleTransactionImpl() {
-    }
-
-    public SimpleTransactionImpl(TransactionType type, long recipientId, long senderId, long feeATM, long amountATM) {
-        this.type = type;
-        this.recipientId = recipientId;
-        this.senderId = senderId;
-        this.feeATM = feeATM;
-        this.amountATM = amountATM;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
-
-    public void setRecipientId(long recipientId) {
-        this.recipientId = recipientId;
-    }
-
-    public void setSenderId(long senderId) {
-        this.senderId = senderId;
-    }
-
-    public void setFeeATM(long feeATM) {
-        this.feeATM = feeATM;
-    }
-
-    public void setAmountATM(long amountATM) {
-        this.amountATM = amountATM;
-    }
-
     @Override
     public TransactionType getType() {
         return type;
@@ -162,10 +149,6 @@ public class SimpleTransactionImpl implements Transaction {
     @Override
     public Attachment getAttachment() {
         return attachment;
-    }
-
-    public void setAttachment(Attachment attachment) {
-        this.attachment = attachment;
     }
 
     @Override
@@ -190,10 +173,7 @@ public class SimpleTransactionImpl implements Transaction {
 
     @Override
     public JSONObject getJSONObject() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", getId());
-        jsonObject.put("type", getType());
-        return jsonObject;
+        return new JSONObject();
     }
 
     @Override
@@ -266,3 +246,4 @@ public class SimpleTransactionImpl implements Transaction {
         return 0;
     }
 }
+

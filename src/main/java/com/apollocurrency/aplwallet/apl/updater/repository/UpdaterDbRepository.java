@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.repository;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
@@ -15,8 +17,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class UpdaterDbRepository implements UpdaterRepository {
     private static final Logger LOG = getLogger(UpdaterDbRepository.class);
@@ -76,7 +76,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
 
     public void save(Connection connection, UpdateTransaction transaction) {
 
-        try (PreparedStatement pstm = connection.prepareStatement("INSERT INTO update_status values (?, ?)")) {
+        try (PreparedStatement pstm = connection.prepareStatement("INSERT INTO update_status (transaction_id, updated) values (?, ?)")) {
             pstm.setLong(1, transaction.getTransaction().getId());
             pstm.setBoolean(2, transaction.isUpdated());
             int i = pstm.executeUpdate();

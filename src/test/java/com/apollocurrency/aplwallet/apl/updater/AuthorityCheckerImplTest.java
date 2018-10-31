@@ -4,32 +4,35 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResourcePath;
+
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResourcePath;
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(AuthorityCheckerImpl.class)
 public class AuthorityCheckerImplTest {
-    private AuthorityChecker correctAuthorityChecker = new AuthorityCheckerImpl("rootCA.crt", ".crt", "intermediate.crt", "1_", "2_");
     @Test
     public void testVerifyCertificates() throws Exception {
         Path testRootCAPath = loadResourcePath("certs/rootCA.crt");
         Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
-        boolean verified = correctAuthorityChecker.verifyCertificates("certs");
+        boolean verified = new AuthorityCheckerImpl(certificate).verifyCertificates("certs");
         Assert.assertTrue(verified);
+    }
+
+    private static Certificate loadRootCert() throws URISyntaxException, CertificateException, IOException {
+        Path testRootCAPath = loadResourcePath("certs/rootCA.crt");
+        Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
+        return certificate;
     }
 
     @Test
@@ -44,7 +47,7 @@ public class AuthorityCheckerImplTest {
         Assert.assertFalse(isVerified);
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testNotVerifiedCertificatesWhenIncorrectPathIntermediateCertificate() {
         AuthorityChecker incorrectAuthorityChecker = new AuthorityCheckerImpl("rootCA.crt", ".crt", "intermediat.crt", "1_", "2_");
 
@@ -64,7 +67,7 @@ public class AuthorityCheckerImplTest {
             generator.generate();
             generator.close();
             jarOutputStream.close();
-            correctAuthorityChecker.verifyJarSignature(certificate, jarFilePath);
+            new AuthorityCheckerImpl(loadRootCert()).verifyJarSignature(certificate, jarFilePath);
         }
         finally {
             Files.deleteIfExists(jarFilePath);
@@ -81,7 +84,7 @@ public class AuthorityCheckerImplTest {
             generator.generate();
             generator.close();
             jarOutputStream.close();
-            correctAuthorityChecker.verifyJarSignature(certificate, jarFilePath);
+            new AuthorityCheckerImpl(loadRootCert()).verifyJarSignature(certificate, jarFilePath);
         }
         finally {
             Files.deleteIfExists(jarFilePath);

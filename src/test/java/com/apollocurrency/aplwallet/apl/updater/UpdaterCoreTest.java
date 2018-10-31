@@ -4,25 +4,39 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.updater.core.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Level;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.updater.core.MinorUpdater;
+import com.apollocurrency.aplwallet.apl.updater.core.Updater;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import dto.transaction.SimpleTransactionImpl;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-import util.TestUtil;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class UpdaterCoreTest {
 
@@ -55,7 +69,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedTransaction() throws Exception {
-        Transaction mockTransaction = new SimpleTransactionImpl(TransactionType.Update.CRITICAL, 1, 2, 3, 4, 5);
+        Transaction mockTransaction = new SimpleTransaction(5L, TransactionType.Update.CRITICAL);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(mockTransaction, decryptedUrl));
@@ -73,7 +87,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedMinorTransaction() throws Exception {
-        Transaction mockTransaction = new SimpleTransactionImpl(TransactionType.Update.MINOR, 1, 2, 3, 4, 5);
+        Transaction mockTransaction = new SimpleTransaction(1L, TransactionType.Update.MINOR);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(mockTransaction, decryptedUrl));
@@ -106,7 +120,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedNullUpdateData() throws Exception {
-        Transaction mockTransaction = new SimpleTransactionImpl(TransactionType.Update.MINOR, 1, 2, 3, 4, 5);
+        Transaction mockTransaction = new SimpleTransaction(1L, TransactionType.Update.MINOR);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
@@ -123,7 +137,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitUpdatedCriticalUpdateGreaterUpdateVersion() throws Exception {
-        SimpleTransactionImpl mockTransaction = new SimpleTransactionImpl(TransactionType.Update.CRITICAL, 1, 2, 3, 4, 5);
+        SimpleTransaction mockTransaction = new SimpleTransaction(4L, TransactionType.Update.CRITICAL);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -145,7 +159,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitUpdatedNonCriticalUpdateGreaterUpdateVersion() throws Exception {
-        SimpleTransactionImpl mockTransaction = new SimpleTransactionImpl(TransactionType.Update.IMPORTANT, 1, 2, 3, 4, 5);
+        SimpleTransaction mockTransaction = new SimpleTransaction(1L, TransactionType.Update.IMPORTANT);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -164,7 +178,7 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitUpdatedAllUpdatesLesserOrEqualUpdateVersion() throws Exception {
-        SimpleTransactionImpl mockTransaction = new SimpleTransactionImpl(TransactionType.Update.IMPORTANT, 1, 2, 3, 4, 5);
+        SimpleTransaction mockTransaction = new SimpleTransaction(4L, TransactionType.Update.IMPORTANT);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -183,8 +197,9 @@ public class UpdaterCoreTest {
 
     //    UpdaterCoreImpl startMinorUpdate
     @Test
+    @JsonIgnore
     public void testStartMinorUpdate() {
-        SimpleTransactionImpl mockTransaction = new SimpleTransactionImpl(TransactionType.Update.MINOR, 1, 2, 3, 4, 5);
+        SimpleTransaction mockTransaction = new SimpleTransaction(1L, TransactionType.Update.MINOR);
         mockTransaction.setAttachment(attachment);
         UpdateData updateData = new UpdateData(mockTransaction, decryptedUrl);
         Updater mockMinorUpdater = mock(MinorUpdater.class);
@@ -208,7 +223,8 @@ public class UpdaterCoreTest {
         List<Transaction> transactions = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < numberOfTransactions; i++) {
-            Transaction transaction = new SimpleTransactionImpl(TransactionType.findTransactionType((byte) random.nextInt(8), (byte) 0), random.nextLong(), random.nextLong(), TestUtil.atm(random.nextInt(10_000)), TestUtil.atm(random.nextInt(10_000)));
+            Transaction transaction = new SimpleTransaction(random.nextLong(), TransactionType.findTransactionType((byte) random.nextInt(8),
+                    (byte) 0));
             transactions.add(transaction);
         }
         return transactions;

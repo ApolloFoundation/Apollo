@@ -27,7 +27,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 import util.TestUtil;
 import util.WalletRunner;
@@ -167,7 +166,7 @@ public class TestnetIntegrationScenario {
         LOG.info("Stopping forging and peer server...");
         int remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
         Class updaterCore = runner.loadClass("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
-        Whitebox.invokeMethod(updaterCore.getMethod("getInstance").invoke(null, null), "stopForgingAndBlockAcceptance");
+//        Whitebox.invokeMethod(updaterCore.getMethod("getInstance").invoke(null, null), "stopForgingAndBlockAcceptance");
         int localHeight = CLIENT.getBlockchainHeight(TestConstants.TEST_LOCALHOST);
         LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
         Assert.assertEquals(localHeight, remoteHeight);

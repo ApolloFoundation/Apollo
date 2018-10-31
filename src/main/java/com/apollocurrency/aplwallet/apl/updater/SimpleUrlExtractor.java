@@ -4,8 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.updater.decryption.DoubleDecryptor;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -14,6 +16,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class SimpleUrlExtractor implements UrlExtractor {
+    private static final Logger LOG = getLogger(SimpleUrlExtractor.class);
+
     private String defaultCertificatesDirectory = UpdaterConstants.CERTIFICATE_DIRECTORY;
     private CertificatePairsProvider certificatePairsProvider;
     private Set<UpdaterUtil.CertificatePair> certificatePairs;
@@ -45,7 +49,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
                 );
                 String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
                 if (urlPattern.matcher(decryptedUrl).matches()) {
-                    Logger.logDebugMessage("Decrypted url using: " + pair);
+                    LOG.debug("Decrypted url using: " + pair);
                     return decryptedUrl;
                 }
             }

@@ -4,16 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Logger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
 public class UpdaterMediatorImpl implements UpdaterMediator {
+    private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
+
     @Override
     public void shutdownApplication() {
         Apl.shutdown();
@@ -29,11 +33,11 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public void resumeBlockchain() {
-        Logger.logDebugMessage("Restarting peer server, blockchain processor and forging");
+        LOG.debug("Restarting peer server, blockchain processor and forging");
         BlockchainProcessorImpl.getInstance().resumeBlockchainDownloading();
         Peers.resume();
         Generator.resumeForging();
-        Logger.logDebugMessage("Peer server, blockchain processor and forging were restarted successfully");
+        LOG.debug("Peer server, blockchain processor and forging were restarted successfully");
     }
 
     @Override
