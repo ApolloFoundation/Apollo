@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.updater.decryption;
 
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
-import com.apollocurrency.aplwallet.apl.Version;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;

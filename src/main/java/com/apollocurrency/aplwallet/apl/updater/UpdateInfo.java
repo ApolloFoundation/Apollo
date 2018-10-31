@@ -7,25 +7,30 @@ import com.apollocurrency.aplwallet.apl.Level;
 import com.apollocurrency.aplwallet.apl.Version;
 import org.json.simple.JSONObject;
 
-public class UpdateInfo {
+public class UpdateInfo implements Cloneable{
+    private long id;
     private boolean isUpdate;
     private int estimatedHeight;
     private int receivedHeight;
     private Level level;
     private Version version;
-    private UpdateState updateState;
+    private UpdateState updateState = UpdateState.NONE;
     private DownloadInfo downloadInfo = new DownloadInfo();
 
-    public UpdateInfo(boolean isUpdate, int estimatedHeight, int receivedHeight, Level level, Version version, UpdateState updateState) {
+    public UpdateInfo(boolean isUpdate, long id, int estimatedHeight, int receivedHeight, Level level, Version version, UpdateState updateState) {
         this.isUpdate = isUpdate;
+        this.id = id;
         this.estimatedHeight = estimatedHeight;
         this.receivedHeight = receivedHeight;
         this.level = level;
         this.version = version;
         this.updateState = updateState;
     }
-    public UpdateInfo(boolean isUpdate, int estimatedHeight, int receivedHeight, Level level, Version version) {
-        this(isUpdate, estimatedHeight, receivedHeight, level, version, UpdateState.NONE);
+    public UpdateInfo(boolean isUpdate, long id, int estimatedHeight, int receivedHeight, Level level, Version version) {
+        this(isUpdate, id,estimatedHeight, receivedHeight, level, version, UpdateState.NONE);
+    }
+
+    public UpdateInfo() {
     }
 
     public synchronized UpdateInfo.UpdateState getUpdateState() {
@@ -95,13 +100,38 @@ public class UpdateInfo {
         return result;
     }
 
-    public synchronized boolean isStartAllowed() {
-        return level == Level.MINOR && estimatedHeight == -1 && updateState == UpdateInfo.UpdateState.REQUIRED_START;
+    public synchronized long getId() {
+        return id;
+    }
+
+    public synchronized void setId(long id) {
+        this.id = id;
+    }
+
+    public void setDownloadInfo(DownloadInfo downloadInfo) {
+        this.downloadInfo = downloadInfo;
     }
 
     public enum UpdateState {
         NONE, IN_PROGRESS, REQUIRED_START, REQUIRED_MANUAL_INSTALL, RE_PLANNING, FINISHED, FAILED_REQUIRED_START
     }
 
-
+    @Override
+    public UpdateInfo clone() {
+        UpdateInfo clone;
+        try {
+            clone = (UpdateInfo) super.clone();
+        }
+        catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        if (this.version != null) {
+            clone.setVersion(Version.from(version.toString()));
+        }
+        DownloadInfo downloadInfo = new DownloadInfo();
+        downloadInfo.setDownloadState(this.downloadInfo.getDownloadState());
+        downloadInfo.setDownloadStatus(this.downloadInfo.getDownloadStatus());
+        clone.setDownloadInfo(downloadInfo);
+        return clone;
+    }
 }

@@ -25,10 +25,11 @@ public class AuthorityCheckerImplTest {
     public void testVerifyCertificates() throws Exception {
         Path testRootCAPath = loadResourcePath("certs/rootCA.crt");
         Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
-        boolean verified = new AuthorityCheckerImpl(certificate).verifyCertificates("certs");
+        AuthorityChecker correctAuthorityChecker = new AuthorityCheckerImpl(certificate, ".crt", "intermediate.crt",
+                "1_", "2_");
+        boolean verified = correctAuthorityChecker.verifyCertificates("certs");
         Assert.assertTrue(verified);
     }
-
     private static Certificate loadRootCert() throws URISyntaxException, CertificateException, IOException {
         Path testRootCAPath = loadResourcePath("certs/rootCA.crt");
         Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
@@ -51,9 +52,7 @@ public class AuthorityCheckerImplTest {
     public void testNotVerifiedCertificatesWhenIncorrectPathIntermediateCertificate() {
         AuthorityChecker incorrectAuthorityChecker = new AuthorityCheckerImpl("rootCA.crt", ".crt", "intermediat.crt", "1_", "2_");
 
-        boolean isVerified = incorrectAuthorityChecker.verifyCertificates("certs");
-
-        Assert.assertFalse(isVerified);
+        incorrectAuthorityChecker.verifyCertificates("certs");
     }
 
     @Test

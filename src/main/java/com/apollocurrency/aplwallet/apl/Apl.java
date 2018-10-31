@@ -629,7 +629,7 @@ public final class Apl {
     }
 
     public static boolean startMinorUpdate() {
-        return updaterCore.startMinorUpdate();
+        return updaterCore.startAvailableUpdate();
     }
 
     public static String getProcessId() {

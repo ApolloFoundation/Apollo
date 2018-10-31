@@ -144,18 +144,38 @@ public class UpdaterDbTest extends DbIntegrationTest {
                     }
                 }
 
-                @Override
-                public void endTransaction(Connection connection) {
-                    try {
-                        if (connection != null) {
-                            connection.close();
-                        }
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
+        @Override
+        public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
+            try {
+                int height = rs.getInt("height");
+                long id = rs.getLong("id");
+                byte type = rs.getByte("type");
+                byte subType = rs.getByte("subtype");
+                byte[] attachmentBytes = rs.getBytes("attachment_bytes");
+                TransactionType transactionType = TransactionType.findTransactionType(type, subType);
+
+                ByteBuffer buffer = ByteBuffer.wrap(attachmentBytes);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transactionType.parseAttachment(buffer);
+                return new dto.transaction.UpdateTransaction(id, transactionType, 0, 0, 0, 0, height, attachment);
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+            @Override
+            public void endTransaction(Connection connection) {
+                try {
+                    if (connection != null) {
+                        connection.close();
                     }
                 }
-
+                catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
+            }
                 @Override
                 public boolean isInTransaction(Connection connection) {
                     return false;
@@ -163,4 +183,3 @@ public class UpdaterDbTest extends DbIntegrationTest {
             };
         }
     }
-}

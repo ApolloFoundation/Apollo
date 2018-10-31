@@ -11,7 +11,7 @@ public interface UpdaterCore {
 
     void init();
 
-    boolean startMinorUpdate();
+    boolean startAvailableUpdate();
 
     void startUpdate(UpdateData updateData);
 

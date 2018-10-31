@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
 
 public class UpdateData {
     private Transaction transaction;
@@ -31,4 +32,7 @@ public class UpdateData {
         return decryptedUrl;
     }
 
+    public boolean isAutomaticUpdate() {
+        return transaction.getType() != TransactionType.Update.MINOR;
+    }
 }

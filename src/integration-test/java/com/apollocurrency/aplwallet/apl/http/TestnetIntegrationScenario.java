@@ -165,9 +165,9 @@ public class TestnetIntegrationScenario {
         });
         LOG.info("Stopping forging and peer server...");
         int remoteHeight = CLIENT.getBlockchainHeight(TestUtil.randomUrl(runner.getUrls()));
-        Class updaterCore = runner.loadClass("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
-//        Whitebox.invokeMethod(updaterCore.getMethod("getInstance").invoke(null, null), "stopForgingAndBlockAcceptance");
-        int localHeight = CLIENT.getBlockchainHeight(TestConstants.TEST_LOCALHOST);
+        Class updaterCore = runner.loadClass("com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore");
+        new UpdaterMediatorImpl().suspendBlockchain();
+        int localHeight = CLIENT.getBlockchainHeight(TEST_LOCALHOST);
         LOG.info("Local height / Remote height: {}/{}", localHeight, remoteHeight);
         Assert.assertEquals(localHeight, remoteHeight);
         Assert.assertEquals(CLIENT.getBlock(TestUtil.randomUrl(runner.getUrls()), remoteHeight), CLIENT.getBlock(TestConstants.TEST_LOCALHOST, localHeight));

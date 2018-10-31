@@ -6,19 +6,21 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.regex.Pattern;
+
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import org.slf4j.Logger;
 
-import java.util.regex.Pattern;
-
 
 public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier {
-    private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
+        private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
 
-    private static final String VERSION_PLACEHOLDER = "$version$";
-    private static final String DEFAULT_URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-" + VERSION_PLACEHOLDER + ".jar";
+    public static final String VERSION_PLACEHOLDER = "$version$";
+    public static final String PLATFORM_PLACEHOLDER = "$platform$";
+    private static final String DEFAULT_URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-" + VERSION_PLACEHOLDER + "-" + PLATFORM_PLACEHOLDER + ".jar";
     private UpdaterMediator updaterMediator;
     private UpdaterService updaterService;
     private String urlTemplate;
@@ -41,12 +43,8 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
             if (attachment.getAppVersion().greaterThan(updaterMediator.getWalletVersion())) {
                 Platform currentPlatform = Platform.current();
                 Architecture currentArchitecture = Architecture.current();
-                if (attachment.getPlatform() == currentPlatform && attachment.getArchitecture() == currentArchitecture) {
-                    Pattern urlPattern = urlTemplate.contains(VERSION_PLACEHOLDER) ?
-                            Pattern.compile(urlTemplate.replace(VERSION_PLACEHOLDER,
-                                    attachment.getAppVersion().toString())) :
-                            Pattern.compile(urlTemplate);
-
+                if (currentPlatform != null && currentPlatform.isAppropriate(attachment.getPlatform()) && attachment.getArchitecture() == currentArchitecture) {
+                    Pattern urlPattern = getUrlPattern(attachment.getAppVersion(), attachment.getPlatform());
                     DoubleByteArrayTuple encryptedUrl = attachment.getUrl();
                     byte[] urlEncryptedBytes = UpdaterUtil.concatArrays(encryptedUrl.getFirst(), encryptedUrl.getSecond());
                     String url = updaterService.extractUrl(urlEncryptedBytes, urlPattern);
@@ -66,4 +64,15 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
         }
         return null;
     }
-}
+
+    private Pattern getUrlPattern(Version version, Platform platform) {
+        String resultUrl = urlTemplate;
+        if (resultUrl.contains(PLATFORM_PLACEHOLDER)) {
+            resultUrl = resultUrl.replace(PLATFORM_PLACEHOLDER, String.valueOf(platform));
+        }
+        if (resultUrl.contains(VERSION_PLACEHOLDER)) {
+            resultUrl = resultUrl.replace(VERSION_PLACEHOLDER, version.toString());
+        }
+        return Pattern.compile(resultUrl);
+    }
+    }

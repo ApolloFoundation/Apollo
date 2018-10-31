@@ -46,4 +46,9 @@ public class UpdateTransaction {
     public void setUpdated(boolean updated) {
         this.updated = updated;
     }
+
+    public boolean requireManualUpdate() {
+        return transaction.getType() == TransactionType.Update.MINOR;
+    }
+
 }

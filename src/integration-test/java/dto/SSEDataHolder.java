@@ -3,6 +3,8 @@ package dto;
 
 import java.util.List;
 
+import dto.transaction.JSONTransaction;
+
 public class SSEDataHolder{
     private List<JSONTransaction> transactions;
     private int aliasCount;

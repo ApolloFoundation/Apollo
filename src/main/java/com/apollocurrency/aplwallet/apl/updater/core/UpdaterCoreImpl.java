@@ -24,16 +24,18 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private UpdaterMediator updaterMediator;
     private UpdaterFactory updaterFactory;
     private UpdateTransactionVerifier updateTransactionVerifier;
-    private Listener<List<? extends Transaction>> listener;
-    private UpdateInfo beforeUpdaterUpdateInfo;
-    private volatile Updater lastUpdater;
+    private UpdateTransactionProcessingListener updateTransactionProcessingListener;
+    private Listener<UpdateData> updatePerformingListener;
+    private AtomicReference<UpdateInfo> updateInfo;
+
+
+    private void setUpdateInfo(UpdateInfo updateInfo) {
+        this.updateInfo.getAndSet(updateInfo);
+    }
 
     @Override
     public UpdateInfo getUpdateInfo() {
-        return lastUpdater == null ?
-                beforeUpdaterUpdateInfo == null ?
-                        new UpdateInfo(false, 0, 0, null, Version.from("0.0.0"), UpdateInfo.UpdateState.NONE) : beforeUpdaterUpdateInfo :
-                        lastUpdater.getUpdateInfo();
+        return updateInfo.get();
     }
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator) {
@@ -55,7 +57,9 @@ public class UpdaterCoreImpl implements UpdaterCore {
         this.updaterMediator = updaterMediator;
         this.updaterFactory = updaterFactory;
         this.updateTransactionVerifier = updateTransactionVerifier;
-        this.listener = new UpdateListener(updateTransactionVerifier);
+        this.updateTransactionProcessingListener = new UpdateTransactionProcessingListener(updateTransactionVerifier);
+        this.updatePerformingListener = new UpdatePerformingListener();
+        this.updateInfo = new AtomicReference<>(DEFAULT_UPDATE_INFO.clone());
     }
     
     @Override
@@ -72,16 +76,18 @@ public class UpdaterCoreImpl implements UpdaterCore {
             Transaction transaction = updateTransaction.getTransaction();
             if (!updateTransaction.isUpdated()) {
                 LOG.debug("Found non-installed update : " + transaction.getJSONObject().toJSONString());
-                UpdateData updateHolder = updateTransactionVerifier.process(transaction);
-                if (updateHolder == null) {
+                UpdateData updateData = updateTransactionVerifier.process(transaction);
+                if (updateData == null) {
                     LOG.error("Unable to validate update transaction: " + transaction.getJSONObject().toJSONString());
                     int deleted = updaterService.clear();
                     LOG.debug("Deleted {} invalid update transaction(s)", deleted);
                 } else {
-                    if (((TransactionType.Update) updateHolder.getTransaction().getType()).getLevel() != Level.MINOR) {
+                    if (updateData.isAutomaticUpdate()) {
                         startUpdater = false;
+                        startUpdate(updateData);
+                    } else {
+                        setUpdateInfo(transactionToUpdateInfo(transaction, UpdateInfo.UpdateState.REQUIRED_START));
                     }
-                    startUpdate(updateHolder);
                 }
             } else {
                 Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
@@ -91,9 +97,8 @@ public class UpdaterCoreImpl implements UpdaterCore {
                             " " + " updateVersion: " + expectedVersion);
                     if (transaction.getType() == TransactionType.Update.CRITICAL) {
                         updaterMediator.suspendBlockchain();
-                        beforeUpdaterUpdateInfo = new UpdateInfo(true, 0,
-                                transaction.getHeight(), Level.CRITICAL, expectedVersion);
-                        beforeUpdaterUpdateInfo.setUpdateState(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                        UpdateInfo currentUpdateInfo = transactionToUpdateInfo(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
+                        setUpdateInfo(currentUpdateInfo);
                         startUpdater = false;
                         LOG.error("Manual install required for critical update!");
                     } else {
@@ -103,54 +108,128 @@ public class UpdaterCoreImpl implements UpdaterCore {
             }
         }
         if (startUpdater) {
-            updaterMediator.addUpdateListener(listener);
+            registerListeners();
         }
-    }
-    @Override
-    public void startUpdate(UpdateData updateData) {
-        updaterService.clearAndSave(new UpdateTransaction(updateData.getTransaction(), false));
-        new Thread(() -> performUpdate(updateData), "Updater thread").start();
     }
 
     @Override
-    public boolean startMinorUpdate() {
-        if (lastUpdater != null && lastUpdater.getLevel() == Level.MINOR && lastUpdater.getUpdateInfo().getUpdateState() == UpdateInfo.UpdateState.REQUIRED_START && lastUpdater instanceof Startable) {
-            new Thread(() -> ((Startable) lastUpdater).start(), "Minor update thread").start();
-            return true;
+    public void startUpdate(UpdateData updateData) {
+        new Thread(() ->
+                performUpdate(updateData),
+                "Updater thread").start();
+    }
+
+    @Override
+    public boolean startAvailableUpdate() {
+        UpdateTransaction last = updaterService.getLast();
+        if (last == null) {
+            return false;
         }
-        return false;
+        if (last.isUpdated()) {
+            return false;
+        }
+        UpdateData updateData = updateTransactionVerifier.process(last.getTransaction());
+        if (updateData == null) {
+            return false;
+        }
+        startUpdate(updateData);
+        return true;
     }
 
     private void performUpdate(UpdateData data) {
-        lastUpdater = updaterFactory.getUpdater(data);
-        lastUpdater.processUpdate();
+        Updater updater = updaterFactory.getUpdater(data);
+        setUpdateInfo(updater.getUpdateInfo());
+        UpdateInfo.UpdateState updateState = updater.processUpdate();
+        LOG.info("Update state: {}", updateState);
     }
-    
 
-    public class UpdateListener implements Listener<List<? extends Transaction>> {
+
+    public class UpdateTransactionProcessingListener implements Listener<List<? extends Transaction>> {
         private UpdateTransactionVerifier verifier;
-
-        public UpdateListener(UpdateTransactionVerifier verifier) {
+        private final Listeners<UpdateData, UpdateEvent> listeners = new Listeners<>();
+        public UpdateTransactionProcessingListener(UpdateTransactionVerifier verifier) {
             this.verifier = verifier;
         }
 
+        public void addListener(UpdateEvent event, Listener<UpdateData> updateDataListener) {
+            listeners.addListener(updateDataListener, event);
+        }
+        public void removeListener(UpdateEvent event, Listener<UpdateData> updateDataListener) {
+            listeners.removeListener(updateDataListener, event);
+        }
         @Override
         public void notify(List<? extends Transaction> transactions) {
             transactions.forEach(transaction -> {
-                UpdateData holder = verifier.process(transaction);
-                if (holder != null) {
-                    if (((TransactionType.Update) holder.getTransaction().getType()).getLevel() != Level.MINOR) {
+                UpdateData updateData = verifier.process(transaction);
+                if (updateData != null) {
+                    if (((TransactionType.Update) updateData.getTransaction().getType()).getLevel() != Level.MINOR) {
                         updaterMediator.removeUpdateListener(this);
                     }
-                    LOG.debug("Found appropriate update transaction: " + holder.getTransaction().getJSONObject().get("attachment"));
-                    startUpdate(holder);
+                    LOG.debug("Found appropriate update transaction: " + updateData.getTransaction().getJSONObject().get("attachment"));
+                    listeners.notify(updateData, NEW_UPDATE);
                 }
             });
         }
     }
 
+    private class UpdatePerformingListener implements Listener<UpdateData> {
+
+        @Override
+        public void notify(UpdateData updateData) {
+            updaterService.clearAndSave(new UpdateTransaction(updateData.getTransaction(), false));
+            if (updateData.isAutomaticUpdate()) {
+                deregisterUpdateProcessingListener();
+                startUpdate(updateData);
+            } else {
+                UpdateInfo updateInfo = transactionToUpdateInfo(updateData.getTransaction(), UpdateInfo.UpdateState.REQUIRED_START);
+                setUpdateInfo(updateInfo);
+            }
+        }
+    }
+
+    private UpdateInfo transactionToUpdateInfo(Transaction transaction, UpdateInfo.UpdateState state) {;
+        Attachment.UpdateAttachment updateAttachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+        return new UpdateInfo(true,
+                transaction.getId(),
+                0,
+                updaterMediator.getBlockchainHeight(),
+                from(transaction.getType()),
+                updateAttachment.getAppVersion(),
+                state);
+    }
+
+    public enum UpdateEvent {
+        NEW_UPDATE
+    }
+
+    private Level from(TransactionType type) {
+
+        if (type == TransactionType.Update.CRITICAL) {
+            return Level.CRITICAL;
+        } else if (type == TransactionType.Update.IMPORTANT) {
+            return Level.IMPORTANT;
+        } else if (type == TransactionType.Update.MINOR) {
+            return Level.MINOR;
+        }
+        return null;
+    }
+
     @Override
     public void shutdown() {
-        updaterMediator.removeUpdateListener(listener);
+        deregisterListeners();
+    }
+
+    private void deregisterUpdateProcessingListener() {
+        updaterMediator.removeUpdateListener(updateTransactionProcessingListener);
+    }
+
+    private void registerListeners() {
+        updateTransactionProcessingListener.addListener(UpdateEvent.NEW_UPDATE, updatePerformingListener);
+        updaterMediator.addUpdateListener(updateTransactionProcessingListener);
+    }
+
+    private void deregisterListeners() {
+        deregisterUpdateProcessingListener();
+        updateTransactionProcessingListener.removeListener(UpdateEvent.NEW_UPDATE, updatePerformingListener);
     }
 }
