@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.updater.RSAUtil;
+import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.junit.Assert;
 import org.junit.Test;
