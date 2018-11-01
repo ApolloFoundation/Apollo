@@ -11,10 +11,15 @@ else
     JAVA=java
 fi
 
-cd secureTransport
-sudo ./runClient.sh 
+unamestr=`uname`
+if [[ "$unamestr" == 'Linux' ]]; then
 
-cd ..
+    cd secureTransport
+    sudo ./runClient.sh 
+    cd ..
+fi
+
+
 
 ${JAVA} -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -jar Apollo.jar
 
