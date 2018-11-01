@@ -1077,7 +1077,9 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         BlockImpl lastBlock = blockchain.getLastBlock();
         if (block.getPreviousBlockId() == lastBlock.getId()) {
             pushBlock(block);
-        } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId() && (block.getTimestamp() < lastBlock.getTimestamp() || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout())) {
+        } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId()
+                && ((block.getTimestamp() < lastBlock.getTimestamp()
+                                || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout()))) {
             blockchain.writeLock();
             try {
                 if (lastBlock.getId() != blockchain.getLastBlock().getId()) {
