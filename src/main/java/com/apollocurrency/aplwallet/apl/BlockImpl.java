@@ -296,7 +296,7 @@ final class BlockImpl implements Block {
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
-            int timeout =  timeoutJsonValue == null ? 0 : (int) timeoutJsonValue;
+            int timeout =  timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
             List<TransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));

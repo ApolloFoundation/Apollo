@@ -45,7 +45,7 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
         String previousBlockId = (String)request.get("previousBlock");
         Block lastBlock = Apl.getBlockchain().getLastBlock();
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
-        int peerBlockTimeout = (int)request.get("timeout");
+        int peerBlockTimeout = ((Long)request.get("timeout")).intValue();
         if (lastBlock.getStringId().equals(previousBlockId) ||
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
                         && (lastBlock.getTimestamp() > peerBlockTimestamp) ||
