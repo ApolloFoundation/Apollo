@@ -11,10 +11,11 @@ else
     JAVA=java
 fi
 
-cd tor
-./tor &
+cd secureTransport
+./runClient.sh &
+
 cd ..
 
-${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop -jar Apollo.jar
+${JAVA} -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -jar Apollo.jar
 
 
