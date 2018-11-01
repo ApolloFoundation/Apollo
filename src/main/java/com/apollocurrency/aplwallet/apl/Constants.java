@@ -37,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
 
 public final class Constants {
+    private static final Logger LOG = getLogger(Constants.class);
+
     private static Chain chain;
     private static boolean testnet;
     public static final boolean isOffline = Apl.getBooleanProperty("apl.isOffline");
@@ -236,6 +238,7 @@ public final class Constants {
         Constants.shufflingDepositAtm = (testnet ? 7 : 1000) * ONE_APL;
         Constants.GUARANTEED_BALANCE_CONFIRMATIONS = testnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
         changeableConstants = new ChangeableConstants(chain.getBlockchainProperties().get(0));
+        LOG.debug("Connected to chain {}-{}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
     private static ChangeableConstants getLatest(Chain chain) {
