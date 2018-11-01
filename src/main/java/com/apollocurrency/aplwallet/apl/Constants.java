@@ -104,7 +104,7 @@ public final class Constants {
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
     public static final int MAX_ROLLBACK = Math.max(Apl.getIntProperty("apl.maxRollback"), 720);
-    private static int GUARANTEED_BALANCE_CONFIRMATIONS;
+    private static int guaranteedBalanceConfirmations;
     private static int leasingDelay = testnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
@@ -236,9 +236,9 @@ public final class Constants {
         Constants.lastKnownBlock = testnet ? 0 : 0;
         Constants.unconfirmedPoolDepositAtm = (testnet ? 50 : 100) * ONE_APL;
         Constants.shufflingDepositAtm = (testnet ? 7 : 1000) * ONE_APL;
-        Constants.GUARANTEED_BALANCE_CONFIRMATIONS = testnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
+        Constants.guaranteedBalanceConfirmations = testnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
         changeableConstants = new ChangeableConstants(chain.getBlockchainProperties().get(0));
-        LOG.debug("Connected to chain {}-{}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+        LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
     private static ChangeableConstants getLatest(Chain chain) {
@@ -247,7 +247,7 @@ public final class Constants {
                 blockchainProperties
                         .keySet()
                         .stream()
-                        .filter(height -> BlockDb.findLastBlock().getHeight() > height && height != 0)
+                        .filter(height -> BlockDb.findLastBlock() != null && BlockDb.findLastBlock().getHeight() > height && height != 0)
                         .max(Comparator.naturalOrder());
         return maxHeight
                 .map(height -> new ChangeableConstants(blockchainProperties.get(height)))
@@ -255,7 +255,7 @@ public final class Constants {
     }
 
     public static int getGuaranteedBalanceConfirmations() {
-        return GUARANTEED_BALANCE_CONFIRMATIONS;
+        return guaranteedBalanceConfirmations;
     }
 
     static void updateToLatestConstants() {
@@ -376,7 +376,8 @@ public final class Constants {
         public ConstantsChangeListener(Map<Integer, BlockchainProperties> propertiesMap) {
             this.propertiesMap = propertiesMap;
             targetHeights = propertiesMap.keySet();
-            String stringConstantsChangeHeights = targetHeights.stream().filter(height -> height > BlockDb.findLastBlock().getHeight()).map(Object::toString).collect(Collectors.joining(
+            String stringConstantsChangeHeights =
+                    targetHeights.stream().filter(height -> BlockDb.findLastBlock() == null || height > BlockDb.findLastBlock().getHeight()).map(Object::toString).collect(Collectors.joining(
                     ","));
             LOG.debug("Available constants updates at height: {}",
                     stringConstantsChangeHeights.isEmpty() ? "none" : stringConstantsChangeHeights);
