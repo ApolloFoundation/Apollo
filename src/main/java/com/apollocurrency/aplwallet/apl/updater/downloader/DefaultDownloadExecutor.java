@@ -33,7 +33,7 @@ public class DefaultDownloadExecutor implements DownloadExecutor {
 
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
         }
-        catch (IOException e) {
+        catch (Exception e) {
             //delete failed file and directory
             Files.deleteIfExists(downloadedFilePath);
             Files.deleteIfExists(tempDir);
@@ -43,7 +43,6 @@ public class DefaultDownloadExecutor implements DownloadExecutor {
         return downloadedFilePath;
     }
 
-    @Override
     public Path download(String uri) throws IOException {
         return downloadAttempt(uri, tempDirPrefix, downloadedFileName);
     }

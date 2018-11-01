@@ -292,7 +292,7 @@ public enum APIEnum {
     GET_PRIVATE_ACCOUNT_LEDGER_ENTRY("getPrivateAccountLedgerEntry", GetPrivateAccountLedgerEntry.getInstance()),
     SEND_UPDATE_TRANSACTION("sendUpdateTransaction", SendUpdateTransaction.getInstance()),
     GET_UPDATE_STATUS("getUpdateStatus", GetUpdateStatus.getInstance()),
-    START_MINOR_UPDATE("startAvailableUpdate", StartAvailableUpdate.getInstance()),
+    START_MINOR_UPDATE("startMinorUpdate", StartMinorUpdate.getInstance()),
     GET_ALL_TRANSACTIONS("getAllTransactions", GetAllTransactions.getInstance()),
     GET_VOTED_ACCOUNT_POLLS("getVotedAccountPolls", GetVotedAccountPolls.getInstance()),
     GET_CHATS("getChats", GetChats.getInstance()),
