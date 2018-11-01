@@ -12,7 +12,7 @@ else
 fi
 
 cd secureTransport
-./runClient.sh &
+sudo ./runClient.sh 
 
 cd ..
 
