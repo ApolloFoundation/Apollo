@@ -6,18 +6,24 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
-import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 
+@RunWith(PowerMockRunner.class)
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
 
@@ -35,13 +41,14 @@ public class DownloaderTest {
     @Test
     public void testTryDownloadWithInvalidUrl() {
 
-        DownloadInfo downloadInfo = new DownloadInfo();
-        Downloader downloader = new DownloaderImpl(downloadInfo, 1, 10, (path, hash) -> true, new ThrowingDownloadExecutor());
+        UpdaterMediator updaterMediator = UpdaterMediator.getInstance();
+        Downloader downloader = Downloader.getInstance();
 
-        Path result = downloader.tryDownload("unknow.url", new byte[0]);
+        Path result = downloader.tryDownload("invalid-url", null, new ThrowingDownloadExecutor());
+
         Assert.assertNull(result);
-        Assert.assertEquals(downloadInfo.getDownloadState(), DownloadInfo.DownloadState.FINISHED);
-        Assert.assertEquals(downloadInfo.getDownloadStatus(), DownloadInfo.DownloadStatus.FAIL);
+        Assert.assertEquals(updaterMediator.getState(), UpdateInfo.DownloadState.FINISHED);
+        Assert.assertEquals(updaterMediator.getStatus(), UpdateInfo.DownloadStatus.FAIL);
 
     }
 
@@ -50,13 +57,17 @@ public class DownloaderTest {
      */
     @Test
     public void testTryDownloadWithSignedValidPayload() {
-        DownloadInfo downloadInfo = new DownloadInfo();
-        Downloader downloader = new DownloaderImpl(downloadInfo, 1, 10, (path, hash) -> true, new ResourceDownloadExecutor());
-        Path result = downloader.tryDownload("testDownloaderPayload.txt", new byte[0]);
+
+        Downloader downloader = Downloader.getInstance();
+        UpdaterMediator updaterMediator = UpdaterMediator.getInstance();
+
+        PowerMockito.mock(URL.class);
+
+        Path result = downloader.tryDownload("testDownloaderPayload.txt", TEST_PAYLOAD_SHA256, new ResourceDownloadExecutor());
 
         Assert.assertNotNull(result);
-        Assert.assertEquals(downloadInfo.getDownloadState(), DownloadInfo.DownloadState.FINISHED);
-        Assert.assertEquals(downloadInfo.getDownloadStatus(), DownloadInfo.DownloadStatus.OK);
+        Assert.assertEquals(updaterMediator.getState(), UpdateInfo.DownloadState.FINISHED);
+        Assert.assertEquals(updaterMediator.getStatus(), UpdateInfo.DownloadStatus.OK);
 
     }
 

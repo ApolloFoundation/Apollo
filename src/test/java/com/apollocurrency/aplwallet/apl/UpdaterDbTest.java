@@ -4,182 +4,131 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
-import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
-import com.apollocurrency.aplwallet.apl.updater.SimpleTransaction;
-import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
-import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
-import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
-public class UpdaterDbTest extends DbIntegrationTest {
-    private UpdaterRepository repository = new UpdaterDbRepository(new MockUpdaterMediator());
+import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class})
+@SuppressStaticInitializationFor({"com.apollocurrency.aplwallet.apl.Db","com.apollocurrency.aplwallet.apl.util.Logger", "com.apollocurrency.aplwallet.apl.db.TransactionalDb","com.apollocurrency" +
+        ".aplwallet.apl.Constants", "com" +
+        ".apollocurrency" +
+        ".aplwallet.apl.Apl"})
+public class UpdaterDbTest {
+    private EmbeddedDatabase db;
+
+    @Before
+    public void setUp() throws Exception {
+        db = new EmbeddedDatabaseBuilder()
+                .setType(EmbeddedDatabaseType.H2)
+                .addScript("db/schema.sql")
+                .addScript("db/data.sql")
+                .build();
+        mockStatic(Apl.class);
+        mockStatic(Db.class);
+        mockStatic(TransactionalDb.class);
+        mockStatic(Constants.class);
+        TransactionalDb fakeDb = mock(TransactionalDb.class);
+        Whitebox.setInternalState(Db.class, "db", fakeDb);
+        Whitebox.setInternalState(Constants.class, "correctInvalidFees", false);
+        BlockchainImpl mock = spy(BlockchainImpl.getInstance());
+        PowerMockito.doReturn(100).when(mock).getHeight();
+        spy(Apl.class);
+        PowerMockito.doReturn(mock).when(Apl.class, "getBlockchain");
+        when(fakeDb.getConnection()).then(invocationOnMock -> db.getConnection());
+        Connection connection = db.getConnection();
+        when(fakeDb.beginTransaction()).then(invocationOnMock -> {
+            connection.setAutoCommit(false);
+            return connection;
+        });
+        doAnswer(invocation -> {
+            connection.setAutoCommit(true);
+            connection.commit();
+            return null;
+        }).when(fakeDb).commitTransaction();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        db.shutdown();
+    }
 
     @Test
     public void testLoadUpdateTransaction() throws Exception {
-        UpdateTransaction updateTransaction = repository.getLast();
-        Transaction transaction = updateTransaction.getTransaction();
+        Transaction transaction = UpdaterDb.loadLastUpdateTransaction();
         Assert.assertEquals(TransactionType.Update.IMPORTANT, transaction.getType());
         Assert.assertEquals(104595, transaction.getHeight());
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), Version.from("1.0.8"));
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
-        Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), (
-                "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
-        Assert.assertTrue(updateTransaction.isUpdated());
+        Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), ("a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
     }
-
     @Test
     public void testClear() throws Exception {
-        int actual = repository.clear();
+        int actual = UpdaterDb.clear();
         Assert.assertEquals(1, actual);
-        UpdateTransaction tr = repository.getLast();
+        Transaction tr = UpdaterDb.loadLastUpdateTransaction();
         Assert.assertNull(tr);
     }
-
     @Test
     public void testSaveUpdateTransaction() throws Exception {
-        repository.clear();
-        repository.save(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
-        UpdateTransaction updateTransaction = repository.getLast();
-        Transaction transaction = updateTransaction.getTransaction();
+        UpdaterDb.clear();
+        boolean saved = UpdaterDb.saveUpdateTransaction(-4081443370478530685L);
+        Assert.assertTrue(saved);
+        Transaction transaction = UpdaterDb.loadLastUpdateTransaction();
         Assert.assertEquals(TransactionType.Update.CRITICAL, transaction.getType());
         Assert.assertEquals(104671, transaction.getHeight());
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), Version.from("1.0.8"));
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.AMD64);
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
         Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), ("a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
-        Assert.assertFalse(updateTransaction.isUpdated());
+    }
+
+    @Test
+    public void testGetUpdateStatus() {
+        boolean updateStatus = UpdaterDb.getUpdateStatus();
+        Assert.assertTrue(updateStatus);
+        UpdaterDb.clearAndSaveUpdateTransaction(-4081443370478530685L);
+        Assert.assertFalse(UpdaterDb.getUpdateStatus());
+    }
+
+    @Test
+    public void testSaveUpdateStatus() {
+        UpdaterDb.saveUpdateStatus(false);
+        Assert.assertFalse(UpdaterDb.getUpdateStatus());
+        UpdaterDb.saveUpdateStatus(true);
+        Assert.assertTrue(UpdaterDb.getUpdateStatus());
     }
 
     @Test
     public void testClearAndSaveUpdateTransaction() {
-        repository.clearAndSave(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
-        UpdateTransaction updateTransaction = repository.getLast();
-        Transaction transaction = updateTransaction.getTransaction();
+        boolean saved = UpdaterDb.clearAndSaveUpdateTransaction(-4081443370478530685L);
+        Assert.assertTrue(saved);
+        Transaction transaction = UpdaterDb.loadLastUpdateTransaction();
         Assert.assertEquals(-4081443370478530685L, transaction.getId());
         Assert.assertEquals(TransactionType.Update.CRITICAL, transaction.getAttachment().getTransactionType());
-        Assert.assertFalse(updateTransaction.isUpdated());
+        Assert.assertFalse(UpdaterDb.getUpdateStatus());
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testSaveTwoUpdateTransactions() {
-        repository.save(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
-        UpdateTransaction last = repository.getLast();
-    }
-    private class MockUpdaterMediator extends UpdaterMediatorImpl {
-        @Override
-        public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-            try {
-                SimpleTransaction simpleTransaction = new SimpleTransaction(
-                        rs.getLong("id"),
-                        (TransactionType.findTransactionType(
-                                rs.getByte("type"),
-                                rs.getByte("subtype"))),
-                        rs.getInt("height"));
-                byte[] attachmentBytes = rs.getBytes(
-                        "attachment_bytes");
-                if (attachmentBytes != null) {
-                    ByteBuffer buffer = ByteBuffer.wrap(attachmentBytes);
-                    buffer.order(ByteOrder.LITTLE_ENDIAN);
-                    simpleTransaction.setAttachment(simpleTransaction.getType().parseAttachment(buffer));
-                }
-                return simpleTransaction;
-            }
-            catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
 
-        @Override
-        public ConnectionProvider getConnectionProvider() {
-            return new ConnectionProvider() {
-                @Override
-                public Connection getConnection() throws SQLException {
-                    return db.getConnection();
-                }
-
-                @Override
-                public Connection beginTransaction() {
-                    try {
-                        Connection connection = db.getConnection();
-                        connection.setAutoCommit(false);
-                        return connection;
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
-                }
-
-                @Override
-                public void rollbackTransaction(Connection connection) {
-                    if (connection != null) {
-                        try {
-                            connection.rollback();
-                        }
-                        catch (SQLException e) {
-                            throw new RuntimeException(e.toString(), e);
-                        }
-                    }
-                }
-
-                @Override
-                public void commitTransaction(Connection connection) {
-                    try {
-                        connection.commit();
-                        connection.setAutoCommit(true);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
-                }
-
-        @Override
-        public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-            try {
-                int height = rs.getInt("height");
-                long id = rs.getLong("id");
-                byte type = rs.getByte("type");
-                byte subType = rs.getByte("subtype");
-                byte[] attachmentBytes = rs.getBytes("attachment_bytes");
-                TransactionType transactionType = TransactionType.findTransactionType(type, subType);
-
-                ByteBuffer buffer = ByteBuffer.wrap(attachmentBytes);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transactionType.parseAttachment(buffer);
-                return new dto.transaction.UpdateTransaction(id, transactionType, 0, 0, 0, 0, height, attachment);
-            }
-            catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
-            @Override
-            public void endTransaction(Connection connection) {
-                try {
-                    if (connection != null) {
-                        connection.close();
-                    }
-                }
-                catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }
-                @Override
-                public boolean isInTransaction(Connection connection) {
-                    return false;
-                }
-            };
-        }
-    }
+}

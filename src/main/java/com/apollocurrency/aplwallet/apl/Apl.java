@@ -58,9 +58,6 @@ import com.apollocurrency.aplwallet.apl.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
@@ -106,7 +103,7 @@ public final class Apl {
     }
 
     private static volatile boolean shutdown = false;
-    private static UpdaterCore updaterCore;
+
     public static boolean isShutdown() {
         return shutdown;
     }
@@ -469,7 +466,7 @@ public final class Apl {
                     runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
-
+                
                 if (Constants.isTestnet) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
@@ -624,14 +621,6 @@ public final class Apl {
         } catch (InterruptedException ignore) {}
     }
 
-    public static UpdateInfo getUpdateInfo() {
-        return updaterCore.getUpdateInfo();
-    }
-
-    public static boolean startMinorUpdate() {
-        return updaterCore.startAvailableUpdate();
-    }
-
     public static String getProcessId() {
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         if (runtimeName == null) {
@@ -686,7 +675,14 @@ public final class Apl {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
-        updaterCore.init();
+        try {
+            Class<?> aClass = Class.forName("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
+            //force load lazy updater instance
+            aClass.getMethod("getInstance").invoke(null);
+
+        }
+        catch (Exception e) {
+            LOG.error("Cannot load Updater!", e);
+        }
     }
 }

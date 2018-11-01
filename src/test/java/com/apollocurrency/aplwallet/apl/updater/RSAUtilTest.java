@@ -4,34 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.encrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPrivateKey;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.decrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.doubleDecrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.doubleEncrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.encrypt;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.getPrivateKey;
+import static com.apollocurrency.aplwallet.apl.updater.RSAUtil.getPublicKeyFromCertificate;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
-
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.encrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPrivateKey;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 
 public class RSAUtilTest {
@@ -91,11 +79,7 @@ public class RSAUtilTest {
         String expectedMessage = "http://apollocurrency/ApolloWallet-1.0.8.jar";
         DoubleByteArrayTuple doubleEncryptedBytes = RSAUtil.doubleEncrypt(privateKey1, privateKey2, expectedMessage.getBytes());
 
-        byte[] encryptedBytes = ArrayUtils.addAll(doubleEncryptedBytes.getFirst(),
-                doubleEncryptedBytes.getSecond());
-
-        String url = new String(new RSADoubleDecryptor().decrypt(encryptedBytes,
-                pubKey2, pubKey1));
+        String url = RSAUtil.tryDecryptUrl("certs", doubleEncryptedBytes, Version.from("1.0.8"));
         Assert.assertNotNull(url);
         Assert.assertEquals(expectedMessage, url);
     }
