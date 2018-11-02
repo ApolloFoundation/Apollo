@@ -82,12 +82,12 @@ public final class Db {
                 ,Apl.getIntProperty("apl.dbMaxMemoryRows")
         );
     }
-    public static void init(String dbDir) {
+    public static void init(String dbUrl) {
         init(
                 Apl.getIntProperty("apl.dbCacheKB")
-                , null
+                , dbUrl
                 , Apl.getStringProperty(PREFIX + "Type")
-                , dbDir
+                , null
                 , Apl.getStringProperty(PREFIX + "Params")
                 , Apl.getStringProperty(PREFIX + "Username")
                 , Apl.getStringProperty(PREFIX + "Password", null, true)

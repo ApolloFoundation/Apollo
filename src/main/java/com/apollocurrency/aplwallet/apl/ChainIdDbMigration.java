@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,7 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 public class ChainIdDbMigration {
     private static final Logger LOG = getLogger(ChainIdDbMigration.class);
@@ -38,7 +38,8 @@ public class ChainIdDbMigration {
             LOG.info("Required db migration for applying chainId");
             Db.shutdown();
             String oldDbDir = Apl.getOldDbDir(Apl.getStringProperty(Db.PREFIX + "Dir"));
-            Db.init(oldDbDir);
+            String dbUrl = String.format("jdbc:%s:%s", Apl.getStringProperty(Db.PREFIX + "Type"), oldDbDir);
+            Db.init(dbUrl);
             Path oldDbDirPath = Paths.get(oldDbDir);
             int numberOfBlocks = 0;
             try (Connection con = Db.getDb().getConnection();
@@ -47,7 +48,6 @@ public class ChainIdDbMigration {
                     rs.next();
                     numberOfBlocks = rs.getInt(1);
                 }
-
             }
             catch (SQLException e) {
                 LOG.error("Cannot read data from old db", e);
@@ -94,7 +94,7 @@ public class ChainIdDbMigration {
                         }
                     }
                     try {
-                        Db.removeDb(oldDbDirPath);
+                        Db.removeDb(oldDbDirPath.getParent());
                     }
                     catch (IOException e) {
                         LOG.info("Delete old db manually from " + oldDbDir, e);
