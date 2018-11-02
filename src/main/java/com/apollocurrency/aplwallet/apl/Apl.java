@@ -21,11 +21,29 @@
 package com.apollocurrency.aplwallet.apl;
 
 
-import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.http.API;
+import com.apollocurrency.aplwallet.apl.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.peer.Peers;
+import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.Time;
+import org.h2.jdbc.JdbcSQLException;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,22 +66,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.env.DirProvider;
-import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.env.RuntimeMode;
-import com.apollocurrency.aplwallet.apl.env.ServerStatus;
-import com.apollocurrency.aplwallet.apl.http.API;
-import com.apollocurrency.aplwallet.apl.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.Time;
-import org.h2.jdbc.JdbcSQLException;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
 public final class Apl {
     private static Logger LOG;
@@ -103,7 +105,7 @@ public final class Apl {
     }
 
     private static volatile boolean shutdown = false;
-
+    private static UpdaterCore updaterCore;
     public static boolean isShutdown() {
         return shutdown;
     }
@@ -466,7 +468,7 @@ public final class Apl {
                     runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
-                
+
                 if (Constants.isTestnet) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
@@ -621,6 +623,14 @@ public final class Apl {
         } catch (InterruptedException ignore) {}
     }
 
+    public static UpdateInfo getUpdateInfo() {
+        return updaterCore.getUpdateInfo();
+    }
+
+    public static boolean startMinorUpdate() {
+        return updaterCore.startAvailableUpdate();
+    }
+
     public static String getProcessId() {
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         if (runtimeName == null) {
@@ -675,14 +685,7 @@ public final class Apl {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        try {
-            Class<?> aClass = Class.forName("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
-            //force load lazy updater instance
-            aClass.getMethod("getInstance").invoke(null);
-
-        }
-        catch (Exception e) {
-            LOG.error("Cannot load Updater!", e);
-        }
+        updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
+        updaterCore.init();
     }
 }
