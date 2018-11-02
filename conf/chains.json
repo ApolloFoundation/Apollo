@@ -50,9 +50,7 @@
       "163.172.146.173",
       "51.15.69.39",
       "51.15.59.37",
-      "51.15.114.68",
-      "51.15.130.37",
-      "51.15.228.90"
+      "51.15.114.68"
     ],
     "wellKnownPeers": [],
     "blacklistedPeers": [],
@@ -74,7 +72,23 @@
         }
       },
       {
-        "height": 205866,
+        "height": 230000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "false",
+            "emptyBlockTime": 60
+          }
+        }
+
+      },
+      {
+        "height": 232000,
         "maxNumberOfTransactions": 255,
         "blockTime": 10,
         "maxBalance": 30000000000,
@@ -87,7 +101,6 @@
             "emptyBlockTime": 60
           }
         }
-
       }
     ]
   }

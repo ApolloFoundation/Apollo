@@ -69,8 +69,8 @@ public final class Constants {
             this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(blockTime * maxBalanceApl)).longValue();
             this.maxBaseTarget = initialBaseTarget * (testnet ? maxBalanceApl : 50);
             this.minBaseTarget = initialBaseTarget * 9 / 10;
-            this.minBlocktimeLimit = blockTime - 2;
-            this.maxBlocktimeLimit = blockTime + 2;
+            this.minBlocktimeLimit = blockTime - 0;
+            this.maxBlocktimeLimit = blockTime + 0;
             this.isAdaptiveForgingEnabled = bp.getConsensus().getAdaptiveForgingSettings().isEnabled();
             this.adaptiveForgingEmptyBlockTime = bp.getConsensus().getAdaptiveForgingSettings().getEmptyBlockTime();
             this.consensusType = bp.getConsensus().getType();
