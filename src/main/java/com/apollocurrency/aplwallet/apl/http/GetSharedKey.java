@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetSharedKey extends APIServlet.APIRequestHandler {
 
@@ -40,20 +40,21 @@ public final class GetSharedKey extends APIServlet.APIRequestHandler {
     }
 
     private GetSharedKey() {
-        super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce");
+        super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce", "passphrase", "participantAccount");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
 
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long participantAccountId = ParameterParser.getAccountId(req,"participantAccount", true);
         byte[] nonce = ParameterParser.getBytes(req, "nonce", true);
-        long accountId = ParameterParser.getAccountId(req, "account", true);
-        byte[] publicKey = Account.getPublicKey(accountId);
+        byte[] publicKey = Account.getPublicKey(participantAccountId);
         if (publicKey == null) {
             return JSONResponses.INCORRECT_ACCOUNT;
         }
-        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), publicKey, nonce);
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(keySeed), publicKey, nonce);
         JSONObject response = new JSONObject();
         response.put("sharedKey", Convert.toHexString(sharedKey));
         return response;

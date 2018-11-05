@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import com.apollocurrency.aplwallet.apl.Apl;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -39,12 +40,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
 
-    private static final boolean useStrongSecureRandom = Apl.getBooleanProperty("apl.useStrongSecureRandom");
+    private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
     private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
         @Override
@@ -79,6 +78,11 @@ public final class Crypto {
         return getMessageDigest("SHA-256");
     }
 
+    public static MessageDigest sha512() {
+        return getMessageDigest("SHA-512");
+    }
+
+
     public static MessageDigest ripemd160() {
         return new RIPEMD160.Digest();
     }
@@ -88,8 +92,11 @@ public final class Crypto {
     }
 
     public static byte[] getKeySeed(String secretPhrase, byte[]... nonces) {
+        return getKeySeed(Convert.toBytes(secretPhrase), nonces);
+    }
+    public static byte[] getKeySeed(byte[] secretBytes, byte[]... nonces) {
         MessageDigest digest = Crypto.sha256();
-        digest.update(Convert.toBytes(secretPhrase));
+        digest.update(secretBytes);
         for (byte[] nonce : nonces) {
             digest.update(nonce);
         }
@@ -101,6 +108,7 @@ public final class Crypto {
         Curve25519.keygen(publicKey, null, Arrays.copyOf(keySeed, keySeed.length));
         return publicKey;
     }
+
 
     public static byte[] getPublicKey(String secretPhrase) {
         byte[] publicKey = new byte[32];
@@ -125,10 +133,14 @@ public final class Crypto {
     }
 
     public static byte[] sign(byte[] message, String secretPhrase) {
+        return sign(message, sha256().digest(Convert.toBytes(secretPhrase)));
+    }
+
+    public static byte[] sign(byte[] message, byte[] keySeed) {
         byte[] P = new byte[32];
         byte[] s = new byte[32];
         MessageDigest digest = Crypto.sha256();
-        Curve25519.keygen(P, s, digest.digest(Convert.toBytes(secretPhrase)));
+        Curve25519.keygen(P, s, keySeed);
 
         byte[] m = digest.digest(message);
 

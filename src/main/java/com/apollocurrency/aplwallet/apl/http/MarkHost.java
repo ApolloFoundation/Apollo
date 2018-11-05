@@ -47,13 +47,14 @@ public final class MarkHost extends APIServlet.APIRequestHandler {
     }
 
     private MarkHost() {
-        super(new APITag[] {APITag.TOKENS}, "secretPhrase", "host", "weight", "date");
+        super(new APITag[] {APITag.TOKENS}, "secretPhrase", "host", "weight", "date", "account", "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
         String host = Convert.emptyToNull(req.getParameter("host"));
         String weightValue = Convert.emptyToNull(req.getParameter("weight"));
         String dateValue = Convert.emptyToNull(req.getParameter("date"));
@@ -81,7 +82,7 @@ public final class MarkHost extends APIServlet.APIRequestHandler {
 
         try {
 
-            String hallmark = Hallmark.generateHallmark(secretPhrase, host, weight, Hallmark.parseDate(dateValue));
+            String hallmark = Hallmark.generateHallmark(keySeed, host, weight, Hallmark.parseDate(dateValue));
 
             JSONObject response = new JSONObject();
             response.put("hallmark", hallmark);

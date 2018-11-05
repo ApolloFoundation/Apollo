@@ -10,5 +10,11 @@ if [ -x jre/bin/java ]; then
 else
     JAVA=java
 fi
-${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -cp target/classes:target/lib/*:conf:addons/classes:addons/lib/* com.apollocurrency.aplwallet.apl.Apl
+
+cd tor
+./tor &
+cd ..
+
+${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop -jar Apollo.jar
+
 

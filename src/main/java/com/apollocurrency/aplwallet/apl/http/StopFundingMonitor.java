@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.HoldingType;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Stop a funding monitor
@@ -56,7 +56,7 @@ public class StopFundingMonitor extends APIServlet.APIRequestHandler {
 
     private StopFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
-                "account", "adminPassword");
+                "account", "adminPassword", "passphrase");
     }
     /**
      * Process the request
@@ -67,20 +67,21 @@ public class StopFundingMonitor extends APIServlet.APIRequestHandler {
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+
         JSONObject response = new JSONObject();
-        if (secretPhrase == null) {
+        if (keySeed == null) {
             API.verifyPassword(req);
         }
-        if (secretPhrase != null || accountId != 0) {
-            if (secretPhrase != null) {
+        if (keySeed != null || accountId != 0) {
+            if (keySeed != null) {
                 if (accountId != 0) {
-                    if (Account.getId(Crypto.getPublicKey(secretPhrase)) != accountId) {
+                    if (Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                         return JSONResponses.INCORRECT_ACCOUNT;
                     }
                 } else {
-                    accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+                    accountId = Account.getId(Crypto.getPublicKey(keySeed));
                 }
             }
             HoldingType holdingType = ParameterParser.getHoldingType(req);

@@ -63,7 +63,7 @@ public interface Appendix {
     }
 
     interface Encryptable {
-        void encrypt(String secretPhrase);
+        void encrypt(byte[] keySeed);
     }
 
 
@@ -869,8 +869,8 @@ public interface Appendix {
         void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
 
         @Override
-        public void encrypt(String secretPhrase) {
-            setEncryptedData(EncryptedData.encrypt(getPlaintext(), secretPhrase, recipientPublicKey));
+        public void encrypt(byte[] keySeed) {
+            setEncryptedData(EncryptedData.encrypt(getPlaintext(), keySeed, recipientPublicKey));
         }
 
         @Override
@@ -991,8 +991,8 @@ public interface Appendix {
         }
 
         @Override
-        public void encrypt(String secretPhrase) {
-            setEncryptedData(EncryptedData.encrypt(getPlaintext(), secretPhrase, recipientPublicKey));
+        public void encrypt(byte[] keySeed) {
+            setEncryptedData(EncryptedData.encrypt(getPlaintext(), keySeed, recipientPublicKey));
         }
 
         private byte[] getPlaintext() {
@@ -1101,8 +1101,8 @@ public interface Appendix {
         }
 
         @Override
-        public void encrypt(String secretPhrase) {
-            setEncryptedData(EncryptedData.encrypt(getPlaintext(), secretPhrase, Crypto.getPublicKey(secretPhrase)));
+        public void encrypt(byte[] keySeed) {
+            setEncryptedData(EncryptedData.encrypt(getPlaintext(), keySeed, Crypto.getPublicKey(keySeed)));
         }
 
         @Override

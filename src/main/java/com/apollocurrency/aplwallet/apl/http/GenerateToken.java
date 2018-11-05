@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_WEBSITE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_WEBSITE;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Token;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_WEBSITE;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_WEBSITE;
 
 
 public final class GenerateToken extends APIServlet.APIRequestHandler {
@@ -42,13 +42,15 @@ public final class GenerateToken extends APIServlet.APIRequestHandler {
     }
 
     private GenerateToken() {
-        super(new APITag[] {APITag.TOKENS}, "website", "secretPhrase");
+        super(new APITag[] {APITag.TOKENS}, "website", "secretPhrase", "account", "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long accountId = ParameterParser.getAccountId(req, true);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+
         String website = Convert.emptyToNull(req.getParameter("website"));
         if (website == null) {
             return MISSING_WEBSITE;
@@ -56,7 +58,7 @@ public final class GenerateToken extends APIServlet.APIRequestHandler {
 
         try {
 
-            String tokenString = Token.generateToken(secretPhrase, website.trim());
+            String tokenString = Token.generateToken(keySeed, website.trim());
 
             JSONObject response = JSONData.token(Token.parseToken(tokenString, website));
             response.put("token", tokenString);

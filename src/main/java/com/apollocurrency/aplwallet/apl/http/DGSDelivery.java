@@ -94,9 +94,9 @@ public final class DGSDelivery extends CreateTransaction {
             } catch (RuntimeException e) {
                 return INCORRECT_DGS_GOODS;
             }
-            String secretPhrase = ParameterParser.getSecretPhrase(req, broadcast);
-            if (secretPhrase != null) {
-                encryptedGoods = buyerAccount.encryptTo(goodsBytes, secretPhrase, true);
+            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
+            if (keySeed != null) {
+                encryptedGoods = buyerAccount.encryptTo(goodsBytes, keySeed, true);
             }
         }
 

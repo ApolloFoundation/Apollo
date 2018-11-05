@@ -46,7 +46,7 @@ public final class Hallmark {
         return (year < 10 ? "000" : (year < 100 ? "00" : (year < 1000 ? "0" : ""))) + year + "-" + (month < 10 ? "0" : "") + month + "-" + (day < 10 ? "0" : "") + day;
     }
 
-    public static String generateHallmark(String secretPhrase, String host, int weight, int date) {
+    public static String generateHallmark(byte[] keySeed, String host, int weight, int date) {
 
         if (host.length() == 0 || host.length() > 100) {
             throw new IllegalArgumentException("Hostname length should be between 1 and 100");
@@ -56,7 +56,7 @@ public final class Hallmark {
             throw new IllegalArgumentException("Weight should be between 1 and " + maxBalanceAPL);
         }
 
-        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] hostBytes = Convert.toBytes(host);
 
         ByteBuffer buffer = ByteBuffer.allocate(32 + 2 + hostBytes.length + 4 + 4 + 1);
@@ -69,7 +69,7 @@ public final class Hallmark {
 
         byte[] data = buffer.array();
         data[data.length - 1] = (byte) ThreadLocalRandom.current().nextInt();
-        byte[] signature = Crypto.sign(data, secretPhrase);
+        byte[] signature = Crypto.sign(data, keySeed);
 
         return Convert.toHexString(data) + Convert.toHexString(signature);
 

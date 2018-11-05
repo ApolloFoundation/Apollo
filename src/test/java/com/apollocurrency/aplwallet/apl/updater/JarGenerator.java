@@ -12,7 +12,7 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.util.Random;
 
-public class JarGenerator {
+public class JarGenerator implements AutoCloseable {
     private SimpleJar jar;
     private static final String KEY_ALIAS = "test";
     private static final String KEY_PASSWORD = "test";

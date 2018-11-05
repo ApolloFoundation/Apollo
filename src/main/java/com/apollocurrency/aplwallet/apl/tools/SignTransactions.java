@@ -25,10 +25,7 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
-import java.io.BufferedReader;
-import java.io.Console;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
@@ -51,23 +48,17 @@ public final class SignTransactions {
                 System.out.println("File already exists: " + signed.getAbsolutePath());
                 System.exit(1);
             }
-            String secretPhrase;
-            Console console = System.console();
-            if (console == null) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-                    secretPhrase = reader.readLine();
-                }
-            } else {
-                secretPhrase = new String(console.readPassword("Secret phrase: "));
-            }
+
+            byte[] keySeed = SignTransactionJSON.readKeySeed();
             int n = 0;
             if (Files.exists(signed.toPath())) {
                 Files.delete(signed.toPath());
             }
                 Files.createFile(signed.toPath());
                 List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
+
                 for (String unsignedTransaction : unsignedTransactions) {
-                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, secretPhrase).getBytes(), StandardOpenOption.APPEND);
+                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, keySeed).getBytes(), StandardOpenOption.APPEND);
                     Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
                     n += 1;
                 }
@@ -76,11 +67,13 @@ public final class SignTransactions {
             e.printStackTrace();
         }
     }
-    private static String signTransaction(String transactionBytesHexString, String secretPhrase) throws AplException.NotValidException {
+    private static String signTransaction(String transactionBytesHexString, byte[] keySeed) throws AplException.NotValidException {
         byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
         Transaction.Builder builder = Apl.newTransactionBuilder(transactionBytes);
-        Transaction transaction = builder.build(secretPhrase);
+        Transaction transaction = builder.build(keySeed);
         return Convert.toHexString(transaction.getBytes());
     }
+
+
 
 }
