@@ -21,6 +21,6 @@ fi
 
 
 
-${JAVA} -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -jar Apollo.jar
+${JAVA} -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false -jar Apollo.jar
 
 
