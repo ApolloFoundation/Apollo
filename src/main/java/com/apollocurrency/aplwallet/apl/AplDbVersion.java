@@ -667,7 +667,6 @@ public class AplDbVersion extends DbVersion {
                 PublicKeyMigration.init();
                 apply(null);
             case 242:
-            case 242:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
                         + "account BIGINT PRIMARY KEY,"
                         + "secret VARBINARY,"
