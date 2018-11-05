@@ -60,7 +60,7 @@ rem	@echo off
 	cd secureTransport	
 	start runClient.bat 
 	cd ..
-	"%javaDir%"\bin\java.exe -jar -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop Apollo.jar 
+	"%javaDir%"\bin\java.exe -jar -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false Apollo.jar 
 
 :endProcess 
 	endlocal
