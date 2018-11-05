@@ -36,9 +36,9 @@ public final class Shuffler {
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
 
-    public static Shuffler addOrGetShuffler(String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
+    public static Shuffler addOrGetShuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
         String hash = Convert.toHexString(shufflingFullHash);
-        long accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+        long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
         BlockchainImpl.getInstance().writeLock();
         try {
             Map<Long, Shuffler> map = shufflingsMap.get(hash);
@@ -68,7 +68,7 @@ public final class Shuffler {
                 if (account != null && account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
                     throw new ControlledAccountException("Cannot run a shuffler for an account under phasing only control");
                 }
-                shuffler = new Shuffler(secretPhrase, recipientPublicKey, shufflingFullHash);
+                shuffler = new Shuffler(secretBytes, recipientPublicKey, shufflingFullHash);
                 if (shuffling != null) {
                     shuffler.init(shuffling);
                     clearExpiration(shuffling);
@@ -292,22 +292,22 @@ public final class Shuffler {
     }
 
     private final long accountId;
-    private final String secretPhrase;
+    private final byte[] secretBytes;
     private final byte[] recipientPublicKey;
     private final byte[] shufflingFullHash;
     private volatile Transaction failedTransaction;
     private volatile AplException.NotCurrentlyValidException failureCause;
 
-    private Shuffler(String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) {
-        this.secretPhrase = secretPhrase;
-        this.accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+    private Shuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
+        this.secretBytes = secretBytes;
+        this.accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
         this.recipientPublicKey = recipientPublicKey;
         this.shufflingFullHash = shufflingFullHash;
     }
 
-    private Shuffler(long accountId, String secretPhrase, byte[] recipientPublicKey, byte[] shufflingFullHash) {
+    private Shuffler(long accountId, byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
         this.accountId = accountId;
-        this.secretPhrase = secretPhrase;
+        this.secretBytes = secretBytes;
         this.recipientPublicKey = recipientPublicKey;
         this.shufflingFullHash = shufflingFullHash;
     }
@@ -422,7 +422,7 @@ public final class Shuffler {
 
     private void submitProcess(Shuffling shuffling) {
         LOG.debug("Account %s processing shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingAttachment attachment = shuffling.process(accountId, secretPhrase, recipientPublicKey);
+        Attachment.ShufflingAttachment attachment = shuffling.process(accountId, secretBytes, recipientPublicKey);
         submitTransaction(attachment);
     }
 
@@ -434,7 +434,8 @@ public final class Shuffler {
 
     private void submitCancel(Shuffling shuffling) {
         LOG.debug("Account %s cancelling shuffling %s", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretPhrase, shuffling.getAssigneeAccountId(), shuffling.getStateHash());
+        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
+                shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
@@ -453,10 +454,10 @@ public final class Shuffler {
             }
         }
         try {
-            Transaction.Builder builder = Apl.newTransactionBuilder(Crypto.getPublicKey(secretPhrase), 0, 0,
+            Transaction.Builder builder = Apl.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
                     (short) 1440, attachment);
             builder.timestamp(Apl.getBlockchain().getLastBlockTimestamp());
-            Transaction transaction = builder.build(secretPhrase);
+            Transaction transaction = builder.build(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;
             Account participantAccount = Account.getAccount(this.accountId);

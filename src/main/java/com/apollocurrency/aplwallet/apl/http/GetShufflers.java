@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Shuffler;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.List;
 
 
 public final class GetShufflers extends APIServlet.APIRequestHandler {
@@ -43,22 +43,23 @@ public final class GetShufflers extends APIServlet.APIRequestHandler {
     }
 
     private GetShufflers() {
-        super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState");
+        super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState",
+                "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
         long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+
+        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
         boolean includeParticipantState = "true".equalsIgnoreCase(req.getParameter("includeParticipantState"));
         List<Shuffler> shufflers;
-        if (secretPhrase != null) {
-            if (accountId != 0 && Account.getId(Crypto.getPublicKey(secretPhrase)) != accountId) {
+        if (keySeed != null) {
+            if (accountId != 0 && Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
-            accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+            accountId = Account.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
                 shufflers = Shuffler.getAccountShufflers(accountId);
             } else {

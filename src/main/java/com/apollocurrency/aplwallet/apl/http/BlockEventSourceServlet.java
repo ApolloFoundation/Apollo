@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import org.eclipse.jetty.servlets.EventSource;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.eclipse.jetty.servlets.EventSource;
+import org.slf4j.Logger;
 
 public class BlockEventSourceServlet extends org.eclipse.jetty.servlets.EventSourceServlet {
     public static final Logger LOG = getLogger(BlockEventSourceServlet.class);
@@ -23,6 +23,7 @@ public class BlockEventSourceServlet extends org.eclipse.jetty.servlets.EventSou
 
         } catch (ParameterException e) {
             return null;
+
         }
         return new BlockEventSource((ThreadPoolExecutor) request
                 .getServletContext().getAttribute("executor"), accountId);

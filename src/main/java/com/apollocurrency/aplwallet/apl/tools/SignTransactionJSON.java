@@ -20,6 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
@@ -27,10 +36,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 
 public final class SignTransactionJSON {
     public static void main(String[] args) {
@@ -60,16 +65,8 @@ public final class SignTransactionJSON {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
                 byte[] publicKeyHash = Crypto.sha256().digest(Convert.parseHexString((String) json.get("senderPublicKey")));
                 String senderRS = Convert.rsAccount(Convert.fullHashToId(publicKeyHash));
-                String secretPhrase;
-                Console console = System.console();
-                if (console == null) {
-                    try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in))) {
-                        secretPhrase = inputReader.readLine();
-                    }
-                } else {
-                    secretPhrase = new String(console.readPassword("Secret phrase for account " + senderRS + ": "));
-                }
-                Files.write(signed.toPath(), signTransaction(json, secretPhrase).getBytes(), StandardOpenOption.CREATE);
+                byte[] keySeed = readKeySeed();
+                Files.write(signed.toPath(), signTransaction(json, keySeed).getBytes(), StandardOpenOption.CREATE);
                 System.out.println("Signed transaction JSON saved as: " + signed.getAbsolutePath());
             }
         } catch (Exception e) {
@@ -77,9 +74,40 @@ public final class SignTransactionJSON {
         }
     }
 
-    private static String signTransaction(JSONObject transactionJson, String secretPhrase) throws AplException.NotValidException {
+    public static byte[] readKeySeed() {
+        String secretPhraseString;
+        byte[] secret = null;
+        Console console = System.console();
+        if (console == null) {
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
+                System.out.println("Enter secretPhrase, if you have secretKey press enter:");
+                secretPhraseString = in.readLine();
+                System.out.println("Enter secret key in hexadecimal format: ");
+                if (secretPhraseString.isEmpty()) {
+                    String s = in.readLine();
+                    secret = Convert.parseHexString(s);
+                } else {
+                    secret = Convert.toBytes(secretPhraseString);
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            secretPhraseString = new String(console.readPassword("Secret phrase, skip if you have secretKey : "));
+            if (secretPhraseString.isEmpty()) {
+                String s = new String(console.readPassword("Enter secretKey in hexadecimal format: "));
+                secret = Convert.parseHexString(s);
+            } else {
+                secret = Convert.toBytes(secretPhraseString);
+            }
+        }
+        return Crypto.getKeySeed(secret);
+    }
+
+    private static String signTransaction(JSONObject transactionJson, byte[] keySeed) throws AplException.NotValidException {
         Transaction.Builder builder = Apl.newTransactionBuilder(transactionJson);
-        Transaction transaction = builder.build(secretPhrase);
+        Transaction transaction = builder.build(keySeed);
         return transaction.getJSONObject().toJSONString();
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "apl-blockchain",
-  "version": "1.20.4",
+  "version": "1.21.1",
   "description": "Client API library for the APL Blockchain",
   "main": "nrs.node.bridge.js",
   "directories": {

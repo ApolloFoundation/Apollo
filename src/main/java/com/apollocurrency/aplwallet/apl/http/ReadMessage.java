@@ -20,7 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NO_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -30,9 +39,6 @@ import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ReadMessage extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(ReadMessage.class);
@@ -46,7 +52,7 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
     }
 
     private ReadMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
+        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
     }
 
     @Override
@@ -80,12 +86,14 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
             response.put("message", Convert.toString(prunableMessage.getMessage(), prunableMessage.messageIsText()));
             response.put("messageIsPrunable", true);
         }
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        long accountId = ParameterParser.getAccountId(req, false);
+
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
-        if (sharedKey.length != 0 && secretPhrase != null) {
+        if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey");
         }
-        if (secretPhrase != null || sharedKey.length > 0) {
+        if (keySeed != null || sharedKey.length > 0) {
             EncryptedData encryptedData = null;
             boolean isText = false;
             boolean uncompress = true;
@@ -103,13 +111,13 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
             if (encryptedData != null) {
                 try {
                     byte[] decrypted = null;
-                    if (secretPhrase != null) {
-                        byte[] readerPublicKey = Crypto.getPublicKey(secretPhrase);
+                    if (keySeed != null) {
+                        byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
                         byte[] senderPublicKey = Account.getPublicKey(transaction.getSenderId());
                         byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
                         byte[] publicKey = Arrays.equals(senderPublicKey, readerPublicKey) ? recipientPublicKey : senderPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, encryptedData, secretPhrase, uncompress);
+                            decrypted = Account.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(encryptedData.getData(), sharedKey);
@@ -123,10 +131,11 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
                     JSONData.putException(response, e, "Wrong secretPhrase or sharedKey");
                 }
             }
-            if (encryptToSelfMessage != null && secretPhrase != null) {
-                byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+            if (encryptToSelfMessage != null && keySeed != null) {
+                byte[] publicKey = Crypto.getPublicKey(keySeed);
                 try {
-                    byte[] decrypted = Account.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), secretPhrase, encryptToSelfMessage.isCompressed());
+                    byte[] decrypted = Account.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
+                            encryptToSelfMessage.isCompressed());
                     response.put("decryptedMessageToSelf", Convert.toString(decrypted, encryptToSelfMessage.isText()));
                 } catch (RuntimeException e) {
                     LOG.debug("Decryption of message to self failed: " + e.toString());

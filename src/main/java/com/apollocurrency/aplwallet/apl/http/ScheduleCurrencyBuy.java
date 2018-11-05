@@ -20,7 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Currency;
+import com.apollocurrency.aplwallet.apl.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionScheduler;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -29,10 +41,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
@@ -69,10 +77,10 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = ParameterParser.getSenderAccount(req);
-                String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+                byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
-                if (secretPhrase == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
+                if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
                     return response;
                 }

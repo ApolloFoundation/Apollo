@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Shuffler;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 
 public final class StopShuffler extends APIServlet.APIRequestHandler {
@@ -40,20 +40,20 @@ public final class StopShuffler extends APIServlet.APIRequestHandler {
     }
 
     private StopShuffler() {
-        super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword");
+        super(new APITag[] {APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
         long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req,accountId, false);
         JSONObject response = new JSONObject();
-        if (secretPhrase != null) {
-            if (accountId != 0 && Account.getId(Crypto.getPublicKey(secretPhrase)) != accountId) {
+        if (keySeed != null) {
+            if (accountId != 0 && Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
-            accountId = Account.getId(Crypto.getPublicKey(secretPhrase));
+            accountId = Account.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
                 return JSONResponses.missing("shufflingFullHash");
             }
@@ -91,4 +91,8 @@ public final class StopShuffler extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected String accountName2FA() {
+        return "account";
+    }
 }
