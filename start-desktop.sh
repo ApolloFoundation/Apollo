@@ -17,6 +17,6 @@ if [ -x jre/bin/java ]; then
 else
     JAVA=java
 fi
-nohup ${JAVA} -cp addons/classes:addons/lib/* -Dapl.runtime.mode=desktop -Dapl.runtime.dirProvider=com.apollocurrency.aplwallet.apl.env.DefaultDirProvider -jar Apollo.jar > /dev/null 2>&1 &
+nohup ${JAVA} -cp addons/classes:addons/lib/* -Dapl.runtime.mode=desktop -jar Apollo.jar > /dev/null 2>&1 &
 echo $! > ~/.${APPLICATION}/apl.pid
 cd - > /dev/null

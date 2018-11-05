@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Generator;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_FORGING;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ACCOUNT;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_FORGING;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ACCOUNT;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Generator;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 
 public final class GetForging extends APIServlet.APIRequestHandler {
@@ -45,20 +45,20 @@ public final class GetForging extends APIServlet.APIRequestHandler {
     }
 
     private GetForging() {
-        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword");
+        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey", "passphrase", "account");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        long id = ParameterParser.getAccountId(req, "account", false);
+        byte[] publicKey = ParameterParser.getPublicKey(req, null, id, false);
         int elapsedTime = Apl.getEpochTime() - Apl.getBlockchain().getLastBlock().getTimestamp();
-        if (secretPhrase != null) {
-            Account account = Account.getAccount(Crypto.getPublicKey(secretPhrase));
+        if (publicKey != null) {
+            Account account = Account.getAccount(publicKey);
             if (account == null) {
                 return UNKNOWN_ACCOUNT;
             }
-            Generator generator = Generator.getGenerator(secretPhrase);
+            Generator generator = Generator.getGenerator(Convert.getId(publicKey));
             if (generator == null) {
                 return NOT_FORGING;
             }

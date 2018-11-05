@@ -20,6 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -29,10 +33,6 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DecryptFrom extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(DecryptFrom.class);
@@ -46,24 +46,27 @@ public final class DecryptFrom extends APIServlet.APIRequestHandler {
     }
 
     private DecryptFrom() {
-        super(new APITag[] {APITag.MESSAGES}, "account", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage", "secretPhrase");
+        super(new APITag[] {APITag.MESSAGES}, "participantAccount", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage",
+                "secretPhrase",
+                "passphrase", "account");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        byte[] publicKey = Account.getPublicKey(ParameterParser.getAccountId(req, true));
+        byte[] publicKey = Account.getPublicKey(ParameterParser.getAccountId(req, "participantAccount",true));
         if (publicKey == null) {
             return INCORRECT_ACCOUNT;
         }
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
         byte[] data = Convert.parseHexString(Convert.nullToEmpty(req.getParameter("data")));
         byte[] nonce = Convert.parseHexString(Convert.nullToEmpty(req.getParameter("nonce")));
         EncryptedData encryptedData = new EncryptedData(data, nonce);
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("decryptedMessageIsText"));
         boolean uncompress = !"false".equalsIgnoreCase(req.getParameter("uncompressDecryptedMessage"));
         try {
-            byte[] decrypted = Account.decryptFrom(publicKey, encryptedData, secretPhrase, uncompress);
+            byte[] decrypted = Account.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
             JSONObject response = new JSONObject();
             response.put("decryptedMessage", isText ? Convert.toString(decrypted) : Convert.toHexString(decrypted));
             return response;

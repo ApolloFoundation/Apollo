@@ -85,7 +85,7 @@ final class TransactionImpl implements Transaction {
         }
 
         @Override
-        public TransactionImpl build(String secretPhrase) throws AplException.NotValidException {
+        public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (timestamp == Integer.MAX_VALUE) {
                 timestamp = Apl.getEpochTime();
             }
@@ -94,7 +94,7 @@ final class TransactionImpl implements Transaction {
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
-            return new TransactionImpl(this, secretPhrase);
+            return new TransactionImpl(this, keySeed);
         }
 
         @Override
@@ -264,7 +264,7 @@ final class TransactionImpl implements Transaction {
     private volatile byte[] bytes = null;
 
 
-    private TransactionImpl(BuilderImpl builder, String secretPhrase) throws AplException.NotValidException {
+    private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
 
         this.timestamp = builder.timestamp;
         this.deadline = builder.deadline;
@@ -312,8 +312,8 @@ final class TransactionImpl implements Transaction {
         this.appendages = Collections.unmodifiableList(list);
         int appendagesSize = 0;
         for (Appendix appendage : appendages) {
-            if (secretPhrase != null && appendage instanceof Appendix.Encryptable) {
-                ((Appendix.Encryptable)appendage).encrypt(secretPhrase);
+            if (keySeed != null && appendage instanceof Appendix.Encryptable) {
+                ((Appendix.Encryptable)appendage).encrypt(keySeed);
             }
             appendagesSize += appendage.getSize();
         }
@@ -326,15 +326,15 @@ final class TransactionImpl implements Transaction {
             feeATM = builder.feeATM;
         }
 
-        if (builder.signature != null && secretPhrase != null) {
+        if (builder.signature != null && keySeed != null) {
             throw new AplException.NotValidException("Transaction is already signed");
         } else if (builder.signature != null) {
             this.signature = builder.signature;
-        } else if (secretPhrase != null) {
-            if (getSenderPublicKey() != null && ! Arrays.equals(senderPublicKey, Crypto.getPublicKey(secretPhrase))) {
+        } else if (keySeed != null) {
+            if (getSenderPublicKey() != null && ! Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
                 throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
             }
-            signature = Crypto.sign(bytes(), secretPhrase);
+            signature = Crypto.sign(bytes(), keySeed);
             bytes = null;
         } else {
             signature = null;

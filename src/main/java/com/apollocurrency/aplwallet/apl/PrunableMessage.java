@@ -20,6 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
@@ -27,11 +32,6 @@ import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 public final class PrunableMessage {
 
@@ -250,15 +250,10 @@ public final class PrunableMessage {
     }
 
     public byte[] decrypt(String secretPhrase) {
-        if (encryptedData == null) {
-            return null;
-        }
-        byte[] publicKey = senderId == Account.getId(Crypto.getPublicKey(secretPhrase))
-                ? Account.getPublicKey(recipientId) : Account.getPublicKey(senderId);
-        return Account.decryptFrom(publicKey, encryptedData, secretPhrase, isCompressed);
+        return decryptUsingKeySeed(Crypto.getKeySeed(secretPhrase));
     }
 
-    public byte[] decrypt(byte[] sharedKey) {
+    public byte[] decryptUsingSharedKey(byte[] sharedKey) {
         if (encryptedData == null) {
             return null;
         }
@@ -267,6 +262,15 @@ public final class PrunableMessage {
             data = Convert.uncompress(data);
         }
         return data;
+    }
+
+    public byte[] decryptUsingKeySeed(byte[] keySeed) {
+        if (encryptedData == null) {
+            return null;
+        }
+        byte[] publicKey = senderId == Account.getId(Crypto.getPublicKey(keySeed))
+                ? Account.getPublicKey(recipientId) : Account.getPublicKey(senderId);
+        return Account.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }
 
     static void add(TransactionImpl transaction, Appendix.PrunablePlainMessage appendix) {

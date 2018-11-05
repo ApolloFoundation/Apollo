@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
@@ -12,7 +14,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
@@ -22,10 +23,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor("com.apollocurrency.aplwallet.apl.util.Logger")
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
 
@@ -43,9 +41,6 @@ public class DownloaderTest {
     @Test
     public void testTryDownloadWithInvalidUrl() {
 
-        PowerMockito.mockStatic(Logger.class);
-        PowerMockito.doNothing().when(Logger.class);
-
         UpdaterMediator updaterMediator = UpdaterMediator.getInstance();
         Downloader downloader = Downloader.getInstance();
 
@@ -62,9 +57,6 @@ public class DownloaderTest {
      */
     @Test
     public void testTryDownloadWithSignedValidPayload() {
-
-        PowerMockito.mockStatic(Logger.class);
-        PowerMockito.doNothing().when(Logger.class);
 
         Downloader downloader = Downloader.getInstance();
         UpdaterMediator updaterMediator = UpdaterMediator.getInstance();

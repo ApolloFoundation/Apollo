@@ -1740,7 +1740,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
 
-    void generateBlock(String secretPhrase, int blockTimestamp, int timeout) throws BlockNotAcceptedException {
+    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout) throws BlockNotAcceptedException {
 
         BlockImpl previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp);
@@ -1759,12 +1759,12 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         byte[] payloadHash = digest.digest();
         digest.update(previousBlock.getGenerationSignature());
-        final byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        final byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
-                payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, secretPhrase);
+                payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed);
 
         try {
             pushBlock(block);

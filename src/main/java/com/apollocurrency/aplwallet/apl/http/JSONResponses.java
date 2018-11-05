@@ -20,14 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import java.util.Arrays;
+
+import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import java.util.Arrays;
 
 public final class JSONResponses {
 
@@ -195,6 +197,14 @@ public final class JSONResponses {
         NOT_ENOUGH_CURRENCY = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware ACCOUNT_GENERATION_ERROR;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 6);
+        response.put("errorDescription", "Error occurred during account generation");
+        ACCOUNT_GENERATION_ERROR = JSON.prepare(response);
+    }
+
     public static final JSONStreamAware ERROR_NOT_ALLOWED;
     static {
         JSONObject response = new JSONObject();
@@ -233,6 +243,14 @@ public final class JSONResponses {
         response.put("errorCode", 1);
         response.put("errorDescription", "This request is only accepted using POST!");
         POST_REQUIRED = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware REQUIRED_2FA;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 1);
+        response.put("errorDescription", "This request require successfully 2FA passing");
+        REQUIRED_2FA = JSON.prepare(response);
     }
 
     public static final JSONStreamAware FEATURE_NOT_AVAILABLE;
@@ -367,7 +385,7 @@ public final class JSONResponses {
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
-        response.put("errorDescription", "secretPhrase not specified or not submitted to the remote node");
+        response.put("errorDescription", "neither secretPhrase nor passphrase were not specified or submitted to the remote node");
         MISSING_SECRET_PHRASE = JSON.prepare(response);
     }
 
@@ -493,6 +511,7 @@ public final class JSONResponses {
         response.put("errorDescription", "Unknown account");
         response.put("account", Long.toUnsignedString(id));
         response.put("accountRS", Convert.rsAccount(id));
+        response.put("is2FA", Account.isEnabled2FA(id));
         return JSON.prepare(response);
     }
 
@@ -536,6 +555,24 @@ public final class JSONResponses {
         response.put("errorCode", 5);
         response.put("errorDescription", "Account monitor already started");
         MONITOR_ALREADY_STARTED = JSON.prepare(response);
+    }
+
+    public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA, long accountId) {
+        return accountError(accountId, String.valueOf(status2FA));
+    }
+
+    public static JSONStreamAware vaultWalletError(long accountId, String notPerformedAction, String errorDetails) {
+        return accountError(accountId, String.format("Vault wallet for account was not %s : %s", notPerformedAction, errorDetails));
+    }
+
+    public static JSONStreamAware accountError(long accountId, String errorDetails) {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 22);
+        response.put("errorDescription", errorDetails);
+        if (accountId != 0) {
+            JSONData.putAccount(response, "account", accountId);
+        }
+        return JSON.prepare(response);
     }
 
     public static final JSONStreamAware MONITOR_NOT_STARTED;

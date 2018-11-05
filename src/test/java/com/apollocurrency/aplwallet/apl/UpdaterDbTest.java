@@ -4,6 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
+
+import java.sql.Connection;
+
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
@@ -21,12 +29,6 @@ import org.powermock.reflect.Whitebox;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-
-import java.sql.Connection;
-
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Db.class, TransactionalDb.class, Constants.class, Apl.class, BlockchainImpl.class})
@@ -49,7 +51,7 @@ public class UpdaterDbTest {
         mockStatic(TransactionalDb.class);
         mockStatic(Constants.class);
         TransactionalDb fakeDb = mock(TransactionalDb.class);
-        Whitebox.setInternalState(Db.class, "db", fakeDb);
+        PowerMockito.doReturn(fakeDb).when(Db.class, "getDb");
         Whitebox.setInternalState(Constants.class, "correctInvalidFees", false);
         BlockchainImpl mock = spy(BlockchainImpl.getInstance());
         PowerMockito.doReturn(100).when(mock).getHeight();

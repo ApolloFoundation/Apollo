@@ -29,8 +29,8 @@ import java.util.Arrays;
 
 public final class AnonymouslyEncryptedData {
 
-    public static AnonymouslyEncryptedData encrypt(byte[] plaintext, String secretPhrase, byte[] theirPublicKey, byte[] nonce) {
-        byte[] keySeed = Crypto.getKeySeed(secretPhrase, theirPublicKey, nonce);
+    public static AnonymouslyEncryptedData encrypt(byte[] plaintext, byte[] secretBytes, byte[] theirPublicKey, byte[] nonce) {
+        byte[] keySeed = Crypto.getKeySeed(secretBytes, theirPublicKey, nonce);
         byte[] myPrivateKey = Crypto.getPrivateKey(keySeed);
         byte[] myPublicKey = Crypto.getPublicKey(keySeed);
         byte[] sharedKey = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
@@ -68,8 +68,8 @@ public final class AnonymouslyEncryptedData {
         this.publicKey = publicKey;
     }
 
-    public byte[] decrypt(String secretPhrase) {
-        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(secretPhrase), publicKey);
+    public byte[] decrypt(byte[] secretBytes) {
+        byte[] sharedKey = Crypto.getSharedKey(Crypto.getPrivateKey(Crypto.getKeySeed(secretBytes)), publicKey);
         return Crypto.aesGCMDecrypt(data, sharedKey);
     }
 

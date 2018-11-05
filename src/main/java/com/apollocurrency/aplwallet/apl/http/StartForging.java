@@ -43,9 +43,9 @@ public final class StartForging extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
-        Generator generator = Generator.startForging(secretPhrase);
+        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        Generator generator = Generator.startForging(keySeed);
 
         JSONObject response = new JSONObject();
         response.put("deadline", generator.getDeadline());
@@ -69,4 +69,8 @@ public final class StartForging extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected String accountName2FA() {
+        return "account";
+    }
 }

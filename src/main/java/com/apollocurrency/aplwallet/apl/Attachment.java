@@ -1766,8 +1766,8 @@ public interface Attachment extends Appendix {
         }
 
         @Override
-        public void encrypt(String secretPhrase) {
-            setGoods(EncryptedData.encrypt(getPlaintext(), secretPhrase, recipientPublicKey));
+        public void encrypt(byte[] keySeed){
+            setGoods(EncryptedData.encrypt(getPlaintext(), keySeed, recipientPublicKey));
         }
 
         @Override

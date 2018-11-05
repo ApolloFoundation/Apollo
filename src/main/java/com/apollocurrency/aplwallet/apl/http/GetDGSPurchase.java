@@ -20,6 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
@@ -28,12 +34,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAILED;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(GetDGSPurchase.class);
@@ -48,7 +48,7 @@ public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
     }
 
     private GetDGSPurchase() {
-        super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey");
+        super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey", "account", "passphrase");
     }
 
     @Override
@@ -58,11 +58,12 @@ public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
         JSONObject response = JSONData.purchase(purchase);
 
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        if (sharedKey.length != 0 && secretPhrase != null) {
-            return JSONResponses.either("secretPhrase", "sharedKey");
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+        if (sharedKey.length != 0 && keySeed != null) {
+            return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }
-        if (sharedKey.length == 0 && secretPhrase == null) {
+        if (sharedKey.length == 0 && keySeed == null) {
             return response;
         }
         if (purchase.getEncryptedGoods() != null) {
@@ -70,13 +71,13 @@ public final class GetDGSPurchase extends APIServlet.APIRequestHandler {
             try {
                 byte[] decrypted = Convert.EMPTY_BYTE;
                 if (data.length != 0) {
-                    if (secretPhrase != null) {
-                        byte[] readerPublicKey = Crypto.getPublicKey(secretPhrase);
+                    if (keySeed != null) {
+                        byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
                         byte[] sellerPublicKey = Account.getPublicKey(purchase.getSellerId());
                         byte[] buyerPublicKey = Account.getPublicKey(purchase.getBuyerId());
                         byte[] publicKey = Arrays.equals(sellerPublicKey, readerPublicKey) ? buyerPublicKey : sellerPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, purchase.getEncryptedGoods(), secretPhrase, true);
+                            decrypted = Account.decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(purchase.getEncryptedGoods().getData(), sharedKey);

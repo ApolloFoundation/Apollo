@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
 
 public final class EncryptTo extends APIServlet.APIRequestHandler {
 
@@ -43,12 +43,13 @@ public final class EncryptTo extends APIServlet.APIRequestHandler {
     }
 
     private EncryptTo() {
-        super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase");
+        super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase"
+                , "account", "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-
+        long senderAccountId = ParameterParser.getAccountId(req, "account", false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", true);
         byte[] recipientPublicKey = Account.getPublicKey(recipientId);
         if (recipientPublicKey == null) {
@@ -66,8 +67,8 @@ public final class EncryptTo extends APIServlet.APIRequestHandler {
         } catch (RuntimeException e) {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
-        String secretPhrase = ParameterParser.getSecretPhrase(req, true);
-        EncryptedData encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, secretPhrase, compress);
+        byte[] keySeed = ParameterParser.getKeySeed(req, senderAccountId, true);
+        EncryptedData encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 
     }

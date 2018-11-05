@@ -362,6 +362,7 @@ public final class JSONData {
             accountArray.add(accountBalanceJson);
         }
         result.put("accounts", accountArray);
+        result.put("total", Account.getGenesisBalancesNumber());
         return result;
     }
 
@@ -1140,7 +1141,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject prunableMessage(PrunableMessage prunableMessage, String secretPhrase, byte[] sharedKey) {
+    static JSONObject prunableMessage(PrunableMessage prunableMessage, byte[] keySeed, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
@@ -1158,10 +1159,10 @@ public final class JSONData {
             json.put("encryptedMessageIsText", prunableMessage.encryptedMessageIsText());
             byte[] decrypted = null;
             try {
-                if (secretPhrase != null) {
-                    decrypted = prunableMessage.decrypt(secretPhrase);
+                if (keySeed != null) {
+                    decrypted = prunableMessage.decryptUsingKeySeed(keySeed);
                 } else if (sharedKey != null && sharedKey.length > 0) {
-                    decrypted = prunableMessage.decrypt(sharedKey);
+                    decrypted = prunableMessage.decryptUsingSharedKey(sharedKey);
                 }
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
@@ -1178,6 +1179,8 @@ public final class JSONData {
         }
         return json;
     }
+
+
 
     static JSONObject taggedData(TaggedData taggedData, boolean includeData) {
         JSONObject json = new JSONObject();

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
@@ -18,8 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
 public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
 
@@ -39,7 +39,8 @@ public class GetPrivateAccountLedger extends APIServlet.APIRequestHandler {
      */
     private GetPrivateAccountLedger() {
         super(new APITag[] {APITag.ACCOUNTS},  "firstIndex", "lastIndex",
-                "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo", "secretPhrase", "publicKey");
+                "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo", "secretPhrase", "publicKey", "account"
+                , "passphrase");
     }
 
     /**
