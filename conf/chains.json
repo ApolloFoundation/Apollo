@@ -72,7 +72,7 @@
         }
       },
       {
-        "height": 230100,
+        "height": 230500,
         "maxNumberOfTransactions": 255,
         "blockTime": 1,
         "maxBalance": 30000000000,
@@ -88,7 +88,7 @@
 
       },
       {
-        "height": 232100,
+        "height": 233000,
         "maxNumberOfTransactions": 255,
         "blockTime": 10,
         "maxBalance": 30000000000,
