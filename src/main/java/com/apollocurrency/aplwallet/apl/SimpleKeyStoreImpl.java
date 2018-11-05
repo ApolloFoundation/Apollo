@@ -102,7 +102,7 @@ import org.slf4j.Logger;
                          if (beginIndex == -1) {
                              return false;
                          }
-                         return stringPath.substring(beginIndex + 3).equalsIgnoreCase(String.valueOf(Convert.rsAccount(accountId)));
+                         return stringPath.substring(beginIndex + 3).equalsIgnoreCase(String.valueOf(Convert.defaultRsAccount(accountId)));
                      }).collect(Collectors.toList());
          }
          catch (IOException e) {
@@ -179,7 +179,7 @@ import org.slf4j.Logger;
      private Path makeTargetPath(long accountId) {
          Instant instant = Instant.now();
          OffsetDateTime utcTime = instant.atOffset( ZoneOffset.UTC );
-         return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.rsAccount(accountId)));
+         return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.defaultRsAccount(accountId)));
      }
 
      private boolean isNewAccount(long accountId) {

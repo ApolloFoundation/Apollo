@@ -20,6 +20,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.security.GeneralSecurityException;
+import java.util.Random;
+
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -31,9 +34,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import util.TwoFactorAuthUtil;
-
-import java.security.GeneralSecurityException;
-import java.util.Random;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TwoFactorAuthServiceTest {
@@ -50,7 +50,7 @@ public class TwoFactorAuthServiceTest {
     public void testEnable() {
         doReturn(true).when(repository).add(any(TwoFactorAuthEntity.class));
         TwoFactorAuthDetails twoFactorAuthDetails = service.enable(ENTITY3.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert.rsAccount(ENTITY3.getAccount()));
+        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert.defaultRsAccount(ENTITY3.getAccount()));
         Assert.assertEquals(TwoFactorAuthService.Status2FA.OK, twoFactorAuthDetails.getStatus2Fa());
         verify(repository, times(1)).add(any(TwoFactorAuthEntity.class));
     }
@@ -68,7 +68,7 @@ public class TwoFactorAuthServiceTest {
         doReturn(ENTITY2).when(repository).get(ACCOUNT2.getId());
 
         TwoFactorAuthDetails details = service.enable(ACCOUNT2.getId());
-        TwoFactorAuthUtil.verifySecretCode(details, Convert.rsAccount(ACCOUNT2.getId()));
+        TwoFactorAuthUtil.verifySecretCode(details, Convert.defaultRsAccount(ACCOUNT2.getId()));
         Assert.assertEquals(ACCOUNT2_2FA_SECRET_BASE32, details.getSecret());
     }
 

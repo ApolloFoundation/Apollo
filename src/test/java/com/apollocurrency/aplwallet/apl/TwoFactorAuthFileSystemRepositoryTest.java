@@ -27,8 +27,8 @@ public class TwoFactorAuthFileSystemRepositoryTest extends AbstractTwoFactorAuth
         repositoryPath = Files.createTempDirectory("test2faFSrepository");
         repository = new TwoFactorAuthFileSystemRepository(repositoryPath);
         setRepository(repository);
-        String confirmedAccount = Convert.rsAccount(TwoFactorAuthTestData.ENTITY1.getAccount());
-        String unconfirmedAccount = Convert.rsAccount(TwoFactorAuthTestData.ENTITY2.getAccount());
+        String confirmedAccount = Convert.defaultRsAccount(TwoFactorAuthTestData.ENTITY1.getAccount());
+        String unconfirmedAccount = Convert.defaultRsAccount(TwoFactorAuthTestData.ENTITY2.getAccount());
         JSON.writeJson(repositoryPath.resolve(confirmedAccount), TwoFactorAuthTestData.ENTITY1);
         JSON.writeJson(repositoryPath.resolve(unconfirmedAccount), TwoFactorAuthTestData.ENTITY2);
     }

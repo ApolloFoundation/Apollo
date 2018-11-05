@@ -136,7 +136,7 @@ public final class Convert {
         }
         return result;
     }
-
+    //TODO: rewrite other classes without defaultRsAccount
     public static String rsAccount(long accountId) {
         return Constants.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }

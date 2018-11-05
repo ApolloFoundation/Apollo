@@ -48,8 +48,8 @@ import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
@@ -62,21 +62,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
     private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
@@ -86,7 +71,7 @@ public final class Account {
     private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore =
             new SimpleKeyStoreImpl(Apl.getKeystoreDir(
-                    Constants.isTestnet ?
+                    Constants.isTestnet() ?
                             Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
                             Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
@@ -316,11 +301,11 @@ public final class Account {
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
             Apl.getBooleanProperty("apl.store2FAInFileSystem") ?
                     new TwoFactorAuthFileSystemRepository(Apl.get2FADir(
-                            Constants.isTestnet ?
+                            Constants.isTestnet() ?
                                     Apl.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
                                     Apl.getStringProperty("apl.dir2FA", "2fa")
                     )) :
-                    new TwoFactorAuthRepositoryImpl(Db.db));
+                    new TwoFactorAuthRepositoryImpl(Db.getDb()));
 
     static {
 
