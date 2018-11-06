@@ -132,6 +132,13 @@ public class UPnP {
         // Discover the gateway devices on the local network
         //
         try {
+            //TODO: Stub. Find where that UPnP calling and fix properly...
+            if (!Apl.getBooleanProperty("apl.enablePeerUPnP"))
+            {
+                LOG.info("UPnP disabled");
+                return;
+            }
+            
             LOG.info("Looking for UPnP gateway device...");
             GatewayDevice.setHttpReadTimeout(Apl.getIntProperty("apl.upnpGatewayTimeout", GatewayDevice.getHttpReadTimeout()));
             GatewayDiscover discover = new GatewayDiscover();

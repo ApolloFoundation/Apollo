@@ -570,7 +570,7 @@ public final class Apl {
       for (String propertyName : systemProperties) {
         String propertyValue;
         if ((propertyValue = System.getProperty(propertyName)) != null) {
-          System.setProperty(propertyName, propertyValue);
+          //System.setProperty(propertyName, propertyValue);
           properties.setProperty(propertyName, propertyValue);
           LOG.info("System property set: ", propertyName + " " + propertyValue);
         }
