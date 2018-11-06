@@ -564,13 +564,20 @@ public final class Apl {
       String[] systemProperties = new String[] {
         "socksProxyHost",
         "socksProxyPort",
+        "apl.enablePeerUPnP"
       };
 
       for (String propertyName : systemProperties) {
         String propertyValue;
-        if ((propertyValue = getStringProperty(propertyName)) != null) {
+        if ((propertyValue = System.getProperty(propertyName)) != null) {
           System.setProperty(propertyName, propertyValue);
+          properties.setProperty(propertyName, propertyValue);
+          LOG.info("System property set: ", propertyName + " " + propertyValue);
         }
+        else
+        {
+        }
+        
       }
     }
 
