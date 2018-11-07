@@ -17,12 +17,24 @@ then
 
     echo Copy update files
     cp -vRa $2/* $1
+    
+
+    unamestr=`uname`
+    if [[ "$unamestr" == 'Darwin' ]]; then
+	mv "$1/ApolloWallet+Secure Transport.app" $1/../
+	chmod 755 "$1/../ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
+	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
+	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/*.sh"
+    fi
+
 
     cd $1 
     chmod 755 *.sh
 
     cd $1 
     chmod 755 *.sh
+
+
 
     if [ $3 == true ]
     then
