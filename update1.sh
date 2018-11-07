@@ -30,6 +30,12 @@ then
 	chmod 755 "$1/../ApolloWallet+Tor.app/tor/bin/tor"
     fi
 
+    if [[ "$unamestr" == 'Linux' ]]; then
+	chmod 755 $1/tor/tor
+	chmod 755 $1/secureTransport/securenodexchg
+	chmod 755 $1/secureTransport/runClient.sh
+    fi
+
 
     cd $1 
     chmod 755 *.sh
