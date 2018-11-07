@@ -22,9 +22,12 @@ then
     unamestr=`uname`
     if [[ "$unamestr" == 'Darwin' ]]; then
 	mv "$1/ApolloWallet+Secure Transport.app" $1/../
+	mv "$1/ApolloWallet+Tor.app" $1/../
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/*.sh"
+	chmod 755 "$1/../ApolloWallet+Tor.app/Contents/MacOS/apl"
+	chmod 755 "$1/../ApolloWallet+Tor.app/tor/bin/tor"
     fi
 
 
