@@ -856,12 +856,15 @@ public final class Account {
             ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
             int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             TwoFactorAuthService.Status2FA status2FA;
+            long accountId;
             if (params2FA.isPassphrasePresent()) {
-                 status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
+                status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
+                accountId = params2FA.getAccountId();
             } else {
                 status2FA = Account.auth2FA(params2FA.getSecretPhrase(), code);
+                accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
             }
-            validate2FAStatus(status2FA);
+            validate2FAStatus(status2FA, accountId);
         }
     }
 

@@ -14,7 +14,7 @@ import org.json.simple.JSONStreamAware;
 
 public class Disable2FA extends APIServlet.APIRequestHandler {
     private Disable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "code2FA", "secretPhrase", "account", "passphrase");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
     }
 
     private static class Disable2FAHolder {
@@ -40,6 +40,16 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
         JSONData.putAccount(response, "account", params2FA.accountId);
         response.put("status", status2FA);
         return response;
+    }
+
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
+
+    @Override
+    protected boolean is2FAProtected() {
+        return true;
     }
 
     @Override

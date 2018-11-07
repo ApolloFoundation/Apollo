@@ -20,15 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_WHITELIST;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.PhasingParams;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -257,8 +271,13 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected String accountName2FA() {
+    protected String vaultAccountName() {
         return "sender";
+    }
+
+    @Override
+    protected boolean is2FAProtected() {
+        return true;
     }
 
     @Override
