@@ -20,15 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_WHITELIST;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.PhasingParams;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
@@ -126,6 +140,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                             long amountATM, Attachment attachment) throws AplException {
+        boolean calculateFee = ParameterParser.getBoolean(req, "calculateFee", false);
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
@@ -163,26 +178,27 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             phasing = parsePhasing(req);
         }
 
-        if (secretPhrase == null && publicKeyValue == null && passphrase == null) {
+        if (secretPhrase == null && publicKeyValue == null && passphrase == null && !calculateFee) {
             return MISSING_SECRET_PHRASE;
-        } else if (deadlineValue == null) {
+        } else if (deadlineValue == null && !calculateFee) {
             return MISSING_DEADLINE;
         }
 
-        short deadline;
+        short deadline = 0;
         try {
             deadline = Short.parseShort(deadlineValue);
-            if (deadline < 1) {
+            if (deadline < 1 && !calculateFee) {
                 return INCORRECT_DEADLINE;
             }
         } catch (NumberFormatException e) {
-            return INCORRECT_DEADLINE;
+            if (!calculateFee) {
+                return INCORRECT_DEADLINE;
+            }
         }
-
-        long feeATM = ParameterParser.getFeeATM(req);
+        long feeATM = ParameterParser.getFeeATM(req, !calculateFee);
         int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
         long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
-        if (ecBlockId != 0 && ecBlockId != Apl.getBlockchain().getBlockIdAtHeight(ecBlockHeight)) {
+        if (ecBlockId != 0 && ecBlockId != Apl.getBlockchain().getBlockIdAtHeight(ecBlockHeight) && !calculateFee) {
             return INCORRECT_EC_BLOCK;
         }
         if (ecBlockId == 0 && ecBlockHeight > 0) {
@@ -194,7 +210,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
         try {
-            Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountATM, feeATM,
+            Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountATM, calculateFee ? 0 : feeATM,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
@@ -212,6 +228,10 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
             byte[] keySeed = ParameterParser.getKeySeed(req, senderAccount.getId(), false);
             Transaction transaction = builder.build(keySeed);
+            if (calculateFee) {
+                response.put("feeATM", transaction.getFeeATM());
+                return response;
+            }
             try {
                 if (Math.addExact(amountATM, transaction.getFeeATM()) > senderAccount.getUnconfirmedBalanceATM()) {
                     return NOT_ENOUGH_FUNDS;

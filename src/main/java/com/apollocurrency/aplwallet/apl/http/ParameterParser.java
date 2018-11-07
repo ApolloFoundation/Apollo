@@ -55,6 +55,17 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Alias;
 import com.apollocurrency.aplwallet.apl.Apl;
@@ -80,17 +91,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
@@ -289,7 +289,10 @@ public final class ParameterParser {
     }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeATM", 0L, Constants.MAX_BALANCE_ATM, true);
+        return getFeeATM(req, true);
+    }
+    public static long getFeeATM(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getLong(req, "feeATM", 0L, Constants.MAX_BALANCE_ATM, isMandatory);
     }
 
     public static long getPriceATM(HttpServletRequest req) throws ParameterException {
@@ -533,7 +536,7 @@ public final class ParameterParser {
     }
 
 
-    public static Account getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
+    public static Account getSenderAccount(HttpServletRequest req, String accountName, boolean isMandatory) throws ParameterException {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
@@ -544,7 +547,7 @@ public final class ParameterParser {
         return account;
     }
     public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
-        return getSenderAccount(req, null);
+        return getSenderAccount(req, null, true);
     }
     public static Account getAccount(HttpServletRequest req) throws ParameterException {
         return getAccount(req, true);
@@ -964,6 +967,21 @@ public final class ParameterParser {
     public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req) throws ParameterException {
         return parse2FARequest(req, "account", true);
 
+    }
+
+    public static boolean getBoolean(HttpServletRequest request, String parameterName, boolean isMandatory) throws ParameterException {
+        String paramValue = Convert.emptyToNull(request.getParameter(parameterName));
+        if (paramValue == null) {
+            if (isMandatory) {
+                throw new ParameterException(missing(parameterName));
+            }
+            return false;
+        }
+        try {
+            return Boolean.parseBoolean(paramValue);
+        } catch (RuntimeException e) {
+            throw new ParameterException(incorrect(parameterName, String.format("value %s is not boolean", paramValue)));
+        }
     }
 
     private ParameterParser() {} // never
