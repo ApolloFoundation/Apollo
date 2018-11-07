@@ -20,9 +20,56 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AccountLedger;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Asset;
+import com.apollocurrency.aplwallet.apl.AssetDelete;
+import com.apollocurrency.aplwallet.apl.AssetDividend;
+import com.apollocurrency.aplwallet.apl.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Currency;
+import com.apollocurrency.aplwallet.apl.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.CurrencyType;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.Exchange;
+import com.apollocurrency.aplwallet.apl.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.FundingMonitor;
+import com.apollocurrency.aplwallet.apl.Generator;
+import com.apollocurrency.aplwallet.apl.HoldingType;
+import com.apollocurrency.aplwallet.apl.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.Order;
+import com.apollocurrency.aplwallet.apl.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.PhasingVote;
+import com.apollocurrency.aplwallet.apl.Poll;
+import com.apollocurrency.aplwallet.apl.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.Shuffler;
+import com.apollocurrency.aplwallet.apl.Shuffling;
+import com.apollocurrency.aplwallet.apl.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.TaggedData;
+import com.apollocurrency.aplwallet.apl.Token;
+import com.apollocurrency.aplwallet.apl.Trade;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
+import com.apollocurrency.aplwallet.apl.Vote;
+import com.apollocurrency.aplwallet.apl.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
@@ -33,10 +80,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
 
 public final class JSONData {
 
@@ -1097,7 +1140,7 @@ public final class JSONData {
         return json;
     }
 
-    static JSONObject prunableMessage(PrunableMessage prunableMessage, String secretPhrase, byte[] sharedKey) {
+    static JSONObject prunableMessage(PrunableMessage prunableMessage, byte[] keySeed, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
@@ -1115,10 +1158,10 @@ public final class JSONData {
             json.put("encryptedMessageIsText", prunableMessage.encryptedMessageIsText());
             byte[] decrypted = null;
             try {
-                if (secretPhrase != null) {
-                    decrypted = prunableMessage.decrypt(secretPhrase);
+                if (keySeed != null) {
+                    decrypted = prunableMessage.decryptUsingKeySeed(keySeed);
                 } else if (sharedKey != null && sharedKey.length > 0) {
-                    decrypted = prunableMessage.decrypt(sharedKey);
+                    decrypted = prunableMessage.decryptUsingSharedKey(sharedKey);
                 }
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
@@ -1135,6 +1178,8 @@ public final class JSONData {
         }
         return json;
     }
+
+
 
     static JSONObject taggedData(TaggedData taggedData, boolean includeData) {
         JSONObject json = new JSONObject();

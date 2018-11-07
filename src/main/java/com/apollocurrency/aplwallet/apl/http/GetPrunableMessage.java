@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSACTION;
 
 public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
 
@@ -41,16 +41,17 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
     }
 
     private GetPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
+        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
-        if (sharedKey.length != 0 && secretPhrase != null) {
-            return JSONResponses.either("secretPhrase", "sharedKey");
+        if (sharedKey.length != 0 && keySeed != null) {
+            return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
@@ -61,7 +62,7 @@ public final class GetPrunableMessage extends APIServlet.APIRequestHandler {
             prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
         }
         if (prunableMessage != null) {
-            return JSONData.prunableMessage(prunableMessage, secretPhrase, sharedKey);
+            return JSONData.prunableMessage(prunableMessage, keySeed, sharedKey);
         }
         return JSON.emptyJSON;
     }

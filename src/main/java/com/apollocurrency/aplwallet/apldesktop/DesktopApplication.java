@@ -20,11 +20,50 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.net.ssl.HttpsURLConnection;
+import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.TaggedData;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
+import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -53,28 +92,6 @@ import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.awt.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
-import static org.slf4j.LoggerFactory.getLogger;
-
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
 
@@ -86,6 +103,9 @@ public class DesktopApplication extends Application {
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
     private static volatile Stage screenStage;
+    private static volatile Stage changelogStage;
+    
+
 
     public static void refreshMainApplication() {
         MainApplication.refresh();
@@ -134,6 +154,12 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
+        if (!Apl.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        {
+            Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
+            Option.set("Previous launch APP Version", Apl.VERSION.toString());
+            
+        }
     }
 
     //start javaFx splash screen
@@ -308,7 +334,7 @@ public class DesktopApplication extends Application {
         public static MainApplication getInstance() {
             return instance;
         }
-
+           
         public void startDesktopApplication() {
             mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
@@ -388,6 +414,31 @@ public class DesktopApplication extends Application {
             mainStage.sizeToScene();
             mainStage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::showOnCloseWarnAlert);
             mainStage.show();
+            Platform.setImplicitExit(false); // So that we can reopen the application in case the user closed it
+        }
+        
+        public void startChangelogWindow() {
+            changelogStage = new Stage();
+            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+            WebView browser = new WebView();
+            browser.setOnContextMenuRequested(new WalletContextMenu());
+
+            int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 500);
+            int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 720);
+            browser.setMinHeight(height);
+            browser.setMinWidth(width);
+            webEngine = browser.getEngine();
+            URL changelogUrl = getClass().getClassLoader().getResource("html/changelog.html");
+
+            webEngine.load(changelogUrl.toString());
+
+            Scene scene = new Scene(browser);
+            String address = API.getServerRootUri().toString();
+            changelogStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
+            changelogStage.initStyle(StageStyle.DECORATED);
+            changelogStage.setScene(scene);
+            changelogStage.sizeToScene();
+            changelogStage.show();
             Platform.setImplicitExit(false); // So that we can reopen the application in case the user closed it
         }
 
@@ -555,7 +606,7 @@ public class DesktopApplication extends Application {
                         if (secretPhrase != null) {
                             data = prunableMessage.decrypt(secretPhrase);
                         } else if (sharedKey.length > 0) {
-                            data = prunableMessage.decrypt(sharedKey);
+                            data = prunableMessage.decryptUsingSharedKey(sharedKey);
                         } else {
                             data = prunableMessage.getMessage();
                         }

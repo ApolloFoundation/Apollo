@@ -4,4 +4,6 @@ If Not WScript.Arguments.Named.Exists("elevate") Then
   WScript.Quit
 End If
 Set WshShell = CreateObject("WScript.Shell") 
-WshShell.Run "run-secure-transport.bat", 0, false
+scriptdir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
+WshShell.CurrentDirectory = scriptdir
+WshShell.Run chr(34) & scriptdir & "\run-secure-transport.bat" & chr(34), 0, false

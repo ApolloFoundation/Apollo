@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class SignTransaction extends APIServlet.APIRequestHandler {
 
@@ -40,7 +40,7 @@ public final class SignTransaction extends APIServlet.APIRequestHandler {
 
     private SignTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase",
-                "validate", "sender");
+                "validate", "sender", "passphrase");
     }
 
     @Override

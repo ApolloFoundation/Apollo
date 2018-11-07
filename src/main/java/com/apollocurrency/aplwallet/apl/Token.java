@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
-import java.util.Arrays;
-
 public final class Token {
 
-    public static String generateToken(String secretPhrase, String messageString) {
-        return generateToken(secretPhrase, Convert.toBytes(messageString));
+    public static String generateToken(byte[] keySeed, String messageString) {
+        return generateToken(keySeed, Convert.toBytes(messageString));
     }
 
-    public static String generateToken(String secretPhrase, byte[] message) {
+    public static String generateToken(byte[] keySeed, byte[] message) {
         byte[] data = new byte[message.length + 32 + 4];
         System.arraycopy(message, 0, data, 0, message.length);
-        System.arraycopy(Crypto.getPublicKey(secretPhrase), 0, data, message.length, 32);
+        System.arraycopy(Crypto.getPublicKey(keySeed), 0, data, message.length, 32);
         int timestamp = Apl.getEpochTime();
         data[message.length + 32] = (byte)timestamp;
         data[message.length + 32 + 1] = (byte)(timestamp >> 8);
@@ -43,7 +43,7 @@ public final class Token {
 
         byte[] token = new byte[100];
         System.arraycopy(data, message.length, token, 0, 32 + 4);
-        System.arraycopy(Crypto.sign(data, secretPhrase), 0, token, 32 + 4, 64);
+        System.arraycopy(Crypto.sign(data, keySeed), 0, token, 32 + 4, 64);
 
         StringBuilder buf = new StringBuilder();
         for (int ptr = 0; ptr < 100; ptr += 5) {

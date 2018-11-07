@@ -11,12 +11,16 @@ else
     JAVA=java
 fi
 
+unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
-    cd tor
-    ./tor &
+
+    cd secureTransport
+    sudo ./runClient.sh 
     cd ..
 fi
 
-${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop -jar Apollo.jar
+
+
+${JAVA} -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false -jar Apollo.jar
 
 

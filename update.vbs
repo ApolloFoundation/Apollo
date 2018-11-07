@@ -39,7 +39,8 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	Wscript.Echo "Subfolders were copied"
 	Set objShell = Wscript.CreateObject("WScript.Shell")
 	objShell.CurrentDirectory = WScript.Arguments(0)
-	if  ("true" = LCase(WScript.Arguments(2))) Then
+    	objShell.Run "make_transport_shortcut.vbs" & " " & chr(34) & WScript.Arguments(0) & chr(34) & "\.."
+    if  ("true" = LCase(WScript.Arguments(2))) Then
         WScript.Echo "Start desktop application"
  	objShell.Run chr(34) & WScript.Arguments(0) & "\start-desktop.vbs" & chr(34)
     else

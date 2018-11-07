@@ -20,6 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.HoldingType;
@@ -28,9 +31,6 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 /**
  * Get a funding monitor
@@ -60,7 +60,7 @@ public class GetFundingMonitor extends APIServlet.APIRequestHandler {
 
     private GetFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
-                "includeMonitoredAccounts", "account", "adminPassword");
+                "includeMonitoredAccounts", "account", "adminPassword", "account", "passphrase");
     }
     /**
      * Process the request
@@ -71,35 +71,37 @@ public class GetFundingMonitor extends APIServlet.APIRequestHandler {
      */
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
+        long accountId = ParameterParser.getAccountId(req, false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
         long account = ParameterParser.getAccountId(req, false);
         boolean includeMonitoredAccounts = "true".equalsIgnoreCase(req.getParameter("includeMonitoredAccounts"));
-        if (secretPhrase == null) {
+        if (keySeed == null) {
             API.verifyPassword(req);
         }
         List<FundingMonitor> monitors;
-        if (secretPhrase != null || account != 0) {
-            if (secretPhrase != null) {
+        if (keySeed != null || account != 0) {
+            if (keySeed != null) {
                 if (account != 0) {
-                    if (Account.getId(Crypto.getPublicKey(secretPhrase)) != account) {
+                    if (Account.getId(Crypto.getPublicKey(keySeed)) != account) {
                         return JSONResponses.INCORRECT_ACCOUNT;
                     }
                 } else {
-                    account = Account.getId(Crypto.getPublicKey(secretPhrase));
+                    account = Account.getId(Crypto.getPublicKey(keySeed));
                 }
             }
-            final long accountId = account;
+            accountId = account;
             final HoldingType holdingType = ParameterParser.getHoldingType(req);
             final long holdingId = ParameterParser.getHoldingId(req, holdingType);
             final String property = ParameterParser.getAccountProperty(req, false);
             Filter<FundingMonitor> filter;
+            long finalAccountId = accountId;
             if (property != null) {
-                filter = (monitor) -> monitor.getAccountId() == accountId &&
+                filter = (monitor) -> monitor.getAccountId() == finalAccountId &&
                         monitor.getProperty().equals(property) &&
                         monitor.getHoldingType() == holdingType &&
                         monitor.getHoldingId() == holdingId;
             } else {
-                filter = (monitor) -> monitor.getAccountId() == accountId;
+                filter = (monitor) -> monitor.getAccountId() == finalAccountId;
             }
             monitors = FundingMonitor.getMonitors(filter);
         } else {
