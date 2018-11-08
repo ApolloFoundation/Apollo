@@ -1073,20 +1073,22 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void processPeerBlock(JSONObject request) throws AplException {
-        BlockImpl block = BlockImpl.parseBlock(request);
-        BlockImpl lastBlock = blockchain.getLastBlock();
-        LOG.debug("Timeout: peerBlock{},ourBlock{}", block.getTimeout(), lastBlock.getTimeout());
-        LOG.debug("Timestamp: peerBlock{},ourBlock{}", block.getTimestamp(), lastBlock.getTimestamp());
-        LOG.debug("PrevId: peerBlock{},ourBlock{}", block.getPreviousBlockId(), lastBlock.getPreviousBlockId());
-        if (block.getPreviousBlockId() == lastBlock.getId()) {
-            LOG.debug("push peer last block");
-            pushBlock(block);
-        } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId()
-                && ((block.getTimestamp() < lastBlock.getTimestamp()
-                                || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout()))) {
-            LOG.debug("Need to replace block");
-            blockchain.writeLock();
-            try {
+        blockchain.writeLock();
+        try {
+            BlockImpl block = BlockImpl.parseBlock(request);
+            BlockImpl lastBlock = blockchain.getLastBlock();
+            LOG.debug("Timeout: peerBlock{},ourBlock{}", block.getTimeout(), lastBlock.getTimeout());
+            LOG.debug("Timestamp: peerBlock{},ourBlock{}", block.getTimestamp(), lastBlock.getTimestamp());
+            LOG.debug("PrevId: peerBlock{},ourBlock{}", block.getPreviousBlockId(), lastBlock.getPreviousBlockId());
+            if (block.getPreviousBlockId() == lastBlock.getId()) {
+                LOG.debug("push peer last block");
+                pushBlock(block);
+            } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId()
+                    && ((block.getTimestamp() < lastBlock.getTimestamp()
+                    || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout()))) {
+                LOG.debug("Need to replace block");
+
+
                 BlockImpl lb = blockchain.getLastBlock();
                 if (lastBlock.getId() != lb.getId()) {
                     LOG.debug("Block changed: expected: id {} height: {} generator: {}, got id {}, height {}, generator {} ", lastBlock.getId(),
@@ -1104,15 +1106,17 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                             Convert.rsAccount(block.getGeneratorId()));
                     TransactionProcessorImpl.getInstance().processLater(lastBlock.getTransactions());
                     LOG.debug("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
-                } catch (BlockNotAcceptedException e) {
+                }
+                catch (BlockNotAcceptedException e) {
                     LOG.debug("Replacement block failed to be accepted, pushing back our last block");
                     pushBlock(lastBlock);
                     TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
                 }
-            } finally {
-                blockchain.writeUnlock();
-            }
-        } // else ignore the block
+            }// else ignore the block
+        }
+        finally {
+            blockchain.writeUnlock();
+        }
     }
 
     @Override
