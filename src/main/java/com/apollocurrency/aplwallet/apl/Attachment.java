@@ -20,6 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
@@ -28,10 +36,6 @@ import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.util.*;
 
 public interface Attachment extends Appendix {
 
@@ -255,7 +259,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("alias", aliasName);
-            attachment.put("priceNQT", priceATM);
+            attachment.put("priceATM", priceATM);
         }
 
         public String getAliasName(){
@@ -960,7 +964,7 @@ public interface Attachment extends Appendix {
         void putMyJSON(JSONObject attachment) {
             attachment.put("name", name);
             attachment.put("description", description);
-            attachment.put("quantityQNT", quantityATU);
+            attachment.put("quantityATU", quantityATU);
             attachment.put("decimals", decimals);
         }
 
@@ -1022,7 +1026,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityQNT", quantityATU);
+            attachment.put("quantityATU", quantityATU);
         }
 
         @Override
@@ -1076,7 +1080,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityQNT", quantityATU);
+            attachment.put("quantityATU", quantityATU);
         }
 
         @Override
@@ -1135,8 +1139,8 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityQNT", quantityATU);
-            attachment.put("priceNQT", priceATM);
+            attachment.put("quantityATU", quantityATU);
+            attachment.put("priceATM", priceATM);
         }
 
         public long getAssetId() {
@@ -1316,7 +1320,7 @@ public interface Attachment extends Appendix {
         void putMyJSON(JSONObject attachment) {
             attachment.put("asset", Long.toUnsignedString(assetId));
             attachment.put("height", height);
-            attachment.put("amountNQTPerQNT", amountATMPerATU);
+            attachment.put("amountATMPerATU", amountATMPerATU);
         }
 
         @Override
@@ -1399,7 +1403,7 @@ public interface Attachment extends Appendix {
             attachment.put("description", description);
             attachment.put("tags", tags);
             attachment.put("quantity", quantity);
-            attachment.put("priceNQT", priceATM);
+            attachment.put("priceATM", priceATM);
         }
 
         @Override
@@ -1497,7 +1501,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("goods", Long.toUnsignedString(goodsId));
-            attachment.put("priceNQT", priceATM);
+            attachment.put("priceATM", priceATM);
         }
 
         @Override
@@ -1608,7 +1612,7 @@ public interface Attachment extends Appendix {
         void putMyJSON(JSONObject attachment) {
             attachment.put("goods", Long.toUnsignedString(goodsId));
             attachment.put("quantity", quantity);
-            attachment.put("priceNQT", priceATM);
+            attachment.put("priceATM", priceATM);
             attachment.put("deliveryDeadlineTimestamp", deliveryDeadlineTimestamp);
         }
 
@@ -1681,7 +1685,7 @@ public interface Attachment extends Appendix {
             attachment.put("purchase", Long.toUnsignedString(purchaseId));
             attachment.put("goodsData", Convert.toHexString(goods.getData()));
             attachment.put("goodsNonce", Convert.toHexString(goods.getNonce()));
-            attachment.put("discountNQT", discountATM);
+            attachment.put("discountATM", discountATM);
             attachment.put("goodsIsText", goodsIsText);
         }
 
@@ -1758,7 +1762,7 @@ public interface Attachment extends Appendix {
                 attachment.put("goodsToEncrypt", goodsIsText() ? Convert.toString(goodsToEncrypt) : Convert.toHexString(goodsToEncrypt));
                 attachment.put("recipientPublicKey", Convert.toHexString(recipientPublicKey));
                 attachment.put("purchase", Long.toUnsignedString(getPurchaseId()));
-                attachment.put("discountNQT", getDiscountATM());
+                attachment.put("discountATM", getDiscountATM());
                 attachment.put("goodsIsText", goodsIsText());
             } else {
                 super.putMyJSON(attachment);
@@ -1859,7 +1863,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("purchase", Long.toUnsignedString(purchaseId));
-            attachment.put("refundNQT", refundATM);
+            attachment.put("refundATM", refundATM);
         }
 
         @Override
@@ -2140,7 +2144,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("currency", Long.toUnsignedString(currencyId));
-            attachment.put("amountPerUnitNQT", amountPerUnitATM);
+            attachment.put("amountPerUnitATM", amountPerUnitATM);
         }
 
         @Override
@@ -2335,8 +2339,8 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("currency", Long.toUnsignedString(currencyId));
-            attachment.put("buyRateNQT", buyRateATM);
-            attachment.put("sellRateNQT", sellRateATM);
+            attachment.put("buyRateATM", buyRateATM);
+            attachment.put("sellRateATM", sellRateATM);
             attachment.put("totalBuyLimit", totalBuyLimit);
             attachment.put("totalSellLimit", totalSellLimit);
             attachment.put("initialBuySupply", initialBuySupply);
@@ -2425,7 +2429,7 @@ public interface Attachment extends Appendix {
         @Override
         void putMyJSON(JSONObject attachment) {
             attachment.put("currency", Long.toUnsignedString(currencyId));
-            attachment.put("rateNQT", rateATM);
+            attachment.put("rateATM", rateATM);
             attachment.put("units", units);
         }
 
