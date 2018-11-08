@@ -52,10 +52,10 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
         int peerBlockTimeout = ((Long)request.get("timeout")).intValue();
         LOG.debug("API: Timeout: peerBlock{},ourBlock{}", peerBlockTimeout, lastBlock.getTimeout());
         LOG.debug("API: Timestamp: peerBlock{},ourBlock{}", peerBlockTimestamp, lastBlock.getTimestamp());
-        LOG.debug("API: PrevId: peerBlock{},ourBlock{}", previousBlockId, lastBlock.getPreviousBlockId());
+        LOG.debug("API: PrevId: peerBlock{},ourBlock{}", Convert.parseUnsignedLong(previousBlockId), lastBlock.getPreviousBlockId());
         if (lastBlock.getStringId().equals(previousBlockId) ||
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
-                        && ((lastBlock.getTimestamp() > peerBlockTimestamp) ||
+                        && (lastBlock.getTimestamp() > peerBlockTimestamp ||
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             Peers.peersService.submit(() -> {
                 try {
