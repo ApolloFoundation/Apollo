@@ -70,7 +70,7 @@ import java.util.Set;
 public final class Apl {
     private static Logger LOG;
 
-    public static final Version VERSION = Version.from("1.21.6");
+    public static final Version VERSION = Version.from("1.21.7");
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
