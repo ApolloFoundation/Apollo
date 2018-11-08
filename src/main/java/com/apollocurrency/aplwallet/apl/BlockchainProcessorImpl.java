@@ -1336,7 +1336,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
 
         if (block.getTimestamp() >= curTime - 600) {
-            LOG.debug("Send block to peers: height: id: generator:", block.getHeight(), block.getId(), Convert.rsAccount(block.getGeneratorId()));
+            LOG.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), block.getId(),
+                    Convert.rsAccount(block.getGeneratorId()));
             Peers.sendToSomePeers(block);
         }
 
