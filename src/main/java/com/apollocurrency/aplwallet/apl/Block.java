@@ -67,6 +67,8 @@ public interface Block {
 
     byte[] getBytes();
 
+    byte[] getBytes(boolean adaptive);
+
     JSONObject getJSONObject();
 
     int getTimeout();

@@ -16,11 +16,13 @@ import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-@JsonPropertyOrder({"height","maxNumberOfTransactions", "blockTime", "maxBalance", "consensus"})
+@JsonPropertyOrder({"height","maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance", "consensus"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
     private int blockTime;
+    private int maxBlockTimeLimit;
+    private int minBlockTimeLimit;
     private long maxBalance;
     private Consensus consensus;
 
@@ -33,12 +35,16 @@ public class BlockchainProperties {
             @JsonProperty("height") int height,
             @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
             @JsonProperty("blockTime") int blockTime,
+            @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
+            @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
             @JsonProperty("maxBalance") long maxBalance,
-            @JsonProperty(value = "consensus") Consensus consensus) {
+            @JsonProperty("consensus") Consensus consensus) {
         this();
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
+        this.maxBlockTimeLimit = maxBlockTimeLimit;
+        this.minBlockTimeLimit = minBlockTimeLimit;
         this.maxBalance = maxBalance;
         this.consensus = consensus;
     }
@@ -61,6 +67,14 @@ public class BlockchainProperties {
 
     public Consensus getConsensus() {
         return consensus;
+    }
+
+    public int getMaxBlockTimeLimit() {
+        return maxBlockTimeLimit;
+    }
+
+    public int getMinBlockTimeLimit() {
+        return minBlockTimeLimit;
     }
 
     public void setConsensus(Consensus consensus) {

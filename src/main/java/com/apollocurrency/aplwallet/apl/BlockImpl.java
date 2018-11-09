@@ -276,6 +276,8 @@ final class BlockImpl implements Block {
         json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
         json.put("blockSignature", Convert.toHexString(blockSignature));
         json.put("timeout", timeout);
+        json.put("adaptive", Constants.isAdaptiveBlockAtHeight(height));
+
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
@@ -297,13 +299,15 @@ final class BlockImpl implements Block {
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
             int timeout =  timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
+            Object adaptiveJsonValue = blockData.get("adaptive");
+            boolean adaptive = adaptiveJsonValue == null ? false : (Boolean) adaptiveJsonValue;
             List<TransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
                     generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions);
-            if (!block.checkSignature()) {
+            if (!block.checkSignature(adaptive)) {
                 throw new AplException.NotValidException("Invalid block signature");
             }
             return block;
@@ -316,12 +320,20 @@ final class BlockImpl implements Block {
 
     @Override
     public byte[] getBytes() {
-        return Arrays.copyOf(bytes(), bytes.length);
+        return getBytes(false);
     }
 
-    byte[] bytes() {
+    @Override
+    public byte[] getBytes(boolean adaptive) {
+        return Arrays.copyOf(bytes(adaptive), bytes.length);
+    }
+
+    byte[] bytes(boolean adaptive) {
         if (bytes == null) {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 + 4 + (blockSignature != null ? 64 : 0));
+            ByteBuffer buffer =
+                    ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 +
+                            (Constants.isAdaptiveForgingEnabled() || adaptive ? 4 : 0) +(blockSignature != null ? 64 :
+                    0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
             buffer.putInt(timestamp);
@@ -334,13 +346,19 @@ final class BlockImpl implements Block {
             buffer.put(getGeneratorPublicKey());
             buffer.put(generationSignature);
             buffer.put(previousBlockHash);
-            buffer.putInt(timeout);
+            if (Constants.isAdaptiveForgingEnabled()) {
+                buffer.putInt(timeout);
+            }
             if (blockSignature != null) {
                 buffer.put(blockSignature);
             }
             bytes = buffer.array();
         }
         return bytes;
+    }
+
+    byte[] bytes() {
+        return bytes(false);
     }
 
     boolean verifyBlockSignature() {
@@ -350,12 +368,17 @@ final class BlockImpl implements Block {
     private volatile boolean hasValidSignature = false;
 
     private boolean checkSignature() {
+        return checkSignature(false);
+    }
+
+    private boolean checkSignature(boolean adaptive) {
         if (! hasValidSignature) {
-            byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
+            byte[] data = Arrays.copyOf(bytes(adaptive), bytes.length - 64);
             hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey());
         }
         return hasValidSignature;
     }
+
 
     boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException {
 
@@ -451,8 +474,9 @@ final class BlockImpl implements Block {
     private void calculateBaseTarget(BlockImpl previousBlock) {
         long prevBaseTarget = previousBlock.baseTarget;
         int blockchainHeight = previousBlock.height;
-        if (blockchainHeight > 2 && blockchainHeight % 2 == 0
-                && (Constants.isAdaptiveForgingEnabled() && getTransactions().size() != 0 || !Constants.isAdaptiveForgingEnabled())) {
+        if (Constants.isAdaptiveForgingEnabled() && getTransactions().size() == 0) {
+            baseTarget = prevBaseTarget;
+        } else if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);
             int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
             int blockTime = Constants.getBlockTime();
