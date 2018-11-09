@@ -284,7 +284,7 @@ final class BlockImpl implements Block {
         return json;
     }
 
-    static BlockImpl parseBlock(JSONObject blockData) throws AplException.NotValidException {
+    static BlockImpl parseBlock(JSONObject blockData, boolean adaptive) throws AplException.NotValidException {
         try {
             int version = ((Long) blockData.get("version")).intValue();
             int timestamp = ((Long) blockData.get("timestamp")).intValue();
@@ -299,8 +299,6 @@ final class BlockImpl implements Block {
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
             int timeout =  timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
-            Object adaptiveJsonValue = blockData.get("adaptive");
-            boolean adaptive = adaptiveJsonValue == null ? false : (Boolean) adaptiveJsonValue;
             List<TransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));

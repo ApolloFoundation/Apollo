@@ -208,8 +208,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 chainBlockIds = getBlockIdsAfterCommon(peer, commonMilestoneBlockId, false);
                 if (chainBlockIds.size() < 2 || !peerHasMore) {
                     if (commonMilestoneBlockId == genesisBlockId) {
-                        LOG.info(String.format("Cannot load blocks after genesis block %d from peer %s, perhaps using different Genesis block",
-                                commonMilestoneBlockId, peer.getAnnouncedAddress()));
+                        LOG.info("Cannot load blocks after genesis block {} from peer {}, perhaps using different Genesis block",
+                                commonMilestoneBlockId, peer.getAnnouncedAddress());
                     }
                     return;
                 }
@@ -299,6 +299,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }
 
+        /**
+         * Get first mutual block which peer has in blockchain and we have in blockchain
+         * @param peer - blockchain node with which we will retrieve first mutual block
+         * @return id of the first mutual block
+         */
         private long getCommonMilestoneBlockId(Peer peer) {
 
             String lastMilestoneBlockId = null;
@@ -420,7 +425,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             int segSize = 36;
             int stop = chainBlockIds.size() - 1;
             for (int start = 0; start < stop; start += segSize) {
-                getList.add(new GetNextBlocks(chainBlockIds, start, Math.min(start + segSize, stop)));
+                getList.add(new GetNextBlocks(chainBlockIds, start, Math.min(start + segSize, stop), startHeight));
             }
             int nextPeerIndex = ThreadLocalRandom.current().nextInt(connectedPublicPeers.size());
             long maxResponseTime = 0;
@@ -619,16 +624,23 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         private long responseTime;
 
         /**
+         * height of the block from which we will start to download next blocks
+         */
+        private int startHeight;
+
+        /**
          * Create the callable future
          *
          * @param   blockIds            Block identifier list
          * @param   start               Start index within the list
          * @param   stop                Stop index within the list
+         * @param   startHeight         Height of the block from which we will start to download blockchain
          */
-        public GetNextBlocks(List<Long> blockIds, int start, int stop) {
+        public GetNextBlocks(List<Long> blockIds, int start, int stop, int startHeight) {
             this.blockIds = blockIds;
             this.start = start;
             this.stop = stop;
+            this.startHeight = startHeight;
             this.requestCount = 0;
         }
 
@@ -670,11 +682,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 peer.blacklist("Too many nextBlocks");
                 return null;
             }
+            int expectedHeight = startHeight + start + 1;
             List<BlockImpl> blockList = new ArrayList<>(nextBlocks.size());
             try {
                 int count = stop - start;
                 for (JSONObject blockData : nextBlocks) {
-                    blockList.add(BlockImpl.parseBlock(blockData));
+                    expectedHeight++;
+                    boolean adaptive = Constants.isAdaptiveBlockAtHeight(expectedHeight);
+                    blockList.add(BlockImpl.parseBlock(blockData, adaptive));
                     if (--count <= 0)
                         break;
                 }
@@ -1075,7 +1090,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     public void processPeerBlock(JSONObject request) throws AplException {
         blockchain.writeLock();
         try {
-            BlockImpl block = BlockImpl.parseBlock(request);
+//            assuming Constants.isAdaptiveForging is set up correctly
+            BlockImpl block = BlockImpl.parseBlock(request, false);
             BlockImpl lastBlock = blockchain.getLastBlock();
             LOG.debug("Timeout: peerBlock{},ourBlock{}", block.getTimeout(), lastBlock.getTimeout());
             LOG.debug("Timestamp: peerBlock{},ourBlock{}", block.getTimestamp(), lastBlock.getTimestamp());
@@ -1942,7 +1958,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                         validate(currentBlock, blockchain.getLastBlock(), curTime);
                                         byte[] blockBytes = currentBlock.bytes();
                                         JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
-                                        if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockJSON).bytes())) {
+                                        if (!Arrays.equals(blockBytes,
+                                                BlockImpl.parseBlock(blockJSON, Constants.isAdaptiveBlockAtHeight(height)).bytes())) {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
