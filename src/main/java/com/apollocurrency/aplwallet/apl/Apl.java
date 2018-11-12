@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -82,7 +83,7 @@ public final class Apl {
 
     private static final RuntimeMode runtimeMode;
     private static final DirProvider dirProvider;
-
+    
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
     }
@@ -440,6 +441,7 @@ public final class Apl {
                 API.init();
                 initUpdater();
                 DebugTrace.init();
+                NtpTime.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
