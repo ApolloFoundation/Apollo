@@ -74,10 +74,10 @@ final class BlockImpl implements Block {
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout, List<TransactionImpl> transactions,
-              byte[] keySeed) {
+              byte[] keySeed, boolean adaptive) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions);
-        blockSignature = Crypto.sign(bytes(), keySeed);
+        blockSignature = Crypto.sign(bytes(adaptive), keySeed);
         bytes = null;
     }
 
@@ -224,7 +224,8 @@ final class BlockImpl implements Block {
             if (blockSignature == null) {
                 throw new IllegalStateException("Block is not signed yet");
             }
-            byte[] hash = Crypto.sha256().digest(bytes());
+//            assuming that calculation of id will work only for generated blocks
+            byte[] hash = Crypto.sha256().digest(bytes(Constants.isAdaptiveForgingEnabled()));
             BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
             id = bigInteger.longValue();
             stringId = bigInteger.toString();
@@ -318,7 +319,7 @@ final class BlockImpl implements Block {
 
     @Override
     public byte[] getBytes() {
-        return getBytes(false);
+        return getBytes(Constants.isAdaptiveForgingEnabled());
     }
 
     @Override
@@ -330,7 +331,7 @@ final class BlockImpl implements Block {
         if (bytes == null) {
             ByteBuffer buffer =
                     ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 +
-                            (Constants.isAdaptiveForgingEnabled() || adaptive ? 4 : 0) +(blockSignature != null ? 64 :
+                            (adaptive ? 4 : 0) +(blockSignature != null ? 64 :
                     0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
@@ -344,7 +345,7 @@ final class BlockImpl implements Block {
             buffer.put(getGeneratorPublicKey());
             buffer.put(generationSignature);
             buffer.put(previousBlockHash);
-            if (Constants.isAdaptiveForgingEnabled()) {
+            if (adaptive) {
                 buffer.putInt(timeout);
             }
             if (blockSignature != null) {
@@ -355,10 +356,6 @@ final class BlockImpl implements Block {
         return bytes;
     }
 
-    byte[] bytes() {
-        return bytes(false);
-    }
-
     boolean verifyBlockSignature() {
         return checkSignature() && Account.setOrVerify(getGeneratorId(), getGeneratorPublicKey());
     }
@@ -366,7 +363,7 @@ final class BlockImpl implements Block {
     private volatile boolean hasValidSignature = false;
 
     private boolean checkSignature() {
-        return checkSignature(false);
+        return checkSignature(Constants.isAdaptiveForgingEnabled());
     }
 
     private boolean checkSignature(boolean adaptive) {

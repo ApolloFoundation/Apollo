@@ -480,9 +480,11 @@ public final class JSONData {
         putAccount(json, "generator", block.getGeneratorId());
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
-        if (Constants.isAdaptiveForgingEnabled()) {
+        boolean adaptive = Constants.isAdaptiveForgingEnabled();
+        if (adaptive) {
             json.put("timeout", block.getTimeout());
         }
+        json.put("adaptive", adaptive);
         json.put("numberOfTransactions", block.getTransactions().size());
         json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());
