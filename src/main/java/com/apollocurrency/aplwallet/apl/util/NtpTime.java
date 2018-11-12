@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.apollocurrency.aplwallet.apl.Constants;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import java.net.InetAddress;
@@ -11,8 +12,6 @@ import java.util.concurrent.TimeUnit;
 import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
 import java.util.concurrent.atomic.AtomicLong;
-
-
 
 public class NtpTime {
 
@@ -24,7 +23,7 @@ public class NtpTime {
         try {
             NTPUDPClient client = new NTPUDPClient();
             client.open();
-            InetAddress hostAddr = InetAddress.getByName("pool.ntp.org");
+            InetAddress hostAddr = InetAddress.getByName(Constants.TIME_SERVICE);
             TimeInfo info = client.getTime(hostAddr);
             info.computeDetails(); // compute offset/delay if not already done
             Long offsetValue = info.getOffset();
