@@ -20,10 +20,8 @@ public class NtpTime {
     private static AtomicLong timeOffset = new AtomicLong(0);
     final private static NtpTime instance = new NtpTime();
             
-    private static void setTimeDrift()
-    {
-        try
-        {
+    private static void setTimeDrift() {
+        try {
             NTPUDPClient client = new NTPUDPClient();
             client.open();
             InetAddress hostAddr = InetAddress.getByName("pool.ntp.org");
@@ -39,26 +37,22 @@ public class NtpTime {
             client.close();
             timeOffset = new AtomicLong(offsetValue);
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             LOG.error(e.getMessage());
             timeOffset = new AtomicLong(0);
         }
     }
     
-    public static long getTime()
-    {
+    public static long getTime() {
         return System.currentTimeMillis() + timeOffset.longValue();
     }
     
     
-    private static void NtpTime()
-    {
+    private static void NtpTime() {
                         
     }
     
-    public static void init()
-    {        
+    public static void init() {        
         setTimeDrift();
         Runnable timeUpdate = () -> { setTimeDrift(); };
         ThreadPool.scheduleThread("NTP Update", timeUpdate, 10, TimeUnit.SECONDS);        
