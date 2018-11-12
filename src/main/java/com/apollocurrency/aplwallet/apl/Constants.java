@@ -252,6 +252,9 @@ public final class Constants {
 
     private static ChangeableConstants getConstantsAtHeight(Chain chain, int targetHeight, boolean inclusive) {
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
+        if (targetHeight == 0) {
+            return new ChangeableConstants(blockchainProperties.get(0));
+        }
         Optional<Integer> maxHeight =
                 blockchainProperties
                         .keySet()
