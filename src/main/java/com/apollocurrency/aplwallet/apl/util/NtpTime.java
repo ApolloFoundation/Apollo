@@ -23,8 +23,9 @@ public class NtpTime {
     private static AtomicLong timeOffset = new AtomicLong(0);
             
     private static void setTimeDrift() {
+        NTPUDPClient client = new NTPUDPClient();
+        
         try {
-            NTPUDPClient client = new NTPUDPClient();
             client.open();
             InetAddress hostAddr = InetAddress.getByName(Constants.TIME_SERVICE);
             TimeInfo info = client.getTime(hostAddr);
@@ -36,13 +37,14 @@ public class NtpTime {
             
             LOG.info(" Roundtrip delay(ms)=" + delay
                     + ", clock offset(ms)=" + offset); // offset in ms
-            client.close();
+            
             timeOffset = new AtomicLong(offsetValue);
         }
         catch (Exception e) {
             LOG.error(e.getMessage());
             timeOffset = new AtomicLong(0);
         }
+        client.close();
     }
     
     public static long getTime() {
