@@ -4,20 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.apollocurrency.aplwallet.apl.Constants;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
-import java.net.InetAddress;
-import java.util.concurrent.TimeUnit;
-import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
-import java.util.concurrent.atomic.AtomicLong;
+
 
 public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
+    private static final NtpTime instance = new NtpTime();
     private static AtomicLong timeOffset = new AtomicLong(0);
-    final private static NtpTime instance = new NtpTime();
             
     private static void setTimeDrift() {
         try {
@@ -46,15 +49,18 @@ public class NtpTime {
         return System.currentTimeMillis() + timeOffset.longValue();
     }
     
-    
-    private static void NtpTime() {
-                        
-    }
-    
     public static void init() {        
         setTimeDrift();
         Runnable timeUpdate = () -> { setTimeDrift(); };
         ThreadPool.scheduleThread("NTP Update", timeUpdate, 10, TimeUnit.SECONDS);        
     }
+
+
+    //never
+    
+    private static void NtpTime() {
+                        
+    }
+    
             
 }
