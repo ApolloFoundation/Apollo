@@ -61,8 +61,7 @@ public class NtpTime {
 
 
     //never
-    
-    private static void NtpTime() {
+    private NtpTime() {
                         
     }
     
