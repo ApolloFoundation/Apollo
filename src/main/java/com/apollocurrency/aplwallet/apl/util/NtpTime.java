@@ -44,7 +44,9 @@ public class NtpTime {
             LOG.error(e.getMessage());
             timeOffset = new AtomicLong(0);
         }
-        client.close();
+        finally {
+             client.close();
+        }
     }
     
     public static long getTime() {
