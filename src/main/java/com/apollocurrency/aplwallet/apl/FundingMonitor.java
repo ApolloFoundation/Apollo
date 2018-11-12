@@ -20,6 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -29,12 +39,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Monitor account balances based on account properties
@@ -240,7 +244,7 @@ public final class FundingMonitor {
                                     long amount, long threshold, int interval, byte[] keySeed) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
-        // instead of during NRS initialization so we don't start the monitor thread if it
+        // instead of during ARS initialization so we don't start the monitor thread if it
         // won't be used.
         //
         init();

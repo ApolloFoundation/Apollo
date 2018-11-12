@@ -144,7 +144,7 @@ public final class Constants {
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
 
     public static final int LAST_CHECKSUM_BLOCK = 0;
-    // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
+    // LAST_KNOWN_BLOCK must also be set in html/www/js/ars.constants.js
     public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
     public static final Version MIN_VERSION = new Version(1, 0, 0);
