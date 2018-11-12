@@ -142,7 +142,12 @@
             <artifactId>commons-net</artifactId>
             <version>${apache-commons-net.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${apache-commons-codec.version}</version>
+            <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
