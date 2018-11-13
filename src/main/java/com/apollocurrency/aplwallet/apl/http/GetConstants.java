@@ -58,15 +58,16 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
 
     private static final class Holder {
 
-        private static final JSONObject CONSTANTS = new JSONObject();
+        private static final JSONStreamAware CONSTANTS;
 
         static {
             try {
-                CONSTANTS.put("genesisBlockId", Long.toUnsignedString(Apl.getBlockchainProcessor().getGenesisBlockId()));
-                CONSTANTS.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
-                CONSTANTS.put("epochBeginning", Genesis.EPOCH_BEGINNING);
-                CONSTANTS.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
-                CONSTANTS.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
+                JSONObject response = new JSONObject();
+                response.put("genesisBlockId", Long.toUnsignedString(Apl.getBlockchainProcessor().getGenesisBlockId()));
+                response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
+                response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
+                response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
+                response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
@@ -102,53 +103,53 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     typeJSON.put("subtypes", subtypesJSON);
                     transactionJSON.put(type, typeJSON);
                 }
-                CONSTANTS.put("transactionTypes", transactionJSON);
-                CONSTANTS.put("transactionSubTypes", transactionSubTypesJSON);
+                response.put("transactionTypes", transactionJSON);
+                response.put("transactionSubTypes", transactionSubTypesJSON);
 
                 JSONObject currencyTypes = new JSONObject();
                 for (CurrencyType currencyType : CurrencyType.values()) {
                     currencyTypes.put(currencyType.toString(), currencyType.getCode());
                 }
-                CONSTANTS.put("currencyTypes", currencyTypes);
+                response.put("currencyTypes", currencyTypes);
 
                 JSONObject votingModels = new JSONObject();
                 for (VoteWeighting.VotingModel votingModel : VoteWeighting.VotingModel.values()) {
                     votingModels.put(votingModel.toString(), votingModel.getCode());
                 }
-                CONSTANTS.put("votingModels", votingModels);
+                response.put("votingModels", votingModels);
 
                 JSONObject minBalanceModels = new JSONObject();
                 for (VoteWeighting.MinBalanceModel minBalanceModel : VoteWeighting.MinBalanceModel.values()) {
                     minBalanceModels.put(minBalanceModel.toString(), minBalanceModel.getCode());
                 }
-                CONSTANTS.put("minBalanceModels", minBalanceModels);
+                response.put("minBalanceModels", minBalanceModels);
 
                 JSONObject hashFunctions = new JSONObject();
                 for (HashFunction hashFunction : HashFunction.values()) {
                     hashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
-                CONSTANTS.put("hashAlgorithms", hashFunctions);
+                response.put("hashAlgorithms", hashFunctions);
 
                 JSONObject phasingHashFunctions = new JSONObject();
                 for (HashFunction hashFunction : PhasingPoll.acceptedHashFunctions) {
                     phasingHashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
-                CONSTANTS.put("phasingHashAlgorithms", phasingHashFunctions);
+                response.put("phasingHashAlgorithms", phasingHashFunctions);
 
-                CONSTANTS.put("maxPhasingDuration", Constants.MAX_PHASING_DURATION);
+                response.put("maxPhasingDuration", Constants.MAX_PHASING_DURATION);
 
                 JSONObject mintingHashFunctions = new JSONObject();
                 for (HashFunction hashFunction : CurrencyMinting.acceptedHashFunctions) {
                     mintingHashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
-                CONSTANTS.put("mintingHashAlgorithms", mintingHashFunctions);
+                response.put("mintingHashAlgorithms", mintingHashFunctions);
 
                 JSONObject peerStates = new JSONObject();
                 for (Peer.State peerState : Peer.State.values()) {
                     peerStates.put(peerState.toString(), peerState.ordinal());
                 }
-                CONSTANTS.put("peerStates", peerStates);
-                CONSTANTS.put("maxTaggedDataDataLength", Constants.MAX_TAGGED_DATA_DATA_LENGTH);
+                response.put("peerStates", peerStates);
+                response.put("maxTaggedDataDataLength", Constants.MAX_TAGGED_DATA_DATA_LENGTH);
 
                 JSONObject requestTypes = new JSONObject();
                 for (Map.Entry<String, APIServlet.APIRequestHandler> handlerEntry : APIServlet.apiRequestHandlers.entrySet()) {
@@ -161,25 +162,25 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     handlerJSON.put("enabled", false);
                     requestTypes.put(handlerEntry.getKey(), handlerJSON);
                 }
-                CONSTANTS.put("requestTypes", requestTypes);
+                response.put("requestTypes", requestTypes);
 
                 JSONObject holdingTypes = new JSONObject();
                 for (HoldingType holdingType : HoldingType.values()) {
                     holdingTypes.put(holdingType.toString(), holdingType.getCode());
                 }
-                CONSTANTS.put("holdingTypes", holdingTypes);
+                response.put("holdingTypes", holdingTypes);
 
                 JSONObject shufflingStages = new JSONObject();
                 for (Shuffling.Stage stage : Shuffling.Stage.values()) {
                     shufflingStages.put(stage.toString(), stage.getCode());
                 }
-                CONSTANTS.put("shufflingStages", shufflingStages);
+                response.put("shufflingStages", shufflingStages);
 
                 JSONObject shufflingParticipantStates = new JSONObject();
                 for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
                     shufflingParticipantStates.put(state.toString(), state.getCode());
                 }
-                CONSTANTS.put("shufflingParticipantStates", shufflingParticipantStates);
+                response.put("shufflingParticipantStates", shufflingParticipantStates);
 
                 JSONObject apiTags = new JSONObject();
                 for (APITag apiTag : APITag.values()) {
@@ -188,19 +189,20 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                     tagJSON.put("enabled", !API.disabledAPITags.contains(apiTag));
                     apiTags.put(apiTag.name(), tagJSON);
                 }
-                CONSTANTS.put("apiTags", apiTags);
+                response.put("apiTags", apiTags);
 
                 JSONArray disabledAPIs = new JSONArray();
                 Collections.addAll(disabledAPIs, API.disabledAPIs);
-                CONSTANTS.put("disabledAPIs", disabledAPIs);
+                response.put("disabledAPIs", disabledAPIs);
 
                 JSONArray disabledAPITags = new JSONArray();
                 API.disabledAPITags.forEach(apiTag -> disabledAPITags.add(apiTag.getDisplayName()));
-                CONSTANTS.put("disabledAPITags", disabledAPITags);
+                response.put("disabledAPITags", disabledAPITags);
 
                 JSONArray notForwardedRequests = new JSONArray();
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
-                CONSTANTS.put("proxyNotForwardedRequests", notForwardedRequests);
+                response.put("proxyNotForwardedRequests", notForwardedRequests);
+                CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {
                 LOG.error(e.toString(), e);
                 throw e;
@@ -214,7 +216,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
-        return JSON.prepare(Holder.CONSTANTS);
+        return Holder.CONSTANTS;
 
     }
 
