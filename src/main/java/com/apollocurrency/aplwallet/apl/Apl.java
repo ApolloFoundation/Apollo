@@ -47,38 +47,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-
-import com.apollocurrency.aplwallet.apl.dbmodel.Option;
-import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.lang.management.ManagementFactory;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.AccessControlException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.chainid.Chain;
+import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
+import com.apollocurrency.aplwallet.apl.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
@@ -90,16 +63,14 @@ import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 public final class Apl {
     private static Logger LOG;
-
-    public static final Version VERSION = Version.from("1.21.1");
+    private static ChainIdService chainIdService;
+    public static final Version VERSION = Version.from("1.21.9");
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
@@ -412,20 +383,8 @@ public final class Apl {
         Apl.shutdown = true;
     }
 
-    public static List<Chain> readChains() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(new File("conf/chains.json"), new TypeReference<List<Chain>>() {});
-    }
-
     public static Chain getActiveChain() throws IOException {
-        List<Chain> chains = readChains();
-        List<Chain> activeChains = chains.stream().filter(Chain::isActive).collect(Collectors.toList());
-        if (activeChains.size() == 0) {
-            throw new RuntimeException("No active blockchain to connect!");
-        } else if (activeChains.size() > 1) {
-            throw new RuntimeException("Only one blockchain can be active at the moment!");
-        }
-        return activeChains.get(0);
+        return chainIdService.getActiveChain();
     }
 
 
@@ -437,6 +396,8 @@ public final class Apl {
             try {
 
                 long startTime = System.currentTimeMillis();
+                chainIdService = new ChainIdServiceImpl(
+                        (Apl.getStringProperty("apl.chainIdFilePath" , "chains.json")));
                 Constants.init(getActiveChain());
                 setSystemProperties();
                 logSystemProperties();

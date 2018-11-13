@@ -22,18 +22,6 @@ package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.db.DbClause;
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbKey;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.slf4j.Logger;
-
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,6 +33,18 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.slf4j.Logger;
 
 public final class Shuffling {
     private static final Logger LOG = getLogger(Shuffling.class);
@@ -221,7 +221,7 @@ public final class Shuffling {
         long shufflingId = Convert.fullHashToId(fullHash);
         Shuffling shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
         if (shuffling != null && !Arrays.equals(shuffling.getFullHash(), fullHash)) {
-            LOG.debug("Shuffling with different hash %s but same id found for hash %s",
+            LOG.debug("Shuffling with different hash {} but same id found for hash {}",
                     Convert.toHexString(shuffling.getFullHash()), Convert.toHexString(fullHash));
             return null;
         }
@@ -411,7 +411,7 @@ public final class Shuffling {
         this.stage = stage;
         this.assigneeAccountId = assigneeAccountId;
         this.blocksRemaining = blocksRemaining;
-        LOG.debug("Shuffling %s entered stage %s, assignee %s, remaining blocks %s",
+        LOG.debug("Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
                 Long.toUnsignedString(id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
@@ -707,7 +707,7 @@ public final class Shuffling {
         if (deleteFinished) {
             delete();
         }
-        LOG.debug("Shuffling %s was distributed", Long.toUnsignedString(id));
+        LOG.debug("Shuffling {} was distributed", Long.toUnsignedString(id));
     }
 
     private void cancel(Block block) {
@@ -736,14 +736,15 @@ public final class Shuffling {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
-                LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(),
+                LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(),
                         block.getHeight() - i - 1);
             }
             fee = Constants.getShufflingDepositAtm() - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
             blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             blockGeneratorAccount.addToForgedBalanceATM(fee);
-            LOG.debug("Shuffling penalty %f %s awarded to forger at height %d", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(), block.getHeight());
+            LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(),
+                    block.getHeight());
         }
         setStage(Stage.CANCELLED, blamedAccountId, (short)0);
         shufflingTable.insert(this);
@@ -751,13 +752,13 @@ public final class Shuffling {
         if (deleteFinished) {
             delete();
         }
-        LOG.debug("Shuffling %s was cancelled, blaming account %s", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));
+        LOG.debug("Shuffling {} was cancelled, blaming account {}", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));
     }
 
     private long blame() {
         // if registration never completed, no one is to blame
         if (stage == Stage.REGISTRATION) {
-            LOG.debug("Registration never completed for shuffling %s", Long.toUnsignedString(id));
+            LOG.debug("Registration never completed for shuffling {}", Long.toUnsignedString(id));
             return 0;
         }
         // if no one submitted cancellation, blame the first one that did not submit processing data

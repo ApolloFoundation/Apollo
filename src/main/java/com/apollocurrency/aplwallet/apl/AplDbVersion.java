@@ -668,21 +668,22 @@ public class AplDbVersion extends DbVersion {
                 apply(null);
             case 242:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
-                            + "account BIGINT PRIMARY KEY,"
-                            + "secret VARBINARY,"
-                            + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
-                            + ")"
+                        + "account BIGINT PRIMARY KEY,"
+                        + "secret VARBINARY,"
+                        + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
+                        + ")"
                 );
 
             case 243:
                 apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
-
             case 244:
                 apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
-
             case 245:
+                apply("ALTER TABLE block ADD timeout INT NOT NULL DEFAULT 0");
+            case 246:
+                apply("ALTER TABLE block ADD CONSTRAINT chk_timeout CHECK (timeout >= 0)");
+            case 247:
                 return;
-
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

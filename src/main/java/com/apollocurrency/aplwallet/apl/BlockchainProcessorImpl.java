@@ -70,7 +70,6 @@ import org.slf4j.Logger;
 final class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
 
-
     private static final byte[] CHECKSUM_1 = Constants.isTestnet() ?
             null
             :
@@ -209,8 +208,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 chainBlockIds = getBlockIdsAfterCommon(peer, commonMilestoneBlockId, false);
                 if (chainBlockIds.size() < 2 || !peerHasMore) {
                     if (commonMilestoneBlockId == genesisBlockId) {
-                        LOG.info(String.format("Cannot load blocks after genesis block %d from peer %s, perhaps using different Genesis block",
-                                commonMilestoneBlockId, peer.getAnnouncedAddress()));
+                        LOG.info("Cannot load blocks after genesis block {} from peer {}, perhaps using different Genesis block",
+                                commonMilestoneBlockId, peer.getAnnouncedAddress());
                     }
                     return;
                 }
@@ -300,6 +299,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }
 
+        /**
+         * Get first mutual block which peer has in blockchain and we have in blockchain
+         * @param peer - blockchain node with which we will retrieve first mutual block
+         * @return id of the first mutual block
+         */
         private long getCommonMilestoneBlockId(Peer peer) {
 
             String lastMilestoneBlockId = null;
@@ -421,7 +425,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             int segSize = 36;
             int stop = chainBlockIds.size() - 1;
             for (int start = 0; start < stop; start += segSize) {
-                getList.add(new GetNextBlocks(chainBlockIds, start, Math.min(start + segSize, stop)));
+                getList.add(new GetNextBlocks(chainBlockIds, start, Math.min(start + segSize, stop), startHeight));
             }
             int nextPeerIndex = ThreadLocalRandom.current().nextInt(connectedPublicPeers.size());
             long maxResponseTime = 0;
@@ -620,16 +624,23 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         private long responseTime;
 
         /**
+         * height of the block from which we will start to download next blocks
+         */
+        private int startHeight;
+
+        /**
          * Create the callable future
          *
          * @param   blockIds            Block identifier list
          * @param   start               Start index within the list
          * @param   stop                Stop index within the list
+         * @param   startHeight         Height of the block from which we will start to download blockchain
          */
-        public GetNextBlocks(List<Long> blockIds, int start, int stop) {
+        public GetNextBlocks(List<Long> blockIds, int start, int stop, int startHeight) {
             this.blockIds = blockIds;
             this.start = start;
             this.stop = stop;
+            this.startHeight = startHeight;
             this.requestCount = 0;
         }
 
@@ -671,11 +682,14 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 peer.blacklist("Too many nextBlocks");
                 return null;
             }
+            int expectedHeight = startHeight + start + 1;
             List<BlockImpl> blockList = new ArrayList<>(nextBlocks.size());
             try {
                 int count = stop - start;
                 for (JSONObject blockData : nextBlocks) {
-                    blockList.add(BlockImpl.parseBlock(blockData));
+                    expectedHeight++;
+                    boolean adaptive = Constants.isAdaptiveBlockAtHeight(expectedHeight);
+                    blockList.add(BlockImpl.parseBlock(blockData, adaptive));
                     if (--count <= 0)
                         break;
                 }
@@ -1074,31 +1088,54 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void processPeerBlock(JSONObject request) throws AplException {
-        BlockImpl block = BlockImpl.parseBlock(request);
-        BlockImpl lastBlock = blockchain.getLastBlock();
-        if (block.getPreviousBlockId() == lastBlock.getId()) {
-            pushBlock(block);
-        } else if (block.getPreviousBlockId() == lastBlock.getPreviousBlockId() && block.getTimestamp() < lastBlock.getTimestamp()) {
-            blockchain.writeLock();
-            try {
-                if (lastBlock.getId() != blockchain.getLastBlock().getId()) {
-                    return; // blockchain changed, ignore the block
+        blockchain.writeLock();
+        try {
+            BlockImpl lastBlock = blockchain.getLastBlock();
+            long peerBlockPreviousBlockId = Convert.parseUnsignedLong((String) request.get("previousBlock"));
+            LOG.trace("Timeout: peerBlock{},ourBlock{}", request.get("timeout"), lastBlock.getTimeout());
+            LOG.trace("Timestamp: peerBlock{},ourBlock{}", request.get("timestamp"), lastBlock.getTimestamp());
+            LOG.trace("PrevId: peerBlock{},ourBlock{}", peerBlockPreviousBlockId, lastBlock.getPreviousBlockId());
+            // peer block is the next block in our blockchain
+            if (peerBlockPreviousBlockId == lastBlock.getId()) {
+                LOG.debug("push peer last block");
+                BlockImpl block = BlockImpl.parseBlock(request, Constants.isAdaptiveBlockAtHeight(lastBlock.getHeight() + 1));
+                pushBlock(block);
+            } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
+                BlockImpl block = BlockImpl.parseBlock(request, Constants.isAdaptiveBlockAtHeight(lastBlock.getHeight()));
+                //try to replace our last block by peer block only when timestamp of peer block is less than timestamp of our block or when
+                // timestamps are equal but timeout of peer block is greater, so that peer block is better.
+                if (((block.getTimestamp() < lastBlock.getTimestamp()
+                        || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout()))) {
+                    LOG.debug("Need to replace block");
+                    BlockImpl lb = blockchain.getLastBlock();
+                    if (lastBlock.getId() != lb.getId()) {
+                        LOG.debug("Block changed: expected: id {} height: {} generator: {}, got id {}, height {}, generator {} ", lastBlock.getId(),
+                                lastBlock.getHeight(), Convert.rsAccount(lastBlock.getGeneratorId()), lb.getId(), lb.getHeight(),
+                                Convert.rsAccount(lb.getGeneratorId()));
+                        return; // blockchain changed, ignore the block
+                    }
+                    BlockImpl previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
+                    lastBlock = popOffTo(previousBlock).get(0);
+                    try {
+                        pushBlock(block);
+                        LOG.debug("Pushed better peer block: id {} height: {} generator: {}",
+                                block.getId(),
+                                block.getHeight(),
+                                Convert.rsAccount(block.getGeneratorId()));
+                        TransactionProcessorImpl.getInstance().processLater(lastBlock.getTransactions());
+                        LOG.debug("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
+                    }
+                    catch (BlockNotAcceptedException e) {
+                        LOG.debug("Replacement block failed to be accepted, pushing back our last block");
+                        pushBlock(lastBlock);
+                        TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
+                    }
                 }
-                BlockImpl previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
-                lastBlock = popOffTo(previousBlock).get(0);
-                try {
-                    pushBlock(block);
-                    TransactionProcessorImpl.getInstance().processLater(lastBlock.getTransactions());
-                    LOG.debug("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
-                } catch (BlockNotAcceptedException e) {
-                    LOG.debug("Replacement block failed to be accepted, pushing back our last block");
-                    pushBlock(lastBlock);
-                    TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
-                }
-            } finally {
-                blockchain.writeUnlock();
-            }
-        } // else ignore the block
+            }// else ignore the block
+        }
+        finally {
+            blockchain.writeUnlock();
+        }
     }
 
     @Override
@@ -1322,6 +1359,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
 
         if (block.getTimestamp() >= curTime - 600) {
+            LOG.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), block.getId(),
+                    Convert.rsAccount(block.getGeneratorId()));
             Peers.sendToSomePeers(block);
         }
 
@@ -1370,7 +1409,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new BlockNotAcceptedException("Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
                     + previousLastBlock.getTimestamp(), block);
         }
-        if (!Arrays.equals(Crypto.sha256().digest(previousLastBlock.bytes()), block.getPreviousBlockHash())) {
+        if (!Arrays.equals(Crypto.sha256().digest(previousLastBlock.bytes(Constants.isAdaptiveBlockAtHeight(previousLastBlock.getHeight()))),
+                block.getPreviousBlockHash())) {
             throw new BlockNotAcceptedException("Previous block hash doesn't match", block);
         }
         if (block.getId() == 0L || BlockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
@@ -1389,6 +1429,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         if (block.getPayloadLength() > Constants.getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
+        }
+        int actualBlockTime = block.getTimestamp() - previousLastBlock.getTimestamp();
+        if (Constants.isAdaptiveForgingEnabled() && actualBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() && block.getTransactions().size() == 0) {
+            throw new BlockNotAcceptedException("Invalid empty block. Time since previous block should be greater than " + Constants.getAdaptiveForgingEmptyBlockTime() + ", but " +
+                    "got " + actualBlockTime, null);
         }
     }
 
@@ -1621,6 +1666,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 scheduleScan(0, false);
                 BlockImpl lastBLock = BlockDb.deleteBlocksFrom(BlockDb.findBlockIdAtHeight(height));
                 blockchain.setLastBlock(lastBLock);
+                Constants.rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
             } finally {
                 scan(0, false);
@@ -1716,8 +1762,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingInt(UnconfirmedTransaction::getHeight)
             .thenComparingLong(UnconfirmedTransaction::getId);
 
-    void generateBlock(byte[] keySeed, int blockTimestamp) throws BlockNotAcceptedException {
-
+    public SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(blockchain.getHeight() + 1)) {
             for (TransactionImpl phasedTransaction : phasedTransactions) {
@@ -1728,10 +1773,17 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
         }
-
-        BlockImpl previousBlock = blockchain.getLastBlock();
+//        validate and insert in unconfirmed_transaction db table all waiting transaction
         TransactionProcessorImpl.getInstance().processWaitingTransactions();
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp);
+        return sortedTransactions;
+    }
+
+
+    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout) throws BlockNotAcceptedException {
+
+        BlockImpl previousBlock = blockchain.getLastBlock();
+        SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp);
         List<TransactionImpl> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;
@@ -1749,10 +1801,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         digest.update(previousBlock.getGenerationSignature());
         final byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] generationSignature = digest.digest(publicKey);
-        byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes());
+        byte[] previousBlockHash = Crypto.sha256().digest(previousBlock.bytes(Constants.isAdaptiveBlockAtHeight(previousBlock.getHeight())));
 
         BlockImpl block = new BlockImpl(getBlockVersion(previousBlock.getHeight()), blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
-                payloadHash, publicKey, generationSignature, previousBlockHash, blockTransactions, keySeed);
+                payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed,
+                Constants.isAdaptiveBlockAtHeight(previousBlock.getHeight() + 1));
 
         try {
             pushBlock(block);
@@ -1908,9 +1961,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                                     if (validate && currentBlock.getHeight() > 0) {
                                         int curTime = Apl.getEpochTime();
                                         validate(currentBlock, blockchain.getLastBlock(), curTime);
-                                        byte[] blockBytes = currentBlock.bytes();
+                                        boolean isAdaptiveBlock = Constants.isAdaptiveBlockAtHeight(currentBlock.getHeight());
+                                        byte[] blockBytes = currentBlock.bytes(isAdaptiveBlock);
                                         JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
-                                        if (!Arrays.equals(blockBytes, BlockImpl.parseBlock(blockJSON).bytes())) {
+                                        if (!Arrays.equals(blockBytes,
+                                                BlockImpl.parseBlock(blockJSON, isAdaptiveBlock).bytes(isAdaptiveBlock))) {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
@@ -1974,18 +2029,6 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    public boolean validateUpdateTransaction(Transaction transaction) throws InvalidTransactionException {
-        if (!TransactionType.Update.isUpdate(transaction.getType())) {
-            throw new InvalidTransactionException("Not an update transaction", (BlockImpl) transaction.getBlock());
-        }
-        if (transaction.getRecipientId() != 0) {
-            throw new InvalidTransactionException("Update transaction should has no recipient", (BlockImpl) transaction.getBlock());
-        }
-        if (transaction.getAmountATM() != 0) {
-            throw new InvalidTransactionException("Update transaction should has no amount");
-        }
-        return true;
-    }
 
     public void suspendBlockchainDownloading() {
         getMoreBlocks = false;

@@ -63,13 +63,9 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
-                response.put("coinSymbol", Constants.getCoinSymbol());
-                response.put("accountPrefix", Constants.getAccountPrefix());
-                response.put("projectName", Constants.getProjectName());
                 response.put("genesisBlockId", Long.toUnsignedString(Apl.getBlockchainProcessor().getGenesisBlockId()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
-                response.put("maxBlockPayloadLength", Constants.getMaxPayloadLength());
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
 
@@ -206,9 +202,6 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 JSONArray notForwardedRequests = new JSONArray();
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
                 response.put("proxyNotForwardedRequests", notForwardedRequests);
-
-                response.put("initialBaseTarget", Long.toUnsignedString(Constants.getInitialBaseTarget()));
-
                 CONSTANTS = JSON.prepare(response);
             } catch (Exception e) {
                 LOG.error(e.toString(), e);
@@ -224,6 +217,7 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) {
         return Holder.CONSTANTS;
+
     }
 
     @Override

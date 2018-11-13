@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import org.json.simple.JSONObject;
-
 import java.math.BigInteger;
 import java.util.List;
+
+import org.json.simple.JSONObject;
 
 public interface Block {
 
@@ -67,7 +67,11 @@ public interface Block {
 
     byte[] getBytes();
 
+    byte[] getBytes(boolean adaptive);
+
     JSONObject getJSONObject();
+
+    int getTimeout();
 
     default String toJsonString() {
         return getJSONObject().toJSONString();
