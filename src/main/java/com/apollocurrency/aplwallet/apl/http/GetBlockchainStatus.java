@@ -69,6 +69,18 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
         response.put("includeExpiredPrunable", Constants.INCLUDE_EXPIRED_PRUNABLE);
         response.put("correctInvalidFees", Constants.correctInvalidFees);
         response.put("ledgerTrimKeep", AccountLedger.trimKeep);
+        response.put("chainId", Constants.getChain().getChainId());
+        response.put("chainName", Constants.getChain().getName());
+        response.put("chainDescription", Constants.getChain().getDescription());
+        response.put("blockTime", Constants.getBlockTime());
+        response.put("adaptiveForging", Constants.isAdaptiveForgingEnabled());
+        response.put("emptyBlockTime", Constants.getAdaptiveForgingEmptyBlockTime());
+        response.put("consensus", Constants.getConsesusType());
+        response.put("maxBlockPayloadLength", Constants.getMaxPayloadLength());
+        response.put("initialBaseTarget", Long.toUnsignedString(Constants.getInitialBaseTarget()));
+        response.put("coinSymbol", Constants.getCoinSymbol());
+        response.put("accountPrefix", Constants.getAccountPrefix());
+        response.put("projectName", Constants.getProjectName());
         JSONArray servicesArray = new JSONArray();
         Peers.getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);

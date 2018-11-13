@@ -1090,19 +1090,20 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     public void processPeerBlock(JSONObject request) throws AplException {
         blockchain.writeLock();
         try {
-//            assuming Constants.isAdaptiveForging is set up correctly
             BlockImpl lastBlock = blockchain.getLastBlock();
             long peerBlockPreviousBlockId = Convert.parseUnsignedLong((String) request.get("previousBlock"));
-//            BlockImpl block = BlockImpl.parseBlock(request, Constants.isAdaptiveBlockAtHeight(lastBlock.getHeight() + 1));
-            LOG.debug("Timeout: peerBlock{},ourBlock{}", request.get("timeout"), lastBlock.getTimeout());
-            LOG.debug("Timestamp: peerBlock{},ourBlock{}", request.get("timestamp"), lastBlock.getTimestamp());
-            LOG.debug("PrevId: peerBlock{},ourBlock{}", peerBlockPreviousBlockId, lastBlock.getPreviousBlockId());
+            LOG.trace("Timeout: peerBlock{},ourBlock{}", request.get("timeout"), lastBlock.getTimeout());
+            LOG.trace("Timestamp: peerBlock{},ourBlock{}", request.get("timestamp"), lastBlock.getTimestamp());
+            LOG.trace("PrevId: peerBlock{},ourBlock{}", peerBlockPreviousBlockId, lastBlock.getPreviousBlockId());
+            // peer block is the next block in our blockchain
             if (peerBlockPreviousBlockId == lastBlock.getId()) {
                 LOG.debug("push peer last block");
                 BlockImpl block = BlockImpl.parseBlock(request, Constants.isAdaptiveBlockAtHeight(lastBlock.getHeight() + 1));
                 pushBlock(block);
-            } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) {
+            } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
                 BlockImpl block = BlockImpl.parseBlock(request, Constants.isAdaptiveBlockAtHeight(lastBlock.getHeight()));
+                //try to replace our last block by peer block only when timestamp of peer block is less than timestamp of our block or when
+                // timestamps are equal but timeout of peer block is greater, so that peer block is better.
                 if (((block.getTimestamp() < lastBlock.getTimestamp()
                         || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout()))) {
                     LOG.debug("Need to replace block");
