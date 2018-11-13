@@ -32,7 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import util.TwoFactorAuthUtil;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -88,7 +88,6 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testDisableFailAuth() {
         TwoFactorAuthService spy = spy(service);
-        doReturn(TwoFactorAuthService.Status2FA.INCORRECT_CODE).when(spy).tryAuth(ACCOUNT1.getId(), INVALID_CODE);
         doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
         TwoFactorAuthService.Status2FA status2FA = spy.disable(ACCOUNT1.getId(), INVALID_CODE);

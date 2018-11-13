@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+
 import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
@@ -105,7 +106,7 @@ public final class Apl {
     }
 
     private static volatile boolean shutdown = false;
-
+    private static UpdaterCore updaterCore;
     public static boolean isShutdown() {
         return shutdown;
     }
@@ -576,13 +577,20 @@ public final class Apl {
       String[] systemProperties = new String[] {
         "socksProxyHost",
         "socksProxyPort",
+        "apl.enablePeerUPnP"
       };
 
       for (String propertyName : systemProperties) {
         String propertyValue;
-        if ((propertyValue = getStringProperty(propertyName)) != null) {
-          System.setProperty(propertyName, propertyValue);
+        if ((propertyValue = System.getProperty(propertyName)) != null) {
+          //System.setProperty(propertyName, propertyValue);
+          properties.setProperty(propertyName, propertyValue);
+          LOG.info("System property set: ", propertyName + " " + propertyValue);
         }
+        else
+        {
+        }
+
       }
     }
 
@@ -631,6 +639,14 @@ public final class Apl {
                         "Install haveged if on linux, or set apl.useStrongSecureRandom=false.");
             }
         } catch (InterruptedException ignore) {}
+    }
+
+    public static UpdateInfo getUpdateInfo() {
+        return updaterCore.getUpdateInfo();
+    }
+
+    public static boolean startMinorUpdate() {
+        return updaterCore.startAvailableUpdate();
     }
 
     public static String getProcessId() {
@@ -701,14 +717,7 @@ public final class Apl {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        try {
-            Class<?> aClass = Class.forName("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
-            //force load lazy updater instance
-            aClass.getMethod("getInstance").invoke(null);
-
-        }
-        catch (Exception e) {
-            LOG.error("Cannot load Updater!", e);
-        }
+        updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
+        updaterCore.init();
     }
 }

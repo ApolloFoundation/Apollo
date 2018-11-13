@@ -4,11 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.updater.util.util.JarGenerator;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import util.TestUtil;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,17 +24,33 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class UnpackerTest {
+public class JarUnpackerTest {
+    private Path tempDirectory;
+    private Path tempJar;
+    private Path unpackedFile;
+    @Before
+    public void setUp() throws IOException {
+        tempDirectory = Files.createTempDirectory("unpack");
+        tempJar = Files.createTempFile(tempDirectory, "test", ".jar");
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        Files.deleteIfExists(tempJar);
+        Files.deleteIfExists(tempDirectory);
+        if (unpackedFile != null) {
+            TestUtil.deleteDir(unpackedFile, path -> true);
+        }
+    }
     @Test
     public void testUnpack() throws IOException {
-        Path tempDirectory = Files.createTempDirectory("unpack");
-        Path tempJar = Files.createTempFile(tempDirectory, "test", ".jar");
-        Path unpackedFile = null;
-        try {
-        try (JarGenerator generator = new JarGenerator(Files.newOutputStream(tempJar))) {
+            try (
+                    OutputStream outputStream = Files.newOutputStream(tempJar);
+                    JarGenerator generator = new JarGenerator(outputStream)) {
             generator.generate();
-        }
-            unpackedFile = Unpacker.getInstance().unpack(tempJar);
+            }
+            Unpacker unpacker = new JarUnpacker("");
+            unpackedFile = unpacker.unpack(tempJar);
             try (JarFile jarFile = new JarFile(tempJar.toFile())) {
                 Map<String, Long> files = new HashMap<>();
                 Enumeration<JarEntry> entries = jarFile.entries();
@@ -47,16 +67,7 @@ public class UnpackerTest {
                         return FileVisitResult.CONTINUE;
                     }
                 });
-                jarFile.close();
             }
-        }
-        finally {
-            Files.deleteIfExists(tempJar);
-            Files.deleteIfExists(tempDirectory);
-            if (unpackedFile != null) {
-                TestUtil.deleteDir(unpackedFile, path -> true);
-            }
-        }
     }
 
 }

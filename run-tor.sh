@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # WARNING: java still bypasses the tor proxy when sending DNS queries and
 # this can reveal the fact that you are running Apl, however blocks and
@@ -11,9 +11,11 @@ else
     JAVA=java
 fi
 
-cd tor
-./tor &
-cd ..
+if [[ "$unamestr" == 'Linux' ]]; then
+    cd tor
+    ./tor &
+    cd ..
+fi
 
 ${JAVA} -DsocksProxyHost=localhost -DsocksProxyPort=9050 -Dapl.runtime.mode=desktop -jar Apollo.jar
 

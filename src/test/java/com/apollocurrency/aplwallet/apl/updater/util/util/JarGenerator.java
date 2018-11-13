@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.updater;
+package com.apollocurrency.aplwallet.apl.updater.util.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,18 +13,18 @@ import java.security.cert.Certificate;
 import java.util.Random;
 
 public class JarGenerator implements AutoCloseable {
-    private SimpleJar jar;
+    private com.apollocurrency.aplwallet.apl.updater.util.SimpleJar jar;
     private static final String KEY_ALIAS = "test";
     private static final String KEY_PASSWORD = "test";
 
 
     public JarGenerator(OutputStream outputStream, Certificate certificate, PrivateKey privateKey) throws GeneralSecurityException, IOException {
         KeyStore keyStore = initKeyStore(certificate, privateKey);
-        this.jar = new SimpleSignedJar(outputStream, keyStore, KEY_ALIAS,  KEY_PASSWORD);
+        this.jar = new com.apollocurrency.aplwallet.apl.updater.util.SimpleSignedJar(outputStream, keyStore, KEY_ALIAS,  KEY_PASSWORD);
     }
 
     public JarGenerator(OutputStream outputStream) {
-        this.jar = new SimpleJar(outputStream);
+        this.jar = new com.apollocurrency.aplwallet.apl.updater.util.SimpleJar(outputStream);
     }
 
 

@@ -314,7 +314,7 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
-//
+
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
 

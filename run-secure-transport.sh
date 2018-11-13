@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # WARNING: java still bypasses the tor proxy when sending DNS queries and
 # this can reveal the fact that you are running Apl, however blocks and
