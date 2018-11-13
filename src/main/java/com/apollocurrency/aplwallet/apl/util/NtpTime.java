@@ -19,9 +19,8 @@ import org.slf4j.Logger;
 public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
-    private static final NtpTime instance = new NtpTime();
     private static volatile long timeOffset = 0;
-    private static final int refreshFrequency = 10;
+    private static final int REFRESH_FREQUENCY = 10;
             
     private static void setTimeDrift() {
         NTPUDPClient client = new NTPUDPClient();
@@ -55,9 +54,9 @@ public class NtpTime {
     }
 
     public NtpTime() {
-            setTimeDrift();
+        setTimeDrift();
         Runnable timeUpdate = () -> { setTimeDrift(); };
-        ThreadPool.scheduleThread("NTP Update", timeUpdate, refreshFrequency, TimeUnit.SECONDS);                        
+        ThreadPool.scheduleThread("NTP Update", timeUpdate, REFRESH_FREQUENCY, TimeUnit.SECONDS);                        
     }
     
             
