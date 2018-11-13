@@ -64,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.dbmodel.Option;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -493,9 +494,9 @@ public class DesktopApplication extends Application {
                 return;
             }
             unconfirmedTransactionUpdates.addAll(transactions);
-            if (System.currentTimeMillis() - updateTime > 3000L) {
+            if (NtpTime.getTime() - updateTime > 3000L) {
                 String msg = transactionEvent.toString() + " ids " + unconfirmedTransactionUpdates.stream().map(Transaction::getStringId).collect(Collectors.joining(","));
-                updateTime = System.currentTimeMillis();
+                updateTime = NtpTime.getTime();
                 unconfirmedTransactionUpdates = new ArrayList<>();
                 updateClientState(msg);
             }

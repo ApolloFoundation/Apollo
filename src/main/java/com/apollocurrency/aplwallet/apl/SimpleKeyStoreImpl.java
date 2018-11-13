@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -160,7 +161,7 @@ import org.slf4j.Logger;
 
      private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
          byte[] nonce = generateBytes(16);
-         long timestamp = System.currentTimeMillis();
+         long timestamp = NtpTime.getTime();
          byte[] key = Crypto.getKeySeed(passphrase, nonce, Convert.longToBytes(timestamp));
          byte[] encryptedSecretBytes = Crypto.aesEncrypt(secretBytes, key);
          return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, version, nonce, timestamp);

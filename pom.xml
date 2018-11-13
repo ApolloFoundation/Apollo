@@ -38,6 +38,7 @@
         <apache-commons-lang.version>3.7</apache-commons-lang.version>
         <apache-commons-io.version>1.4</apache-commons-io.version>
         <apache-commons-codec.version>1.9</apache-commons-codec.version>
+        <apache-commons-net.version>3.6</apache-commons-net.version>
         <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
 
@@ -137,9 +138,15 @@
     <dependencies>
         <!--Apache-commons-->
         <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>${apache-commons-net.version}</version>
+        </dependency>
+        <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>${apache-commons-codec.version}</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

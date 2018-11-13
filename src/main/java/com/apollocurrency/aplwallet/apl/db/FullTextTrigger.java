@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -746,7 +747,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
-            long now = System.currentTimeMillis();
+            long now = NtpTime.getTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
             document.add(new TextField("_TABLE", tableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");

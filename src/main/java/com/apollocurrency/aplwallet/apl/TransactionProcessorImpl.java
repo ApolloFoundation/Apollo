@@ -420,7 +420,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             transaction.validate();
-            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction((TransactionImpl) transaction, System.currentTimeMillis());
+            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction((TransactionImpl) transaction, NtpTime.getTime());
             boolean broadcastLater = BlockchainProcessorImpl.getInstance().isProcessingBlock();
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
@@ -566,7 +566,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void processLater(Collection<? extends Transaction> transactions) {
-        long currentTime = System.currentTimeMillis();
+        long currentTime = NtpTime.getTime();
         BlockchainImpl.getInstance().writeLock();
         try {
             for (Transaction transaction : transactions) {
@@ -623,7 +623,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         if (transactionsData == null || transactionsData.isEmpty()) {
             return;
         }
-        long arrivalTimestamp = System.currentTimeMillis();
+        long arrivalTimestamp = NtpTime.getTime();
         List<TransactionImpl> receivedTransactions = new ArrayList<>();
         List<TransactionImpl> sendToPeersTransactions = new ArrayList<>();
         List<TransactionImpl> addedUnconfirmedTransactions = new ArrayList<>();
