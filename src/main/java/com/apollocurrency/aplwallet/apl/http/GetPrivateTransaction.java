@@ -9,6 +9,8 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
@@ -16,8 +18,6 @@ import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
 
@@ -30,7 +30,7 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
     }
 
     private GetPrivateTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey", "account", "passphrase");
+        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
     }
 
     @Override
@@ -84,6 +84,11 @@ public final class GetPrivateTransaction extends APIServlet.APIRequestHandler {
         }
         response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
         return response;
+    }
+
+    @Override
+    protected String vaultAccountName() {
+        return "account";
     }
 }
 

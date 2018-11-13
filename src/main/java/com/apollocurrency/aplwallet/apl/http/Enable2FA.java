@@ -14,7 +14,7 @@ import org.json.simple.JSONStreamAware;
 
 public class Enable2FA extends APIServlet.APIRequestHandler {
     private Enable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "secretPhrase");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
     }
 
     private static class Enable2FAHolder {
@@ -39,6 +39,11 @@ public class Enable2FA extends APIServlet.APIRequestHandler {
         response.put("secret", twoFactorAuthDetails.getSecret());
         response.put("qrCodeUrl", twoFactorAuthDetails.getQrCodeUrl());
         return response;
+    }
+
+    @Override
+    protected String vaultAccountName() {
+        return "account";
     }
 
     @Override

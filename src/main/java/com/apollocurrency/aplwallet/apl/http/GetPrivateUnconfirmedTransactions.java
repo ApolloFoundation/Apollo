@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.TransactionType;
@@ -14,8 +16,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetPrivateUnconfirmedTransactions extends APIServlet.APIRequestHandler {
 
@@ -28,7 +28,7 @@ public final class GetPrivateUnconfirmedTransactions extends APIServlet.APIReque
     }
 
     private GetPrivateUnconfirmedTransactions() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "firstIndex", "lastIndex", "secretPhrase", "publicKey", "account", "passphrase");
+        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "firstIndex", "lastIndex", "secretPhrase", "publicKey");
     }
 
     @Override
@@ -59,5 +59,9 @@ public final class GetPrivateUnconfirmedTransactions extends APIServlet.APIReque
         return response;
     }
 
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
 }
 
