@@ -442,7 +442,6 @@ public final class Apl {
                 API.init();
                 initUpdater();
                 DebugTrace.init();
-                NtpTime.init();
                 int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {

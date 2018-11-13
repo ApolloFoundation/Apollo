@@ -11,8 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.Constants;
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
