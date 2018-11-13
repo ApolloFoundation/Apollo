@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Shuffler;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class StartShuffler extends APIServlet.APIRequestHandler {
 
@@ -47,7 +47,7 @@ public final class StartShuffler extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
-        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
         long recipientId = ParameterParser.getAccountId(req, "recipientAccount", false);
         byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
 
@@ -103,7 +103,12 @@ public final class StartShuffler extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected String accountName2FA() {
+    protected String vaultAccountName() {
         return "account";
+    }
+
+    @Override
+    protected boolean is2FAProtected() {
+        return true;
     }
 }

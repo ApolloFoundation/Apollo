@@ -24,6 +24,8 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DECRYPTION_FAI
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -31,8 +33,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class DecryptFrom extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(DecryptFrom.class);
@@ -47,8 +47,7 @@ public final class DecryptFrom extends APIServlet.APIRequestHandler {
 
     private DecryptFrom() {
         super(new APITag[] {APITag.MESSAGES}, "participantAccount", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage",
-                "secretPhrase",
-                "passphrase", "account");
+                "secretPhrase");
     }
 
     @Override
@@ -81,4 +80,8 @@ public final class DecryptFrom extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
 }

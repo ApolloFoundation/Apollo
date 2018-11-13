@@ -79,11 +79,13 @@ public final class APIServlet extends HttpServlet {
                 parameters.add("requireBlock");
                 parameters.add("requireLastBlock");
             }
-            String accountName2FA = accountName2FA();
-            if (accountName2FA != null && !accountName2FA.isEmpty()) {
-                parameters.add(accountName2FA);
-                parameters.add("code2FA");
+            String vaultAccountParameterName = vaultAccountName();
+            if (vaultAccountParameterName != null && !vaultAccountParameterName.isEmpty()) {
+                parameters.add(vaultAccountParameterName);
                 parameters.add("passphrase");
+            }
+            if (is2FAProtected()) {
+                parameters.add("code2FA");
             }
             this.parameters = Collections.unmodifiableList(parameters);
             this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
@@ -134,7 +136,11 @@ public final class APIServlet extends HttpServlet {
 
         protected boolean logRequestTime() { return false; }
 
-        protected String accountName2FA() {
+        protected boolean is2FAProtected() {
+            return false;
+        }
+
+        protected String vaultAccountName() {
             return null;
         }
     }
@@ -246,8 +252,8 @@ public final class APIServlet extends HttpServlet {
             if (apiRequestHandler.requirePassword()) {
                 API.verifyPassword(req);
             }
-            String accountName2FA = apiRequestHandler.accountName2FA();
-            if (accountName2FA != null && !accountName2FA.isEmpty()) {
+            String accountName2FA = apiRequestHandler.vaultAccountName();
+            if (apiRequestHandler.is2FAProtected()) {
                 Account.verify2FA(req, accountName2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?

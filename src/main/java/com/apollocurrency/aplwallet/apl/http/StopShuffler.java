@@ -92,7 +92,12 @@ public final class StopShuffler extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected String accountName2FA() {
+    protected String vaultAccountName() {
         return "account";
+    }
+
+    @Override
+    protected boolean is2FAProtected() {
+        return true;
     }
 }

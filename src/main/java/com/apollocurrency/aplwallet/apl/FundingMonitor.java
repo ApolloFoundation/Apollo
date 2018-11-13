@@ -244,7 +244,7 @@ public final class FundingMonitor {
                                     long amount, long threshold, int interval, byte[] keySeed) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
-        // instead of during NRS initialization so we don't start the monitor thread if it
+        // instead of during ARS initialization so we don't start the monitor thread if it
         // won't be used.
         //
         init();

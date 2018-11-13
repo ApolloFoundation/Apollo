@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.Constants;
 import org.slf4j.Logger;
 
 /**
- * Compact and reorganize the NRS database.  The NRS application must not be
+ * Compact and reorganize the ARS database.  The ARS application must not be
  * running.
  *
  * To run the database compact tool on Linux or Mac:
@@ -49,7 +49,7 @@ public class CompactDatabase {
     private static final Logger LOG = getLogger(CompactDatabase.class);
 
     /**
-     * Compact the NRS database
+     * Compact the ARS database
      *
      * @param   args                Command line arguments
      */
@@ -143,7 +143,7 @@ public class CompactDatabase {
         if (!dbFile.exists()) {
             dbFile = new File(dbDir, "apl.mv.db");
             if (!dbFile.exists()) {
-                LOG.error("NRS database not found");
+                LOG.error("ARS database not found");
                 return 1;
             }
         }

@@ -762,8 +762,8 @@ final class TransactionImpl implements Transaction {
         if (type.canHaveRecipient()) {
             json.put("recipient", Long.toUnsignedString(recipientId));
         }
-        json.put("amountNQT", amountATM);
-        json.put("feeNQT", feeATM);
+        json.put("amountATM", amountATM);
+        json.put("feeATM", feeATM);
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
         }

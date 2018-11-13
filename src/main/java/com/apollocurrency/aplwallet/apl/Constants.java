@@ -203,7 +203,7 @@ public final class Constants {
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
 
     public static final int LAST_CHECKSUM_BLOCK = 0;
-    // lastKnownBlock must also be set in html/www/js/nrs.constants.js
+    // lastKnownBlock must also be set in html/www/js/ars.constants.js
     private static int lastKnownBlock;
 
     public static final Version MIN_VERSION = new Version(1, 0, 0);

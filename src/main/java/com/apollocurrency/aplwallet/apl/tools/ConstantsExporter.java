@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.http.GetConstants;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+
+import com.apollocurrency.aplwallet.apl.http.GetConstants;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 
 public class ConstantsExporter {
     public static void main(String[] args) {
@@ -38,15 +38,15 @@ public class ConstantsExporter {
 
         try {
             Path filePath = Paths.get(args[0]);
-            Files.write(filePath, (String.format("if (!NRS) {%1$s" +
-                    "    var NRS = {};%1$s" +
-                    "    NRS.constants = {};%1$s" +
+            Files.write(filePath, (String.format("if (!ARS) {%1$s" +
+                    "    var ARS = {};%1$s" +
+                    "    ARS.constants = {};%1$s" +
                     "}%1$s%1$s",System.lineSeparator())).getBytes());
-            Files.write(filePath, ("NRS.constants.SERVER = ").getBytes(), StandardOpenOption.APPEND);
+            Files.write(filePath, ("ARS.constants.SERVER = ").getBytes(), StandardOpenOption.APPEND);
             JSON.writeJSONString(GetConstants.getConstants(), filePath);
             Files.write(filePath, String.format("%1$s%1$s" +
                     "if (isNode) {%1$s" +
-                    "    module.exports = NRS.constants.SERVER;%1$s" +
+                    "    module.exports = ARS.constants.SERVER;%1$s" +
                     "}%1$s", System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();

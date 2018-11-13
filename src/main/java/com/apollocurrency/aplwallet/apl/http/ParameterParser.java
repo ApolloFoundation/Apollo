@@ -55,6 +55,17 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Alias;
 import com.apollocurrency.aplwallet.apl.Apl;
@@ -80,17 +91,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);

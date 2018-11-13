@@ -268,8 +268,8 @@ final class BlockImpl implements Block {
         json.put("version", version);
         json.put("timestamp", timestamp);
         json.put("previousBlock", Long.toUnsignedString(previousBlockId));
-        json.put("totalAmountNQT", totalAmountATM);
-        json.put("totalFeeNQT", totalFeeATM);
+        json.put("totalAmountATM", totalAmountATM);
+        json.put("totalFeeATM", totalFeeATM);
         json.put("payloadLength", payloadLength);
         json.put("payloadHash", Convert.toHexString(payloadHash));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));

@@ -20,6 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.db.DbClause;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
@@ -27,13 +34,6 @@ import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 @SuppressWarnings("UnusedDeclaration")
 public final class Currency {
@@ -88,12 +88,12 @@ public final class Currency {
             this.currentSupply = rs.getLong("current_supply");
             this.currentReservePerUnitATM =
                     //TODO: remove nqt from database column name
-                    rs.getLong("current_reserve_per_unit_nqt");
+                    rs.getLong("current_reserve_per_unit_atm");
         }
 
         private void save(Connection con) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
-                    + "current_reserve_per_unit_nqt, height, latest) "
+                    + "current_reserve_per_unit_atm, height, latest) "
                     + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE)")) {
                 int i = 0;
                 pstmt.setLong(++i, this.currencyId);
@@ -252,7 +252,7 @@ public final class Currency {
         this.maxSupply = rs.getLong("max_supply");
         this.creationHeight = rs.getInt("creation_height");
         this.issuanceHeight = rs.getInt("issuance_height");
-        this.minReservePerUnitATM = rs.getLong("min_reserve_per_unit_nqt");
+        this.minReservePerUnitATM = rs.getLong("min_reserve_per_unit_atm");
         this.minDifficulty = rs.getByte("min_difficulty") & 0xFF;
         this.maxDifficulty = rs.getByte("max_difficulty") & 0xFF;
         this.ruleset = rs.getByte("ruleset");
@@ -283,7 +283,7 @@ public final class Currency {
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_nqt, "
+                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
                 + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
