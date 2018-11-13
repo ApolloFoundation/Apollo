@@ -20,12 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -36,7 +31,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
@@ -258,8 +258,8 @@ final class BlockImpl implements Block {
         json.put("version", version);
         json.put("timestamp", timestamp);
         json.put("previousBlock", Long.toUnsignedString(previousBlockId));
-        json.put("totalAmountNQT", totalAmountATM);
-        json.put("totalFeeNQT", totalFeeATM);
+        json.put("totalAmountATM", totalAmountATM);
+        json.put("totalFeeATM", totalFeeATM);
         json.put("payloadLength", payloadLength);
         json.put("payloadHash", Convert.toHexString(payloadHash));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));

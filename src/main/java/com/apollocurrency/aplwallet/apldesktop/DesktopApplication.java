@@ -306,7 +306,7 @@ public class DesktopApplication extends Application {
         private static final Set DOWNLOAD_REQUEST_TYPES = new HashSet<>(Arrays.asList("downloadTaggedData", "downloadPrunableMessage"));
         private static volatile WebEngine webEngine;
         private static MainApplication instance = new MainApplication();
-        private JSObject nrs;
+        private JSObject ars;
         private volatile long updateTime;
         private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
@@ -365,7 +365,7 @@ public class DesktopApplication extends Application {
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
                         mainStage.setTitle(Constants.PROJECT_NAME + " Desktop - " + webEngine.getLocation());
-                        nrs = (JSObject) webEngine.executeScript("NRS");
+                        ars = (JSObject) webEngine.executeScript("ARS");
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
@@ -502,7 +502,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
+            Platform.runLater(() -> webEngine.executeScript("ARS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")
@@ -653,7 +653,7 @@ public class DesktopApplication extends Application {
             } else {
                 LOG.info(msg, e);
             }
-            nrs.call("growl", msg);
+            ars.call("growl", msg);
         }
 
 

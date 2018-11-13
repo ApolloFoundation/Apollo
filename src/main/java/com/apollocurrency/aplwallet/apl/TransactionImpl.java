@@ -20,6 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -27,12 +37,6 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.*;
 
 final class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
@@ -758,8 +762,8 @@ final class TransactionImpl implements Transaction {
         if (type.canHaveRecipient()) {
             json.put("recipient", Long.toUnsignedString(recipientId));
         }
-        json.put("amountNQT", amountATM);
-        json.put("feeNQT", feeATM);
+        json.put("amountATM", amountATM);
+        json.put("feeATM", feeATM);
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
         }

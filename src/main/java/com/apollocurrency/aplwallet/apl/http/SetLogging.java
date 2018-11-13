@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
@@ -28,10 +30,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
- * <p>The SetLogging API will set the NRS log level for all log messages.
+ * <p>The SetLogging API will set the ARS log level for all log messages.
  * It will also set the communication events that are logged.</p>
  *
  * <p>Request parameters:</p>

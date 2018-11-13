@@ -20,11 +20,34 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+
 import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.DateTools;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -40,21 +63,6 @@ import org.apache.lucene.store.FSDirectory;
 import org.h2.api.Trigger;
 import org.h2.tools.SimpleResultSet;
 import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * todo make backward compatibility for triggers in old database and new database
@@ -87,7 +95,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * The result set columns are the following:
  *   SCHEMA  - the schema name (String)
  *   TABLE   - the table name (String)
- *   COLUMNS - the primary key columns (String[]) - this is always DB_ID for NRS
+ *   COLUMNS - the primary key columns (String[]) - this is always DB_ID for ARS
  *   KEYS    - the primary key values (Long[]) - DB_ID value for the row
  *   SCORE   - the search hit score (Float)
  *
@@ -98,7 +106,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         private static final Logger LOG = getLogger(FullTextTrigger.class);
 
 
-    /** NRS is active */
+    /** ARS is active */
     private static volatile boolean isActive = false;
 
     /** Index triggers */
@@ -150,10 +158,10 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
 
     /**
-     * This method is called by NRS initialization to indicate NRS is active.
+     * This method is called by ARS initialization to indicate ARS is active.
      *
      * This is required since database triggers will be initialized when the database
-     * is opened outside the NRS environment (for example, from the H2 console)
+     * is opened outside the ARS environment (for example, from the H2 console)
      *
      * The database triggers cannot be re-activated after they have been deactivated.
      *
@@ -172,7 +180,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * Initialize the fulltext support for a new database
      *
      * This method should be called from AplDbVersion when performing the database version update
-     * that enables NRS fulltext search support
+     * that enables ARS fulltext search support
      */
     public static void init() {
         String ourClassName = FullTextTrigger.class.getName();
@@ -194,7 +202,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                 }
             }
             if (triggersExist && alreadyInitialized) {
-                LOG.info("NRS fulltext support is already initialized");
+                LOG.info("ARS fulltext support is already initialized");
                 return;
             }
             //
@@ -219,7 +227,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
             stmt.execute("CREATE TABLE IF NOT EXISTS FTL.INDEXES "
                     + "(SCHEMA VARCHAR, TABLE VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, TABLE))");
-            LOG.info("NRS fulltext schema created");
+            LOG.info("ARS fulltext schema created");
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
             // when it is created.  H2 has already initialized the existing triggers and they
@@ -246,9 +254,9 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             stmt.execute("CREATE ALIAS FTL_CREATE_INDEX FOR \"" + ourClassName + ".createIndex\"");
             stmt.execute("CREATE ALIAS FTL_DROP_INDEX FOR \"" + ourClassName + ".dropIndex\"");
             stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + ourClassName + ".search\"");
-            LOG.info("NRS fulltext aliases created");
+            LOG.info("ARS fulltext aliases created");
         } catch (SQLException exc) {
-            LOG.error("Unable to initialize NRS fulltext search support", exc);
+            LOG.error("Unable to initialize ARS fulltext search support", exc);
             throw new RuntimeException(exc.toString(), exc);
         }
     }
@@ -314,7 +322,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         FullTextTrigger trigger = indexTriggers.get(tableName);
         if (trigger == null) {
-            LOG.error("NRS fulltext trigger for table " + tableName + " was not initialized");
+            LOG.error("ARS fulltext trigger for table " + tableName + " was not initialized");
         } else {
             try {
                 trigger.reindexTable(conn);
@@ -477,7 +485,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
                                     throws SQLException {
         //
-        // Ignore the trigger if NRS is not active or this is a temporary table copy
+        // Ignore the trigger if ARS is not active or this is a temporary table copy
         //
         if (!isActive || table.contains("_COPY_")) {
             return;
@@ -496,7 +504,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             //
             // Get the table column information
             //
-            // NRS tables use DB_ID as the primary index
+            // ARS tables use DB_ID as the primary index
             //
             try (ResultSet rs = stmt.executeQuery("SHOW COLUMNS FROM " + table + " FROM " + schema)) {
                 int index = 0;
@@ -834,7 +842,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      */
     private static void getIndexAccess(Connection conn) throws SQLException {
         if (!isActive) {
-            throw new SQLException("NRS is no longer active");
+            throw new SQLException("ARS is no longer active");
         }
         boolean obtainedUpdateLock = false;
         if (!indexLock.writeLock().hasLock()) {
