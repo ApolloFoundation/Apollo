@@ -297,7 +297,7 @@ public class NodeClient {
     }
 
     public List<Block> getBlocksList(String url, boolean includeTransactions, Long timestamp) throws IOException {
-        String json = getBlocks(url, 0, 4, includeTransactions, timestamp);
+        String json = getBlocks(url, 0, 99, includeTransactions, timestamp);
         JsonNode root = MAPPER.readTree(json);
         JsonNode blocksArray = root.get("blocks");
         return MAPPER.readValue(blocksArray.toString(), new TypeReference<List<Block>>() {
