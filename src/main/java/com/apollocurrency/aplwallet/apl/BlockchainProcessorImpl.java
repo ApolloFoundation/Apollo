@@ -682,7 +682,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 peer.blacklist("Too many nextBlocks");
                 return null;
             }
-            int expectedHeight = startHeight + start + 1;
+            int expectedHeight = startHeight + start;
             List<BlockImpl> blockList = new ArrayList<>(nextBlocks.size());
             try {
                 int count = stop - start;
@@ -1431,7 +1431,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             throw new BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
         int actualBlockTime = block.getTimestamp() - previousLastBlock.getTimestamp();
-        if (Constants.isAdaptiveForgingEnabled() && actualBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() && block.getTransactions().size() == 0) {
+        if (Constants.isAdaptiveBlockAtHeight(previousLastBlock.getHeight() + 1) && actualBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() && block.getTransactions().size() == 0) {
             throw new BlockNotAcceptedException("Invalid empty block. Time since previous block should be greater than " + Constants.getAdaptiveForgingEmptyBlockTime() + ", but " +
                     "got " + actualBlockTime, null);
         }
