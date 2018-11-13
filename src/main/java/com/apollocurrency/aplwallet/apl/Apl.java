@@ -83,6 +83,7 @@ public final class Apl {
 
     private static final RuntimeMode runtimeMode;
     private static final DirProvider dirProvider;
+    private static NtpTime ntpTime;
     
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
@@ -390,7 +391,7 @@ public final class Apl {
 
         static {
             try {
-
+                ntpTime = new NtpTime();
                 long startTime = System.currentTimeMillis();
                 setSystemProperties();
                 logSystemProperties();

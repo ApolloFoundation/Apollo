@@ -8,9 +8,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.apollocurrency.aplwallet.apl.Constants;
+import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
@@ -20,7 +22,8 @@ public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
     private static final NtpTime instance = new NtpTime();
-    private static AtomicLong timeOffset = new AtomicLong(0);
+    private static volatile long timeOffset = 0;
+    private static final int refreshFrequency = 10;
             
     private static void setTimeDrift() {
         NTPUDPClient client = new NTPUDPClient();
@@ -38,11 +41,11 @@ public class NtpTime {
             LOG.info(" Roundtrip delay(ms)=" + delay
                     + ", clock offset(ms)=" + offset); // offset in ms
             
-            timeOffset.set(offsetValue);
+            timeOffset = offsetValue;
         }
-        catch (Exception e) {
-            LOG.error(e.getMessage());
-            timeOffset.set(0);
+        catch (IOException e ) {
+            LOG.error(e.getMessage(), e);
+            timeOffset = 0;
         }
         finally {
              client.close();
@@ -50,19 +53,13 @@ public class NtpTime {
     }
     
     public static long getTime() {
-        return System.currentTimeMillis() + timeOffset.longValue();
+        return System.currentTimeMillis() + timeOffset;
     }
-    
-    public static void init() {        
-        setTimeDrift();
+
+    public NtpTime() {
+            setTimeDrift();
         Runnable timeUpdate = () -> { setTimeDrift(); };
-        ThreadPool.scheduleThread("NTP Update", timeUpdate, 10, TimeUnit.SECONDS);        
-    }
-
-
-    //never
-    private NtpTime() {
-                        
+        ThreadPool.scheduleThread("NTP Update", timeUpdate, refreshFrequency, TimeUnit.SECONDS);                        
     }
     
             
