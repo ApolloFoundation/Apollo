@@ -20,15 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
-import com.apollocurrency.aplwallet.apl.Block;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 final class ProcessBlock extends PeerServlet.PeerRequestHandler {
+    private static final Logger LOG = getLogger(ProcessBlock.class);
 
     private static class ProcessBlockHolder {
         private static final ProcessBlock INSTANCE = new ProcessBlock();
@@ -46,12 +50,16 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
         Block lastBlock = Apl.getBlockchain().getLastBlock();
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
         int peerBlockTimeout = ((Long)request.get("timeout")).intValue();
+        LOG.debug("API: Timeout: peerBlock{},ourBlock{}", peerBlockTimeout, lastBlock.getTimeout());
+        LOG.debug("API: Timestamp: peerBlock{},ourBlock{}", peerBlockTimestamp, lastBlock.getTimestamp());
+        LOG.debug("API: PrevId: peerBlock{},ourBlock{}", Convert.parseUnsignedLong(previousBlockId), lastBlock.getPreviousBlockId());
         if (lastBlock.getStringId().equals(previousBlockId) ||
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
-                        && (lastBlock.getTimestamp() > peerBlockTimestamp) ||
-                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout())) {
+                        && (lastBlock.getTimestamp() > peerBlockTimestamp ||
+                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             Peers.peersService.submit(() -> {
                 try {
+                    LOG.debug("API: need to process peer block");
                     Apl.getBlockchainProcessor().processPeerBlock(request);
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {

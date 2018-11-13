@@ -33,6 +33,8 @@
         "height": 0,
         "maxNumberOfTransactions": 255,
         "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
         "maxBalance": 30000000000,
         "consensus":
         {
@@ -50,9 +52,7 @@
       "163.172.146.173",
       "51.15.69.39",
       "51.15.59.37",
-      "51.15.114.68",
-      "51.15.130.37",
-      "51.15.228.90"
+      "51.15.114.68"
     ],
     "wellKnownPeers": [],
     "blacklistedPeers": [],
@@ -67,6 +67,8 @@
         "height": 0,
         "maxNumberOfTransactions": 255,
         "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
         "maxBalance": 30000000000,
         "consensus":
         {
@@ -74,9 +76,29 @@
         }
       },
       {
-        "height": 205866,
+        "height": 234700,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 1,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "false",
+            "emptyBlockTime": 60
+          }
+        }
+
+      },
+      {
+        "height": 238000,
         "maxNumberOfTransactions": 255,
         "blockTime": 10,
+        "maxBlockTimeLimit": 10,
+        "minBlockTimeLimit": 10,
         "maxBalance": 30000000000,
         "consensus":
         {
@@ -87,7 +109,6 @@
             "emptyBlockTime": 60
           }
         }
-
       }
     ]
   }

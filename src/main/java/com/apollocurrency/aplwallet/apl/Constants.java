@@ -23,11 +23,13 @@ package com.apollocurrency.aplwallet.apl;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.chainid.BlockchainProperties;
@@ -69,8 +71,8 @@ public final class Constants {
             this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(blockTime * maxBalanceApl)).longValue();
             this.maxBaseTarget = initialBaseTarget * (testnet ? maxBalanceApl : 50);
             this.minBaseTarget = initialBaseTarget * 9 / 10;
-            this.minBlocktimeLimit = blockTime - 2;
-            this.maxBlocktimeLimit = blockTime + 2;
+            this.minBlocktimeLimit = bp.getMinBlockTimeLimit();
+            this.maxBlocktimeLimit = bp.getMaxBlockTimeLimit();
             this.isAdaptiveForgingEnabled = bp.getConsensus().getAdaptiveForgingSettings().isEnabled();
             this.adaptiveForgingEmptyBlockTime = bp.getConsensus().getAdaptiveForgingSettings().getEmptyBlockTime();
             this.consensusType = bp.getConsensus().getType();
@@ -238,16 +240,26 @@ public final class Constants {
         Constants.shufflingDepositAtm = (testnet ? 7 : 1000) * ONE_APL;
         Constants.guaranteedBalanceConfirmations = testnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
         changeableConstants = new ChangeableConstants(chain.getBlockchainProperties().get(0));
+        ConstantsChangeListener constantsChangeListener = new ConstantsChangeListener(chain.getBlockchainProperties());
+        BlockchainProcessorImpl.getInstance().addListener(constantsChangeListener,
+                BlockchainProcessor.Event.BLOCK_PUSHED);
+        BlockchainProcessorImpl.getInstance().addListener(constantsChangeListener,
+                BlockchainProcessor.Event.BLOCK_POPPED);
+        BlockchainProcessorImpl.getInstance().addListener(constantsChangeListener,
+                BlockchainProcessor.Event.BLOCK_SCANNED);
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    private static ChangeableConstants getLatest(Chain chain) {
+    private static ChangeableConstants getConstantsAtHeight(Chain chain, int targetHeight, boolean inclusive) {
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
+        if (targetHeight == 0) {
+            return new ChangeableConstants(blockchainProperties.get(0));
+        }
         Optional<Integer> maxHeight =
                 blockchainProperties
                         .keySet()
                         .stream()
-                        .filter(height -> BlockDb.findLastBlock() != null && BlockDb.findLastBlock().getHeight() > height && height != 0)
+                        .filter(height -> inclusive ? targetHeight >= height : targetHeight > height)
                         .max(Comparator.naturalOrder());
         return maxHeight
                 .map(height -> new ChangeableConstants(blockchainProperties.get(height)))
@@ -259,13 +271,22 @@ public final class Constants {
     }
 
     static void updateToLatestConstants() {
+        BlockImpl lastBlock = BlockDb.findLastBlock();
+        if (lastBlock == null) {
+            LOG.debug("Nothing to update. No blocks");
+            return;
+        }
+        updateToHeight(lastBlock.getHeight(), true);
+    }
+    private static void updateToHeight(int height, boolean inclusive) {
         Objects.requireNonNull(chain);
 
-        ChangeableConstants latestConstants = getLatest(chain);
+        ChangeableConstants latestConstants = getConstantsAtHeight(chain, height, inclusive);
         if (latestConstants != null) {
             changeableConstants = latestConstants;
+        } else {
+            LOG.error("No constants at all!");
         }
-        BlockchainProcessorImpl.getInstance().addListener(new ConstantsChangeListener(chain.getBlockchainProperties()), BlockchainProcessor.Event.BLOCK_PUSHED);
     }
 
     public static Chain getChain() {
@@ -367,19 +388,17 @@ public final class Constants {
     }
 
     private static class ConstantsChangeListener implements Listener<Block> {
-            private static final Logger LOG = getLogger(ConstantsChangeListener.class);
-
-
-        private Map<Integer, BlockchainProperties> propertiesMap;
-        private Set<Integer> targetHeights;
+        private static final Logger LOG = getLogger(ConstantsChangeListener.class);
+        private final Map<Integer, BlockchainProperties> propertiesMap;
+        private final Set<Integer> targetHeights;
 
         public ConstantsChangeListener(Map<Integer, BlockchainProperties> propertiesMap) {
-            this.propertiesMap = propertiesMap;
-            targetHeights = propertiesMap.keySet();
+            this.propertiesMap = new ConcurrentHashMap<>(propertiesMap);
+            this.targetHeights = Collections.unmodifiableSet(propertiesMap.keySet());
             String stringConstantsChangeHeights =
-                    targetHeights.stream().filter(height -> BlockDb.findLastBlock() == null || height > BlockDb.findLastBlock().getHeight()).map(Object::toString).collect(Collectors.joining(
+                    targetHeights.stream().map(Object::toString).collect(Collectors.joining(
                     ","));
-            LOG.debug("Available constants updates at height: {}",
+            LOG.debug("Constants updates at heights: {}",
                     stringConstantsChangeHeights.isEmpty() ? "none" : stringConstantsChangeHeights);
         }
 
@@ -390,8 +409,16 @@ public final class Constants {
                 LOG.info("Updating constants at height {}", currentHeight);
                 changeableConstants = new ChangeableConstants(propertiesMap.get(currentHeight));
                 LOG.info("New constants applied: {}", changeableConstants);
-                targetHeights.remove(currentHeight);
             }
         }
+    }
+
+    public static void rollback(int height) {
+        Constants.updateToHeight(height, true);
+    }
+
+    public static boolean isAdaptiveBlockAtHeight(int height) {
+        ChangeableConstants constantsAtHeight = getConstantsAtHeight(chain, height, false);
+        return constantsAtHeight.isAdaptiveForgingEnabled;
     }
 }
