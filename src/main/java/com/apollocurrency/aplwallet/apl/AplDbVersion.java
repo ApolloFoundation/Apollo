@@ -679,13 +679,13 @@ public class AplDbVersion extends DbVersion {
             case 244:
                 apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
             case 245:
-                apply("ALTER TABLE currency ALTER COLUMN min_reserve_per_unit_nqt RENAME TO min_reserve_per_unit_atm");
-            case 246:
-                apply("ALTER TABLE currency_supply ALTER COLUMN current_reserve_per_unit_nqt RENAME TO current_reserve_per_unit_atm");
-            case 247:
                 apply("ALTER TABLE block ADD timeout INT NOT NULL DEFAULT 0");
-            case 248:
+            case 246:
                 apply("ALTER TABLE block ADD CONSTRAINT chk_timeout CHECK (timeout >= 0)");
+            case 247:
+                apply("ALTER TABLE currency ALTER COLUMN min_reserve_per_unit_nqt RENAME TO min_reserve_per_unit_atm");
+            case 248:
+                apply("ALTER TABLE currency_supply ALTER COLUMN current_reserve_per_unit_nqt RENAME TO current_reserve_per_unit_atm");
             case 249:
                 return;
             default:
