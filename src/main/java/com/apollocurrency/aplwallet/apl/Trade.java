@@ -91,7 +91,7 @@ public final class Trade {
     }
 
     public static List<Trade> getLastTrades(long[] assetIds) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trade WHERE asset_id = ? ORDER BY asset_id, height DESC LIMIT 1")) {
             List<Trade> result = new ArrayList<>();
             for (long assetId : assetIds) {
@@ -111,7 +111,7 @@ public final class Trade {
     public static DbIterator<Trade> getAccountTrades(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trade WHERE seller_id = ?"
                     + " UNION ALL SELECT * FROM trade WHERE buyer_id = ? AND seller_id <> ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));
@@ -130,7 +130,7 @@ public final class Trade {
     public static DbIterator<Trade> getAccountAssetTrades(long accountId, long assetId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trade WHERE seller_id = ? AND asset_id = ?"
                     + " UNION ALL SELECT * FROM trade WHERE buyer_id = ? AND seller_id <> ? AND asset_id = ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));

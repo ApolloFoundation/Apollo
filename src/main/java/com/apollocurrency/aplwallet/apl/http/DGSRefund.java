@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DUPLICATE_REFUND;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.GOODS_NOT_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_REFUND;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONStreamAware;
 
 public final class DGSRefund extends CreateTransaction {
 
@@ -74,7 +74,7 @@ public final class DGSRefund extends CreateTransaction {
         } catch (RuntimeException e) {
             return INCORRECT_DGS_REFUND;
         }
-        if (refundATM < 0 || refundATM > Constants.MAX_BALANCE_ATM) {
+        if (refundATM < 0 || refundATM > Constants.getMaxBalanceATM()) {
             return INCORRECT_DGS_REFUND;
         }
 

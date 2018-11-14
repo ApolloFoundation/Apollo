@@ -85,7 +85,7 @@ public class KeyStoreTest {
 
         Assert.assertEquals(2, Files.list(tempDirectory).count());
 
-        String rsAcc = Convert.rsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
+        String rsAcc = Convert.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
 
         Path encryptedKeyPath =
                 Files.list(tempDirectory).filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(()->new RuntimeException("No encrypted key found for " + rsAcc  + " account"));
@@ -110,7 +110,7 @@ public class KeyStoreTest {
         SecretBytesDetails secretBytes = keyStoreSpy.getSecretBytes(PASSPHRASE, accountId);
         byte[] actualKey = secretBytes.getSecretBytes();
         Assert.assertEquals(KeyStore.Status.OK, secretBytes.getExtractStatus()) ;
-        String rsAcc = Convert.rsAccount(accountId);
+        String rsAcc = Convert.defaultRsAccount(accountId);
 
         verify(keyStoreSpy, times(1)).findSecretPaths(accountId);
 

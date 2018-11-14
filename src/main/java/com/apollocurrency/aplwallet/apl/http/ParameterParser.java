@@ -285,15 +285,15 @@ public final class ParameterParser {
     }
 
     public static long getAmountATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATM", 1L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "amountATM", 1L, Constants.getMaxBalanceATM(), true);
     }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeATM", 0L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "feeATM", 0L, Constants.getMaxBalanceATM(), true);
     }
 
     public static long getPriceATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "priceATM", 1L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "priceATM", 1L, Constants.getMaxBalanceATM(), true);
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
@@ -353,7 +353,7 @@ public final class ParameterParser {
     }
 
     public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATMPerATU", 1L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "amountATMPerATU", 1L, Constants.getMaxBalanceATM(), true);
     }
 
     public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
@@ -670,7 +670,8 @@ public final class ParameterParser {
     public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
         long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
         if (holdingType == HoldingType.APL && holdingId != 0) {
-            throw new ParameterException(JSONResponses.incorrect("holding", "holding id should not be specified if holdingType is " + Constants.COIN_SYMBOL));
+            throw new ParameterException(JSONResponses.incorrect("holding",
+                    "holding id should not be specified if holdingType is " + Constants.getCoinSymbol()));
         }
         return holdingId;
     }

@@ -20,10 +20,55 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.servlet.DispatcherType;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -36,15 +81,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.servlet.DispatcherType;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Peers {
     private static final Logger LOG = getLogger(Peers.class);
@@ -77,7 +113,8 @@ public final class Peers {
     static final boolean useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
     static final boolean isGzipEnabled;
 
-
+    private static final int DEFAULT_PEER_PORT = 47874;
+    private static final int TESTNET_PEER_PORT = 46874;
     private static final String myPlatform;
     private static final String myAddress;
     private static final int myPeerServerPort;
@@ -128,7 +165,7 @@ public final class Peers {
         }
         myPlatform = platform;
         myAddress = Convert.emptyToNull(Apl.getStringProperty("apl.myAddress", "").trim());
-        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !Constants.isTestnet) {
+        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !Constants.isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
         String myHost = null;
@@ -175,7 +212,7 @@ public final class Peers {
             }
         }
         myPeerServerPort = Apl.getIntProperty("apl.peerServerPort");
-        if (myPeerServerPort == TESTNET_PEER_PORT && !Constants.isTestnet) {
+        if (myPeerServerPort == TESTNET_PEER_PORT && !Constants.isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
         shareMyAddress = Apl.getBooleanProperty("apl.shareMyAddress") && ! Constants.isOffline;
@@ -208,7 +245,7 @@ public final class Peers {
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
-                if (!Constants.isTestnet) {
+                if (!Constants.isTestnet()) {
                     if (port >= 0)
                         announcedAddress = myAddress;
                     else
@@ -232,6 +269,7 @@ public final class Peers {
         json.put("application", Apl.APPLICATION);
         json.put("version", Apl.VERSION.toString());
         json.put("platform", Peers.myPlatform);
+        json.put("chainId", Constants.getChain().getChainId());
         json.put("shareAddress", Peers.shareMyAddress);
         if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             servicesList.add(Peer.Service.PRUNABLE);
@@ -279,12 +317,10 @@ public final class Peers {
         LOG.debug("My peer info:\n" + json.toJSONString());
         myPeerInfo = json;
 
-        final List<String> defaultPeers = Constants.isTestnet ? Apl.getStringListProperty("apl.defaultTestnetPeers")
-                : Apl.getStringListProperty("apl.defaultPeers");
-        wellKnownPeers = Collections.unmodifiableList(Constants.isTestnet ? Apl.getStringListProperty("apl.testnetPeers")
-                : Apl.getStringListProperty("apl.wellKnownPeers"));
+        final List<String> defaultPeers = Constants.getChain().getDefaultPeers();
+        wellKnownPeers = Constants.getChain().getWellKnownPeers();
 
-        List<String> knownBlacklistedPeersList = Apl.getStringListProperty("apl.knownBlacklistedPeers");
+        List<String> knownBlacklistedPeersList = Constants.getChain().getBlacklistedPeers();
         if (knownBlacklistedPeersList.isEmpty()) {
             knownBlacklistedPeers = Collections.emptySet();
         } else {
@@ -387,7 +423,7 @@ public final class Peers {
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
-                final int port = Constants.isTestnet ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
+                final int port = Constants.isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
                 connector.setPort(port);
                 final String host = Apl.getStringProperty("apl.peerServerHost");
                 connector.setHost(host);
@@ -709,15 +745,15 @@ public final class Peers {
             // Update the peer database
             //
             try {
-                Db.db.beginTransaction();
+                Db.getDb().beginTransaction();
                 PeerDb.deletePeers(toDelete);
                 PeerDb.updatePeers(toUpdate);
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             } catch (Exception e) {
-                Db.db.rollbackTransaction();
+                Db.getDb().rollbackTransaction();
                 throw e;
             } finally {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
         }
 
@@ -727,14 +763,14 @@ public final class Peers {
         Peers.addListener(peer -> peersService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    Db.db.beginTransaction();
+                    Db.getDb().beginTransaction();
                     PeerDb.updatePeer((PeerImpl)peer);
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
-                    Db.db.rollbackTransaction();
+                    Db.getDb().rollbackTransaction();
                 } finally {
-                    Db.db.endTransaction();
+                    Db.getDb().endTransaction();
                 }
             }
         }), Peers.Event.CHANGED_SERVICES);
@@ -820,7 +856,7 @@ public final class Peers {
     }
 
     public static int getDefaultPeerPort() {
-        return Constants.isTestnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+        return Constants.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
     }
 
     public static Collection<? extends Peer> getAllPeers() {
@@ -942,11 +978,11 @@ public final class Peers {
             return null;
         }
         peer = new PeerImpl(host, announcedAddress);
-        if (Constants.isTestnet && peer.getPort() != TESTNET_PEER_PORT) {
+        if (Constants.isTestnet() && peer.getPort() != TESTNET_PEER_PORT) {
             LOG.debug("Peer " + host + " on testnet is not using port " + TESTNET_PEER_PORT + ", ignoring");
             return null;
         }
-        if (!Constants.isTestnet && peer.getPort() == TESTNET_PEER_PORT) {
+        if (!Constants.isTestnet() && peer.getPort() == TESTNET_PEER_PORT) {
             LOG.debug("Peer " + host + " is using testnet port " + peer.getPort() + ", ignoring");
             return null;
         }
@@ -1194,7 +1230,8 @@ public final class Peers {
     private static void checkBlockchainState() {
         Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
                 (Apl.getBlockchainProcessor().isDownloading() || Apl.getBlockchain().getLastBlockTimestamp() < Apl.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (Apl.getBlockchain().getLastBlock().getBaseTarget() / Constants.INITIAL_BASE_TARGET > 10 && !Constants.isTestnet) ? Peer.BlockchainState.FORK :
+                        (Apl.getBlockchain().getLastBlock().getBaseTarget() / Constants.getInitialBaseTarget() > 10 && !Constants.isTestnet()) ?
+                                Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {
             JSONObject json = new JSONObject(myPeerInfo);

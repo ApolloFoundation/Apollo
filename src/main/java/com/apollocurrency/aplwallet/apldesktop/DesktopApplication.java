@@ -365,8 +365,8 @@ public class DesktopApplication extends Application {
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-                        mainStage.setTitle(Constants.PROJECT_NAME + " Desktop - " + webEngine.getLocation());
-                        ars = (JSObject) webEngine.executeScript("ARS");
+                        mainStage.setTitle(Constants.getProjectName() + " Desktop - " + webEngine.getLocation());
+                        ars = (JSObject) webEngine.executeScript("NRS");
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
@@ -503,7 +503,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-            Platform.runLater(() -> webEngine.executeScript("ARS.getState(null, '" + msg + "')"));
+            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")
@@ -701,7 +701,7 @@ public class DesktopApplication extends Application {
         }
 
         private Alert reindexDbUI() throws SQLException {
-            FullTextTrigger.reindex(Db.db.getConnection());
+            FullTextTrigger.reindex(Db.getDb().getConnection());
             return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
         }
 

@@ -17,11 +17,11 @@ public class PublicKeyMigration {
         Connection con;
         boolean isInTransaction = false;
         try {
-            if (Db.db.isInTransaction()) {
+            if (Db.getDb().isInTransaction()) {
                 isInTransaction = true;
-                con = Db.db.getConnection();
+                con = Db.getDb().getConnection();
             } else {
-                con = Db.db.beginTransaction();
+                con = Db.getDb().beginTransaction();
             }
 
             try (Statement stmt = con.createStatement();
@@ -73,7 +73,7 @@ public class PublicKeyMigration {
                             pstm.addBatch();
                             if (++counter % 500 == 0) {
                                 pstm.executeBatch();
-                                Db.db.commitTransaction();
+                                Db.getDb().commitTransaction();
                                 LOG.debug("Copied {} / {}", counter, totalNumberOfGenesisKeys);
                             }
                         }
@@ -89,19 +89,19 @@ public class PublicKeyMigration {
                     deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + Constants.BATCH_COMMIT_SIZE);
                     totalDeleted += deleted;
                     LOG.debug("Migration performed for {}/{} public keys", totalDeleted, totalNumberOfGenesisKeys);
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } while (deleted == Constants.BATCH_COMMIT_SIZE);
                 //add indices
             }
-            Db.db.commitTransaction();
+            Db.getDb().commitTransaction();
         }
         catch (SQLException e) {
-            Db.db.rollbackTransaction();
+            Db.getDb().rollbackTransaction();
             throw new RuntimeException(e.toString(), e);
         }
         finally {
             if (!isInTransaction) {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
         }
     }

@@ -111,7 +111,7 @@ public final class PassphraseRecovery {
     static Map<Long, byte[]> getPublicKeys() {
         Db.init();
         Map<Long, byte[]> publicKeys = new HashMap<>();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM public_key WHERE latest=TRUE");
              ResultSet rs = selectBlocks.executeQuery()) {
             while (rs.next()) {

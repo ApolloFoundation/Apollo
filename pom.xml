@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.21.7</version>
+    <version>1.21.9</version>
     <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
@@ -41,6 +41,7 @@
         <apache-commons-net.version>3.6</apache-commons-net.version>
         <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
+        <jackson.version>2.9.3</jackson.version>
 
         <!--Indexing-->
         <lucene.version>5.3.2</lucene.version>
@@ -50,11 +51,10 @@
 
         <!--Logging-->
         <slf4j.version>1.7.22</slf4j.version>
-        <logback.version>1.1.7</logback.version>
+        <logback.version>1.2.3</logback.version>
         <log4jdbc.version>1.2</log4jdbc.version>
 
         <!--Tests-->
-        <jackson.version>2.9.3</jackson.version>
         <json-simple.version>1.1.1</json-simple.version>
         <json-unit.version>1.20.0</json-unit.version>
         <junit.version>4.12</junit.version>

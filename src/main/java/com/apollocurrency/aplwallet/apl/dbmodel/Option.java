@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.dbmodel;
 
-import com.apollocurrency.aplwallet.apl.Db;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.Db;
+import org.slf4j.Logger;
 
 //TODO: Refactor as ORM
 
@@ -21,7 +21,7 @@ public class Option {
 
     public static String get(String optionName) 
     {
-        try (Connection con = Db.db.getConnection()) 
+        try (Connection con = Db.getDb().getConnection())
         {
             PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
             stmt.setString(1, optionName);
@@ -42,7 +42,7 @@ public class Option {
     {
         if (get(optionName) == null)
         {
-            try (Connection con = Db.db.getConnection())
+            try (Connection con = Db.getDb().getConnection())
             {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
                 stmt.setString(1, optionName);
@@ -56,7 +56,7 @@ public class Option {
         }
         else
         {
-            try (Connection con = Db.db.getConnection())
+            try (Connection con = Db.getDb().getConnection())
             {
                 PreparedStatement stmt = con.prepareStatement("UPDATE option set value = ? WHERE name = ?");
                 stmt.setString(1, optionValue);
@@ -79,7 +79,7 @@ public class Option {
         }
         else
         {
-            try (Connection con = Db.db.getConnection()) {
+            try (Connection con = Db.getDb().getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");
                 stmt.setString(1, optionName);
             }

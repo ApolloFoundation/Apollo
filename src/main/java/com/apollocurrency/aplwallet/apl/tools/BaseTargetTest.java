@@ -20,9 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -32,16 +30,18 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.slf4j.Logger;
 
 public final class BaseTargetTest {
         private static final Logger LOG = getLogger(BaseTargetTest.class);
 
-    private static final long MIN_BASE_TARGET = Constants.INITIAL_BASE_TARGET * 9 / 10;
-    private static final long MAX_BASE_TARGET = Constants.INITIAL_BASE_TARGET * (Constants.isTestnet ? Constants.MAX_BALANCE_APL : 50);
+    private static final long MIN_BASE_TARGET = Constants.getInitialBaseTarget() * 9 / 10;
+    private static final long MAX_BASE_TARGET = Constants.getInitialBaseTarget() * (Constants.isTestnet() ? Constants.getMaxBalanceAPL() : 50);
 
-    private static final int MIN_BLOCKTIME_LIMIT = Constants.BLOCK_TIME - 7;
-    private static final int MAX_BLOCKTIME_LIMIT = Constants.BLOCK_TIME + 7;
+    private static final int MIN_BLOCKTIME_LIMIT = Constants.getBlockTime() - 7;
+    private static final int MAX_BLOCKTIME_LIMIT = Constants.getBlockTime() + 7;
 
     private static final int GAMMA = 64;
 
@@ -57,10 +57,12 @@ public final class BaseTargetTest {
 
     private static long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
-        if (blocktimeEMA > Constants.BLOCK_TIME) {
-            baseTarget = (previousBaseTarget * Math.min(blocktimeEMA, MAX_BLOCKTIME_LIMIT)) / Constants.BLOCK_TIME;
+        int blockTime = Constants.getBlockTime();
+        if (blocktimeEMA > blockTime) {
+            baseTarget = (previousBaseTarget * Math.min(blocktimeEMA, MAX_BLOCKTIME_LIMIT)) / blockTime;
         } else {
-            baseTarget = previousBaseTarget - previousBaseTarget * GAMMA * (Constants.BLOCK_TIME - Math.max(blocktimeEMA, MIN_BLOCKTIME_LIMIT)) / (100 * Constants.BLOCK_TIME);
+            baseTarget =
+                    previousBaseTarget - previousBaseTarget * GAMMA * (blockTime - Math.max(blocktimeEMA, MIN_BLOCKTIME_LIMIT)) / (100 * blockTime);
         }
         if (baseTarget < 0 || baseTarget > MAX_BASE_TARGET) {
             baseTarget = MAX_BASE_TARGET;
@@ -112,7 +114,7 @@ public final class BaseTargetTest {
 
             int count = 0;
 
-            String dbLocation = Constants.isTestnet ? "apl_test_db" : "apl_db";
+            String dbLocation = Constants.isTestnet() ? "apl_test_db" : "apl_db";
 
             try (Connection con = DriverManager.getConnection("jdbc:h2:./" + dbLocation + "/apl;DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE", "sa", "sa");
                  PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM block WHERE height > " + height + " ORDER BY db_id ASC");

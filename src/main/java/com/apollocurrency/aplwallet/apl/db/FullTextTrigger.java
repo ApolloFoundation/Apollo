@@ -185,7 +185,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      */
     public static void init() {
         String ourClassName = FullTextTrigger.class.getName();
-        try (Connection conn = Db.db.getConnection();
+        try (Connection conn = Db.getDb().getConnection();
                 Statement stmt = conn.createStatement();
                 Statement qstmt = conn.createStatement()) {
             //
@@ -608,7 +608,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         // Commit the change immediately if we are not in a transaction
         //
-        if (!Db.db.isInTransaction()) {
+        if (!Db.getDb().isInTransaction()) {
             try {
                 commitRow(oldRow, newRow);
                 commitIndex();
@@ -627,7 +627,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         // Register our transaction callback
         //
-        Db.db.registerCallback(this);
+        Db.getDb().registerCallback(this);
     }
 
     /**

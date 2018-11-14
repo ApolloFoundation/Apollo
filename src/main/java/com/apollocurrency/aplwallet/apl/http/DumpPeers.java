@@ -20,14 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Version;
-import com.apollocurrency.aplwallet.apl.peer.Peer;
-import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -38,7 +31,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.peer.Peer;
+import com.apollocurrency.aplwallet.apl.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 public final class DumpPeers extends APIServlet.APIRequestHandler {
         private static final Logger LOG = getLogger(DumpPeers.class);
@@ -60,7 +60,7 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
 
         Version version = Version.from(Convert.nullToEmpty(req.getParameter("version")));
 
-        int weight = ParameterParser.getInt(req, "weight", 0, (int)Constants.MAX_BALANCE_APL, false);
+        int weight = ParameterParser.getInt(req, "weight", 0, (int)Constants.getMaxBalanceAPL(), false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();

@@ -20,27 +20,43 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.apollocurrency.aplwallet.apl.db.DbClause;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.Comparator.comparingInt;
-import static java.util.Comparator.comparingLong;
-import static org.slf4j.LoggerFactory.getLogger;
 
 final class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
@@ -88,7 +104,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
         @Override
         public void rollback(int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
                 pstmt.setInt(1, height);
                 try (ResultSet rs = pstmt.executeQuery()) {
@@ -176,17 +192,17 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     BlockchainImpl.getInstance().writeLock();
                     try {
                         try {
-                            Db.db.beginTransaction();
+                            Db.getDb().beginTransaction();
                             for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
                                 removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
                             }
-                            Db.db.commitTransaction();
+                            Db.getDb().commitTransaction();
                         } catch (Exception e) {
                             LOG.error(e.toString(), e);
-                            Db.db.rollbackTransaction();
+                            Db.getDb().rollbackTransaction();
                             throw e;
                         } finally {
-                            Db.db.endTransaction();
+                            Db.getDb().endTransaction();
                         }
                     } finally {
                         BlockchainImpl.getInstance().writeUnlock();
@@ -363,7 +379,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     private List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM unconfirmed_transaction");
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
@@ -453,7 +469,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             List<Transaction> removed = new ArrayList<>();
             try {
-                Db.db.beginTransaction();
+                Db.getDb().beginTransaction();
                 try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getAllUnconfirmedTransactions()) {
                     for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
                         unconfirmedTransaction.getTransaction().undoUnconfirmed();
@@ -461,13 +477,13 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
                 unconfirmedTransactionTable.truncate();
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             } catch (Exception e) {
                 LOG.error(e.toString(), e);
-                Db.db.rollbackTransaction();
+                Db.getDb().rollbackTransaction();
                 throw e;
             } finally {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
             unconfirmedDuplicates.clear();
             waitingTransactions.clear();
@@ -483,17 +499,17 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     public void requeueAllUnconfirmedTransactions() {
         BlockchainImpl.getInstance().writeLock();
         try {
-            if (!Db.db.isInTransaction()) {
+            if (!Db.getDb().isInTransaction()) {
                 try {
-                    Db.db.beginTransaction();
+                    Db.getDb().beginTransaction();
                     requeueAllUnconfirmedTransactions();
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } catch (Exception e) {
                     LOG.error(e.toString(), e);
-                    Db.db.rollbackTransaction();
+                    Db.getDb().rollbackTransaction();
                     throw e;
                 } finally {
-                    Db.db.endTransaction();
+                    Db.getDb().endTransaction();
                 }
                 return;
             }
@@ -535,21 +551,21 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     void removeUnconfirmedTransaction(TransactionImpl transaction) {
-        if (!Db.db.isInTransaction()) {
+        if (!Db.getDb().isInTransaction()) {
             try {
-                Db.db.beginTransaction();
+                Db.getDb().beginTransaction();
                 removeUnconfirmedTransaction(transaction);
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             } catch (Exception e) {
                 LOG.error(e.toString(), e);
-                Db.db.rollbackTransaction();
+                Db.getDb().rollbackTransaction();
                 throw e;
             } finally {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
             return;
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM unconfirmed_transaction WHERE id = ?")) {
             pstmt.setLong(1, transaction.getId());
             int deleted = pstmt.executeUpdate();
@@ -617,7 +633,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (Apl.getBlockchain().getHeight() <= Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
+        if (Apl.getBlockchain().getHeight() <= Constants.getLastKnownBlock() && !testUnconfirmedTransactions) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -680,8 +696,8 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         BlockchainImpl.getInstance().writeLock();
         try {
             try {
-                Db.db.beginTransaction();
-                if (Apl.getBlockchain().getHeight() < Constants.LAST_KNOWN_BLOCK && !testUnconfirmedTransactions) {
+                Db.getDb().beginTransaction();
+                if (Apl.getBlockchain().getHeight() < Constants.getLastKnownBlock() && !testUnconfirmedTransactions) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
 
@@ -707,12 +723,12 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
                 unconfirmedTransactionTable.insert(unconfirmedTransaction);
 
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             } catch (Exception e) {
-                Db.db.rollbackTransaction();
+                Db.getDb().rollbackTransaction();
                 throw e;
             } finally {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
@@ -774,7 +790,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         List<Transaction> processed = new ArrayList<>();
         Apl.getBlockchain().readLock();
         try {
-            Db.db.beginTransaction();
+            Db.getDb().beginTransaction();
             try {
                 //
                 // Check each transaction returned by the archive peer
@@ -818,17 +834,17 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                         if (foundAllData) {
                             processed.add(myTransaction);
                         }
-                        Db.db.clearCache();
-                        Db.db.commitTransaction();
+                        Db.getDb().clearCache();
+                        Db.getDb().commitTransaction();
                     }
                 }
-                Db.db.commitTransaction();
+                Db.getDb().commitTransaction();
             } catch (Exception e) {
-                Db.db.rollbackTransaction();
+                Db.getDb().rollbackTransaction();
                 processed.clear();
                 throw e;
             } finally {
-                Db.db.endTransaction();
+                Db.getDb().endTransaction();
             }
         } finally {
             Apl.getBlockchain().readUnlock();

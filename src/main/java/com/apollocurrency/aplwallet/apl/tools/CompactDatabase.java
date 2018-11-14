@@ -71,7 +71,7 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-        String dbPrefix = Constants.isTestnet ? "apl.testDb" : "apl.db";
+        String dbPrefix = Constants.isTestnet() ? "apl.testDb" : "apl.db";
         String dbType = Apl.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");

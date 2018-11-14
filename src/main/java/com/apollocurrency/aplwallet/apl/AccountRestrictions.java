@@ -20,12 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.Account.ControlType;
-import com.apollocurrency.aplwallet.apl.AplException.AccountControlException;
-import com.apollocurrency.aplwallet.apl.VoteWeighting.VotingModel;
-import com.apollocurrency.aplwallet.apl.db.*;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.TransactionType.AccountControl.SET_PHASING_ONLY;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,8 +29,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.TransactionType.AccountControl.SET_PHASING_ONLY;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Account.ControlType;
+import com.apollocurrency.aplwallet.apl.AplException.AccountControlException;
+import com.apollocurrency.aplwallet.apl.VoteWeighting.VotingModel;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.slf4j.Logger;
 
 public final class AccountRestrictions {
         private static final Logger LOG = getLogger(AccountRestrictions.class);
@@ -139,7 +143,8 @@ public final class AccountRestrictions {
 
         private void checkTransaction(Transaction transaction) throws AccountControlException {
             if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
-                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL, Constants.COIN_SYMBOL));
+                throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL,
+                        Constants.getCoinSymbol()));
             }
             if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
                 return;

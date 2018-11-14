@@ -20,23 +20,53 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
+import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
+import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import java.io.*;
-import java.net.*;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.zip.GZIPInputStream;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
@@ -70,6 +100,7 @@ final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private volatile BlockchainState blockchainState;
+    private volatile int chainId = -1;
 
     PeerImpl(String host, String announcedAddress) {
         this.host = host;
@@ -182,6 +213,15 @@ final class PeerImpl implements Peer {
             throw new IllegalArgumentException("Invalid platform length: " + platform.length());
         }
         this.platform = platform;
+    }
+
+    @Override
+    public int getChainId() {
+        return chainId;
+    }
+
+    public void setChainId(int chainId) {
+        this.chainId = chainId;
     }
 
     @Override
@@ -307,7 +347,7 @@ final class PeerImpl implements Peer {
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = Apl.getBlockchain().getHeight();
         }
-        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / Constants.MAX_BALANCE_APL);
+        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / Constants.getMaxBalanceAPL());
     }
 
     @Override
@@ -632,7 +672,11 @@ final class PeerImpl implements Peer {
                 setPlatform((String) response.get("platform"));
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));
-
+                Object chainIdObject = response.get("chainId");
+                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(Constants.getChain().getChainId())) {
+                    blacklist(String.format("Peer %s has different chainId %d", getAnnouncedAddress(), this.chainId));
+                    return;
+                }
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     String newAnnouncedAddress = Convert.emptyToNull((String) response.get("announcedAddress"));
                     if (newAnnouncedAddress != null) {
@@ -777,7 +821,7 @@ final class PeerImpl implements Peer {
             }
 
             for (PeerImpl peer : groupedPeers) {
-                peer.adjustedWeight = Constants.MAX_BALANCE_APL * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
+                peer.adjustedWeight = Constants.getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
                 Peers.notifyListeners(peer, Peers.Event.WEIGHT);
             }
 

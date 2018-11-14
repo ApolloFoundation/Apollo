@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.UUID;
 
 abstract class DesktopUserDirProvider implements DirProvider {
 
@@ -66,8 +67,8 @@ abstract class DesktopUserDirProvider implements DirProvider {
     }
 
     @Override
-    public String getDbDir(String dbDir) {
-        return Paths.get(getUserHomeDir()).resolve(Paths.get(dbDir)).toString();
+    public String getDbDir(String dbDir, UUID chainId) {
+        return Paths.get(getUserHomeDir()).resolve(String.valueOf(chainId)).resolve(Paths.get(dbDir)).toString();
     }
 
     @Override

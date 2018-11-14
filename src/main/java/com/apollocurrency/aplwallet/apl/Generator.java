@@ -20,21 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.slf4j.Logger;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -70,7 +77,7 @@ public final class Generator implements Comparable<Generator> {
                     BlockchainImpl.getInstance().updateLock();
                     try {
                         Block lastBlock = Apl.getBlockchain().getLastBlock();
-                        if (lastBlock == null || lastBlock.getHeight() < Constants.LAST_KNOWN_BLOCK) {
+                        if (lastBlock == null || lastBlock.getHeight() < Constants.getLastKnownBlock()) {
                             return;
                         }
                         final int generationLimit = Apl.getEpochTime() - delayTime;
@@ -81,7 +88,7 @@ public final class Generator implements Comparable<Generator> {
                                 for (Generator generator : generators.values()) {
                                     generator.setLastBlock(previousBlock);
                                     int timestamp = generator.getTimestamp(generationLimit);
-                                    if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp()) {
+                                    if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
                                         LOG.debug("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
                                         List<BlockImpl> poppedOffBlock = BlockchainProcessorImpl.getInstance().popOffTo(previousBlock);
                                         for (BlockImpl block : poppedOffBlock) {
@@ -245,12 +252,12 @@ public final class Generator implements Comparable<Generator> {
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         return hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
-                || (Constants.isTestnet ? elapsedTime > 300 : elapsedTime > 3600)
+                || (Constants.isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
                 || Constants.isOffline);
     }
 
     static boolean allowsFakeForging(byte[] publicKey) {
-        return Constants.isTestnet && publicKey != null && Arrays.equals(publicKey, fakeForgingPublicKey);
+        return Constants.isTestnet() && publicKey != null && Arrays.equals(publicKey, fakeForgingPublicKey);
     }
 
     static BigInteger getHit(byte[] publicKey, Block block) {
@@ -289,7 +296,7 @@ public final class Generator implements Comparable<Generator> {
         this.accountId = Account.getId(publicKey);
         Apl.getBlockchain().updateLock();
         try {
-            if (Apl.getBlockchain().getHeight() >= Constants.LAST_KNOWN_BLOCK) {
+            if (Apl.getBlockchain().getHeight() >= Constants.getLastKnownBlock()) {
                 setLastBlock(Apl.getBlockchain().getLastBlock());
             }
             sortedForgers = null;
@@ -349,23 +356,64 @@ public final class Generator implements Comparable<Generator> {
 
     boolean forge(Block lastBlock, int generationLimit) throws BlockchainProcessor.BlockNotAcceptedException {
         int timestamp = getTimestamp(generationLimit);
+        int timeout = getBlockTimeout(timestamp, generationLimit, lastBlock);
+        if (timeout <= -1) {
+            return false;
+        }
         if (!verifyHit(hit, effectiveBalance, lastBlock, timestamp)) {
-            LOG.debug(this.toString() + " failed to forge at " + timestamp + " height " + lastBlock.getHeight() + " last timestamp " + lastBlock.getTimestamp());
+            LOG.debug(this.toString() + " failed to forge at " + (timestamp + timeout) + " height " + lastBlock.getHeight() + " last timestamp " + lastBlock.getTimestamp());
             return false;
         }
         int start = Apl.getEpochTime();
         while (true) {
             try {
-                BlockchainProcessorImpl.getInstance().generateBlock(keySeed, timestamp);
+                BlockchainProcessorImpl.getInstance().generateBlock(keySeed, timestamp  + timeout, timeout);
                 setDelay(Constants.FORGING_DELAY);
                 return true;
-            } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
+            }
+            catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                 // the bad transaction has been expunged, try again
                 if (Apl.getEpochTime() - start > 10) { // give up after trying for 10 s
                     throw e;
                 }
             }
         }
+    }
+
+    /**
+     * Return block timestamp shift
+     * @return 0 - when adaptive forging is disabled or forging process should be continued
+     *         -1 - when adaptive forging is enabled and forging process should be terminated for current attempt
+     *         >0 - when adaptive forging is enabled and new block should be generated with timestamp = calculated timestamp + returned value
+     */
+    private int getBlockTimeout(int timestamp, int generationLimit, Block lastBlock) {
+        // transactions at generator hit time
+        boolean noTransactionsAtTimestamp =
+                BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, timestamp).size() == 0;
+        // transactions at current time
+        boolean noTransactionsAtGenerationLimit =
+                BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, generationLimit).size() == 0;
+        int planedBlockTime = timestamp - lastBlock.getTimestamp();
+        LOG.debug("Planed blockTime {} - uncg {}, unct {}", planedBlockTime,
+                noTransactionsAtGenerationLimit, noTransactionsAtTimestamp);
+        if (Constants.isAdaptiveForgingEnabled() // try to calculate timeout only when adaptive forging enabled
+                && noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
+                && planedBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() // calculate timeout only for faster than predefined empty block
+        ) {
+            int actualBlockTime = generationLimit - lastBlock.getTimestamp();
+            LOG.debug("Act time:" + actualBlockTime);
+            if (actualBlockTime >= Constants.getAdaptiveForgingEmptyBlockTime() // empty block can be generated by timeout
+//                    block with transactions can be generated (unc transactions exist at current time, required timeout)
+                    || !noTransactionsAtGenerationLimit && actualBlockTime >= planedBlockTime
+            ) {
+                int timeout = (generationLimit - timestamp);
+                LOG.debug("Timeout:" + timeout);
+                return timeout;
+            } else {
+                return -1;
+            }
+        }
+        return 0;
     }
 
     private int getTimestamp(int generationLimit) {

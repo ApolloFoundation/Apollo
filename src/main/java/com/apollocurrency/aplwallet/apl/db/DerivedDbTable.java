@@ -30,7 +30,7 @@ import java.sql.Statement;
 
 public abstract class DerivedDbTable {
 
-    protected static final TransactionalDb db = Db.db;
+    protected static final TransactionalDb db = Db.getDb();
 
     protected final String table;
 
