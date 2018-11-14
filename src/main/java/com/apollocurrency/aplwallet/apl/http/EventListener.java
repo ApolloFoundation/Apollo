@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -81,7 +82,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         eventTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                long oldestTime = System.currentTimeMillis() - eventTimeout*1000;
+                long oldestTime = NtpTime.getTime() - eventTimeout*1000;
                 eventListeners.values().forEach(listener -> {
                     if (listener.getTimestamp() < oldestTime) {
                         listener.deactivateListener();
@@ -343,7 +344,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 events = new ArrayList<>();
                 events.addAll(pendingEvents);
                 pendingEvents.clear();
-                timestamp = System.currentTimeMillis();
+                timestamp = NtpTime.getTime();
             } else {
                 //
                 // Wait for an event
@@ -353,7 +354,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 context.addListener(this);
                 context.setTimeout(timeout*1000);
                 pendingWaits.add(context);
-                timestamp = System.currentTimeMillis();
+                timestamp = NtpTime.getTime();
             }
         } finally {
             lock.unlock();
@@ -378,7 +379,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 }
                 HttpServletResponse resp = (HttpServletResponse)context.getResponse();
                 JSONObject response = EventWait.formatResponse(events);
-                response.put("requestProcessingTime", System.currentTimeMillis()-timestamp);
+                response.put("requestProcessingTime", NtpTime.getTime()-timestamp);
                 try (Writer writer = resp.getWriter()) {
                     response.writeJSONString(writer);
                 } catch (IOException exc) {
@@ -387,7 +388,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 }
                 context.complete();
                 aborted = false;
-                timestamp = System.currentTimeMillis();
+                timestamp = NtpTime.getTime();
             }
         } finally {
             lock.unlock();
@@ -424,7 +425,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         try {
             pendingWaits.remove(context);
             context.complete();
-            timestamp = System.currentTimeMillis();
+            timestamp = NtpTime.getTime();
             LOG.debug("Error detected during event wait for "+address, event.getThrowable());
         } finally {
             lock.unlock();
@@ -453,7 +454,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             pendingWaits.remove(context);
             JSONObject response = new JSONObject();
             response.put("events", new JSONArray());
-            response.put("requestProcessingTime", System.currentTimeMillis()-timestamp);
+            response.put("requestProcessingTime", NtpTime.getTime()-timestamp);
             try (Writer writer = context.getResponse().getWriter()) {
                 response.writeJSONString(writer);
             } catch (IOException exc) {
@@ -461,7 +462,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                                                      address, exc.toString()));
             }
             context.complete();
-            timestamp = System.currentTimeMillis();
+            timestamp = NtpTime.getTime();
         } finally {
             lock.unlock();
         }

@@ -7,7 +7,9 @@ package com.apollocurrency.aplwallet.apl.updater;
 import org.apache.commons.lang3.SystemUtils;
 
 public enum Platform {
+
     LINUX, WINDOWS, MAC_OS, ALL, OSX;
+
 
     public static Platform current() {
         return

@@ -224,6 +224,8 @@ public final class Constants {
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+    public static final String TIME_SERVICE = "pool.ntp.org";
+    
     private Constants() {} // never
 
     public static void init(Chain chain) {
