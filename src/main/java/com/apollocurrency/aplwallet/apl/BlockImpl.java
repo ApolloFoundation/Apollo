@@ -277,7 +277,9 @@ final class BlockImpl implements Block {
         json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
         json.put("blockSignature", Convert.toHexString(blockSignature));
         json.put("timeout", timeout);
-        json.put("adaptive", Constants.isAdaptiveBlockAtHeight(height));
+        if (height >= 0) {
+            json.put("adaptive", Constants.isAdaptiveBlockAtHeight(height));
+        }
 
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
