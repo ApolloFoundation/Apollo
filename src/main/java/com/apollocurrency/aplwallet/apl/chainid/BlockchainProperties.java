@@ -16,7 +16,8 @@ import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-@JsonPropertyOrder({"height","maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance", "consensus"})
+@JsonPropertyOrder({"height","maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance", "blockVersion",
+        "consensus"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
@@ -24,10 +25,12 @@ public class BlockchainProperties {
     private int maxBlockTimeLimit;
     private int minBlockTimeLimit;
     private long maxBalance;
+    private int blockVersion;
     private Consensus consensus;
 
     public BlockchainProperties() {
         this.consensus = new Consensus();
+        this.blockVersion = 3;
     }
 
     @JsonCreator
@@ -47,6 +50,14 @@ public class BlockchainProperties {
         this.minBlockTimeLimit = minBlockTimeLimit;
         this.maxBalance = maxBalance;
         this.consensus = consensus;
+    }
+
+    public void setBlockVersion(int blockVersion) {
+        this.blockVersion = blockVersion;
+    }
+
+    public int getBlockVersion() {
+        return blockVersion;
     }
 
     public int getHeight() {

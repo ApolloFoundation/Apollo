@@ -31,7 +31,7 @@
     "blockchainProperties": [
       {
         "height": 0,
-        "maxNumberOfTransactions": 255,
+        "numberOfTransactions": 255,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -65,7 +65,7 @@
     "blockchainProperties": [
       {
         "height": 0,
-        "maxNumberOfTransactions": 255,
+        "numberOfTransactions": 255,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -77,7 +77,7 @@
       },
       {
         "height": 234700,
-        "maxNumberOfTransactions": 255,
+        "numberOfTransactions": 255,
         "blockTime": 1,
         "maxBlockTimeLimit": 1,
         "minBlockTimeLimit": 1,
@@ -88,14 +88,14 @@
           "adaptiveForgingSettings":
           {
             "enabled": "false",
-            "emptyBlockTime": 60
+            "adaptiveBlockTime": 60
           }
         }
 
       },
       {
         "height": 238000,
-        "maxNumberOfTransactions": 255,
+        "numberOfTransactions": 255,
         "blockTime": 10,
         "maxBlockTimeLimit": 10,
         "minBlockTimeLimit": 10,
@@ -106,7 +106,10 @@
           "adaptiveForgingSettings":
           {
             "enabled": "true",
-            "emptyBlockTime": 60
+            "adaptiveBlockTime": 60,
+            "maxAdaptiveBlockTimeLimit": 67,
+            "minAdaptiveBlockTimeLimit": 53,
+            "numberOfTransactions": 0
           }
         }
       }

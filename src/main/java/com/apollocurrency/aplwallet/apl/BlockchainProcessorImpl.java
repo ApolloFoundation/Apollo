@@ -1396,7 +1396,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (previousLastBlock.getId() != block.getPreviousBlockId()) {
             throw new BlockOutOfOrderException("Previous block id doesn't match", block);
         }
-        if (block.getVersion() != getBlockVersion(previousLastBlock.getHeight())) {
+        if (block.getVersion() < getBlockVersion(previousLastBlock.getHeight())) {
             throw new BlockNotAcceptedException("Invalid version " + block.getVersion(), block);
         }
         if (block.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
@@ -1677,6 +1677,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private int getBlockVersion(int previousBlockHeight) {
+
         return 3;
     }
 

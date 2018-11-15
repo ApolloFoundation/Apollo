@@ -73,6 +73,8 @@ public interface Block {
 
     int getTimeout();
 
+    boolean isAdaptive();
+
     default String toJsonString() {
         return getJSONObject().toJSONString();
     }

@@ -33,6 +33,7 @@ import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -53,6 +54,7 @@ final class BlockImpl implements Block {
     private final byte[] generationSignature;
     private final byte[] payloadHash;
     private final int timeout;
+    private byte flags;
     private volatile List<TransactionImpl> blockTransactions;
 
     private byte[] blockSignature;
@@ -66,23 +68,24 @@ final class BlockImpl implements Block {
     private volatile byte[] bytes = null;
 
 
-    BlockImpl(byte[] generatorPublicKey, byte[] generationSignature) {
+    BlockImpl(byte[] generatorPublicKey, byte[] generationSignature, boolean isAdaptive) {
         this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey, generationSignature, new byte[64],
-                new byte[32], (byte) 0, Collections.emptyList());
+                new byte[32],  0, isAdaptive, Collections.emptyList());
         this.height = 0;
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout, List<TransactionImpl> transactions,
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout, boolean isAdaptive,
+              List<TransactionImpl> transactions,
               byte[] keySeed, boolean adaptive) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
-                generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions);
+                generatorPublicKey, generationSignature, null, previousBlockHash, timeout, isAdaptive, transactions);
         blockSignature = Crypto.sign(bytes(adaptive), keySeed);
         bytes = null;
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout, boolean isAdaptive,
               List<TransactionImpl> transactions) {
         this.version = version;
         this.timestamp = timestamp;
@@ -96,6 +99,7 @@ final class BlockImpl implements Block {
         this.blockSignature = blockSignature;
         this.previousBlockHash = previousBlockHash;
         this.timeout = timeout;
+        this.flags |= isAdaptive ? 1 : 0;
         if (transactions != null) {
             this.blockTransactions = Collections.unmodifiableList(transactions);
         }
@@ -104,9 +108,9 @@ final class BlockImpl implements Block {
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
-              List<TransactionImpl> blockTransactions) {
+              boolean isAdaptive, List<TransactionImpl> blockTransactions) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
-                null, generationSignature, blockSignature, previousBlockHash, timeout, null);
+                null, generationSignature, blockSignature, previousBlockHash, timeout, isAdaptive, null);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
         this.nextBlockId = nextBlockId;
@@ -114,6 +118,11 @@ final class BlockImpl implements Block {
         this.id = id;
         this.generatorId = generatorId;
         this.blockTransactions = blockTransactions;
+    }
+
+    @Override
+    public boolean isAdaptive() {
+        return (flags & 1) == 1;
     }
 
     @Override
@@ -277,7 +286,7 @@ final class BlockImpl implements Block {
         json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
         json.put("blockSignature", Convert.toHexString(blockSignature));
         json.put("timeout", timeout);
-        json.put("adaptive", Constants.isAdaptiveBlockAtHeight(height));
+        json.put("adaptive", isAdaptive());
 
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
@@ -285,7 +294,7 @@ final class BlockImpl implements Block {
         return json;
     }
 
-    static BlockImpl parseBlock(JSONObject blockData, boolean adaptive) throws AplException.NotValidException {
+    static BlockImpl parseBlock(JSONObject blockData, boolean adaptiveEnabled, boolean isLegacy) throws AplException.NotValidException {
         try {
             int version = ((Long) blockData.get("version")).intValue();
             int timestamp = ((Long) blockData.get("timestamp")).intValue();
@@ -299,14 +308,16 @@ final class BlockImpl implements Block {
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
-            int timeout =  timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
+            int timeout =  timeoutJsonValue == null || !adaptiveEnabled ? 0 : ((Long) timeoutJsonValue).intValue();
+            Object adaptiveJsonValue = blockData.get("adaptive");
+            boolean adaptive = adaptiveJsonValue == null || !adaptiveEnabled ? false : (Boolean) adaptiveJsonValue;
             List<TransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
-                    generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions);
-            if (!block.checkSignature(adaptive)) {
+                    generationSignature, blockSignature, previousBlockHash, timeout, adaptive, blockTransactions);
+            if (!block.checkSignature(adaptiveEnabled, isLegacy)) {
                 throw new AplException.NotValidException("Invalid block signature");
             }
             return block;
@@ -323,15 +334,15 @@ final class BlockImpl implements Block {
     }
 
     @Override
-    public byte[] getBytes(boolean adaptive) {
-        return Arrays.copyOf(bytes(adaptive), bytes.length);
+    public byte[] getBytes(boolean adaptiveEnabled) {
+        return Arrays.copyOf(bytes(adaptiveEnabled), bytes.length);
     }
 
-    byte[] bytes(boolean adaptive) {
+    byte[] bytes(boolean adaptiveEnabled, boolean isLegacy) {
         if (bytes == null) {
             ByteBuffer buffer =
                     ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 +
-                            (adaptive ? 4 : 0) +(blockSignature != null ? 64 :
+                            (adaptiveEnabled && timeout != 0 ? 4 : 0) +4 +(blockSignature != null ? 64 :
                     0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
@@ -345,8 +356,11 @@ final class BlockImpl implements Block {
             buffer.put(getGeneratorPublicKey());
             buffer.put(generationSignature);
             buffer.put(previousBlockHash);
-            if (adaptive) {
+            if (adaptiveEnabled && timeout != 0) {
                 buffer.putInt(timeout);
+            }
+            if (!isLegacy) {
+                buffer.put(flags);
             }
             if (blockSignature != null) {
                 buffer.put(blockSignature);
@@ -356,26 +370,23 @@ final class BlockImpl implements Block {
         return bytes;
     }
 
-    boolean verifyBlockSignature() {
-        return checkSignature() && Account.setOrVerify(getGeneratorId(), getGeneratorPublicKey());
+    boolean verifyBlockSignature(boolean adaptiveEnabled, boolean isLegacy) {
+        return checkSignature(adaptiveEnabled, isLegacy) && Account.setOrVerify(getGeneratorId(), getGeneratorPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;
 
-    private boolean checkSignature() {
-        return checkSignature(Constants.isAdaptiveForgingEnabled());
-    }
 
-    private boolean checkSignature(boolean adaptive) {
+    private boolean checkSignature(boolean adaptiveEnabled, boolean isLegacy) {
         if (! hasValidSignature) {
-            byte[] data = Arrays.copyOf(bytes(adaptive), bytes.length - 64);
+            byte[] data = Arrays.copyOf(bytes(adaptiveEnabled, isLegacy), bytes.length - 64);
             hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey());
         }
         return hasValidSignature;
     }
 
 
-    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException {
+    boolean verifyGenerationSignature(boolean isAdaptiveEnabled) throws BlockchainProcessor.BlockOutOfOrderException {
 
         try {
 
@@ -399,7 +410,7 @@ final class BlockImpl implements Block {
 
             BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
 
-            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, timestamp - timeout);
+            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, isAdaptiveEnabled ? timestamp - timeout: timestamp);
 
         } catch (RuntimeException e) {
 
@@ -469,7 +480,12 @@ final class BlockImpl implements Block {
     private void calculateBaseTarget(BlockImpl previousBlock) {
         long prevBaseTarget = previousBlock.baseTarget;
         int blockchainHeight = previousBlock.height;
-        if (Constants.isAdaptiveForgingEnabled() && getTransactions().size() == 0) {
+        if (Constants.isAdaptiveForgingEnabled() && getTransactions().size() <= Constants.getNumberOfTransactionsInAdaptiveBlock()) {
+            int skipCount = 3;
+            if (Constants.isAdaptiveBlockAtHeight(blockchainHeight)) {
+                skipCount--;
+            }
+            BlockImpl thirdAdaptiveBlock = BlockDb.findBlockWithTransactions(skipCount, Constants.getNumberOfTransactionsInAdaptiveBlock(), DbClause.Op.EQ);
             baseTarget = prevBaseTarget;
         } else if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);

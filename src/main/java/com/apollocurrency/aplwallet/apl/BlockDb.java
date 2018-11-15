@@ -31,11 +31,15 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.apollocurrency.aplwallet.apl.chainid.AdaptiveBlocksSearchConfig;
+import com.apollocurrency.aplwallet.apl.chainid.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import org.slf4j.Logger;
 final class BlockDb {
@@ -186,6 +190,78 @@ final class BlockDb {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    static BlockImpl findBlockWithTransactions(int skipCount, int numberOfTransactions, DbClause.Op op) {
+        try (Connection con = Db.getDb().getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+             "SELECT * FROM block WHERE id = " +
+                     "(SELECT block_id FROM transaction " +
+                        "GROUP BY block_id HAVING COUNT (block_id) " + op.operator()+ " ? ORDER BY block_timestamp DESC LIMIT 1 OFFSET ?)")) {
+            pstmt.setInt(1, numberOfTransactions);
+            pstmt.setInt(1, skipCount);
+            BlockImpl block = null;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    block = loadBlock(con, rs);
+                }
+            }
+            return block;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    static BlockImpl findAdaptiveBlock(int skipCount) {
+        try (Connection con = Db.getDb().getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT * FROM block WHERE id = " +
+                             "(SELECT * FROM (SELECT block_id, height, COUNT(block_id) as txs FROM transaction " +
+                             "GROUP BY block_id ORDER BY block_timestamp )" + builder.toString() + " DESC LIMIT 1 OFFSET ?")) {
+            int i = 1;
+            i = setAdaptiveBlocksWhereClause(pstmt, i, )
+            pstmt.setInt(1, );
+            pstmt.setInt(1, skipCount);
+            BlockImpl block = null;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    block = loadBlock(con, rs);
+                }
+            }
+            return block;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+
+    }
+
+    private static StringBuilder createAdaptiveBlocksWhereClause( List<AdaptiveBlocksSearchConfig> configs) {
+        StringBuilder builder = new StringBuilder();
+        if (configs.size() == 0) return builder;
+        builder.append(" WHERE ");
+            for (int i = 0; i < configs.size(); i++) {
+                AdaptiveBlocksSearchConfig config = configs.get(i);
+                builder.append("height > ? AND ");
+                if (config.getFinishHeight() != -1) {
+                    builder.append("height <= ? AND ");
+                }
+                builder.append("txs = ? ");
+                if (i < configs.size() - 1) {
+                    builder.append(" OR ");
+                }
+            }
+        return builder;
+    }
+
+    private static int setAdaptiveBlocksWhereClause(PreparedStatement pstmt, int index, List<AdaptiveBlocksSearchConfig> configs) throws SQLException {
+        for (AdaptiveBlocksSearchConfig config : configs) {
+            pstmt.setInt(index++, config.getStartHeight());
+            if (config.getFinishHeight() != -1) {
+                pstmt.setInt(index++, config.getFinishHeight());
+            }
+            pstmt.setInt(index++, config.getNumberOfTransactions());
+        }
+        return index;
     }
 
     static BlockImpl findLastBlock(int timestamp) {
