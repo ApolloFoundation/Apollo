@@ -26,11 +26,8 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
                     + previousLastBlock.getTimestamp(), block);
         }
-//        if (!block.verifyBlockSignature()) {
-//            throw new BlockchainProcessor.BlockNotAcceptedException("Block signature verification failed", block);
-//        }
         verifySignature(block);
-        validatePreviousHash();
+        validatePreviousHash(block, previousLastBlock);
         if (block.getId() == 0L || BlockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
@@ -46,22 +43,27 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         if (block.getPayloadLength() > Constants.getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
-        validateAdaptiveBlock(block, previousLastBlock);
-
-
-
-//        int actualBlockTime = block.getTimestamp() - previousLastBlock.getTimestamp();
-//        if (Constants.isAdaptiveBlockAtHeight(previousLastBlock.getHeight() + 1) && actualBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() && block.getTransactions().size() == 0) {
-//            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid empty block. Time since previous block should be greater than " + Constants.getAdaptiveForgingEmptyBlockTime() + ", but " +
-//                    "got " + actualBlockTime, null);
-//        }
-
+        switch (block.getVersion()) {
+            case Block.INSTANT_BLOCK_VERSION:
+                validateInstantBlock(block, previousLastBlock);
+                break;
+            case Block.ADAPTIVE_BLOCK_VERSION:
+                validateAdaptiveBlock(block, previousLastBlock);
+                break;
+            case Block.REGULAR_BLOCK_VERSION:
+                validateRegularBlock(block, previousLastBlock);
+                break;
+        }
     }
 
     abstract void validatePreviousHash(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void verifySignature(BlockImpl block);
+    abstract void verifySignature(BlockImpl block) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateAdaptiveBlock(BlockImpl block, BlockImpl previousBlock);
+    abstract void validateAdaptiveBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+
+    abstract void validateInstantBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+
+    abstract void validateRegularBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
 }

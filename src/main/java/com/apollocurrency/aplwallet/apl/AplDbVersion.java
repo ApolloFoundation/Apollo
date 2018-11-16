@@ -687,8 +687,6 @@ public class AplDbVersion extends DbVersion {
             case 248:
                 apply("ALTER TABLE currency_supply ALTER COLUMN current_reserve_per_unit_nqt RENAME TO current_reserve_per_unit_atm");
             case 249:
-                apply("ALTER TABLE block ADD flags TINYINT NOT NULL DEFAULT 0");
-            case 250:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

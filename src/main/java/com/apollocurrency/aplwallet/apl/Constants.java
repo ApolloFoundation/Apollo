@@ -23,10 +23,8 @@ package com.apollocurrency.aplwallet.apl;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.chainid.AdaptiveBlocksSearchConfig;
 import com.apollocurrency.aplwallet.apl.chainid.AdaptiveForgingSettings;
 import com.apollocurrency.aplwallet.apl.chainid.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.chainid.Chain;
@@ -50,7 +47,6 @@ public final class Constants {
     public static final boolean isOffline = Apl.getBooleanProperty("apl.isOffline");
     public static final boolean isLightClient = Apl.getBooleanProperty("apl.isLightClient");
     public static final String customLoginWarning = Apl.getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
-    private static List<AdaptiveBlocksSearchConfig> adaptiveBlocksSearchConfig;
     private volatile static ChangeableConstants changeableConstants;
     private static class ChangeableConstants {
         public final int maxNumberOfTransactions;
@@ -72,7 +68,6 @@ public final class Constants {
         public final int numberOfTransactionsInAdaptiveBlock;
         public final int minAdaptiveBlockTime;
         public final int maxAdaptiveBlockTime;
-        public final int blockVersion;
         private ChangeableConstants(BlockchainProperties bp) {
             this.maxNumberOfTransactions = bp.getMaxNumberOfTransactions();
             this.maxBalanceApl = bp.getMaxBalance();
@@ -94,7 +89,6 @@ public final class Constants {
             this.maxAdaptiveBaseTarget = initialAdaptiveBaseTarget * (testnet ? maxBalanceApl : 50);
             this.minAdaptiveBaseTarget = initialBaseTarget * 9 / 10;
             this.consensusType = bp.getConsensus().getType();
-            this.blockVersion = bp.getBlockVersion();
         }
 
         @Override
@@ -258,7 +252,6 @@ public final class Constants {
         Constants.unconfirmedPoolDepositAtm = (testnet ? 50 : 100) * ONE_APL;
         Constants.shufflingDepositAtm = (testnet ? 7 : 1000) * ONE_APL;
         Constants.guaranteedBalanceConfirmations = testnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
-        Constants.adaptiveBlocksSearchConfig = createAdaptiveBlocksSearchConfig(chain);
         changeableConstants = new ChangeableConstants(chain.getBlockchainProperties().get(0));
         ConstantsChangeListener constantsChangeListener = new ConstantsChangeListener(chain.getBlockchainProperties());
         BlockchainProcessorImpl.getInstance().addListener(constantsChangeListener,
@@ -268,25 +261,6 @@ public final class Constants {
         BlockchainProcessorImpl.getInstance().addListener(constantsChangeListener,
                 BlockchainProcessor.Event.BLOCK_SCANNED);
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
-    }
-
-    private static List<AdaptiveBlocksSearchConfig> createAdaptiveBlocksSearchConfig(Chain chain) {
-        List<BlockchainProperties> list = chain.getBlockchainPropertiesList();
-        List<AdaptiveBlocksSearchConfig> result = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            BlockchainProperties current = list.get(i);
-            if (!current.getConsensus().getAdaptiveForgingSettings().isEnabled()) {
-                continue;
-            }
-            BlockchainProperties next = null;
-            if (i + 1 < list.size()) {
-                next = list.get(i + 1);
-            }
-            result.add(new AdaptiveBlocksSearchConfig(current.getHeight(), next == null ? -1 : next.getHeight(),
-                    current.getConsensus().getAdaptiveForgingSettings().getNumberOfTransactions()));
-        }
-        return result;
-
     }
 
     private static ChangeableConstants getConstantsAtHeight(Chain chain, int targetHeight, boolean inclusive) {
@@ -398,10 +372,6 @@ public final class Constants {
     public static int getMinAdaptiveBlockTime() {return changeableConstants.minAdaptiveBlockTime;}
 
     public static int getMaxAdaptiveBlockTime() {return changeableConstants.maxAdaptiveBlockTime;}
-
-    public static List<AdaptiveBlocksSearchConfig> getAdaptiveBlocksSearchConfig() {
-        return new ArrayList<>(Constants.adaptiveBlocksSearchConfig);
-    }
 
     // Protect non-final constants from modification
     public static boolean isTestnet() {
