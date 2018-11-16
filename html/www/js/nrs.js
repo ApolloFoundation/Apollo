@@ -1682,7 +1682,7 @@ var NRS = (function(NRS, $, undefined) {
         var downloadingBlockchain = $('#downloading_blockchain');
         downloadingBlockchain.find('.last_num_blocks').html($.t('last_num_blocks', { "blocks": lastNumBlocks }));
 
-        if (NRS.state.isDownloading) {
+        if (NRS.state.blockchainState === "DOWNLOADING") {
             if (NRS.state.isLightClient) {
                 downloadingBlockchain.hide();
             } else if (!NRS.serverConnect || !NRS.peerConnect) {

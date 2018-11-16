@@ -427,9 +427,9 @@ var NRS = (function(NRS, $, undefined) {
         this.blocksPulling();
     };
 
-    NRS.myTransactionPagination;
-    NRS.accountLedgerPagination;
-    NRS.blocksPagination;
+//    NRS.myTransactionPagination;
+//    NRS.accountLedgerPagination;
+//    NRS.blocksPagination;
 
     NRS.handleIncomingTransactions = function(transactions, confirmedTransactionIds) {
 		var oldBlock = (confirmedTransactionIds === false); //we pass false instead of an [] in case there is no new block..
