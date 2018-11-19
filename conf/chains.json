@@ -87,7 +87,7 @@
           "type": "POS",
           "adaptiveForgingSettings":
           {
-            "enabled": "false",
+            "enabled": "true",
             "adaptiveBlockTime": 60
           }
         }
