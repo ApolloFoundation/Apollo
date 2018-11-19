@@ -31,7 +31,7 @@
     "blockchainProperties": [
       {
         "height": 0,
-        "numberOfTransactions": 255,
+        "maxNumberOfTransactions": 255,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -65,7 +65,7 @@
     "blockchainProperties": [
       {
         "height": 0,
-        "numberOfTransactions": 255,
+        "maxNumberOfTransactions": 255,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -77,7 +77,7 @@
       },
       {
         "height": 234700,
-        "numberOfTransactions": 255,
+        "maxNumberOfTransactions": 255,
         "blockTime": 10,
         "maxBlockTimeLimit": 12,
         "minBlockTimeLimit": 8,
