@@ -416,7 +416,7 @@ public final class Generator implements Comparable<Generator> {
             } else {
                 return null;
             }
-            timeout = generationLimit - timeout;
+            timeout = generationLimit - timestamp;
             LOG.debug("Timeout:" + timeout);
             return new int[] {timeout, version};
         }
