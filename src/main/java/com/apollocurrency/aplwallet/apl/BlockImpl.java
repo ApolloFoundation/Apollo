@@ -466,8 +466,7 @@ final class BlockImpl implements Block {
         long prevBaseTarget = previousBlock.baseTarget;
         int blockchainHeight = previousBlock.height;
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
-            BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);
-            int blocktimeAverage = (this.timestamp - block. timestamp) / 3;
+            int blocktimeAverage = getBlockTimeAverage(previousBlock);
             int blockTime = Constants.getBlockTime();
             if (blocktimeAverage > blockTime) {
                 int maxBlocktimeLimit = Constants.getMaxBlocktimeLimit();
@@ -489,5 +488,19 @@ final class BlockImpl implements Block {
             baseTarget = prevBaseTarget;
         }
         cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
+    }
+
+    private int getBlockTimeAverage(BlockImpl previousBlock) {
+        int blockchainHeight = previousBlock.height;
+        BlockImpl lastBlockForTimeAverage = BlockDb.findBlockAtHeight(blockchainHeight - 2);
+        if (version != Block.LEGACY_BLOCK_VERSION) {
+            BlockImpl intermediateBlockForTimeAverage = BlockDb.findBlockAtHeight(blockchainHeight - 1);
+            int thisBlockActualTime = this.timestamp - previousBlock.timestamp - this.timeout;
+            int previousBlockTime = previousBlock.timestamp - previousBlock.timeout - intermediateBlockForTimeAverage.timestamp;
+            int secondAvgBlockTime = intermediateBlockForTimeAverage.timestamp - intermediateBlockForTimeAverage.timeout - lastBlockForTimeAverage.timestamp;
+            return  (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
+        } else {
+            return (this.timestamp - lastBlockForTimeAverage.timestamp) / 3;
+        }
     }
 }
