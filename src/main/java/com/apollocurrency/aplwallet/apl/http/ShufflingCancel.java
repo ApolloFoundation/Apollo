@@ -20,13 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Shuffling;
-import org.json.simple.JSONStreamAware;
-
 import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Shuffling;
 
 public final class ShufflingCancel extends CreateTransaction {
 
@@ -43,14 +42,16 @@ public final class ShufflingCancel extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Shuffling shuffling = ParameterParser.getShuffling(req);
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
         byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
         long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
-        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash);
-        Account account = ParameterParser.getSenderAccount(req);
-        return createTransaction(req, account, attachment);
+        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
+//        TODO:perform fee calculation without using mock attachment
+        Attachment.ShufflingCancellation attachment = validate ? shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash) :
+                new Attachment.ShufflingCancellation(shuffling.getId(), new byte[0][0], new byte[0][0], shufflingStateHash, cancellingAccountId);
+        Account account = ParameterParser.getSenderAccount(req, validate);
+        return new CreateTransactionRequestData(attachment, account);
     }
 }

@@ -77,20 +77,20 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             throw new RuntimeException("CreateTransaction API " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
         }
     }
-
-    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment)
-            throws AplException {
-        return createTransaction(req, senderAccount, 0, 0, attachment);
-    }
-
-    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
-            throws AplException {
-        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.ORDINARY_PAYMENT);
-    }
-    final JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
-            throws AplException {
-        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
-    }
+//
+//    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment)
+//            throws AplException {
+//        return createTransaction(req, senderAccount, 0, 0, attachment);
+//    }
+//
+//    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
+//            throws AplException {
+//        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.ORDINARY_PAYMENT);
+//    }
+//    final JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
+//            throws AplException {
+//        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
+//    }
 
     private Appendix.Phasing parsePhasing(HttpServletRequest req) throws ParameterException {
         int finishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
@@ -138,9 +138,22 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return new PhasingParams(votingModel, holdingId, quorum, minBalance, minBalanceModel, whitelist);
     }
 
-    final JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
-                                            long amountATM, Attachment attachment) throws AplException {
+    @Override
+    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean calculateFee = ParameterParser.getBoolean(req, "calculateFee", false);
+        CreateTransactionRequestData data = parseRequest(req, calculateFee);
+        if (data.getErrorJson() != null) {
+            return data.getErrorJson();
+        }
+        Attachment attachment = data.getAttachment();
+        long recipientId = data.getRecipientId();
+        Account senderAccount = data.getSenderAccount();
+        long amountATM = data.getAmountATM();
+        return processRequest(req, attachment, recipientId, amountATM, senderAccount, calculateFee, data.getInsufficientBalanceErrorJson());
+    }
+    protected JSONStreamAware processRequest(HttpServletRequest req, Attachment attachment, long recipientId, long amountATM, Account senderAccount
+            , boolean calculateFee, JSONStreamAware insufficientBalanceJsonError) throws ParameterException, AplException.InsufficientBalanceException {
+        long accountId = senderAccount == null ? 0 : senderAccount.getId();
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
@@ -153,12 +166,12 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             Account recipient = Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
                 prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient,
-                        senderAccount.getId(),true);
+                        accountId,true);
             } else {
-                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, senderAccount.getId(), false);
+                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, accountId, false);
             }
         }
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, senderAccount.getId());
+        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, accountId);
         Appendix.Message message = null;
         Appendix.PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
@@ -208,7 +221,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
-        byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
+        byte[] publicKey = ParameterParser.getPublicKey(req, null, accountId, false);
         try {
             Transaction.Builder builder = Apl.newTransactionBuilder(publicKey, amountATM, calculateFee ? 0 : feeATM,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
@@ -226,7 +239,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
                 builder.ecBlockId(ecBlockId);
                 builder.ecBlockHeight(ecBlockHeight);
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, senderAccount.getId(), false);
+            byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
             Transaction transaction = builder.build(keySeed);
             if (calculateFee) {
                 response.put("feeATM", transaction.getFeeATM());
@@ -259,7 +272,10 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             }
         } catch (AplException.NotYetEnabledException e) {
             return FEATURE_NOT_AVAILABLE;
-        } catch (AplException.InsufficientBalanceException e) {
+        } catch (AplException.InsufficientBalanceException e) {;
+            if (insufficientBalanceJsonError != null) {
+                return insufficientBalanceJsonError;
+            }
             throw e;
         } catch (AplException.ValidationException e) {
             if (broadcast) {
@@ -286,4 +302,5 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return false;
     }
 
+    protected abstract CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException;
 }

@@ -20,12 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
-
 import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
 
 public final class SendMessage extends CreateTransaction {
 
@@ -42,10 +41,10 @@ public final class SendMessage extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        Account account = ParameterParser.getSenderAccount(req);
-        return createTransaction(req, account, recipientId, 0, Attachment.ARBITRARY_MESSAGE);
+        Account account = ParameterParser.getSenderAccount(req, validate);
+        return new CreateTransactionRequestData(Attachment.ARBITRARY_MESSAGE, recipientId, account, 0);
     }
 
 }

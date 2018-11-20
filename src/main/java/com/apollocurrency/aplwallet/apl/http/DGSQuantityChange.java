@@ -20,19 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DELTA_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_DELTA_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_GOODS;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class DGSQuantityChange extends CreateTransaction {
 
@@ -50,30 +49,30 @@ public final class DGSQuantityChange extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
-        if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
-            return UNKNOWN_GOODS;
+        if (goods.isDelisted() || validate && goods.getSellerId() != account.getId()) {
+            return new CreateTransactionRequestData(UNKNOWN_GOODS);
         }
 
         int deltaQuantity;
         try {
             String deltaQuantityString = Convert.emptyToNull(req.getParameter("deltaQuantity"));
             if (deltaQuantityString == null) {
-                return MISSING_DELTA_QUANTITY;
+                return new CreateTransactionRequestData(MISSING_DELTA_QUANTITY);
             }
             deltaQuantity = Integer.parseInt(deltaQuantityString);
             if (deltaQuantity > Constants.MAX_DGS_LISTING_QUANTITY || deltaQuantity < -Constants.MAX_DGS_LISTING_QUANTITY) {
-                return INCORRECT_DELTA_QUANTITY;
+                return new CreateTransactionRequestData(INCORRECT_DELTA_QUANTITY);
             }
         } catch (NumberFormatException e) {
-            return INCORRECT_DELTA_QUANTITY;
+            return new CreateTransactionRequestData(INCORRECT_DELTA_QUANTITY);
         }
 
         Attachment attachment = new Attachment.DigitalGoodsQuantityChange(goods.getId(), deltaQuantity);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
 
     }
 

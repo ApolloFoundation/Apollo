@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.CurrencyType;
-import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Issue a currency on the APL blockchain
@@ -101,29 +100,29 @@ public final class IssueCurrency extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         String name = Convert.nullToEmpty(req.getParameter("name"));
         String code = Convert.nullToEmpty(req.getParameter("code"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
 
         if (name.length() < Constants.MIN_CURRENCY_NAME_LENGTH || name.length() > Constants.MAX_CURRENCY_NAME_LENGTH) {
-            return JSONResponses.INCORRECT_CURRENCY_NAME_LENGTH;
+            return new CreateTransactionRequestData(JSONResponses.INCORRECT_CURRENCY_NAME_LENGTH);
         }
         if (code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH) {
-            return JSONResponses.INCORRECT_CURRENCY_CODE_LENGTH;
+            return new CreateTransactionRequestData(JSONResponses.INCORRECT_CURRENCY_CODE_LENGTH);
         }
         if (description.length() > Constants.MAX_CURRENCY_DESCRIPTION_LENGTH) {
-            return JSONResponses.INCORRECT_CURRENCY_DESCRIPTION_LENGTH;
+            return new CreateTransactionRequestData(JSONResponses.INCORRECT_CURRENCY_DESCRIPTION_LENGTH);
         }
         String normalizedName = name.toLowerCase();
         for (int i = 0; i < normalizedName.length(); i++) {
             if (Constants.ALPHABET.indexOf(normalizedName.charAt(i)) < 0) {
-                return JSONResponses.INCORRECT_CURRENCY_NAME;
+                return new CreateTransactionRequestData(JSONResponses.INCORRECT_CURRENCY_NAME);
             }
         }
         for (int i = 0; i < code.length(); i++) {
             if (Constants.ALLOWED_CURRENCY_CODE_LETTERS.indexOf(code.charAt(i)) < 0) {
-                return JSONResponses.INCORRECT_CURRENCY_CODE;
+                return new CreateTransactionRequestData(JSONResponses.INCORRECT_CURRENCY_CODE);
             }
         }
 
@@ -148,10 +147,10 @@ public final class IssueCurrency extends CreateTransaction {
         byte ruleset = ParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
         byte algorithm = ParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
         byte decimals = ParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = new Attachment.MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
                 reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
     }
 }

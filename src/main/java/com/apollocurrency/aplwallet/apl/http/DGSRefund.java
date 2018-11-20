@@ -20,20 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.DUPLICATE_REFUND;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.GOODS_NOT_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_REFUND;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class DGSRefund extends CreateTransaction {
 
@@ -51,18 +50,18 @@ public final class DGSRefund extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
+        Account sellerAccount = ParameterParser.getSenderAccount(req, validate);
         DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
-        if (sellerAccount.getId() != purchase.getSellerId()) {
-            return INCORRECT_PURCHASE;
+        if (validate && sellerAccount.getId() != purchase.getSellerId()) {
+            return new CreateTransactionRequestData(INCORRECT_PURCHASE);
         }
         if (purchase.getRefundNote() != null) {
-            return DUPLICATE_REFUND;
+            return new CreateTransactionRequestData(DUPLICATE_REFUND);
         }
         if (purchase.getEncryptedGoods() == null) {
-            return GOODS_NOT_DELIVERED;
+            return new CreateTransactionRequestData(GOODS_NOT_DELIVERED);
         }
 
         String refundValueATM = Convert.emptyToNull(req.getParameter("refundATM"));
@@ -72,16 +71,16 @@ public final class DGSRefund extends CreateTransaction {
                 refundATM = Long.parseLong(refundValueATM);
             }
         } catch (RuntimeException e) {
-            return INCORRECT_DGS_REFUND;
+            return new CreateTransactionRequestData(INCORRECT_DGS_REFUND);
         }
         if (refundATM < 0 || refundATM > Constants.MAX_BALANCE_ATM) {
-            return INCORRECT_DGS_REFUND;
+            return new CreateTransactionRequestData(INCORRECT_DGS_REFUND);
         }
 
         Account buyerAccount = Account.getAccount(purchase.getBuyerId());
 
         Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundATM);
-        return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
+        return new CreateTransactionRequestData(attachment, buyerAccount.getId(), sellerAccount, 0);
 
     }
 

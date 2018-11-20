@@ -20,13 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Currency;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Claim currency units and receive back APL invested into this currency before it became active
@@ -56,12 +55,12 @@ public final class CurrencyReserveClaim extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
         long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = new Attachment.MonetarySystemReserveClaim(currency.getId(), units);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
 
     }
 

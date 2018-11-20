@@ -20,18 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Alias;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_OWNER;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_OWNER;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 
 public final class SellAlias extends CreateTransaction {
@@ -49,9 +48,9 @@ public final class SellAlias extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Alias alias = ParameterParser.getAlias(req);
-        Account owner = ParameterParser.getSenderAccount(req);
+        Account owner = ParameterParser.getSenderAccount(req, validate);
 
         long priceATM = ParameterParser.getLong(req, "priceATM", 0L, Constants.MAX_BALANCE_ATM, true);
 
@@ -61,18 +60,18 @@ public final class SellAlias extends CreateTransaction {
             try {
                 recipientId = Convert.parseAccountId(recipientValue);
             } catch (RuntimeException e) {
-                return INCORRECT_RECIPIENT;
+                return new CreateTransactionRequestData(INCORRECT_RECIPIENT);
             }
             if (recipientId == 0) {
-                return INCORRECT_RECIPIENT;
+                return new CreateTransactionRequestData(INCORRECT_RECIPIENT);
             }
         }
 
-        if (alias.getAccountId() != owner.getId()) {
-            return INCORRECT_ALIAS_OWNER;
+        if (validate && alias.getAccountId() != owner.getId()) {
+            return new CreateTransactionRequestData(INCORRECT_ALIAS_OWNER);
         }
 
         Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceATM);
-        return createTransaction(req, owner, recipientId, 0, attachment);
+        return new CreateTransactionRequestData(attachment, recipientId, owner,0);
     }
 }

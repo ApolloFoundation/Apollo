@@ -20,25 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Attachment.MessagingPollCreation.PollBuilder;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_POLL_DESCRIPTION_LENGTH;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_POLL_NAME_LENGTH;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_POLL_OPTION_LENGTH;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ZEROOPTIONS;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_DESCRIPTION;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_NAME;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Attachment.MessagingPollCreation.PollBuilder;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class CreatePoll extends CreateTransaction {
 
@@ -60,23 +59,23 @@ public final class CreatePoll extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
         String nameValue = Convert.emptyToNull(req.getParameter("name"));
         String descriptionValue = req.getParameter("description");
 
         if (nameValue == null || nameValue.trim().isEmpty()) {
-            return MISSING_NAME;
+            return new CreateTransactionRequestData(MISSING_NAME);
         } else if (descriptionValue == null) {
-            return MISSING_DESCRIPTION;
+            return new CreateTransactionRequestData(MISSING_DESCRIPTION);
         }
 
         if (nameValue.length() > Constants.MAX_POLL_NAME_LENGTH) {
-            return INCORRECT_POLL_NAME_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_POLL_NAME_LENGTH);
         }
 
         if (descriptionValue.length() > Constants.MAX_POLL_DESCRIPTION_LENGTH) {
-            return INCORRECT_POLL_DESCRIPTION_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_POLL_DESCRIPTION_LENGTH);
         }
 
         List<String> options = new ArrayList<>();
@@ -87,14 +86,14 @@ public final class CreatePoll extends CreateTransaction {
                 break;
             }
             if (optionValue.length() > Constants.MAX_POLL_OPTION_LENGTH || (optionValue = optionValue.trim()).isEmpty()) {
-                return INCORRECT_POLL_OPTION_LENGTH;
+                return new CreateTransactionRequestData(INCORRECT_POLL_OPTION_LENGTH);
             }
             options.add(optionValue);
         }
 
         byte optionsSize = (byte) options.size();
         if (options.size() == 0) {
-            return INCORRECT_ZEROOPTIONS;
+            return new CreateTransactionRequestData(INCORRECT_ZEROOPTIONS);
         }
 
         int currentHeight = Apl.getBlockchain().getHeight();
@@ -126,8 +125,8 @@ public final class CreatePoll extends CreateTransaction {
             builder.holdingId(holdingId);
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = builder.build();
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
     }
 }

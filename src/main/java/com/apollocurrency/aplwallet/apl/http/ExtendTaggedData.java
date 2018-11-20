@@ -20,18 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.TaggedData;
-import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.TransactionType;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.TaggedData;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.TransactionType;
 
 public final class ExtendTaggedData extends CreateTransaction {
 
@@ -49,21 +48,21 @@ public final class ExtendTaggedData extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null) {
             Transaction transaction = Apl.getBlockchain().getTransaction(transactionId);
             if (transaction == null || transaction.getType() != TransactionType.Data.TAGGED_DATA_UPLOAD) {
-                return UNKNOWN_TRANSACTION;
+                return new CreateTransactionRequestData(UNKNOWN_TRANSACTION);
             }
             Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
             taggedData = new TaggedData(transaction, taggedDataUpload);
         }
         Attachment.TaggedDataExtend taggedDataExtend = new Attachment.TaggedDataExtend(taggedData);
-        return createTransaction(req, account, taggedDataExtend);
+        return new CreateTransactionRequestData(taggedDataExtend, account);
 
     }
 

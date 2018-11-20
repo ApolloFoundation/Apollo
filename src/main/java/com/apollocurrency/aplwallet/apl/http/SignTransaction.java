@@ -53,13 +53,13 @@ public final class SignTransaction extends APIServlet.APIRequestHandler {
         Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
 
         byte[] keySeed = ParameterParser.getKeySeed(req, senderId, true);
-        boolean validate = !"false".equalsIgnoreCase(req.getParameter("validate"));
+        boolean validateTransaction = !"false".equalsIgnoreCase(req.getParameter("validate"));
 
         JSONObject response = new JSONObject();
         try {
             Transaction transaction = builder.build(keySeed);
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
-            if (validate) {
+            if (validateTransaction) {
                 transaction.validate();
                 response.put("verify", transaction.verifySignature());
             }

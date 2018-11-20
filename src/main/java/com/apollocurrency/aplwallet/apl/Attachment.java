@@ -2835,7 +2835,7 @@ public interface Attachment extends Appendix {
             }
         }
 
-        ShufflingProcessing(long shufflingId, byte[][] data, byte[] shufflingStateHash) {
+        public ShufflingProcessing(long shufflingId, byte[][] data, byte[] shufflingStateHash) {
             super(shufflingId, shufflingStateHash);
             this.data = data;
             this.hash = null;
@@ -3059,7 +3059,7 @@ public interface Attachment extends Appendix {
             this.cancellingAccountId = Convert.parseUnsignedLong((String) attachmentData.get("cancellingAccount"));
         }
 
-        ShufflingCancellation(long shufflingId, byte[][] blameData, byte[][] keySeeds, byte[] shufflingStateHash, long cancellingAccountId) {
+        public ShufflingCancellation(long shufflingId, byte[][] blameData, byte[][] keySeeds, byte[] shufflingStateHash, long cancellingAccountId) {
             super(shufflingId, shufflingStateHash);
             this.blameData = blameData;
             this.keySeeds = keySeeds;

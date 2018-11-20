@@ -20,23 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_LISTING_DESCRIPTION;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_LISTING_NAME;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_LISTING_TAGS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_NAME;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Appendix;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_LISTING_DESCRIPTION;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_LISTING_NAME;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_LISTING_TAGS;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_NAME;
 
 public final class DGSListing extends CreateTransaction {
 
@@ -54,7 +54,7 @@ public final class DGSListing extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
@@ -63,36 +63,36 @@ public final class DGSListing extends CreateTransaction {
         int quantity = ParameterParser.getGoodsQuantity(req);
 
         if (name == null) {
-            return MISSING_NAME;
+            return new CreateTransactionRequestData(MISSING_NAME);
         }
         name = name.trim();
         if (name.length() > Constants.MAX_DGS_LISTING_NAME_LENGTH) {
-            return INCORRECT_DGS_LISTING_NAME;
+            return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_NAME);
         }
 
         if (description.length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH) {
-            return INCORRECT_DGS_LISTING_DESCRIPTION;
+            return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_DESCRIPTION);
         }
 
         if (tags.length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH) {
-            return INCORRECT_DGS_LISTING_TAGS;
+            return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_TAGS);
         }
 
         Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true);
         if (prunablePlainMessage != null) {
             if (prunablePlainMessage.isText()) {
-                return MESSAGE_NOT_BINARY;
+                return new CreateTransactionRequestData(MESSAGE_NOT_BINARY);
             }
             byte[] image = prunablePlainMessage.getMessage();
             String mediaType = Search.detectMimeType(image);
             if (mediaType == null || !mediaType.startsWith("image/")) {
-                return MESSAGE_NOT_IMAGE;
+                return new CreateTransactionRequestData(MESSAGE_NOT_IMAGE);
             }
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = new Attachment.DigitalGoodsListing(name, description, tags, quantity, priceATM);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
 
     }
 

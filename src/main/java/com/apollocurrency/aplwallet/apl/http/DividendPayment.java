@@ -20,13 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Asset;
 import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class DividendPayment extends CreateTransaction {
 
@@ -43,22 +42,16 @@ public class DividendPayment extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(final HttpServletRequest request)
-            throws AplException
-    {
-        final int height = ParameterParser.getHeight(request);
-        final long amountATMPerATU = ParameterParser.getAmountATMPerATU(request);
-        final Account account = ParameterParser.getSenderAccount(request);
-        final Asset asset = ParameterParser.getAsset(request);
-        if (Asset.getAsset(asset.getId(), height) == null) {
-            return JSONResponses.ASSET_NOT_ISSUED_YET;
-        }
-        final Attachment attachment = new Attachment.ColoredCoinsDividendPayment(asset.getId(), height, amountATMPerATU);
-        try {
-            return this.createTransaction(request, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_FUNDS;
-        }
-    }
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
+            final int height = ParameterParser.getHeight(req);
+            final long amountATMPerATU = ParameterParser.getAmountATMPerATU(req);
+            final Account account = ParameterParser.getSenderAccount(req, validate);
+            final Asset asset = ParameterParser.getAsset(req);
+            if (Asset.getAsset(asset.getId(), height) == null) {
+                return new CreateTransactionRequestData(JSONResponses.ASSET_NOT_ISSUED_YET);
+            }
+            final Attachment attachment = new Attachment.ColoredCoinsDividendPayment(asset.getId(), height, amountATMPerATU);
+            return new CreateTransactionRequestData(attachment, account, JSONResponses.NOT_ENOUGH_FUNDS);
+    }
 }

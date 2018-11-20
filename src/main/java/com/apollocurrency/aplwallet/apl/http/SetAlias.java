@@ -21,21 +21,20 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Alias;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_LENGTH;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_NAME;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_URI_LENGTH;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_ALIAS_NAME;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONObject;
 
 public final class SetAlias extends CreateTransaction {
 
@@ -52,43 +51,43 @@ public final class SetAlias extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         String aliasName = Convert.emptyToNull(req.getParameter("aliasName"));
         String aliasURI = Convert.nullToEmpty(req.getParameter("aliasURI"));
 
         if (aliasName == null) {
-            return MISSING_ALIAS_NAME;
+            return new CreateTransactionRequestData(MISSING_ALIAS_NAME);
         }
 
         aliasName = aliasName.trim();
         if (aliasName.length() == 0 || aliasName.length() > Constants.MAX_ALIAS_LENGTH) {
-            return INCORRECT_ALIAS_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_ALIAS_LENGTH);
         }
 
         String normalizedAlias = aliasName.toLowerCase();
         for (int i = 0; i < normalizedAlias.length(); i++) {
             if (Constants.ALPHABET.indexOf(normalizedAlias.charAt(i)) < 0) {
-                return INCORRECT_ALIAS_NAME;
+                return new CreateTransactionRequestData(INCORRECT_ALIAS_NAME);
             }
         }
 
         aliasURI = aliasURI.trim();
         if (aliasURI.length() > Constants.MAX_ALIAS_URI_LENGTH) {
-            return INCORRECT_URI_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_URI_LENGTH);
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
 
         Alias alias = Alias.getAlias(normalizedAlias);
-        if (alias != null && alias.getAccountId() != account.getId()) {
+        if (alias != null && validate && alias.getAccountId() != account.getId()) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);
             response.put("errorDescription", "\"" + aliasName + "\" is already used");
-            return response;
+            return new CreateTransactionRequestData(response);
         }
 
         Attachment attachment = new Attachment.MessagingAliasAssignment(aliasName, aliasURI);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
 
     }
 

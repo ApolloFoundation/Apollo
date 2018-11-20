@@ -21,15 +21,20 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.TOO_MANY_PHASING_VOTES;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.*;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public class ApproveTransaction extends CreateTransaction {
     public static ApproveTransaction getInstance() {
@@ -45,15 +50,15 @@ public class ApproveTransaction extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         String[] phasedTransactionValues = req.getParameterValues("transactionFullHash");
 
         if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
-            return MISSING_TRANSACTION_FULL_HASH;
+            return new CreateTransactionRequestData(MISSING_TRANSACTION_FULL_HASH);
         }
 
         if (phasedTransactionValues.length > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
-            return TOO_MANY_PHASING_VOTES;
+            return new CreateTransactionRequestData(TOO_MANY_PHASING_VOTES);
         }
 
         List<byte[]> phasedTransactionFullHashes = new ArrayList<>(phasedTransactionValues.length);
@@ -61,7 +66,7 @@ public class ApproveTransaction extends CreateTransaction {
             byte[] hash = Convert.parseHexString(phasedTransactionValue);
             PhasingPoll phasingPoll = PhasingPoll.getPoll(Convert.fullHashToId(hash));
             if (phasingPoll == null) {
-                return UNKNOWN_TRANSACTION_FULL_HASH;
+                return new CreateTransactionRequestData(UNKNOWN_TRANSACTION_FULL_HASH);
             }
             phasedTransactionFullHashes.add(hash);
         }
@@ -81,6 +86,6 @@ public class ApproveTransaction extends CreateTransaction {
         }
         Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MessagingPhasingVoteCasting(phasedTransactionFullHashes, secret);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
     }
 }

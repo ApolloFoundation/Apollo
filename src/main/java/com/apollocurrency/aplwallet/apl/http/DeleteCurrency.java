@@ -20,13 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Currency;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class DeleteCurrency extends CreateTransaction {
 
@@ -43,13 +42,14 @@ public final class DeleteCurrency extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
-        Account account = ParameterParser.getSenderAccount(req);
-        if (!currency.canBeDeletedBy(account.getId())) {
-            return JSONResponses.CANNOT_DELETE_CURRENCY;
+        Account account = ParameterParser.getSenderAccount(req, validate);
+        if (validate && !currency.canBeDeletedBy(account.getId())) {
+            return new CreateTransactionRequestData(JSONResponses.CANNOT_DELETE_CURRENCY);
         }
         Attachment attachment = new Attachment.MonetarySystemCurrencyDeletion(currency.getId());
-        return createTransaction(req, account, attachment);
+
+        return new CreateTransactionRequestData(attachment, account);
     }
 }

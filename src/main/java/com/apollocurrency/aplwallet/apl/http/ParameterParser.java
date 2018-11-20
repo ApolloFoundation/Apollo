@@ -539,12 +539,18 @@ public final class ParameterParser {
     public static Account getSenderAccount(HttpServletRequest req, String accountName, boolean isMandatory) throws ParameterException {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
-        byte[] publicKey = getPublicKey(req, accountId);
+        byte[] publicKey = getPublicKey(req, null, accountId, isMandatory);
+        if (publicKey == null) {
+            return null;
+        }
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
         return account;
+    }
+    public static Account getSenderAccount(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getSenderAccount(req, "sender", isMandatory);
     }
     public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
         return getSenderAccount(req, null, true);

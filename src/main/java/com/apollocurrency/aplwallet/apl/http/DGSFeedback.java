@@ -20,16 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.GOODS_NOT_DELIVERED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.GOODS_NOT_DELIVERED;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 
 public final class DGSFeedback extends CreateTransaction {
 
@@ -47,21 +46,21 @@ public final class DGSFeedback extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
         DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
 
-        Account buyerAccount = ParameterParser.getSenderAccount(req);
-        if (buyerAccount.getId() != purchase.getBuyerId()) {
-            return INCORRECT_PURCHASE;
+        Account buyerAccount = ParameterParser.getSenderAccount(req, validate);
+        if (validate && buyerAccount.getId() != purchase.getBuyerId()) {
+            return new CreateTransactionRequestData(INCORRECT_PURCHASE);
         }
-        if (purchase.getEncryptedGoods() == null) {
-            return GOODS_NOT_DELIVERED;
+        if (validate && purchase.getEncryptedGoods() == null) {
+            return new CreateTransactionRequestData(GOODS_NOT_DELIVERED);
         }
 
         Account sellerAccount = Account.getAccount(purchase.getSellerId());
         Attachment attachment = new Attachment.DigitalGoodsFeedback(purchase.getId());
-        return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
+        return new CreateTransactionRequestData(attachment, sellerAccount.getId(), buyerAccount, 0);
     }
 
 }

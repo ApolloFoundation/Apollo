@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Alias;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_NOTFORSALE;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_NOTFORSALE;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
 
 
 public final class BuyAlias extends CreateTransaction {
@@ -46,15 +45,15 @@ public final class BuyAlias extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account buyer = ParameterParser.getSenderAccount(req);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Alias alias = ParameterParser.getAlias(req);
         long amountATM = ParameterParser.getAmountATM(req);
         if (Alias.getOffer(alias) == null) {
-            return INCORRECT_ALIAS_NOTFORSALE;
+            return new CreateTransactionRequestData(INCORRECT_ALIAS_NOTFORSALE);
         }
         long sellerId = alias.getAccountId();
         Attachment attachment = new Attachment.MessagingAliasBuy(alias.getAliasName());
-        return createTransaction(req, buyer, sellerId, amountATM, attachment);
+        Account buyer = ParameterParser.getSenderAccount(req, validate);
+        return new CreateTransactionRequestData(attachment ,sellerId, buyer, amountATM);
     }
 }

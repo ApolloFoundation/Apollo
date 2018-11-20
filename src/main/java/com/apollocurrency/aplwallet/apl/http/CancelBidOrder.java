@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Order;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ORDER;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_ORDER;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Order;
 
 public final class CancelBidOrder extends CreateTransaction {
 
@@ -45,15 +44,15 @@ public final class CancelBidOrder extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         long orderId = ParameterParser.getUnsignedLong(req, "order", true);
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Order.Bid orderData = Order.Bid.getBidOrder(orderId);
-        if (orderData == null || orderData.getAccountId() != account.getId()) {
-            return UNKNOWN_ORDER;
+        if (orderData == null || validate && orderData.getAccountId() != account.getId()) {
+            return new CreateTransactionRequestData(UNKNOWN_ORDER);
         }
         Attachment attachment = new Attachment.ColoredCoinsBidOrderCancellation(orderId);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
     }
 
 }

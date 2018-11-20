@@ -64,7 +64,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         String transactionBytes = Convert.emptyToNull(req.getParameter("transactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
         long offerIssuerId = ParameterParser.getAccountId(req, "offerIssuer", true);
-
+        boolean calculateFee = "true".equalsIgnoreCase(req.getParameter("calculateFee"));
         try {
             JSONObject response;
             Transaction transaction;
@@ -76,11 +76,12 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 Currency currency = ParameterParser.getCurrency(req);
                 long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-                Account account = ParameterParser.getSenderAccount(req);
+                Account account = ParameterParser.getSenderAccount(req, calculateFee);
                 byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
-                response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
-                if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
+                response = (JSONObject)JSONValue.parse(JSON.toString(processRequest(req, attachment, 0, 0, account, calculateFee, null)));
+
+                if (keySeed == null || calculateFee) {
                     response.put("scheduled", false);
                     return response;
                 }
@@ -138,6 +139,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         } catch (AplException.InsufficientBalanceException e) {
             return JSONResponses.NOT_ENOUGH_FUNDS;
         }
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+        throw new UnsupportedOperationException("Unable to parse request");
     }
 
     @Override

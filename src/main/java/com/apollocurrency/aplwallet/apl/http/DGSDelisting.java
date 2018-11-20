@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_GOODS;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_GOODS;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 
 public final class DGSDelisting extends CreateTransaction {
 
@@ -45,14 +44,14 @@ public final class DGSDelisting extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+        Account account = ParameterParser.getSenderAccount(req, validate);
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
-        if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
-            return UNKNOWN_GOODS;
+        if (goods.isDelisted() || validate && goods.getSellerId() != account.getId()) {
+            return new CreateTransactionRequestData(UNKNOWN_GOODS);
         }
         Attachment attachment = new Attachment.DigitalGoodsDelisting(goods.getId());
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
     }
 
 }

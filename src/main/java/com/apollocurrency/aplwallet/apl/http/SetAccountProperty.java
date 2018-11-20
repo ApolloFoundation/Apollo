@@ -20,17 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class SetAccountProperty extends CreateTransaction {
 
@@ -47,26 +46,26 @@ public final class SetAccountProperty extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req);
+        Account senderAccount = ParameterParser.getSenderAccount(req, validate);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        if (recipientId == 0) {
+        if (validate && recipientId == 0) {
             recipientId = senderAccount.getId();
         }
         String property = Convert.nullToEmpty(req.getParameter("property")).trim();
         String value = Convert.nullToEmpty(req.getParameter("value")).trim();
 
         if (property.length() > Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH || property.length() == 0) {
-            return INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH);
         }
 
         if (value.length() > Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH) {
-            return INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH);
         }
 
         Attachment attachment = new Attachment.MessagingAccountProperty(property, value);
-        return createTransaction(req, senderAccount, recipientId, 0, attachment);
+        return new CreateTransactionRequestData(attachment, recipientId, senderAccount, 0);
 
     }
 

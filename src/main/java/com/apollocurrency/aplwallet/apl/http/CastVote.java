@@ -20,18 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Poll;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_VOTE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.POLL_FINISHED;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_VOTE;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.POLL_FINISHED;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Poll;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 
 public final class CastVote extends CreateTransaction {
@@ -49,10 +48,10 @@ public final class CastVote extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Poll poll = ParameterParser.getPoll(req);
         if (poll.isFinished()) {
-            return POLL_FINISHED;
+            return new CreateTransactionRequestData(POLL_FINISHED);
         }
 
         int numberOfOptions = poll.getOptions().length;
@@ -63,18 +62,18 @@ public final class CastVote extends CreateTransaction {
                 if (voteValue != null) {
                     vote[i] = Byte.parseByte(voteValue);
                     if (vote[i] != Constants.NO_VOTE_VALUE && (vote[i] < poll.getMinRangeValue() || vote[i] > poll.getMaxRangeValue())) {
-                        return INCORRECT_VOTE;
+                        return new CreateTransactionRequestData(INCORRECT_VOTE);
                     }
                 } else {
                     vote[i] = Constants.NO_VOTE_VALUE;
                 }
             }
         } catch (NumberFormatException e) {
-            return INCORRECT_VOTE;
+            return new CreateTransactionRequestData(INCORRECT_VOTE);
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = new Attachment.MessagingVoteCasting(poll.getId(), vote);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
     }
 }

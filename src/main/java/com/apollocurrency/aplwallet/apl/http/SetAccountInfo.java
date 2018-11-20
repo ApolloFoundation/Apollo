@@ -20,17 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_DESCRIPTION_LENGTH;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_NAME_LENGTH;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_DESCRIPTION_LENGTH;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ACCOUNT_NAME_LENGTH;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class SetAccountInfo extends CreateTransaction {
 
@@ -47,22 +46,22 @@ public final class SetAccountInfo extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
         String name = Convert.nullToEmpty(req.getParameter("name")).trim();
         String description = Convert.nullToEmpty(req.getParameter("description")).trim();
 
         if (name.length() > Constants.MAX_ACCOUNT_NAME_LENGTH) {
-            return INCORRECT_ACCOUNT_NAME_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_NAME_LENGTH);
         }
 
         if (description.length() > Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH) {
-            return INCORRECT_ACCOUNT_DESCRIPTION_LENGTH;
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_DESCRIPTION_LENGTH);
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = new Attachment.MessagingAccountInfo(name, description);
-        return createTransaction(req, account, attachment);
+        return new CreateTransactionRequestData(attachment, account);
 
     }
 

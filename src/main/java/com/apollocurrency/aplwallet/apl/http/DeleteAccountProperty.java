@@ -20,13 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class DeleteAccountProperty extends CreateTransaction {
 
@@ -43,30 +42,30 @@ public final class DeleteAccountProperty extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req);
+        Account senderAccount = ParameterParser.getSenderAccount(req, validate);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        if (recipientId == 0) {
+        if (recipientId == 0 && validate) {
             recipientId = senderAccount.getId();
         }
         long setterId = ParameterParser.getAccountId(req, "setter", false);
-        if (setterId == 0) {
+        if (setterId == 0 && validate) {
             setterId = senderAccount.getId();
         }
         String property = Convert.nullToEmpty(req.getParameter("property")).trim();
         if (property.isEmpty()) {
-            return JSONResponses.MISSING_PROPERTY;
+            return new CreateTransactionRequestData(JSONResponses.MISSING_PROPERTY);
         }
         Account.AccountProperty accountProperty = Account.getProperty(recipientId, property, setterId);
-        if (accountProperty == null) {
-            return JSONResponses.UNKNOWN_PROPERTY;
+        if (accountProperty == null && validate) {
+            return new CreateTransactionRequestData(JSONResponses.UNKNOWN_PROPERTY);
         }
-        if (accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
-            return JSONResponses.INCORRECT_PROPERTY;
+        if (validate && accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
+            return new CreateTransactionRequestData(JSONResponses.INCORRECT_PROPERTY);
         }
-        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty.getId());
-        return createTransaction(req, senderAccount, recipientId, 0, attachment);
+        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty == null ? 0 : accountProperty.getId());
+        return new CreateTransactionRequestData(attachment, recipientId,senderAccount, 0);
 
     }
 

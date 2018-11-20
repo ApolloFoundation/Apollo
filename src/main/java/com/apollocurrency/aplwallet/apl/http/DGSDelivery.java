@@ -20,21 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.ALREADY_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_DISCOUNT;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_DGS_GOODS;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PURCHASE;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class DGSDelivery extends CreateTransaction {
 
@@ -52,15 +51,15 @@ public final class DGSDelivery extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
+        Account sellerAccount = ParameterParser.getSenderAccount(req, validate);
         DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
-        if (sellerAccount.getId() != purchase.getSellerId()) {
-            return INCORRECT_PURCHASE;
+        if (validate && sellerAccount.getId() != purchase.getSellerId()) {
+            return new CreateTransactionRequestData(INCORRECT_PURCHASE);
         }
         if (! purchase.isPending()) {
-            return ALREADY_DELIVERED;
+            return new CreateTransactionRequestData(ALREADY_DELIVERED);
         }
 
         String discountValueATM = Convert.emptyToNull(req.getParameter("discountATM"));
@@ -70,12 +69,12 @@ public final class DGSDelivery extends CreateTransaction {
                 discountATM = Long.parseLong(discountValueATM);
             }
         } catch (RuntimeException e) {
-            return INCORRECT_DGS_DISCOUNT;
+            return new CreateTransactionRequestData(INCORRECT_DGS_DISCOUNT);
         }
         if (discountATM < 0
                 || discountATM > Constants.MAX_BALANCE_ATM
                 || discountATM > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())) {
-            return INCORRECT_DGS_DISCOUNT;
+            return new CreateTransactionRequestData(INCORRECT_DGS_DISCOUNT);
         }
 
         Account buyerAccount = Account.getAccount(purchase.getBuyerId());
@@ -88,13 +87,13 @@ public final class DGSDelivery extends CreateTransaction {
             try {
                 String plainGoods = Convert.nullToEmpty(req.getParameter("goodsToEncrypt"));
                 if (plainGoods.length() == 0) {
-                    return INCORRECT_DGS_GOODS;
+                    return new CreateTransactionRequestData(INCORRECT_DGS_GOODS);
                 }
                 goodsBytes = goodsIsText ? Convert.toBytes(plainGoods) : Convert.parseHexString(plainGoods);
             } catch (RuntimeException e) {
-                return INCORRECT_DGS_GOODS;
+                return new CreateTransactionRequestData(INCORRECT_DGS_GOODS);
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
+            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount == null ? 0 : sellerAccount.getId(),broadcast);
             if (keySeed != null) {
                 encryptedGoods = buyerAccount.encryptTo(goodsBytes, keySeed, true);
             }
@@ -105,7 +104,7 @@ public final class DGSDelivery extends CreateTransaction {
                         goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
                 new Attachment.DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
                         goodsIsText, discountATM);
-        return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
+        return new CreateTransactionRequestData(attachment, buyerAccount.getId(),sellerAccount, 0);
 
     }
 

@@ -22,6 +22,11 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -34,11 +39,6 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
 
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
@@ -237,6 +237,19 @@ public final class Crypto {
         } catch (InvalidCipherTextException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    public static int getLengthOfEncryptedByAESMessage(int plainMessageLength, boolean includeIV) {
+        int result = plainMessageLength;
+        if (plainMessageLength % 16 == 0) {
+            result += 16;
+        } else {
+            result += 16 - plainMessageLength % 16;
+        }
+        if (includeIV) {
+            result += 16;
+        }
+        return result;
     }
 
     public static byte[] aesGCMEncrypt(byte[] plaintext, byte[] key) {

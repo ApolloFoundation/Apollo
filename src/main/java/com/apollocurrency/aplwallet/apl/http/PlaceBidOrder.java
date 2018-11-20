@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Asset;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Asset;
+import com.apollocurrency.aplwallet.apl.Attachment;
 
 public final class PlaceBidOrder extends CreateTransaction {
 
@@ -45,19 +44,15 @@ public final class PlaceBidOrder extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
         long priceATM = ParameterParser.getPriceATM(req);
         long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req, validate);
 
         Attachment attachment = new Attachment.ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_FUNDS;
-        }
+        return new CreateTransactionRequestData(attachment, account, NOT_ENOUGH_FUNDS);
     }
 
 }
