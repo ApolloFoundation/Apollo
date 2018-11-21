@@ -22,6 +22,13 @@ package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import org.slf4j.Logger;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -35,13 +42,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import org.slf4j.Logger;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -390,9 +390,9 @@ public final class Generator implements Comparable<Generator> {
      *         >0 - when adaptive forging is enabled and new block should be generated with timestamp = calculated timestamp + returned value
      */
     private int[] getBlockTimeoutAndVersion(int timestamp, int generationLimit, Block lastBlock) {
-        // transactions at generator hit time
         int version = Constants.isAdaptiveForgingEnabled() ? Block.REGULAR_BLOCK_VERSION : Block.LEGACY_BLOCK_VERSION;
         int timeout = 0;
+        // transactions at generator hit time
         boolean noTransactionsAtTimestamp =
                 BlockchainProcessorImpl.getInstance().getUnconfirmedTransactions(lastBlock, timestamp).size() == 0;
         // transactions at current time
@@ -419,6 +419,9 @@ public final class Generator implements Comparable<Generator> {
             timeout = generationLimit - timestamp;
             LOG.debug("Timeout:" + timeout);
             return new int[] {timeout, version};
+        }
+        if (Constants.isAdaptiveForgingEnabled() && noTransactionsAtTimestamp) {
+            version = Block.ADAPTIVE_BLOCK_VERSION;
         }
         return new int[] {timeout, version};
     }
