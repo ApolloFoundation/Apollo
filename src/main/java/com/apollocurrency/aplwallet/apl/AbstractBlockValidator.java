@@ -44,6 +44,10 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
         switch (block.getVersion()) {
+            case Block.LEGACY_BLOCK_VERSION:
+                if (Constants.isAdaptiveForgingEnabled()) {
+                    throw new BlockchainProcessor.BlockNotAcceptedException("Legacy blocks are not accepting during adaptive forging", block);
+                }
             case Block.INSTANT_BLOCK_VERSION:
                 validateInstantBlock(block, previousLastBlock);
                 break;
