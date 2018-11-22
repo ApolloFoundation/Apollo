@@ -4,27 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.chainid;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 @JsonPropertyOrder({"enabled", "adaptiveBlockTime", "maxAdaptiveBlockTimeLimit", "minAdaptiveBlockTimeLimit", "numberOfTransactions"})
 public class AdaptiveForgingSettings {
     private boolean enabled;
     private int adaptiveBlockTime;
-    private int maxAdaptiveBlockTimeLimit;
-    private int minAdaptiveBlockTimeLimit;
     private int numberOfTransactions;
 
     public AdaptiveForgingSettings() {
-        this(false, 60, 53, 67, 0);
+        this(false, 60, 0);
     }
 
-    public AdaptiveForgingSettings(boolean enabled, int adaptiveBlockTime, int maxAdaptiveBlockTimeLimit, int minAdaptiveBlockTimeLimit, int numberOfTransactions) {
+    public AdaptiveForgingSettings(boolean enabled, int adaptiveBlockTime, int numberOfTransactions) {
         this.enabled = enabled;
         this.adaptiveBlockTime = adaptiveBlockTime;
-        this.maxAdaptiveBlockTimeLimit = maxAdaptiveBlockTimeLimit;
-        this.minAdaptiveBlockTimeLimit = minAdaptiveBlockTimeLimit;
         this.numberOfTransactions = numberOfTransactions;
     }
 
@@ -44,30 +40,6 @@ public class AdaptiveForgingSettings {
         this.adaptiveBlockTime = adaptiveBlockTime;
     }
 
-    public int getMaxAdaptiveBlockTimeLimit() {
-        return maxAdaptiveBlockTimeLimit;
-    }
-
-    public void setMaxAdaptiveBlockTimeLimit(int maxAdaptiveBlockTimeLimit) {
-        this.maxAdaptiveBlockTimeLimit = maxAdaptiveBlockTimeLimit;
-    }
-
-    public int getMinAdaptiveBlockTimeLimit() {
-        return minAdaptiveBlockTimeLimit;
-    }
-
-    public void setMinAdaptiveBlockTimeLimit(int minAdaptiveBlockTimeLimit) {
-        this.minAdaptiveBlockTimeLimit = minAdaptiveBlockTimeLimit;
-    }
-
-    public int getEmptyBlockTime() {
-        return adaptiveBlockTime;
-    }
-
-    public void setEmptyBlockTime(int adaptiveBlockTime) {
-        this.adaptiveBlockTime = adaptiveBlockTime;
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
@@ -81,8 +53,6 @@ public class AdaptiveForgingSettings {
         return "AdaptiveForgingSettings{" +
                 "enabled=" + enabled +
                 ", adaptiveBlockTime=" + adaptiveBlockTime +
-                ", maxAdaptiveBlockTimeLimit=" + maxAdaptiveBlockTimeLimit +
-                ", minAdaptiveBlockTimeLimit=" + minAdaptiveBlockTimeLimit +
                 ", numberOfTransactions=" + numberOfTransactions +
                 '}';
     }
@@ -94,13 +64,11 @@ public class AdaptiveForgingSettings {
         AdaptiveForgingSettings that = (AdaptiveForgingSettings) o;
         return enabled == that.enabled &&
                 adaptiveBlockTime == that.adaptiveBlockTime &&
-                maxAdaptiveBlockTimeLimit == that.maxAdaptiveBlockTimeLimit &&
-                minAdaptiveBlockTimeLimit == that.minAdaptiveBlockTimeLimit &&
                 numberOfTransactions == that.numberOfTransactions;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, adaptiveBlockTime, maxAdaptiveBlockTimeLimit, minAdaptiveBlockTimeLimit, numberOfTransactions);
+        return Objects.hash(enabled, adaptiveBlockTime, numberOfTransactions);
     }
 }

@@ -22,6 +22,13 @@ package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.chainid.AdaptiveForgingSettings;
+import com.apollocurrency.aplwallet.apl.chainid.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.chainid.Chain;
+import com.apollocurrency.aplwallet.apl.chainid.Consensus;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import org.slf4j.Logger;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,13 +38,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.chainid.AdaptiveForgingSettings;
-import com.apollocurrency.aplwallet.apl.chainid.BlockchainProperties;
-import com.apollocurrency.aplwallet.apl.chainid.Chain;
-import com.apollocurrency.aplwallet.apl.chainid.Consensus;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import org.slf4j.Logger;
 
 public final class Constants {
     private static final Logger LOG = getLogger(Constants.class);
@@ -62,12 +62,7 @@ public final class Constants {
         public final boolean isAdaptiveForgingEnabled;
         public final int adaptiveBlockTime;
         public final Consensus.Type consensusType;
-        public final long initialAdaptiveBaseTarget;
-        public final long maxAdaptiveBaseTarget;
-        public final long minAdaptiveBaseTarget;
         public final int numberOfTransactionsInAdaptiveBlock;
-        public final int minAdaptiveBlockTime;
-        public final int maxAdaptiveBlockTime;
         private ChangeableConstants(BlockchainProperties bp) {
             this.maxNumberOfTransactions = bp.getMaxNumberOfTransactions();
             this.maxBalanceApl = bp.getMaxBalance();
@@ -81,13 +76,8 @@ public final class Constants {
             this.maxBlockTimeLimit = bp.getMaxBlockTimeLimit();
             AdaptiveForgingSettings adaptiveForgingSettings = bp.getConsensus().getAdaptiveForgingSettings();
             this.isAdaptiveForgingEnabled = adaptiveForgingSettings.isEnabled();
-            this.adaptiveBlockTime = adaptiveForgingSettings.getEmptyBlockTime();
-            this.maxAdaptiveBlockTime = adaptiveForgingSettings.getMaxAdaptiveBlockTimeLimit();
-            this.minAdaptiveBlockTime = adaptiveForgingSettings.getMinAdaptiveBlockTimeLimit();
+            this.adaptiveBlockTime = adaptiveForgingSettings.getAdaptiveBlockTime();
             this.numberOfTransactionsInAdaptiveBlock = adaptiveForgingSettings.getNumberOfTransactions();
-            this.initialAdaptiveBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(adaptiveBlockTime * maxBalanceApl)).longValue();
-            this.maxAdaptiveBaseTarget = initialAdaptiveBaseTarget * (testnet ? maxBalanceApl : 50);
-            this.minAdaptiveBaseTarget = initialBaseTarget * 9 / 10;
             this.consensusType = bp.getConsensus().getType();
         }
 
@@ -101,10 +91,7 @@ public final class Constants {
                     ", isAdaptiveForgingEnabled=" + isAdaptiveForgingEnabled +
                     ", adaptiveBlockTime=" + adaptiveBlockTime +
                     ", consensusType=" + consensusType +
-                    ", initialAdaptiveBaseTarget=" + initialAdaptiveBaseTarget +
                     ", numberOfTransactionsInAdaptiveBlock=" + numberOfTransactionsInAdaptiveBlock +
-                    ", minAdaptiveBlockTime=" + minAdaptiveBlockTime +
-                    ", maxAdaptiveBlockTime=" + maxAdaptiveBlockTime +
                     '}';
         }
     }
@@ -361,17 +348,7 @@ public final class Constants {
 
     public static int getAdaptiveBlockTime() {return changeableConstants.adaptiveBlockTime;}
 
-    public static long getInitialAdaptiveBaseTarget() {return changeableConstants.initialAdaptiveBaseTarget;}
-
-    public static long getMaxAdaptiveBaseTarget() {return changeableConstants.maxAdaptiveBaseTarget;}
-
-    public static long getMinAdaptiveBaseTarget() {return changeableConstants.minAdaptiveBaseTarget;}
-
     public static int getNumberOfTransactionsInAdaptiveBlock() {return changeableConstants.numberOfTransactionsInAdaptiveBlock;}
-
-    public static int getMinAdaptiveBlockTime() {return changeableConstants.minAdaptiveBlockTime;}
-
-    public static int getMaxAdaptiveBlockTime() {return changeableConstants.maxAdaptiveBlockTime;}
 
     // Protect non-final constants from modification
     public static boolean isTestnet() {
