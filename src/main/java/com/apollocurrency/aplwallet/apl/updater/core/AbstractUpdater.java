@@ -67,6 +67,8 @@ public abstract class AbstractUpdater implements Updater {
     public UpdateInfo.UpdateState processUpdate() {
         LOG.info("Starting {} update", getLevel());
         updateInfo.setUpdateState(UpdateInfo.UpdateState.IN_PROGRESS);
+        LOG.debug("Waiting {} blocks or {} sec before starting update", blocksWait, secondsWait);
+        waitBlocks(blocksWait, secondsWait);
         updaterMediator.suspendBlockchain();
         if (tryUpdate()) {
             LOG.info("{} was installed successfully");
@@ -84,8 +86,6 @@ public abstract class AbstractUpdater implements Updater {
     }
 
     protected boolean tryUpdate() {
-        LOG.debug("Waiting {} blocks or {} sec before starting update", blocksWait, secondsWait);
-        waitBlocks(blocksWait, secondsWait);
         Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) updateData.getTransaction().getAttachment();
         LOG.info("Update to version: " + attachment.getAppVersion());
         //Downloader downloads update package
