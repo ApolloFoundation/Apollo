@@ -22,8 +22,6 @@ package com.apollocurrency.aplwallet.apl.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Arrays;
-
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Block;
@@ -58,7 +56,7 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
         if (lastBlock.getStringId().equals(previousBlockId) ||
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
                         && (lastBlock.getTimestamp() > peerBlockTimestamp ||
-                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout() && !Arrays.equals(generatorPublicKey, lastBlock.getGeneratorPublicKey())))) {
+                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             Peers.peersService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");

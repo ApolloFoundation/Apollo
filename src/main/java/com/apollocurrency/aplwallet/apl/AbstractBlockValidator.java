@@ -48,6 +48,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
                 if (Constants.isAdaptiveForgingEnabled()) {
                     throw new BlockchainProcessor.BlockNotAcceptedException("Legacy blocks are not accepting during adaptive forging", block);
                 }
+                break;
             case Block.INSTANT_BLOCK_VERSION:
                 validateInstantBlock(block, previousLastBlock);
                 break;
