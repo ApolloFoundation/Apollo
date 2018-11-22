@@ -171,18 +171,18 @@ var NRS = (function(NRS, $, undefined) {
                 });
 			} else {
             	if (response.level === 'CRITICAL') {
-                    $.growl("You current version is outdated. Available new IMPORTANT version: " + response.availableVersion + " that contains CRYTICAL changes", {
+                    $.growl("Your current version is outdated. Version: " + response.availableVersion + " is now available", {
                         "type": "danger",
                         delay: 60000
                     });
 				}
 				if (response.level === 'IMPORTANT') {
-                    $.growl("You current version is outdated. Available new version: " + response.availableVersion + " that contains IMPORTANT changes", {
+                    $.growl("Your current version is outdated. Version: " + response.availableVersion + " is now available", {
                         "type": "danger",
                         delay: 60000
                     });
 				} else {
-                    $.growl("You current version is outdated. Available new version: " + response.availableVersion, {
+                    $.growl("Your current version is outdated. Version: " + response.availableVersion, {
                         "type": "danger",
                         delay: 60000
                     });
