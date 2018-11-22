@@ -68,7 +68,9 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
-
+                response.put("coinSymbol", Constants.getCoinSymbol());
+                response.put("accountPrefix", Constants.getAccountPrefix());
+                response.put("projectName", Constants.getProjectName());
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
                 outer:

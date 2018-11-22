@@ -423,6 +423,9 @@ public final class Constants {
 
     public static boolean isAdaptiveBlockAtHeight(int height) {
         ChangeableConstants constantsAtHeight = getConstantsAtHeight(chain, height, false);
+        if (constantsAtHeight == null) {
+            throw new IllegalArgumentException(String.format("Constants at height %d are not available", height));
+        }
         return constantsAtHeight.isAdaptiveForgingEnabled;
     }
 

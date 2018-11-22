@@ -306,6 +306,7 @@ public class DesktopApplication extends Application {
     public static class MainApplication {
         private static final Set DOWNLOAD_REQUEST_TYPES = new HashSet<>(Arrays.asList("downloadTaggedData", "downloadPrunableMessage"));
         private static volatile WebEngine webEngine;
+        private static volatile WebEngine webEngine2;
         private static MainApplication instance = new MainApplication();
         private JSObject ars;
         private volatile long updateTime;
@@ -428,10 +429,10 @@ public class DesktopApplication extends Application {
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 720);
             browser.setMinHeight(height);
             browser.setMinWidth(width);
-            webEngine = browser.getEngine();
+            webEngine2 = browser.getEngine();
             URL changelogUrl = getClass().getClassLoader().getResource("html/changelog.html");
 
-            webEngine.load(changelogUrl.toString());
+            webEngine2.load(changelogUrl.toString());
 
             Scene scene = new Scene(browser);
             String address = API.getServerRootUri().toString();
