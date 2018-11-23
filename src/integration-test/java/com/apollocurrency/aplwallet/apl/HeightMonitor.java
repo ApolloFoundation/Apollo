@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,10 +34,15 @@ public class HeightMonitor {
         );
         List<String> peersUrls = peers.stream().map(peer -> "http://" + peer + ":6876/apl").collect(Collectors.toList());
 
-        int max = -1;
+        int allTimeMax = -1;
+        int last3HoursMax = -1;
+        int last6HoursMax = -1;
+        int last12HoursMax = -1;
+        int last24HoursMax = -1;
+        long startTime = System.currentTimeMillis();
         try (FileWriter writer = new FileWriter("heightMonitorLogs")) {
-            start:
             while (true) {
+
                 Map<String, List<Block>> peerBlocks = new HashMap<>();
                 for (int i = 0; i < peersUrls.size(); i++) {
                     try {
@@ -45,8 +51,8 @@ public class HeightMonitor {
 
                     }
                     catch (Throwable e) {
-                        e.printStackTrace();
-                        continue start;
+                        writer.append(e.getMessage()).append(" Cannot connect to peer: ").append(peers.get(i)).append("\n");
+                        peerBlocks.put(peers.get(i), new ArrayList<>());
                     }
                 }
                 for (int i = 0; i < peers.size(); i++) {
@@ -62,12 +68,33 @@ public class HeightMonitor {
                         int lastHeight = targetBlocks.get(0).getHeight();
                         int mutualBlockHeight = lastMutualBlock.getHeight();
                         int blocksDiff = lastHeight - mutualBlockHeight;
-                        max = Math.max(blocksDiff, max);
+                        allTimeMax = Math.max(blocksDiff, allTimeMax);
+                        last3HoursMax = Math.max(blocksDiff, last3HoursMax);
+                        last6HoursMax = Math.max(blocksDiff, last6HoursMax);
+                        last12HoursMax = Math.max(blocksDiff, last12HoursMax);
+                        last24HoursMax = Math.max(blocksDiff, last24HoursMax);
                         writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - Blocks diff is ").append(String.valueOf(blocksDiff)).append(" between peers ").append(peers.get(i)).append(" and ").append(peers.get(j)).append("\n");
                         writer.flush();
                     }
                 }
-                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff is ").append(String.valueOf(max)).append("\n");
+                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff is ").append(String.valueOf(allTimeMax)).append("\n");
+                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 3h is  ").append(String.valueOf(last3HoursMax)).append("\n");
+                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 6h is  ").append(String.valueOf(last6HoursMax)).append("\n");
+                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 12h is  ").append(String.valueOf(last12HoursMax)).append("\n");
+                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 24h is  ").append(String.valueOf(last24HoursMax)).append("\n");
+                long currentTime = System.currentTimeMillis();
+                if (((currentTime - startTime) / (1000 * 60 * 60)) % 3 == 0) {
+                    last3HoursMax = 0;
+                }
+                if (((currentTime - startTime) / (1000 * 60 * 60)) % 6 == 0) {
+                    last6HoursMax = 0;
+                }
+                if (((currentTime - startTime) / (1000 * 60 * 60)) % 12 == 0) {
+                    last12HoursMax = 0;
+                }
+                if (((currentTime - startTime) / (1000 * 60 * 60)) % 24 == 0) {
+                    last24HoursMax = 0;
+                }
                 TimeUnit.SECONDS.sleep(30);
 
             }
