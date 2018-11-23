@@ -268,10 +268,10 @@ public final class DebugTrace {
         long blamedAccountId = shuffling.getAssigneeAccountId();
         if (blamedAccountId != 0 && include(blamedAccountId)) {
             Map<String,String> map = getValues(blamedAccountId, false);
-            map.put("transaction fee", String.valueOf(-Constants.getShufflingDepositAtm()));
+            map.put("transaction fee", String.valueOf(-AplGlobalObjects.getChainConfig().getShufflingDepositAtm()));
             map.put("event", "shuffling blame");
             log(map);
-            long fee = Constants.getShufflingDepositAtm()/ 4;
+            long fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm()/ 4;
             int height = Apl.getBlockchain().getHeight();
             for (int i = 0; i < 3; i++) {
                 long generatorId = BlockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
@@ -282,7 +282,7 @@ public final class DebugTrace {
                     log(generatorMap);
                 }
             }
-            fee = Constants.getShufflingDepositAtm() - 3 * fee;
+            fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm() - 3 * fee;
             long generatorId = Apl.getBlockchain().getLastBlock().getGeneratorId();
             if (include(generatorId)) {
                 Map<String,String> generatorMap = getValues(generatorId, false);
@@ -437,7 +437,7 @@ public final class DebugTrace {
         Map<String,String> map = getValues(accountId, false);
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
-        String deposit = String.valueOf(isRecipient ? Constants.getShufflingDepositAtm() : -Constants.getShufflingDepositAtm());
+        String deposit = String.valueOf(isRecipient ? AplGlobalObjects.getChainConfig().getShufflingDepositAtm() : -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
         if (shuffling.getHoldingType() == HoldingType.APL) {
             map.put("transaction amount", amount);
         } else if (shuffling.getHoldingType() == HoldingType.ASSET) {

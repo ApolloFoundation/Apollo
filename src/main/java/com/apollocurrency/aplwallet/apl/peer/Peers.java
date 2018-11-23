@@ -53,6 +53,7 @@ import java.util.concurrent.TimeoutException;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Db;
@@ -165,7 +166,7 @@ public final class Peers {
         }
         myPlatform = platform;
         myAddress = Convert.emptyToNull(Apl.getStringProperty("apl.myAddress", "").trim());
-        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !Constants.isTestnet()) {
+        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !AplGlobalObjects.getChainConfig().isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
         String myHost = null;
@@ -212,7 +213,7 @@ public final class Peers {
             }
         }
         myPeerServerPort = Apl.getIntProperty("apl.peerServerPort");
-        if (myPeerServerPort == TESTNET_PEER_PORT && !Constants.isTestnet()) {
+        if (myPeerServerPort == TESTNET_PEER_PORT && !AplGlobalObjects.getChainConfig().isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
         shareMyAddress = Apl.getBooleanProperty("apl.shareMyAddress") && ! Constants.isOffline;
@@ -245,7 +246,7 @@ public final class Peers {
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
-                if (!Constants.isTestnet()) {
+                if (!AplGlobalObjects.getChainConfig().isTestnet()) {
                     if (port >= 0)
                         announcedAddress = myAddress;
                     else
@@ -269,9 +270,9 @@ public final class Peers {
         json.put("application", Apl.APPLICATION);
         json.put("version", Apl.VERSION.toString());
         json.put("platform", Peers.myPlatform);
-        json.put("chainId", Constants.getChain().getChainId());
+        json.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
         json.put("shareAddress", Peers.shareMyAddress);
-        if (!Constants.ENABLE_PRUNING && Constants.INCLUDE_EXPIRED_PRUNABLE) {
+        if (!AplGlobalObjects.getChainConfig().isEnablePruning() && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
         if (API.openAPIPort > 0) {
@@ -317,10 +318,10 @@ public final class Peers {
         LOG.debug("My peer info:\n" + json.toJSONString());
         myPeerInfo = json;
 
-        final List<String> defaultPeers = Constants.getChain().getDefaultPeers();
-        wellKnownPeers = Constants.getChain().getWellKnownPeers();
+        final List<String> defaultPeers = AplGlobalObjects.getChainConfig().getChain().getDefaultPeers();
+        wellKnownPeers = AplGlobalObjects.getChainConfig().getChain().getWellKnownPeers();
 
-        List<String> knownBlacklistedPeersList = Constants.getChain().getBlacklistedPeers();
+        List<String> knownBlacklistedPeersList = AplGlobalObjects.getChainConfig().getChain().getBlacklistedPeers();
         if (knownBlacklistedPeersList.isEmpty()) {
             knownBlacklistedPeers = Collections.emptySet();
         } else {
@@ -423,7 +424,7 @@ public final class Peers {
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
-                final int port = Constants.isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
+                final int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
                 connector.setPort(port);
                 final String host = Apl.getStringProperty("apl.peerServerHost");
                 connector.setHost(host);
@@ -856,7 +857,7 @@ public final class Peers {
     }
 
     public static int getDefaultPeerPort() {
-        return Constants.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+        return AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
     }
 
     public static Collection<? extends Peer> getAllPeers() {
@@ -978,11 +979,12 @@ public final class Peers {
             return null;
         }
         peer = new PeerImpl(host, announcedAddress);
-        if (Constants.isTestnet() && peer.getPort() != TESTNET_PEER_PORT) {
+        boolean testnet = AplGlobalObjects.getChainConfig().isTestnet();
+        if (testnet && peer.getPort() != TESTNET_PEER_PORT) {
             LOG.debug("Peer " + host + " on testnet is not using port " + TESTNET_PEER_PORT + ", ignoring");
             return null;
         }
-        if (!Constants.isTestnet() && peer.getPort() == TESTNET_PEER_PORT) {
+        if (!testnet && peer.getPort() == TESTNET_PEER_PORT) {
             LOG.debug("Peer " + host + " is using testnet port " + peer.getPort() + ", ignoring");
             return null;
         }
@@ -1230,7 +1232,7 @@ public final class Peers {
     private static void checkBlockchainState() {
         Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
                 (Apl.getBlockchainProcessor().isDownloading() || Apl.getBlockchain().getLastBlockTimestamp() < Apl.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (Apl.getBlockchain().getLastBlock().getBaseTarget() / Constants.getInitialBaseTarget() > 10 && !Constants.isTestnet()) ?
+                        (Apl.getBlockchain().getLastBlock().getBaseTarget() / AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() > 10 && !AplGlobalObjects.getChainConfig().isTestnet()) ?
                                 Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {

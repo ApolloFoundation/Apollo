@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.updater.util.util.JarGenerator;
+import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

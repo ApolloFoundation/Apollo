@@ -32,13 +32,14 @@ import java.util.Collections;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-final class BlockImpl implements Block {
+public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
@@ -57,7 +58,7 @@ final class BlockImpl implements Block {
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty = BigInteger.ZERO;
-    private long baseTarget = Constants.getInitialBaseTarget();
+    private long baseTarget = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget();
     private volatile long nextBlockId;
     private int height = -1;
     private volatile long id;
@@ -423,14 +424,14 @@ final class BlockImpl implements Block {
                 }
                 totalBackFees += backFees[i];
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, Constants.getCoinSymbol(),
+                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
                         this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, Constants.getCoinSymbol(), this.height);
+            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(), this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
         generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);
@@ -467,22 +468,23 @@ final class BlockImpl implements Block {
         int blockchainHeight = previousBlock.height;
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             int blocktimeAverage = getBlockTimeAverage(previousBlock);
-            int blockTime = Constants.getBlockTime();
+            HeightConfig config = AplGlobalObjects.getChainConfig().getCurrentConfig();
+            int blockTime = config.getBlockTime();
             if (blocktimeAverage > blockTime) {
-                int maxBlocktimeLimit = Constants.getMaxBlocktimeLimit();
+                int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
                 baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, maxBlocktimeLimit)) / blockTime;
             } else {
-                int minBlocktimeLimit = Constants.getMinBlocktimeLimit();
+                int minBlocktimeLimit = config.getMinBlockTimeLimit();
                 baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
                         * (blockTime - Math.max(blocktimeAverage, minBlocktimeLimit)) / (100 * blockTime);
             }
-            long maxBaseTarget = Constants.getMaxBaseTarget();
+            long maxBaseTarget = config.getMaxBaseTarget();
             if (baseTarget < 0 || baseTarget > maxBaseTarget) {
                 baseTarget = maxBaseTarget;
             }
-            long minBaseTarget = Constants.getMinBaseTarget();
+            long minBaseTarget = config.getMinBaseTarget();
             if (baseTarget < minBaseTarget) {
-                baseTarget = Constants.getMinBaseTarget();
+                baseTarget = config.getMinBaseTarget();
             }
         } else {
             baseTarget = prevBaseTarget;
