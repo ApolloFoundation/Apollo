@@ -8,6 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -23,6 +24,31 @@ import org.slf4j.Logger;
 
 public class HeightMonitor {
     private static final Logger LOG = getLogger(HeightMonitor.class);
+    private static final class MaxBlockDiffCounter {
+        private int period;
+        private int value;
+        private long lastResetTime = System.currentTimeMillis() / (1000 * 60);
+
+        public MaxBlockDiffCounter(int period) {
+            this.period = period;
+        }
+
+        public void update(int currentBlockDiff, Writer writer) throws IOException {
+            value = Math.max(value, currentBlockDiff);
+            writer
+                    .append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .append(" - MAX Blocks diff for last")
+                    .append(String.valueOf(period))
+                    .append("h is  ")
+                    .append(String.valueOf(value))
+                    .append("\n");
+            long currentTime = System.currentTimeMillis() / 1000 / 60;
+            if (currentTime - lastResetTime >= period * 60 ) {
+                lastResetTime = currentTime;
+                value = currentBlockDiff;
+            }
+        }
+    }
     public static void main(String[] args) {
         NodeClient client = new NodeClient();
         List<String> peers = Arrays.asList(
@@ -34,12 +60,12 @@ public class HeightMonitor {
         );
         List<String> peersUrls = peers.stream().map(peer -> "http://" + peer + ":6876/apl").collect(Collectors.toList());
 
-        int allTimeMax = -1;
-        int last3HoursMax = -1;
-        int last6HoursMax = -1;
-        int last12HoursMax = -1;
-        int last24HoursMax = -1;
-        long startTime = System.currentTimeMillis();
+        List<MaxBlockDiffCounter> maxBlockDiffCounters = Arrays.asList(
+                new MaxBlockDiffCounter(3),
+                new MaxBlockDiffCounter(6),
+                new MaxBlockDiffCounter(12),
+                new MaxBlockDiffCounter(24),
+                new MaxBlockDiffCounter(96));
         try (FileWriter writer = new FileWriter("heightMonitorLogs")) {
             while (true) {
 
@@ -55,6 +81,7 @@ public class HeightMonitor {
                         peerBlocks.put(peers.get(i), new ArrayList<>());
                     }
                 }
+                int currentMaxBlocksDiff = -1;
                 for (int i = 0; i < peers.size(); i++) {
                     List<Block> targetBlocks = peerBlocks.get(peers.get(i));
                     for (int j = i + 1; j < peers.size(); j++) {
@@ -68,32 +95,14 @@ public class HeightMonitor {
                         int lastHeight = targetBlocks.get(0).getHeight();
                         int mutualBlockHeight = lastMutualBlock.getHeight();
                         int blocksDiff = lastHeight - mutualBlockHeight;
-                        allTimeMax = Math.max(blocksDiff, allTimeMax);
-                        last3HoursMax = Math.max(blocksDiff, last3HoursMax);
-                        last6HoursMax = Math.max(blocksDiff, last6HoursMax);
-                        last12HoursMax = Math.max(blocksDiff, last12HoursMax);
-                        last24HoursMax = Math.max(blocksDiff, last24HoursMax);
+                        currentMaxBlocksDiff = Math.max(blocksDiff, currentMaxBlocksDiff);
+
                         writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - Blocks diff is ").append(String.valueOf(blocksDiff)).append(" between peers ").append(peers.get(i)).append(" and ").append(peers.get(j)).append("\n");
                         writer.flush();
                     }
                 }
-                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff is ").append(String.valueOf(allTimeMax)).append("\n");
-                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 3h is  ").append(String.valueOf(last3HoursMax)).append("\n");
-                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 6h is  ").append(String.valueOf(last6HoursMax)).append("\n");
-                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 12h is  ").append(String.valueOf(last12HoursMax)).append("\n");
-                writer.append(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)).append(" - MAX Blocks diff for last 24h is  ").append(String.valueOf(last24HoursMax)).append("\n");
-                long currentTime = System.currentTimeMillis();
-                if (((currentTime - startTime) / (1000 * 60 * 60)) % 3 == 0) {
-                    last3HoursMax = 0;
-                }
-                if (((currentTime - startTime) / (1000 * 60 * 60)) % 6 == 0) {
-                    last6HoursMax = 0;
-                }
-                if (((currentTime - startTime) / (1000 * 60 * 60)) % 12 == 0) {
-                    last12HoursMax = 0;
-                }
-                if (((currentTime - startTime) / (1000 * 60 * 60)) % 24 == 0) {
-                    last24HoursMax = 0;
+                for (MaxBlockDiffCounter maxBlockDiffCounter : maxBlockDiffCounters) {
+                    maxBlockDiffCounter.update(currentMaxBlocksDiff, writer);
                 }
                 TimeUnit.SECONDS.sleep(30);
 
@@ -115,5 +124,9 @@ public class HeightMonitor {
             }
         }
         return null;
+    }
+
+    private static void logMaxBlocksDiff(int diff, long startTime, int hours) {
+
     }
 }
