@@ -319,6 +319,7 @@ public final class API {
             apiHandlers.addHandler(new DefaultHandler());
 
             apiServer.setHandler(apiHandlers);
+            apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
 
             ThreadPool.runBeforeStart("UPnP ports init", () -> {
