@@ -74,8 +74,10 @@ import org.slf4j.Logger;
 
 public final class Apl {
     private static Logger LOG;
+
     private static ChainIdService chainIdService;
     public static final Version VERSION = Version.from("1.22.2");
+
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
