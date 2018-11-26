@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Generator;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 
 public final class StopForging extends APIServlet.APIRequestHandler {
@@ -43,8 +43,8 @@ public final class StopForging extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
+        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
             Generator generator = Generator.stopForging(keySeed);
@@ -75,7 +75,12 @@ public final class StopForging extends APIServlet.APIRequestHandler {
 
 
     @Override
-    protected String accountName2FA() {
+    protected boolean is2FAProtected() {
+        return true;
+    }
+
+    @Override
+    protected String vaultAccountName() {
         return "account";
     }
 }

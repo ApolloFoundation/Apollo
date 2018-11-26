@@ -142,7 +142,7 @@ public final class Poll extends AbstractPoll {
     public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) {
         Connection connection = null;
         try {
-            connection = Db.db.getConnection();
+            connection = Db.getDb().getConnection();
             PreparedStatement pollStatement = connection.prepareStatement(
                     "SELECT * FROM poll WHERE id IN" +
                             " (SELECT bytes_to_long(attachment_bytes, 1) FROM transaction WHERE " +

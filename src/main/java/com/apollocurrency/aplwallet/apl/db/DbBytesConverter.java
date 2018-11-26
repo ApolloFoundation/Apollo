@@ -28,7 +28,7 @@ public class DbBytesConverter {
     }
 
     public static void init() {
-        try (Connection connection = Db.db.getConnection();
+        try (Connection connection = Db.getDb().getConnection();
              Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("DROP ALIAS IF EXISTS " + BYTE_TO_LONG_DB_FUNCTION_NAME);
             String className = DbBytesConverter.class.getName();

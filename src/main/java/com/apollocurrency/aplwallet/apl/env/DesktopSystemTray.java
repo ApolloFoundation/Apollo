@@ -20,11 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.env;
 
-import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.http.API;
-import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +32,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Block;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.Generator;
+import com.apollocurrency.aplwallet.apl.http.API;
+import com.apollocurrency.aplwallet.apl.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.slf4j.Logger;
 
 public class DesktopSystemTray {
     private static final Logger LOG = getLogger(DesktopSystemTray.class);
@@ -180,13 +184,13 @@ public class DesktopSystemTray {
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Apl.APPLICATION);
         addDataRow(statusPanel, "Version", Apl.VERSION.toString());
-        addDataRow(statusPanel, "Network", (Constants.isTestnet) ? "TestNet" : "MainNet");
+        addDataRow(statusPanel, "Network", (Constants.isTestnet()) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(Apl.getUserHomeDir()).toAbsolutePath()));
-        addDataRow(statusPanel, "Database URL", Db.db == null ? "unavailable" : Db.db.getUrl());
+        addDataRow(statusPanel, "Database URL", Db.getDb() == null ? "unavailable" : Db.getDb().getUrl());
         addEmptyRow(statusPanel);
 
         if (lastBlock != null) {

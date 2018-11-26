@@ -14,7 +14,7 @@ import org.json.simple.JSONStreamAware;
 
 public class Confirm2FA extends APIServlet.APIRequestHandler {
     private Confirm2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "passphrase", "account", "code2FA", "secretPhrase");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
     }
 
     private static class Confirm2FAHolder {
@@ -41,6 +41,17 @@ public class Confirm2FA extends APIServlet.APIRequestHandler {
         JSONData.putAccount(response, "account", params2FA.accountId);
         response.put("status", confirmStatus);
         return response;
+    }
+
+
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
+
+    @Override
+    protected boolean is2FAProtected() {
+        return true;
     }
 
     @Override

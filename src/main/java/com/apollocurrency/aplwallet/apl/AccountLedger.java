@@ -20,17 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
-
-import java.sql.*;
-import java.util.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Maintain a ledger of changes to selected accounts
@@ -130,7 +140,7 @@ public class AccountLedger {
                 int trimmed;
                 do {
                     trimmed = pstmt.executeUpdate();
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } while (trimmed >= Constants.BATCH_COMMIT_SIZE);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
@@ -204,7 +214,7 @@ public class AccountLedger {
         if (!isUnconfirmed && logUnconfirmed == 2) {
             return false;
         }
-        if (trimKeep > 0 && blockchain.getHeight() <= Constants.LAST_KNOWN_BLOCK - trimKeep) {
+        if (trimKeep > 0 && blockchain.getHeight() <= Constants.getLastKnownBlock() - trimKeep) {
             return false;
         }
         //
@@ -227,7 +237,7 @@ public class AccountLedger {
         //
         // Must be in a database transaction
         //
-        if (!Db.db.isInTransaction()) {
+        if (!Db.getDb().isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         //
@@ -286,7 +296,7 @@ public class AccountLedger {
         if (!allowPrivate) {
             sql += " AND event_id NOT IN (select event_id from account_ledger where event_type = ? ) ";
         }
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
                 PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setLong(1, ledgerId);
             if (!allowPrivate) {
@@ -371,7 +381,7 @@ public class AccountLedger {
         // Get the ledger entries
         //
         blockchain.readLock();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
             if (accountId != 0) {

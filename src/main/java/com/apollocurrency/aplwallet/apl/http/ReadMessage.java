@@ -25,6 +25,9 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PRUNED_TRANSAC
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Appendix;
@@ -36,9 +39,6 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
 
 public final class ReadMessage extends APIServlet.APIRequestHandler {
     private static final Logger LOG = getLogger(ReadMessage.class);
@@ -52,7 +52,7 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
     }
 
     private ReadMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
+        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
     }
 
     @Override
@@ -145,4 +145,8 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
         return response;
     }
 
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
 }

@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class LeaseBalance extends CreateTransaction {
 
@@ -46,7 +46,7 @@ public final class LeaseBalance extends CreateTransaction {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        int period = ParameterParser.getInt(req, "period", Constants.LEASING_DELAY, 65535, true);
+        int period = ParameterParser.getInt(req, "period", Constants.getLeasingDelay(), 65535, true);
         Account account = ParameterParser.getSenderAccount(req);
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
         Account recipientAccount = Account.getAccount(recipient);

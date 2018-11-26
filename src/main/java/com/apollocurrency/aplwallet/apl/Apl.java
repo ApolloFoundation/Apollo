@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl;
 
 
-import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
@@ -48,8 +47,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.chainid.Chain;
+import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
+import com.apollocurrency.aplwallet.apl.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
@@ -58,9 +61,13 @@ import com.apollocurrency.aplwallet.apl.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
+import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -68,7 +75,9 @@ import org.slf4j.Logger;
 public final class Apl {
     private static Logger LOG;
 
-    public static final Version VERSION = Version.from("1.21.9");
+    private static ChainIdService chainIdService;
+    public static final Version VERSION = Version.from("1.22.2");
+
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
@@ -80,7 +89,8 @@ public final class Apl {
 
     private static final RuntimeMode runtimeMode;
     private static final DirProvider dirProvider;
-
+    private static NtpTime ntpTime;
+    
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
     }
@@ -103,7 +113,7 @@ public final class Apl {
     }
 
     private static volatile boolean shutdown = false;
-
+    private static UpdaterCore updaterCore;
     public static boolean isShutdown() {
         return shutdown;
     }
@@ -211,6 +221,7 @@ public final class Apl {
         }
     }
 
+    // For using Apl.shutdown instead of System.exit
     static void removeShutdownHook() {
         Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
@@ -380,6 +391,10 @@ public final class Apl {
         Apl.shutdown = true;
     }
 
+    public static Chain getActiveChain() throws IOException {
+        return chainIdService.getActiveChain();
+    }
+
 
     private static class Init {
 
@@ -387,17 +402,23 @@ public final class Apl {
 
         static {
             try {
-
+                ntpTime = new NtpTime();
                 long startTime = System.currentTimeMillis();
+                chainIdService = new ChainIdServiceImpl(
+                        (Apl.getStringProperty("apl.chainIdFilePath" , "chains.json")));
+                Constants.init(getActiveChain());
                 setSystemProperties();
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
                 runtimeMode.updateAppStatus("Database initialization...");
+
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
+                ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
+                Constants.updateToLatestConstants();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -438,7 +459,7 @@ public final class Apl {
                 API.init();
                 initUpdater();
                 DebugTrace.init();
-                int timeMultiplier = (Constants.isTestnet && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
+                int timeMultiplier = (Constants.isTestnet() && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), Apl.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
@@ -466,8 +487,7 @@ public final class Apl {
                     runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
-                
-                if (Constants.isTestnet) {
+                if (Constants.isTestnet()) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
 
@@ -505,8 +525,8 @@ public final class Apl {
         }
 
         static Set<Integer> collectWorkingPorts() {
-            final int port = Constants.isTestnet ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
-            final int sslPort = Constants.isTestnet ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
+            final int port = Constants.isTestnet() ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
+            final int sslPort = Constants.isTestnet() ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
             boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
@@ -523,7 +543,7 @@ public final class Apl {
                 }
             }
             if (peerPort == -1) {
-                peerPort = Constants.isTestnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+                peerPort = Constants.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
             }
             int peerServerPort = Apl.getIntProperty("apl.peerServerPort");
 
@@ -533,7 +553,7 @@ public final class Apl {
                 ports.add(sslPort);
             }
             ports.add(peerPort);
-            ports.add(Constants.isTestnet ? TESTNET_PEER_PORT : peerServerPort);
+            ports.add(Constants.isTestnet() ? TESTNET_PEER_PORT : peerServerPort);
             return ports;
         }
 
@@ -577,7 +597,7 @@ public final class Apl {
         else
         {
         }
-        
+
       }
     }
 
@@ -628,6 +648,14 @@ public final class Apl {
         } catch (InterruptedException ignore) {}
     }
 
+    public static UpdateInfo getUpdateInfo() {
+        return updaterCore.getUpdateInfo();
+    }
+
+    public static boolean startMinorUpdate() {
+        return updaterCore.startAvailableUpdate();
+    }
+
     public static String getProcessId() {
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         if (runtimeName == null) {
@@ -640,8 +668,22 @@ public final class Apl {
         return "";
     }
 
+    public static String getDbDir(String dbDir, UUID chainId) {
+        return dirProvider.getDbDir(dbDir, chainId);
+    }
+
     public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir);
+        return dirProvider.getDbDir(dbDir, Constants.getChain().getChainId());
+    }
+
+    public static String getOldDbDir(String dbDir,  UUID chainId) {
+        return dirProvider
+                .getDbDir(dbDir, chainId)
+                .replace(String.valueOf(chainId) + File.separator, "");
+    }
+
+    public static String getOldDbDir(String dbDir) {
+        return getOldDbDir(dbDir, Constants.getChain().getChainId());
     }
     public static Path getKeystoreDir(String keystoreDir) {
         return dirProvider.getKeystoreDir(keystoreDir).toPath();
@@ -682,14 +724,7 @@ public final class Apl {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        try {
-            Class<?> aClass = Class.forName("com.apollocurrency.aplwallet.apl.updater.UpdaterCore");
-            //force load lazy updater instance
-            aClass.getMethod("getInstance").invoke(null);
-
-        }
-        catch (Exception e) {
-            LOG.error("Cannot load Updater!", e);
-        }
+        updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
+        updaterCore.init();
     }
 }

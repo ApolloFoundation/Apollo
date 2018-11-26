@@ -20,11 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Genesis;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,6 +29,11 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Genesis;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 public final class Convert {
 
@@ -136,9 +136,9 @@ public final class Convert {
         }
         return result;
     }
-
+    //TODO: rewrite other classes without defaultRsAccount
     public static String rsAccount(long accountId) {
-        return Constants.ACCOUNT_PREFIX + "-" + Crypto.rsEncode(accountId);
+        return Constants.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
@@ -278,7 +278,7 @@ public final class Convert {
     }
 
     public static long parseAPL(String apl) {
-        return parseStringFraction(apl, 8, Constants.MAX_BALANCE_APL);
+        return parseStringFraction(apl, 8, Constants.getMaxBalanceAPL());
     }
 
     private static long parseStringFraction(String value, int decimals, long maxValue) {

@@ -64,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.dbmodel.Option;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -307,7 +308,7 @@ public class DesktopApplication extends Application {
         private static volatile WebEngine webEngine;
         private static volatile WebEngine webEngine2;
         private static MainApplication instance = new MainApplication();
-        private JSObject nrs;
+        private JSObject ars;
         private volatile long updateTime;
         private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
@@ -365,8 +366,8 @@ public class DesktopApplication extends Application {
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-                        mainStage.setTitle(Constants.PROJECT_NAME + " Desktop - " + webEngine.getLocation());
-                        nrs = (JSObject) webEngine.executeScript("NRS");
+                        mainStage.setTitle(Constants.getProjectName() + " Desktop - " + webEngine.getLocation());
+                        ars = (JSObject) webEngine.executeScript("NRS");
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
@@ -494,9 +495,9 @@ public class DesktopApplication extends Application {
                 return;
             }
             unconfirmedTransactionUpdates.addAll(transactions);
-            if (System.currentTimeMillis() - updateTime > 3000L) {
+            if (NtpTime.getTime() - updateTime > 3000L) {
                 String msg = transactionEvent.toString() + " ids " + unconfirmedTransactionUpdates.stream().map(Transaction::getStringId).collect(Collectors.joining(","));
-                updateTime = System.currentTimeMillis();
+                updateTime = NtpTime.getTime();
                 unconfirmedTransactionUpdates = new ArrayList<>();
                 updateClientState(msg);
             }
@@ -654,7 +655,7 @@ public class DesktopApplication extends Application {
             } else {
                 LOG.info(msg, e);
             }
-            nrs.call("growl", msg);
+            ars.call("growl", msg);
         }
 
 
@@ -701,7 +702,7 @@ public class DesktopApplication extends Application {
         }
 
         private Alert reindexDbUI() throws SQLException {
-            FullTextTrigger.reindex(Db.db.getConnection());
+            FullTextTrigger.reindex(Db.getDb().getConnection());
             return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
         }
 

@@ -20,15 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
-
-import java.io.*;
-import java.math.BigInteger;
-import java.util.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DebugTrace {
     private static final Logger LOG = getLogger(DebugTrace.class);
@@ -258,10 +268,10 @@ public final class DebugTrace {
         long blamedAccountId = shuffling.getAssigneeAccountId();
         if (blamedAccountId != 0 && include(blamedAccountId)) {
             Map<String,String> map = getValues(blamedAccountId, false);
-            map.put("transaction fee", String.valueOf(-Constants.SHUFFLING_DEPOSIT_ATM));
+            map.put("transaction fee", String.valueOf(-Constants.getShufflingDepositAtm()));
             map.put("event", "shuffling blame");
             log(map);
-            long fee = Constants.SHUFFLING_DEPOSIT_ATM / 4;
+            long fee = Constants.getShufflingDepositAtm()/ 4;
             int height = Apl.getBlockchain().getHeight();
             for (int i = 0; i < 3; i++) {
                 long generatorId = BlockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
@@ -272,7 +282,7 @@ public final class DebugTrace {
                     log(generatorMap);
                 }
             }
-            fee = Constants.SHUFFLING_DEPOSIT_ATM - 3 * fee;
+            fee = Constants.getShufflingDepositAtm() - 3 * fee;
             long generatorId = Apl.getBlockchain().getLastBlock().getGeneratorId();
             if (include(generatorId)) {
                 Map<String,String> generatorMap = getValues(generatorId, false);
@@ -427,7 +437,7 @@ public final class DebugTrace {
         Map<String,String> map = getValues(accountId, false);
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
-        String deposit = String.valueOf(isRecipient ? Constants.SHUFFLING_DEPOSIT_ATM : -Constants.SHUFFLING_DEPOSIT_ATM);
+        String deposit = String.valueOf(isRecipient ? Constants.getShufflingDepositAtm() : -Constants.getShufflingDepositAtm());
         if (shuffling.getHoldingType() == HoldingType.APL) {
             map.put("transaction amount", amount);
         } else if (shuffling.getHoldingType() == HoldingType.ASSET) {

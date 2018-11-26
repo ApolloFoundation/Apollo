@@ -144,7 +144,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         LOG.debug("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
-    static void trim(final TransactionalDb db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void trim(final TransactionalDb db,  final String table, final int height, final DbKey.Factory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }

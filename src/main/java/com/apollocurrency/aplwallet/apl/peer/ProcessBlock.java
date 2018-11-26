@@ -20,15 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
-import com.apollocurrency.aplwallet.apl.Block;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 final class ProcessBlock extends PeerServlet.PeerRequestHandler {
+    private static final Logger LOG = getLogger(ProcessBlock.class);
 
     private static class ProcessBlockHolder {
         private static final ProcessBlock INSTANCE = new ProcessBlock();
@@ -44,11 +48,16 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
     JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
         String previousBlockId = (String)request.get("previousBlock");
         Block lastBlock = Apl.getBlockchain().getLastBlock();
+        long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
+        Object timeoutJsonValue = request.get("timeout");
+        int peerBlockTimeout =  timeoutJsonValue == null ? 0 : ((Long)timeoutJsonValue).intValue();
         if (lastBlock.getStringId().equals(previousBlockId) ||
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
-                        && lastBlock.getTimestamp() > Convert.parseLong(request.get("timestamp")))) {
+                        && (lastBlock.getTimestamp() > peerBlockTimestamp ||
+                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             Peers.peersService.submit(() -> {
                 try {
+                    LOG.debug("API: need to process better peer block");
                     Apl.getBlockchainProcessor().processPeerBlock(request);
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {

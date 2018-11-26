@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-
 import java.util.EnumSet;
 import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
 /**
  * Define and validate currency capabilities
@@ -94,7 +94,7 @@ public enum CurrencyType {
                 if (attachment.getMinReservePerUnitATM() <= 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
-                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > Constants.MAX_BALANCE_ATM) {
+                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > Constants.getMaxBalanceAPL()) {
                     throw new AplException.NotValidException("Minimum reserve per unit is too large");
                 }
                 if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {
@@ -268,7 +268,7 @@ public enum CurrencyType {
 
     private static void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
-            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", Constants.COIN_SYMBOL));
+            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", Constants.getCoinSymbol()));
         }
 
         final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
@@ -310,7 +310,7 @@ public enum CurrencyType {
                 throw new AplException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
             }
         }
-        if (code.contains(Constants.COIN_SYMBOL) || Constants.COIN_SYMBOL.toLowerCase().equals(normalizedName)) {
+        if (code.contains(Constants.getCoinSymbol()) || Constants.getCoinSymbol().toLowerCase().equals(normalizedName)) {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;

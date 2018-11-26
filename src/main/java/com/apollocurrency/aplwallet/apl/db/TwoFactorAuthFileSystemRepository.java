@@ -44,7 +44,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
     }
     @Override
     public TwoFactorAuthEntity get(long account) {
-        Path path = findFile(Convert.rsAccount(account));
+        Path path = findFile(Convert.defaultRsAccount(account));
         if (path == null) {
             return null;
         }
@@ -68,7 +68,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
 
     @Override
     public boolean add(TwoFactorAuthEntity entity2FA) {
-        Path path = getNewFilePath(Convert.rsAccount(entity2FA.getAccount()));
+        Path path = getNewFilePath(Convert.defaultRsAccount(entity2FA.getAccount()));
         if (path == null) {
             return false;
         }
@@ -96,7 +96,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         if (entity == null) {
             return false;
         }
-        String rsAccount = Convert.rsAccount(entity2FA.getAccount());
+        String rsAccount = Convert.defaultRsAccount(entity2FA.getAccount());
         Path targetPath = twoFactorDirPath.resolve(rsAccount);
         Path copyPath = Paths.get(targetPath.toString() + suffix);
 
@@ -126,7 +126,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         TwoFactorAuthEntity entity = get(account);
         if (entity != null && entity.getAccount() == account) {
             try {
-                Files.delete(twoFactorDirPath.resolve(Convert.rsAccount(account)));
+                Files.delete(twoFactorDirPath.resolve(Convert.defaultRsAccount(account)));
                 return get(account) == null;
             }
             catch (IOException e) {

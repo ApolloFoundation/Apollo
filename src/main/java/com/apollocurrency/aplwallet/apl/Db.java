@@ -20,37 +20,82 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+
 import com.apollocurrency.aplwallet.apl.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
 
-    public static final String PREFIX = Constants.isTestnet ? "apl.testDb" : "apl.db";
-    public static final TransactionalDb db = new TransactionalDb(new BasicDb.DbProperties()
-            .maxCacheSize(Apl.getIntProperty("apl.dbCacheKB"))
-            .dbUrl(Apl.getStringProperty(PREFIX + "Url"))
-            .dbType(Apl.getStringProperty(PREFIX + "Type"))
-            .dbDir(Apl.getStringProperty(PREFIX + "Dir"))
-            .dbParams(Apl.getStringProperty(PREFIX + "Params"))
-            .dbUsername(Apl.getStringProperty(PREFIX + "Username"))
-            .dbPassword(Apl.getStringProperty(PREFIX + "Password", null, true))
-            .maxConnections(Apl.getIntProperty("apl.maxDbConnections"))
-            .loginTimeout(Apl.getIntProperty("apl.dbLoginTimeout"))
-            .defaultLockTimeout(Apl.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
-            .maxMemoryRows(Apl.getIntProperty("apl.dbMaxMemoryRows"))
-    );
+    public static final String PREFIX = Constants.isTestnet() ? "apl.testDb" : "apl.db";
+    private static BasicDb.DbProperties dbProperties;
+    private static TransactionalDb db;
+
+    public static TransactionalDb getDb() {
+        if (db == null || db.isShutdown()) {
+            throw new RuntimeException("Db is null or was already shutdown. Call Db.init for starting db");
+        }
+        return db;
+    }
+
+    public static void init(int cacheKb, String dbUrl, String dbType, String dbDir, String params, String username, String password,
+                            int maxConnections, int loginTimeout, int defaultLockTimeout, int maxMemoryRows) {
+        dbProperties =  new BasicDb.DbProperties()
+                .maxCacheSize(cacheKb)
+                .dbUrl(dbUrl)
+                .dbType(dbType)
+                .dbDir(dbDir)
+                .dbParams(params)
+                .dbUsername(username)
+                .dbPassword(password)
+                .maxConnections(maxConnections)
+                .loginTimeout(loginTimeout)
+                .defaultLockTimeout(defaultLockTimeout)
+                .maxMemoryRows(maxMemoryRows);
+        db = new TransactionalDb(dbProperties);
+        db.init(new AplDbVersion());
+    }
 
     public static void init() {
-        db.init(new AplDbVersion());
+        init(
+                Apl.getIntProperty("apl.dbCacheKB")
+                , Apl.getStringProperty(PREFIX + "Url")
+                , Apl.getStringProperty(PREFIX + "Type")
+                , Apl.getStringProperty(PREFIX + "Dir")
+                , Apl.getStringProperty(PREFIX + "Params")
+                , Apl.getStringProperty(PREFIX + "Username")
+                , Apl.getStringProperty(PREFIX + "Password", null, true)
+                , Apl.getIntProperty("apl.maxDbConnections")
+                , Apl.getIntProperty("apl.dbLoginTimeout")
+                , Apl.getIntProperty("apl.dbDefaultLockTimeout") * 1000
+                ,Apl.getIntProperty("apl.dbMaxMemoryRows")
+        );
+    }
+    public static void init(String dbUrl) {
+        init(
+                Apl.getIntProperty("apl.dbCacheKB")
+                , dbUrl
+                , Apl.getStringProperty(PREFIX + "Type")
+                , null
+                , Apl.getStringProperty(PREFIX + "Params")
+                , Apl.getStringProperty(PREFIX + "Username")
+                , Apl.getStringProperty(PREFIX + "Password", null, true)
+                , Apl.getIntProperty("apl.maxDbConnections")
+                , Apl.getIntProperty("apl.dbLoginTimeout")
+                , Apl.getIntProperty("apl.dbDefaultLockTimeout") * 1000
+                , Apl.getIntProperty("apl.dbMaxMemoryRows")
+        );
     }
 
     static void shutdown() {
@@ -66,7 +111,7 @@ public final class Db {
             removeDb(dbPath);
             LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }
-    private static void removeDb(Path dbPath) throws IOException {
+    static void removeDb(Path dbPath) throws IOException {
         Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {

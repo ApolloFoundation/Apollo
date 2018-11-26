@@ -20,7 +20,44 @@
 
 package com.apollocurrency.aplwallet.apl.mint;
 
-import com.apollocurrency.aplwallet.apl.*;
+import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -28,16 +65,6 @@ import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
-
-import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
-import java.math.BigInteger;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_PORT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class MintWorker {
     private static final Logger LOG = getLogger(MintWorker.class);
@@ -227,7 +254,7 @@ public class MintWorker {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        int port = Constants.isTestnet ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
+        int port = Constants.isTestnet() ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
         String urlParams = getUrlParams(params);
         URL url;
         try {

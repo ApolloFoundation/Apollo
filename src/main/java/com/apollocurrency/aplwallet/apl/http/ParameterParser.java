@@ -55,6 +55,17 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Alias;
 import com.apollocurrency.aplwallet.apl.Apl;
@@ -80,17 +91,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
@@ -285,15 +285,15 @@ public final class ParameterParser {
     }
 
     public static long getAmountATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATM", 1L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "amountATM", 1L, Constants.getMaxBalanceATM(), true);
     }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeATM", 0L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "feeATM", 0L, Constants.getMaxBalanceATM(), true);
     }
 
     public static long getPriceATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "priceATM", 1L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "priceATM", 1L, Constants.getMaxBalanceATM(), true);
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
@@ -353,7 +353,7 @@ public final class ParameterParser {
     }
 
     public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATMPerATU", 1L, Constants.MAX_BALANCE_ATM, true);
+        return getLong(req, "amountATMPerATU", 1L, Constants.getMaxBalanceATM(), true);
     }
 
     public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
@@ -670,7 +670,8 @@ public final class ParameterParser {
     public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
         long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
         if (holdingType == HoldingType.APL && holdingId != 0) {
-            throw new ParameterException(JSONResponses.incorrect("holding", "holding id should not be specified if holdingType is " + Constants.COIN_SYMBOL));
+            throw new ParameterException(JSONResponses.incorrect("holding",
+                    "holding id should not be specified if holdingType is " + Constants.getCoinSymbol()));
         }
         return holdingId;
     }

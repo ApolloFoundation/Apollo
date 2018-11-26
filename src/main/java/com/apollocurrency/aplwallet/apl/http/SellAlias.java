@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Alias;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_OWNER;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_ALIAS_OWNER;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_RECIPIENT;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Alias;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONStreamAware;
 
 
 public final class SellAlias extends CreateTransaction {
@@ -53,7 +53,7 @@ public final class SellAlias extends CreateTransaction {
         Alias alias = ParameterParser.getAlias(req);
         Account owner = ParameterParser.getSenderAccount(req);
 
-        long priceATM = ParameterParser.getLong(req, "priceATM", 0L, Constants.MAX_BALANCE_ATM, true);
+        long priceATM = ParameterParser.getLong(req, "priceATM", 0L, Constants.getMaxBalanceATM(), true);
 
         String recipientValue = Convert.emptyToNull(req.getParameter("recipient"));
         long recipientId = 0;
