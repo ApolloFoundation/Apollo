@@ -47,6 +47,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
