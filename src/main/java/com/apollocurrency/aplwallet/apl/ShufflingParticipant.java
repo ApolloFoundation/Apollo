@@ -303,7 +303,7 @@ public final class ShufflingParticipant {
     }
 
     void setData(byte[][] data, int timestamp) {
-        if (data != null && Apl.getEpochTime() - timestamp < Constants.MAX_PRUNABLE_LIFETIME && getData() == null) {
+        if (data != null && Apl.getEpochTime() - timestamp < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, Apl.getBlockchain().getHeight()));
         }
     }

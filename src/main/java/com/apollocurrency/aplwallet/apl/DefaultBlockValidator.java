@@ -28,21 +28,21 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     @Override
     void validateAdaptiveBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         int actualBlockTime = block.getTimestamp() - previousBlock.getTimestamp();
-        if (actualBlockTime < Constants.getAdaptiveForgingEmptyBlockTime() && block.getTransactions().size() <= Constants.getNumberOfTransactionsInAdaptiveBlock()) {
+        if (actualBlockTime < AplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime() && block.getTransactions().size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid adaptive block. " + actualBlockTime, null);
         }
     }
 
     @Override
     void validateInstantBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (block.getTransactions().size() <= Constants.getNumberOfTransactionsInAdaptiveBlock()) {
+        if (block.getTransactions().size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Incorrect instant block", block);
         }
     }
 
     @Override
     void validateRegularBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (block.getTransactions().size() <= Constants.getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
+        if (block.getTransactions().size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Incorrect regular block", block);
         }
     }

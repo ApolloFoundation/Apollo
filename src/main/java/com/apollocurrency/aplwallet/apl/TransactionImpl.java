@@ -953,7 +953,7 @@ final class TransactionImpl implements Transaction {
 
     @Override
     public void validate() throws AplException.ValidationException {
-        long maxBalanceAtm = Constants.getMaxBalanceATM();
+        long maxBalanceAtm = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM();
         if (timestamp == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
                 || feeATM > maxBalanceAtm
                 || amountATM < 0
@@ -996,7 +996,7 @@ final class TransactionImpl implements Transaction {
             }
         }
 
-        if (getFullSize() > Constants.getMaxPayloadLength()) {
+        if (getFullSize() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
@@ -1004,7 +1004,7 @@ final class TransactionImpl implements Transaction {
             long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
             if (feeATM < minimumFeeATM) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                        ((double) feeATM) / Constants.ONE_APL, Constants.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, Constants.getCoinSymbol(),
+                        ((double) feeATM) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
                         blockchainHeight));
             }
             if (ecBlockId != 0) {
@@ -1040,7 +1040,7 @@ final class TransactionImpl implements Transaction {
         }
         if (referencedTransactionFullHash != null) {
             senderAccount.addToUnconfirmedBalanceATM(getType().getLedgerEvent(), getId(),
-                    0, Constants.getUnconfirmedPoolDepositAtm());
+                    0, AplGlobalObjects.getChainConfig().getUnconfirmedPoolDepositAtm());
         }
         if (attachmentIsPhased()) {
             senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeATM);

@@ -38,7 +38,7 @@ import java.util.TreeMap;
 
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import org.slf4j.Logger;
-final class BlockDb {
+public final class BlockDb {
     private static final Logger LOG = getLogger(BlockDb.class);
 
     /** Block cache */
@@ -173,7 +173,7 @@ final class BlockDb {
         }
     }
 
-    static BlockImpl findLastBlock() {
+    public static BlockImpl findLastBlock() {
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             BlockImpl block = null;

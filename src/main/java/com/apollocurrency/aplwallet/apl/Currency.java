@@ -87,7 +87,6 @@ public final class Currency {
             this.dbKey = dbKey;
             this.currentSupply = rs.getLong("current_supply");
             this.currentReservePerUnitATM =
-                    //TODO: remove nqt from database column name
                     rs.getLong("current_reserve_per_unit_atm");
         }
 

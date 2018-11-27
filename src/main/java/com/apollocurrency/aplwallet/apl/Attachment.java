@@ -3030,7 +3030,7 @@ public interface Attachment extends Appendix {
             this.blameData = new byte[count][];
             for (int i = 0; i < count; i++) {
                 int size = buffer.getInt();
-                if (size > Constants.getMaxPayloadLength()) {
+                if (size > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
                     throw new AplException.NotValidException("Invalid data size " + size);
                 }
                 this.blameData[i] = new byte[size];

@@ -67,10 +67,10 @@ import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
-final class BlockchainProcessorImpl implements BlockchainProcessor {
+public final class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
 
-    private static final byte[] CHECKSUM_1 = Constants.isTestnet() ?
+    private static final byte[] CHECKSUM_1 = AplGlobalObjects.getChainConfig().isTestnet() ?
             null
             :
             null;
@@ -78,7 +78,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final BlockchainProcessorImpl instance = new BlockchainProcessorImpl(new DefaultBlockValidator());
 
 
-    static BlockchainProcessorImpl getInstance() {
+    public static BlockchainProcessorImpl getInstance() {
         return instance;
     }
 
@@ -87,7 +87,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
     private final boolean trimDerivedTables = Apl.getBooleanProperty("apl.trimDerivedTables");
-    private final int defaultNumberOfForkConfirmations = Apl.getIntProperty(Constants.isTestnet()
+    private final int defaultNumberOfForkConfirmations = Apl.getIntProperty(AplGlobalObjects.getChainConfig().isTestnet()
             ? "apl.testnetNumberOfForkConfirmations" : "apl.numberOfForkConfirmations");
     private final boolean simulateEndlessDownload = Apl.getBooleanProperty("apl.simulateEndlessDownload");
 
@@ -1174,8 +1174,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         Db.getDb().beginTransaction();
         try (Connection con = Db.getDb().getConnection()) {
             int now = Apl.getEpochTime();
-            int minTimestamp = Math.max(1, now - Constants.MAX_PRUNABLE_LIFETIME);
-            int maxTimestamp = Math.max(minTimestamp, now - Constants.getMinPrunableLifetime()) - 1;
+            int minTimestamp = Math.max(1, now - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime());
+            int maxTimestamp = Math.max(minTimestamp, now - AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) - 1;
             List<TransactionDb.PrunableTransaction> transactionList =
                     TransactionDb.findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {
@@ -1473,7 +1473,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
             block.apply();
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
-            int fromTimestamp = Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
+            int fromTimestamp = Apl.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime();
             for (TransactionImpl transaction : block.getTransactions()) {
                 try {
                     transaction.apply();
@@ -1582,9 +1582,11 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                     poppedOffBlocks.add(block);
                     block = popLastBlock();
                 }
+                long rollbackStartTime = System.currentTimeMillis();
                 for (DerivedDbTable table : derivedTables) {
                     table.rollback(commonBlock.getHeight());
                 }
+                LOG.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
                 Db.getDb().clearCache();
                 Db.getDb().commitTransaction();
             } catch (RuntimeException e) {
@@ -1620,7 +1622,7 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
                 scheduleScan(0, false);
                 BlockImpl lastBLock = BlockDb.deleteBlocksFrom(BlockDb.findBlockIdAtHeight(height));
                 blockchain.setLastBlock(lastBLock);
-                Constants.rollback(lastBLock.getHeight());
+                AplGlobalObjects.getChainConfig().rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
             } finally {
                 scan(0, false);
@@ -1678,8 +1680,8 @@ final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
-        int maxPayloadLength = Constants.getMaxPayloadLength();
-        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= Constants.getMaxNumberOfTransactions()) {
+        int maxPayloadLength = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength();
+        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxNumberOfTransactions()) {
             int prevNumberOfNewTransactions = sortedTransactions.size();
             for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
                 int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();

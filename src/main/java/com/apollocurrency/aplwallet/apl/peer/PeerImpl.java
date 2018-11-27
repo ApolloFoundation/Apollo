@@ -52,6 +52,7 @@ import java.util.zip.GZIPInputStream;
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Version;
@@ -347,7 +348,7 @@ final class PeerImpl implements Peer {
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = Apl.getBlockchain().getHeight();
         }
-        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / Constants.getMaxBalanceAPL());
+        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL());
     }
 
     @Override
@@ -673,7 +674,7 @@ final class PeerImpl implements Peer {
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));
                 Object chainIdObject = response.get("chainId");
-                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(Constants.getChain().getChainId())) {
+                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(AplGlobalObjects.getChainConfig().getChain().getChainId())) {
                     blacklist(String.format("Peer %s has different chainId %d", getAnnouncedAddress(), this.chainId));
                     return;
                 }
@@ -821,7 +822,7 @@ final class PeerImpl implements Peer {
             }
 
             for (PeerImpl peer : groupedPeers) {
-                peer.adjustedWeight = Constants.getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
+                peer.adjustedWeight = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
                 Peers.notifyListeners(peer, Peers.Event.WEIGHT);
             }
 

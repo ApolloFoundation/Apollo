@@ -71,7 +71,7 @@ public final class Account {
     private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore =
             new SimpleKeyStoreImpl(Apl.getKeystoreDir(
-                    Constants.isTestnet() ?
+                    AplGlobalObjects.getChainConfig().isTestnet() ?
                             Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
                             Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
@@ -104,7 +104,7 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            if (height <= Constants.getGuaranteedBalanceConfirmations()) {
+            if (height <= AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations()) {
                 return;
             }
             super.trim(height);
@@ -112,7 +112,7 @@ public final class Account {
 
         @Override
         public void checkAvailable(int height) {
-            if (height > Constants.getGuaranteedBalanceConfirmations()) {
+            if (height > AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations()) {
                 super.checkAvailable(height);
                 return;
             }
@@ -256,7 +256,7 @@ public final class Account {
             try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmtDelete.setInt(1, height - Constants.getGuaranteedBalanceConfirmations());
+                pstmtDelete.setInt(1, height - AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations());
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
@@ -301,7 +301,7 @@ public final class Account {
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
             Apl.getBooleanProperty("apl.store2FAInFileSystem") ?
                     new TwoFactorAuthFileSystemRepository(Apl.get2FADir(
-                            Constants.isTestnet() ?
+                            AplGlobalObjects.getChainConfig().isTestnet() ?
                                     Apl.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
                                     Apl.getStringProperty("apl.dir2FA", "2fa")
                     )) :
@@ -1095,7 +1095,7 @@ public final class Account {
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
-                effectiveBalanceATM += getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), height);
+                effectiveBalanceATM += getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), height);
             }
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
@@ -1124,7 +1124,7 @@ public final class Account {
                      + (height < blockchainHeight ? " AND height <= ? " : "")
                      + " GROUP BY account_id ORDER BY account_id")) {
             pstmt.setObject(1, lessorIds);
-            pstmt.setInt(2, height - Constants.getGuaranteedBalanceConfirmations());
+            pstmt.setInt(2, height - AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations());
             if (height < blockchainHeight) {
                 pstmt.setInt(3, height);
             }
@@ -1160,14 +1160,14 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM() {
-        return getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), Apl.getBlockchain().getHeight());
+        return getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), Apl.getBlockchain().getHeight());
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
         Apl.getBlockchain().readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + Constants.getGuaranteedBalanceConfirmations() < Apl.getBlockchainProcessor().getMinRollbackHeight()
+            if (height + AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations() < Apl.getBlockchainProcessor().getMinRollbackHeight()
                     || height > Apl.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
@@ -1272,17 +1272,18 @@ public final class Account {
     void leaseEffectiveBalance(long lesseeId, int period) {
         int height = Apl.getBlockchain().getHeight();
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));
+        int leasingDelay = AplGlobalObjects.getChainConfig().getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
-                    height + Constants.getLeasingDelay(),
-                    height + Constants.getLeasingDelay() + period,
+                    height + leasingDelay,
+                    height + leasingDelay + period,
                     lesseeId);
         } else if (accountLease.currentLesseeId == 0) {
-            accountLease.currentLeasingHeightFrom = height + Constants.getLeasingDelay();
-            accountLease.currentLeasingHeightTo = height + Constants.getLeasingDelay() + period;
+            accountLease.currentLeasingHeightFrom = height + leasingDelay;
+            accountLease.currentLeasingHeightTo = height + leasingDelay + period;
             accountLease.currentLesseeId = lesseeId;
         } else {
-            accountLease.nextLeasingHeightFrom = height + Constants.getLeasingDelay();
+            accountLease.nextLeasingHeightFrom = height + leasingDelay;
             if (accountLease.nextLeasingHeightFrom < accountLease.currentLeasingHeightTo) {
                 accountLease.nextLeasingHeightFrom = accountLease.currentLeasingHeightTo;
             }

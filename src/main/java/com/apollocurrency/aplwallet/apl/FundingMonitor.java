@@ -642,8 +642,8 @@ public final class FundingMonitor {
                 Apl.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = Apl.getBlockchain().getHeight();
                 LOG.debug(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        Constants.getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
-                        Constants.getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
+                        AplGlobalObjects.getChainConfig().getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
+                        AplGlobalObjects.getChainConfig().getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
             }
         }
     }

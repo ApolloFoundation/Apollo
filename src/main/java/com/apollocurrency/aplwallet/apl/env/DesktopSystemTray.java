@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Db;
@@ -184,7 +185,7 @@ public class DesktopSystemTray {
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Apl.APPLICATION);
         addDataRow(statusPanel, "Version", Apl.VERSION.toString());
-        addDataRow(statusPanel, "Network", (Constants.isTestnet()) ? "TestNet" : "MainNet");
+        addDataRow(statusPanel, "Network", (AplGlobalObjects.getChainConfig().isTestnet()) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));

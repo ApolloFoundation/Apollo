@@ -214,7 +214,7 @@ public class AccountLedger {
         if (!isUnconfirmed && logUnconfirmed == 2) {
             return false;
         }
-        if (trimKeep > 0 && blockchain.getHeight() <= Constants.getLastKnownBlock() - trimKeep) {
+        if (trimKeep > 0 && blockchain.getHeight() <= AplGlobalObjects.getChainConfig().getLastKnownBlock() - trimKeep) {
             return false;
         }
         //

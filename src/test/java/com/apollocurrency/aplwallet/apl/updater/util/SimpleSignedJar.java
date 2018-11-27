@@ -4,24 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.util;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.io.BaseEncoding;
-import com.google.common.io.ByteStreams;
-import org.bouncycastle.cert.jcajce.JcaCertStore;
-import org.bouncycastle.cms.*;
-import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DigestCalculatorProvider;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
-import org.bouncycastle.util.Store;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,8 +22,28 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
+import com.google.common.io.ByteStreams;
+import org.bouncycastle.cert.jcajce.JcaCertStore;
+import org.bouncycastle.cms.CMSProcessableByteArray;
+import org.bouncycastle.cms.CMSSignedData;
+import org.bouncycastle.cms.CMSSignedDataGenerator;
+import org.bouncycastle.cms.CMSTypedData;
+import org.bouncycastle.cms.SignerInfoGenerator;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DigestCalculatorProvider;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.util.Store;
 
 /**
  * Generator of signed Jars. It stores some data in memory therefore it is not suited for creation of large files. The
@@ -60,7 +64,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @see <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#Signed_JAR_File">JAR format
  *      specification</a>
  */
-public class SimpleSignedJar extends SimpleJar {
+public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.util.SimpleJar {
     private static final String MANIFEST_FN = "META-INF/MANIFEST.MF";
     private static final String SIG_FN = "META-INF/SIGNUMO.SF";
     private static final String SIG_RSA_FN = "META-INF/SIGNUMO.RSA";

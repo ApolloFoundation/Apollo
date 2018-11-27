@@ -37,15 +37,15 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
         }
 
-        if (block.getTransactions().size() > Constants.getMaxNumberOfTransactions()) {
+        if (block.getTransactions().size() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxNumberOfTransactions()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getTransactions().size(), block);
         }
-        if (block.getPayloadLength() > Constants.getMaxPayloadLength() || block.getPayloadLength() < 0) {
+        if (block.getPayloadLength() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
         switch (block.getVersion()) {
             case Block.LEGACY_BLOCK_VERSION:
-                if (Constants.isAdaptiveForgingEnabled()) {
+                if (AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled()) {
                     throw new BlockchainProcessor.BlockNotAcceptedException("Legacy blocks are not accepting during adaptive forging", block);
                 }
                 break;
