@@ -94,7 +94,9 @@ public enum CurrencyType {
                 if (attachment.getMinReservePerUnitATM() <= 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
+
                 if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+
                     throw new AplException.NotValidException("Minimum reserve per unit is too large");
                 }
                 if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {

@@ -31,9 +31,8 @@ public class DownloaderImpl implements Downloader {
         this.defaultDownloadExecutor = downloadExecutor == null ? this.defaultDownloadExecutor : downloadExecutor;
     }
     public DownloaderImpl(DownloadInfo downloadInfo, int timeout, int maxAttempts, ConsistencyVerifier consistencyVerifier) {
-        this(downloadInfo, timeout, maxAttempts, consistencyVerifier, new DefaultDownloadExecutor("", ""));
+        this(downloadInfo, timeout, maxAttempts, consistencyVerifier, new DefaultDownloadExecutor("apl-update", "update-package"));
     }
-
 
     /**
      * Download file from uri and return Path to downloaded file
