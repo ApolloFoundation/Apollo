@@ -27,21 +27,18 @@ import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -50,9 +47,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.chainid.Chain;
-import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
@@ -61,19 +55,16 @@ import com.apollocurrency.aplwallet.apl.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Time;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 public final class Apl {
     private static Logger LOG;
+
 
     private static ChainIdService chainIdService;
     public static final Version VERSION = Version.from("1.22.3");
@@ -82,20 +73,15 @@ public final class Apl {
     private static Thread shutdownHook;
     private static volatile Time time = new Time.EpochTime();
 
-    public static final String APL_DEFAULT_PROPERTIES = "apl-default.properties";
-    public static final String APL_PROPERTIES = "apl.properties";
-    public static final String APL_INSTALLER_PROPERTIES = "apl-installer.properties";
-    public static final String CONFIG_DIR = "conf";
-
     private static final RuntimeMode runtimeMode;
     private static final DirProvider dirProvider;
-    private static NtpTime ntpTime;
+
+
     
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
     }
 
-    private static final Properties defaultProperties = new Properties();
     static {
         redirectSystemStreams("out");
         redirectSystemStreams("err");
@@ -106,14 +92,14 @@ public final class Apl {
         dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(Apl.class);
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
-        loadProperties(defaultProperties, APL_DEFAULT_PROPERTIES, true);
-        if (!VERSION.equals(Version.from(Apl.defaultProperties.getProperty("apl.version")))) {
+        AplGlobalObjects.createPropertiesLoader(dirProvider);
+        if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
     }
 
     private static volatile boolean shutdown = false;
-    private static UpdaterCore updaterCore;
+
     public static boolean isShutdown() {
         return shutdown;
     }
@@ -148,78 +134,7 @@ public final class Apl {
         }
     }
 
-    private static final Properties properties = new Properties(defaultProperties);
 
-    static {
-        loadProperties(properties, APL_INSTALLER_PROPERTIES, true);
-        loadProperties(properties, APL_PROPERTIES, false);
-    }
-
-    public static Properties loadProperties(Properties properties, String propertiesFile, boolean isDefault) {
-        try {
-            // Load properties from location specified as command line parameter
-            String configFile = System.getProperty(propertiesFile);
-            if (configFile != null) {
-                System.out.printf("Loading %s from %s\n", propertiesFile, configFile);
-                try (InputStream fis = new FileInputStream(configFile)) {
-                    properties.load(fis);
-                    return properties;
-                } catch (IOException e) {
-                    throw new IllegalArgumentException(String.format("Error loading %s from %s", propertiesFile, configFile));
-                }
-            } else {
-                try (InputStream is = ClassLoader.getSystemResourceAsStream(propertiesFile)) {
-                    // When running apl.exe from a Windows installation we always have apl.properties in the classpath but this is not the apl properties file
-                    // Therefore we first load it from the classpath and then look for the real apl.properties in the user folder.
-                    if (is != null) {
-                        System.out.printf("Loading %s from classpath\n", propertiesFile);
-                        properties.load(is);
-                        if (isDefault) {
-                            return properties;
-                        }
-                    }
-                    // load non-default properties files from the user folder
-                    if (!dirProvider.isLoadPropertyFileFromUserDir()) {
-                        return properties;
-                    }
-                    String homeDir = dirProvider.getUserHomeDir();
-                    if (!Files.isReadable(Paths.get(homeDir))) {
-                        System.out.printf("Creating dir %s\n", homeDir);
-                        try {
-                            Files.createDirectory(Paths.get(homeDir));
-                        } catch(Exception e) {
-                            if (!(e instanceof NoSuchFileException)) {
-                                throw e;
-                            }
-                            // Fix for WinXP and 2003 which does have a roaming sub folder
-                            Files.createDirectory(Paths.get(homeDir).getParent());
-                            Files.createDirectory(Paths.get(homeDir));
-                        }
-                    }
-                    Path confDir = Paths.get(homeDir, CONFIG_DIR);
-                    if (!Files.isReadable(confDir)) {
-                        System.out.printf("Creating dir %s\n", confDir);
-                        Files.createDirectory(confDir);
-                    }
-                    Path propPath = Paths.get(confDir.toString()).resolve(Paths.get(propertiesFile));
-                    if (Files.isReadable(propPath)) {
-                        System.out.printf("Loading %s from dir %s\n", propertiesFile, confDir);
-                        properties.load(Files.newInputStream(propPath));
-                    } else {
-                        System.out.printf("Creating property file %s\n", propPath);
-                        Files.createFile(propPath);
-                        Files.write(propPath, Convert.toBytes("# use this file for workstation specific " + propertiesFile));
-                    }
-                    return properties;
-                } catch (IOException e) {
-                    throw new IllegalArgumentException("Error loading " + propertiesFile, e);
-                }
-            }
-        } catch(IllegalArgumentException e) {
-            e.printStackTrace(); // make sure we log this exception
-            throw e;
-        }
-    }
 
     // For using Apl.shutdown instead of System.exit
     static void removeShutdownHook() {
@@ -249,14 +164,7 @@ public final class Apl {
     }
 
     public static int getIntProperty(String name, int defaultValue) {
-        try {
-            int result = Integer.parseInt(properties.getProperty(name));
-            LOG.info(name + " = \"" + result + "\"");
-            return result;
-        } catch (NumberFormatException e) {
-            LOG.info(name + " not defined or not numeric, using default value " + defaultValue);
-            return defaultValue;
-        }
+        return AplGlobalObjects.getPropertiesLoader().getIntProperty(name, defaultValue);
     }
 
     public static String getStringProperty(String name) {
@@ -272,21 +180,7 @@ public final class Apl {
     }
 
     public static String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
-        String value = properties.getProperty(name);
-        if (value != null && ! "".equals(value)) {
-            LOG.info(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
-        } else {
-            LOG.info(name + " not defined");
-            value = defaultValue;
-        }
-        if (encoding == null || value == null) {
-            return value;
-        }
-        try {
-            return new String(value.getBytes("ISO-8859-1"), encoding);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return AplGlobalObjects.getPropertiesLoader().getStringProperty(name, defaultValue, doNotLog, encoding);
     }
 
     public static List<String> getStringListProperty(String name) {
@@ -309,16 +203,7 @@ public final class Apl {
     }
 
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
-        String value = properties.getProperty(name);
-        if (Boolean.TRUE.toString().equals(value)) {
-            LOG.info(name + " = \"true\"");
-            return true;
-        } else if (Boolean.FALSE.toString().equals(value)) {
-            LOG.info(name + " = \"false\"");
-            return false;
-        }
-        LOG.info(name + " not defined, using default " + defaultValue);
-        return defaultValue;
+        return AplGlobalObjects.getPropertiesLoader().getBooleanProperty(name, defaultValue);
     }
 
     public static Blockchain getBlockchain() {
@@ -368,11 +253,6 @@ public final class Apl {
         }
     }
 
-    public static void init(Properties customProperties) {
-        properties.putAll(customProperties);
-        init();
-    }
-
     public static void init() {
         Init.init();
     }
@@ -391,10 +271,6 @@ public final class Apl {
         Apl.shutdown = true;
     }
 
-    public static Chain getActiveChain() throws IOException {
-        return chainIdService.getActiveChain();
-    }
-
 
     private static class Init {
 
@@ -402,12 +278,17 @@ public final class Apl {
 
         static {
             try {
-                ntpTime = new NtpTime();
                 long startTime = System.currentTimeMillis();
-                chainIdService = new ChainIdServiceImpl(
-                        (Apl.getStringProperty("apl.chainIdFilePath" , "chains.json")));
-                Constants.init(getActiveChain());
-                setSystemProperties();
+                AplGlobalObjects.createNtpTime();
+                PropertiesLoader propertiesLoader = AplGlobalObjects.getPropertiesLoader();
+                AplGlobalObjects.createChainIdService(propertiesLoader.getStringProperty("apl.chainIdFilePath" , "chains.json"));
+                AplGlobalObjects.createBlockchainConfig(AplGlobalObjects.getChainIdService().getActiveChain(), propertiesLoader, false);
+                AplGlobalObjects.getChainConfig().init();
+                propertiesLoader.loadSystemProperties(
+                        Arrays.asList(
+                                "socksProxyHost",
+                                "socksProxyPort",
+                                "apl.enablePeerUPnP"));
                 logSystemProperties();
                 runtimeMode.init();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -418,7 +299,7 @@ public final class Apl {
                 Db.init();
                 ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
-                Constants.updateToLatestConstants();
+                AplGlobalObjects.getChainConfig().updateToLatestConstants();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -459,7 +340,7 @@ public final class Apl {
                 API.init();
                 initUpdater();
                 DebugTrace.init();
-                int timeMultiplier = (Constants.isTestnet() && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
+                int timeMultiplier = (AplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(Apl.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), Apl.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
@@ -487,7 +368,7 @@ public final class Apl {
                     runtimeMode.updateAppStatus("Starting desktop application...");
                     launchDesktopApplication();
                 }
-                if (Constants.isTestnet()) {
+                if (AplGlobalObjects.getChainConfig().isTestnet()) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
 
@@ -525,8 +406,9 @@ public final class Apl {
         }
 
         static Set<Integer> collectWorkingPorts() {
-            final int port = Constants.isTestnet() ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
-            final int sslPort = Constants.isTestnet() ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
+            boolean testnet = AplGlobalObjects.getChainConfig().isTestnet();
+            final int port = testnet ?  Constants.TESTNET_API_PORT: Apl.getIntProperty("apl.apiServerPort");
+            final int sslPort = testnet ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
             boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
@@ -543,7 +425,7 @@ public final class Apl {
                 }
             }
             if (peerPort == -1) {
-                peerPort = Constants.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+                peerPort = testnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
             }
             int peerServerPort = Apl.getIntProperty("apl.peerServerPort");
 
@@ -553,7 +435,7 @@ public final class Apl {
                 ports.add(sslPort);
             }
             ports.add(peerPort);
-            ports.add(Constants.isTestnet() ? TESTNET_PEER_PORT : peerServerPort);
+            ports.add(testnet ? TESTNET_PEER_PORT : peerServerPort);
             return ports;
         }
 
@@ -579,27 +461,6 @@ public final class Apl {
 
     }
 
-    private static void setSystemProperties() {
-      // Override system settings that the user has define in apl.properties file.
-      String[] systemProperties = new String[] {
-        "socksProxyHost",
-        "socksProxyPort",
-        "apl.enablePeerUPnP"
-      };
-
-      for (String propertyName : systemProperties) {
-        String propertyValue;
-        if ((propertyValue = System.getProperty(propertyName)) != null) {
-          //System.setProperty(propertyName, propertyValue);
-          properties.setProperty(propertyName, propertyValue);
-          LOG.info("System property set: ", propertyName + " " + propertyValue);
-        }
-        else
-        {
-        }
-
-      }
-    }
 
     private static void logSystemProperties() {
         String[] loggedProperties = new String[] {
@@ -648,13 +509,6 @@ public final class Apl {
         } catch (InterruptedException ignore) {}
     }
 
-    public static UpdateInfo getUpdateInfo() {
-        return updaterCore.getUpdateInfo();
-    }
-
-    public static boolean startMinorUpdate() {
-        return updaterCore.startAvailableUpdate();
-    }
 
     public static String getProcessId() {
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
@@ -673,7 +527,7 @@ public final class Apl {
     }
 
     public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, Constants.getChain().getChainId());
+        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId());
     }
 
     public static String getOldDbDir(String dbDir,  UUID chainId) {
@@ -683,7 +537,7 @@ public final class Apl {
     }
 
     public static String getOldDbDir(String dbDir) {
-        return getOldDbDir(dbDir, Constants.getChain().getChainId());
+        return getOldDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId());
     }
     public static Path getKeystoreDir(String keystoreDir) {
         return dirProvider.getKeystoreDir(keystoreDir).toPath();
@@ -724,7 +578,6 @@ public final class Apl {
         if (!getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
-        updaterCore.init();
+        AplGlobalObjects.createUpdaterCore(true);
     }
 }

@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
@@ -60,7 +60,7 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
 
         Version version = Version.from(Convert.nullToEmpty(req.getParameter("version")));
 
-        int weight = ParameterParser.getInt(req, "weight", 0, (int)Constants.getMaxBalanceAPL(), false);
+        int weight = ParameterParser.getInt(req, "weight", 0, (int) AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL(), false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();

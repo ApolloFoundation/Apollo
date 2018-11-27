@@ -5,8 +5,8 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -27,9 +27,9 @@ public final class StartAvailableUpdate extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject object = new JSONObject();
-        boolean started = Apl.startMinorUpdate();
+        boolean started = AplGlobalObjects.getUpdaterCore().startAvailableUpdate();
         object.put("updateStarted", started);
-        object.put("updateInfo", Apl.getUpdateInfo().json());
+        object.put("updateInfo", AplGlobalObjects.getUpdaterCore().getUpdateInfo().json());
         return object;
     }
 

@@ -71,12 +71,12 @@ public final class Genesis {
     private static byte[] loadGenesisAccountsJSON() {
         MessageDigest digest = Crypto.sha256();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
-                ClassLoader.getSystemResourceAsStream(Constants.getChain().getGenesisLocation()), digest))) {
+                ClassLoader.getSystemResourceAsStream(AplGlobalObjects.getChainConfig().getChain().getGenesisLocation()), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
         } catch (IOException|ParseException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
-        digest.update((byte)(Constants.isTestnet() ? 1 : 0));
+        digest.update((byte)(AplGlobalObjects.getChainConfig().isTestnet() ? 1 : 0));
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         return digest.digest();
     }
@@ -117,11 +117,11 @@ public final class Genesis {
                 Db.getDb().commitTransaction();
             }
         }
-        long maxBalanceATM = Constants.getMaxBalanceATM();
+        long maxBalanceATM = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM();
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
-        LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, Constants.getCoinSymbol());
+        LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol());
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
@@ -130,7 +130,7 @@ public final class Genesis {
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
             try (InputStreamReader is = new InputStreamReader(
-                    Genesis.class.getClassLoader().getResourceAsStream(Constants.getChain().getGenesisLocation()))) {
+                    Genesis.class.getClassLoader().getResourceAsStream(AplGlobalObjects.getChainConfig().getChain().getGenesisLocation()))) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode root = objectMapper.readTree(is);
                 JsonNode balancesArray = root.get("balances");

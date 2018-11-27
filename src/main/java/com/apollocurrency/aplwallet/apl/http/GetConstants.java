@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.CurrencyType;
@@ -68,9 +69,9 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
-                response.put("coinSymbol", Constants.getCoinSymbol());
-                response.put("accountPrefix", Constants.getAccountPrefix());
-                response.put("projectName", Constants.getProjectName());
+                response.put("coinSymbol", AplGlobalObjects.getChainConfig().getCoinSymbol());
+                response.put("accountPrefix", AplGlobalObjects.getChainConfig().getAccountPrefix());
+                response.put("projectName", AplGlobalObjects.getChainConfig().getProjectName());
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
                 outer:

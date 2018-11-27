@@ -38,7 +38,7 @@ import java.util.TreeMap;
 
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import org.slf4j.Logger;
-final class BlockDb {
+public final class BlockDb {
     private static final Logger LOG = getLogger(BlockDb.class);
 
     /** Block cache */
@@ -173,7 +173,7 @@ final class BlockDb {
         }
     }
 
-    static BlockImpl findLastBlock() {
+    public static BlockImpl findLastBlock() {
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             BlockImpl block = null;
@@ -187,6 +187,48 @@ final class BlockDb {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
+    static BlockImpl findBlockWithVersion(int skipCount, int version) {
+        try (Connection con = Db.getDb().getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+             "SELECT * FROM block WHERE version = ? ORDER BY block_timestamp DESC LIMIT 1 OFFSET ?)")) {
+            int i = 0;
+            pstmt.setInt(++i, version);
+            pstmt.setInt(++i, skipCount);
+            BlockImpl block = null;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    block = loadBlock(con, rs);
+                }
+            }
+            return block;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    static BlockImpl findAdaptiveBlock(int skipCount) {
+        return findBlockWithVersion(skipCount, Block.ADAPTIVE_BLOCK_VERSION);
+    }
+
+    static BlockImpl findLastAdaptiveBlock() {
+        return findAdaptiveBlock(0);
+    }
+    static BlockImpl findInstantBlock(int skipCount) {
+        return findBlockWithVersion(skipCount, Block.INSTANT_BLOCK_VERSION);
+    }
+
+    static BlockImpl findLastInstantBlock() {
+        return findInstantBlock(0);
+    }
+    static BlockImpl findRegularBlock(int skipCount) {
+        return findBlockWithVersion(skipCount, Block.REGULAR_BLOCK_VERSION);
+    }
+
+    static BlockImpl findRegularBlock() {
+        return findRegularBlock(0);
+    }
+
 
     static BlockImpl findLastBlock(int timestamp) {
         try (Connection con = Db.getDb().getConnection();

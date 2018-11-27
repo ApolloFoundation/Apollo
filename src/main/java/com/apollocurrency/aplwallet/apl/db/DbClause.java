@@ -28,7 +28,7 @@ public abstract class DbClause {
 
     public enum Op {
 
-        LT("<"), LTE("<="), GT(">"), GTE(">="), NE("<>");
+        LT("<"), LTE("<="), GT(">"), GTE(">="), NE("<>"), EQ("=");
 
         private final String operator;
 

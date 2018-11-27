@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbClause;
@@ -163,8 +164,9 @@ public final class Shuffling {
 
     static {
         Apl.getBlockchainProcessor().addListener(block -> {
-            if (block.getTransactions().size() == Constants.getMaxNumberOfTransactions()
-                    || block.getPayloadLength() > Constants.getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
+            BlockchainConfig chainConfig = AplGlobalObjects.getChainConfig();
+            if (block.getTransactions().size() == chainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+                    || block.getPayloadLength() > chainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
@@ -596,7 +598,7 @@ public final class Shuffling {
         this.registrantCount += 1;
         // Check if participant registration is complete and if so update the shuffling
         if (this.registrantCount == this.participantCount) {
-            setStage(Stage.PROCESSING, this.issuerId, Constants.getShufflingProcessingDeadline());
+            setStage(Stage.PROCESSING, this.issuerId, AplGlobalObjects.getChainConfig().getShufflingProcessingDeadline());
         } else {
             this.assigneeAccountId = participantId;
         }
@@ -618,7 +620,7 @@ public final class Shuffling {
             return;
         }
         this.assigneeAccountId = participant.getNextAccountId();
-        this.blocksRemaining = Constants.getShufflingProcessingDeadline();
+        this.blocksRemaining = AplGlobalObjects.getChainConfig().getShufflingProcessingDeadline();
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
     }
@@ -641,7 +643,7 @@ public final class Shuffling {
                 Account.addOrGetAccount(recipientId).apply(recipientPublicKey);
             }
         }
-        setStage(Stage.VERIFICATION, 0, (short)(Constants.getShufflingProcessingDeadline() + participantCount));
+        setStage(Stage.VERIFICATION, 0, (short)(AplGlobalObjects.getChainConfig().getShufflingProcessingDeadline() + participantCount));
         shufflingTable.insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_FINISHED);
     }
@@ -657,7 +659,7 @@ public final class Shuffling {
         participant.cancel(blameData, keySeeds);
         boolean startingBlame = this.stage != Stage.BLAME;
         if (startingBlame) {
-            setStage(Stage.BLAME, participant.getAccountId(), (short) (Constants.getShufflingProcessingDeadline() + participantCount));
+            setStage(Stage.BLAME, participant.getAccountId(), (short) (AplGlobalObjects.getChainConfig().getShufflingProcessingDeadline() + participantCount));
         }
         shufflingTable.insert(this);
         if (startingBlame) {
@@ -688,7 +690,7 @@ public final class Shuffling {
                 Account participantAccount = Account.getAccount(participant.getAccountId());
                 holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                 if (holdingType != HoldingType.APL) {
-                    participantAccount.addToBalanceATM(event, this.id, -Constants.getShufflingDepositAtm());
+                    participantAccount.addToBalanceATM(event, this.id, -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
                 }
             }
         }
@@ -698,7 +700,7 @@ public final class Shuffling {
             recipientAccount.apply(recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
-                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, Constants.getShufflingDepositAtm());
+                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
             }
         }
         setStage(Stage.DONE, 0, (short)0);
@@ -719,31 +721,31 @@ public final class Shuffling {
                 holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                 if (participantAccount.getId() != blamedAccountId) {
                     if (holdingType != HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, Constants.getShufflingDepositAtm());
+                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
                     }
                 } else {
                     if (holdingType == HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -Constants.getShufflingDepositAtm());
+                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
                     }
-                    participantAccount.addToBalanceATM(event, this.id, -Constants.getShufflingDepositAtm());
+                    participantAccount.addToBalanceATM(event, this.id, -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
                 }
             }
         }
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
-            long fee = Constants.getShufflingDepositAtm() / 4;
+            long fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm() / 4;
             for (int i = 0; i < 3; i++) {
                 Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
-                LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(),
+                LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
                         block.getHeight() - i - 1);
             }
-            fee = Constants.getShufflingDepositAtm() - 3 * fee;
+            fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm() - 3 * fee;
             Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
             blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             blockGeneratorAccount.addToForgedBalanceATM(fee);
-            LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, Constants.getCoinSymbol(),
+            LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
                     block.getHeight());
         }
         setStage(Stage.CANCELLED, blamedAccountId, (short)0);
@@ -876,7 +878,7 @@ public final class Shuffling {
         } else { // must use same for PROCESSING/VERIFICATION/BLAME
             transactionSize = 16384; // max observed was 15647 for 30 participants
         }
-        return block.getPayloadLength() + transactionSize > Constants.getMaxPayloadLength();
+        return block.getPayloadLength() + transactionSize > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength();
     }
 
     private static byte[] getParticipantsHash(Iterable<ShufflingParticipant> participants) {

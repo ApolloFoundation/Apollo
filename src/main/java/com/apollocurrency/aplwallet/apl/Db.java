@@ -38,7 +38,7 @@ public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
 
-    public static final String PREFIX = Constants.isTestnet() ? "apl.testDb" : "apl.db";
+    public static final String PREFIX = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
     private static BasicDb.DbProperties dbProperties;
     private static TransactionalDb db;
 

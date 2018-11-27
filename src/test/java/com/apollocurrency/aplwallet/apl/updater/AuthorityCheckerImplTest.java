@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResourcePath;
 
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
-import com.apollocurrency.aplwallet.apl.updater.util.util.JarGenerator;
+import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 

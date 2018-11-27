@@ -4,30 +4,40 @@
 
 package com.apollocurrency.aplwallet.apl.chainid;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"enabled", "emptyBlockTime"})
+import java.util.Objects;
+
+@JsonPropertyOrder({"enabled", "adaptiveBlockTime", "maxAdaptiveBlockTimeLimit", "minAdaptiveBlockTimeLimit", "numberOfTransactions"})
 public class AdaptiveForgingSettings {
     private boolean enabled;
-    private int emptyBlockTime;
+    private int adaptiveBlockTime;
+    private int numberOfTransactions;
 
     public AdaptiveForgingSettings() {
-        this(false, 60);
+        this(false, 60, 0);
     }
 
-    public AdaptiveForgingSettings(boolean enabled, int emptyBlockTime) {
+    public AdaptiveForgingSettings(boolean enabled, int adaptiveBlockTime, int numberOfTransactions) {
         this.enabled = enabled;
-        this.emptyBlockTime = emptyBlockTime;
+        this.adaptiveBlockTime = adaptiveBlockTime;
+        this.numberOfTransactions = numberOfTransactions;
     }
 
-    public int getEmptyBlockTime() {
-        return emptyBlockTime;
+    public int getNumberOfTransactions() {
+        return numberOfTransactions;
     }
 
-    public void setEmptyBlockTime(int emptyBlockTime) {
-        this.emptyBlockTime = emptyBlockTime;
+    public void setNumberOfTransactions(int numberOfTransactions) {
+        this.numberOfTransactions = numberOfTransactions;
+    }
+
+    public int getAdaptiveBlockTime() {
+        return adaptiveBlockTime;
+    }
+
+    public void setAdaptiveBlockTime(int adaptiveBlockTime) {
+        this.adaptiveBlockTime = adaptiveBlockTime;
     }
 
     public boolean isEnabled() {
@@ -39,24 +49,26 @@ public class AdaptiveForgingSettings {
     }
 
     @Override
+    public String toString() {
+        return "AdaptiveForgingSettings{" +
+                "enabled=" + enabled +
+                ", adaptiveBlockTime=" + adaptiveBlockTime +
+                ", numberOfTransactions=" + numberOfTransactions +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AdaptiveForgingSettings)) return false;
         AdaptiveForgingSettings that = (AdaptiveForgingSettings) o;
         return enabled == that.enabled &&
-                emptyBlockTime == that.emptyBlockTime;
+                adaptiveBlockTime == that.adaptiveBlockTime &&
+                numberOfTransactions == that.numberOfTransactions;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, emptyBlockTime);
-    }
-
-    @Override
-    public String toString() {
-        return "AdaptiveForgingSettings{" +
-                "enabled=" + enabled +
-                ", emptyBlockTime=" + emptyBlockTime +
-                '}';
+        return Objects.hash(enabled, adaptiveBlockTime, numberOfTransactions);
     }
 }

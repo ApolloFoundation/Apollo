@@ -3,9 +3,9 @@
  */
 package dto;
 
-import com.apollocurrency.aplwallet.apl.BasicAccount;
-
 import java.util.Objects;
+
+import com.apollocurrency.aplwallet.apl.BasicAccount;
 
 public class ForgingDetails {
     private Long deadline;
