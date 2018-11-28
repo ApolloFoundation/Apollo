@@ -32,7 +32,7 @@ public class ChainIdDbMigration {
         String dbDir = Apl.getStringProperty(Db.PREFIX + "Dir");
         String dbName = Apl.getStringProperty(Db.PREFIX + "Name");
 
-        DbInfo dbInfo = getOldChainIdDbInfo(dbDir, dbName, false);
+        DbInfo dbInfo = getOldChainIdDbInfo(dbDir, dbName, true);
         if (dbInfo != null) {
             return dbInfo;
         }
