@@ -78,7 +78,7 @@ public final class Apl {
     private static final DirProvider dirProvider;
 
 
-    
+
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
     }
@@ -523,23 +523,18 @@ public final class Apl {
         return "";
     }
 
-    public static String getDbDir(String dbDir, UUID chainId) {
-        return dirProvider.getDbDir(dbDir, chainId);
+    public static String getDbDir(String dbDir, UUID chainId, boolean chainIdFirst) {
+        return dirProvider.getDbDir(dbDir, chainId, chainIdFirst);
+    }
+
+    public static String getDbDir(String dbDir, boolean chainIdFirst) {
+        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId(), chainIdFirst);
     }
 
     public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId());
+        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId(), false);
     }
 
-    public static String getOldDbDir(String dbDir,  UUID chainId) {
-        return dirProvider
-                .getDbDir(dbDir, chainId)
-                .replace(String.valueOf(chainId) + File.separator, "");
-    }
-
-    public static String getOldDbDir(String dbDir) {
-        return getOldDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId());
-    }
     public static Path getKeystoreDir(String keystoreDir) {
         return dirProvider.getKeystoreDir(keystoreDir).toPath();
     }
