@@ -132,7 +132,24 @@
           }
         }
 
-      }
+      },
+      {
+        "height": 244600,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+       }
     ]
   },
   {
