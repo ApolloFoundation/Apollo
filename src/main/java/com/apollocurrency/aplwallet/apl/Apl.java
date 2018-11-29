@@ -49,6 +49,7 @@ import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.env.RuntimeMode;
@@ -298,6 +299,7 @@ public final class Apl {
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
+                migrateDb();
                 ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
                 AplGlobalObjects.getChainConfig().updateToLatestConstants();
@@ -392,6 +394,15 @@ public final class Apl {
                 runtimeMode.alert(e.getMessage() + "\n" +
                         "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");
                 System.exit(1);
+            }
+        }
+
+        private static void migrateDb() {
+            String secondDbMigrationRequired = Option.get("secondDbMigrationRequired");
+            boolean secondMigrationRequired = secondDbMigrationRequired == null || Boolean.parseBoolean(secondDbMigrationRequired);
+            if (secondMigrationRequired) {
+                Db.shutdown();
+
             }
         }
 
