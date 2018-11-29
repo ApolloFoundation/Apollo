@@ -67,8 +67,21 @@ abstract class DesktopUserDirProvider implements DirProvider {
     }
 
     @Override
-    public String getDbDir(String dbDir, UUID chainId) {
-        return Paths.get(getUserHomeDir()).resolve(String.valueOf(chainId)).resolve(Paths.get(dbDir)).toString();
+    public String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst) {
+        String chainIdDir = chainId == null ? "" : String.valueOf(chainId);
+        Path dbDirRelativePath = Paths.get(dbRelativeDir);
+        Path userHomeDirPath = Paths.get(getUserHomeDir());
+        Path dbPath;
+        if (chainIdFirst) {
+            dbPath = userHomeDirPath
+                    .resolve(chainIdDir)
+                    .resolve(dbDirRelativePath);
+        } else {
+            dbPath = userHomeDirPath
+                    .resolve(dbDirRelativePath)
+                    .resolve(chainIdDir);
+        }
+        return dbPath.toString();
     }
 
     @Override

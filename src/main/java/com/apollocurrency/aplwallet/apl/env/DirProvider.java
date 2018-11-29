@@ -31,7 +31,7 @@ public interface DirProvider {
 
     void updateLogFileHandler(Properties loggingProperties);
 
-    String getDbDir(String dbDir, UUID chainId);
+    String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst);
 
     File getLogFileDir();
 

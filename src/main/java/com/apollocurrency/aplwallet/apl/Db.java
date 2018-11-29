@@ -49,7 +49,8 @@ public final class Db {
         return db;
     }
 
-    public static void init(int cacheKb, String dbUrl, String dbType, String dbDir, String params, String username, String password,
+    public static void init(int cacheKb, String dbUrl, String dbType, String dbDir, String dbFileName, String params, String username,
+                            String password,
                             int maxConnections, int loginTimeout, int defaultLockTimeout, int maxMemoryRows) {
         dbProperties =  new BasicDb.DbProperties()
                 .maxCacheSize(cacheKb)
@@ -57,6 +58,7 @@ public final class Db {
                 .dbType(dbType)
                 .dbDir(dbDir)
                 .dbParams(params)
+                .dbFileName(dbFileName)
                 .dbUsername(username)
                 .dbPassword(password)
                 .maxConnections(maxConnections)
@@ -73,6 +75,7 @@ public final class Db {
                 , Apl.getStringProperty(PREFIX + "Url")
                 , Apl.getStringProperty(PREFIX + "Type")
                 , Apl.getStringProperty(PREFIX + "Dir")
+                , Apl.getStringProperty(PREFIX + "Name")
                 , Apl.getStringProperty(PREFIX + "Params")
                 , Apl.getStringProperty(PREFIX + "Username")
                 , Apl.getStringProperty(PREFIX + "Password", null, true)
@@ -87,6 +90,7 @@ public final class Db {
                 Apl.getIntProperty("apl.dbCacheKB")
                 , dbUrl
                 , Apl.getStringProperty(PREFIX + "Type")
+                , null
                 , null
                 , Apl.getStringProperty(PREFIX + "Params")
                 , Apl.getStringProperty(PREFIX + "Username")
