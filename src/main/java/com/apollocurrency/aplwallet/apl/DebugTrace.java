@@ -274,7 +274,7 @@ public final class DebugTrace {
             long fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm()/ 4;
             int height = Apl.getBlockchain().getHeight();
             for (int i = 0; i < 3; i++) {
-                long generatorId = BlockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
+                long generatorId = AplGlobalObjects.getBlockDb().findBlockAtHeight(height - i - 1).getGeneratorId();
                 if (include(generatorId)) {
                     Map<String, String> generatorMap = getValues(generatorId, false);
                     generatorMap.put("generation fee", String.valueOf(fee));
@@ -504,7 +504,7 @@ public final class DebugTrace {
                     break;
                 }
                 totalBackFees += backFees[i];
-                long previousGeneratorId = BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
+                long previousGeneratorId = AplGlobalObjects.getBlockDb().findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
                 if (include(previousGeneratorId)) {
                     Map<String,String> map = getValues(previousGeneratorId, false);
                     map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceAPL()));

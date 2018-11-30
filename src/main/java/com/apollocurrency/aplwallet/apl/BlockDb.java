@@ -166,6 +166,14 @@ public final class BlockDb {
         }
     }
 
+    public Map<Long, BlockImpl> getBlockCache() {
+        return blockCache;
+    }
+
+    public SortedMap<Integer, BlockImpl> getHeightMap() {
+        return heightMap;
+    }
+
     BlockImpl findBlockAtHeight(int height) {
         // Check the cache
         synchronized(blockCache) {
@@ -190,6 +198,14 @@ public final class BlockDb {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    public int getBlockCacheSize() {
+        return blockCacheSize;
+    }
+
+    public Map<Long, TransactionImpl> getTransactionCache() {
+        return transactionCache;
     }
 
     public BlockImpl findLastBlock() {
@@ -284,11 +300,11 @@ public final class BlockDb {
         return generators;
     }
 
-    BlockImpl loadBlock(Connection con, ResultSet rs) {
+    static BlockImpl loadBlock(Connection con, ResultSet rs) {
         return loadBlock(con, rs, false);
     }
 
-    BlockImpl loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
+    static BlockImpl loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         try {
             int version = rs.getInt("version");
             int timestamp = rs.getInt("timestamp");

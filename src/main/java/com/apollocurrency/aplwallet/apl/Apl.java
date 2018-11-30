@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,8 +48,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
+import com.apollocurrency.aplwallet.apl.chainid.ChainIdDbMigrator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
@@ -68,7 +70,6 @@ public final class Apl {
     private static Logger LOG;
 
 
-    private static ChainIdService chainIdService;
     public static final Version VERSION = Version.from("1.22.4");
 
     public static final String APPLICATION = "Apollo";
@@ -299,8 +300,8 @@ public final class Apl {
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
+                AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                 migrateDb();
-                ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
                 AplGlobalObjects.getChainConfig().updateToLatestConstants();
                 TransactionProcessorImpl.getInstance();
@@ -374,7 +375,6 @@ public final class Apl {
                 if (AplGlobalObjects.getChainConfig().isTestnet()) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
-
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
@@ -401,8 +401,33 @@ public final class Apl {
             String secondDbMigrationRequired = Option.get("secondDbMigrationRequired");
             boolean secondMigrationRequired = secondDbMigrationRequired == null || Boolean.parseBoolean(secondDbMigrationRequired);
             if (secondMigrationRequired) {
+                Option.set("secondDbMigrationRequired", "true");
+                LOG.debug("Db migration required");
                 Db.shutdown();
-
+                String dbDir = Apl.getStringProperty(Db.PREFIX + "Dir");
+                String dbName = Apl.getStringProperty(Db.PREFIX + "Name");
+                String legacyDbDir = Apl.getDbDir(dbDir, null, false);
+                String chainIdDbDir = Apl.getDbDir(dbDir, true);
+                ChainIdDbMigrator dbMigrator = new ChainIdDbMigratorImpl.Builder(chainIdDbDir, legacyDbDir)
+                        .dbName(dbName)
+                        .dbSuffix(".h2.db")
+                        .build();
+                String targetDbDir = Apl.getDbDir(dbDir);
+                try {
+                    dbMigrator.migrate(targetDbDir, Apl.getBooleanProperty("apl.deleteOldDbAfterMigration"));
+                    Db.init();
+                    try (Connection connection = Db.getDb().getConnection()) {
+                        FullTextTrigger.reindex(connection);
+                    }
+                    catch (SQLException e) {
+                        throw new RuntimeException(e.toString(), e);
+                    }
+                    AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
+                        Option.set("secondDbMigrationRequired", "false");
+                    }
+                    catch (IOException e) {
+                        throw new RuntimeException(e.toString(), e);
+                    }
             }
         }
 
