@@ -133,7 +133,7 @@ public class ChainIdDbMigratorImpl implements ChainIdDbMigrator  {
     protected void shutdownDb(DataSource dataSource) {
         try {
             Connection connection = dataSource.getConnection();
-            connection.createStatement().execute("SHUTDOWN COMPACT");
+            connection.createStatement().execute("SHUTDOWN");
         }
         catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -149,9 +149,6 @@ public class ChainIdDbMigratorImpl implements ChainIdDbMigrator  {
         jdbcDataSource.setPassword("sa");
         jdbcDataSource.setUser("sa");
         jdbcDataSource.setURL(dbUrl);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            shutdownDb(jdbcDataSource);
-        }));
         return jdbcDataSource;
     }
 
@@ -234,7 +231,7 @@ public class ChainIdDbMigratorImpl implements ChainIdDbMigrator  {
     }
 
     private static String createDbUrl(String dbDir, String dbName, String type) {
-        return String.format("jdbc:%s:%s", type, dbDir + "/" + dbName);
+        return String.format("jdbc:%s:%s;MV_STORE=FALSE", type, dbDir + "/" + dbName);
     }
 
     private Path createDbPath(String dbDir) {
