@@ -505,7 +505,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
+           // Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")

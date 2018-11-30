@@ -20,7 +20,7 @@ public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
     private static volatile long timeOffset = 0;
-    private static final int REFRESH_FREQUENCY = 10;
+    private static final int REFRESH_FREQUENCY = 60;
             
     private static void setTimeDrift() {
         NTPUDPClient client = new NTPUDPClient();
