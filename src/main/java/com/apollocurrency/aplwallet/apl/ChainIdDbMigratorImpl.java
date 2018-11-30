@@ -202,13 +202,13 @@ public class ChainIdDbMigratorImpl implements ChainIdDbMigrator  {
     private void deleteAllWithExclusion(Path pathToDelete, Path pathToExclude) {
 
         try {
-            List<Path> excludedPaths = Files.walk(pathToExclude).collect(Collectors.toList());
+            List<Path> excludedPaths = Files.walk(pathToExclude.normalize()).collect(Collectors.toList());
             if (pathToExclude.startsWith(pathToDelete)) {
                 Path relativePath = pathToDelete.relativize(pathToExclude);
                 for (Path aRelativePath : relativePath) {
                     excludedPaths.add(aRelativePath);
                 }
-                excludedPaths.add(pathToDelete);
+                excludedPaths.add(pathToDelete.normalize());
             }
             Files.walkFileTree(pathToDelete.normalize(), new SimpleFileVisitor<Path>() {
                 @Override
