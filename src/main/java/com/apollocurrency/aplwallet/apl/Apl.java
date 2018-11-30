@@ -414,6 +414,7 @@ public final class Apl {
                         .build();
                 String targetDbDir = Apl.getDbDir(dbDir);
                 try {
+                    runtimeMode.updateAppStatus("Performing database migration");
                     dbMigrator.migrate(targetDbDir, Apl.getBooleanProperty("apl.deleteOldDbAfterMigration"));
                     Db.init();
                     try (Connection connection = Db.getDb().getConnection()) {
