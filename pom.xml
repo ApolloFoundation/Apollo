@@ -44,7 +44,7 @@
         <jackson.version>2.9.3</jackson.version>
 
         <!--Indexing-->
-        <lucene.version>5.3.2</lucene.version>
+        <lucene.version>7.5.0</lucene.version>
 
         <!--Db-->
         <h2.version>1.4.196</h2.version>
@@ -138,9 +138,29 @@
     <dependencies>
         <!--Apache-commons-->
         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>11</version>
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>${apache-commons-net.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>11</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>

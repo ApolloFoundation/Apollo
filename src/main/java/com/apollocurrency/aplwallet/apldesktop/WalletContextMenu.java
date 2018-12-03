@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.sun.javafx.scene.control.skin.ContextMenuContent;
+import javafx.scene.control.skin.ContextMenuSkin;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Parent;
