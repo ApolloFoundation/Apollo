@@ -45,7 +45,7 @@ public final class ShufflingCancel extends CreateTransaction {
     protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Shuffling shuffling = ParameterParser.getShuffling(req);
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
-        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
+        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", validate);
         long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
         byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
 //        TODO:perform fee calculation without using mock attachment

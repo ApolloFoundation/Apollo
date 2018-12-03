@@ -285,7 +285,6 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             JSONData.putException(response, e);
         }
         return response;
-
     }
     @Override
     protected final boolean requirePost() {

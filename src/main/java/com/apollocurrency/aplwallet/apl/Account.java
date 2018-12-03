@@ -381,7 +381,7 @@ public final class Account {
     private long activeLesseeId;
     private Set<ControlType> controls;
 
-    private Account(long id) {
+    public Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
             LOG.info("CRITICAL ERROR: Reed-Solomon encoding fails for " + id);
         }

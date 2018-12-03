@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Currency;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_ENOUGH_CURRENCY;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.NOT_ENOUGH_CURRENCY;
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Currency;
 
 public final class TransferCurrency extends CreateTransaction {
 
@@ -45,20 +44,15 @@ public final class TransferCurrency extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        long recipient = ParameterParser.getAccountId(req, "recipient", true);
+        long recipient = ParameterParser.getAccountId(req, "recipient", validate);
 
         Currency currency = ParameterParser.getCurrency(req);
         long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
-
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment attachment = new Attachment.MonetarySystemCurrencyTransfer(currency.getId(), units);
-        try {
-            return createTransaction(req, account, recipient, 0, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_CURRENCY;
-        }
+        return new CreateTransactionRequestData(attachment, recipient, account, 0, NOT_ENOUGH_CURRENCY);
     }
 
 }

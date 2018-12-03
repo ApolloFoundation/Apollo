@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class ShufflingRegister extends CreateTransaction {
 
@@ -43,24 +43,23 @@ public final class ShufflingRegister extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", validate);
 
         Attachment attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
 
-        Account account = ParameterParser.getSenderAccount(req);
-        if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
-            return JSONResponses.error("Accounts under phasing only control cannot join a shuffling");
+        Account account = ParameterParser.getSenderAccount(req, validate);
+        if (account.getControls().contains(Account.ControlType.PHASING_ONLY) && validate) {
+            throw new ParameterException(JSONResponses.error("Accounts under phasing only control cannot join a shuffling"));
         }
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
-            if (shuffling == null) {
-                return JSONResponses.NOT_ENOUGH_FUNDS;
-            }
-            return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
-        }
-    }
+        Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+        JSONStreamAware errorJson;
+        if (shuffling == null) {
+            errorJson = JSONResponses.NOT_ENOUGH_FUNDS;
+        } else {
+            errorJson = JSONResponses.notEnoughHolding(shuffling.getHoldingType());
 
+        }
+            return new CreateTransactionRequestData(attachment, account, errorJson);
+    }
 }

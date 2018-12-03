@@ -22,6 +22,8 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
@@ -30,9 +32,6 @@ import com.apollocurrency.aplwallet.apl.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class ShufflingProcess extends CreateTransaction {
 
@@ -59,8 +58,8 @@ public final class ShufflingProcess extends CreateTransaction {
             return new CreateTransactionRequestData(JSON.prepare(response));
         }
         Account senderAccount = ParameterParser.getSenderAccount(req, validate);
-        long senderId = senderAccount == null ? senderAccount.getId() : ;
-        if (shuffling.getAssigneeAccountId() != senderId) {
+        long senderId = senderAccount.getId();
+        if (validate && shuffling.getAssigneeAccountId() != senderId) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 12);
             response.put("errorDescription", String.format("Account %s cannot process shuffling since shuffling assignee is %s",
@@ -77,16 +76,17 @@ public final class ShufflingProcess extends CreateTransaction {
         }
 
         long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
-        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient");
-        if (Account.getAccount(recipientPublicKey) != null) {
+        long recipientId = ParameterParser.getAccountId(req, "recipient", false);
+        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
+        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, validate);
+        if (validate && Account.getAccount(recipientPublicKey) != null) {
             return new CreateTransactionRequestData(INCORRECT_PUBLIC_KEY); // do not allow existing account to be used as recipient
         }
 
 //        TODO: perform fee calculation without mock attachment
         Attachment.ShufflingAttachment attachment = validate ? shuffling.process(senderId, secretBytes, recipientPublicKey) :
                 new Attachment.ShufflingProcessing(shuffling.getId(), new byte[0][0], shuffling.getStateHash());
-        return new CreateTransactionRequestData(senderAccount, attachment);
+        return new CreateTransactionRequestData(attachment, senderAccount);
     }
 
 }

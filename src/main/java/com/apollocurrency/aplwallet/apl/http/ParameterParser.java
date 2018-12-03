@@ -541,7 +541,10 @@ public final class ParameterParser {
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, null, accountId, isMandatory);
         if (publicKey == null) {
-            return null;
+            if (accountId == 0) {
+                return null;
+            }
+            return new Account(accountId);
         }
         Account account = Account.getAccount(publicKey);
         if (account == null) {

@@ -20,12 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.AplException;
-import org.json.simple.JSONStreamAware;
-
 import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
 
 public final class UploadTaggedData extends CreateTransaction {
 
@@ -43,12 +42,10 @@ public final class UploadTaggedData extends CreateTransaction {
     }
 
     @Override
-    protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-
-        Account account = ParameterParser.getSenderAccount(req);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+        Account account = ParameterParser.getSenderAccount(req, validate);
         Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
-        return createTransaction(req, account, taggedDataUpload);
-
+        return new CreateTransactionRequestData(taggedDataUpload, account);
     }
 
 }
