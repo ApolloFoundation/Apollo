@@ -141,7 +141,7 @@ var NRS = (function (NRS, $) {
             NRS.constants.ACCOUNT_MASK_UNDERSCORE = response.accountPrefix + "-____-____-____-_____";
             NRS.constants.ACCOUNT_MASK_PREFIX = response.accountPrefix + "-";
             NRS.constants.GENESIS_RS = converters.convertNumericToRSAccountFormat(response.genesisAccountId);
-            NRS.constants.INITIAL_BASE_TARGET = parseInt(response.initialBaseTarget);
+            // NRS.constants.INITIAL_BASE_TARGET = parseInt(response.initialBaseTarget);
             NRS.constants.CURRENCY_TYPES = response.currencyTypes;
             if (resolve) {
                 resolve();
