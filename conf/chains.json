@@ -169,7 +169,7 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "data/genesisAccounts-testnet.json",
+    "genesisLocation": "data/genesisAccounts.json",
     "blockchainProperties": [
       {
         "height": 0,
