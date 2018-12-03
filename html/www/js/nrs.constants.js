@@ -79,7 +79,7 @@ var NRS = (function (NRS, $) {
         'UNKNOWN': 'unknown',
         'LAST_KNOWN_BLOCK': { id: "0", height: "0" },
         'LAST_KNOWN_TESTNET_BLOCK': { id: "0", height: "0" },
-        'INITIAL_BASE_TARGET': 153722867,
+        'INITIAL_BASE_TARGET': 30744573,
         'SCHEDULE_PREFIX': "schedule"
     };
 
