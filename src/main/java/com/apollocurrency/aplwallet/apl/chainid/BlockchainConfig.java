@@ -84,7 +84,7 @@ public class BlockchainConfig {
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    public void updateToLatestConstants() {
+    public void updateToLatestConfig() {
         BlockImpl lastBlock = AplGlobalObjects.getBlockDb().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");

@@ -49,6 +49,9 @@ import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdDbMigrator;
+import com.apollocurrency.aplwallet.apl.chainid.DbInfoExtractor;
+import com.apollocurrency.aplwallet.apl.chainid.DbMigrator;
+import com.apollocurrency.aplwallet.apl.chainid.H2DbInfoExtractor;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.dbmodel.Option;
@@ -303,7 +306,7 @@ public final class Apl {
                 AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                 migrateDb();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
-                AplGlobalObjects.getChainConfig().updateToLatestConstants();
+                AplGlobalObjects.getChainConfig().updateToLatestConfig();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -405,17 +408,17 @@ public final class Apl {
                 LOG.debug("Db migration required");
                 Db.shutdown();
                 String dbDir = Apl.getStringProperty(Db.PREFIX + "Dir");
+                String targetDbDir = Apl.getDbDir(dbDir);
                 String dbName = Apl.getStringProperty(Db.PREFIX + "Name");
+                String dbUser = Apl.getStringProperty(Db.PREFIX + "Username");
+                String dbPassword = Apl.getStringProperty(Db.PREFIX + "Password");
                 String legacyDbDir = Apl.getDbDir(dbDir, null, false);
                 String chainIdDbDir = Apl.getDbDir(dbDir, true);
-                ChainIdDbMigrator dbMigrator = new ChainIdDbMigratorImpl.Builder(chainIdDbDir, legacyDbDir)
-                        .dbName(dbName)
-                        .dbSuffix(".h2.db")
-                        .build();
-                String targetDbDir = Apl.getDbDir(dbDir);
+                DbInfoExtractor dbInfoExtractor = new H2DbInfoExtractor(dbName, dbUser, dbPassword);
+                DbMigrator dbMigrator = new ChainIdDbMigrator(chainIdDbDir, legacyDbDir, dbInfoExtractor);
                 try {
                     runtimeMode.updateAppStatus("Performing database migration");
-                    dbMigrator.migrate(targetDbDir, Apl.getBooleanProperty("apl.deleteOldDbAfterMigration"));
+                    Path oldDbPath = dbMigrator.migrate(targetDbDir);
                     Db.init();
                     try (Connection connection = Db.getDb().getConnection()) {
                         FullTextTrigger.reindex(connection);
@@ -424,11 +427,36 @@ public final class Apl {
                         throw new RuntimeException(e.toString(), e);
                     }
                     AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
-                        Option.set("secondDbMigrationRequired", "false");
+                    Option.set("secondDbMigrationRequired", "false");
+                    boolean deleteOldDb = Apl.getBooleanProperty("apl.deleteOldDbAfterMigration");
+                    if (deleteOldDb) {
+                        Option.set("oldDbPath", oldDbPath.toAbsolutePath().toString());
+                    }
+                }
+                catch (IOException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
+            }
+            performDbMigrationCleanup();
+        }
+
+        private static void performDbMigrationCleanup() {
+            String dbDir = Apl.getStringProperty(Db.PREFIX + "Dir");
+            String targetDbDir = Apl.getDbDir(dbDir);
+            String oldDbPathOption = Option.get("oldDbPath");
+            if (oldDbPathOption != null) {
+                Path oldDbPath = Paths.get(oldDbPathOption);
+                if (Files.exists(oldDbPath)) {
+                    try {
+                        ChainIdDbMigrator.deleteAllWithExclusion(oldDbPath, Paths.get(targetDbDir));
+                        Option.delete("oldDbPath");
                     }
                     catch (IOException e) {
-                        throw new RuntimeException(e.toString(), e);
+                        LOG.error("Unable to delete old db");
                     }
+                } else {
+                    Option.delete("oldDbPath");
+                }
             }
         }
 
