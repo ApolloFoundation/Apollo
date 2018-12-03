@@ -285,7 +285,7 @@ var NRS = (function(NRS, $) {
                 "<td>" + NRS.formatAmount(block.numberOfTransactions) + "</td>" +
                 "<td>" + NRS.getAccountLink(block, "generator") + "</td>" +
                 "<td>" + NRS.formatVolume(block.payloadLength) + "</td>" +
-				"<td>" + NRS.baseTargetPercent(block) + " %</td>" +
+				"<td>" + NRS.baseTargetPercent(block).pad(4) + " %</td>" +
             "</tr>";
 		}
 
