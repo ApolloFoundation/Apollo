@@ -154,7 +154,7 @@
   },
   {
     "chainId": "0a038e49-1a74-4c32-b35e-bd8f9d744081",
-    "isTestnet": true,
+    "isTestnet": false,
     "active": true,
     "defaultPeers": [
 	"51.15.120.100",
