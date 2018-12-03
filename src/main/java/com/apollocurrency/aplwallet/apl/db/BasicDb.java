@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.util.exception.DbException;
-import org.h2.jdbcx.JdbcConnectionPool;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.sql.DataSource;
 import java.io.PrintWriter;
@@ -32,7 +29,10 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import org.h2.jdbcx.JdbcConnectionPool;
+import org.slf4j.Logger;
 
 public class BasicDb implements DataSource {
     private static final Logger LOG = getLogger(BasicDb.class);
@@ -98,6 +98,7 @@ public class BasicDb implements DataSource {
         private String dbUrl;
         private String dbType;
         private String dbDir;
+        private String dbFileName;
         private String dbParams;
         private String dbUsername;
         private String dbPassword;
@@ -113,6 +114,11 @@ public class BasicDb implements DataSource {
 
         public DbProperties dbUrl(String dbUrl) {
             this.dbUrl = dbUrl;
+            return this;
+        }
+
+        public DbProperties dbFileName(String dbFileName) {
+            this.dbFileName = dbFileName;
             return this;
         }
 
@@ -189,6 +195,7 @@ public class BasicDb implements DataSource {
     private final int defaultLockTimeout;
     private final int maxMemoryRows;
     private volatile boolean initialized = false;
+    private volatile boolean shutdown = false;
 
     public BasicDb(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.maxCacheSize;
@@ -198,7 +205,8 @@ public class BasicDb implements DataSource {
         String dbUrl = dbProperties.dbUrl;
         if (dbUrl == null) {
             String dbDir = Apl.getDbDir(dbProperties.dbDir);
-            dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.dbType, dbDir, dbProperties.dbParams);
+            String dbFileName = dbProperties.dbFileName;
+            dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.dbType, dbDir + "/" + dbFileName, dbProperties.dbParams);
         }
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
@@ -230,6 +238,7 @@ public class BasicDb implements DataSource {
         }
         dbVersion.init(this);
         initialized = true;
+        shutdown = false;
     }
 
     public void shutdown() {
@@ -242,9 +251,15 @@ public class BasicDb implements DataSource {
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
             LOG.info("Database shutdown completed");
+            shutdown = true;
+            initialized = false;
         } catch (SQLException e) {
             LOG.info(e.toString(), e);
         }
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
     }
 
     public void analyzeTables() {

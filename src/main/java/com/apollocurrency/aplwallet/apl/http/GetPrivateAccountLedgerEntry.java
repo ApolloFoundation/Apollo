@@ -6,14 +6,14 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
 
@@ -30,8 +30,7 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
      * Create the GetPrivateAccountLedgerEntry instance
      */
     private GetPrivateAccountLedgerEntry() {
-        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey", "account",
-                "passphrase");
+        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
 
     /**
@@ -80,5 +79,10 @@ public class GetPrivateAccountLedgerEntry extends APIServlet.APIRequestHandler {
     @Override
     protected boolean allowRequiredBlockParameters() {
         return false;
+    }
+
+    @Override
+    protected String vaultAccountName() {
+        return "account";
     }
 }

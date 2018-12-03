@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
 
 /**
  * Sends a transaction to some peers.
@@ -42,7 +42,7 @@ import java.util.Collections;
  * <p>
  * The client then signs and submits the signed transaction using {@link SendTransaction}
  * <p>
- * The default wallet implements this procedure in nrs.server.js which you can use as reference.
+ * The default wallet implements this procedure in ars.server.js which you can use as reference.
  * <p>
  * {@link SendTransaction} accepts the following parameters:<br>
  * transactionJSON - JSON representation of the signed transaction<br>

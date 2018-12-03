@@ -20,17 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AccountLedger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
 
@@ -64,11 +65,23 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
         response.put("isDownloading", blockchainProcessor.isDownloading());
         response.put("maxRollback", Constants.MAX_ROLLBACK);
         response.put("currentMinRollbackHeight", Apl.getBlockchainProcessor().getMinRollbackHeight());
-        response.put("isTestnet", Constants.isTestnet);
-        response.put("maxPrunableLifetime", Constants.MAX_PRUNABLE_LIFETIME);
+        response.put("isTestnet", AplGlobalObjects.getChainConfig().isTestnet());
+        response.put("maxPrunableLifetime", AplGlobalObjects.getChainConfig().getMaxPrunableLifetime());
         response.put("includeExpiredPrunable", Constants.INCLUDE_EXPIRED_PRUNABLE);
         response.put("correctInvalidFees", Constants.correctInvalidFees);
         response.put("ledgerTrimKeep", AccountLedger.trimKeep);
+        response.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+        response.put("chainName", AplGlobalObjects.getChainConfig().getChain().getName());
+        response.put("chainDescription", AplGlobalObjects.getChainConfig().getChain().getDescription());
+        response.put("blockTime", AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime());
+        response.put("adaptiveForging", AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled());
+        response.put("emptyBlockTime", AplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime());
+        response.put("consensus", AplGlobalObjects.getChainConfig().getCurrentConfig().getConsensusType());
+        response.put("maxBlockPayloadLength", AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength());
+        response.put("initialBaseTarget", Long.toUnsignedString(AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget()));
+        response.put("coinSymbol", AplGlobalObjects.getChainConfig().getCoinSymbol());
+        response.put("accountPrefix", AplGlobalObjects.getChainConfig().getAccountPrefix());
+        response.put("projectName", AplGlobalObjects.getChainConfig().getProjectName());
         JSONArray servicesArray = new JSONArray();
         Peers.getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);

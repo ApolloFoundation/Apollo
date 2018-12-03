@@ -21,8 +21,10 @@
 package com.apollocurrency.aplwallet.apl.env;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.UUID;
 
 public class DefaultDirProvider implements DirProvider {
 
@@ -35,9 +37,23 @@ public class DefaultDirProvider implements DirProvider {
     public void updateLogFileHandler(Properties loggingProperties) {}
 
     @Override
-    public String getDbDir(String dbDir) {
-        return dbDir;
+    public String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst) {
+        String chainIdDir = chainId == null ? "" : String.valueOf(chainId);
+        Path dbDirRelativePath = Paths.get(dbRelativeDir);
+        Path userHomeDirPath = Paths.get(getUserHomeDir());
+        Path dbPath;
+        if (chainIdFirst) {
+            dbPath = userHomeDirPath
+                    .resolve(chainIdDir)
+                    .resolve(dbDirRelativePath);
+        } else {
+            dbPath = userHomeDirPath
+                    .resolve(dbDirRelativePath)
+                    .resolve(chainIdDir);
+        }
+        return dbPath.toString();
     }
+
 
     @Override
     public File getLogFileDir() {
@@ -57,5 +73,10 @@ public class DefaultDirProvider implements DirProvider {
     @Override
     public File getBinDirectory() {
         return Paths.get(getUserHomeDir()).resolve("classes").toFile();
+    }
+
+    public static void main(String[] args) {
+        Path path = Paths.get("apollo", "");
+        System.out.println( path.toAbsolutePath().toString());
     }
 }

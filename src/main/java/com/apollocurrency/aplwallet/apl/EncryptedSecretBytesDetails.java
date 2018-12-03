@@ -30,7 +30,7 @@ public class EncryptedSecretBytesDetails {
     }
 
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, byte version, byte[] nonce, long timestamp) {
-        this(encryptedSecretBytes, Convert.rsAccount(account), version, nonce, timestamp);
+        this(encryptedSecretBytes, Convert.defaultRsAccount(account), version, nonce, timestamp);
     }
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, byte version, byte[] nonce, long timestamp) {
         this(encryptedSecretBytes, accountRS, Convert.parseAccountId(accountRS), version, nonce, timestamp);

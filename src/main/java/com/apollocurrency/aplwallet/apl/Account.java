@@ -48,8 +48,8 @@ import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
@@ -71,7 +71,7 @@ public final class Account {
     private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore =
             new SimpleKeyStoreImpl(Apl.getKeystoreDir(
-                    Constants.isTestnet ?
+                    AplGlobalObjects.getChainConfig().isTestnet() ?
                             Apl.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
                             Apl.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
@@ -104,7 +104,7 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            if (height <= Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+            if (height <= AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations()) {
                 return;
             }
             super.trim(height);
@@ -112,7 +112,7 @@ public final class Account {
 
         @Override
         public void checkAvailable(int height) {
-            if (height > Constants.GUARANTEED_BALANCE_CONFIRMATIONS) {
+            if (height > AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations()) {
                 super.checkAvailable(height);
                 return;
             }
@@ -253,14 +253,14 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmtDelete.setInt(1, height - Constants.GUARANTEED_BALANCE_CONFIRMATIONS);
+                pstmtDelete.setInt(1, height - AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations());
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
-                    Db.db.commitTransaction();
+                    Db.getDb().commitTransaction();
                 } while (count >= Constants.BATCH_COMMIT_SIZE);
             }
             catch (SQLException e) {
@@ -301,11 +301,11 @@ public final class Account {
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
             Apl.getBooleanProperty("apl.store2FAInFileSystem") ?
                     new TwoFactorAuthFileSystemRepository(Apl.get2FADir(
-                            Constants.isTestnet ?
+                            AplGlobalObjects.getChainConfig().isTestnet() ?
                                     Apl.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
                                     Apl.getStringProperty("apl.dir2FA", "2fa")
                     )) :
-                    new TwoFactorAuthRepositoryImpl(Db.db));
+                    new TwoFactorAuthRepositoryImpl(Db.getDb()));
 
     static {
 
@@ -602,7 +602,7 @@ public final class Account {
             return accountTable.getManyBy(con, pstmt, false);
     }
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
-        try(Connection con = Db.db.getConnection()) {
+        try(Connection con = Db.getDb().getConnection()) {
             return getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
         }
         catch (SQLException e) {
@@ -644,7 +644,7 @@ public final class Account {
         }
     }
     public static long getTotalNumberOfAccounts() {
-        try(Connection con = Db.db.getConnection()) {
+        try(Connection con = Db.getDb().getConnection()) {
             return getTotalNumberOfAccounts(con);
         }
         catch (SQLException e) {
@@ -669,7 +669,7 @@ public final class Account {
         }
     }
     public static long getTotalSupply() {
-        try(Connection con = Db.db.getConnection()) {
+        try(Connection con = Db.getDb().getConnection()) {
             return getTotalSupply(con);
         }
         catch (SQLException e) {
@@ -753,7 +753,7 @@ public final class Account {
     private static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement pstmt = con.prepareStatement(
                     "SELECT * FROM account_lease WHERE current_leasing_height_from = ? AND latest = TRUE "
                             + "UNION ALL SELECT * FROM account_lease WHERE current_leasing_height_to = ? AND latest = TRUE "
@@ -856,12 +856,15 @@ public final class Account {
             ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
             int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             TwoFactorAuthService.Status2FA status2FA;
+            long accountId;
             if (params2FA.isPassphrasePresent()) {
-                 status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
+                status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
+                accountId = params2FA.getAccountId();
             } else {
                 status2FA = Account.auth2FA(params2FA.getSecretPhrase(), code);
+                accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
             }
-            validate2FAStatus(status2FA);
+            validate2FAStatus(status2FA, accountId);
         }
     }
 
@@ -1092,7 +1095,7 @@ public final class Account {
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
-                effectiveBalanceATM += getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height);
+                effectiveBalanceATM += getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), height);
             }
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
@@ -1115,13 +1118,13 @@ public final class Account {
             balances[i] = lessors.get(i).getBalanceATM();
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
                      + (height < blockchainHeight ? " AND height <= ? " : "")
                      + " GROUP BY account_id ORDER BY account_id")) {
             pstmt.setObject(1, lessorIds);
-            pstmt.setInt(2, height - Constants.GUARANTEED_BALANCE_CONFIRMATIONS);
+            pstmt.setInt(2, height - AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations());
             if (height < blockchainHeight) {
                 pstmt.setInt(3, height);
             }
@@ -1157,18 +1160,18 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM() {
-        return getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, Apl.getBlockchain().getHeight());
+        return getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), Apl.getBlockchain().getHeight());
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
         Apl.getBlockchain().readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + Constants.GUARANTEED_BALANCE_CONFIRMATIONS < Apl.getBlockchainProcessor().getMinRollbackHeight()
+            if (height + AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations() < Apl.getBlockchainProcessor().getMinRollbackHeight()
                     || height > Apl.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
                          + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
                 pstmt.setLong(1, this.id);
@@ -1269,17 +1272,18 @@ public final class Account {
     void leaseEffectiveBalance(long lesseeId, int period) {
         int height = Apl.getBlockchain().getHeight();
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));
+        int leasingDelay = AplGlobalObjects.getChainConfig().getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
-                    height + Constants.LEASING_DELAY,
-                    height + Constants.LEASING_DELAY + period,
+                    height + leasingDelay,
+                    height + leasingDelay + period,
                     lesseeId);
         } else if (accountLease.currentLesseeId == 0) {
-            accountLease.currentLeasingHeightFrom = height + Constants.LEASING_DELAY;
-            accountLease.currentLeasingHeightTo = height + Constants.LEASING_DELAY + period;
+            accountLease.currentLeasingHeightFrom = height + leasingDelay;
+            accountLease.currentLeasingHeightTo = height + leasingDelay + period;
             accountLease.currentLesseeId = lesseeId;
         } else {
-            accountLease.nextLeasingHeightFrom = height + Constants.LEASING_DELAY;
+            accountLease.nextLeasingHeightFrom = height + leasingDelay;
             if (accountLease.nextLeasingHeightFrom < accountLease.currentLeasingHeightTo) {
                 accountLease.nextLeasingHeightFrom = accountLease.currentLeasingHeightTo;
             }
@@ -1622,7 +1626,7 @@ public final class Account {
             return;
         }
         int blockchainHeight = Apl.getBlockchain().getHeight();
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
                      + "WHERE account_id = ? and height = ?");
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "

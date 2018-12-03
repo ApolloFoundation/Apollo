@@ -29,11 +29,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.json.simple.JSONStreamAware;
 
 public final class DGSDelivery extends CreateTransaction {
 
@@ -72,7 +73,7 @@ public final class DGSDelivery extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_DGS_DISCOUNT);
         }
         if (discountATM < 0
-                || discountATM > Constants.MAX_BALANCE_ATM
+                || discountATM > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
                 || discountATM > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())) {
             return new CreateTransactionRequestData(INCORRECT_DGS_DISCOUNT);
         }

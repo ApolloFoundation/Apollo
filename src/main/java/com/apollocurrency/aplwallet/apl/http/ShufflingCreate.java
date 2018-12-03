@@ -24,9 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
+import org.json.simple.JSONStreamAware;
 
 public final class ShufflingCreate extends CreateTransaction {
 
@@ -48,9 +50,9 @@ public final class ShufflingCreate extends CreateTransaction {
         HoldingType holdingType = ParameterParser.getHoldingType(req);
         long holdingId = ParameterParser.getHoldingId(req, holdingType);
         long amount = ParameterParser.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
-        if (validate && holdingType == HoldingType.APL && amount < Constants.SHUFFLING_DEPOSIT_ATM) {
+        if (validate && holdingType == HoldingType.APL && amount < AplGlobalObjects.getChainConfig().getShufflingDepositAtm()) {
             return new CreateTransactionRequestData(JSONResponses.incorrect("amount",
-                    "Minimum shuffling amount is " + Constants.SHUFFLING_DEPOSIT_ATM / Constants.ONE_APL + " " + Constants.COIN_SYMBOL));
+                    "Minimum shuffling amount is " + AplGlobalObjects.getChainConfig().getShufflingDepositAtm() / Constants.ONE_APL + " " + AplGlobalObjects.getChainConfig().getCoinSymbol()));
         }
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, validate);

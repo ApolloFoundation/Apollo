@@ -20,42 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import java.math.BigInteger;
-
 public final class Constants {
 
-    public static final boolean isTestnet = Apl.getBooleanProperty("apl.isTestnet");
-    public static final boolean isOffline = Apl.getBooleanProperty("apl.isOffline");
-    public static final boolean isLightClient = Apl.getBooleanProperty("apl.isLightClient");
-    public static final String customLoginWarning = Apl.getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
+    public static final boolean isOffline = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.isOffline");
+    public static final boolean isLightClient = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.isLightClient");
+    public static final String customLoginWarning = AplGlobalObjects.getPropertiesLoader().getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
 
-    public static final String COIN_SYMBOL = "Apollo";
-    public static final String ACCOUNT_PREFIX = "APL";
-    public static final String PROJECT_NAME = "Apollo";
-    public static final int MAX_NUMBER_OF_TRANSACTIONS = Apl.getIntProperty("apl.maxNumberOfTransactions", 255);
-    public static final int MIN_TRANSACTION_SIZE = 176;
-    public static final int MAX_PAYLOAD_LENGTH = MAX_NUMBER_OF_TRANSACTIONS * MIN_TRANSACTION_SIZE;
-    public static final long MAX_BALANCE_APL = 30000000000L;
     public static final long ONE_APL = 100000000;
-    public static final long MAX_BALANCE_ATM = MAX_BALANCE_APL * ONE_APL;
 
-    public static final int BLOCK_TIME = 60;
-    public static final long INITIAL_BASE_TARGET = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(BLOCK_TIME * MAX_BALANCE_APL)).longValue(); //153722867;
-    public static final long MAX_BASE_TARGET = INITIAL_BASE_TARGET * (isTestnet ? MAX_BALANCE_APL : 50);
-    public static final long MIN_BASE_TARGET = INITIAL_BASE_TARGET * 9 / 10;
-    public static final int MIN_BLOCKTIME_LIMIT = BLOCK_TIME - 7;
-    public static final int MAX_BLOCKTIME_LIMIT = BLOCK_TIME + 7;
+    public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
-    public static final int MAX_ROLLBACK = Math.max(Apl.getIntProperty("apl.maxRollback"), 720);
-    public static final int GUARANTEED_BALANCE_CONFIRMATIONS = isTestnet ? Apl.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", 1440) : 1440;
-    public static final int LEASING_DELAY = isTestnet ? Apl.getIntProperty("apl.testnetLeasingDelay", 1440) : 1440;
+    public static final int MAX_ROLLBACK = Math.max(AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.maxRollback"), 720);
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
-    public static final int FORGING_DELAY = Apl.getIntProperty("apl.forgingDelay");
-    public static final int FORGING_SPEEDUP = Apl.getIntProperty("apl.forgingSpeedup");
-    public static final int BATCH_COMMIT_SIZE = Apl.getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
-    public static final int TRIM_TRANSACTION_TIME_THRESHHOLD = Apl.getIntProperty("apl.trimOperationsLogThreshold", 1000);
+    public static final int FORGING_DELAY = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.forgingDelay");
+    public static final int FORGING_SPEEDUP = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.forgingSpeedup");
+    public static final int BATCH_COMMIT_SIZE = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
+    public static final int TRIM_TRANSACTION_TIME_THRESHHOLD = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.trimOperationsLogThreshold", 1000);
 
     public static final byte MAX_PHASING_VOTE_TRANSACTIONS = 10;
     public static final byte MAX_PHASING_WHITELIST_SIZE = 10;
@@ -72,15 +54,7 @@ public final class Constants {
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
 
-    public static final int MIN_PRUNABLE_LIFETIME = isTestnet ? 1440 * 60 : 14 * 1440 * 60;
-    public static final int MAX_PRUNABLE_LIFETIME;
-    public static final boolean ENABLE_PRUNING;
-    static {
-        int maxPrunableLifetime = Apl.getIntProperty("apl.maxPrunableLifetime");
-        ENABLE_PRUNING = maxPrunableLifetime >= 0;
-        MAX_PRUNABLE_LIFETIME = ENABLE_PRUNING ? Math.max(maxPrunableLifetime, MIN_PRUNABLE_LIFETIME) : Integer.MAX_VALUE;
-    }
-    public static final boolean INCLUDE_EXPIRED_PRUNABLE = Apl.getBooleanProperty("apl.includeExpiredPrunable");
+    public static final boolean INCLUDE_EXPIRED_PRUNABLE = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.includeExpiredPrunable");
 
     public static final int MAX_ACCOUNT_NAME_LENGTH = 100;
     public static final int MAX_ACCOUNT_DESCRIPTION_LENGTH = 1000;
@@ -122,7 +96,6 @@ public final class Constants {
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51
     public static final short MAX_SHUFFLING_REGISTRATION_PERIOD = (short)1440 * 7;
-    public static final short SHUFFLING_PROCESSING_DEADLINE = (short)(isTestnet ? 10 : 100);
 
     public static final int MAX_TAGGED_DATA_NAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DESCRIPTION_LENGTH = 1000;
@@ -144,8 +117,6 @@ public final class Constants {
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
 
     public static final int LAST_CHECKSUM_BLOCK = 0;
-    // LAST_KNOWN_BLOCK must also be set in html/www/js/nrs.constants.js
-    public static final int LAST_KNOWN_BLOCK = isTestnet ? 0 : 0;
 
     public static final Version MIN_VERSION = new Version(1, 0, 0);
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
@@ -157,14 +128,13 @@ public final class Constants {
     public static final int DEFAULT_PEER_PORT = 47874;
     public static final int TESTNET_PEER_PORT = 46874;
 
-    static final long UNCONFIRMED_POOL_DEPOSIT_ATM = (isTestnet ? 50 : 100) * ONE_APL;
-    public static final long SHUFFLING_DEPOSIT_ATM = (isTestnet ? 7 : 1000) * ONE_APL;
-
-    public static final boolean correctInvalidFees = Apl.getBooleanProperty("apl.correctInvalidFees");
+    public static final boolean correctInvalidFees = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.correctInvalidFees");
 
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+    public static final String TIME_SERVICE = "pool.ntp.org";
+    
     private Constants() {} // never
 
 }

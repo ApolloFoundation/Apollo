@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
+import static org.slf4j.LoggerFactory.getLogger;
+import static util.TestUtil.atm;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import dto.JSONTransaction;
@@ -11,12 +15,13 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
-import static com.apollocurrency.aplwallet.apl.TestConstants.TEST_LOCALHOST;
-import static org.slf4j.LoggerFactory.getLogger;
-import static util.TestUtil.atm;
 
 public class TestDataGenerator {
         private static final Logger LOG = getLogger(TestDataGenerator.class);
@@ -98,7 +103,7 @@ public class TestDataGenerator {
 
     public static void fundAcc(TestAccount account, TestAccount fundingAcc, long amount) throws Exception {
         JSONTransaction jsonTransaction = client.sendMoneyTransaction(TEST_LOCALHOST, fundingAcc.getSecretPhrase(),
-                Convert.toHexString(account.getPublicKey()),60,
+                Convert.toHexString(Crypto.getPublicKey(account.getSecretPhrase())),60,
                 account.getAccountRS(), atm(amount), atm(1L));
         LOG.debug("Funding acc: {} -> {}", fundingAcc.getAccountRS(), account.getAccountRS());
         waitForConfirmation(jsonTransaction);
@@ -140,10 +145,11 @@ public class TestDataGenerator {
         byte[] publicKey = Crypto.getPublicKey(secretPhrase);
         long id = Account.getId(publicKey);
         String name = namePrefix + Crypto.getSecureRandom().nextInt();
-        return new TestAccount(id, publicKey, name, secretPhrase);
+        return new TestAccount(id, secretPhrase);
     }
     public static JSONTransaction saveAcc(TestAccount account) throws Exception {
-            JSONTransaction jsonTransaction = client.setAccountInfo(TEST_LOCALHOST, account.getName(), account.getSecretPhrase(), 60, atm(1));
+            JSONTransaction jsonTransaction = client.setAccountInfo(TEST_LOCALHOST, "acc" + new Random().nextInt(100), account.getSecretPhrase(), 60,
+                    atm(1));
             waitForConfirmation(jsonTransaction);
         return jsonTransaction;
     }

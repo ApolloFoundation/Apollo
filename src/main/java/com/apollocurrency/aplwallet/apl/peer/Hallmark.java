@@ -27,7 +27,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 
@@ -51,8 +51,9 @@ public final class Hallmark {
         if (host.length() == 0 || host.length() > 100) {
             throw new IllegalArgumentException("Hostname length should be between 1 and 100");
         }
-        if (weight <= 0 || weight > Constants.MAX_BALANCE_APL) {
-            throw new IllegalArgumentException("Weight should be between 1 and " + Constants.MAX_BALANCE_APL);
+        long maxBalanceAPL = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL();
+        if (weight <= 0 || weight > maxBalanceAPL) {
+            throw new IllegalArgumentException("Weight should be between 1 and " + maxBalanceAPL);
         }
 
         byte[] publicKey = Crypto.getPublicKey(keySeed);
@@ -104,7 +105,7 @@ public final class Hallmark {
         byte[] data = new byte[hallmarkBytes.length - 64];
         System.arraycopy(hallmarkBytes, 0, data, 0, data.length);
 
-        boolean isValid = host.length() < 100 && weight > 0 && weight <= Constants.MAX_BALANCE_APL
+        boolean isValid = host.length() < 100 && weight > 0 && weight <= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL()
                 && Crypto.verify(signature, data, publicKey);
         try {
             return new Hallmark(hallmarkString, publicKey, signature, host, weight, date, isValid);

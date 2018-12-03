@@ -20,11 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 
 public final class ShufflingCancel extends CreateTransaction {

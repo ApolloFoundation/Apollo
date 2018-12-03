@@ -21,9 +21,8 @@
 package com.apollocurrency.aplwallet.apl.db;
 
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Constants;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,8 +33,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.apollocurrency.aplwallet.apl.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(VersionedEntityDbTable.class);
@@ -141,10 +141,10 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        LOG.debug("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
-    static void trim(final TransactionalDb db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void trim(final TransactionalDb db,  final String table, final int height, final DbKey.Factory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }

@@ -32,7 +32,8 @@ public interface Time {
     final class EpochTime implements Time {
 
         public int getTime() {
-            return Convert.toEpochTime(System.currentTimeMillis());
+            return Convert.toEpochTime(NtpTime.getTime());
+            //return Convert.toEpochTime(System.currentTimeMillis());
         }
 
     }

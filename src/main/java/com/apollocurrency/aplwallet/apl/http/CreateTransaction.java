@@ -292,8 +292,13 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     }
 
     @Override
-    protected String accountName2FA() {
+    protected String vaultAccountName() {
         return "sender";
+    }
+
+    @Override
+    protected boolean is2FAProtected() {
+        return true;
     }
 
     @Override

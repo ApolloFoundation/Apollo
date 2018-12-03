@@ -20,9 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.*;
-import com.apollocurrency.aplwallet.apl.util.Search;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +30,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.db.DbClause;
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbKey;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedPrunableDbTable;
+import com.apollocurrency.aplwallet.apl.db.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.util.Search;
+import org.slf4j.Logger;
 
 public class TaggedData {
     private static final Logger LOG = getLogger(TaggedData.class);
@@ -66,11 +73,11 @@ public class TaggedData {
 
         @Override
         protected void prune() {
-            if (Constants.ENABLE_PRUNING) {
+            if (AplGlobalObjects.getChainConfig().isEnablePruning()) {
                 try (Connection con = db.getConnection();
                      PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                              + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                    int expiration = Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME;
+                    int expiration = Apl.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime();
                     pstmtSelect.setInt(1, expiration);
                     Map<String,Integer> expiredTags = new HashMap<>();
                     try (ResultSet rs = pstmtSelect.executeQuery()) {
@@ -203,7 +210,7 @@ public class TaggedData {
         }
 
         private static void add(TaggedData taggedData, int height) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count + 1 WHERE tag = ? AND height >= ?")) {
                 for (String tagValue : taggedData.getParsedTags()) {
                     pstmt.setString(1, tagValue);
@@ -221,7 +228,7 @@ public class TaggedData {
         }
 
         private static void delete(Map<String,Integer> expiredTags) {
-            try (Connection con = Db.db.getConnection();
+            try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count - ? WHERE tag = ?");
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM data_tag WHERE tag_count <= 0")) {
                 for (Map.Entry<String,Integer> entry : expiredTags.entrySet()) {
@@ -499,7 +506,7 @@ public class TaggedData {
     }
 
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
-        if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME && attachment.getData() != null) {
+        if (Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment);
@@ -515,16 +522,16 @@ public class TaggedData {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         Timestamp timestamp = timestampTable.get(dbKey);
-        if (transaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp.timestamp) {
+        if (transaction.getTimestamp() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime() > timestamp.timestamp) {
             timestamp.timestamp = transaction.getTimestamp();
         } else {
-            timestamp.timestamp = timestamp.timestamp + Math.min(Constants.MIN_PRUNABLE_LIFETIME, Integer.MAX_VALUE - timestamp.timestamp);
+            timestamp.timestamp = timestamp.timestamp + Math.min(AplGlobalObjects.getChainConfig().getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.timestamp);
         }
         timestampTable.insert(timestamp);
         List<Long> extendTransactionIds = extendTable.get(dbKey);
         extendTransactionIds.add(transaction.getId());
         extendTable.insert(taggedDataId, extendTransactionIds);
-        if (Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME < timestamp.timestamp) {
+        if (Apl.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
                 TransactionImpl uploadTransaction = TransactionDb.findTransaction(taggedDataId);
@@ -547,10 +554,10 @@ public class TaggedData {
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : TaggedData.getExtendTransactionIds(transaction.getId())) {
             Transaction extendTransaction = TransactionDb.findTransaction(extendTransactionId);
-            if (extendTransaction.getTimestamp() - Constants.MIN_PRUNABLE_LIFETIME > timestamp) {
+            if (extendTransaction.getTimestamp() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {
-                timestamp = timestamp + Math.min(Constants.MIN_PRUNABLE_LIFETIME, Integer.MAX_VALUE - timestamp);
+                timestamp = timestamp + Math.min(AplGlobalObjects.getChainConfig().getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp);
             }
             taggedData.transactionTimestamp = timestamp;
             taggedData.blockTimestamp = extendTransaction.getBlockTimestamp();
@@ -560,7 +567,7 @@ public class TaggedData {
     }
 
     static boolean isPruned(long transactionId) {
-        try (Connection con = Db.db.getConnection();
+        try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {

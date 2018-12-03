@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * The purpose of broadcast transaction is to support client side signing of transactions.
@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
  * <p>
  * The client then signs and submits the signed transaction using {@link com.apollocurrency.aplwallet.apl.http.BroadcastTransaction}
  * <p>
- * The default wallet implements this procedure in nrs.server.js which you can use as reference.
+ * The default wallet implements this procedure in ars.server.js which you can use as reference.
  * <p>
  * {@link com.apollocurrency.aplwallet.apl.http.BroadcastTransaction} accepts the following parameters:<br>
  * transactionJSON - JSON representation of the signed transaction<br>

@@ -124,6 +124,8 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isApiConnectable();
 
+    int getChainId();
+
     StringBuilder getPeerApiUri();
 
     String getBlacklistingCause();

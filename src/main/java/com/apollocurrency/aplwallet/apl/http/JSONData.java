@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.Alias;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Appendix;
 import com.apollocurrency.aplwallet.apl.Asset;
 import com.apollocurrency.aplwallet.apl.AssetDelete;
@@ -125,7 +126,7 @@ public final class JSONData {
             json.put("forgedBalanceATM", String.valueOf(account.getForgedBalanceATM()));
             if (includeEffectiveBalance) {
                 json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height));
-                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(Constants.GUARANTEED_BALANCE_CONFIRMATIONS, height)));
+                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), height)));
             }
         }
         return json;
@@ -370,7 +371,7 @@ public final class JSONData {
         //using one connection for 4 queries
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             long totalSupply = Account.getTotalSupply(con);
             long totalAccounts = Account.getTotalNumberOfAccounts(con);
             long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
@@ -480,6 +481,8 @@ public final class JSONData {
         putAccount(json, "generator", block.getGeneratorId());
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
+
+        json.put("timeout", block.getTimeout());
         json.put("numberOfTransactions", block.getTransactions().size());
         json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());
@@ -631,6 +634,7 @@ public final class JSONData {
         }
         json.put("services", servicesArray);
         json.put("blockchainState", peer.getBlockchainState());
+        json.put("chainId", peer.getChainId());
         return json;
     }
 

@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
+import com.apollocurrency.aplwallet.apl.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
 
 public class Chat {
     public static DbIterator<ChatInfo> getChatAccounts(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement stmt = con.prepareStatement(
                     "select account, max(timestamp) as timestamp from "
                             + "((SELECT recipient_id as account, timestamp from transaction "
@@ -49,7 +49,7 @@ public class Chat {
     public static DbIterator<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
         Connection con = null;
         try {
-            con = Db.db.getConnection();
+            con = Db.getDb().getConnection();
             PreparedStatement stmt = con.prepareStatement(
                     "SELECT * from transaction "
                             + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +
