@@ -48,7 +48,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
 
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",
-            "message", "messageIsText", "messageIsPrunable",
+            "message","messageSize", "messageIsText", "messageIsPrunable",
             "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
             "messageToEncryptToSelf", "messageToEncryptToSelfIsText", "encryptToSelfMessageData", "encryptToSelfMessageNonce", "compressMessageToEncryptToSelf",
             "phased", "phasingFinishHeight", "phasingVotingModel", "phasingQuorum", "phasingMinBalance", "phasingHolding", "phasingMinBalanceModel",
@@ -56,7 +56,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
-            "ecBlockId", "ecBlockHeight"};
+            "ecBlockId", "ecBlockHeight", "calculateFee"};
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
@@ -141,7 +141,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean calculateFee = ParameterParser.getBoolean(req, "calculateFee", false);
-        CreateTransactionRequestData data = parseRequest(req, calculateFee);
+        CreateTransactionRequestData data = parseRequest(req, !calculateFee);
         if (data.getErrorJson() != null) {
             return data.getErrorJson();
         }
@@ -175,9 +175,9 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         Appendix.Message message = null;
         Appendix.PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
-            prunablePlainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
+            prunablePlainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true, calculateFee);
         } else {
-            message = (Appendix.Message) ParameterParser.getPlainMessage(req, false);
+            message = (Appendix.Message) ParameterParser.getPlainMessage(req, false, calculateFee);
         }
         Appendix.PublicKeyAnnouncement publicKeyAnnouncement = null;
         String recipientPublicKey = Convert.emptyToNull(req.getParameter("recipientPublicKey"));

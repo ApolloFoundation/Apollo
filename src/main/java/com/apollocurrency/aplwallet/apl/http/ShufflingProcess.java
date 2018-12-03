@@ -75,7 +75,7 @@ public final class ShufflingProcess extends CreateTransaction {
             return new CreateTransactionRequestData(JSON.prepare(response));
         }
 
-        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
         byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, validate);

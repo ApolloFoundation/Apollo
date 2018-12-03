@@ -45,10 +45,10 @@ public final class CancelAskOrder extends CreateTransaction {
 
     @Override
     protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
-        long orderId = ParameterParser.getUnsignedLong(req, "order", true);
+        long orderId = ParameterParser.getUnsignedLong(req, "order", validate);
         Account account = ParameterParser.getSenderAccount(req, validate);
         Order.Ask orderData = Order.Ask.getAskOrder(orderId);
-        if (orderData == null || validate && orderData.getAccountId() != account.getId()) {
+        if (validate && (orderData == null || orderData.getAccountId() != account.getId())) {
             return new CreateTransactionRequestData(UNKNOWN_ORDER);
         }
         Attachment attachment = new Attachment.ColoredCoinsAskOrderCancellation(orderId);

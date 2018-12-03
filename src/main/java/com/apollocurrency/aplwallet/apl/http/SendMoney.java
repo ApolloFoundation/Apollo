@@ -43,7 +43,7 @@ public final class SendMoney extends CreateTransaction {
     @Override
     protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         long recipient = ParameterParser.getAccountId(req, "recipient", validate);
-        long amountATM = ParameterParser.getAmountATM(req);
+        long amountATM = ParameterParser.getAmountATM(req, validate);
         Account account = ParameterParser.getSenderAccount(req, validate);
         return new CreateTransactionRequestData(Attachment.ORDINARY_PAYMENT, recipient, account, amountATM);
     }

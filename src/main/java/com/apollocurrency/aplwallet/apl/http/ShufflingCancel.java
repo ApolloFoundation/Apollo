@@ -20,9 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 
 public final class ShufflingCancel extends CreateTransaction {
@@ -44,7 +46,7 @@ public final class ShufflingCancel extends CreateTransaction {
         Shuffling shuffling = ParameterParser.getShuffling(req);
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
         byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", validate);
-        long accountId = ParameterParser.getAccountId(req, accountName2FA(), false);
+        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
         byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
 //        TODO:perform fee calculation without using mock attachment
         Attachment.ShufflingCancellation attachment = validate ? shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash) :

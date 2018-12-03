@@ -285,8 +285,8 @@ public final class ParameterParser {
         return alias;
     }
 
-    public static long getAmountATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATM", 1L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), true);
+    public static long getAmountATM(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getLong(req, "amountATM", 1L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), isMandatory);
     }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {
@@ -747,15 +747,25 @@ public final class ParameterParser {
         }
     }
 
-    public static Appendix getPlainMessage(HttpServletRequest req, boolean prunable) throws ParameterException {
+    public static Appendix getPlainMessage(HttpServletRequest req, boolean prunable, boolean calculateFee) throws ParameterException {
         String messageValue = Convert.emptyToNull(req.getParameter("message"));
+        int messageSize = ParameterParser.getInt(req, "messageSize", 0, Integer.MAX_VALUE, calculateFee);
         boolean messageIsText = !"false".equalsIgnoreCase(req.getParameter("messageIsText"));
-        if (messageValue != null) {
+        if (messageValue != null || calculateFee) {
             try {
                 if (prunable) {
-                    return new Appendix.PrunablePlainMessage(messageValue, messageIsText);
+                    if (calculateFee) {
+                        return new Appendix.PrunablePlainMessage(new byte[messageSize], messageIsText);
+                    } else {
+                        return new Appendix.PrunablePlainMessage(messageValue, messageIsText);
+                    }
                 } else {
-                    return new Appendix.Message(messageValue, messageIsText);
+                    if (calculateFee) {
+                        return new Appendix.Message(new byte[messageSize], messageIsText);
+                    } else {
+                        return new Appendix.Message(messageValue, messageIsText);
+                    }
+
                 }
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);

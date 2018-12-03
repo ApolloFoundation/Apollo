@@ -47,7 +47,7 @@ public final class BuyAlias extends CreateTransaction {
     @Override
     protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
         Alias alias = ParameterParser.getAlias(req);
-        long amountATM = ParameterParser.getAmountATM(req);
+        long amountATM = ParameterParser.getAmountATM(req, validate);
         if (Alias.getOffer(alias) == null) {
             return new CreateTransactionRequestData(INCORRECT_ALIAS_NOTFORSALE);
         }
