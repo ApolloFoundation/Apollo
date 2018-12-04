@@ -1,4 +1,7 @@
 # Apollo Blockchain Platform 
+
+## Refactoring work in progress
+
 Apollo is being being developed by the Apollo Foundation and supporting members of the community.
 
 ## Requirements
