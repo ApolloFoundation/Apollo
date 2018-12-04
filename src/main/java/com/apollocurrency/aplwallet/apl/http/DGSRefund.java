@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
 
 public final class DGSRefund extends CreateTransaction {
 
@@ -51,11 +50,11 @@ public final class DGSRefund extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req, validate);
+        Account sellerAccount = ParameterParser.getSenderAccount(req);
         DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
-        if (validate && sellerAccount.getId() != purchase.getSellerId()) {
+        if (sellerAccount.getId() != purchase.getSellerId()) {
             return new CreateTransactionRequestData(INCORRECT_PURCHASE);
         }
         if (purchase.getRefundNote() != null) {
@@ -85,4 +84,8 @@ public final class DGSRefund extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsRefund(0, 0), null);
+    }
 }

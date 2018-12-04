@@ -66,13 +66,17 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
         long amountPerUnitATM = ParameterParser.getLong(req, "amountPerUnitATM", 1L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), true);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
         return new CreateTransactionRequestData(attachment, account);
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MonetarySystemReserveIncrease(0, 0), null);
+    }
 }

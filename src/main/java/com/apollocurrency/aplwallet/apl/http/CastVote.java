@@ -48,7 +48,7 @@ public final class CastVote extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Poll poll = ParameterParser.getPoll(req);
         if (poll.isFinished()) {
             return new CreateTransactionRequestData(POLL_FINISHED);
@@ -72,8 +72,13 @@ public final class CastVote extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_VOTE);
         }
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MessagingVoteCasting(poll.getId(), vote);
         return new CreateTransactionRequestData(attachment, account);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MessagingVoteCasting(0, new byte[0]), null);
     }
 }

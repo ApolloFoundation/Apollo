@@ -162,16 +162,21 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && (secretPhrase != null || passphrase != null);
         Appendix.EncryptedMessage encryptedMessage = null;
         Appendix.PrunableEncryptedMessage prunableEncryptedMessage = null;
-        if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
-            Account recipient = Account.getAccount(recipientId);
+        if (attachment.getTransactionType().canHaveRecipient() && (recipientId != 0 || calculateFee)) {
+            Account recipient = calculateFee ? null : Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
-                prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient,
-                        accountId,true);
+                prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) (calculateFee ?
+                        ParameterParser.getEncryptedMessageFeeAppendix(req, true) :
+                        ParameterParser.getEncryptedMessage(req, recipient, accountId,true));
             } else {
-                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, accountId, false);
+                encryptedMessage = (Appendix.EncryptedMessage) (calculateFee ?
+                        ParameterParser.getEncryptedMessageFeeAppendix(req, false) :
+                        ParameterParser.getEncryptedMessage(req, recipient, accountId,false));
             }
         }
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, accountId);
+        Appendix.EncryptToSelfMessage encryptToSelfMessage = calculateFee ?
+                ParameterParser.getEncryptToSelfMessageFeeAppendix(req) :
+                ParameterParser.getEncryptToSelfMessage(req, accountId);
         Appendix.Message message = null;
         Appendix.PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
@@ -306,5 +311,9 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return false;
     }
 
-    protected abstract CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException;
+    protected abstract CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException;
+
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return parseRequest(req);
+    }
 }

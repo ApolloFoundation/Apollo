@@ -48,9 +48,9 @@ public final class ExtendTaggedData extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null) {
@@ -66,4 +66,8 @@ public final class ExtendTaggedData extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+
+    }
 }

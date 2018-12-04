@@ -45,15 +45,20 @@ public final class DeleteAlias extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(final HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(final HttpServletRequest req) throws AplException {
         final Alias alias = ParameterParser.getAlias(req);
-        final Account owner = ParameterParser.getSenderAccount(req, validate);
+        final Account owner = ParameterParser.getSenderAccount(req);
 
-        if (validate && alias.getAccountId() != owner.getId()) {
+        if (alias.getAccountId() != owner.getId()) {
             return new CreateTransactionRequestData(INCORRECT_ALIAS_OWNER);
         }
 
         final Attachment attachment = new Attachment.MessagingAliasDelete(alias.getAliasName());
         return new CreateTransactionRequestData(attachment, owner);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MessagingAliasDelete(""), null);
     }
 }

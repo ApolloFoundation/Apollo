@@ -42,14 +42,19 @@ public final class DeleteCurrency extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
-        Account account = ParameterParser.getSenderAccount(req, validate);
-        if (validate && !currency.canBeDeletedBy(account.getId())) {
+        Account account = ParameterParser.getSenderAccount(req);
+        if (!currency.canBeDeletedBy(account.getId())) {
             return new CreateTransactionRequestData(JSONResponses.CANNOT_DELETE_CURRENCY);
         }
         Attachment attachment = new Attachment.MonetarySystemCurrencyDeletion(currency.getId());
 
         return new CreateTransactionRequestData(attachment, account);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MonetarySystemCurrencyDeletion(0), null);
     }
 }

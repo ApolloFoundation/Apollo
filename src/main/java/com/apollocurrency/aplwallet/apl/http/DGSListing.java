@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Search;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -50,11 +51,11 @@ public final class DGSListing extends CreateTransaction {
 
     private DGSListing() {
         super("messageFile", new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "name", "description", "tags", "quantity", "priceATM");
+                "name", "description", "tags", "quantity", "priceATM", "nameLength", "descriptionLength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
@@ -65,7 +66,7 @@ public final class DGSListing extends CreateTransaction {
         if (name == null) {
             return new CreateTransactionRequestData(MISSING_NAME);
         }
-        name = name.trim();
+         name = name.trim();
         if (name.length() > Constants.MAX_DGS_LISTING_NAME_LENGTH) {
             return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_NAME);
         }
@@ -78,7 +79,7 @@ public final class DGSListing extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_TAGS);
         }
 
-        Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true);
+        Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true, false);
         if (prunablePlainMessage != null) {
             if (prunablePlainMessage.isText()) {
                 return new CreateTransactionRequestData(MESSAGE_NOT_BINARY);
@@ -90,10 +91,37 @@ public final class DGSListing extends CreateTransaction {
             }
         }
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.DigitalGoodsListing(name, description, tags, quantity, priceATM);
         return new CreateTransactionRequestData(attachment, account);
 
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        int nameLength = ParameterParser.getInt(req, "nameLength", 1, Integer.MAX_VALUE, false);
+        int descriptionLength = ParameterParser.getInt(req, "descriptionLength", 1, Integer.MAX_VALUE, false, -1);
+        String name = Convert.emptyToNull(req.getParameter("name"));
+        String description = Convert.nullToEmpty(req.getParameter("description"));
+        if (nameLength == 0 && name == null) {
+            return new CreateTransactionRequestData(MISSING_NAME);
+        }
+        if (nameLength == 0) {
+            name = name.trim();
+            nameLength = name.length();
+        }
+        if (nameLength > Constants.MAX_DGS_LISTING_NAME_LENGTH) {
+            return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_NAME);
+        }
+        if (descriptionLength == -1) {
+            descriptionLength = description.length();
+        }
+        if (descriptionLength > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH) {
+            return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_DESCRIPTION);
+        }
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsListing(StringUtils.repeat('*',nameLength), StringUtils.repeat('*', descriptionLength),
+                null, 0, 0L),
+                null);
     }
 
     private static final JSONStreamAware MESSAGE_NOT_BINARY;

@@ -42,16 +42,21 @@ public class DividendPayment extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
             final int height = ParameterParser.getHeight(req);
             final long amountATMPerATU = ParameterParser.getAmountATMPerATU(req);
-            final Account account = ParameterParser.getSenderAccount(req, validate);
+            final Account account = ParameterParser.getSenderAccount(req);
             final Asset asset = ParameterParser.getAsset(req);
             if (Asset.getAsset(asset.getId(), height) == null) {
                 return new CreateTransactionRequestData(JSONResponses.ASSET_NOT_ISSUED_YET);
             }
             final Attachment attachment = new Attachment.ColoredCoinsDividendPayment(asset.getId(), height, amountATMPerATU);
             return new CreateTransactionRequestData(attachment, account, JSONResponses.NOT_ENOUGH_FUNDS);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ColoredCoinsDividendPayment(0, 0, 0), null);
     }
 }

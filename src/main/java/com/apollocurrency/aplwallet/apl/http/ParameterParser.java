@@ -88,6 +88,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Search;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -119,13 +120,13 @@ public final class ParameterParser {
         return getByte(req, name, min, max, isMandatory, (byte) 0);
     }
 
-    public static int getInt(HttpServletRequest req, String name, int min, int max, boolean isMandatory) throws ParameterException {
+    public static int getInt(HttpServletRequest req, String name, int min, int max, boolean isMandatory, int defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
                 throw new ParameterException(missing(name));
             }
-            return 0;
+            return defaultValue;
         }
         try {
             int value = Integer.parseInt(paramValue);
@@ -137,6 +138,10 @@ public final class ParameterParser {
             throw new ParameterException(incorrect(name, String.format("value %s is not numeric", paramValue)));
         }
     }
+    public static int getInt(HttpServletRequest req, String name, int min, int max, boolean isMandatory) throws ParameterException {
+        return getInt(req, name, min, max, isMandatory, 0);
+    }
+
 
     public static long getLong(HttpServletRequest req, String name, long min, long max,
                         boolean isMandatory) throws ParameterException {
@@ -288,6 +293,9 @@ public final class ParameterParser {
     public static long getAmountATM(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getLong(req, "amountATM", 1L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), isMandatory);
     }
+    public static long getAmountATM(HttpServletRequest req) throws ParameterException {
+        return getAmountATM(req, true);
+    }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {
         return getFeeATM(req, true);
@@ -296,9 +304,13 @@ public final class ParameterParser {
         return getLong(req, "feeATM", 0L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), isMandatory);
     }
 
-    public static long getPriceATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "priceATM", 1L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), true);
+    public static long getPriceATM(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getLong(req, "priceATM", 1L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), isMandatory);
     }
+    public static long getPriceATM(HttpServletRequest req) throws ParameterException {
+        return getPriceATM(req, true);
+    }
+
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
         Poll poll = Poll.getPoll(getUnsignedLong(req, "poll", true));
@@ -308,12 +320,19 @@ public final class ParameterParser {
         return poll;
     }
 
-    public static Asset getAsset(HttpServletRequest req) throws ParameterException {
-        Asset asset = Asset.getAsset(getUnsignedLong(req, "asset", true));
+    public static Asset getAsset(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        long assetId = getUnsignedLong(req, "asset", isMandatory);
+        if (assetId == 0) {
+            return null;
+        }
+        Asset asset = Asset.getAsset(assetId);
         if (asset == null) {
             throw new ParameterException(UNKNOWN_ASSET);
         }
         return asset;
+    }
+    public static Asset getAsset(HttpServletRequest req) throws ParameterException {
+        return getAsset(req, true);
     }
 
     public static Currency getCurrency(HttpServletRequest req) throws ParameterException {
@@ -352,8 +371,11 @@ public final class ParameterParser {
         return shuffling;
     }
 
+    public static long getQuantityATU(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+        return getLong(req, "quantityATU", 1L, Constants.MAX_ASSET_QUANTITY_ATU, isMandatory);
+    }
     public static long getQuantityATU(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "quantityATU", 1L, Constants.MAX_ASSET_QUANTITY_ATU, true);
+        return getQuantityATU(req, true);
     }
 
     public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {
@@ -368,8 +390,11 @@ public final class ParameterParser {
         return goods;
     }
 
-    public static int getGoodsQuantity(HttpServletRequest req) throws ParameterException {
+    public static int getGoodsQuantity(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getInt(req, "quantity", 0, Constants.MAX_DGS_LISTING_QUANTITY, true);
+    }
+    public static int getGoodsQuantity(HttpServletRequest req) throws ParameterException {
+        return getGoodsQuantity(req, true);
     }
 
     public static EncryptedData getEncryptedData(HttpServletRequest req, String messageType) throws ParameterException {
@@ -436,6 +461,16 @@ public final class ParameterParser {
         } else {
             return new Appendix.UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
         }
+    }
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessageFeeAppendix(HttpServletRequest req) throws ParameterException {
+        boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
+        boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
+        int encryptToSelfMessageSize = ParameterParser.getInt(req, "encryptToSelfMessageSize", 1, Constants.MAX_ENCRYPTED_MESSAGE_LENGTH, false);
+        if (encryptToSelfMessageSize != 0) {
+            EncryptedData encryptedData = new EncryptedData(new byte[encryptToSelfMessageSize], new byte[32]);
+            return new Appendix.EncryptToSelfMessage(encryptedData, isText, compress);
+        }
+        return null;
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
@@ -799,6 +834,28 @@ public final class ParameterParser {
         }
     }
 
+    public static Appendix getEncryptedMessageFeeAppendix(HttpServletRequest req, boolean prunable) throws ParameterException {
+        boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
+        boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
+        int encryptedMessageSize = ParameterParser.getInt(req, "encryptedMessageSize", 1, prunable ?
+                Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH : Constants.MAX_ENCRYPTED_MESSAGE_LENGTH, false);
+        if (encryptedMessageSize != 0) {
+            EncryptedData encryptedData = new EncryptedData(new byte[encryptedMessageSize], new byte[32]);
+            return prunable ?
+                    new Appendix.PrunableEncryptedMessage(encryptedData, isText, compress) :
+                    new Appendix.EncryptedMessage(encryptedData, isText, compress);
+        }
+        int plainMessageSize = ParameterParser.getInt(req, "messageToEncryptSize", 1, Integer.MAX_VALUE, false);
+        if (plainMessageSize != 0) {
+            int encryptedDataLength = EncryptedData.getEncryptedDataLength(plainMessageSize);
+            EncryptedData encryptedData = new EncryptedData(new byte[encryptedDataLength], new byte[32]);
+            return prunable ?
+                    new Appendix.PrunableEncryptedMessage(encryptedData, isText, compress) :
+                    new Appendix.EncryptedMessage(encryptedData, isText, compress);
+        }
+        return null;
+    }
+
     public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, long senderId, boolean prunable) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
@@ -946,6 +1003,54 @@ public final class ParameterParser {
         }
         return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
     }
+    public static Attachment.TaggedDataUpload getTaggedDataFeeAttachment(HttpServletRequest req) throws ParameterException,
+            AplException.NotValidException {
+        boolean isText = !"false".equalsIgnoreCase(req.getParameter("isText" ));
+        int nameLength =        ParameterParser.getInt(req,"nameLength"        , 1, Integer.MAX_VALUE, true);
+        int descriptionLength = ParameterParser.getInt(req,"descriptionLength" , 0, Integer.MAX_VALUE, false);
+        int tagsLength =        ParameterParser.getInt(req,"tagsLength"        , 0, Integer.MAX_VALUE, false);
+        int typeLength =        ParameterParser.getInt(req,"typeLength"        , 0, Integer.MAX_VALUE, false);
+        int channelLength =     ParameterParser.getInt(req,"channelLength"     , 0, Integer.MAX_VALUE, false);
+        int filenameLength =    ParameterParser.getInt(req,"filenameLength"    , 0, Integer.MAX_VALUE, false);
+        int dataLength =        ParameterParser.getInt(req,"dataLength"        , 0, Integer.MAX_VALUE, true);
+
+        if (nameLength > Constants.MAX_TAGGED_DATA_NAME_LENGTH) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_NAME);
+        }
+
+        if (descriptionLength > Constants.MAX_TAGGED_DATA_DESCRIPTION_LENGTH) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_DESCRIPTION);
+        }
+
+        if (tagsLength > Constants.MAX_TAGGED_DATA_TAGS_LENGTH) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_TAGS);
+        }
+
+        if (typeLength > Constants.MAX_TAGGED_DATA_TYPE_LENGTH) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_TYPE);
+        }
+
+        if (channelLength > Constants.MAX_TAGGED_DATA_CHANNEL_LENGTH) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_CHANNEL);
+        }
+
+        if (dataLength == 0) {
+            throw new ParameterException(INCORRECT_DATA_ZERO_LENGTH);
+        }
+
+        if (dataLength > Constants.MAX_TAGGED_DATA_DATA_LENGTH) {
+            throw new ParameterException(INCORRECT_DATA_TOO_LONG);
+        }
+
+        if (filenameLength > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
+            throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
+        }
+        return new Attachment.TaggedDataUpload(StringUtils.repeat('*', nameLength), StringUtils.repeat('*', descriptionLength),
+                StringUtils.repeat('*', tagsLength), StringUtils.repeat('*', typeLength),
+                StringUtils.repeat('*', channelLength), isText,
+                StringUtils.repeat('*', filenameLength), new byte[dataLength]);
+    }
+
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
         byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));

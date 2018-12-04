@@ -50,7 +50,7 @@ public class ApproveTransaction extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         String[] phasedTransactionValues = req.getParameterValues("transactionFullHash");
 
         if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
@@ -87,5 +87,10 @@ public class ApproveTransaction extends CreateTransaction {
         Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MessagingPhasingVoteCasting(phasedTransactionFullHashes, secret);
         return new CreateTransactionRequestData(attachment, account);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MessagingPhasingVoteCasting(null, null), null);
     }
 }

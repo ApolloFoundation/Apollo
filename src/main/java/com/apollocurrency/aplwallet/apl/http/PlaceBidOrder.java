@@ -46,12 +46,12 @@ public final class PlaceBidOrder extends CreateTransaction {
     @Override
     protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
 
-        Asset asset = ParameterParser.getAsset(req);
-        long priceATM = ParameterParser.getPriceATM(req);
-        long quantityATU = ParameterParser.getQuantityATU(req);
+        Asset asset = ParameterParser.getAsset(req, validate);
+        long priceATM = ParameterParser.getPriceATM(req, validate);
+        long quantityATU = ParameterParser.getQuantityATU(req, validate);
         Account account = ParameterParser.getSenderAccount(req, validate);
 
-        Attachment attachment = new Attachment.ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
+        Attachment attachment = new Attachment.ColoredCoinsBidOrderPlacement(asset == null ? 0 : asset.getId(), quantityATU, priceATM);
         return new CreateTransactionRequestData(attachment, account, NOT_ENOUGH_FUNDS);
     }
 

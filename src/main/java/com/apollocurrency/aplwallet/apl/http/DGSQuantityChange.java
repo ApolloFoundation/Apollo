@@ -49,11 +49,11 @@ public final class DGSQuantityChange extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
-        if (goods.isDelisted() || validate && goods.getSellerId() != account.getId()) {
+        if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return new CreateTransactionRequestData(UNKNOWN_GOODS);
         }
 
@@ -76,4 +76,8 @@ public final class DGSQuantityChange extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsQuantityChange(0L, 0), null);
+    }
 }

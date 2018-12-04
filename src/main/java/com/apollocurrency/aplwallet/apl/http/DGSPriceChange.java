@@ -45,15 +45,19 @@ public final class DGSPriceChange extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req, validate);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
+        Account account = ParameterParser.getSenderAccount(req);
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
         long priceATM = ParameterParser.getPriceATM(req);
-        if (goods.isDelisted() || validate && goods.getSellerId() != account.getId()) {
+        if (goods.isDelisted() ||goods.getSellerId() != account.getId()) {
             return new CreateTransactionRequestData(UNKNOWN_GOODS);
         }
         Attachment attachment = new Attachment.DigitalGoodsPriceChange(goods.getId(), priceATM);
         return new CreateTransactionRequestData(attachment, account);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsPriceChange(0L, 0L), null);
+    }
 }

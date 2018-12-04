@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public final class EncryptedData {
 
@@ -74,6 +74,9 @@ public final class EncryptedData {
             return 0;
         }
         return Crypto.aesEncrypt(plaintext, new byte[32]).length;
+    }
+    public static int getEncryptedDataLength(int messageSize) {
+        return getEncryptedDataLength(new byte[messageSize]);
     }
 
     public static int getEncryptedSize(byte[] plaintext) {

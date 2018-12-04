@@ -45,15 +45,20 @@ public final class BuyAlias extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Alias alias = ParameterParser.getAlias(req);
-        long amountATM = ParameterParser.getAmountATM(req, validate);
+        long amountATM = ParameterParser.getAmountATM(req);
         if (Alias.getOffer(alias) == null) {
             return new CreateTransactionRequestData(INCORRECT_ALIAS_NOTFORSALE);
         }
         long sellerId = alias.getAccountId();
         Attachment attachment = new Attachment.MessagingAliasBuy(alias.getAliasName());
-        Account buyer = ParameterParser.getSenderAccount(req, validate);
+        Account buyer = ParameterParser.getSenderAccount(req);
         return new CreateTransactionRequestData(attachment ,sellerId, buyer, amountATM);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MessagingAliasBuy(""), null);
     }
 }

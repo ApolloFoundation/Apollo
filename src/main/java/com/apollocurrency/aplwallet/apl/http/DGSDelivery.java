@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -48,15 +49,16 @@ public final class DGSDelivery extends CreateTransaction {
 
     private DGSDelivery() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "purchase", "discountATM", "goodsToEncrypt", "goodsIsText", "goodsData", "goodsNonce");
+                "purchase", "discountATM", "goodsToEncrypt", "goodsIsText", "goodsData", "goodsNonce", "goodsToEncryptLength",
+                "encryptedGoodsLength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req, validate);
+        Account sellerAccount = ParameterParser.getSenderAccount(req);
         DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
-        if (validate && sellerAccount.getId() != purchase.getSellerId()) {
+        if (sellerAccount.getId() != purchase.getSellerId()) {
             return new CreateTransactionRequestData(INCORRECT_PURCHASE);
         }
         if (! purchase.isPending()) {
@@ -94,7 +96,7 @@ public final class DGSDelivery extends CreateTransaction {
             } catch (RuntimeException e) {
                 return new CreateTransactionRequestData(INCORRECT_DGS_GOODS);
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount == null ? 0 : sellerAccount.getId(),broadcast);
+            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
             if (keySeed != null) {
                 encryptedGoods = buyerAccount.encryptTo(goodsBytes, keySeed, true);
             }
@@ -109,4 +111,35 @@ public final class DGSDelivery extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
+        int encryptedGoodsLength = ParameterParser.getInt(req, "encryptedGoodsLength", 1, Integer.MAX_VALUE, false);
+        EncryptedData encryptedGoods;
+        if (encryptedGoodsLength != 0) {
+            encryptedGoods = new EncryptedData(new byte[encryptedGoodsLength], new byte[32]);
+        } else {
+            encryptedGoods =  ParameterParser.getEncryptedData(req, "goods");
+        }
+
+        if (encryptedGoods == null) {
+            int goodsToEncryptLenth = ParameterParser.getInt(req, "goodsToEncryptLength", 1, Integer.MAX_VALUE, false);
+            if (goodsToEncryptLenth != 0) {
+                encryptedGoods = new EncryptedData(new byte[EncryptedData.getEncryptedDataLength(goodsToEncryptLenth)], new byte[32]);
+            } else {
+                try {
+                    String plainGoods = Convert.nullToEmpty(req.getParameter("goodsToEncrypt"));
+                    if (plainGoods.length() == 0) {
+                        return new CreateTransactionRequestData(INCORRECT_DGS_GOODS);
+                    }
+                    byte[] goodsBytes = goodsIsText ? Convert.toBytes(plainGoods) : Convert.parseHexString(plainGoods);
+                    encryptedGoods = new EncryptedData(new byte[EncryptedData.getEncryptedDataLength(goodsBytes)], new byte[32]);
+                } catch (RuntimeException e) {
+                    return new CreateTransactionRequestData(INCORRECT_DGS_GOODS);
+                }
+            }
+        }
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsDelivery(0, encryptedGoods, false, 0), null);
+
+    }
 }

@@ -54,4 +54,8 @@ public final class DGSDelisting extends CreateTransaction {
         return new CreateTransactionRequestData(attachment, account);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsDelisting(0), null);
+    }
 }

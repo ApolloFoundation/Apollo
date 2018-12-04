@@ -46,15 +46,15 @@ public final class DGSFeedback extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
 
-        Account buyerAccount = ParameterParser.getSenderAccount(req, validate);
-        if (validate && buyerAccount.getId() != purchase.getBuyerId()) {
+        Account buyerAccount = ParameterParser.getSenderAccount(req);
+        if (buyerAccount.getId() != purchase.getBuyerId()) {
             return new CreateTransactionRequestData(INCORRECT_PURCHASE);
         }
-        if (validate && purchase.getEncryptedGoods() == null) {
+        if (purchase.getEncryptedGoods() == null) {
             return new CreateTransactionRequestData(GOODS_NOT_DELIVERED);
         }
 
@@ -63,4 +63,8 @@ public final class DGSFeedback extends CreateTransaction {
         return new CreateTransactionRequestData(attachment, sellerAccount.getId(), buyerAccount, 0);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsFeedback(0), null);
+    }
 }

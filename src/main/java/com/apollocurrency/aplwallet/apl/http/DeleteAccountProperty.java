@@ -42,15 +42,15 @@ public final class DeleteAccountProperty extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req, validate);
+        Account senderAccount = ParameterParser.getSenderAccount(req);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        if (recipientId == 0 && validate) {
+        if (recipientId == 0) {
             recipientId = senderAccount.getId();
         }
         long setterId = ParameterParser.getAccountId(req, "setter", false);
-        if (setterId == 0 && validate) {
+        if (setterId == 0 ) {
             setterId = senderAccount.getId();
         }
         String property = Convert.nullToEmpty(req.getParameter("property")).trim();
@@ -58,15 +58,18 @@ public final class DeleteAccountProperty extends CreateTransaction {
             return new CreateTransactionRequestData(JSONResponses.MISSING_PROPERTY);
         }
         Account.AccountProperty accountProperty = Account.getProperty(recipientId, property, setterId);
-        if (accountProperty == null && validate) {
+        if (accountProperty == null) {
             return new CreateTransactionRequestData(JSONResponses.UNKNOWN_PROPERTY);
         }
-        if (validate && accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
+        if (accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
             return new CreateTransactionRequestData(JSONResponses.INCORRECT_PROPERTY);
         }
-        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty == null ? 0 : accountProperty.getId());
+        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty.getId());
         return new CreateTransactionRequestData(attachment, recipientId,senderAccount, 0);
-
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MessagingAccountPropertyDelete(0), null);
+    }
 }

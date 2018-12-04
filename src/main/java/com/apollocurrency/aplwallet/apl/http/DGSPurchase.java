@@ -51,7 +51,7 @@ public final class DGSPurchase extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
         if (goods.isDelisted()) {
@@ -82,11 +82,17 @@ public final class DGSPurchase extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_DELIVERY_DEADLINE_TIMESTAMP);
         }
 
-        Account buyerAccount = ParameterParser.getSenderAccount(req, validate);
+        Account buyerAccount = ParameterParser.getSenderAccount(req);
         Account sellerAccount = Account.getAccount(goods.getSellerId());
 
         Attachment attachment = new Attachment.DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
                 deliveryDeadline);
         return new CreateTransactionRequestData(attachment, sellerAccount.getId(),buyerAccount, 0);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.DigitalGoodsPurchase(0, 0, 0L,
+                0), null);
     }
 }
