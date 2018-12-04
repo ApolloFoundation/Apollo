@@ -202,9 +202,9 @@
       {
         "height": 341800,
         "maxNumberOfTransactions": 255,
-        "blockTime": 10,
-        "maxBlockTimeLimit": 60,
-        "minBlockTimeLimit": 7,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 30,
+        "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
         "consensus":
         {
