@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ChainIdServiceImpl implements ChainIdService {
@@ -28,6 +29,7 @@ public class ChainIdServiceImpl implements ChainIdService {
 
     private List<Chain> readChains() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InputStream is = getClass().getClassLoader().getResourceAsStream(chainsConfigFileLocations);
         if (is == null) {
             is = Files.newInputStream(Paths.get(chainsConfigFileLocations));

@@ -6,27 +6,26 @@
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo</artifactId>
     <version>1.24.0</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
     <organization>
         <name>Apollo Foundation</name>
         <url>https://www.apollocurrency.com/</url>
     </organization>
-    
+<!--    
     <modules>
         <module>apl-api</module>
         <module>apl-crypto</module>
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
-        <!-- integration tests should not be included in build profiles -->
         <module>apl-tests</module>
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
     </modules>
-    
+ -->    
     <properties>
         <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
