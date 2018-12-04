@@ -16,12 +16,9 @@
     <dependencies>
         <!-- POPJO <-> JSON -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-crypto</artifactId>
+            <version>${project.version}</version>
         </dependency>
         
 <!-- Swagger annotation for API auto-documenting --> 
