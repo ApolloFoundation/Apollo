@@ -91,5 +91,14 @@ your software versions using instructions from __"Preparation steps" section__
    * application should start in desktop mode
    * if you require command line mode -> use ___run.bat___ instead of ___run-desktop.bat___
 
+## Possible problems and solutions
+In case you get compilation error like:
+package com.sun.javafx.scene.control.skin does not exist
+[ERROR] /Apollo/src/main/java/com/apollocurrency/aplwallet/apldesktop/WalletContextMenu.java:[24,20] package javafx.event does not exist
+[ERROR] /Apollo/src/main/java/com/apollocurrency/aplwallet/apldesktop/WalletContextMenu.java:[25,20] package javafx.scene does not exist
+[ERROR] /Apollo/src/main/java/com/apollocurrency/aplwallet/apldesktop/WalletContextMenu.java:[27,28] package javafx.scene.control does not exist
 
+you have to install 'openfx' library for JDK
+
+* on Ubuntu install by command > sudo apt-get install openjfx
 
