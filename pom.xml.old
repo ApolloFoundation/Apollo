@@ -4,29 +4,15 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo</artifactId>
-    <version>1.24.0</version>
-    <packaging>pom</packaging>
+    <artifactId>apollo-wallet</artifactId>
+    <version>1.23.0</version>
+    <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
     <organization>
         <name>Apollo Foundation</name>
         <url>https://www.apollocurrency.com/</url>
     </organization>
-    
-    <modules>
-        <module>apl-api</module>
-        <module>apl-crypto</module>
-        <module>apl-utils</module>
-        <module>apl-core</module>
-        <module>apl-updater</module>
-        <!-- integration tests should not be included in build profiles -->
-        <module>apl-tests</module>
-        <module>apl-tools</module>
-        <module>apl-exec</module>
-        <module>apl-desktop</module>
-    </modules>
-    
     <properties>
         <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,35 +62,7 @@
         <spring.version>5.0.7.RELEASE</spring.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
-<!-- TODO: cleanup -->        
-        <logback.version>1.2.3</logback.version>
-        <jackson.version>2.9.6</jackson.version>
-        <json-simple.version>1.1.1</json-simple.version>
-        <apache-lucene.version>5.5.5</apache-lucene.version>
-        <servlet-api.version>3.1.0</servlet-api.version>
-        <jetty.version>9.4.12.v20180830</jetty.version>
-        <h2.version>1.4.196</h2.version>
-        <apache-tika.version>1.17</apache-tika.version>
-        <bitlet.version>0.1.4</bitlet.version>
-        <zxing.version>3.3.3</zxing.version>
-        <weld.version>3.0.5.Final</weld.version>
-        <weld-junit5.version>1.3.1.Final</weld-junit5.version>
-        <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>3.6.1.Final</resteasy.version>
-        <swagger.version>1.5.21</swagger.version>
-        <apache-commons-io.version>2.6</apache-commons-io.version>
-        <junit-5-bom.version>5.3.1</junit-5-bom.version>
-        <mockito.version>2.22.0</mockito.version>
-        <hikari.version>3.2.0</hikari.version>
-        <jcommander.version>1.72</jcommander.version>
-        <jdbi3-core.version>3.5.1</jdbi3-core.version>
-        <jdbi3-sqlobject.version>3.5.1</jdbi3-sqlobject.version>
-        <lombok.version>1.18.4</lombok.version>
-        <surefire-plugin.version>2.22.1</surefire-plugin.version>
-        <compile-plugin.version>3.8.0</compile-plugin.version>  
-        
     </properties>
-    
     <profiles>
         <profile>
             <id>arm64</id>
@@ -175,265 +133,7 @@
             </properties>
         </profile>
     </profiles>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <!-- json-simple should be gone after new REST completion -->
-            <dependency>
-                <groupId>com.googlecode.json-simple</groupId>
-                <artifactId>json-simple</artifactId>
-                <version>${json-simple.version}</version>
-            </dependency>
-            <!-- json-simple should be gone after new REST completion -->
-            <dependency>
-                <groupId>com.googlecode.json-simple</groupId>
-                <artifactId>json-simple</artifactId>
-                <version>${json-simple.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-json-org</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-               <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-                
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-queries</artifactId>
-                <version>${apache-lucene.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-queryparser</artifactId>
-                <version>${apache-lucene.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-analyzers-common</artifactId>
-                <version>${apache-lucene.version}</version>
-            </dependency>
-             <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>${servlet-api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-proxy</artifactId>
-                <version>${jetty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-server</artifactId>
-                <version>${jetty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-servlet</artifactId>
-                <version>${jetty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty.websocket</groupId>
-                <artifactId>websocket-client</artifactId>
-                <version>${jetty.version}</version>
-                <classifier>hybrid</classifier>
-            </dependency>
-             <dependency>
-                <groupId>org.eclipse.jetty.websocket</groupId>
-                <artifactId>websocket-server</artifactId>
-                <version>${jetty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-servlets</artifactId>
-                <version>${jetty.version}</version>
-            </dependency>
-                
-            <!-- REST:  Need to put api here because strange things happens without it  -->
-            <dependency>
-                <groupId>javax.ws.rs</groupId>
-                <artifactId>javax.ws.rs-api</artifactId>
-                <version>${rs-api.version}</version>
-            </dependency>
-            <!-- RESTEasy runtime dependencies -->
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-servlet-initializer</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-jackson-provider</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
-             <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-jackson2-provider</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-validator-provider-11</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
-              <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging</artifactId>
-                <version>3.2.1.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-annotations</artifactId>
-                <version>2.1.0.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-processor</artifactId>
-                <version>2.1.0.Final</version>
-            </dependency>
-                
-            <!-- Swagger runtime dependencies -->
-            <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-jaxrs</artifactId>
-                <version>${swagger.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-annotations</artifactId>
-                <version>${swagger.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.h2database</groupId>
-                <artifactId>h2</artifactId>
-                <version>${h2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tika</groupId>
-                <artifactId>tika-parsers</artifactId>
-                <version>${apache-tika.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.bitlet</groupId>
-                <artifactId>weupnp</artifactId>
-                <version>${bitlet.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.zxing</groupId>
-                <artifactId>core</artifactId>
-                <version>${zxing.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.zxing</groupId>
-                <artifactId>javase</artifactId>
-                <version>${zxing.version}</version>
-            </dependency>
-             <dependency>
-                <groupId>org.jboss.weld.se</groupId>
-                <artifactId>weld-se-core</artifactId>
-                <version>${weld.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.weld.servlet</groupId>
-                <artifactId>weld-servlet-shaded</artifactId>
-                <version>${weld.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.weld</groupId>
-                <artifactId>weld-junit5</artifactId>
-                <version>${weld-junit5.version}</version>
-                <scope>test</scope>
-            </dependency>
-                
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-cdi</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-jaxrs</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
-             <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${apache-commons-io.version}</version>
-            </dependency>
-                
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit-5-bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>${mockito.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-junit-jupiter</artifactId>
-                <version>${mockito.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
-            </dependency>
-                
-            <dependency>
-                <groupId>com.zaxxer</groupId>
-                <artifactId>HikariCP</artifactId>
-                <version>${hikari.version}</version>
-            </dependency>
-                
-            <dependency>
-                <groupId>com.beust</groupId>
-                <artifactId>jcommander</artifactId>
-                <version>${jcommander.version}</version>
-            </dependency>
-                
-            <dependency>
-                <groupId>org.jdbi</groupId>
-                <artifactId>jdbi3-core</artifactId>
-                <version>${jdbi3-core.version}</version>
-            </dependency>
-                
-            <dependency>
-                <groupId>org.jdbi</groupId>
-                <artifactId>jdbi3-sqlobject</artifactId>
-                <version>${jdbi3-sqlobject.version}</version>
-            </dependency>
-             <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
-                <scope>provided</scope>
-            </dependency>                                                                                                                         
-        </dependencies>
-    </dependencyManagement>            
 
     <dependencies>
         <!--Apache-commons-->
@@ -860,7 +560,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
                 <configuration>
                     <finalName>Apollo</finalName>
                     <archive>
