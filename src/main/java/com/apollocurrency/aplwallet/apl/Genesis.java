@@ -70,8 +70,9 @@ public final class Genesis {
 
     private static byte[] loadGenesisAccountsJSON() {
         MessageDigest digest = Crypto.sha256();
+        String path = "conf/"+AplGlobalObjects.getChainConfig().getChain().getGenesisLocation();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
-                ClassLoader.getSystemResourceAsStream(AplGlobalObjects.getChainConfig().getChain().getGenesisLocation()), digest))) {
+                ClassLoader.getSystemResourceAsStream(path), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
         } catch (IOException|ParseException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
