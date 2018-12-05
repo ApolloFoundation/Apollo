@@ -324,7 +324,7 @@ var NRS = (function(NRS, $, undefined) {
         	setInterval(function() {
                 that.getItems();
 
-            }, 60000)
+            }, 4000)
 		};
 		this.blocksPulling = function() {
 			var that = this;
