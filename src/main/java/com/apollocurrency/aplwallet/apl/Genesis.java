@@ -55,7 +55,7 @@ public final class Genesis {
     private static final String GENESIS_ACCOUNTS_JSON_PATH_MAINNET_SUFFIX = ".json";
 
     static {
-        try (InputStream is = ClassLoader.getSystemResourceAsStream("data/genesisParameters.json")) {
+        try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
             CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
             CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
@@ -129,8 +129,9 @@ public final class Genesis {
     }
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
+            String path = "conf/"+AplGlobalObjects.getChainConfig().getChain().getGenesisLocation();
             try (InputStreamReader is = new InputStreamReader(
-                    Genesis.class.getClassLoader().getResourceAsStream(AplGlobalObjects.getChainConfig().getChain().getGenesisLocation()))) {
+                    Genesis.class.getClassLoader().getResourceAsStream(path))) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode root = objectMapper.readTree(is);
                 JsonNode balancesArray = root.get("balances");
