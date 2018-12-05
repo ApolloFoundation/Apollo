@@ -271,7 +271,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 request.put("exclude", exclude);
                 request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
                 JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId(),
-                        10 * 1024 * 1024);
+                        10 * 1024 * 1024, false);
                 if (response == null) {
                     return;
                 }
