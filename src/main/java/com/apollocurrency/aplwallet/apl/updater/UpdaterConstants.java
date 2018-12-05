@@ -17,7 +17,7 @@ public class UpdaterConstants {
 
     static {
         updaterProperties = new Properties();
-        try (InputStream is = UpdaterConstants.class.getClassLoader().getResourceAsStream("updater.properties")) {
+        try (InputStream is = UpdaterConstants.class.getClassLoader().getResourceAsStream("conf/updater.properties")) {
             updaterProperties.load(is);
         }
         catch (Throwable e) {

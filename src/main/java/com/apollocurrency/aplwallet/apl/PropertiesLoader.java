@@ -21,8 +21,6 @@ import java.util.Properties;
 
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import java.net.URL;
-import java.util.Enumeration;
 import org.slf4j.Logger;
 
 public class PropertiesLoader {
