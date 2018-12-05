@@ -22,9 +22,10 @@ package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -208,7 +209,7 @@ public final class PassphraseRecovery {
                     byte[] publicKey = Crypto.getPublicKey(secretPhrase);
                     long id = Account.getId(publicKey);
                     if (publicKeys.keySet().contains(id)) {
-                        return new Solution(secretPhrase, publicKeys.get(id), id, Convert.rsAccount(id));
+                        return new Solution(secretPhrase, publicKeys.get(id), id, Convert2.rsAccount(id));
                     }
                 }
             }
@@ -241,7 +242,7 @@ public final class PassphraseRecovery {
             this.passphrase = passphrase;
             this.publicKey = publicKey;
             this.accountId = accountId;
-            this.rsAccount = Convert.rsAccount(accountId);
+            this.rsAccount = Convert2.rsAccount(accountId);
         }
 
         @Override

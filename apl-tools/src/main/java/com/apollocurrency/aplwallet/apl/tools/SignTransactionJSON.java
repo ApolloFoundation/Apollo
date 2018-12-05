@@ -30,10 +30,11 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Convert2;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -64,7 +65,7 @@ public final class SignTransactionJSON {
             try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))){
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
                 byte[] publicKeyHash = Crypto.sha256().digest(Convert.parseHexString((String) json.get("senderPublicKey")));
-                String senderRS = Convert.rsAccount(Convert.fullHashToId(publicKeyHash));
+                String senderRS = Convert2.rsAccount(Convert.fullHashToId(publicKeyHash));
                 byte[] keySeed = readKeySeed();
                 Files.write(signed.toPath(), signTransaction(json, keySeed).getBytes(), StandardOpenOption.CREATE);
                 System.out.println("Signed transaction JSON saved as: " + signed.getAbsolutePath());

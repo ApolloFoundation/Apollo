@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 //TODO: add vault wallets support
 public class GeneratePublicKey {

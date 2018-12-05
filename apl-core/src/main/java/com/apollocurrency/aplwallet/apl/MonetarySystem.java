@@ -72,7 +72,7 @@ public abstract class MonetarySystem extends TransactionType {
     }
 
     @Override
-    boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         Attachment.MonetarySystemAttachment attachment = (Attachment.MonetarySystemAttachment) transaction.getAttachment();
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());
         String nameLower = currency.getName().toLowerCase();
@@ -151,17 +151,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyIssuance(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyIssuance(attachmentData);
         }
 
         @Override
-        boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
             String nameLower = attachment.getName().toLowerCase();
             String codeLower = attachment.getCode().toLowerCase();
@@ -178,7 +178,7 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
             if (attachment.getMaxSupply() > Constants.MAX_CURRENCY_TOTAL_SUPPLY
                     || attachment.getMaxSupply() <= 0
@@ -247,17 +247,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemReserveIncrease parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemReserveIncrease parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemReserveIncrease(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemReserveIncrease parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemReserveIncrease parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemReserveIncrease(attachmentData);
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemReserveIncrease attachment = (Attachment.MonetarySystemReserveIncrease) transaction.getAttachment();
             if (attachment.getAmountPerUnitATM() <= 0) {
                 throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
@@ -325,17 +325,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemReserveClaim parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemReserveClaim parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemReserveClaim(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemReserveClaim parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemReserveClaim parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemReserveClaim(attachmentData);
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemReserveClaim attachment = (Attachment.MonetarySystemReserveClaim) transaction.getAttachment();
             if (attachment.getUnits() <= 0) {
                 throw new AplException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
@@ -396,17 +396,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyTransfer(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyTransfer(attachmentData);
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemCurrencyTransfer attachment = (Attachment.MonetarySystemCurrencyTransfer) transaction.getAttachment();
             if (attachment.getUnits() <= 0) {
                 throw new AplException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
@@ -475,17 +475,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemPublishExchangeOffer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemPublishExchangeOffer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemPublishExchangeOffer(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemPublishExchangeOffer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemPublishExchangeOffer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemPublishExchangeOffer(attachmentData);
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer) transaction.getAttachment();
             if (attachment.getBuyRateATM() <= 0
                     || attachment.getSellRateATM() <= 0
@@ -562,7 +562,7 @@ public abstract class MonetarySystem extends TransactionType {
     abstract static class MonetarySystemExchange extends MonetarySystem {
 
         @Override
-        final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange) transaction.getAttachment();
             if (attachment.getRateATM() <= 0 || attachment.getUnits() == 0) {
                 throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
@@ -599,17 +599,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemExchangeBuy parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemExchangeBuy parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemExchangeBuy(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemExchangeBuy parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemExchangeBuy parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemExchangeBuy(attachmentData);
         }
 
         @Override
-        boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             return super.isDuplicate(transaction, duplicates);
         }
 
@@ -658,12 +658,12 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemExchangeSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemExchangeSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemExchangeSell(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemExchangeSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemExchangeSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemExchangeSell(attachmentData);
         }
 
@@ -715,17 +715,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyMinting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyMinting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyMinting(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyMinting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyMinting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyMinting(attachmentData);
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemCurrencyMinting attachment = (Attachment.MonetarySystemCurrencyMinting) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);
@@ -763,7 +763,7 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             Attachment.MonetarySystemCurrencyMinting attachment = (Attachment.MonetarySystemCurrencyMinting) transaction.getAttachment();
             return TransactionType.isDuplicate(CURRENCY_MINTING, attachment.getCurrencyId() + ":" + transaction.getSenderId(), duplicates, true)
                     || super.isDuplicate(transaction, duplicates);
@@ -800,17 +800,17 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyDeletion parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyDeletion parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyDeletion(buffer);
         }
 
         @Override
-        Attachment.MonetarySystemCurrencyDeletion parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.MonetarySystemCurrencyDeletion parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.MonetarySystemCurrencyDeletion(attachmentData);
         }
 
         @Override
-        boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        public  boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
             Attachment.MonetarySystemCurrencyDeletion attachment = (Attachment.MonetarySystemCurrencyDeletion) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             String nameLower = currency.getName().toLowerCase();
@@ -823,7 +823,7 @@ public abstract class MonetarySystem extends TransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.MonetarySystemCurrencyDeletion attachment = (Attachment.MonetarySystemCurrencyDeletion) transaction.getAttachment();
             Currency currency = Currency.getCurrency(attachment.getCurrencyId());
             CurrencyType.validate(currency, transaction);

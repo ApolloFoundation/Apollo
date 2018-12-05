@@ -227,11 +227,11 @@ public abstract class TransactionType {
 
     public abstract LedgerEvent getLedgerEvent();
 
-    abstract Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
+    public abstract Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
 
-    abstract Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
+    public abstract Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 
-    abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
+    public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false iff double spending
     final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
@@ -282,7 +282,7 @@ public abstract class TransactionType {
 
     abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
-    boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         return false;
     }
 
@@ -418,17 +418,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return Attachment.ORDINARY_PAYMENT;
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return Attachment.ORDINARY_PAYMENT;
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid ordinary payment");
                 }
@@ -454,17 +454,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return Attachment.PRIVATE_PAYMENT;
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return Attachment.PRIVATE_PAYMENT;
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid private payment");
                 }
@@ -510,12 +510,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return Attachment.ARBITRARY_MESSAGE;
             }
 
             @Override
-            Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return Attachment.ARBITRARY_MESSAGE;
             }
 
@@ -524,7 +524,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment attachment = transaction.getAttachment();
                 if (transaction.getAmountATM() != 0) {
                     throw new AplException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
@@ -582,23 +582,23 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasAssignment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAliasAssignment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasAssignment(buffer);
             }
 
             @Override
-            Attachment.MessagingAliasAssignment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAliasAssignment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasAssignment(attachmentData);
             }
 
             @Override
-            void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
                 Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
                 Alias.addOrUpdateAlias(transaction, attachment);
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
                 return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
             }
@@ -610,7 +610,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
                 if (attachment.getAliasName().length() == 0
                         || attachment.getAliasName().length() > Constants.MAX_ALIAS_LENGTH
@@ -658,12 +658,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAliasSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasSell(buffer);
             }
 
             @Override
-            Attachment.MessagingAliasSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAliasSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasSell(attachmentData);
             }
 
@@ -674,14 +674,14 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.MessagingAliasSell attachment = (Attachment.MessagingAliasSell) transaction.getAttachment();
                 // not a bug, uniqueness is based on Messaging.ALIAS_ASSIGNMENT
                 return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 if (transaction.getAmountATM() != 0) {
                     throw new AplException.NotValidException("Invalid sell alias transaction: " +
                             transaction.getJSONObject());
@@ -749,12 +749,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasBuy parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAliasBuy parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasBuy(buffer);
             }
 
             @Override
-            Attachment.MessagingAliasBuy parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAliasBuy parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasBuy(attachmentData);
             }
 
@@ -767,14 +767,14 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.MessagingAliasBuy attachment = (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 // not a bug, uniqueness is based on Messaging.ALIAS_ASSIGNMENT
                 return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 final Attachment.MessagingAliasBuy attachment =
                         (Attachment.MessagingAliasBuy) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
@@ -831,12 +831,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAliasDelete parseAttachment(final ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAliasDelete parseAttachment(final ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasDelete(buffer);
             }
 
             @Override
-            Attachment.MessagingAliasDelete parseAttachment(final JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAliasDelete parseAttachment(final JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAliasDelete(attachmentData);
             }
 
@@ -848,14 +848,14 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.MessagingAliasDelete attachment = (Attachment.MessagingAliasDelete) transaction.getAttachment();
                 // not a bug, uniqueness is based on Messaging.ALIAS_ASSIGNMENT
                 return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
             }
 
             @Override
-            void validateAttachment(final Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(final Transaction transaction) throws AplException.ValidationException {
                 final Attachment.MessagingAliasDelete attachment =
                         (Attachment.MessagingAliasDelete) transaction.getAttachment();
                 final String aliasName = attachment.getAliasName();
@@ -928,12 +928,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingPollCreation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingPollCreation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingPollCreation(buffer);
             }
 
             @Override
-            Attachment.MessagingPollCreation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingPollCreation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingPollCreation(attachmentData);
             }
 
@@ -944,7 +944,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
 
                 Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) transaction.getAttachment();
 
@@ -1029,12 +1029,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingVoteCasting(buffer);
             }
 
             @Override
-            Attachment.MessagingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingVoteCasting(attachmentData);
             }
 
@@ -1045,7 +1045,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
 
                 Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
                 if (attachment.getPollId() == 0 || attachment.getPollVote() == null
@@ -1087,7 +1087,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
                 String key = Long.toUnsignedString(attachment.getPollId()) + ":" + Long.toUnsignedString(transaction.getSenderId());
                 return isDuplicate(Messaging.VOTE_CASTING, key, duplicates, true);
@@ -1133,12 +1133,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingPhasingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingPhasingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingPhasingVoteCasting(buffer);
             }
 
             @Override
-            Attachment.MessagingPhasingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingPhasingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingPhasingVoteCasting(attachmentData);
             }
 
@@ -1148,7 +1148,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
 
                 Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
                 byte[] revealedSecret = attachment.getRevealedSecret();
@@ -1257,17 +1257,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAccountInfo parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAccountInfo parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAccountInfo(buffer);
             }
 
             @Override
-            Attachment.MessagingAccountInfo parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAccountInfo parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAccountInfo(attachmentData);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.MessagingAccountInfo attachment = (Attachment.MessagingAccountInfo)transaction.getAttachment();
                 if (attachment.getName().length() > Constants.MAX_ACCOUNT_NAME_LENGTH
                         || attachment.getDescription().length() > Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH) {
@@ -1329,17 +1329,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAccountProperty parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAccountProperty parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAccountProperty(buffer);
             }
 
             @Override
-            Attachment.MessagingAccountProperty parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAccountProperty parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAccountProperty(attachmentData);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.MessagingAccountProperty attachment = (Attachment.MessagingAccountProperty)transaction.getAttachment();
                 if (attachment.getProperty().length() > Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH
                         || attachment.getProperty().length() == 0
@@ -1390,17 +1390,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MessagingAccountPropertyDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MessagingAccountPropertyDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MessagingAccountPropertyDelete(buffer);
             }
 
             @Override
-            Attachment.MessagingAccountPropertyDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MessagingAccountPropertyDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MessagingAccountPropertyDelete(attachmentData);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.MessagingAccountPropertyDelete attachment = (Attachment.MessagingAccountPropertyDelete)transaction.getAttachment();
                 Account.AccountProperty accountProperty = Account.getProperty(attachment.getPropertyId());
                 if (accountProperty == null) {
@@ -1493,12 +1493,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAssetIssuance(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsAssetIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAssetIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAssetIssuance(attachmentData);
             }
 
@@ -1520,7 +1520,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance)transaction.getAttachment();
                 if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH
                         || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH
@@ -1580,12 +1580,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAssetTransfer(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsAssetTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAssetTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAssetTransfer(attachmentData);
             }
 
@@ -1623,7 +1623,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+           public  void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer)transaction.getAttachment();
                 if (transaction.getAmountATM() != 0 || attachment.getAssetId() == 0) {
                     throw new AplException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
@@ -1672,12 +1672,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAssetDelete(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsAssetDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAssetDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAssetDelete(attachmentData);
             }
 
@@ -1709,7 +1709,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
                 if (attachment.getAssetId() == 0) {
                     throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
@@ -1739,7 +1739,7 @@ public abstract class TransactionType {
         abstract static class ColoredCoinsOrderPlacement extends ColoredCoins {
 
             @Override
-            final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
                 if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
                         || attachment.getAssetId() == 0) {
@@ -1785,12 +1785,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAskOrderPlacement parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAskOrderPlacement parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAskOrderPlacement(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsAskOrderPlacement parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAskOrderPlacement parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAskOrderPlacement(attachmentData);
             }
 
@@ -1839,12 +1839,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsBidOrderPlacement parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsBidOrderPlacement parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsBidOrderPlacement(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsBidOrderPlacement parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsBidOrderPlacement parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsBidOrderPlacement(attachmentData);
             }
 
@@ -1921,12 +1921,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsAskOrderCancellation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAskOrderCancellation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAskOrderCancellation(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsAskOrderCancellation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsAskOrderCancellation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsAskOrderCancellation(attachmentData);
             }
 
@@ -1942,7 +1942,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
                 Order ask = Order.Ask.getAskOrder(attachment.getOrderId());
                 if (ask == null) {
@@ -1974,12 +1974,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsBidOrderCancellation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsBidOrderCancellation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsBidOrderCancellation(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsBidOrderCancellation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ColoredCoinsBidOrderCancellation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ColoredCoinsBidOrderCancellation(attachmentData);
             }
 
@@ -1995,7 +1995,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
                 Order bid = Order.Bid.getBidOrder(attachment.getOrderId());
                 if (bid == null) {
@@ -2027,12 +2027,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ColoredCoinsDividendPayment parseAttachment(ByteBuffer buffer) {
+            public Attachment.ColoredCoinsDividendPayment parseAttachment(ByteBuffer buffer) {
                 return new Attachment.ColoredCoinsDividendPayment(buffer);
             }
 
             @Override
-            Attachment.ColoredCoinsDividendPayment parseAttachment(JSONObject attachmentData) {
+            public Attachment.ColoredCoinsDividendPayment parseAttachment(JSONObject attachmentData) {
                 return new Attachment.ColoredCoinsDividendPayment(attachmentData);
             }
 
@@ -2073,7 +2073,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
                 if (attachment.getHeight() > Apl.getBlockchain().getHeight()) {
                     throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight()
@@ -2101,7 +2101,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
                 return isDuplicate(ColoredCoins.DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
             }
@@ -2140,7 +2140,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Invalid digital goods transaction");
             }
@@ -2181,12 +2181,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsListing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsListing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsListing(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsListing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsListing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsListing(attachmentData);
             }
 
@@ -2261,12 +2261,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsDelisting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsDelisting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsDelisting(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsDelisting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsDelisting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsDelisting(attachmentData);
             }
 
@@ -2290,7 +2290,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.DigitalGoodsDelisting attachment = (Attachment.DigitalGoodsDelisting) transaction.getAttachment();
                 return isDuplicate(DigitalGoods.DELISTING, Long.toUnsignedString(attachment.getGoodsId()), duplicates, true);
             }
@@ -2325,12 +2325,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsPriceChange parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsPriceChange parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsPriceChange(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsPriceChange parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsPriceChange parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsPriceChange(attachmentData);
             }
 
@@ -2355,7 +2355,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
                 // not a bug, uniqueness is based on DigitalGoods.DELISTING
                 return isDuplicate(DigitalGoods.DELISTING, Long.toUnsignedString(attachment.getGoodsId()), duplicates, true);
@@ -2391,12 +2391,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsQuantityChange parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsQuantityChange parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsQuantityChange(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsQuantityChange parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsQuantityChange parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsQuantityChange(attachmentData);
             }
 
@@ -2422,7 +2422,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.DigitalGoodsQuantityChange attachment = (Attachment.DigitalGoodsQuantityChange) transaction.getAttachment();
                 // not a bug, uniqueness is based on DigitalGoods.DELISTING
                 return isDuplicate(DigitalGoods.DELISTING, Long.toUnsignedString(attachment.getGoodsId()), duplicates, true);
@@ -2458,12 +2458,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsPurchase parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsPurchase parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsPurchase(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsPurchase parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsPurchase parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsPurchase(attachmentData);
             }
 
@@ -2516,7 +2516,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
                 // not a bug, uniqueness is based on DigitalGoods.DELISTING
                 return isDuplicate(DigitalGoods.DELISTING, Long.toUnsignedString(attachment.getGoodsId()), duplicates, false);
@@ -2565,12 +2565,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsDelivery parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsDelivery parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsDelivery(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsDelivery parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsDelivery parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 if (attachmentData.get("goodsData") == null) {
                     return new Attachment.UnencryptedDigitalGoodsDelivery(attachmentData);
                 }
@@ -2609,7 +2609,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.DigitalGoodsDelivery attachment = (Attachment.DigitalGoodsDelivery) transaction.getAttachment();
                 return isDuplicate(DigitalGoods.DELIVERY, Long.toUnsignedString(attachment.getPurchaseId()), duplicates, true);
             }
@@ -2644,12 +2644,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsFeedback parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsFeedback parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsFeedback(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsFeedback parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsFeedback parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsFeedback(attachmentData);
             }
 
@@ -2712,12 +2712,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.DigitalGoodsRefund parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsRefund parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsRefund(buffer);
             }
 
             @Override
-            Attachment.DigitalGoodsRefund parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.DigitalGoodsRefund parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.DigitalGoodsRefund(attachmentData);
             }
 
@@ -2763,7 +2763,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
                 return isDuplicate(DigitalGoods.REFUND, Long.toUnsignedString(attachment.getPurchaseId()), duplicates, true);
             }
@@ -2819,12 +2819,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
             }
 
             @Override
-            Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.AccountControlEffectiveBalanceLeasing(attachmentData);
             }
 
@@ -2835,7 +2835,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+           public  void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing)transaction.getAttachment();
                 if (transaction.getSenderId() == transaction.getRecipientId()) {
                     throw new AplException.NotValidException("Account cannot lease balance to itself");
@@ -2881,17 +2881,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            public AbstractAttachment parseAttachment(ByteBuffer buffer) {
                 return new Attachment.SetPhasingOnly(buffer);
             }
 
             @Override
-            AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            public AbstractAttachment parseAttachment(JSONObject attachmentData) {
                 return new Attachment.SetPhasingOnly(attachmentData);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws ValidationException {
+            public void validateAttachment(Transaction transaction) throws ValidationException {
                 Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly)transaction.getAttachment();
                 VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
                 attachment.getPhasingParams().validate();
@@ -2924,7 +2924,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 return TransactionType.isDuplicate(SET_PHASING_ONLY, Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
             }
 
@@ -3012,17 +3012,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.TaggedDataUpload parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.TaggedDataUpload parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.TaggedDataUpload(buffer);
             }
 
             @Override
-            Attachment.TaggedDataUpload parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.TaggedDataUpload parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.TaggedDataUpload(attachmentData);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
                 if (attachment.getData() == null && Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
@@ -3083,17 +3083,17 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.TaggedDataExtend parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.TaggedDataExtend parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.TaggedDataExtend(buffer);
             }
 
             @Override
-            Attachment.TaggedDataExtend parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.TaggedDataExtend parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.TaggedDataExtend(attachmentData);
             }
 
             @Override
-            void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
                 if ((attachment.jsonIsPruned() || attachment.getData() == null) && Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
@@ -3171,7 +3171,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
             if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH
                     || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH
@@ -3216,12 +3216,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.CriticalUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.CriticalUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.CriticalUpdate(buffer);
             }
 
             @Override
-            Attachment.CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.CriticalUpdate(attachmentData);
             }
 
@@ -3249,12 +3249,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.ImportantUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.ImportantUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.ImportantUpdate(buffer);
             }
 
             @Override
-            Attachment.ImportantUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.ImportantUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.ImportantUpdate(attachmentData);
             }
         };
@@ -3281,12 +3281,12 @@ public abstract class TransactionType {
             }
 
             @Override
-            Attachment.MinorUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            public Attachment.MinorUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
                 return new Attachment.MinorUpdate(buffer);
             }
 
             @Override
-            Attachment.MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            public Attachment.MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
                 return new Attachment.MinorUpdate(attachmentData);
             }
         };

@@ -20,7 +20,7 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
-        <module>apl-tests</module>
+  <!--      <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>

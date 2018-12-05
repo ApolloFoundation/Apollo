@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.env.service.AplService_ServiceManagement;
+
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -37,15 +37,18 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import org.apache.http.annotation.Obsolete;
 
+//TODO: we use maven, we do not need this
+@Obsolete
 public class ManifestGenerator {
 
     public static void main(String[] args) {
         ManifestGenerator manifestGenerator = new ManifestGenerator();
         manifestGenerator.generate("./resource/apl.manifest.mf", Apl.class.getCanonicalName(), "./lib");
-        String serviceClassName = AplService_ServiceManagement.class.getCanonicalName();
-        serviceClassName = serviceClassName.substring(0, serviceClassName.length() - "_ServiceManagement".length());
-        manifestGenerator.generate("./resource/aplservice.manifest.mf", serviceClassName, "./lib");
+//        String serviceClassName = AplService_ServiceManagement.class.getCanonicalName();
+//        serviceClassName = serviceClassName.substring(0, serviceClassName.length() - "_ServiceManagement".length());
+//        manifestGenerator.generate("./resource/aplservice.manifest.mf", serviceClassName, "./lib");
     }
 
     private void generate(String fileName, String className, String ... directories) {

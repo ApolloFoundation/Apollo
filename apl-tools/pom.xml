@@ -14,23 +14,28 @@
     <packaging>jar</packaging>
     
     <dependencies>
-        <!-- POPJO <-> JSON -->
+
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-crypto</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        
-<!-- Swagger annotation for API auto-documenting --> 
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency> 
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-        </dependency>
-        
-<!-- unit tests -->
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>   
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-updater</artifactId>
+            <version>${project.version}</version>
+        </dependency>            
+        <!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>

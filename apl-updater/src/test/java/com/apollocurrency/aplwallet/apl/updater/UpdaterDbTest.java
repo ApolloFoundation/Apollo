@@ -22,10 +22,13 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.db.BasicDb;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class UpdaterDbTest extends DbIntegrationTest {
+public class UpdaterDbTest {
+       private static final DbManipulator manipulator = new DbManipulator();
+    protected static final BasicDb db = manipulator.getDb(); 
     private UpdaterRepository repository = new UpdaterDbRepository(new MockUpdaterMediator());
 
     @Test
@@ -109,7 +112,7 @@ public class UpdaterDbTest extends DbIntegrationTest {
             return new ConnectionProvider() {
                 @Override
                 public Connection getConnection() throws SQLException {
-                    return db.getConnection();
+                    return db.getConnection();                
                 }
 
                 @Override

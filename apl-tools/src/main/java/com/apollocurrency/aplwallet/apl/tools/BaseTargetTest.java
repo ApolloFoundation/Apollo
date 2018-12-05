@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 public final class BaseTargetTest {

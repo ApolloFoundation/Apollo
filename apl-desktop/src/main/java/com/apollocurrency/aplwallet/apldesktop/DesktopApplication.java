@@ -62,7 +62,7 @@ import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.apollocurrency.aplwallet.apl.http.API;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.sun.javafx.scene.web.Debugger;
