@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.UnsupportedEncodingException;
@@ -12,7 +13,6 @@ import java.security.GeneralSecurityException;
 
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             if (!entity.isConfirmed()) {
 
             String existingBase32Secret = BASE_32.encodeToString(entity.getSecret());
-            return new TwoFactorAuthDetails(getQrCodeUrl(Convert.defaultRsAccount(entity.getAccount()), existingBase32Secret),
+            return new TwoFactorAuthDetails(getQrCodeUrl(Convert2.defaultRsAccount(entity.getAccount()), existingBase32Secret),
                     existingBase32Secret, Status2FA.OK);
             }
             return new TwoFactorAuthDetails(null, null, Status2FA.ALREADY_ENABLED);
@@ -53,7 +53,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             return new TwoFactorAuthDetails(null, null, Status2FA.INTERNAL_ERROR);
         }
 
-        String qrCodeUrl = getQrCodeUrl(Convert.defaultRsAccount(accountId), base32Secret);
+        String qrCodeUrl = getQrCodeUrl(Convert2.defaultRsAccount(accountId), base32Secret);
         return new TwoFactorAuthDetails(qrCodeUrl, base32Secret, Status2FA.OK);
     }
 

@@ -40,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.PhasingParams;
 import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

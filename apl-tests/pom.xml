@@ -14,6 +14,11 @@
     <packaging>jar</packaging>
     
     <dependencies>
+         <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>         
         <!-- POPJO <-> JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,7 +34,6 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
 
 public final class Shuffler {

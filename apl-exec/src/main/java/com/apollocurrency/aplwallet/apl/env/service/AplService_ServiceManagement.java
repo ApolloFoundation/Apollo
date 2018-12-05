@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.env.service;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.env.LookAndFeel;
+import com.apollocurrency.aplwallet.apl.util.env.LookAndFeel;
 
 import javax.swing.*;
 

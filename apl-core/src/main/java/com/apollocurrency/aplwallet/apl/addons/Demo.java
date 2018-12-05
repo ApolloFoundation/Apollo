@@ -24,7 +24,7 @@ package com.apollocurrency.aplwallet.apl.addons;
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import org.slf4j.Logger;
 
 import java.util.Map;
@@ -37,7 +37,7 @@ public final class Demo implements AddOn {
     @Override
     public void init() {
         Apl.getBlockchainProcessor().addListener(block -> LOG.info("Block " + block.getStringId()
-                + " has been forged by account " + Convert.rsAccount(block.getGeneratorId()) + " having effective balance of "
+                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
                 + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL()),
                 BlockchainProcessor.Event.BEFORE_BLOCK_APPLY);
     }

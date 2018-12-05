@@ -19,8 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import com.apollocurrency.aplwallet.apl.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import org.slf4j.Logger;
 
 public class PropertiesLoader {

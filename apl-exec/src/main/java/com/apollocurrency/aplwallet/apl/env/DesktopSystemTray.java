@@ -36,11 +36,12 @@ import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.Generator;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.SystemTrayDataProvider;
 import org.slf4j.Logger;
 
 public class DesktopSystemTray {
@@ -166,7 +167,7 @@ public class DesktopSystemTray {
 
         StringBuilder generators = new StringBuilder();
         for (Generator generator : allGenerators) {
-            generators.append(Convert.rsAccount(generator.getAccountId())).append(' ');
+            generators.append(Convert2.rsAccount(generator.getAccountId())).append(' ');
         }
         Object optionPaneBackground = UIManager.get("OptionPane.background");
         UIManager.put("OptionPane.background", Color.WHITE);
@@ -198,7 +199,7 @@ public class DesktopSystemTray {
             addLabelRow(statusPanel, "Last Block");
             addDataRow(statusPanel, "Height", String.valueOf(lastBlock.getHeight()));
             addDataRow(statusPanel, "Timestamp", String.valueOf(lastBlock.getTimestamp()));
-            addDataRow(statusPanel, "Time", String.valueOf(new Date(Convert.fromEpochTime(lastBlock.getTimestamp()))));
+            addDataRow(statusPanel, "Time", String.valueOf(new Date(Convert2.fromEpochTime(lastBlock.getTimestamp()))));
             addDataRow(statusPanel, "Seconds passed", String.valueOf(Apl.getEpochTime() - lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Forging", String.valueOf(allGenerators.size() > 0));
             if (allGenerators.size() > 0) {

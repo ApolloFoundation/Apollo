@@ -25,7 +25,7 @@ import java.util.Random;
 
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.Assert;
 import org.junit.Before;

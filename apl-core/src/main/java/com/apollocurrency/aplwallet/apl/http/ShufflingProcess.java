@@ -25,9 +25,10 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.INCORRECT_PUBL
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.Shuffling;
 import com.apollocurrency.aplwallet.apl.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -64,7 +65,7 @@ public final class ShufflingProcess extends CreateTransaction {
             JSONObject response = new JSONObject();
             response.put("errorCode", 12);
             response.put("errorDescription", String.format("Account %s cannot process shuffling since shuffling assignee is %s",
-                    Convert.rsAccount(senderId), Convert.rsAccount(shuffling.getAssigneeAccountId())));
+                    Convert2.rsAccount(senderId), Convert2.rsAccount(shuffling.getAssigneeAccountId())));
             return JSON.prepare(response);
         }
         ShufflingParticipant participant = shuffling.getParticipant(senderId);
@@ -72,7 +73,7 @@ public final class ShufflingProcess extends CreateTransaction {
             JSONObject response = new JSONObject();
             response.put("errorCode", 13);
             response.put("errorDescription", String.format("Account %s is not a participant of shuffling %d",
-                    Convert.rsAccount(senderId), shuffling.getId()));
+                    Convert2.rsAccount(senderId), shuffling.getId()));
             return JSON.prepare(response);
         }
 

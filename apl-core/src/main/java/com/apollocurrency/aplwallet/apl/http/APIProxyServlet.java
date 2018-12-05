@@ -35,7 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.peer.Peer;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;

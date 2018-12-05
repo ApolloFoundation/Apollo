@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.Level;
 import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.updater.UpdateData;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 
 public class UpdaterFactoryImpl implements UpdaterFactory {

@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

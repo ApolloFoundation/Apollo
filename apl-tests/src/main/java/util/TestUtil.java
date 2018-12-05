@@ -33,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.TransactionDeserializer;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import dto.JSONTransaction;
+import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
 import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;

@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
 public abstract class ShufflingTransaction extends TransactionType {

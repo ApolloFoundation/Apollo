@@ -37,7 +37,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 public class APITestServlet extends HttpServlet {
 

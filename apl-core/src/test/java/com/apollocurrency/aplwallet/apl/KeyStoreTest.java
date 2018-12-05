@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.Random;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.junit.After;
 import org.junit.Assert;

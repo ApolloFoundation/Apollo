@@ -46,14 +46,13 @@
         <zxing.version>3.3.0</zxing.version>
 
         <!--Tools-->
-        <apache-commons-lang.version>3.7</apache-commons-lang.version>
+        <apache-commons-lang.version>3.8.1</apache-commons-lang.version>
         <apache-commons-io.version>1.4</apache-commons-io.version>
         <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <apache-commons-net.version>3.6</apache-commons-net.version>
-        <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
         <jackson.version>2.9.6</jackson.version>
-
+        <tika.version>1.19.1</tika.version>
         <!--Indexing-->
         <lucene.version>5.5.5</lucene.version> <!-- was 5.3.2 -->
 
@@ -73,12 +72,10 @@
         <spring.version>5.0.7.RELEASE</spring.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
-<!-- TODO: cleanup -->        
+        <!-- TODO: cleanup -->        
         <jetty.version>9.4.12.v20180830</jetty.version>
-        <h2.version>1.4.196</h2.version>
         <apache-tika.version>1.17</apache-tika.version>
         <bitlet.version>0.1.4</bitlet.version>
-        <zxing.version>3.3.3</zxing.version>
         <weld.version>3.0.5.Final</weld.version>
         <weld-junit5.version>1.3.1.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
@@ -112,49 +109,49 @@
                 </plugins>
             </build>
         </profile>
-            <!-- The Configuration of the development profile -->
-            <profile>
-                <id>dev</id>
-                <activation>
-                    <activeByDefault>true</activeByDefault>
-                </activation>
-                <properties>
-                    <!--
-                        Specifies the build.profile.id property that must be equal than the name of
-                        the directory that contains the profile specific configuration file.
-                        Because the name of the directory that contains the configuration file of the
-                        development profile is dev, we must set the value of the build.profile.id
-                        property to dev.
-                    -->
-                        <!--Do not exclude nothing! But this property should be specified for successful build-->
-                        <!--<exclude.path>${project.build.testSourceDirectory}</exclude.path>-->
-                    <build.profile.id>dev</build.profile.id>
-                    <!--
-                        Only unit tests are run when the development profile is active
-                    -->
-                    <skip.integration.tests>true</skip.integration.tests>
-                    <skip.unit.tests>false</skip.unit.tests>
-                </properties>
-            </profile>
-            <!-- The Configuration of the integration-test profile -->
-            <profile>
-                <id>integration-test</id>
-                <properties>
-                    <!--
-                        Specifies the build.profile.id property that must be equal than the name of
-                        the directory that contains the profile specific configuration file.
-                        Because the name of the directory that contains the configuration file of the
-                        integration-test profile is integration-test, we must set the value of the
-                        build.profile.id property to integration-test.
-                    -->
-                    <build.profile.id>integration-test</build.profile.id>
-                    <!--
-                        Only integration tests are run when the integration-test profile is active
-                    -->
-                    <skip.integration.tests>false</skip.integration.tests>
-                    <skip.unit.tests>true</skip.unit.tests>
-                </properties>
-            </profile>
+        <!-- The Configuration of the development profile -->
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <!--
+                    Specifies the build.profile.id property that must be equal than the name of
+                    the directory that contains the profile specific configuration file.
+                    Because the name of the directory that contains the configuration file of the
+                    development profile is dev, we must set the value of the build.profile.id
+                    property to dev.
+                -->
+                <!--Do not exclude nothing! But this property should be specified for successful build-->
+                <!--<exclude.path>${project.build.testSourceDirectory}</exclude.path>-->
+                <build.profile.id>dev</build.profile.id>
+                <!--
+                    Only unit tests are run when the development profile is active
+                -->
+                <skip.integration.tests>true</skip.integration.tests>
+                <skip.unit.tests>false</skip.unit.tests>
+            </properties>
+        </profile>
+        <!-- The Configuration of the integration-test profile -->
+        <profile>
+            <id>integration-test</id>
+            <properties>
+                <!--
+                    Specifies the build.profile.id property that must be equal than the name of
+                    the directory that contains the profile specific configuration file.
+                    Because the name of the directory that contains the configuration file of the
+                    integration-test profile is integration-test, we must set the value of the
+                    build.profile.id property to integration-test.
+                -->
+                <build.profile.id>integration-test</build.profile.id>
+                <!--
+                    Only integration tests are run when the integration-test profile is active
+                -->
+                <skip.integration.tests>false</skip.integration.tests>
+                <skip.unit.tests>true</skip.unit.tests>
+            </properties>
+        </profile>
         <!--Profile for running all tests-->
         <profile>
             <id>test-all</id>
@@ -206,7 +203,7 @@
                 <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
-               <dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
@@ -234,7 +231,7 @@
                 <version>${lucene.version}</version>
             </dependency>
 
-             <dependency>
+            <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
                 <version>${servlet-api.version}</version>
@@ -260,7 +257,7 @@
                 <version>${jetty.version}</version>
                 <classifier>hybrid</classifier>
             </dependency>
-             <dependency>
+            <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-server</artifactId>
                 <version>${jetty.version}</version>
@@ -288,7 +285,7 @@
                 <artifactId>resteasy-jackson-provider</artifactId>
                 <version>${resteasy.version}</version>
             </dependency>
-             <dependency>
+            <dependency>
                 <groupId>org.jboss.resteasy</groupId>
                 <artifactId>resteasy-jackson2-provider</artifactId>
                 <version>${resteasy.version}</version>
@@ -309,7 +306,7 @@
                 <version>${resteasy.version}</version>
             </dependency>
 
-              <dependency>
+            <dependency>
                 <groupId>org.jboss.logging</groupId>
                 <artifactId>jboss-logging</artifactId>
                 <version>3.2.1.Final</version>
@@ -404,12 +401,21 @@
                 <scope>test</scope>
             </dependency>
 
-             <dependency>
+            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${apache-commons-io.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${apache-commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${apache-commons-codec.version}</version>
+            </dependency>           
             <!--JDBI libs-->
             <dependency>
                 <groupId>com.zaxxer</groupId>
@@ -431,15 +437,17 @@
                 <artifactId>jdbi3-sqlobject</artifactId>
                 <version>${jdbi3-sqlobject.version}</version>
             </dependency>
-
-
-             <dependency>
+            <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <dependency>
+                <groupId>commons-net</groupId>
+                <artifactId>commons-net</artifactId>
+                <version>${apache-commons-net.version}</version>
+            </dependency>
 
             <!--TEST frameworks-->
             <dependency>
@@ -551,386 +559,80 @@
             </dependency>
 
         </dependencies>
-    </dependencyManagement>            
-
-    <dependencies>
-        <!--Apache-commons-->
-        <dependency>
-            <groupId>commons-net</groupId>
-            <artifactId>commons-net</artifactId>
-            <version>${apache-commons-net.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${apache-commons-codec.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${apache-commons-lang.version}</version>
-        </dependency>
-        <!--Qr code-->
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>javase</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-
-        <!--Jackson-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
-        <!--2fa api-->
-        <dependency>
-            <groupId>com.j256.two-factor-auth</groupId>
-            <artifactId>two-factor-auth</artifactId>
-        </dependency>
-
-        <!-- Jetty -->
-<!--        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <scope>provided</scope>
-        </dependency>-->
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-proxy</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-client</artifactId>
-            <classifier>hybrid</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-        </dependency>
-
-        <!--Wel CDI-->
-        <dependency>
-            <groupId>org.jboss.weld.se</groupId>
-            <artifactId>weld-se-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.weld.servlet</groupId>
-            <artifactId>weld-servlet-shaded</artifactId>
-        </dependency>
-
-        <!--Json simple-->
-        <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-        </dependency>
-
-        <!--Tests-->
-        <dependency>
-            <groupId>net.javacrumbs.json-unit</groupId>
-            <artifactId>json-unit-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.javacrumbs.json-unit</groupId>
-            <artifactId>json-unit-fluent</artifactId>
-            <scope>test</scope>
-        </dependency>
-<!--OkHttp SSE client-->
-        <dependency>
-            <groupId>com.squareup.okhttp</groupId>
-            <artifactId>okhttp</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.launchdarkly</groupId>
-            <artifactId>okhttp-eventsource</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!--Lucene-->
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queries</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-        </dependency>
-
-
-        <!--Logging-->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.log4jdbc</groupId>
-            <artifactId>log4jdbc</artifactId>
-        </dependency>
-
-        <!--Tika-->
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-
-        <!--UPnP-->
-        <dependency>
-            <groupId>org.bitlet</groupId>
-            <artifactId>weupnp</artifactId>
-        </dependency>
-    </dependencies>
+    </dependencyManagement>    
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                    <configuration>
+                        <useSystemClassLoader>false</useSystemClassLoader>
+                    </configuration>
+                    <!--    JDK 11
+                                        <dependencies>
+                                            <dependency>
+                                                <groupId>org.ow2.asm</groupId>
+                                                <artifactId>asm</artifactId>
+                                                <version>6.2</version>
+                                            </dependency>
+                                        </dependencies>
+                    -->
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${compile-plugin.version}</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+                <!-- Maven Assembly Plugin -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-
-                <executions>
-                    <!--
-                        Invokes both the integration-test and the verify goals of the
-                        Failsafe Maven plugin
-                    -->
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <!--
-                                Skips integration tests if the value of skip.integration.tests
-                                property is true
-                            -->
-                            <systemPropertyVariables>
-                                <walletWorkingDir>${project.build.directory}</walletWorkingDir>
-                            </systemPropertyVariables>
-                            <includes>
-                                <include>com.apollocurrency.aplwallet.apl.http.*</include>
-                            </includes>
-                            <skipTests>${skip.integration.tests}</skipTests>
-                            <forkCount>1</forkCount>
-                            <reuseForks>false</reuseForks>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
-                <configuration>
-                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
-                    <skipTests>${skip.unit.tests}</skipTests>
-                    <!-- Excludes integration tests when unit tests are run -->
-                    <excludes>
-                        <exclude>com.apollocurrency.aplwallet.apl.http.*, **/*IntegrationTest.java, **/IT*.java</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
-                <executions>
-                    <!-- Add a new source directory to our build -->
-                    <execution>
-                        <id>add-integration-test-sources</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Configures the source directory of our integration tests -->
-                            <sources>
-                                <source>src/integration-test/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                    <!-- Add a new resource directory to our build -->
-                    <execution>
-                        <id>add-integration-test-resources</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>add-test-resource</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Configures the resource directory of our integration tests -->
-                            <resources>
-                                <!--
-                                    Placeholders that are found from the files located in the configured resource
-                                    directories are replaced with the property values found from the profile
-                                    specific configuration file.
-                                -->
-                                <resource>
-                                    <filtering>true</filtering>
-                                    <directory>src/integration-test/resources</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <finalName>Apollo</finalName>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <classpathLayoutType>simple</classpathLayoutType>
-                            <mainClass>com.apollocurrency.aplwallet.apl.Apl</mainClass>
-                        </manifest>
-                        <manifestEntries>
-                            <Class-Path>conf/</Class-Path>
-                            </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <!-- here the phase you need -->
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>conf</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
                 <version>1.6.0</version>
-                <configuration>
-                    <executable>java</executable>
-                    <arguments>
-                        <argument>-Dapl.runtime.mode=desktop</argument>
-                        <argument>-Djava.library.path=${project.build.directory}/lib</argument>
-                        <!--<argument>-Djava.util.logging.manager=com.apollocurrency.aplwallet.apl.util.AplLogManager</argument>-->
-                        <argument>-classpath</argument>
-                        <argument>${project.basedir}/conf;${project.build.directory}/classes;${project.build.directory}/lib/*;${project.basedir}/conf/logging.properties;${project.basedir}/conf/logging-default.properties</argument>
-                        <argument>com.apollocurrency.aplwallet.apl.Apl</argument>
-                    </arguments>
-                </configuration>
+                <inherited>false</inherited>
+                <!--<executions>
+                   <execution>
+                       <id>Version Calculation</id>
+                       <phase>validate</phase>
+                       <goals>
+                           <goal>exec</goal>
+                       </goals>
+                       <configuration>
+                          <executable>${basedir}/git-sha-1.sh</executable>
+                        </configuration>
+                    </execution>
+                </executions>-->
+            </plugin>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.1</version>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <showDeprecation>false</showDeprecation>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+            
 </project>

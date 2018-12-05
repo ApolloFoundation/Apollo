@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+
 
 public final class PrunableMessage {
 

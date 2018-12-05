@@ -57,11 +57,12 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -98,7 +99,7 @@ public class MintWorker {
         boolean isStopOnError = Apl.getBooleanProperty("apl.mint.stopOnError");
         byte[] publicKeyHash = Crypto.sha256().digest(Crypto.getPublicKey(secretPhrase));
         long accountId = Convert.fullHashToId(publicKeyHash);
-        String rsAccount = Convert.rsAccount(accountId);
+        String rsAccount = Convert2.rsAccount(accountId);
         JSONObject currency = getCurrency(currencyCode);
         if (currency.get("currency") == null) {
             throw new IllegalArgumentException("Invalid currency code " + currencyCode);

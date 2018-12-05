@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
+import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.regex.Pattern;

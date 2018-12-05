@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -13,7 +14,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.slf4j.Logger;
 

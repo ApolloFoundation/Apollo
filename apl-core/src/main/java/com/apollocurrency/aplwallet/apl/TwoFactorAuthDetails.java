@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -12,10 +13,10 @@ import java.util.Objects;
 public class TwoFactorAuthDetails {
     private String qrCodeUrl;
     private String secret;
-    private TwoFactorAuthService.Status2FA status2FA;
+    private Status2FA status2FA;
     @JsonCreator
     public TwoFactorAuthDetails(@JsonProperty("qrCodeUrl") String qrCodeUrl, @JsonProperty("secret") String secret,
-                                @JsonProperty("status2FA") TwoFactorAuthService.Status2FA
+                                @JsonProperty("status2FA") Status2FA
                                 status2FA) {
         this.qrCodeUrl = qrCodeUrl;
         this.secret = secret;
@@ -41,11 +42,11 @@ public class TwoFactorAuthDetails {
         this.qrCodeUrl = qrCodeUrl;
     }
 
-    public TwoFactorAuthService.Status2FA getStatus2Fa() {
+    public Status2FA getStatus2Fa() {
         return status2FA;
     }
 
-    public void setStatus2Fa(TwoFactorAuthService.Status2FA status2Fa) {
+    public void setStatus2Fa(Status2FA status2Fa) {
         this.status2FA = status2Fa;
     }
 

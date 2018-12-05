@@ -8,8 +8,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
 

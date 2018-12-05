@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.launchdarkly.eventsource.EventHandler;
 import com.launchdarkly.eventsource.EventSource;
 import com.launchdarkly.eventsource.MessageEvent;
-import dto.SSEDataHolder;
+import com.apollocurrency.aplwallet.api.dto.SSEDataHolder;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

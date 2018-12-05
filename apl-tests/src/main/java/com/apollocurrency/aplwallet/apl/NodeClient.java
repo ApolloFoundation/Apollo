@@ -26,17 +26,17 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Account2FA;
-import dto.AccountWithKey;
-import dto.AccountsStatistic;
-import dto.Block;
-import dto.ChatInfo;
-import dto.ForgingDetails;
-import dto.JSONTransaction;
-import dto.LedgerEntry;
-import dto.NextGenerators;
-import dto.Peer;
-import dto.TwoFactorAuthAccountDetails;
+import com.apollocurrency.aplwallet.api.dto.Account2FA;
+import com.apollocurrency.aplwallet.api.dto.AccountWithKey;
+import com.apollocurrency.aplwallet.api.dto.AccountsStatistic;
+import com.apollocurrency.aplwallet.api.dto.Block;
+import com.apollocurrency.aplwallet.api.dto.ChatInfo;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
+import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
+import com.apollocurrency.aplwallet.api.dto.LedgerEntry;
+import com.apollocurrency.aplwallet.api.dto.NextGenerators;
+import com.apollocurrency.aplwallet.api.dto.Peer;
+import com.apollocurrency.aplwallet.api.dto.TwoFactorAuthAccountDetails;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -492,10 +492,10 @@ public class NodeClient {
         return MAPPER.readValue(json, LedgerEntry.class);
     }
 
-    public List<dto.Account> getGenesisBalances(String url, int firstIndex, int lastIndex) throws IOException {
+    public List<com.apollocurrency.aplwallet.api.dto.Account> getGenesisBalances(String url, int firstIndex, int lastIndex) throws IOException {
         String json = getGenesisBalancesJSON(url, firstIndex, lastIndex);
         JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
-        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<dto.Account>>(){});
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<com.apollocurrency.aplwallet.api.dto.Account>>(){});
     }
     public String getGenesisBalancesJSON(String url, int firstIndex, int lastIndex) throws IOException {
         Map<String, String> params = new HashMap<>();
@@ -504,12 +504,12 @@ public class NodeClient {
         params.put("lastIndex", String.valueOf(lastIndex));
         return getJson(createURI(url), params);
     }
-    public List<dto.Account> getGenesisBalances(String url) throws IOException {
+    public List<com.apollocurrency.aplwallet.api.dto.Account> getGenesisBalances(String url) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("requestType", "getGenesisBalances");
         String json = getJson(createURI(url), params);
         JsonNode accountsNode = MAPPER.readTree(json).get("accounts");
-        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<dto.Account>>(){});
+        return MAPPER.readValue(accountsNode.toString(), new TypeReference<List<com.apollocurrency.aplwallet.api.dto.Account>>(){});
     }
 
     public String startForging(String url, String secretPhrase) throws IOException {

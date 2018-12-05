@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.updater.repository;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.slf4j.Logger;
 
 import java.sql.Connection;

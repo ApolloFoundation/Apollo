@@ -13,7 +13,14 @@
     <name>apl-api</name>
     <packaging>jar</packaging>
     
-    <dependencies>
+    <dependencies>     
+        <!-- TODO: remove this dependency later. API must not depend on anything except JSOM annotations and Swagger -->   
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-crypto</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
         <!-- POPJO <-> JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

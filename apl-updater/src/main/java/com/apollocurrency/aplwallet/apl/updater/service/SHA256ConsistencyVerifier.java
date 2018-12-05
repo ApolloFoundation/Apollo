@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater.service;
 
 import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.io.IOException;
 import java.io.InputStream;

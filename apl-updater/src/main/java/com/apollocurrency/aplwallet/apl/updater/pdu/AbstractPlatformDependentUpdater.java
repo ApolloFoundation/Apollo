@@ -4,9 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
-import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+
 public interface TwoFactorAuthService {
     /**
      * Enable 2fa for account specified by accountId
@@ -47,14 +49,4 @@ public interface TwoFactorAuthService {
      */
     Status2FA confirm(long accountId, int authCode);
 
-    enum Status2FA {
-        OK,
-        NOT_FOUND,
-        ALREADY_CONFIRMED,
-        INCORRECT_CODE,
-        INTERNAL_ERROR,
-        NOT_ENABLED,
-        ALREADY_ENABLED,
-        NOT_CONFIRMED
-    }
 }

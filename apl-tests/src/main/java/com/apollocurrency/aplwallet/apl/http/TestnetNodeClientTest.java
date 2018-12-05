@@ -32,12 +32,12 @@ import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.Account;
-import dto.AccountsStatistic;
-import dto.Block;
-import dto.JSONTransaction;
-import dto.LedgerEntry;
-import dto.Peer;
+import com.apollocurrency.aplwallet.api.dto.Account;
+import com.apollocurrency.aplwallet.api.dto.AccountsStatistic;
+import com.apollocurrency.aplwallet.api.dto.Block;
+import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
+import com.apollocurrency.aplwallet.api.dto.LedgerEntry;
+import com.apollocurrency.aplwallet.api.dto.Peer;
 import org.json.simple.parser.ParseException;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -603,8 +603,8 @@ public class TestnetNodeClientTest extends AbstractNodeClientTest {
         AccountsStatistic accountsStatistic = client.getAccountsStatistic(url, 100);
         Assert.assertNotNull(accountsStatistic);
         Assert.assertEquals(100, accountsStatistic.getNumberOfTopAccounts());
-        List<dto.Account> expectedOrderedAccounts =
-                accountsStatistic.getTopHolders().stream().sorted(Comparator.comparingLong(dto.Account::getBalanceATM).reversed()).collect(Collectors.toList());
+        List<com.apollocurrency.aplwallet.api.dto.Account> expectedOrderedAccounts =
+                accountsStatistic.getTopHolders().stream().sorted(Comparator.comparingLong(com.apollocurrency.aplwallet.api.dto.Account::getBalanceATM).reversed()).collect(Collectors.toList());
         Assert.assertEquals(expectedOrderedAccounts, accountsStatistic.getTopHolders());
         Assert.assertEquals(accountsStatistic.getTotalAmountOnTopAccounts(),
                 accountsStatistic.getTopHolders().stream().mapToLong(Account::getBalanceATM).sum());

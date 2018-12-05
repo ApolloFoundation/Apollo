@@ -10,7 +10,7 @@ import static util.TestUtil.atm;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import dto.JSONTransaction;
+import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 

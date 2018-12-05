@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifier;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifierImpl;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;

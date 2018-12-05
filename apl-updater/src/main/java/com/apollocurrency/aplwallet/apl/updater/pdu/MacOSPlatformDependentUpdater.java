@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
 import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 
 public class MacOSPlatformDependentUpdater extends UnixPlatformDependentUpdater {
     public MacOSPlatformDependentUpdater(String runTool, String updateScriptPath, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {

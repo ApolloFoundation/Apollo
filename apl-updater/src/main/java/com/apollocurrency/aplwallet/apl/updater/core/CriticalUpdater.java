@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.updater.core;
 import com.apollocurrency.aplwallet.apl.Level;
 import com.apollocurrency.aplwallet.apl.updater.UpdateData;
 import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 
 public class CriticalUpdater extends AbstractUpdater {

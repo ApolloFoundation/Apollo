@@ -32,10 +32,10 @@ import java.util.Objects;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.updater.Architecture;
-import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.updater.Platform;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
+import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -168,8 +168,12 @@ public interface Attachment extends Appendix {
 
         MessagingAliasAssignment(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH).trim();
-            aliasURI = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ALIAS_URI_LENGTH).trim();
+            try {
+                aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH).trim();
+                aliasURI = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ALIAS_URI_LENGTH).trim();
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         MessagingAliasAssignment(JSONObject attachmentData) {
@@ -225,7 +229,11 @@ public interface Attachment extends Appendix {
 
         MessagingAliasSell(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
+            try {
+                this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
             this.priceATM = buffer.getLong();
         }
 
@@ -279,7 +287,11 @@ public interface Attachment extends Appendix {
 
         MessagingAliasBuy(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
+            try {
+                this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
+            } catch (NotValidException ex) {
+               throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         MessagingAliasBuy(JSONObject attachmentData) {
@@ -324,7 +336,11 @@ public interface Attachment extends Appendix {
 
         MessagingAliasDelete(final ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
+            try {
+                this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         MessagingAliasDelete(final JSONObject attachmentData) {
@@ -432,33 +448,37 @@ public interface Attachment extends Appendix {
 
         MessagingPollCreation(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.pollName = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_NAME_LENGTH);
-            this.pollDescription = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_DESCRIPTION_LENGTH);
-
-            this.finishHeight = buffer.getInt();
-
-            int numberOfOptions = buffer.get();
-            if (numberOfOptions > Constants.MAX_POLL_OPTION_COUNT) {
-                throw new AplException.NotValidException("Invalid number of poll options: " + numberOfOptions);
+            try {
+                this.pollName = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_NAME_LENGTH);
+                this.pollDescription = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_DESCRIPTION_LENGTH);
+                
+                this.finishHeight = buffer.getInt();
+                
+                int numberOfOptions = buffer.get();
+                if (numberOfOptions > Constants.MAX_POLL_OPTION_COUNT) {
+                    throw new AplException.NotValidException("Invalid number of poll options: " + numberOfOptions);
+                }
+                
+                this.pollOptions = new String[numberOfOptions];
+                for (int i = 0; i < numberOfOptions; i++) {
+                    this.pollOptions[i] = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_OPTION_LENGTH);
+                }
+                
+                byte votingModel = buffer.get();
+                
+                this.minNumberOfOptions = buffer.get();
+                this.maxNumberOfOptions = buffer.get();
+                
+                this.minRangeValue = buffer.get();
+                this.maxRangeValue = buffer.get();
+                
+                long minBalance = buffer.getLong();
+                byte minBalanceModel = buffer.get();
+                long holdingId = buffer.getLong();
+                this.voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
             }
-
-            this.pollOptions = new String[numberOfOptions];
-            for (int i = 0; i < numberOfOptions; i++) {
-                this.pollOptions[i] = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_OPTION_LENGTH);
-            }
-
-            byte votingModel = buffer.get();
-
-            this.minNumberOfOptions = buffer.get();
-            this.maxNumberOfOptions = buffer.get();
-
-            this.minRangeValue = buffer.get();
-            this.maxRangeValue = buffer.get();
-
-            long minBalance = buffer.getLong();
-            byte minBalanceModel = buffer.get();
-            long holdingId = buffer.getLong();
-            this.voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
         }
 
         MessagingPollCreation(JSONObject attachmentData) {
@@ -762,8 +782,12 @@ public interface Attachment extends Appendix {
 
         MessagingAccountInfo(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_NAME_LENGTH);
-            this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH);
+            try {
+                this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_NAME_LENGTH);
+                this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH);
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         MessagingAccountInfo(JSONObject attachmentData) {
@@ -820,8 +844,12 @@ public interface Attachment extends Appendix {
 
         MessagingAccountProperty(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.property = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH).trim();
-            this.value = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH).trim();
+            try {
+                this.property = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH).trim();
+                this.value = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH).trim();
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         MessagingAccountProperty(JSONObject attachmentData) {
@@ -924,10 +952,14 @@ public interface Attachment extends Appendix {
 
         ColoredCoinsAssetIssuance(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ASSET_NAME_LENGTH);
-            this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ASSET_DESCRIPTION_LENGTH);
-            this.quantityATU = buffer.getLong();
-            this.decimals = buffer.get();
+            try {
+                this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ASSET_NAME_LENGTH);
+                this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ASSET_DESCRIPTION_LENGTH);
+                this.quantityATU = buffer.getLong();
+                this.decimals = buffer.get();
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         ColoredCoinsAssetIssuance(JSONObject attachmentData) {
@@ -1354,11 +1386,15 @@ public interface Attachment extends Appendix {
 
         DigitalGoodsListing(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_NAME_LENGTH);
-            this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH);
-            this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_TAGS_LENGTH);
-            this.quantity = buffer.getInt();
-            this.priceATM = buffer.getLong();
+            try {
+                this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_NAME_LENGTH);
+                this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH);
+                this.tags = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_TAGS_LENGTH);
+                this.quantity = buffer.getInt();
+                this.priceATM = buffer.getLong();
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         DigitalGoodsListing(JSONObject attachmentData) {
@@ -1951,20 +1987,24 @@ public interface Attachment extends Appendix {
 
         MonetarySystemCurrencyIssuance(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
-            this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_NAME_LENGTH);
-            this.code = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_CODE_LENGTH);
-            this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_CURRENCY_DESCRIPTION_LENGTH);
-            this.type = buffer.get();
-            this.initialSupply = buffer.getLong();
-            this.reserveSupply = buffer.getLong();
-            this.maxSupply = buffer.getLong();
-            this.issuanceHeight = buffer.getInt();
-            this.minReservePerUnitATM = buffer.getLong();
-            this.minDifficulty = buffer.get() & 0xFF;
-            this.maxDifficulty = buffer.get() & 0xFF;
-            this.ruleset = buffer.get();
-            this.algorithm = buffer.get();
-            this.decimals = buffer.get();
+            try {
+                this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_NAME_LENGTH);
+                this.code = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_CODE_LENGTH);
+                this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_CURRENCY_DESCRIPTION_LENGTH);
+                this.type = buffer.get();
+                this.initialSupply = buffer.getLong();
+                this.reserveSupply = buffer.getLong();
+                this.maxSupply = buffer.getLong();
+                this.issuanceHeight = buffer.getInt();
+                this.minReservePerUnitATM = buffer.getLong();
+                this.minDifficulty = buffer.get() & 0xFF;
+                this.maxDifficulty = buffer.get() & 0xFF;
+                this.ruleset = buffer.get();
+                this.algorithm = buffer.get();
+                this.decimals = buffer.get();
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         MonetarySystemCurrencyIssuance(JSONObject attachmentData) {
@@ -3579,6 +3619,7 @@ public interface Attachment extends Appendix {
 
         UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
+            try {
                 platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
                 architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
                 int firstUrlPartLength = buffer.getShort();
@@ -3592,7 +3633,9 @@ public interface Attachment extends Appendix {
                 int hashLength = buffer.getShort();
                 hash = new byte[hashLength];
                 buffer.get(hash);
-
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
         }
 
         UpdateAttachment(JSONObject attachmentData) {

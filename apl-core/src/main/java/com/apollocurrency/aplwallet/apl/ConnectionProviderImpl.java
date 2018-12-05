@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
 
 public class ConnectionProviderImpl implements ConnectionProvider {
     @Override

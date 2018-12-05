@@ -86,7 +86,7 @@ import com.apollocurrency.aplwallet.apl.Shuffling;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;

@@ -21,9 +21,10 @@
 package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.Account;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -92,7 +93,7 @@ public final class GetAccount extends APIServlet.APIRequestHandler {
                     while (lessors.hasNext()) {
                         Account lessor = lessors.next();
                         lessorIds.add(Long.toUnsignedString(lessor.getId()));
-                        lessorIdsRS.add(Convert.rsAccount(lessor.getId()));
+                        lessorIdsRS.add(Convert2.rsAccount(lessor.getId()));
                         lessorInfo.add(JSONData.lessor(lessor, includeEffectiveBalance));
                     }
                     response.put("lessors", lessorIds);

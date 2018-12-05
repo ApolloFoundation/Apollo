@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.util.AplException.ValidationException;
 import com.apollocurrency.aplwallet.apl.Attachment.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.VoteWeighting.VotingModel;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;

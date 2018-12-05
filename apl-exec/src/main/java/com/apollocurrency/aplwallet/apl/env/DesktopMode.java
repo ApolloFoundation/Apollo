@@ -20,6 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.env;
 
+import com.apollocurrency.aplwallet.apl.env.DesktopSystemTray;
+import com.apollocurrency.aplwallet.apl.util.env.LookAndFeel;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.env.SystemTrayDataProvider;
 import org.slf4j.Logger;
 
 import javax.swing.*;

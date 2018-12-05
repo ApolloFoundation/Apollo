@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import org.slf4j.Logger;
 
 import java.sql.*;
@@ -44,7 +45,8 @@ public class PublicKeyMigration {
                 catch (SQLException e) {
                     //ignore
                 }
-                Apl.getRuntimeMode().updateAppStatus(message);
+                AppStatus.getInstance().update(message);
+             //   Apl.getRuntimeMode().updateAppStatus(message);
                 //create copy of public_key table
                 if (!isMigrationInterrupted) {
 

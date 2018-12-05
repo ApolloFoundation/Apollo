@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.KeyStore;
 import com.apollocurrency.aplwallet.apl.TestConstants;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
-import dto.TwoFactorAuthAccountDetails;
+import com.apollocurrency.aplwallet.api.dto.TwoFactorAuthAccountDetails;
 import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.junit.Assert;
 import org.junit.Test;

@@ -18,8 +18,8 @@ import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
-import dto.Account2FA;
-import dto.TwoFactorAuthAccountDetails;
+import com.apollocurrency.aplwallet.api.dto.Account2FA;
+import com.apollocurrency.aplwallet.api.dto.TwoFactorAuthAccountDetails;
 import org.junit.Assert;
 import org.junit.Test;
 

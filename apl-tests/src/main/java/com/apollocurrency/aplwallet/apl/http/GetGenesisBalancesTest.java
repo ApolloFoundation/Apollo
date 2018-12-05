@@ -9,7 +9,7 @@ import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.TestConstants;
-import dto.Account;
+import com.apollocurrency.aplwallet.api.dto.Account;
 import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.junit.AfterClass;
 import org.junit.Assert;

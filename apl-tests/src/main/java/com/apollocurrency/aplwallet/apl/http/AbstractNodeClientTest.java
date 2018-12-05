@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.NodeClient;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import dto.JSONTransaction;
+import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.Assert;

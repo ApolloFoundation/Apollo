@@ -43,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.Currency;
 import com.apollocurrency.aplwallet.apl.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.CurrencyFounder;
@@ -77,7 +78,7 @@ import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -1253,7 +1254,7 @@ public final class JSONData {
             Random random = new Random();
             accountId = random.nextLong();
         }
-        json.put(name + "RS", Convert.rsAccount(accountId));
+        json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 
     static void putAccount(JSONObject json, String name, long accountId) {

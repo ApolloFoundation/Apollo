@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.GeneratedAccount;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import dto.TwoFactorAuthAccountDetails;
+import com.apollocurrency.aplwallet.api.dto.TwoFactorAuthAccountDetails;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -26,7 +26,7 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_WEBSIT
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.Token;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

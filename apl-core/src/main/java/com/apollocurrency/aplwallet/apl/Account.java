@@ -61,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
@@ -831,16 +832,16 @@ public final class Account {
     }
 
 
-    public static TwoFactorAuthService.Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
+    public static Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
         findSecretBytes(accountId, passphrase, true);
-        TwoFactorAuthService.Status2FA status2FA = service2FA.disable(accountId, code);
+        Status2FA status2FA = service2FA.disable(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
 
-    public static TwoFactorAuthService.Status2FA disable2FA(String secretPhrase, int code) throws ParameterException {
+    public static Status2FA disable2FA(String secretPhrase, int code) throws ParameterException {
         long id = Convert.getId(Crypto.getPublicKey(secretPhrase));
-        TwoFactorAuthService.Status2FA status2FA = service2FA.disable(id, code);
+        Status2FA status2FA = service2FA.disable(id, code);
         validate2FAStatus(status2FA, id);
         return status2FA;
     }
@@ -855,7 +856,7 @@ public final class Account {
         if (Account.isEnabled2FA(params2FA.getAccountId())) {
             ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
             int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
-            TwoFactorAuthService.Status2FA status2FA;
+            Status2FA status2FA;
             long accountId;
             if (params2FA.isPassphrasePresent()) {
                 status2FA = Account.auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code);
@@ -880,7 +881,7 @@ public final class Account {
 
     public static KeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
         if (isEnabled2FA(accountId)) {
-            TwoFactorAuthService.Status2FA status2FA = disable2FA(accountId, passphrase, code);
+            Status2FA status2FA = disable2FA(accountId, passphrase, code);
             validate2FAStatus(status2FA, accountId);
         }
         KeyStore.Status status = keystore.deleteSecretBytes(passphrase, accountId);
@@ -888,37 +889,37 @@ public final class Account {
         return status;
     }
 
-    public static TwoFactorAuthService.Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
+    public static Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
         findSecretBytes(accountId, passphrase, true);
-        TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
+        Status2FA status2FA = service2FA.confirm(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
-    public static TwoFactorAuthService.Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
+    public static Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
         long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
-        TwoFactorAuthService.Status2FA status2FA = service2FA.confirm(accountId, code);
+        Status2FA status2FA = service2FA.confirm(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
 
-    private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA, long account) throws ParameterException {
-        if (status2FA != TwoFactorAuthService.Status2FA.OK) {
+    private static void validate2FAStatus(Status2FA status2FA, long account) throws ParameterException {
+        if (status2FA != Status2FA.OK) {
             LOG.debug("2fa error: {}-{}", Convert2.rsAccount(account), status2FA);
             throw new ParameterException("2fa error", null, JSONResponses.error2FA(status2FA, account));
         }
     }
-    private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA) throws ParameterException {
+    private static void validate2FAStatus(Status2FA status2FA) throws ParameterException {
         validate2FAStatus(status2FA, 0);
     }
 
-    public static TwoFactorAuthService.Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
+    public static Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
         SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, true);
         return service2FA.tryAuth(accountId, code);
     }
 
-    public static TwoFactorAuthService.Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
+    public static Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
         long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
-        TwoFactorAuthService.Status2FA status2FA = service2FA.tryAuth(accountId, code);
+        Status2FA status2FA = service2FA.tryAuth(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }

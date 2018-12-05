@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.Account;
@@ -30,7 +31,7 @@ public class Disable2FA extends APIServlet.APIRequestHandler {
         ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
         int code = ParameterParser.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 
-        TwoFactorAuthService.Status2FA status2FA;
+        Status2FA status2FA;
         if (params2FA.isPassphrasePresent()) {
             status2FA = Account.disable2FA(params2FA.accountId, params2FA.passphrase, code);
         } else {

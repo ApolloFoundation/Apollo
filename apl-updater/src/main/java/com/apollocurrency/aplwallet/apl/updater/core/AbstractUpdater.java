@@ -11,12 +11,12 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.Attachment;
-import com.apollocurrency.aplwallet.apl.updater.Platform;
+import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.updater.UpdateData;
 import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;

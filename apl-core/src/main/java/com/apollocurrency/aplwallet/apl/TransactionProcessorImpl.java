@@ -50,7 +50,7 @@ import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -593,7 +593,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                     continue;
                 }
                 ((TransactionImpl)transaction).unsetBlock();
-                waitingTransactions.add(new UnconfirmedTransaction((TransactionImpl)transaction, Math.min(currentTime, Convert.fromEpochTime(transaction.getTimestamp()))));
+                waitingTransactions.add(new UnconfirmedTransaction((TransactionImpl)transaction, Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()))));
             }
         } finally {
             BlockchainImpl.getInstance().writeUnlock();
@@ -618,7 +618,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                         iterator.remove();
                     } catch (AplException.NotCurrentlyValidException e) {
                         if (unconfirmedTransaction.getExpiration() < currentTime
-                                || currentTime - Convert.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
+                                || currentTime - Convert2.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
                             iterator.remove();
                         }
                     } catch (AplException.ValidationException|RuntimeException e) {

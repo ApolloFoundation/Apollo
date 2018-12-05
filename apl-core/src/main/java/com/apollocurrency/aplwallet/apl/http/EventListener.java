@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.json.simple.JSONArray;
@@ -977,7 +977,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             public void notify(LedgerEntry entry) {
                 if (entry.getAccountId() == accountId || accountId == 0)
                     dispatch(new PendingEvent(String.format("Ledger.%s.%s",
-                                event.name(), Convert.rsAccount(entry.getAccountId())),
+                                event.name(), Convert2.rsAccount(entry.getAccountId())),
                                 Long.toUnsignedString(entry.getLedgerId())));
             }
         }

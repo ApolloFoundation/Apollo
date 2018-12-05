@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.Account;
@@ -31,7 +32,7 @@ public class Confirm2FA extends APIServlet.APIRequestHandler {
 
         JSONObject response = new JSONObject();
 
-        TwoFactorAuthService.Status2FA confirmStatus;
+        Status2FA confirmStatus;
         if (params2FA.isPassphrasePresent()) {
             confirmStatus = Account.confirm2FA(params2FA.accountId, params2FA.passphrase, code);
         } else {

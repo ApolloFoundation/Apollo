@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.*;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;

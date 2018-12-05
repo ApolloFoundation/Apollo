@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 
 import java.io.File;

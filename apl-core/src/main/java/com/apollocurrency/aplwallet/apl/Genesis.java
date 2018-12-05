@@ -62,7 +62,7 @@ public final class Genesis {
             CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
             EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
-        } catch (IOException|ParseException|java.text.ParseException e) {
+        } catch (ParseException|IOException|java.text.ParseException e) {
             throw new RuntimeException("Failed to load genesis parameters", e);
         }
         
@@ -76,7 +76,7 @@ public final class Genesis {
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
-        } catch (IOException|ParseException e) {
+        } catch (ParseException|IOException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
         digest.update((byte)(AplGlobalObjects.getChainConfig().isTestnet() ? 1 : 0));

@@ -269,7 +269,7 @@ public final class Convert {
         return s == null ? replaceNull : s.length() > limit ? (s.substring(0, dots ? limit - 3 : limit) + (dots ? "..." : "")) : s;
     }
 
-    private static long parseStringFraction(String value, int decimals, long maxValue) {
+    public static long parseStringFraction(String value, int decimals, long maxValue) {
         String[] s = value.trim().split("\\.");
         if (s.length == 0 || s.length > 2) {
             throw new NumberFormatException("Invalid number: " + value);

@@ -20,13 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.Account;
 import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.Convert2;
 import com.apollocurrency.aplwallet.apl.HoldingType;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -510,7 +512,7 @@ public final class JSONResponses {
         response.put("errorCode", 5);
         response.put("errorDescription", "Unknown account");
         response.put("account", Long.toUnsignedString(id));
-        response.put("accountRS", Convert.rsAccount(id));
+        response.put("accountRS", Convert2.rsAccount(id));
         response.put("is2FA", Account.isEnabled2FA(id));
         return JSON.prepare(response);
     }
@@ -557,7 +559,7 @@ public final class JSONResponses {
         MONITOR_ALREADY_STARTED = JSON.prepare(response);
     }
 
-    public static JSONStreamAware error2FA(TwoFactorAuthService.Status2FA status2FA, long accountId) {
+    public static JSONStreamAware error2FA(Status2FA status2FA, long accountId) {
         return accountError(accountId, String.valueOf(status2FA));
     }
 
