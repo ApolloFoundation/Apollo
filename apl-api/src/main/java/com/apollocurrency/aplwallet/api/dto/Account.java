@@ -79,4 +79,8 @@ public class Account extends BasicAccount {
     
     public Account() {
     }
+
+    public long getId() {
+        return id;
+    }
 }

@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.updater.downloader;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
-import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import org.slf4j.Logger;
 
 import java.io.IOException;

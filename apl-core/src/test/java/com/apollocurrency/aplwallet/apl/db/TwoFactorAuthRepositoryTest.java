@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.AbstractTwoFactorAuthRepositoryTest;
 import org.junit.AfterClass;
 import org.junit.Before;
-import util.DbManipulator;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 
 
 public class TwoFactorAuthRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {

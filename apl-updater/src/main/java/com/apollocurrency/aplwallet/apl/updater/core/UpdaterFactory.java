@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.updater.UpdateData;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 
 public interface UpdaterFactory {
     Updater getUpdater(UpdateData updateDataHolder);

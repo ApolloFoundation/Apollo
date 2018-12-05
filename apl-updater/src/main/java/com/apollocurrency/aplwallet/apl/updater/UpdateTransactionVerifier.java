@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.Transaction;
 
 public interface UpdateTransactionVerifier {

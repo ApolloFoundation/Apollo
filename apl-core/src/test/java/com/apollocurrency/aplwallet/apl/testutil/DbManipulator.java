@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package util;
+package com.apollocurrency.aplwallet.apl.testutil;
 
 import java.sql.SQLException;
 

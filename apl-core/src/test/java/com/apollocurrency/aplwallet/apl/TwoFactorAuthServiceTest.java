@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
@@ -33,7 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import util.TwoFactorAuthUtil;
+import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TwoFactorAuthServiceTest {
@@ -51,7 +52,7 @@ public class TwoFactorAuthServiceTest {
         doReturn(true).when(repository).add(any(TwoFactorAuthEntity.class));
         TwoFactorAuthDetails twoFactorAuthDetails = service.enable(ENTITY3.getAccount());
         TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert.defaultRsAccount(ENTITY3.getAccount()));
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.OK, twoFactorAuthDetails.getStatus2Fa());
+        Assert.assertEquals(Status2FA.OK, twoFactorAuthDetails.getStatus2Fa());
         verify(repository, times(1)).add(any(TwoFactorAuthEntity.class));
     }
 
@@ -61,7 +62,7 @@ public class TwoFactorAuthServiceTest {
 
         TwoFactorAuthDetails details = service.enable(ACCOUNT1.getId());
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.ALREADY_ENABLED, details.getStatus2Fa());
+        Assert.assertEquals(Status2FA.ALREADY_ENABLED, details.getStatus2Fa());
     }
     @Test
     public void testEnableNotConfirmed() {
@@ -90,8 +91,8 @@ public class TwoFactorAuthServiceTest {
         TwoFactorAuthService spy = spy(service);
         doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
-        TwoFactorAuthService.Status2FA status2FA = spy.disable(ACCOUNT1.getId(), INVALID_CODE);
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.INCORRECT_CODE, status2FA);
+        Status2FA status2FA = spy.disable(ACCOUNT1.getId(), INVALID_CODE);
+        Assert.assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
 
 
@@ -142,32 +143,32 @@ public class TwoFactorAuthServiceTest {
         doReturn(ENTITY1).when(repository).get(ACCOUNT1.getId());
 
         int currentNumber = new Random().nextInt();
-        TwoFactorAuthService.Status2FA status2FA = service.tryAuth(ACCOUNT1.getId(), currentNumber);
+        Status2FA status2FA = service.tryAuth(ACCOUNT1.getId(), currentNumber);
 
         verify(repository, times(1)).get(ACCOUNT1.getId());
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.INCORRECT_CODE, status2FA);
+        Assert.assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
 
     @Test
     public void testTryAuthNotFoundSecretForAccount() throws GeneralSecurityException {
 //        just to make sure that 2fa code is correct
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.tryAuth(ACCOUNT1.getId(), currentNumber);
+        Status2FA status2FA = service.tryAuth(ACCOUNT1.getId(), currentNumber);
 
         verify(repository, times(1)).get(ACCOUNT1.getId());
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_ENABLED, status2FA);
+        Assert.assertEquals(Status2FA.NOT_ENABLED, status2FA);
     }
     @Test
     public void testTryAuthForNotConfirmedAccount() throws GeneralSecurityException, CloneNotSupportedException {
         doReturn(ENTITY2.clone()).when(repository).get(ACCOUNT2.getId());
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.tryAuth(ACCOUNT2.getId(), currentNumber);
+        Status2FA status2FA = service.tryAuth(ACCOUNT2.getId(), currentNumber);
 
         verify(repository, times(1)).get(ACCOUNT2.getId());
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_CONFIRMED, status2FA);
+        Assert.assertEquals(Status2FA.NOT_CONFIRMED, status2FA);
     }
     @Test
     public void testConfirm() throws GeneralSecurityException, CloneNotSupportedException {
@@ -176,22 +177,22 @@ public class TwoFactorAuthServiceTest {
         doReturn(true).when(repository).update(clone);
 
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.confirm(ACCOUNT2.getId(), currentNumber);
+        Status2FA status2FA = service.confirm(ACCOUNT2.getId(), currentNumber);
 
         verify(repository, times(1)).get(ACCOUNT2.getId());
         verify(repository, times(1)).update(clone);
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.OK, status2FA);
+        Assert.assertEquals(Status2FA.OK, status2FA);
     }
 
     @Test
     public void testConfirmForAlreadyEnabledAccount() throws GeneralSecurityException, CloneNotSupportedException {
         doReturn(ENTITY1.clone()).when(repository).get(ACCOUNT1.getId());
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.confirm(ACCOUNT1.getId(), currentNumber);
+        Status2FA status2FA = service.confirm(ACCOUNT1.getId(), currentNumber);
 
         verify(repository, times(1)).get(ACCOUNT1.getId());
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.ALREADY_CONFIRMED, status2FA);
+        Assert.assertEquals(Status2FA.ALREADY_CONFIRMED, status2FA);
     }
 }

@@ -9,7 +9,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import util.TestUtil;
+
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,6 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -39,7 +40,7 @@ public class JarUnpackerTest {
         Files.deleteIfExists(tempJar);
         Files.deleteIfExists(tempDirectory);
         if (unpackedFile != null) {
-            TestUtil.deleteDir(unpackedFile, path -> true);
+            deleteDir(unpackedFile, path -> true);
         }
     }
     @Test
@@ -69,5 +70,24 @@ public class JarUnpackerTest {
                 });
             }
     }
+    public static void deleteDir(Path dir, Predicate<Path> deleteFilter) throws IOException {
+        Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (deleteFilter.test(file)) {
+                    Files.delete(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
 
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (deleteFilter.test(dir)) {
+                    Files.delete(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+    
 }

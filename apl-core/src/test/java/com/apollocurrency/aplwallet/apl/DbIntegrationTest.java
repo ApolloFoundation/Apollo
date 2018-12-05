@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.db.BasicDb;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import util.DbManipulator;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 
 public class DbIntegrationTest {
     private static final DbManipulator manipulator = new DbManipulator();

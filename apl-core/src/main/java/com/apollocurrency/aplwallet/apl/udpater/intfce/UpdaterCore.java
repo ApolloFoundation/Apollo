@@ -2,10 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.updater.core;
-
-import com.apollocurrency.aplwallet.apl.updater.UpdateData;
-import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
 public interface UpdaterCore {
 

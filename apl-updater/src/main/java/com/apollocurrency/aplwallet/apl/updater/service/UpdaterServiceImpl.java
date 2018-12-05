@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.updater.*;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;

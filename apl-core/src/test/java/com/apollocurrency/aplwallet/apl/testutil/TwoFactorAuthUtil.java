@@ -2,8 +2,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package util;
+package com.apollocurrency.aplwallet.apl.testutil;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -18,8 +19,8 @@ public class TwoFactorAuthUtil {
         // TimeBased code sometimes expire before calling tryAuth method, which will generate another code
         for (int i = 0; i < maxAttempts; i++) {
             int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(secret);
-            TwoFactorAuthService.Status2FA status2FA = service.tryAuth(account, currentNumber);
-            if (status2FA == TwoFactorAuthService.Status2FA.OK) {
+            Status2FA status2FA = service.tryAuth(account, currentNumber);
+            if (status2FA == Status2FA.OK) {
                 return true;
             }
         }

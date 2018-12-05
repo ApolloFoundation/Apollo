@@ -5,19 +5,10 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.encrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPrivateKey;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
@@ -28,7 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;

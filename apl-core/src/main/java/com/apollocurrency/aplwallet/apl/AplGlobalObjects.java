@@ -13,9 +13,8 @@ import com.apollocurrency.aplwallet.apl.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.chainid.Chain;
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdServiceImpl;
-import com.apollocurrency.aplwallet.apl.env.DirProvider;
-import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.slf4j.Logger;
 
@@ -56,11 +55,11 @@ public class AplGlobalObjects {
 
 
     public static void createUpdaterCore(boolean doInit) {
-        UpdaterCore updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
-        if (doInit) {
-            updaterCore.init();
-        }
-        save(DEFAULT_UPDATER_CORE_NAME, new GlobalObject<>(updaterCore, DEFAULT_UPDATER_CORE_NAME));
+//        UpdaterCore updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
+//        if (doInit) {
+//            updaterCore.init();
+//        }
+//        save(DEFAULT_UPDATER_CORE_NAME, new GlobalObject<>(updaterCore, DEFAULT_UPDATER_CORE_NAME));
     }
 
     public static void createNtpTime() {

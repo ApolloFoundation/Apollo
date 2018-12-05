@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.Attachment;
@@ -11,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.Level;
 import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.TransactionType;
 import com.apollocurrency.aplwallet.apl.Version;
-import com.apollocurrency.aplwallet.apl.updater.UpdateData;
-import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifier;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifierImpl;

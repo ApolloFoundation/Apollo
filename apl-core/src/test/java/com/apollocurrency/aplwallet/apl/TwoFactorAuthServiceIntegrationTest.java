@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
@@ -19,7 +20,7 @@ import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.Assert;
 import org.junit.Test;
-import util.TwoFactorAuthUtil;
+import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 
 import java.security.GeneralSecurityException;
 import java.util.Random;
@@ -30,7 +31,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testEnable() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT3.getId());
-        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT3.getAccountRS());
+        TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.rsAccount(ACCOUNT3.getId()));
         Assert.assertFalse(service.isEnabled(ACCOUNT3.getId()));
     }
 
@@ -38,12 +39,12 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     public void testEnableAlreadyRegistered() {
 
         TwoFactorAuthDetails details2FA = service.enable(ACCOUNT1.getId());
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.ALREADY_ENABLED, details2FA.getStatus2Fa());
+        Assert.assertEquals(Status2FA.ALREADY_ENABLED, details2FA.getStatus2Fa());
     }
     @Test
     public void testEnableNotConfirmed() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT2.getId());
-        TwoFactorAuthUtil.verifySecretCode(authDetails, ACCOUNT2.getAccountRS());
+        TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.rsAccount(ACCOUNT2.getId()));
         Assert.assertFalse(service.isEnabled(ACCOUNT2.getId()));
     }
 
@@ -57,9 +58,9 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testDisableFailAuth() {
 
-        TwoFactorAuthService.Status2FA status2FA = service.disable(ACCOUNT1.getId(), INVALID_CODE);
+        Status2FA status2FA = service.disable(ACCOUNT1.getId(), INVALID_CODE);
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.INCORRECT_CODE, status2FA);
+        Assert.assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
 
 
@@ -94,39 +95,39 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testTryAuthCodesNotEquals() {
         int fakeNumber = new Random().nextInt();
-        TwoFactorAuthService.Status2FA status2FA = service.tryAuth(ACCOUNT1.getId(), fakeNumber);
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.INCORRECT_CODE, status2FA);
+        Status2FA status2FA = service.tryAuth(ACCOUNT1.getId(), fakeNumber);
+        Assert.assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
 
     @Test
     public void testTryAuthNotConfirmed() {
         int fakeNumber = new Random().nextInt();
-        TwoFactorAuthService.Status2FA status2FA = service.tryAuth(ACCOUNT2.getId(), fakeNumber);
+        Status2FA status2FA = service.tryAuth(ACCOUNT2.getId(), fakeNumber);
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_CONFIRMED, status2FA);
+        Assert.assertEquals(Status2FA.NOT_CONFIRMED, status2FA);
     }
 
     @Test
     public void testConfirm() throws GeneralSecurityException {
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT2_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.confirm(ACCOUNT2.getId(), currentCode);
+        Status2FA status2FA = service.confirm(ACCOUNT2.getId(), currentCode);
 
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.OK, status2FA);
+        Assert.assertEquals(Status2FA.OK, status2FA);
         Assert.assertTrue(service.isEnabled(ACCOUNT2.getId()));
     }
     @Test
     public void testConfirmAlreadyConfirmed() throws GeneralSecurityException {
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT1_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.confirm(ACCOUNT1.getId(), currentCode);
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.ALREADY_CONFIRMED, status2FA);
+        Status2FA status2FA = service.confirm(ACCOUNT1.getId(), currentCode);
+        Assert.assertEquals(Status2FA.ALREADY_CONFIRMED, status2FA);
         Assert.assertTrue(service.isEnabled(ACCOUNT1.getId()));
     }
 
     @Test
     public void testConfirmNotExists() throws GeneralSecurityException {
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
-        TwoFactorAuthService.Status2FA status2FA = service.confirm(ACCOUNT3.getId(), currentCode);
-        Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_FOUND,status2FA);
+        Status2FA status2FA = service.confirm(ACCOUNT3.getId(), currentCode);
+        Assert.assertEquals(Status2FA.NOT_FOUND,status2FA);
         Assert.assertFalse(service.isEnabled(ACCOUNT3.getId()));
     }
 }

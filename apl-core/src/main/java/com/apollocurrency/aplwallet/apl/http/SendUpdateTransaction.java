@@ -5,10 +5,10 @@ package com.apollocurrency.aplwallet.apl.http;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.*;
-import com.apollocurrency.aplwallet.apl.updater.Architecture;
-import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.updater.Platform;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
+import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
