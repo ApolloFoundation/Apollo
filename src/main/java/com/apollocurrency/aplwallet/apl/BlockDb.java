@@ -37,17 +37,35 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.updater.ConnectionProvider;
 import org.slf4j.Logger;
-final class BlockDb {
+public final class BlockDb {
     private static final Logger LOG = getLogger(BlockDb.class);
 
     /** Block cache */
-    static final int BLOCK_CACHE_SIZE = 10;
-    static final Map<Long, BlockImpl> blockCache = new HashMap<>();
-    static final SortedMap<Integer, BlockImpl> heightMap = new TreeMap<>();
-    static final Map<Long, TransactionImpl> transactionCache = new HashMap<>();
-    static final Blockchain blockchain = Apl.getBlockchain();
-    static {
+    private static final int DEFAULT_BLOCK_CACHE_SIZE = 10;
+    private int blockCacheSize;
+    private final Map<Long, BlockImpl> blockCache;             
+    private final SortedMap<Integer, BlockImpl> heightMap;     
+    private final Map<Long, TransactionImpl> transactionCache;
+    private final ConnectionProvider connectionProvider;
+    public BlockDb(int blockCacheSize, Map<Long, BlockImpl> blockCache, SortedMap<Integer, BlockImpl> heightMap,
+                   Map<Long, TransactionImpl> transactionCache, ConnectionProvider connectionProvider) {
+        this.blockCacheSize = blockCacheSize;
+        this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
+        this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
+        this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
+        if (connectionProvider == null) {
+            throw new IllegalArgumentException("Connection provider is null");
+        }
+        this.connectionProvider = connectionProvider;
+    }
+
+    public BlockDb(ConnectionProvider connectionProvider) {
+        this(DEFAULT_BLOCK_CACHE_SIZE, null, null, null, connectionProvider);
+    }
+
+    public void attachCacheListener() {
         Apl.getBlockchainProcessor().addListener((block) -> {
             synchronized (blockCache) {
                 int height = block.getHeight();
@@ -55,7 +73,7 @@ final class BlockDb {
                 while (it.hasNext()) {
                     Block cacheBlock = it.next();
                     int cacheHeight = cacheBlock.getHeight();
-                    if (cacheHeight <= height - BLOCK_CACHE_SIZE || cacheHeight >= height) {
+                    if (cacheHeight <= height - blockCacheSize || cacheHeight >= height) {
                         cacheBlock.getTransactions().forEach((tx) -> transactionCache.remove(tx.getId()));
                         heightMap.remove(cacheHeight);
                         it.remove();
@@ -67,8 +85,9 @@ final class BlockDb {
             }
         }, BlockchainProcessor.Event.BLOCK_PUSHED);
     }
+    
 
-    static private void clearBlockCache() {
+     private void clearBlockCache() {
         synchronized (blockCache) {
             blockCache.clear();
             heightMap.clear();
@@ -76,7 +95,7 @@ final class BlockDb {
         }
     }
 
-    static BlockImpl findBlock(long blockId) {
+    public BlockImpl findBlock(long blockId) {
         // Check the block cache
         synchronized (blockCache) {
             BlockImpl block = blockCache.get(blockId);
@@ -85,7 +104,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -100,11 +119,11 @@ final class BlockDb {
         }
     }
 
-    static boolean hasBlock(long blockId) {
+    boolean hasBlock(long blockId) {
         return hasBlock(blockId, Integer.MAX_VALUE);
     }
 
-    static boolean hasBlock(long blockId, int height) {
+    boolean hasBlock(long blockId, int height) {
         // Check the block cache
         synchronized(blockCache) {
             BlockImpl block = blockCache.get(blockId);
@@ -113,7 +132,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -124,7 +143,7 @@ final class BlockDb {
         }
     }
 
-    static long findBlockIdAtHeight(int height) {
+    long findBlockIdAtHeight(int height) {
         // Check the cache
         synchronized(blockCache) {
             BlockImpl block = heightMap.get(height);
@@ -133,7 +152,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -147,7 +166,15 @@ final class BlockDb {
         }
     }
 
-    static BlockImpl findBlockAtHeight(int height) {
+    public Map<Long, BlockImpl> getBlockCache() {
+        return blockCache;
+    }
+
+    public SortedMap<Integer, BlockImpl> getHeightMap() {
+        return heightMap;
+    }
+
+    BlockImpl findBlockAtHeight(int height) {
         // Check the cache
         synchronized(blockCache) {
             BlockImpl block = heightMap.get(height);
@@ -156,7 +183,7 @@ final class BlockDb {
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -173,8 +200,16 @@ final class BlockDb {
         }
     }
 
-    static BlockImpl findLastBlock() {
-        try (Connection con = Db.getDb().getConnection();
+    public int getBlockCacheSize() {
+        return blockCacheSize;
+    }
+
+    public Map<Long, TransactionImpl> getTransactionCache() {
+        return transactionCache;
+    }
+
+    public BlockImpl findLastBlock() {
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             BlockImpl block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -188,8 +223,50 @@ final class BlockDb {
         }
     }
 
-    static BlockImpl findLastBlock(int timestamp) {
-        try (Connection con = Db.getDb().getConnection();
+    BlockImpl findBlockWithVersion(int skipCount, int version) {
+        try (Connection con = connectionProvider.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+             "SELECT * FROM block WHERE version = ? ORDER BY block_timestamp DESC LIMIT 1 OFFSET ?)")) {
+            int i = 0;
+            pstmt.setInt(++i, version);
+            pstmt.setInt(++i, skipCount);
+            BlockImpl block = null;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    block = loadBlock(con, rs);
+                }
+            }
+            return block;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    BlockImpl findAdaptiveBlock(int skipCount) {
+        return findBlockWithVersion(skipCount, Block.ADAPTIVE_BLOCK_VERSION);
+    }
+
+    BlockImpl findLastAdaptiveBlock() {
+        return findAdaptiveBlock(0);
+    }
+    BlockImpl findInstantBlock(int skipCount) {
+        return findBlockWithVersion(skipCount, Block.INSTANT_BLOCK_VERSION);
+    }
+
+    BlockImpl findLastInstantBlock() {
+        return findInstantBlock(0);
+    }
+    BlockImpl findRegularBlock(int skipCount) {
+        return findBlockWithVersion(skipCount, Block.REGULAR_BLOCK_VERSION);
+    }
+
+    BlockImpl findRegularBlock() {
+        return findRegularBlock(0);
+    }
+
+
+    BlockImpl findLastBlock(int timestamp) {
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 1")) {
             pstmt.setInt(1, timestamp);
             BlockImpl block = null;
@@ -204,9 +281,9 @@ final class BlockDb {
         }
     }
 
-    static Set<Long> getBlockGenerators(int startHeight) {
+    Set<Long> getBlockGenerators(int startHeight) {
         Set<Long> generators = new HashSet<>();
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
                 PreparedStatement pstmt = con.prepareStatement(
                         "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id")) {
             pstmt.setInt(1, startHeight);
@@ -259,7 +336,7 @@ final class BlockDb {
         }
     }
 
-    static void saveBlock(Connection con, BlockImpl block) {
+    void saveBlock(Connection con, BlockImpl block) {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
@@ -306,8 +383,8 @@ final class BlockDb {
     }
 
     //set next_block_id to null instead of 0 to indicate successful block push
-    static void commit(Block block) {
-        try (Connection con = Db.getDb().getConnection();
+    void commit(Block block) {
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
             pstmt.setLong(1, block.getId());
             pstmt.executeUpdate();
@@ -316,9 +393,9 @@ final class BlockDb {
         }
     }
 
-    static void deleteBlocksFromHeight(int height) {
+    void deleteBlocksFromHeight(int height) {
         long blockId;
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -331,38 +408,38 @@ final class BlockDb {
             throw new RuntimeException(e.toString(), e);
         }
         LOG.debug("Deleting blocks starting from height %s", height);
-        BlockDb.deleteBlocksFrom(blockId);
+        deleteBlocksFrom(blockId);
     }
 
     // relying on cascade triggers in the database to delete the transactions and public keys for all deleted blocks
-    static BlockImpl deleteBlocksFrom(long blockId) {
-        if (!Db.getDb().isInTransaction()) {
+    BlockImpl deleteBlocksFrom(long blockId) {
+        if (!connectionProvider.isInTransaction(null)) {
             BlockImpl lastBlock;
             try {
-                Db.getDb().beginTransaction();
+                Connection connection = connectionProvider.beginTransaction();
                 // TODO: Recursion, check if safe...
                 lastBlock = deleteBlocksFrom(blockId);
-                Db.getDb().commitTransaction();
+                connectionProvider.commitTransaction(connection);
             } catch (Exception e) {
-                Db.getDb().rollbackTransaction();
+                connectionProvider.rollbackTransaction(null);
                 throw e;
             } finally {
-                Db.getDb().endTransaction();
+                connectionProvider.endTransaction(null);
             }
             return lastBlock;
         }
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT db_id FROM block WHERE timestamp >= "
                      + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?")) {
             try {
                 pstmtSelect.setLong(1, blockId);
                 try (ResultSet rs = pstmtSelect.executeQuery()) {
-                    Db.getDb().commitTransaction();
+                    connectionProvider.commitTransaction(con);
                     while (rs.next()) {
         	            pstmtDelete.setLong(1, rs.getLong("db_id"));
             	        pstmtDelete.executeUpdate();
-                        Db.getDb().commitTransaction();
+                        connectionProvider.commitTransaction(con);
                     }
 	            }
                 BlockImpl lastBlock = findLastBlock();
@@ -371,10 +448,10 @@ final class BlockDb {
                     pstmt.setLong(1, lastBlock.getId());
                     pstmt.executeUpdate();
                 }
-                Db.getDb().commitTransaction();
+                connectionProvider.commitTransaction(con);
                 return lastBlock;
             } catch (SQLException e) {
-                Db.getDb().rollbackTransaction();
+                connectionProvider.rollbackTransaction(con);
                 throw e;
             }
         } catch (SQLException e) {
@@ -384,22 +461,22 @@ final class BlockDb {
         }
     }
 
-    static void deleteAll() {
-        if (!Db.getDb().isInTransaction()) {
+    void deleteAll() {
+        if (!connectionProvider.isInTransaction(null)) {
             try {
-                Db.getDb().beginTransaction();
+                Connection connection = connectionProvider.beginTransaction();
                 deleteAll();
-                Db.getDb().commitTransaction();
+                connectionProvider.commitTransaction(connection);
             } catch (Exception e) {
-                Db.getDb().rollbackTransaction();
+                connectionProvider.rollbackTransaction(null);
                 throw e;
             } finally {
-                Db.getDb().endTransaction();
+                connectionProvider.endTransaction(null);
             }
             return;
         }
         LOG.info("Deleting blockchain...");
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
@@ -411,9 +488,9 @@ final class BlockDb {
                     } catch (SQLException ignore) {}
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");
-                Db.getDb().commitTransaction();
+                connectionProvider.commitTransaction(con);
             } catch (SQLException e) {
-                Db.getDb().rollbackTransaction();
+                connectionProvider.rollbackTransaction(con);
                 throw e;
             }
         } catch (SQLException e) {

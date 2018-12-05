@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.Alias;
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Appendix;
 import com.apollocurrency.aplwallet.apl.Asset;
 import com.apollocurrency.aplwallet.apl.AssetDelete;
@@ -125,7 +126,7 @@ public final class JSONData {
             json.put("forgedBalanceATM", String.valueOf(account.getForgedBalanceATM()));
             if (includeEffectiveBalance) {
                 json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height));
-                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(Constants.getGuaranteedBalanceConfirmations(), height)));
+                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), height)));
             }
         }
         return json;
@@ -480,11 +481,8 @@ public final class JSONData {
         putAccount(json, "generator", block.getGeneratorId());
         json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
         json.put("timestamp", block.getTimestamp());
-        boolean adaptive = Constants.isAdaptiveForgingEnabled();
-        if (adaptive) {
-            json.put("timeout", block.getTimeout());
-        }
-        json.put("adaptive", adaptive);
+
+        json.put("timeout", block.getTimeout());
         json.put("numberOfTransactions", block.getTransactions().size());
         json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());

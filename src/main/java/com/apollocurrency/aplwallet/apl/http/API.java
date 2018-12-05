@@ -57,6 +57,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
@@ -173,8 +174,8 @@ public final class API {
 
         boolean enableAPIServer = Apl.getBooleanProperty("apl.enableAPIServer");
         if (enableAPIServer) {
-            final int port = Constants.isTestnet() ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
-            final int sslPort = Constants.isTestnet() ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
+            final int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : Apl.getIntProperty("apl.apiServerPort");
+            final int sslPort = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_SSLPORT : Apl.getIntProperty("apl.apiServerSSLPort");
             final String host = Apl.getStringProperty("apl.apiServerHost");
             disableAdminPassword = Apl.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
             int maxThreadPoolSize = Apl.getIntProperty("apl.threadPoolMaxSize");
@@ -319,6 +320,7 @@ public final class API {
             apiHandlers.addHandler(new DefaultHandler());
 
             apiServer.setHandler(apiHandlers);
+            apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
 
             ThreadPool.runBeforeStart("UPnP ports init", () -> {

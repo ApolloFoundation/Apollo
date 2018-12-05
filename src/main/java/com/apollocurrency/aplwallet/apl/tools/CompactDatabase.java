@@ -30,7 +30,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import org.slf4j.Logger;
 
 /**
@@ -71,7 +71,7 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-        String dbPrefix = Constants.isTestnet() ? "apl.testDb" : "apl.db";
+        String dbPrefix = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
         String dbType = Apl.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");

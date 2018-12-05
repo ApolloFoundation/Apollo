@@ -50,9 +50,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Block;
 import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.Db;
 import com.apollocurrency.aplwallet.apl.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.TaggedData;
@@ -60,11 +60,11 @@ import com.apollocurrency.aplwallet.apl.Transaction;
 import com.apollocurrency.aplwallet.apl.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
-import com.apollocurrency.aplwallet.apl.dbmodel.Option;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.sun.javafx.scene.web.Debugger;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -366,8 +366,9 @@ public class DesktopApplication extends Application {
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-                        mainStage.setTitle(Constants.getProjectName() + " Desktop - " + webEngine.getLocation());
+                        mainStage.setTitle(AplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
                         ars = (JSObject) webEngine.executeScript("NRS");
+                        //JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->

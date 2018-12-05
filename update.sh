@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # first parameter is a current directory, where wallet is executing now (directory, which we should update)
 # second parameter is a update directory which contains unpacked jar for update

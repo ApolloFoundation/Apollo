@@ -79,7 +79,7 @@ var NRS = (function (NRS, $) {
         'UNKNOWN': 'unknown',
         'LAST_KNOWN_BLOCK': { id: "0", height: "0" },
         'LAST_KNOWN_TESTNET_BLOCK': { id: "0", height: "0" },
-        'INITIAL_BASE_TARGET': 153722867,
+        'INITIAL_BASE_TARGET': 30744573,
         'SCHEDULE_PREFIX': "schedule"
     };
 
@@ -141,7 +141,7 @@ var NRS = (function (NRS, $) {
             NRS.constants.ACCOUNT_MASK_UNDERSCORE = response.accountPrefix + "-____-____-____-_____";
             NRS.constants.ACCOUNT_MASK_PREFIX = response.accountPrefix + "-";
             NRS.constants.GENESIS_RS = converters.convertNumericToRSAccountFormat(response.genesisAccountId);
-            NRS.constants.INITIAL_BASE_TARGET = parseInt(response.initialBaseTarget);
+            // NRS.constants.INITIAL_BASE_TARGET = parseInt(response.initialBaseTarget);
             NRS.constants.CURRENCY_TYPES = response.currencyTypes;
             if (resolve) {
                 resolve();

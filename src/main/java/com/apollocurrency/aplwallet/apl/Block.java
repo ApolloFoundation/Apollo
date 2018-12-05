@@ -26,6 +26,10 @@ import java.util.List;
 import org.json.simple.JSONObject;
 
 public interface Block {
+    int LEGACY_BLOCK_VERSION   = 3;
+    int REGULAR_BLOCK_VERSION  = 4;
+    int INSTANT_BLOCK_VERSION  = 5;
+    int ADAPTIVE_BLOCK_VERSION = 6;
 
     int getVersion();
 
@@ -66,8 +70,6 @@ public interface Block {
     BigInteger getCumulativeDifficulty();
 
     byte[] getBytes();
-
-    byte[] getBytes(boolean adaptive);
 
     JSONObject getJSONObject();
 

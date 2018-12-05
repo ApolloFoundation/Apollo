@@ -80,6 +80,74 @@
             "enabled": "false"
           }
         }
+      },
+      {
+        "height": 354500,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+        "height": 406340,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
+        }
+      },
+      {
+        "height": 414980,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 40
+          }
+        }
+      },
+      {
+        "height": 420740,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
       }
     ]
   },
@@ -118,27 +186,9 @@
       {
         "height": 234700,
         "maxNumberOfTransactions": 255,
-        "blockTime": 1,
-        "maxBlockTimeLimit": 1,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensus":
-        {
-          "type": "POS",
-          "adaptiveForgingSettings":
-          {
-            "enabled": "false",
-            "emptyBlockTime": 60
-          }
-        }
-
-      },
-      {
-        "height": 238000,
-        "maxNumberOfTransactions": 255,
         "blockTime": 10,
-        "maxBlockTimeLimit": 10,
-        "minBlockTimeLimit": 10,
+        "maxBlockTimeLimit": 12,
+        "minBlockTimeLimit": 8,
         "maxBalance": 30000000000,
         "consensus":
         {
@@ -146,15 +196,33 @@
           "adaptiveForgingSettings":
           {
             "enabled": "true",
-            "emptyBlockTime": 60
+            "adaptiveBlockTime": 60
           }
         }
-      }
+
+      },
+      {
+        "height": 244600,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+       }
     ]
   },
   {
-    "chainId": "181d062e-935c-4b10-99b6-0e7e4d18a75a",
-    "isTestnet": true,
+    "chainId": "0a038e49-1a74-4c32-b35e-bd8f9d744081",
+    "isTestnet": false,
     "active": false,
     "defaultPeers": [
 	"51.15.120.100",
@@ -169,7 +237,7 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "data/genesisAccounts-testnet.json",
+    "genesisLocation": "data/genesisAccounts.json",
     "blockchainProperties": [
       {
         "height": 0,
@@ -184,7 +252,7 @@
         }
       },
       {
-        "height": 200,
+        "height": 314800,
         "maxNumberOfTransactions": 255,
         "blockTime": 10,
         "maxBlockTimeLimit": 60,
@@ -192,10 +260,83 @@
         "maxBalance": 30000000000,
         "consensus":
         {
-          "type": "POS"
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "false"
+          }
+        }
+      },
+      {
+        "height": 341800,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 30,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+      },
+      {
+        "height": 341970,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 10,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 21165096531,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+      },
+      {
+	"height": 346630,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 21165096531,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+	"height": 347000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 21165096531,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
         }
       }
     ]
+
   },
   {
     "chainId": "0263dc68-9bc6-48de-9f4d-7e1ef5824591",

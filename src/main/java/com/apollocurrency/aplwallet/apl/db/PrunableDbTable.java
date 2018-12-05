@@ -20,15 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Constants;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.Constants;
+import org.slf4j.Logger;
 
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
@@ -56,10 +57,10 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     }
 
     protected void prune() {
-        if (Constants.ENABLE_PRUNING) {
+        if (AplGlobalObjects.getChainConfig().isEnablePruning()) {
             try (Connection con = db.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmt.setInt(1, Apl.getEpochTime() - Constants.MAX_PRUNABLE_LIFETIME);
+                pstmt.setInt(1, Apl.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime());
                 int deleted;
                 do {
                     deleted = pstmt.executeUpdate();

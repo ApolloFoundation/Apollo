@@ -53,8 +53,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -587,7 +587,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         BlockchainImpl.getInstance().writeLock();
         try {
             for (Transaction transaction : transactions) {
-                BlockDb.transactionCache.remove(transaction.getId());
+                AplGlobalObjects.getBlockDb().getTransactionCache().remove(transaction.getId());
                 if (TransactionDb.hasTransaction(transaction.getId())) {
                     continue;
                 }
@@ -634,7 +634,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (Apl.getBlockchain().getHeight() <= Constants.getLastKnownBlock() && !testUnconfirmedTransactions) {
+        if (Apl.getBlockchain().getHeight() <= AplGlobalObjects.getChainConfig().getLastKnownBlock() && !testUnconfirmedTransactions) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -698,7 +698,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             try {
                 Db.getDb().beginTransaction();
-                if (Apl.getBlockchain().getHeight() < Constants.getLastKnownBlock() && !testUnconfirmedTransactions) {
+                if (Apl.getBlockchain().getHeight() < AplGlobalObjects.getChainConfig().getLastKnownBlock() && !testUnconfirmedTransactions) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
 

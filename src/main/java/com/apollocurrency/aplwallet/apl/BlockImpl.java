@@ -32,13 +32,14 @@ import java.util.Collections;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-final class BlockImpl implements Block {
+public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
@@ -57,7 +58,7 @@ final class BlockImpl implements Block {
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty = BigInteger.ZERO;
-    private long baseTarget = Constants.getInitialBaseTarget();
+    private long baseTarget = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget();
     private volatile long nextBlockId;
     private int height = -1;
     private volatile long id;
@@ -68,16 +69,17 @@ final class BlockImpl implements Block {
 
     BlockImpl(byte[] generatorPublicKey, byte[] generationSignature) {
         this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey, generationSignature, new byte[64],
-                new byte[32], (byte) 0, Collections.emptyList());
+                new byte[32],  0, Collections.emptyList());
         this.height = 0;
     }
 
     BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout, List<TransactionImpl> transactions,
-              byte[] keySeed, boolean adaptive) {
+              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout,
+              List<TransactionImpl> transactions,
+              byte[] keySeed) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions);
-        blockSignature = Crypto.sign(bytes(adaptive), keySeed);
+        blockSignature = Crypto.sign(bytes(), keySeed);
         bytes = null;
     }
 
@@ -225,7 +227,7 @@ final class BlockImpl implements Block {
                 throw new IllegalStateException("Block is not signed yet");
             }
 //            assuming that calculation of id will work only for generated blocks
-            byte[] hash = Crypto.sha256().digest(bytes(Constants.isAdaptiveForgingEnabled()));
+            byte[] hash = Crypto.sha256().digest(bytes());
             BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
             id = bigInteger.longValue();
             stringId = bigInteger.toString();
@@ -277,9 +279,6 @@ final class BlockImpl implements Block {
         json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
         json.put("blockSignature", Convert.toHexString(blockSignature));
         json.put("timeout", timeout);
-        if (height >= 0) {
-            json.put("adaptive", Constants.isAdaptiveBlockAtHeight(height));
-        }
 
         JSONArray transactionsData = new JSONArray();
         getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
@@ -287,7 +286,7 @@ final class BlockImpl implements Block {
         return json;
     }
 
-    static BlockImpl parseBlock(JSONObject blockData, boolean adaptive) throws AplException.NotValidException {
+    static BlockImpl parseBlock(JSONObject blockData) throws AplException.NotValidException {
         try {
             int version = ((Long) blockData.get("version")).intValue();
             int timestamp = ((Long) blockData.get("timestamp")).intValue();
@@ -301,14 +300,14 @@ final class BlockImpl implements Block {
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
-            int timeout =  timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
+            int timeout =  !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
             List<TransactionImpl> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
                     generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions);
-            if (!block.checkSignature(adaptive)) {
+            if (!block.checkSignature()) {
                 throw new AplException.NotValidException("Invalid block signature");
             }
             return block;
@@ -321,19 +320,17 @@ final class BlockImpl implements Block {
 
     @Override
     public byte[] getBytes() {
-        return getBytes(Constants.isAdaptiveForgingEnabled());
+        return Arrays.copyOf(bytes(), bytes.length);
     }
 
-    @Override
-    public byte[] getBytes(boolean adaptive) {
-        return Arrays.copyOf(bytes(adaptive), bytes.length);
+    static boolean requireTimeout(int version) {
+        return Block.ADAPTIVE_BLOCK_VERSION == version || Block.INSTANT_BLOCK_VERSION == version;
     }
-
-    byte[] bytes(boolean adaptive) {
+    byte[] bytes() {
         if (bytes == null) {
             ByteBuffer buffer =
                     ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 +
-                            (adaptive ? 4 : 0) +(blockSignature != null ? 64 :
+                            (requireTimeout(version) ? 4 : 0) + (blockSignature != null ? 64 :
                     0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
@@ -347,7 +344,7 @@ final class BlockImpl implements Block {
             buffer.put(getGeneratorPublicKey());
             buffer.put(generationSignature);
             buffer.put(previousBlockHash);
-            if (adaptive) {
+            if (requireTimeout(version)) {
                 buffer.putInt(timeout);
             }
             if (blockSignature != null) {
@@ -364,13 +361,10 @@ final class BlockImpl implements Block {
 
     private volatile boolean hasValidSignature = false;
 
-    private boolean checkSignature() {
-        return checkSignature(Constants.isAdaptiveForgingEnabled());
-    }
 
-    private boolean checkSignature(boolean adaptive) {
+    private boolean checkSignature() {
         if (! hasValidSignature) {
-            byte[] data = Arrays.copyOf(bytes(adaptive), bytes.length - 64);
+            byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
             hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey());
         }
         return hasValidSignature;
@@ -401,7 +395,7 @@ final class BlockImpl implements Block {
 
             BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
 
-            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, timestamp - timeout);
+            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout: timestamp);
 
         } catch (RuntimeException e) {
 
@@ -429,15 +423,15 @@ final class BlockImpl implements Block {
                     break;
                 }
                 totalBackFees += backFees[i];
-                Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, Constants.getCoinSymbol(),
+                Account previousGeneratorAccount = Account.getAccount(AplGlobalObjects.getBlockDb().findBlockAtHeight(this.height - i - 1).getGeneratorId());
+                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
                         this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, Constants.getCoinSymbol(), this.height);
+            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(), this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
         generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);
@@ -468,34 +462,47 @@ final class BlockImpl implements Block {
         }
     }
 
+
     private void calculateBaseTarget(BlockImpl previousBlock) {
         long prevBaseTarget = previousBlock.baseTarget;
         int blockchainHeight = previousBlock.height;
-        if (Constants.isAdaptiveForgingEnabled() && getTransactions().size() == 0) {
-            baseTarget = prevBaseTarget;
-        } else if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
-            BlockImpl block = BlockDb.findBlockAtHeight(blockchainHeight - 2);
-            int blocktimeAverage = (this.timestamp - block.timestamp) / 3;
-            int blockTime = Constants.getBlockTime();
+        if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
+            int blocktimeAverage = getBlockTimeAverage(previousBlock);
+            HeightConfig config = AplGlobalObjects.getChainConfig().getCurrentConfig();
+            int blockTime = config.getBlockTime();
             if (blocktimeAverage > blockTime) {
-                int maxBlocktimeLimit = Constants.getMaxBlocktimeLimit();
+                int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
                 baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, maxBlocktimeLimit)) / blockTime;
             } else {
-                int minBlocktimeLimit = Constants.getMinBlocktimeLimit();
+                int minBlocktimeLimit = config.getMinBlockTimeLimit();
                 baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
                         * (blockTime - Math.max(blocktimeAverage, minBlocktimeLimit)) / (100 * blockTime);
             }
-            long maxBaseTarget = Constants.getMaxBaseTarget();
+            long maxBaseTarget = config.getMaxBaseTarget();
             if (baseTarget < 0 || baseTarget > maxBaseTarget) {
                 baseTarget = maxBaseTarget;
             }
-            long minBaseTarget = Constants.getMinBaseTarget();
+            long minBaseTarget = config.getMinBaseTarget();
             if (baseTarget < minBaseTarget) {
-                baseTarget = Constants.getMinBaseTarget();
+                baseTarget = config.getMinBaseTarget();
             }
         } else {
             baseTarget = prevBaseTarget;
         }
         cumulativeDifficulty = previousBlock.cumulativeDifficulty.add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
+    }
+
+    private int getBlockTimeAverage(BlockImpl previousBlock) {
+        int blockchainHeight = previousBlock.height;
+        BlockImpl lastBlockForTimeAverage = AplGlobalObjects.getBlockDb().findBlockAtHeight(blockchainHeight - 2);
+        if (version != Block.LEGACY_BLOCK_VERSION) {
+            BlockImpl intermediateBlockForTimeAverage = AplGlobalObjects.getBlockDb().findBlockAtHeight(blockchainHeight - 1);
+            int thisBlockActualTime = this.timestamp - previousBlock.timestamp - this.timeout;
+            int previousBlockTime = previousBlock.timestamp - previousBlock.timeout - intermediateBlockForTimeAverage.timestamp;
+            int secondAvgBlockTime = intermediateBlockForTimeAverage.timestamp - intermediateBlockForTimeAverage.timeout - lastBlockForTimeAverage.timestamp;
+            return  (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
+        } else {
+            return (this.timestamp - lastBlockForTimeAverage.timestamp) / 3;
+        }
     }
 }

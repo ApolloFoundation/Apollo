@@ -30,18 +30,18 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.Constants;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
 
 public final class BaseTargetTest {
         private static final Logger LOG = getLogger(BaseTargetTest.class);
 
-    private static final long MIN_BASE_TARGET = Constants.getInitialBaseTarget() * 9 / 10;
-    private static final long MAX_BASE_TARGET = Constants.getInitialBaseTarget() * (Constants.isTestnet() ? Constants.getMaxBalanceAPL() : 50);
+    private static final long MIN_BASE_TARGET = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() * 9 / 10;
+    private static final long MAX_BASE_TARGET = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() * (AplGlobalObjects.getChainConfig().isTestnet() ? AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL() : 50);
 
-    private static final int MIN_BLOCKTIME_LIMIT = Constants.getBlockTime() - 7;
-    private static final int MAX_BLOCKTIME_LIMIT = Constants.getBlockTime() + 7;
+    private static final int MIN_BLOCKTIME_LIMIT = AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime() - 7;
+    private static final int MAX_BLOCKTIME_LIMIT = AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime() + 7;
 
     private static final int GAMMA = 64;
 
@@ -57,7 +57,7 @@ public final class BaseTargetTest {
 
     private static long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
-        int blockTime = Constants.getBlockTime();
+        int blockTime = AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime();
         if (blocktimeEMA > blockTime) {
             baseTarget = (previousBaseTarget * Math.min(blocktimeEMA, MAX_BLOCKTIME_LIMIT)) / blockTime;
         } else {
@@ -114,7 +114,7 @@ public final class BaseTargetTest {
 
             int count = 0;
 
-            String dbLocation = Constants.isTestnet() ? "apl_test_db" : "apl_db";
+            String dbLocation = AplGlobalObjects.getChainConfig().isTestnet() ? "apl_test_db" : "apl_db";
 
             try (Connection con = DriverManager.getConnection("jdbc:h2:./" + dbLocation + "/apl;DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE", "sa", "sa");
                  PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM block WHERE height > " + height + " ORDER BY db_id ASC");

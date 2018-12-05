@@ -58,7 +58,7 @@ public interface Appendix {
         default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
             return Apl.getEpochTime() - transaction.getTimestamp() <
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
-                            Constants.MAX_PRUNABLE_LIFETIME : Constants.getMinPrunableLifetime());
+                            AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() : AplGlobalObjects.getChainConfig().getMinPrunableLifetime());
         }
     }
 
@@ -415,14 +415,14 @@ public interface Appendix {
             if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
                 throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
             }
-            if (msg == null && Apl.getEpochTime() - transaction.getTimestamp() < Constants.getMinPrunableLifetime()) {
+            if (msg == null && Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
             }
         }
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
+            if (Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime()) {
                 PrunableMessage.add((TransactionImpl)transaction, this);
             }
         }
@@ -709,7 +709,7 @@ public interface Appendix {
                 throw new AplException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
             }
             EncryptedData ed = getEncryptedData();
-            if (ed == null && Apl.getEpochTime() - transaction.getTimestamp() < Constants.getMinPrunableLifetime()) {
+            if (ed == null && Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
             }
             if (ed != null) {
@@ -729,7 +729,7 @@ public interface Appendix {
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            if (Apl.getEpochTime() - transaction.getTimestamp() < Constants.MAX_PRUNABLE_LIFETIME) {
+            if (Apl.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime()) {
                 PrunableMessage.add((TransactionImpl)transaction, this);
             }
         }
