@@ -232,6 +232,40 @@
             "adaptiveBlockTime": 60
           }
         }
+      },
+      {
+	"height": 346630,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 21165096531,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+	"height": 347000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 21165096531,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
+        }
       }
     ]
 
