@@ -2,7 +2,7 @@
   {
     "chainId": "b5d7b697-f359-4ce5-a619-fa34b6fb01a5",
     "isTestnet": false,
-    "active": false,
+    "active": true,
     "defaultPeers": [
         "18.217.154.227",
         "18.219.22.254",
@@ -80,6 +80,74 @@
             "enabled": "false"
           }
         }
+      },
+      {
+        "height": 354500,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+        "height": 406340,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
+        }
+      },
+      {
+        "height": 414980,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 40
+          }
+        }
+      },
+      {
+        "height": 420740,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
       }
     ]
   },
@@ -155,7 +223,7 @@
   {
     "chainId": "0a038e49-1a74-4c32-b35e-bd8f9d744081",
     "isTestnet": false,
-    "active": true,
+    "active": false,
     "defaultPeers": [
 	"51.15.120.100",
 	"51.15.107.63",
