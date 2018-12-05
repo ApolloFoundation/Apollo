@@ -73,7 +73,7 @@ public final class Apl {
     private static Logger LOG;
 
 
-    public static final Version VERSION = Version.from("1.23.1");
+    public static final Version VERSION = Version.from("1.23.2");
 
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
