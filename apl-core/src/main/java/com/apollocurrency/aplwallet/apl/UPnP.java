@@ -18,9 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.slf4j.Logger;
@@ -68,7 +68,7 @@ public class UPnP {
         //
         try {
             if (gateway.addPortMapping(port, port, localAddress.getHostAddress(), "TCP",
-                                       Apl.APPLICATION + " " + Apl.VERSION)) {
+                                       "Apollo")) {
                 LOG.debug("Mapped port [" + externalAddress.getHostAddress() + "]:" + port);
             } else {
                 LOG.debug("Unable to map port " + port);
@@ -127,7 +127,7 @@ public class UPnP {
      */
     private static void init() {
         initDone = true;
-        Apl.getRuntimeMode().updateAppStatus("UPnP initialization...");
+       AppStatus.getInstance().update("UPnP initialization...");
         //
         // Discover the gateway devices on the local network
         //

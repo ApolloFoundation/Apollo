@@ -135,7 +135,7 @@ public class PropertiesLoader {
                     throw new IllegalArgumentException(String.format("Error loading %s from %s", propertiesFile, configFile));
                 }
             } else {
-                try (InputStream is = ClassLoader.getSystemResourceAsStream(propertiesFile)) {
+                try (InputStream is = ClassLoader.getSystemResourceAsStream(configDir+"/"+propertiesFile)) {
                     // When running apl.exe from a Windows installation we always have apl.properties in the classpath but this is not the apl properties file
                     // Therefore we first load it from the classpath and then look for the real apl.properties in the user folder.
                     if (is != null) {

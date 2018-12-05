@@ -21,12 +21,11 @@
             <version>${project.version}</version>
         </dependency>
         
-<!-- Swagger annotation for API auto-documenting --> 
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
-        
+
 <!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
@@ -43,13 +42,6 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
     <build>

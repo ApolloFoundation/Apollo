@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.TaggedData;
 import com.apollocurrency.aplwallet.apl.Trade;
 import com.apollocurrency.aplwallet.apl.Vote;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.UPnP;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

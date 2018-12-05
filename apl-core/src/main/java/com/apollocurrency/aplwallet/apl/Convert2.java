@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Genesis;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
-public final class Convert {
+public final class Convert2 {
 
     private static final char[] hexChars = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
     private static final long[] multipliers = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
@@ -51,7 +51,7 @@ public final class Convert {
     public static final byte[][] EMPTY_BYTES = new byte[0][];
     public static final String[] EMPTY_STRING = new String[0];
 
-    private Convert() {} //never
+    private Convert2() {} //never
 
     public static byte[] parseHexString(String hex) {
         if (hex == null) {
@@ -73,7 +73,7 @@ public final class Convert {
 
     public static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.fullHashToId(publicKeyHash);
+        return Convert2.fullHashToId(publicKeyHash);
     }
 
     public static String toHexString(byte[] bytes) {
@@ -275,7 +275,7 @@ public final class Convert {
         }
         byte[] bytes = new byte[numBytes];
         buffer.get(bytes);
-        return Convert.toString(bytes);
+        return Convert2.toString(bytes);
     }
 
     public static String truncate(String s, String replaceNull, int limit, boolean dots) {

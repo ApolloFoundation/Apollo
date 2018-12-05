@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -64,11 +62,12 @@ public final class ThreadPool {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started, no new jobs accepted");
         }
-        if (! Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
-            backgroundJobs.put(runnable, timeUnit.toMillis(delay));
-        } else {
-            LOG.info("Will not run " + name + " thread");
-        }
+//TODO: uncomment after cleanup of property reading in whole        
+//        if (! Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
+//            backgroundJobs.put(runnable, timeUnit.toMillis(delay));
+//        } else {
+//            LOG.info("Will not run " + name + " thread");
+//        }
     }
 
     public static synchronized void start(int timeMultiplier) {

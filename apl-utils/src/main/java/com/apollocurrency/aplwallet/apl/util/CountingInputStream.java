@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.AplException;
-
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;

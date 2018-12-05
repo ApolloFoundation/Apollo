@@ -9,7 +9,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.Constants;
 import java.io.IOException;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
@@ -21,13 +20,16 @@ public class NtpTime {
     private static final Logger LOG = getLogger(NtpTime.class);
     private static volatile long timeOffset = 0;
     private static final int REFRESH_FREQUENCY = 60;
-            
+    
+    public static final String TIME_SERVICE = "pool.ntp.org";
+
+        
     private static void setTimeDrift() {
         NTPUDPClient client = new NTPUDPClient();
 
         try {
             client.open();
-            InetAddress hostAddr = InetAddress.getByName(Constants.TIME_SERVICE);
+            InetAddress hostAddr = InetAddress.getByName(TIME_SERVICE);
             TimeInfo info = client.getTime(hostAddr);
             info.computeDetails(); // compute offset/delay if not already done
             Long offsetValue = info.getOffset();

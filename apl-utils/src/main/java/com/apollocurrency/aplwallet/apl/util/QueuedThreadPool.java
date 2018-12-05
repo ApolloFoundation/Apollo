@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;

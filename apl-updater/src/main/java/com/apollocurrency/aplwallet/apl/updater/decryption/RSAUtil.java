@@ -10,7 +10,6 @@ import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.slf4j.Logger;
-import sun.security.rsa.RSACore;
 
 import javax.crypto.Cipher;
 import java.io.File;
@@ -128,11 +127,13 @@ public class RSAUtil {
     }
 
     public static int maxEncryptionLength(RSAKey key) {
-        return RSACore.getByteLength(key) - 11;
+        return keyLength(key)-11;
     }
 
     public static int keyLength(RSAKey key) {
-        return RSACore.getByteLength(key);
+        int n = key.getModulus().bitLength();
+        int res = (n + 7) >> 3;
+        return res;
     }
 
 

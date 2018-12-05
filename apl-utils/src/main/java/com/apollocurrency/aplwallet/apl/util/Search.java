@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;

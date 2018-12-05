@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
@@ -59,7 +60,6 @@ import com.apollocurrency.aplwallet.apl.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.Time;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -68,6 +68,7 @@ public final class Apl {
     private static Logger LOG;
 
 
+    private static AplContainer container;
     private static ChainIdService chainIdService;
     public static final Version VERSION = Version.from("1.23.0");
 
@@ -299,6 +300,8 @@ public final class Apl {
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
+                container = AplContainer.builder().containerId("MAIN-APL-CDI")
+                        .annotatedDiscoveryMode().build();
                 ChainIdDbMigration.migrate();
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
                 AplGlobalObjects.getChainConfig().updateToLatestConstants();

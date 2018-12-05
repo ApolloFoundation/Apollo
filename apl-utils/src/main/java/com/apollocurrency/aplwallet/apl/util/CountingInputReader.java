@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.AplException.AplIOException;
-
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -114,10 +112,10 @@ public class CountingInputReader extends FilterReader {
      * @param   c                   Number of characters read
      * @throws  AplIOException      Maximum count exceeded
      */
-    private void incCount(long c) throws AplIOException {
+    private void incCount(long c) throws AplException.AplIOException {
         count += c;
         if (count > limit)
-            throw new AplIOException("Maximum size exceeded: " + count);
+            throw new AplException.AplIOException("Maximum size exceeded: " + count);
     }
 
     @Override

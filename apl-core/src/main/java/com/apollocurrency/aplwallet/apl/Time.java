@@ -18,8 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
