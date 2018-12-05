@@ -429,7 +429,7 @@ public final class Apl {
                     AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                     Option.set("secondDbMigrationRequired", "false");
                     boolean deleteOldDb = Apl.getBooleanProperty("apl.deleteOldDbAfterMigration");
-                    if (deleteOldDb) {
+                    if (deleteOldDb && oldDbPath != null) {
                         Option.set("oldDbPath", oldDbPath.toAbsolutePath().toString());
                     }
                 }
