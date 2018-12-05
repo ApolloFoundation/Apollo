@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -27,7 +27,7 @@ public class BasicAccount {
     @Override
     public String toString() {
         return "BasicAccount{" +
-                Convert.rsAccount(id) +
+                Convert2.rsAccount(id) +
                 '}';
     }
 
@@ -48,7 +48,7 @@ public class BasicAccount {
         return id;
     }
     public String getAccountRS() {
-        return Convert.rsAccount(id);
+        return Convert2.rsAccount(id);
     }
 
     @JsonSetter

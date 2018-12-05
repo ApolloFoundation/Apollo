@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,7 +34,6 @@ import java.util.concurrent.Semaphore;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.json.simple.JSONObject;
@@ -135,7 +135,7 @@ public final class FundingMonitor {
         this.threshold = threshold;
         this.interval = interval;
         this.accountId = accountId;
-        this.accountName = Convert.rsAccount(accountId);
+        this.accountName = Convert2.rsAccount(accountId);
         this.keySeed = keySeed;
         this.publicKey = Crypto.getPublicKey(keySeed);
     }
@@ -332,7 +332,7 @@ public final class FundingMonitor {
                 monitorInterval = (int)getValue(jsonValue.get("interval"), monitorInterval);
             } catch (IllegalArgumentException | ParseException exc) {
                 String errorMessage = String.format("Account %s, property '%s', value '%s' is not valid",
-                            Convert.rsAccount(accountId), monitor.property, propertyValue);
+                            Convert2.rsAccount(accountId), monitor.property, propertyValue);
                 throw new IllegalArgumentException(errorMessage, exc);
             }
         }
@@ -769,7 +769,7 @@ public final class FundingMonitor {
                 throw new IllegalArgumentException("Minimum fund interval is " + MIN_FUND_INTERVAL);
             }
             this.accountId = accountId;
-            this.accountName = Convert.rsAccount(accountId);
+            this.accountName = Convert2.rsAccount(accountId);
             this.monitor = monitor;
             this.amount = amount;
             this.threshold = threshold;
@@ -994,7 +994,7 @@ public final class FundingMonitor {
                     }
                 }
             } catch (Exception exc) {
-                LOG.error("Unable to process SET_PROPERTY event for account " + Convert.rsAccount(accountId), exc);
+                LOG.error("Unable to process SET_PROPERTY event for account " + Convert2.rsAccount(accountId), exc);
             }
         }
     }

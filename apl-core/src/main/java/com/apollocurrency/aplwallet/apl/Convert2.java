@@ -36,9 +36,8 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.Genesis;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
 public final class Convert2 {
 

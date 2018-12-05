@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public class LegacyAccountGenerator implements AccountGenerator {
     private PassphraseGenerator passphraseGenerator;

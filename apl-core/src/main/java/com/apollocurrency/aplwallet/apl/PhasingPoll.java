@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

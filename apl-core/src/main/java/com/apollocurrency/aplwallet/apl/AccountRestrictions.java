@@ -33,12 +33,12 @@ import java.util.Map;
 import com.apollocurrency.aplwallet.apl.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.util.AplException.AccountControlException;
 import com.apollocurrency.aplwallet.apl.VoteWeighting.VotingModel;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.db.DbClause;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.db.DbKey;
 import com.apollocurrency.aplwallet.apl.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
 
 public final class AccountRestrictions {

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.json.simple.JSONObject;
 
@@ -85,7 +85,7 @@ public class GeneratedAccount extends BasicAccount {
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("account", id);
-        jsonObject.put("accountRS", Convert.rsAccount(id));
+        jsonObject.put("accountRS", Convert2.rsAccount(id));
         if (publicKey != null) {
             jsonObject.put("publicKey", Convert.toHexString(publicKey));
         }

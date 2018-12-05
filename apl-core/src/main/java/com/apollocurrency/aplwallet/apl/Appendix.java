@@ -32,9 +32,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -499,7 +500,11 @@ public interface Appendix {
             if (length < 0) {
                 length &= Integer.MAX_VALUE;
             }
-            this.encryptedData = EncryptedData.readEncryptedData(buffer, length, 1000);
+            try {
+                this.encryptedData = EncryptedData.readEncryptedData(buffer, length, 1000);
+            } catch (NotValidException ex) {
+                throw new AplException.NotValidException(ex.getMessage());
+            }
             this.isCompressed = getVersion() != 2;
         }
 

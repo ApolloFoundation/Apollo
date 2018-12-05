@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,7 +96,7 @@ public final class Genesis {
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         String loadingPublicKeysString = "Loading public keys";
         LOG.debug(loadingPublicKeysString);
-        Apl.getRuntimeMode().updateAppStatus(loadingPublicKeysString + "...");
+        AppStatus.getInstance().update(loadingPublicKeysString + "...");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
@@ -109,7 +110,7 @@ public final class Genesis {
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
         String loadingAmountsString = "Loading genesis amounts";
         LOG.debug(loadingAmountsString);
-        Apl.getRuntimeMode().updateAppStatus(loadingAmountsString + "...");
+        AppStatus.getInstance().update(loadingAmountsString + "...");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
             Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);

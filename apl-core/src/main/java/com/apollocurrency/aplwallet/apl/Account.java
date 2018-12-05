@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.db.DbClause;
@@ -55,7 +56,6 @@ import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -903,7 +903,7 @@ public final class Account {
 
     private static void validate2FAStatus(TwoFactorAuthService.Status2FA status2FA, long account) throws ParameterException {
         if (status2FA != TwoFactorAuthService.Status2FA.OK) {
-            LOG.debug("2fa error: {}-{}", Convert.rsAccount(account), status2FA);
+            LOG.debug("2fa error: {}-{}", Convert2.rsAccount(account), status2FA);
             throw new ParameterException("2fa error", null, JSONResponses.error2FA(status2FA, account));
         }
     }
@@ -2111,7 +2111,7 @@ public final class Account {
 
     private static void validateKeyStoreStatus(long accountId, KeyStore.Status status, String notPerformedAction) throws ParameterException {
         if (status != KeyStore.Status.OK) {
-            LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert.rsAccount(accountId), status);
+            LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert2.rsAccount(accountId), status);
             throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
                     status.message));
         }

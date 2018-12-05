@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.Arrays;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.util.Convert;
 
 public class EncryptedSecretBytesDetails {
     private byte[] encryptedSecretBytes;

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedWriter;
@@ -37,7 +38,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.slf4j.Logger;
 
 public final class DebugTrace {

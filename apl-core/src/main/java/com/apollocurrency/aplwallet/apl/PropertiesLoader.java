@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Properties;
 
 import com.apollocurrency.aplwallet.apl.env.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 public class PropertiesLoader {

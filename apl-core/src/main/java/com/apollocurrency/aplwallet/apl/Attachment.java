@@ -31,6 +31,7 @@ import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.updater.Architecture;
 import com.apollocurrency.aplwallet.apl.updater.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.Platform;
@@ -1647,7 +1648,11 @@ public interface Attachment extends Appendix {
             if (length < 0) {
                 length &= Integer.MAX_VALUE;
             }
-            this.goods = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_DGS_GOODS_LENGTH);
+            try {
+                this.goods = EncryptedData.readEncryptedData(buffer, length, Constants.MAX_DGS_GOODS_LENGTH);
+            } catch (NotValidException ex) {
+                 throw new AplException.NotValidException(ex.getMessage());
+            }
             this.discountATM = buffer.getLong();
         }
 
