@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 public final class LeaseBalance extends CreateTransaction {
 
@@ -44,10 +43,10 @@ public final class LeaseBalance extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         int period = ParameterParser.getInt(req, "period", AplGlobalObjects.getChainConfig().getLeasingDelay(), 65535, true);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
         Account recipientAccount = Account.getAccount(recipient);
         if (recipientAccount == null || Account.getPublicKey(recipientAccount.getId()) == null) {
@@ -61,4 +60,8 @@ public final class LeaseBalance extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.AccountControlEffectiveBalanceLeasing(0), null);
+    }
 }

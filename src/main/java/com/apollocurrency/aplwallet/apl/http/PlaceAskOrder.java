@@ -44,14 +44,19 @@ public final class PlaceAskOrder extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         Asset asset = ParameterParser.getAsset(req);
         long priceATM = ParameterParser.getPriceATM(req);
         long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new Attachment.ColoredCoinsAskOrderPlacement(asset.getId(), quantityATU, priceATM);
         return new CreateTransactionRequestData(attachment, account, NOT_ENOUGH_ASSETS);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ColoredCoinsAskOrderPlacement(0, 0, 0), null);
     }
 }

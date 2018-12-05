@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.CurrencyType;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Issue a currency on the APL blockchain
@@ -98,11 +98,11 @@ public final class IssueCurrency extends CreateTransaction {
     private IssueCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION},
                 "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
-                "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
+                "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals", "codeLength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         String name = Convert.nullToEmpty(req.getParameter("name"));
         String code = Convert.nullToEmpty(req.getParameter("code"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
@@ -149,10 +149,25 @@ public final class IssueCurrency extends CreateTransaction {
         byte ruleset = ParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
         byte algorithm = ParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
         byte decimals = ParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
                 reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
         return new CreateTransactionRequestData(attachment, account);
     }
-}
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        int codeLength = ParameterParser.getInt(req, "codeLength", 3, 5, false);
+        if (codeLength == 0) {
+            String code = Convert.nullToEmpty(req.getParameter("code"));
+            if (code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH) {
+                return new CreateTransactionRequestData(JSONResponses.INCORRECT_CURRENCY_CODE_LENGTH);
+            }
+            codeLength = code.length();
+        }
+        return
+            new CreateTransactionRequestData(new Attachment.MonetarySystemCurrencyIssuance(null, StringUtils.repeat('*', codeLength), null, (byte) 0
+                    , 0, 0, 0, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 0), null);
+        }
+    }

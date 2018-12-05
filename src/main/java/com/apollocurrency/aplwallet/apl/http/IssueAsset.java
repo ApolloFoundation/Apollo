@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.apache.commons.lang3.StringUtils;
 
 public final class IssueAsset extends CreateTransaction {
 
@@ -45,11 +46,12 @@ public final class IssueAsset extends CreateTransaction {
     }
 
     private IssueAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
+        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals", "descriptionLength",
+                "isSingleton");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         String name = req.getParameter("name");
         String description = req.getParameter("description");
@@ -87,10 +89,46 @@ public final class IssueAsset extends CreateTransaction {
         }
 
         long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.ColoredCoinsAssetIssuance(name, description, quantityATU, decimals);
         return new CreateTransactionRequestData(attachment, account);
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+
+        Object isSingletonValue = req.getParameter("isSingleton");
+        if (isSingletonValue != null) {
+            boolean isSingleton = ParameterParser.getBoolean(req, "isSingleton", true);
+            if (isSingleton) {
+                int length = ParameterParser.getInt(req, "descriptionLength", 0, Integer.MAX_VALUE, false, -1);
+                return new CreateTransactionRequestData(new Attachment.ColoredCoinsAssetIssuance(null, StringUtils.repeat('*', length), 1, (byte)0),
+                        null);
+            } else {
+                return new CreateTransactionRequestData(new Attachment.ColoredCoinsAssetIssuance(null, "", 0, (byte)0),
+                        null);
+            }
+        }
+        String description = req.getParameter("description");
+        String decimalsValue = Convert.emptyToNull(req.getParameter("decimals"));
+
+        if (description != null && description.length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH) {
+            return new CreateTransactionRequestData(INCORRECT_ASSET_DESCRIPTION);
+        }
+        byte decimals = 0;
+        if (decimalsValue != null) {
+            try {
+                decimals = Byte.parseByte(decimalsValue);
+                if (decimals < 0 || decimals > 8) {
+                    return new CreateTransactionRequestData(INCORRECT_DECIMALS);
+                }
+            } catch (NumberFormatException e) {
+                return new CreateTransactionRequestData(INCORRECT_DECIMALS);
+            }
+        }
+
+        long quantityATU = ParameterParser.getQuantityATU(req);
+        return new CreateTransactionRequestData(new Attachment.ColoredCoinsAssetIssuance(null, description, quantityATU, decimals), null);
+    }
 }

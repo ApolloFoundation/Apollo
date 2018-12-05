@@ -1003,17 +1003,20 @@ public final class ParameterParser {
         }
         return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
     }
-    public static Attachment.TaggedDataUpload getTaggedDataFeeAttachment(HttpServletRequest req) throws ParameterException,
+    public static Attachment.TaggedDataUpload getTaggedDataFeeAttachment(HttpServletRequest req, boolean isMandatory) throws ParameterException,
             AplException.NotValidException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("isText" ));
-        int nameLength =        ParameterParser.getInt(req,"nameLength"        , 1, Integer.MAX_VALUE, true);
+        int nameLength =        ParameterParser.getInt(req,"nameLength"        , 1, Integer.MAX_VALUE, isMandatory);
         int descriptionLength = ParameterParser.getInt(req,"descriptionLength" , 0, Integer.MAX_VALUE, false);
         int tagsLength =        ParameterParser.getInt(req,"tagsLength"        , 0, Integer.MAX_VALUE, false);
         int typeLength =        ParameterParser.getInt(req,"typeLength"        , 0, Integer.MAX_VALUE, false);
         int channelLength =     ParameterParser.getInt(req,"channelLength"     , 0, Integer.MAX_VALUE, false);
         int filenameLength =    ParameterParser.getInt(req,"filenameLength"    , 0, Integer.MAX_VALUE, false);
-        int dataLength =        ParameterParser.getInt(req,"dataLength"        , 0, Integer.MAX_VALUE, true);
+        int dataLength =        ParameterParser.getInt(req,"dataLength"        , 0, Integer.MAX_VALUE, isMandatory);
 
+        if (nameLength == 0 || dataLength == 0) {
+            return null;
+        }
         if (nameLength > Constants.MAX_TAGGED_DATA_NAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_NAME);
         }

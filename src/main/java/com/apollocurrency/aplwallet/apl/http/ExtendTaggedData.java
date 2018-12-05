@@ -68,6 +68,10 @@ public final class ExtendTaggedData extends CreateTransaction {
 
     @Override
     protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
-
+        Attachment.TaggedDataUpload attachment = ParameterParser.getTaggedDataFeeAttachment(req, false);
+        if (attachment == null) {
+            attachment = ParameterParser.getTaggedData(req);
+        }
+        return new CreateTransactionRequestData(attachment, null);
     }
 }

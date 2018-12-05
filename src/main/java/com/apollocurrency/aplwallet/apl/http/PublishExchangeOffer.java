@@ -73,7 +73,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
         long buyRateATM = ParameterParser.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
         long sellRateATM = ParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
@@ -82,11 +82,16 @@ public final class PublishExchangeOffer extends CreateTransaction {
         long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
         long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
         int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new Attachment.MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
                 totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
         return new CreateTransactionRequestData(attachment, account, JSONResponses.NOT_ENOUGH_FUNDS);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MonetarySystemPublishExchangeOffer(0, 0, 0,
+                0, 0, 0, 0, 0), null);
+    }
 }
