@@ -21,9 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -31,7 +32,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class BeforeShutdown implements AddOn {
         private static final Logger LOG = getLogger(BeforeShutdown.class);
 
-    final String beforeShutdownScript = AplCore.getStringProperty("apl.beforeShutdownScript");
+    // TODO: YL put into constructor
+    private AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+
+    final String beforeShutdownScript = aplGlobalObjects.getStringProperty("apl.beforeShutdownScript");
 
     @Override
     public void shutdown() {

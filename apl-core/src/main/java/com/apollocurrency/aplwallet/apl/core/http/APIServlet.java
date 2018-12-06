@@ -29,6 +29,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_LAST_BLOCK_NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -47,6 +48,7 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
@@ -145,7 +147,9 @@ public final class APIServlet extends HttpServlet {
         }
     }
 
-    private static final boolean enforcePost = AplCore.getBooleanProperty("apl.apiServerEnforcePOST");
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+    private static final boolean enforcePost = aplGlobalObjects.getBooleanProperty("apl.apiServerEnforcePOST");
     static final Map<String,APIRequestHandler> apiRequestHandlers;
     static final Map<String,APIRequestHandler> disabledRequestHandlers;
 

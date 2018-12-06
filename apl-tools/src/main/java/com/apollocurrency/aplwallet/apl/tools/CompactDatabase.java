@@ -20,8 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -29,9 +32,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -46,8 +47,10 @@ import org.slf4j.Logger;
  *   java -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop com.apollocurrency.aplwallet.apl.tools.CompactDatabase
  */
 public class CompactDatabase {
-    private static AplCore core;
     private static final Logger LOG = getLogger(CompactDatabase.class);
+
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
     /**
      * Compact the ARS database
@@ -55,8 +58,8 @@ public class CompactDatabase {
      * @param   args                Command line arguments
      */
     public static void main(String[] args) {
-//TODO: Check        
-        core = new AplCore();
+//TODO: Check
+        AplCore core = new AplCore();
         core.init();
         //
         // Compact the database
@@ -75,23 +78,23 @@ public class CompactDatabase {
         // Get the database URL
         //
         String dbPrefix = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
-        String dbType = core.getStringProperty(dbPrefix + "Type");
+        String dbType = aplGlobalObjects.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");
             return 1;
         }
-        String dbUrl = core.getStringProperty(dbPrefix + "Url");
+        String dbUrl = aplGlobalObjects.getStringProperty(dbPrefix + "Url");
         if (dbUrl == null) {
-            String dbPath = core.getDbDir(core.getStringProperty(dbPrefix + "Dir"));
+            String dbPath = AplCore.getDbDir(aplGlobalObjects.getStringProperty(dbPrefix + "Dir"));
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
-        String dbParams = core.getStringProperty(dbPrefix + "Params");
+        String dbParams = aplGlobalObjects.getStringProperty(dbPrefix + "Params");
         dbUrl += ";" + dbParams;
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
         }
-        String dbUsername = core.getStringProperty(dbPrefix + "Username", "sa");
-        String dbPassword = core.getStringProperty(dbPrefix + "Password", "sa", true);
+        String dbUsername = aplGlobalObjects.getStringProperty(dbPrefix + "Username", "sa");
+        String dbPassword = aplGlobalObjects.getStringProperty(dbPrefix + "Password", "sa", true);
         //
         // Get the database path.  This is the third colon-separated operand and is
         // terminated by a semi-colon or by the end of the string.

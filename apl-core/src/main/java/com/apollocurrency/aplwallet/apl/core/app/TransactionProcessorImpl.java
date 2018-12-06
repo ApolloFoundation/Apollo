@@ -20,11 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import static java.util.Comparator.comparingInt;
-import static java.util.Comparator.comparingLong;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,29 +56,20 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
+import static org.slf4j.LoggerFactory.getLogger;
 
-public final class TransactionProcessorImpl implements TransactionProcessor {
+final class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
-    private static final boolean enableTransactionRebroadcasting = AplCore.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static final boolean testUnconfirmedTransactions = AplCore.getBooleanProperty("apl.testUnconfirmedTransactions");
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+    private static final boolean enableTransactionRebroadcasting = aplGlobalObjects.getBooleanProperty("apl.enableTransactionRebroadcasting");
+    private static final boolean testUnconfirmedTransactions = aplGlobalObjects.getBooleanProperty("apl.testUnconfirmedTransactions");
     private static final int maxUnconfirmedTransactions;
     static {
-        int n = AplCore.getIntProperty("apl.maxUnconfirmedTransactions");
+        int n = aplGlobalObjects.getIntProperty("apl.maxUnconfirmedTransactions");
         maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
     }
 
@@ -634,7 +637,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (AplCore.getBlockchain().getHeight() <= AplGlobalObjects.getChainConfig().getLastKnownBlock() && !testUnconfirmedTransactions) {
+        if (AplCore.getBlockchain().getHeight() <= aplGlobalObjects.getChainConfig().getLastKnownBlock() && !testUnconfirmedTransactions) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -698,7 +701,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         try {
             try {
                 Db.getDb().beginTransaction();
-                if (AplCore.getBlockchain().getHeight() < AplGlobalObjects.getChainConfig().getLastKnownBlock() && !testUnconfirmedTransactions) {
+                if (AplCore.getBlockchain().getHeight() < aplGlobalObjects.getChainConfig().getLastKnownBlock() && !testUnconfirmedTransactions) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
 

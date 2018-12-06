@@ -20,9 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+//import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,6 +38,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ThreadPool {
     private static final Logger LOG = getLogger(ThreadPool.class);
+
+    // TODO: YL remove static instance later
+//    private static AplGlobalObjects aplGlobalObjects;// = CDI.current().select(AplGlobalObjects.class).get();
 
     private static volatile ScheduledExecutorService scheduledThreadPool;
     private static Map<Runnable, Long> backgroundJobs = new HashMap<>();
@@ -62,12 +71,18 @@ public final class ThreadPool {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started, no new jobs accepted");
         }
-//TODO: uncomment after cleanup of property reading in whole        
-//        if (! Apl.getBooleanProperty("apl.disable" + name + "Thread")) {
-//            backgroundJobs.put(runnable, timeUnit.toMillis(delay));
-//        } else {
-//            LOG.info("Will not run " + name + " thread");
-//        }
+
+//TODO: OL uncomment after cleanup of property reading in whole
+/*
+        if (aplGlobalObjects == null) {
+            aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+        }
+        if (! aplGlobalObjects.getBooleanProperty("apl.disable" + name + "Thread")) {
+            backgroundJobs.put(runnable, timeUnit.toMillis(delay));
+        } else {
+            LOG.info("Will not run " + name + " thread");
+        }
+*/
     }
 
     public static synchronized void start(int timeMultiplier) {

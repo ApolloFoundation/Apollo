@@ -20,25 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
@@ -46,7 +47,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,11 +74,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
         private static final Logger LOG = getLogger(EventListener.class);
 
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
     /** Maximum event users */
-    static final int maxEventUsers = AplCore.getIntProperty("apl.apiMaxEventUsers");
+    static final int maxEventUsers = aplGlobalObjects.getIntProperty("apl.apiMaxEventUsers");
 
     /** Event registration timeout (seconds) */
-    static final int eventTimeout = Math.max(AplCore.getIntProperty("apl.apiEventTimeout"), 15);
+    static final int eventTimeout = Math.max(aplGlobalObjects.getIntProperty("apl.apiEventTimeout"), 15);
 
     /** Blockchain processor */
     static final BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
