@@ -9,4 +9,4 @@ if [ -x ${TOP_DIR}/jre/bin/java ]; then
 else
     JAVA=java
 fi
-${JAVA} -jar ${TOP_DIR}/Apollo.jar
+${JAVA}  -Dapl.runtime.mode=desktop -jar ${TOP_DIR}/Apollo.jar
