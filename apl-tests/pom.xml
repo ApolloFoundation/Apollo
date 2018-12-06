@@ -14,11 +14,16 @@
     <packaging>jar</packaging>
     
     <dependencies>
-         <dependency>
+        <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-api</artifactId>
             <version>${project.version}</version>
-        </dependency>         
+        </dependency>
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>                  
         <!-- POPJO <-> JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -28,14 +33,16 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-        
-<!-- Swagger annotation for API auto-documenting --> 
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-client</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>       
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-http</artifactId>
+            <version>${jetty.version}</version>
         </dependency>
-        
-<!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
@@ -51,7 +58,11 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>net.javacrumbs.json-unit</groupId>
+            <artifactId>json-unit-fluent</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
