@@ -42,16 +42,19 @@ public final class ShufflingCancel extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Shuffling shuffling = ParameterParser.getShuffling(req);
         long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
-        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", validate);
+        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
         long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
-//        TODO:perform fee calculation without using mock attachment
-        Attachment.ShufflingCancellation attachment = validate ? shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash) :
-                new Attachment.ShufflingCancellation(shuffling.getId(), new byte[0][0], new byte[0][0], shufflingStateHash, cancellingAccountId);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
+        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash);
+        Account account = ParameterParser.getSenderAccount(req);
         return new CreateTransactionRequestData(attachment, account);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ShufflingCancellation(0, new byte[0][0], new byte[0][0], new byte[0], 0), null);
     }
 }

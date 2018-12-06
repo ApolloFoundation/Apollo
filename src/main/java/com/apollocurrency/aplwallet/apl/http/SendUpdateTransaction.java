@@ -32,7 +32,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Architecture architecture = Architecture.valueOf(Convert.nullToEmpty(req.getParameter("architecture")).trim());
         Platform platform = Platform.valueOf(Convert.nullToEmpty(req.getParameter("platform")).trim());
         byte[] urlFirstPart = ParameterParser.getBytes(req, "urlFirstPart", true);
@@ -50,9 +50,15 @@ public final class SendUpdateTransaction extends CreateTransaction {
             return new CreateTransactionRequestData(JSONResponses.INCORRECT_UPDATE_HASH_LENGTH);
         }
         DoubleByteArrayTuple url = new DoubleByteArrayTuple(urlFirstPart, urlSecondPart);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = Attachment.UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
         return new CreateTransactionRequestData(attachment, account);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        byte level = ParameterParser.getByte(req, "level", (byte)0, Byte.MAX_VALUE, false);
+        return new CreateTransactionRequestData(Attachment.UpdateAttachment.getAttachment(null, null, null, null, null, level), null);
     }
 }
 

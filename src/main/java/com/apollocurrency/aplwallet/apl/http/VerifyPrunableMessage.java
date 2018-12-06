@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
-import com.apollocurrency.aplwallet.apl.Appendix;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplException;
-import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.EITHER_MESSAGE_ENCRYPTED_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_MESSAGE_ENCRYPTED_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.EITHER_MESSAGE_ENCRYPTED_MESSAGE;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.MISSING_MESSAGE_ENCRYPTED_MESSAGE;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSACTION;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.AplException;
+import com.apollocurrency.aplwallet.apl.Appendix;
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
 
@@ -78,7 +78,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
         long account = ParameterParser.getAccountId(req, "account", false);
         Appendix.PrunablePlainMessage plainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
         Appendix.PrunableEncryptedMessage encryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null,
-                account,true);
+                account,true, false);
 
         if (plainMessage == null && encryptedMessage == null) {
             return MISSING_MESSAGE_ENCRYPTED_MESSAGE;

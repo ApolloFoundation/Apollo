@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 
 public final class SetAlias extends CreateTransaction {
@@ -47,11 +48,11 @@ public final class SetAlias extends CreateTransaction {
     }
 
     private SetAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
+        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI", "aliasNameLength", "aliasURILength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         String aliasName = Convert.emptyToNull(req.getParameter("aliasName"));
         String aliasURI = Convert.nullToEmpty(req.getParameter("aliasURI"));
 
@@ -76,10 +77,10 @@ public final class SetAlias extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_URI_LENGTH);
         }
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
 
         Alias alias = Alias.getAlias(normalizedAlias);
-        if (alias != null && validate && alias.getAccountId() != account.getId()) {
+        if (alias != null && alias.getAccountId() != account.getId()) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);
             response.put("errorDescription", "\"" + aliasName + "\" is already used");
@@ -91,4 +92,44 @@ public final class SetAlias extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        String aliasNameLengthValue = req.getParameter("aliasNameLength");
+        String aliasURILengthValue = req.getParameter("aliasURILength");
+        int aliasNameLength;
+        int aliasURILength;
+        if (aliasNameLengthValue == null || aliasURILengthValue == null) {
+            String aliasName = Convert.emptyToNull(req.getParameter("aliasName"));
+            String aliasURI = Convert.nullToEmpty(req.getParameter("aliasURI"));
+
+            if (aliasName == null) {
+                return new CreateTransactionRequestData(MISSING_ALIAS_NAME);
+            }
+
+            aliasName = aliasName.trim();
+            if (aliasName.length() == 0 || aliasName.length() > Constants.MAX_ALIAS_LENGTH) {
+                return new CreateTransactionRequestData(INCORRECT_ALIAS_LENGTH);
+            }
+
+            String normalizedAlias = aliasName.toLowerCase();
+            for (int i = 0; i < normalizedAlias.length(); i++) {
+                if (Constants.ALPHABET.indexOf(normalizedAlias.charAt(i)) < 0) {
+                    return new CreateTransactionRequestData(INCORRECT_ALIAS_NAME);
+                }
+            }
+
+            aliasURI = aliasURI.trim();
+            if (aliasURI.length() > Constants.MAX_ALIAS_URI_LENGTH) {
+                return new CreateTransactionRequestData(INCORRECT_URI_LENGTH);
+            }
+            aliasNameLength = aliasName.length();
+            aliasURILength = aliasURI.length();
+        } else {
+            aliasNameLength = ParameterParser.getInt(req, "aliasNameLength", 1, Constants.MAX_ALIAS_LENGTH, true);
+            aliasURILength = ParameterParser.getInt(req, "aliasURILength", 0, Constants.MAX_ALIAS_URI_LENGTH, true);
+        }
+        return new CreateTransactionRequestData(new Attachment.MessagingAliasAssignment(StringUtils.repeat('*', aliasNameLength),
+                StringUtils.repeat('*', aliasURILength)), null);
+
+    }
 }

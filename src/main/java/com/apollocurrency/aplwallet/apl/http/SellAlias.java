@@ -31,7 +31,6 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Convert;
-import org.json.simple.JSONStreamAware;
 
 
 public final class SellAlias extends CreateTransaction {
@@ -49,9 +48,9 @@ public final class SellAlias extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Alias alias = ParameterParser.getAlias(req);
-        Account owner = ParameterParser.getSenderAccount(req, validate);
+        Account owner = ParameterParser.getSenderAccount(req);
 
         long priceATM = ParameterParser.getLong(req, "priceATM", 0L, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), true);
 
@@ -68,11 +67,16 @@ public final class SellAlias extends CreateTransaction {
             }
         }
 
-        if (validate && alias.getAccountId() != owner.getId()) {
+        if (alias.getAccountId() != owner.getId()) {
             return new CreateTransactionRequestData(INCORRECT_ALIAS_OWNER);
         }
 
         Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceATM);
         return new CreateTransactionRequestData(attachment, recipientId, owner,0);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MessagingAliasSell("", 0), null);
     }
 }

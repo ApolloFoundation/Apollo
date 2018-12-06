@@ -43,15 +43,20 @@ public final class ShufflingVerify extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Shuffling shuffling = ParameterParser.getShuffling(req);
-        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", validate);
+        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
         if (!Arrays.equals(shufflingStateHash, shuffling.getStateHash())) {
             throw new ParameterException(JSONResponses.incorrect("shufflingStateHash", "Shuffling is in a different state now"));
         }
         Attachment attachment = new Attachment.ShufflingVerification(shuffling.getId(), shufflingStateHash);
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         return new CreateTransactionRequestData(attachment, account);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ShufflingVerification(0, new byte[0]), null);
     }
 }

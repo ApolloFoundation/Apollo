@@ -49,8 +49,14 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",
             "message","messageSize", "messageIsText", "messageIsPrunable",
-            "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
-            "messageToEncryptToSelf", "messageToEncryptToSelfIsText", "encryptToSelfMessageData", "encryptToSelfMessageNonce", "compressMessageToEncryptToSelf",
+            "messageToEncrypt", "messageToEncryptSize", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageDataSize",
+            "encryptedMessageNonce",
+            "encryptedMessageIsPrunable",
+            "compressMessageToEncrypt",
+            "messageToEncryptToSelf", "messageToEncryptToSelfSize", "messageToEncryptToSelfIsText", "encryptToSelfMessageData",
+            "encryptToSelfMessageDataSize",
+            "encryptToSelfMessageNonce",
+            "compressMessageToEncryptToSelf",
             "phased", "phasingFinishHeight", "phasingVotingModel", "phasingQuorum", "phasingMinBalance", "phasingHolding", "phasingMinBalanceModel",
             "phasingWhitelisted", "phasingWhitelisted", "phasingWhitelisted",
             "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
@@ -141,7 +147,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean calculateFee = ParameterParser.getBoolean(req, "calculateFee", false);
-        CreateTransactionRequestData data = parseRequest(req, !calculateFee);
+        CreateTransactionRequestData data =calculateFee ? parseFeeCalculationRequest(req) : parseRequest(req);
         if (data.getErrorJson() != null) {
             return data.getErrorJson();
         }
@@ -166,23 +172,26 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
             Account recipient = calculateFee ? null : Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
                 prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) (calculateFee ?
-                        ParameterParser.getEncryptedMessageFeeAppendix(req, true) :
+                        ParameterParser.getEncryptedMessageAppendixForFeeCalculation(req, true) :
                         ParameterParser.getEncryptedMessage(req, recipient, accountId,true));
             } else {
                 encryptedMessage = (Appendix.EncryptedMessage) (calculateFee ?
-                        ParameterParser.getEncryptedMessageFeeAppendix(req, false) :
+                        ParameterParser.getEncryptedMessageAppendixForFeeCalculation(req, false) :
                         ParameterParser.getEncryptedMessage(req, recipient, accountId,false));
             }
         }
         Appendix.EncryptToSelfMessage encryptToSelfMessage = calculateFee ?
-                ParameterParser.getEncryptToSelfMessageFeeAppendix(req) :
+                ParameterParser.getEncryptToSelfMessageAppendixForFeeCalculation(req) :
                 ParameterParser.getEncryptToSelfMessage(req, accountId);
         Appendix.Message message = null;
         Appendix.PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
-            prunablePlainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true, calculateFee);
+            prunablePlainMessage = (Appendix.PrunablePlainMessage)(calculateFee ? ParameterParser.getPlainMessageAppendixForFeeCalculation(req, true) :
+                     ParameterParser.getPlainMessage(req, true));
         } else {
-            message = (Appendix.Message) ParameterParser.getPlainMessage(req, false, calculateFee);
+            message =  (Appendix.Message)(calculateFee ? ParameterParser.getPlainMessageAppendixForFeeCalculation(req, false) :
+                    ParameterParser.getPlainMessage(req,
+                false));
         }
         Appendix.PublicKeyAnnouncement publicKeyAnnouncement = null;
         String recipientPublicKey = Convert.emptyToNull(req.getParameter("recipientPublicKey"));

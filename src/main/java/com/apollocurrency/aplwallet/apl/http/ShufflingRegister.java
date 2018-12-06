@@ -43,13 +43,13 @@ public final class ShufflingRegister extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", validate);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
+        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
 
         Attachment attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
-        if (account.getControls().contains(Account.ControlType.PHASING_ONLY) && validate) {
+        Account account = ParameterParser.getSenderAccount(req);
+        if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
             throw new ParameterException(JSONResponses.error("Accounts under phasing only control cannot join a shuffling"));
         }
         Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
@@ -61,5 +61,10 @@ public final class ShufflingRegister extends CreateTransaction {
 
         }
             return new CreateTransactionRequestData(attachment, account, errorJson);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ShufflingRegistration(new byte[0]), null);
     }
 }

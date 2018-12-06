@@ -44,7 +44,8 @@ public final class ExtendTaggedData extends CreateTransaction {
 
     private ExtendTaggedData() {
         super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+                "name", "description", "tags", "type", "channel", "isText", "filename", "data", "nameLength", "descriptionLength", "tagsLength",
+                "typeLength", "channelLength", "filenameLength", "dataLength");
     }
 
     @Override

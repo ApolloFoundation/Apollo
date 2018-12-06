@@ -436,6 +436,10 @@ public final class ParameterParser {
     }
 
     public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
+        return getEncryptToSelfMessage(req, senderId, false);
+    }
+
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long senderId, boolean fakeEncrypt) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -450,10 +454,14 @@ public final class ParameterParser {
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
             }
-            byte[] keySeed = getKeySeed(req, senderId, false);
-            if (keySeed != null) {
-                byte[] publicKey = Crypto.getPublicKey(keySeed);
-                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
+            if (fakeEncrypt) {
+                encryptedData = new EncryptedData(new byte[EncryptedData.getEncryptedDataLength(plainMessageBytes)], new byte[32]);
+            } else {
+                byte[] keySeed = getKeySeed(req, senderId, false);
+                if (keySeed != null) {
+                    byte[] publicKey = Crypto.getPublicKey(keySeed);
+                    encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
+                }
             }
         }
         if (encryptedData != null) {
@@ -462,16 +470,31 @@ public final class ParameterParser {
             return new Appendix.UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
         }
     }
-    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessageFeeAppendix(HttpServletRequest req) throws ParameterException {
+
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessageSizeBasedAppendix(HttpServletRequest req) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
-        int encryptToSelfMessageSize = ParameterParser.getInt(req, "encryptToSelfMessageSize", 1, Constants.MAX_ENCRYPTED_MESSAGE_LENGTH, false);
+        int encryptToSelfMessageSize = ParameterParser.getInt(req, "encryptToSelfMessage", 1, Constants.MAX_ENCRYPTED_MESSAGE_LENGTH, false);
+        int messageToEncryptToSelfSize = ParameterParser.getInt(req, "messageToEncryptToSelfSize", 1, Integer.MAX_VALUE, false);
         if (encryptToSelfMessageSize != 0) {
             EncryptedData encryptedData = new EncryptedData(new byte[encryptToSelfMessageSize], new byte[32]);
+            return new Appendix.EncryptToSelfMessage(encryptedData, isText, compress);
+        } else if (messageToEncryptToSelfSize != 0) {
+            EncryptedData encryptedData = new EncryptedData(new byte[EncryptedData.getEncryptedDataLength(messageToEncryptToSelfSize)], new byte[32]);
             return new Appendix.EncryptToSelfMessage(encryptedData, isText, compress);
         }
         return null;
     }
+
+    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessageAppendixForFeeCalculation(HttpServletRequest req) throws ParameterException {
+        Appendix.EncryptToSelfMessage encryptedMessageSizeBasedAppendix = getEncryptToSelfMessageSizeBasedAppendix(req);
+        if (encryptedMessageSizeBasedAppendix == null) {
+            return getEncryptToSelfMessage(req, 0, true);
+        } else {
+            return encryptedMessageSizeBasedAppendix;
+        }
+    }
+
 
     public static byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
 
@@ -782,26 +805,38 @@ public final class ParameterParser {
         }
     }
 
-    public static Appendix getPlainMessage(HttpServletRequest req, boolean prunable, boolean calculateFee) throws ParameterException {
+    public static Appendix getPlainMessageAppendixFromSize(HttpServletRequest req, boolean prunable) throws ParameterException {
+        int messageSize = ParameterParser.getInt(req, "messageSize", 1, Integer.MAX_VALUE, false, -1);
+        if (messageSize != -1) {
+            if (prunable) {
+                return new Appendix.PrunablePlainMessage(new byte[messageSize]);
+            } else {
+                return new Appendix.Message(new byte[messageSize]);
+            }
+        }
+        return null;
+    }
+
+    public static Appendix getPlainMessageAppendixForFeeCalculation(HttpServletRequest req, boolean prunable) throws ParameterException {
+        Appendix sizeBasedPlainMessageAppendix = getPlainMessageAppendixFromSize(req, prunable);
+        if (sizeBasedPlainMessageAppendix == null) {
+            return getPlainMessage(req, prunable);
+        } else {
+            return sizeBasedPlainMessageAppendix;
+        }
+    }
+
+    public static Appendix getPlainMessage(HttpServletRequest req, boolean prunable) throws ParameterException {
         String messageValue = Convert.emptyToNull(req.getParameter("message"));
-        int messageSize = ParameterParser.getInt(req, "messageSize", 0, Integer.MAX_VALUE, calculateFee);
         boolean messageIsText = !"false".equalsIgnoreCase(req.getParameter("messageIsText"));
-        if (messageValue != null || calculateFee) {
+        if (messageValue != null) {
             try {
                 if (prunable) {
-                    if (calculateFee) {
-                        return new Appendix.PrunablePlainMessage(new byte[messageSize], messageIsText);
-                    } else {
                         return new Appendix.PrunablePlainMessage(messageValue, messageIsText);
-                    }
                 } else {
-                    if (calculateFee) {
-                        return new Appendix.Message(new byte[messageSize], messageIsText);
-                    } else {
                         return new Appendix.Message(messageValue, messageIsText);
                     }
 
-                }
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
             }
@@ -834,10 +869,10 @@ public final class ParameterParser {
         }
     }
 
-    public static Appendix getEncryptedMessageFeeAppendix(HttpServletRequest req, boolean prunable) throws ParameterException {
+    public static Appendix getEncryptedMessageSizeBasedAppendix(HttpServletRequest req, boolean prunable) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
-        int encryptedMessageSize = ParameterParser.getInt(req, "encryptedMessageSize", 1, prunable ?
+        int encryptedMessageSize = ParameterParser.getInt(req, "encryptedMessageDataSize", 1, prunable ?
                 Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH : Constants.MAX_ENCRYPTED_MESSAGE_LENGTH, false);
         if (encryptedMessageSize != 0) {
             EncryptedData encryptedData = new EncryptedData(new byte[encryptedMessageSize], new byte[32]);
@@ -856,7 +891,21 @@ public final class ParameterParser {
         return null;
     }
 
+
+    public static Appendix getEncryptedMessageAppendixForFeeCalculation(HttpServletRequest req, boolean prunable) throws ParameterException {
+        Appendix encryptedMessageSizeBasedAppendix = getEncryptedMessageSizeBasedAppendix(req, prunable);
+        if (encryptedMessageSizeBasedAppendix == null) {
+            return getEncryptedMessage(req, null, 0, prunable, true);
+        } else {
+            return encryptedMessageSizeBasedAppendix;
+        }
+    }
+
     public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, long senderId, boolean prunable) throws ParameterException {
+        return getEncryptedMessage(req, recipient, senderId, prunable, false);
+    }
+
+    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, long senderId, boolean prunable, boolean fakeEncrypt) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
         byte[] plainMessageBytes = null;
@@ -893,18 +942,22 @@ public final class ParameterParser {
                     throw new ParameterException(INCORRECT_MESSAGE_TO_ENCRYPT);
                 }
             }
-            if (recipient != null) {
-                recipientPublicKey = Account.getPublicKey(recipient.getId());
-            }
-            if (recipientPublicKey == null) {
-                recipientPublicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter("recipientPublicKey")));
-            }
-            if (recipientPublicKey == null) {
-                throw new ParameterException(MISSING_RECIPIENT_PUBLIC_KEY);
-            }
-            byte[] keySeed = getKeySeed(req, senderId, false);
-            if (keySeed != null) {
-                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+            if (fakeEncrypt) {
+                encryptedData = new EncryptedData(new byte[EncryptedData.getEncryptedDataLength(plainMessageBytes)], new byte[32]);
+            } else {
+                if (recipient != null) {
+                    recipientPublicKey = Account.getPublicKey(recipient.getId());
+                }
+                if (recipientPublicKey == null) {
+                    recipientPublicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter("recipientPublicKey")));
+                }
+                if (recipientPublicKey == null) {
+                    throw new ParameterException(MISSING_RECIPIENT_PUBLIC_KEY);
+                }
+                byte[] keySeed = getKeySeed(req, senderId, false);
+                if (keySeed != null) {
+                    encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+                }
             }
         }
         if (encryptedData != null) {

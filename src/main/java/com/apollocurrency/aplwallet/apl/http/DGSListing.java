@@ -79,7 +79,7 @@ public final class DGSListing extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_DGS_LISTING_TAGS);
         }
 
-        Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true, false);
+        Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true);
         if (prunablePlainMessage != null) {
             if (prunablePlainMessage.isText()) {
                 return new CreateTransactionRequestData(MESSAGE_NOT_BINARY);

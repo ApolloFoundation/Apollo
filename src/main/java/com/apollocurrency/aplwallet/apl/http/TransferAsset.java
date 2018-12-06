@@ -44,15 +44,20 @@ public final class TransferAsset extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        long recipient = ParameterParser.getAccountId(req, "recipient", validate);
+        long recipient = ParameterParser.getAccountId(req, "recipient", true);
 
         Asset asset = ParameterParser.getAsset(req);
         long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
             return new CreateTransactionRequestData(attachment, recipient, account, 0, NOT_ENOUGH_ASSETS);
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ColoredCoinsAssetTransfer(0, 0), null);
     }
 }

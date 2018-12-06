@@ -27,6 +27,7 @@ import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_TRANSA
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.Account;
@@ -46,7 +47,7 @@ public class ApproveTransaction extends CreateTransaction {
     }
     private ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
-                "revealedSecret", "revealedSecretIsText");
+                "revealedSecret", "revealedSecretIsText", "numberOfTransactionFullHashes");
     }
 
     @Override
@@ -91,6 +92,25 @@ public class ApproveTransaction extends CreateTransaction {
 
     @Override
     protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
-        return new CreateTransactionRequestData(new Attachment.MessagingPhasingVoteCasting(null, null), null);
+        String numberOfFullHashesValue = req.getParameter("numberOfTransactionFullHashes");
+        int numberOfFullHashes;
+        if (numberOfFullHashesValue == null) {
+            String[] phasedTransactionValues = req.getParameterValues("transactionFullHash");
+
+            if (phasedTransactionValues == null || phasedTransactionValues.length == 0) {
+                return new CreateTransactionRequestData(MISSING_TRANSACTION_FULL_HASH);
+            }
+
+            if (phasedTransactionValues.length > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
+                return new CreateTransactionRequestData(TOO_MANY_PHASING_VOTES);
+            }
+            numberOfFullHashes = phasedTransactionValues.length;
+
+        } else {
+            numberOfFullHashes = ParameterParser.getInt(req, "numberOfTransactionFullHashes", 0, Constants.MAX_PHASING_VOTE_TRANSACTIONS, true);
+        }
+        return new CreateTransactionRequestData(new Attachment.MessagingPhasingVoteCasting(Collections.nCopies(numberOfFullHashes, new byte[0]),
+                new byte[0])
+                , null);
     }
 }

@@ -64,7 +64,6 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         String transactionBytes = Convert.emptyToNull(req.getParameter("transactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
         long offerIssuerId = ParameterParser.getAccountId(req, "offerIssuer", true);
-        boolean calculateFee = "true".equalsIgnoreCase(req.getParameter("calculateFee"));
         try {
             JSONObject response;
             Transaction transaction;
@@ -76,12 +75,12 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 Currency currency = ParameterParser.getCurrency(req);
                 long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-                Account account = ParameterParser.getSenderAccount(req, calculateFee);
+                Account account = ParameterParser.getSenderAccount(req);
                 byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
-                response = (JSONObject)JSONValue.parse(JSON.toString(processRequest(req, attachment, 0, 0, account, calculateFee, null)));
+                response = (JSONObject)JSONValue.parse(JSON.toString(processRequest(req, attachment, 0, 0, account, false, null)));
 
-                if (keySeed == null || calculateFee) {
+                if (keySeed == null) {
                     response.put("scheduled", false);
                     return response;
                 }
@@ -142,8 +141,13 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
-        throw new UnsupportedOperationException("Unable to parse request");
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
+        throw new UnsupportedOperationException("Unable to parse request.");
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.MonetarySystemExchangeBuy(0, 0, 0), null);
     }
 
     @Override

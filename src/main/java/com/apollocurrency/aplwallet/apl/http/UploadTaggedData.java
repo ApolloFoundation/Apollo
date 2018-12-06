@@ -38,14 +38,23 @@ public final class UploadTaggedData extends CreateTransaction {
 
     private UploadTaggedData() {
         super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION},
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+                "name", "description", "tags", "type", "channel", "isText", "filename", "data", "nameLength", "descriptionLength", "tagsLength",
+                "typeLength", "channelLength", "filenameLength", "dataLength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req, validate);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
         return new CreateTransactionRequestData(taggedDataUpload, account);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        Attachment.TaggedDataUpload attachment = ParameterParser.getTaggedDataFeeAttachment(req, false);
+        if (attachment == null) {
+            attachment = ParameterParser.getTaggedData(req);
+        }
+        return new CreateTransactionRequestData(attachment, null);
+    }
 }

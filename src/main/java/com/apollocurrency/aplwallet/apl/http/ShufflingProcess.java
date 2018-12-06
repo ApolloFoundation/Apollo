@@ -49,7 +49,7 @@ public final class ShufflingProcess extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         Shuffling shuffling = ParameterParser.getShuffling(req);
         if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
             JSONObject response = new JSONObject();
@@ -57,9 +57,9 @@ public final class ShufflingProcess extends CreateTransaction {
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());
             return new CreateTransactionRequestData(JSON.prepare(response));
         }
-        Account senderAccount = ParameterParser.getSenderAccount(req, validate);
+        Account senderAccount = ParameterParser.getSenderAccount(req);
         long senderId = senderAccount.getId();
-        if (validate && shuffling.getAssigneeAccountId() != senderId) {
+        if (shuffling.getAssigneeAccountId() != senderId) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 12);
             response.put("errorDescription", String.format("Account %s cannot process shuffling since shuffling assignee is %s",
@@ -77,16 +77,19 @@ public final class ShufflingProcess extends CreateTransaction {
 
         long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, validate);
-        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, validate);
-        if (validate && Account.getAccount(recipientPublicKey) != null) {
+        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
+        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId);
+        if (Account.getAccount(recipientPublicKey) != null) {
             return new CreateTransactionRequestData(INCORRECT_PUBLIC_KEY); // do not allow existing account to be used as recipient
         }
 
-//        TODO: perform fee calculation without mock attachment
-        Attachment.ShufflingAttachment attachment = validate ? shuffling.process(senderId, secretBytes, recipientPublicKey) :
-                new Attachment.ShufflingProcessing(shuffling.getId(), new byte[0][0], shuffling.getStateHash());
+        Attachment.ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
         return new CreateTransactionRequestData(attachment, senderAccount);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        //Not always correct, because real shuffling 'process' method can return ShufflingRecipients attachment instead of ShufflingProcessing
+        return new CreateTransactionRequestData(new Attachment.ShufflingProcessing(0, new byte[0][0], new byte[0]), null);
+    }
 }

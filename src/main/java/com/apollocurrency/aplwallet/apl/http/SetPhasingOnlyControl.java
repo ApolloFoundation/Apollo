@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.PhasingParams;
-import org.json.simple.JSONStreamAware;
 /**
  * Sets an account control that blocks transactions unless they are phased with certain parameters
  * 
@@ -80,8 +79,8 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req, validate);
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
+        Account account = ParameterParser.getSenderAccount(req);
         PhasingParams phasingParams = parsePhasingParams(req, "control");
         long maxFees = ParameterParser.getLong(req, "controlMaxFees", 0, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), false);
         short minDuration = (short)ParameterParser.getInt(req, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
@@ -89,4 +88,8 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
         return new CreateTransactionRequestData(new Attachment.SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration), account);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.SetPhasingOnly(null, 0, (short) 0, (short) 0), null);
+    }
 }

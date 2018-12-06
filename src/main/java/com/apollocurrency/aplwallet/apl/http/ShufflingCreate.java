@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.HoldingType;
-import org.json.simple.JSONStreamAware;
 
 public final class ShufflingCreate extends CreateTransaction {
 
@@ -41,27 +40,33 @@ public final class ShufflingCreate extends CreateTransaction {
     }
 
     private ShufflingCreate() {
-        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
+        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
                 "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         HoldingType holdingType = ParameterParser.getHoldingType(req);
         long holdingId = ParameterParser.getHoldingId(req, holdingType);
         long amount = ParameterParser.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
-        if (validate && holdingType == HoldingType.APL && amount < AplGlobalObjects.getChainConfig().getShufflingDepositAtm()) {
+        long shufflingDepositAtm = AplGlobalObjects.getChainConfig().getShufflingDepositAtm();
+        if (holdingType == HoldingType.APL && amount < shufflingDepositAtm) {
             return new CreateTransactionRequestData(JSONResponses.incorrect("amount",
-                    "Minimum shuffling amount is " + AplGlobalObjects.getChainConfig().getShufflingDepositAtm() / Constants.ONE_APL + " " + AplGlobalObjects.getChainConfig().getCoinSymbol()));
+                    "Minimum shuffling amount is " + shufflingDepositAtm / Constants.ONE_APL + " " + AplGlobalObjects.getChainConfig().getCoinSymbol()));
         }
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
-                Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, validate);
-        short registrationPeriod = (short) ParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, validate);
+                Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
+        short registrationPeriod = (short) ParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
         Attachment attachment = new Attachment.ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
-        Account account = ParameterParser.getSenderAccount(req, validate);
-        if (validate && account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+        Account account = ParameterParser.getSenderAccount(req);
+        if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
             return new CreateTransactionRequestData(JSONResponses.error("Accounts under phasing only control cannot start a shuffling"));
         }
         return new CreateTransactionRequestData(attachment, account, JSONResponses.notEnoughHolding(holdingType));
+    }
+
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(new Attachment.ShufflingCreation(0, null, 0, (byte) 0, (short) 0), null);
     }
 }

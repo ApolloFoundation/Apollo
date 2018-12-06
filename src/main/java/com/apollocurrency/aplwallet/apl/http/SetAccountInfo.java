@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert;
+import org.apache.commons.lang3.StringUtils;
 
 public final class SetAccountInfo extends CreateTransaction {
 
@@ -42,11 +43,11 @@ public final class SetAccountInfo extends CreateTransaction {
     }
 
     private SetAccountInfo() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description", "nameLength", "descriptionLength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
         String name = Convert.nullToEmpty(req.getParameter("name")).trim();
         String description = Convert.nullToEmpty(req.getParameter("description")).trim();
@@ -59,10 +60,31 @@ public final class SetAccountInfo extends CreateTransaction {
             return new CreateTransactionRequestData(INCORRECT_ACCOUNT_DESCRIPTION_LENGTH);
         }
 
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MessagingAccountInfo(name, description);
         return new CreateTransactionRequestData(attachment, account);
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        int nameLength = ParameterParser.getInt(req, "nameLength", 0, Integer.MAX_VALUE, false, -1);
+        int descriptionLength = ParameterParser.getInt(req, "descriptionLength", 0, Integer.MAX_VALUE, false, -1);
+        if (nameLength == -1 || descriptionLength == -1) {
+            String name = Convert.nullToEmpty(req.getParameter("name")).trim();
+            String description = Convert.nullToEmpty(req.getParameter("description")).trim();
+            nameLength = name.length();
+            descriptionLength = description.length();
+        }
+        if (nameLength > Constants.MAX_ACCOUNT_NAME_LENGTH) {
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_NAME_LENGTH);
+        }
+
+        if (descriptionLength > Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH) {
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_DESCRIPTION_LENGTH);
+        }
+        return new CreateTransactionRequestData(new Attachment.MessagingAccountInfo(StringUtils.repeat('*', nameLength), StringUtils.repeat('*',
+                descriptionLength)), null);
+
+    }
 }

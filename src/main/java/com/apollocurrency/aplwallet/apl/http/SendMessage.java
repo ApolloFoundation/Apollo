@@ -41,10 +41,14 @@ public final class SendMessage extends CreateTransaction {
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        Account account = ParameterParser.getSenderAccount(req, validate);
+        Account account = ParameterParser.getSenderAccount(req);
         return new CreateTransactionRequestData(Attachment.ARBITRARY_MESSAGE, recipientId, account, 0);
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        return new CreateTransactionRequestData(Attachment.ARBITRARY_MESSAGE, 0, null, 0);
+    }
 }

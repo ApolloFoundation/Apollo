@@ -42,15 +42,15 @@ public final class SetAccountProperty extends CreateTransaction {
     }
 
     private SetAccountProperty() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");
+        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value", "valueLength");
     }
 
     @Override
-    protected CreateTransactionRequestData parseRequest(HttpServletRequest req, boolean validate) throws AplException {
+    protected CreateTransactionRequestData parseRequest(HttpServletRequest req) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req, validate);
+        Account senderAccount = ParameterParser.getSenderAccount(req);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        if (validate && recipientId == 0) {
+        if (recipientId == 0) {
             recipientId = senderAccount.getId();
         }
         String property = Convert.nullToEmpty(req.getParameter("property")).trim();
@@ -69,4 +69,16 @@ public final class SetAccountProperty extends CreateTransaction {
 
     }
 
+    @Override
+    protected CreateTransactionRequestData parseFeeCalculationRequest(HttpServletRequest req) throws AplException {
+        int valueLength = ParameterParser.getInt(req, "valueLength", 0, Integer.MAX_VALUE, false, -1);
+        if (valueLength == -1) {
+            String value = Convert.nullToEmpty(req.getParameter("value")).trim();
+            valueLength = value.length();
+        }
+        if (valueLength > Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH) {
+            return new CreateTransactionRequestData(INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH);
+        }
+        return super.parseFeeCalculationRequest(req);
+    }
 }
