@@ -22,7 +22,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public void shutdownApplication() {
         AplCore.shutdown();
-        AplCore.removeShutdownHook();
+ //       AplCore.removeShutdownHook();
     }
 
     @Override

@@ -36,7 +36,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.AccessControlException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,32 +72,14 @@ public final class AplCore {
     public static final Version VERSION = Version.from("1.23.0");
 
     public static final String APPLICATION = "Apollo";
-    private static Thread shutdownHook;
+
     private static volatile Time time = new Time.EpochTime();
 
-    private static final RuntimeMode runtimeMode;
-    private static final DirProvider dirProvider;
-
-
+    public static  RuntimeMode runtimeMode;
+    public static  DirProvider dirProvider;
 
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
-    }
-
-    static {
-        redirectSystemStreams("out");
-        redirectSystemStreams("err");
-        System.out.println("Initializing " + AplCore.APPLICATION + " server version " + AplCore.VERSION);
-        printCommandLineArguments();
-        runtimeMode = RuntimeEnvironment.getRuntimeMode();
-        System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
-        dirProvider = RuntimeEnvironment.getDirProvider();
-        LOG = getLogger(AplCore.class);
-        System.out.println("User home folder " + dirProvider.getUserHomeDir());
-        AplGlobalObjects.createPropertiesLoader(dirProvider);
-        if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
-            throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
-        }
     }
 
     private static volatile boolean shutdown = false;
@@ -106,7 +87,38 @@ public final class AplCore {
     public static boolean isShutdown() {
         return shutdown;
     }
-
+ 
+    public static boolean isDesktopApplicationEnabled() {
+        return RuntimeEnvironment.isDesktopApplicationEnabled() && AplCore.getBooleanProperty("apl.launchDesktopApplication");
+    }
+    
+    private static void logSystemProperties() {
+        String[] loggedProperties = new String[] {
+                "java.version",
+                "java.vm.version",
+                "java.vm.name",
+                "java.vendor",
+                "java.vm.vendor",
+                "java.home",
+                "java.library.path",
+                "java.class.path",
+                "os.arch",
+                "sun.arch.data.model",
+                "os.name",
+                "file.encoding",
+                "java.security.policy",
+                "java.security.manager",
+                RuntimeEnvironment.RUNTIME_MODE_ARG,
+                RuntimeEnvironment.DIRPROVIDER_ARG
+        };
+        for (String property : loggedProperties) {
+            LOG.debug("{} = {}", property, System.getProperty(property));
+        }
+        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
+        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
+        LOG.debug("processId = {}", getProcessId());
+    }
+    
     private static void redirectSystemStreams(String streamName) {
         String isStandardRedirect = System.getProperty("apl.redirect.system." + streamName);
         Path path = null;
@@ -139,32 +151,15 @@ public final class AplCore {
 
 
 
-    // For using AplCore.shutdown instead of System.exit
-    static void removeShutdownHook() {
-        Runtime.getRuntime().removeShutdownHook(shutdownHook);
-    }
+//    // For using AplCore.shutdown instead of System.exit
+//    static void removeShutdownHook() {
+//        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+//    }
 
     public static File getLogDir() {
         return dirProvider.getLogFileDir();
     }
 
-    private static void printCommandLineArguments() {
-        try {
-            List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-            if (inputArguments != null && inputArguments.size() > 0) {
-                System.out.println("Command line arguments");
-            } else {
-                return;
-            }
-            inputArguments.forEach(System.out::println);
-        } catch (AccessControlException e) {
-            System.out.println("Cannot read input arguments " + e.getMessage());
-        }
-    }
-
-    public static int getIntProperty(String name) {
-        return getIntProperty(name, 0);
-    }
 
     public static int getIntProperty(String name, int defaultValue) {
         return AplGlobalObjects.getPropertiesLoader().getIntProperty(name, defaultValue);
@@ -201,6 +196,10 @@ public final class AplCore {
         return result;
     }
 
+    public static int getIntProperty(String name) {
+        return getIntProperty(name, 0);
+    }
+    
     public static boolean getBooleanProperty(String name) {
         return getBooleanProperty(name, false);
     }
@@ -245,18 +244,19 @@ public final class AplCore {
         AplCore.time = time;
     }
 
-    public static void main(String[] args) {
-        try {
-            shutdownHook = new Thread(AplCore::shutdown);
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
-            init();
-        } catch (Throwable t) {
-            System.out.println("Fatal error: " + t.toString());
-            t.printStackTrace();
-        }
-    }
 
     public static void init() {
+        redirectSystemStreams("out");
+        redirectSystemStreams("err");
+        runtimeMode = RuntimeEnvironment.getRuntimeMode();
+        System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
+        dirProvider = RuntimeEnvironment.getDirProvider();
+        LOG = getLogger(AplCore.class);
+        System.out.println("User home folder " + dirProvider.getUserHomeDir());
+        AplGlobalObjects.createPropertiesLoader(dirProvider);
+        if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
+            throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
+        }        
         Init.init();
     }
 
@@ -343,7 +343,6 @@ public final class AplCore {
                 AddOns.init();
                 runtimeMode.updateAppStatus("API initialization...");
                 API.init();
-                initUpdater();
                 DebugTrace.init();
                 int timeMultiplier = (AplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(AplCore.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
@@ -369,10 +368,7 @@ public final class AplCore {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
-                if (isDesktopApplicationEnabled()) {
-                    runtimeMode.updateAppStatus("Starting desktop application...");
-                    launchDesktopApplication();
-                }
+
                 if (AplGlobalObjects.getChainConfig().isTestnet()) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
@@ -467,32 +463,6 @@ public final class AplCore {
     }
 
 
-    private static void logSystemProperties() {
-        String[] loggedProperties = new String[] {
-                "java.version",
-                "java.vm.version",
-                "java.vm.name",
-                "java.vendor",
-                "java.vm.vendor",
-                "java.home",
-                "java.library.path",
-                "java.class.path",
-                "os.arch",
-                "sun.arch.data.model",
-                "os.name",
-                "file.encoding",
-                "java.security.policy",
-                "java.security.manager",
-                RuntimeEnvironment.RUNTIME_MODE_ARG,
-                RuntimeEnvironment.DIRPROVIDER_ARG
-        };
-        for (String property : loggedProperties) {
-            LOG.debug("{} = {}", property, System.getProperty(property));
-        }
-        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
-        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
-        LOG.debug("processId = {}", getProcessId());
-    }
 
     private static Thread initSecureRandom() {
         Thread secureRandomInitThread = new Thread(() -> Crypto.getSecureRandom().nextBytes(new byte[1024]));
@@ -564,20 +534,10 @@ public final class AplCore {
         runtimeMode.setServerStatus(status, wallet, dirProvider.getLogFileDir());
     }
 
-    public static boolean isDesktopApplicationEnabled() {
-        return RuntimeEnvironment.isDesktopApplicationEnabled() && AplCore.getBooleanProperty("apl.launchDesktopApplication");
+    
+//TODO: Core should not be statis anymore!
+    
+    public AplCore() {
     }
 
-    private static void launchDesktopApplication() {
-        runtimeMode.launchDesktopApplication();
-    }
-
-    private AplCore() {} // never
-
-    private static void initUpdater() {
-        if (!getBooleanProperty("apl.allowUpdates", false)) {
-            return;
-        }
-        AplGlobalObjects.createUpdaterCore(true);
-    }
 }

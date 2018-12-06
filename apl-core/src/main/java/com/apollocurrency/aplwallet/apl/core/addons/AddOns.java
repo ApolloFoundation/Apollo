@@ -48,7 +48,8 @@ public final class AddOns {
         });
         addOns = Collections.unmodifiableList(addOnsList);
         if (!addOns.isEmpty() && !AplCore.getBooleanProperty("apl.disableSecurityPolicy")) {
-            System.setProperty("java.security.policy", AplCore.isDesktopApplicationEnabled() ? "apldesktop.policy" : "apl.policy");
+//TODO: check it            
+ //           System.setProperty("java.security.policy", AplCore.isDesktopApplicationEnabled() ? "apldesktop.policy" : "apl.policy");
             LOG.info("Setting security manager with policy " + System.getProperty("java.security.policy"));
             System.setSecurityManager(new SecurityManager() {
                 @Override
