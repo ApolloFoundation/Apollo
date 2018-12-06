@@ -28,12 +28,9 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_P
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -62,9 +59,10 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class AplCore {
-    private static Logger LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(AplCore.class);
 
 
     private static AplContainer container;
@@ -118,43 +116,6 @@ public final class AplCore {
         LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
         LOG.debug("processId = {}", getProcessId());
     }
-    
-    private static void redirectSystemStreams(String streamName) {
-        String isStandardRedirect = System.getProperty("apl.redirect.system." + streamName);
-        Path path = null;
-        if (isStandardRedirect != null) {
-            try {
-                path = Files.createTempFile("apl.system." + streamName + ".", ".log");
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        } else {
-            String explicitFileName = System.getProperty("apl.system." + streamName);
-            if (explicitFileName != null) {
-                path = Paths.get(explicitFileName);
-            }
-        }
-        if (path != null) {
-            try {
-                PrintStream stream = new PrintStream(Files.newOutputStream(path));
-                if (streamName.equals("out")) {
-                    System.setOut(new PrintStream(stream));
-                } else {
-                    System.setErr(new PrintStream(stream));
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-
-//    // For using AplCore.shutdown instead of System.exit
-//    static void removeShutdownHook() {
-//        Runtime.getRuntime().removeShutdownHook(shutdownHook);
-//    }
 
     public static File getLogDir() {
         return dirProvider.getLogFileDir();
@@ -246,12 +207,9 @@ public final class AplCore {
 
 
     public static void init() {
-        redirectSystemStreams("out");
-        redirectSystemStreams("err");
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
         System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
         dirProvider = RuntimeEnvironment.getDirProvider();
-        LOG = getLogger(AplCore.class);
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         AplGlobalObjects.createPropertiesLoader(dirProvider);
         if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
