@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -33,7 +32,6 @@ import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.AccessControlException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -46,8 +44,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
@@ -81,7 +77,8 @@ public final class AplCore {
 
     private static AplContainer container;
     private static ChainIdService chainIdService;
-    public static final Version VERSION = Version.from("1.24.0");
+//    public static final Version VERSION = Version.from("1.24.0");
+    public static final Version VERSION = Version.from("1.23.4");
 
     public static final String APPLICATION = "Apollo";
 
@@ -89,7 +86,11 @@ public final class AplCore {
 
     public static  RuntimeMode runtimeMode;
     public static  DirProvider dirProvider;
-
+    
+    static {
+        runtimeMode = RuntimeEnvironment.getRuntimeMode();
+        dirProvider = RuntimeEnvironment.getDirProvider();        
+    }
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
     }
@@ -221,9 +222,10 @@ public final class AplCore {
 
 
     public static void init() {
-        runtimeMode = RuntimeEnvironment.getRuntimeMode();
+        //TODO: solve this, static{} should be gone
+        // runtimeMode = RuntimeEnvironment.getRuntimeMode();
         System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
-        dirProvider = RuntimeEnvironment.getDirProvider();
+        // dirProvider = RuntimeEnvironment.getDirProvider();
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         AplGlobalObjects.createPropertiesLoader(dirProvider);
         if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
