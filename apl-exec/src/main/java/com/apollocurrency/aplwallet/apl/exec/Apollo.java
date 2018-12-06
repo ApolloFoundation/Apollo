@@ -102,8 +102,8 @@ public class Apollo {
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
             app.initCore();
-            redirectSystemStreams("out");
-            redirectSystemStreams("err");
+//           redirectSystemStreams("out");
+//            redirectSystemStreams("err");
             app.initAppStatusMsg();
             if (app.core.isDesktopApplicationEnabled()) {
                 runtimeMode.updateAppStatus("Starting desktop application...");
