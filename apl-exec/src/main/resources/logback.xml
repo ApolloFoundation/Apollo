@@ -11,7 +11,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.LogDirPropertyDefiner">
+    <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.core.app.LogDirPropertyDefiner">
         <logDirectory>
             logback
         </logDirectory>
@@ -35,7 +35,7 @@
     <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
     <logger name="org.eclipse.jetty" level="off"/>
     <logger name="javax.servlet.level" level="off"/>
-    <logger name="com.apollocurrency.aplwallet.apl.http.APIProxyServlet" level="info"/>
+    <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info"/>
     <logger name="jdbc" level="off"/>
     <logger name="jdbc.connection" level="info"/>
     <logger name="jdbc.sqltiming" level="info"/>
