@@ -54,12 +54,12 @@ public class AplGlobalObjects {
     }
 
 
-    public static void createUpdaterCore(boolean doInit) {
+    public static void createUpdaterCore(boolean doInit, UpdaterCore updaterCore) {
 //        UpdaterCore updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
-//        if (doInit) {
-//            updaterCore.init();
-//        }
-//        save(DEFAULT_UPDATER_CORE_NAME, new GlobalObject<>(updaterCore, DEFAULT_UPDATER_CORE_NAME));
+        if (doInit) {
+            updaterCore.init();
+        }
+        save(DEFAULT_UPDATER_CORE_NAME, new GlobalObject<>(updaterCore, DEFAULT_UPDATER_CORE_NAME));
     }
 
     public static void createNtpTime() {

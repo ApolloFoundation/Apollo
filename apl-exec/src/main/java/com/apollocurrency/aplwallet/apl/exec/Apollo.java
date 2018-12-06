@@ -3,6 +3,12 @@ package com.apollocurrency.aplwallet.apl.exec;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import static com.apollocurrency.aplwallet.apl.core.app.AplCore.runtimeMode;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
+import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +35,18 @@ public class Apollo {
         if (!core.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        AplGlobalObjects.createUpdaterCore(true);
+        UpdaterMediator mediator = new UpdaterMediatorImpl();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(mediator);
+        AplGlobalObjects.createUpdaterCore(true,updaterCore);
     }
 
     private void initAppStatusMsg() {
-
+        AppStatus.setUpdater(new AppStatusUpdater() {
+            @Override
+            public void updateStatus(String status) {
+                core.runtimeMode.updateAppStatus(status);
+            }
+        });
     }
 
     private void launchDesktopApplication() {
