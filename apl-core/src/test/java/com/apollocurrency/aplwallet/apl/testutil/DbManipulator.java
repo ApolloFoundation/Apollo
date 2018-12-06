@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.testutil;
 
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.db.BasicDb;
-import com.apollocurrency.aplwallet.apl.db.DbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 public class DbManipulator {
     protected final BasicDb db =

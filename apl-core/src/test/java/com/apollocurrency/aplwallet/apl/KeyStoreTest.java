@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStore;
+import com.apollocurrency.aplwallet.apl.core.app.SimpleKeyStoreImpl;
+import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doThrow;

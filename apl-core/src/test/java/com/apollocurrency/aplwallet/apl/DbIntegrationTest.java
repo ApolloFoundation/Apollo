@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl;
 
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

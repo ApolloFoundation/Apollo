@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
 import org.junit.Assert;
 import org.junit.Test;
 

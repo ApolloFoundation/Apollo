@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import org.slf4j.Logger;
 
 import java.io.IOException;

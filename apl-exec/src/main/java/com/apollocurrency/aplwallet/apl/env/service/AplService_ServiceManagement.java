@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.env.service;
 
-import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.util.env.LookAndFeel;
 
 import javax.swing.*;
@@ -32,7 +32,7 @@ public class AplService_ServiceManagement {
         LookAndFeel.init();
         new Thread(() -> {
             String[] args = {};
-            Apl.main(args);
+            AplCore.main(args);
         }).start();
         return true;
     }
@@ -40,8 +40,8 @@ public class AplService_ServiceManagement {
     // Invoked when registering the service
     public static String[] serviceGetInfo() {
         return new String[]{
-                Apl.APPLICATION + " Server", // Long name
-                "Manages the " + Apl.APPLICATION + " cryptographic currency protocol", // Description
+                AplCore.APPLICATION + " Server", // Long name
+                "Manages the " + AplCore.APPLICATION + " cryptographic currency protocol", // Description
                 "true", // IsAutomatic
                 "true", // IsAcceptStop
                 "", // failure exe
@@ -56,7 +56,7 @@ public class AplService_ServiceManagement {
     }
 
     public static boolean serviceIsCreate() {
-        return JOptionPane.showConfirmDialog(null, "Do you want to install the " + Apl.APPLICATION + " service ?", "Create Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(null, "Do you want to install the " + AplCore.APPLICATION + " service ?", "Create Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     public static boolean serviceIsLaunch() {
@@ -64,7 +64,7 @@ public class AplService_ServiceManagement {
     }
 
     public static boolean serviceIsDelete() {
-        return JOptionPane.showConfirmDialog(null, "This " + Apl.APPLICATION + " service is already installed. Do you want to delete it ?", "Delete Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(null, "This " + AplCore.APPLICATION + " service is already installed. Do you want to delete it ?", "Delete Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     public static boolean serviceControl_Pause() {

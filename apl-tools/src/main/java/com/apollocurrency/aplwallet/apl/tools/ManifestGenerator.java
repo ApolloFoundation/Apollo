@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 
 
 import java.io.IOException;
@@ -45,7 +45,7 @@ public class ManifestGenerator {
 
     public static void main(String[] args) {
         ManifestGenerator manifestGenerator = new ManifestGenerator();
-        manifestGenerator.generate("./resource/apl.manifest.mf", Apl.class.getCanonicalName(), "./lib");
+        manifestGenerator.generate("./resource/apl.manifest.mf", AplCore.class.getCanonicalName(), "./lib");
 //        String serviceClassName = AplService_ServiceManagement.class.getCanonicalName();
 //        serviceClassName = serviceClassName.substring(0, serviceClassName.length() - "_ServiceManagement".length());
 //        manifestGenerator.generate("./resource/aplservice.manifest.mf", serviceClassName, "./lib");

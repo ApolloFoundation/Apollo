@@ -49,19 +49,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.Block;
-import com.apollocurrency.aplwallet.apl.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.Db;
-import com.apollocurrency.aplwallet.apl.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.TaggedData;
-import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.Version;
-import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.dbmodel.Option;
-import com.apollocurrency.aplwallet.apl.http.API;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.model.Option;
+import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
@@ -118,7 +118,7 @@ public class DesktopApplication extends Application {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        String defaultAccount = Apl.getStringProperty("apl.defaultDesktopAccount");
+        String defaultAccount = AplCore.getStringProperty("apl.defaultDesktopAccount");
         if (defaultAccount != null && !defaultAccount.equals("")) {
             url += "?account=" + defaultAccount;
         }
@@ -155,10 +155,10 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!Apl.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        if (!AplCore.VERSION.toString().equals(Option.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
-            Option.set("Previous launch APP Version", Apl.VERSION.toString());
+            Option.set("Previous launch APP Version", AplCore.VERSION.toString());
             
         }
     }
@@ -258,7 +258,7 @@ public class DesktopApplication extends Application {
             pane.getChildren().add(indicator);
             Text statusText = new Text();
             Text versionText = new Text();
-            Version ver = Apl.VERSION;
+            Version ver = AplCore.VERSION;
             versionText.setId("version-text");
             versionText.setText("Wallet version " + ver);
             statusText.setId("status-text");
@@ -349,11 +349,10 @@ public class DesktopApplication extends Application {
             browser.setMinHeight(height);
             browser.setMinWidth(width);
             webEngine = browser.getEngine();
-            webEngine.setUserDataDirectory(Apl.getConfDir());
+            webEngine.setUserDataDirectory(AplCore.getConfDir());
 
             Worker<Void> loadWorker = webEngine.getLoadWorker();
-            loadWorker.stateProperty().addListener(
-                    (ov, oldState, newState) -> {
+            loadWorker.stateProperty().addListener((ov, oldState, newState) -> {
                         LOG.debug("loadWorker old state " + oldState + " new state " + newState);
                         if (newState != Worker.State.SUCCEEDED) {
                             LOG.debug("loadWorker state change ignored");
@@ -370,12 +369,12 @@ public class DesktopApplication extends Application {
                         //ars = (JSObject) webEngine.executeScript("NRS");
                         JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
                         updateClientState("Desktop Wallet started");
-                        BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
+                        BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
                                 updateClientState(BlockchainProcessor.Event.BLOCK_PUSHED, block), BlockchainProcessor.Event.BLOCK_PUSHED);
                         blockchainProcessor.addListener((block) ->
                                 updateClientState(BlockchainProcessor.Event.AFTER_BLOCK_APPLY, block), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-                        Apl.getTransactionProcessor().addListener(transaction ->
+                        AplCore.getTransactionProcessor().addListener(transaction ->
                                 updateClientState(TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS, transaction), TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
 
                         if (ENABLE_JAVASCRIPT_DEBUGGER) {
@@ -472,7 +471,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(BlockchainProcessor.Event blockEvent, Block block) {
-            BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
+            BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
             if (blockEvent == BlockchainProcessor.Event.BLOCK_PUSHED && blockchainProcessor.isDownloading()) {
                 if (!(block.getHeight() % 100 == 0)) {
                     return;
@@ -558,7 +557,7 @@ public class DesktopApplication extends Application {
             if (requestType.equals("downloadTaggedData")) {
                 if (taggedData == null && retrieve) {
                     try {
-                        if (Apl.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+                        if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
                         }
@@ -583,7 +582,7 @@ public class DesktopApplication extends Application {
                 PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 if (prunableMessage == null && retrieve) {
                     try {
-                        if (Apl.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+                        if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned message not currently available from any peer");
                             return;
                         }

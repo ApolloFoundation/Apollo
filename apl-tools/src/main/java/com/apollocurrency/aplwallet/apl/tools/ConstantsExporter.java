@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import com.apollocurrency.aplwallet.apl.http.GetConstants;
+import com.apollocurrency.aplwallet.apl.core.http.GetConstants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 
 public class ConstantsExporter {

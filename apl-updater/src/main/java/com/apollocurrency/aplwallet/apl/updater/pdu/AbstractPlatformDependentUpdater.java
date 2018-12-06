@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import org.slf4j.Logger;
 
 import java.io.IOException;

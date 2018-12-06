@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.http.API;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
@@ -74,13 +74,13 @@ public class JavaScriptBridge {
         String fileName = "contacts.json";
         byte[] bytes;
         try {
-            bytes = Files.readAllBytes(Paths.get(Apl.getUserHomeDir(), fileName));
+            bytes = Files.readAllBytes(Paths.get(AplCore.getUserHomeDir(), fileName));
         } catch (IOException e) {
             LOG.info("Cannot read file " + fileName + " error " + e.getMessage());
             JSONObject response = new JSONObject();
             response.put("error", "contacts_file_not_found");
             response.put("file", fileName);
-            response.put("folder", Apl.getUserHomeDir());
+            response.put("folder", AplCore.getUserHomeDir());
             response.put("type", "1");
             return JSON.toJSONString(response);
         }

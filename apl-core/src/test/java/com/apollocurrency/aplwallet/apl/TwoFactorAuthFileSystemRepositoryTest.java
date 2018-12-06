@@ -9,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthFileSystemRepository;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import java.nio.file.FileVisitResult;

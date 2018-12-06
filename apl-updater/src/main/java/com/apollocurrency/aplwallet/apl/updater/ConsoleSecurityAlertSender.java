@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import org.slf4j.Logger;
 
 public class ConsoleSecurityAlertSender implements SecurityAlertSender {

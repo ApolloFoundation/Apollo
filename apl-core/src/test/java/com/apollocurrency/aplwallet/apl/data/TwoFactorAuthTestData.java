@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
 import org.apache.commons.codec.binary.Base32;
 
 public class TwoFactorAuthTestData {

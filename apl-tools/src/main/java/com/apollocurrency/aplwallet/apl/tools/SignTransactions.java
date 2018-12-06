@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.io.File;
@@ -69,7 +69,7 @@ public final class SignTransactions {
     }
     private static String signTransaction(String transactionBytesHexString, byte[] keySeed) throws AplException.NotValidException {
         byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
-        Transaction.Builder builder = Apl.newTransactionBuilder(transactionBytes);
+        Transaction.Builder builder = AplCore.newTransactionBuilder(transactionBytes);
         Transaction transaction = builder.build(keySeed);
         return Convert.toHexString(transaction.getBytes());
     }

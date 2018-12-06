@@ -29,10 +29,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
@@ -107,7 +107,7 @@ public final class SignTransactionJSON {
     }
 
     private static String signTransaction(JSONObject transactionJson, byte[] keySeed) throws AplException.NotValidException {
-        Transaction.Builder builder = Apl.newTransactionBuilder(transactionJson);
+        Transaction.Builder builder = AplCore.newTransactionBuilder(transactionJson);
         Transaction transaction = builder.build(keySeed);
         return transaction.getJSONObject().toJSONString();
     }

@@ -32,15 +32,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.Block;
-import com.apollocurrency.aplwallet.apl.Constants;
-import com.apollocurrency.aplwallet.apl.Convert2;
-import com.apollocurrency.aplwallet.apl.Db;
-import com.apollocurrency.aplwallet.apl.Generator;
-import com.apollocurrency.aplwallet.apl.http.API;
-import com.apollocurrency.aplwallet.apl.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.env.SystemTrayDataProvider;
 import org.slf4j.Logger;
 
@@ -79,7 +79,7 @@ public class DesktopSystemTray {
         }
         MenuItem showDesktopApplication = new MenuItem("Show Desktop Application");
         MenuItem refreshDesktopApplication = new MenuItem("Refresh Wallet");
-        if (!Apl.isDesktopApplicationEnabled()) {
+        if (!AplCore.isDesktopApplicationEnabled()) {
             showDesktopApplication.setEnabled(false);
             refreshDesktopApplication.setEnabled(false);
         }
@@ -144,7 +144,7 @@ public class DesktopSystemTray {
 
         shutdown.addActionListener(e -> {
             if(JOptionPane.showConfirmDialog (null,
-                    "Sure you want to shutdown " + Apl.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
+                    "Sure you want to shutdown " + AplCore.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
                     "Shutdown",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 LOG.info("Shutdown requested by System Tray");
@@ -162,7 +162,7 @@ public class DesktopSystemTray {
     }
 
     private void displayStatus() {
-        Block lastBlock = Apl.getBlockchain().getLastBlock();
+        Block lastBlock = AplCore.getBlockchain().getLastBlock();
         Collection<Generator> allGenerators = Generator.getAllGenerators();
 
         StringBuilder generators = new StringBuilder();
@@ -184,14 +184,14 @@ public class DesktopSystemTray {
         statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.Y_AXIS));
 
         addLabelRow(statusPanel, "Installation");
-        addDataRow(statusPanel, "Application", Apl.APPLICATION);
-        addDataRow(statusPanel, "Version", Apl.VERSION.toString());
+        addDataRow(statusPanel, "Application", AplCore.APPLICATION);
+        addDataRow(statusPanel, "Version", AplCore.VERSION.toString());
         addDataRow(statusPanel, "Network", (AplGlobalObjects.getChainConfig().isTestnet()) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
-        addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(Apl.getUserHomeDir()).toAbsolutePath()));
+        addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCore.getUserHomeDir()).toAbsolutePath()));
         addDataRow(statusPanel, "Database URL", Db.getDb() == null ? "unavailable" : Db.getDb().getUrl());
         addEmptyRow(statusPanel);
 
@@ -200,7 +200,7 @@ public class DesktopSystemTray {
             addDataRow(statusPanel, "Height", String.valueOf(lastBlock.getHeight()));
             addDataRow(statusPanel, "Timestamp", String.valueOf(lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Time", String.valueOf(new Date(Convert2.fromEpochTime(lastBlock.getTimestamp()))));
-            addDataRow(statusPanel, "Seconds passed", String.valueOf(Apl.getEpochTime() - lastBlock.getTimestamp()));
+            addDataRow(statusPanel, "Seconds passed", String.valueOf(AplCore.getEpochTime() - lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Forging", String.valueOf(allGenerators.size() > 0));
             if (allGenerators.size() > 0) {
                 addDataRow(statusPanel, "Forging accounts", generators.toString());
@@ -214,12 +214,12 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Max memory", humanReadableByteCount(Runtime.getRuntime().maxMemory()));
         addDataRow(statusPanel, "Total memory", humanReadableByteCount(Runtime.getRuntime().totalMemory()));
         addDataRow(statusPanel, "Free memory", humanReadableByteCount(Runtime.getRuntime().freeMemory()));
-        addDataRow(statusPanel, "Process id", Apl.getProcessId());
+        addDataRow(statusPanel, "Process id", AplCore.getProcessId());
         addEmptyRow(statusPanel);
         addDataRow(statusPanel, "Updated", dateFormat.format(new Date()));
         if (statusDialog == null || !statusDialog.isVisible()) {
             JOptionPane pane = new JOptionPane(statusPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, imageIcon);
-            statusDialog = pane.createDialog(wrapper, Apl.APPLICATION + " Server Status");
+            statusDialog = pane.createDialog(wrapper, AplCore.APPLICATION + " Server Status");
             statusDialog.setVisible(true);
             statusDialog.dispose();
         } else {

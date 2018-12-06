@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
-import com.apollocurrency.aplwallet.apl.Level;
-import com.apollocurrency.aplwallet.apl.Version;
+import com.apollocurrency.aplwallet.apl.core.app.Version;
 import org.json.simple.JSONObject;
 
 public class UpdateInfo implements Cloneable{

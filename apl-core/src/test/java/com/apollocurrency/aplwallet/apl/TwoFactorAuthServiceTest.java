@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
@@ -24,8 +27,8 @@ import static org.mockito.Mockito.verify;
 import java.security.GeneralSecurityException;
 import java.util.Random;
 
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.Assert;

@@ -29,8 +29,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import org.slf4j.Logger;
 
 /**
@@ -54,7 +54,7 @@ public class CompactDatabase {
      * @param   args                Command line arguments
      */
     public static void main(String[] args) {
-        Apl.main(null);
+        AplCore.main(null);
         //
         // Compact the database
         //
@@ -72,23 +72,23 @@ public class CompactDatabase {
         // Get the database URL
         //
         String dbPrefix = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
-        String dbType = Apl.getStringProperty(dbPrefix + "Type");
+        String dbType = AplCore.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");
             return 1;
         }
-        String dbUrl = Apl.getStringProperty(dbPrefix + "Url");
+        String dbUrl = AplCore.getStringProperty(dbPrefix + "Url");
         if (dbUrl == null) {
-            String dbPath = Apl.getDbDir(Apl.getStringProperty(dbPrefix + "Dir"));
+            String dbPath = AplCore.getDbDir(AplCore.getStringProperty(dbPrefix + "Dir"));
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
-        String dbParams = Apl.getStringProperty(dbPrefix + "Params");
+        String dbParams = AplCore.getStringProperty(dbPrefix + "Params");
         dbUrl += ";" + dbParams;
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
         }
-        String dbUsername = Apl.getStringProperty(dbPrefix + "Username", "sa");
-        String dbPassword = Apl.getStringProperty(dbPrefix + "Password", "sa", true);
+        String dbUsername = AplCore.getStringProperty(dbPrefix + "Username", "sa");
+        String dbPassword = AplCore.getStringProperty(dbPrefix + "Password", "sa", true);
         //
         // Get the database path.  This is the third colon-separated operand and is
         // terminated by a semi-colon or by the end of the string.

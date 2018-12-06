@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.db;
 
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.AbstractTwoFactorAuthRepositoryTest;

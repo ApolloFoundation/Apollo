@@ -10,9 +10,8 @@ import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUN
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY2;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY3;
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
-
-import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import org.junit.Assert;
 import org.junit.Test;
 

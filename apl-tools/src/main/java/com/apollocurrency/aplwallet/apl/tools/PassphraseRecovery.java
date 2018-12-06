@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.Account;
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.Convert2;
-import com.apollocurrency.aplwallet.apl.Db;
+import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
@@ -54,14 +54,14 @@ public final class PassphraseRecovery {
     private void recover() {
         try {
             Map<Long, byte[]> publicKeys = getPublicKeys();
-            String wildcard = Apl.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
+            String wildcard = AplCore.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
             if ("".equals(wildcard)) {
                 LOG.info("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
                 return;
             }
             int[] passphraseChars = wildcard.chars().toArray();
             LOG.info("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
-            String positionsStr = Apl.getStringProperty("recoveryPositions", "");
+            String positionsStr = AplCore.getStringProperty("recoveryPositions", "");
             int[] positions;
             try {
                 if (positionsStr.length() == 0) {
@@ -76,7 +76,7 @@ public final class PassphraseRecovery {
                 LOG.info("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
                 return;
             }
-            String dictionaryStr = Apl.getStringProperty("recoveryDictionary", "");
+            String dictionaryStr = AplCore.getStringProperty("recoveryDictionary", "");
             char[] dictionary;
             switch(dictionaryStr.toLowerCase()) {
                 case "":
