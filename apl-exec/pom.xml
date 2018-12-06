@@ -75,6 +75,7 @@
                             <mainClass> com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
                         </manifest>
                     </archive>
+                    <finalName>Apollo</finalName>
                 </configuration>
             </plugin>
             <plugin>

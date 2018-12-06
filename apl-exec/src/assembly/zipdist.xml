@@ -6,7 +6,7 @@
     <id>zipdist</id>
     <includeBaseDirectory>true</includeBaseDirectory>
     <formats>
-        <format>zip</format>
+        <format>tar.gz</format>
     </formats>
     <fileSets>
         <fileSet>
@@ -36,7 +36,7 @@
     </fileSets> 
      <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
         <file>
-            <source> ${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
+            <source> ${project.build.directory}/Apollo.jar</source>
             <outputDirectory>/</outputDirectory>
         </file>
      </files>     

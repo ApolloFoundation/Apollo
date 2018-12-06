@@ -136,8 +136,8 @@
                 -->
                 <skip.integration.tests>true</skip.integration.tests>
                 <skip.unit.tests>false</skip.unit.tests>
-                <zipExecutionPahse>none</zipExecutionPahse> 
-<!--                <zipExecutionPahse>package</zipExecutionPahse>   -->             
+<!--                <zipExecutionPahse>none</zipExecutionPahse> -->
+                <zipExecutionPahse>package</zipExecutionPahse>                
             </properties>
         </profile>
         <!-- The Configuration of the integration-test profile -->
