@@ -20,15 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.Convert;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 
 final class TransactionDb {
 
@@ -38,8 +42,8 @@ final class TransactionDb {
 
     static TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+        synchronized (AplGlobalObjects.getBlockDb().getBlockCache()) {
+            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getHeight() <= height ? transaction : null;
             }
@@ -68,8 +72,8 @@ final class TransactionDb {
     static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
+            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
@@ -99,8 +103,8 @@ final class TransactionDb {
 
     static boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
+            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
             }
@@ -124,8 +128,8 @@ final class TransactionDb {
     static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
+            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.fullHash(), fullHash));
@@ -145,8 +149,8 @@ final class TransactionDb {
 
     static byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            TransactionImpl transaction = BlockDb.transactionCache.get(transactionId);
+        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
+            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.fullHash();
             }
@@ -243,8 +247,8 @@ final class TransactionDb {
 
     static List<TransactionImpl> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized(BlockDb.blockCache) {
-            BlockImpl block = BlockDb.blockCache.get(blockId);
+        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
+            BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
             if (block != null) {
                 return block.getTransactions();
             }

@@ -42,9 +42,9 @@ then
 
     cd $1 
     chmod 755 *.sh
-
-
-
+    
+    ./replace_dbdir.sh
+    
     if [ $3 == true ]
     then
         echo Start desktop application
