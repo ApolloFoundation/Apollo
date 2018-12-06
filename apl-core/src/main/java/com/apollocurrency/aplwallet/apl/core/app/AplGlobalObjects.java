@@ -14,7 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.slf4j.Logger;
 
@@ -32,12 +34,22 @@ public class AplGlobalObjects {
     private static final String DEFAULT_PROPERTIES_LOADER_NAME = "PropertiesLoader";
     private static final String DEFAULT_UPDATER_CORE_NAME = "UpdaterCore";
     private static final String DEFAULT_NTP_TIME_NAME = "NtpTime";
+    private static final String DEFAULT_BLOCK_DB_NAME = "BlockDb";
     private static final String GET_EXEPTION_TEMPLATE = "Unable to get %s. %s is not an instance of %s";
 
 
     public static void createChainIdService(String chainIdFilePath) {
         ChainIdService chainIdService = new ChainIdServiceImpl(chainIdFilePath == null ? "chains.json" : chainIdFilePath);
         save(DEFAULT_CHAINID_SERVICE_NAME, new GlobalObject<>(chainIdService, DEFAULT_CHAINID_SERVICE_NAME));
+    }
+
+    public static void createBlockDb(ConnectionProvider connectionProvider) {
+        BlockDb blockDb = new BlockDb(connectionProvider);
+        save(DEFAULT_BLOCK_DB_NAME, new GlobalObject<>(blockDb, DEFAULT_BLOCK_DB_NAME));
+    }
+
+    public static BlockDb getBlockDb() {
+        return get(BlockDb.class, DEFAULT_BLOCK_DB_NAME);
     }
 
 

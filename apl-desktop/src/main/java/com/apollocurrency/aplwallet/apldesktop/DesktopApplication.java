@@ -366,8 +366,8 @@ public class DesktopApplication extends Application {
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
                         mainStage.setTitle(AplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
-                        //ars = (JSObject) webEngine.executeScript("NRS");
-                        JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
+                        ars = (JSObject) webEngine.executeScript("NRS");
+                        //JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
@@ -504,7 +504,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-           // Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
+            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")

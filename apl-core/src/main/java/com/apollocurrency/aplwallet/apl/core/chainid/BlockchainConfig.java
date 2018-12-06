@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collections;
@@ -16,12 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockDb;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.PropertiesLoader;
+
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
 
@@ -84,8 +85,8 @@ public class BlockchainConfig {
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    public void updateToLatestConstants() {
-        BlockImpl lastBlock = BlockDb.findLastBlock();
+    public void updateToLatestConfig() {
+        BlockImpl lastBlock = AplGlobalObjects.getBlockDb().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");
             return;

@@ -268,7 +268,7 @@ public class DesktopSystemTray {
 
     void setToolTip(final SystemTrayDataProvider dataProvider) {
         SwingUtilities.invokeLater(() -> {
-            trayIcon.setToolTip(dataProvider.getToolTip());
+             trayIcon.setToolTip(dataProvider.getToolTip());
             openWalletInBrowser.setEnabled(dataProvider.getWallet() != null && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE));
             viewLog.setEnabled(dataProvider.getWallet() != null);
             DesktopSystemTray.this.dataProvider = dataProvider;

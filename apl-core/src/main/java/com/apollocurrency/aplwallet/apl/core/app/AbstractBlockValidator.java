@@ -28,7 +28,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
-        if (block.getId() == 0L || BlockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
+        if (block.getId() == 0L || AplGlobalObjects.getBlockDb().hasBlock(block.getId(), previousLastBlock.getHeight())) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
         if (!block.verifyGenerationSignature() && !Generator.allowsFakeForging(block.getGeneratorPublicKey())) {

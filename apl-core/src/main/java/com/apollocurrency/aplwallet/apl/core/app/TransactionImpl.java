@@ -1013,7 +1013,7 @@ final class TransactionImpl implements Transaction {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " exceeds blockchain height " + blockchainHeight);
                 }
-                if (BlockDb.findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
+                if (AplGlobalObjects.getBlockDb().findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
                             + ", transaction was generated on a fork");

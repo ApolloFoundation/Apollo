@@ -183,8 +183,8 @@ var NRS = (function(NRS, $) {
 		} else if (trackBlockchain) {
 			//continue with faster state intervals if we still haven't reached current block from within 1 hour
             timeDiff = NRS.state.time - NRS.blocks[0].timestamp;
-			if (timeDiff < 60 * 60) {
-				NRS.setStateInterval(30);
+			if (timeDiff < 4 * 4) {
+				NRS.setStateInterval(4);
 				trackBlockchain = false;
 			} else {
 				NRS.setStateInterval(10);
@@ -192,29 +192,29 @@ var NRS = (function(NRS, $) {
 		}
 
 		//update number of confirmations... perhaps we should also update it in tne NRS.transactions array
-		$("#dashboard_table").find("tr.confirmed td.confirmations").each(function() {
-			if ($(this).data("incoming")) {
-				$(this).removeData("incoming");
-				return true;
-			}
-			var confirmations = parseInt($(this).data("confirmations"), 10);
-			var nrConfirmations = confirmations + newBlocksCount;
-			if (confirmations <= 10) {
-				$(this).data("confirmations", nrConfirmations);
-				$(this).attr("data-content", $.t("x_confirmations", {
-					"x": NRS.formatAmount(nrConfirmations, false, true)
-				}));
+		// $("#dashboard_table").find("tr.confirmed td.confirmations").each(function() {
+		// 	if ($(this).data("incoming")) {
+		// 		$(this).removeData("incoming");
+		// 		return true;
+		// 	}
+		// 	var confirmations = parseInt($(this).data("confirmations"), 10);
+		// 	var nrConfirmations = confirmations + newBlocksCount;
+		// 	if (confirmations <= 10) {
+		// 		$(this).data("confirmations", nrConfirmations);
+		// 		$(this).attr("data-content", $.t("x_confirmations", {
+		// 			"x": NRS.formatAmount(nrConfirmations, false, true)
+		// 		}));
 
-				if (nrConfirmations > 10) {
-					nrConfirmations = '10+';
-				}
-				$(this).html(nrConfirmations);
-			} else {
-				$(this).attr("data-content", $.t("x_confirmations", {
-					"x": NRS.formatAmount(nrConfirmations, false, true)
-				}));
-			}
-		});
+		// 		if (nrConfirmations > 10) {
+		// 			nrConfirmations = '10+';
+		// 		}
+		// 		$(this).html(nrConfirmations);
+		// 	} else {
+		// 		$(this).attr("data-content", $.t("x_confirmations", {
+		// 			"x": NRS.formatAmount(nrConfirmations, false, true)
+		// 		}));
+		// 	}
+		// });
 		var blockLink = $("#sidebar_block_link");
 		if (blockLink.length > 0) {
 			blockLink.html(NRS.getBlockLink(NRS.lastBlockHeight));

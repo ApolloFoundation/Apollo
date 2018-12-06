@@ -19,10 +19,8 @@ import org.slf4j.Logger;
 public class Option {
     private static final Logger LOG = getLogger(Option.class);
 
-    public static String get(String optionName) 
-    {
-        try (Connection con = Db.getDb().getConnection())
-        {
+    public static String get(String optionName) {
+        try (Connection con = Db.getDb().getConnection()) {
             PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
             stmt.setString(1, optionName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -31,66 +29,50 @@ public class Option {
                 }
             }
         }
-        catch (SQLException e)
-        {
+        catch (SQLException e) {
             LOG.error(e.getMessage());
         }
         return null;
     }
-    
-    public static boolean set(String optionName, String optionValue)
-    {
-        if (get(optionName) == null)
-        {
-            try (Connection con = Db.getDb().getConnection())
-            {
+
+    public static boolean set(String optionName, String optionValue) {
+        if (get(optionName) == null) {
+            try (Connection con = Db.getDb().getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
                 stmt.setString(1, optionName);
                 stmt.setString(2, optionValue);
                 stmt.execute();
             }
-            catch (SQLException e)
-            {
+            catch (SQLException e) {
                 LOG.error(e.getMessage());
             }
-        }
-        else
-        {
-            try (Connection con = Db.getDb().getConnection())
-            {
+        } else {
+            try (Connection con = Db.getDb().getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("UPDATE option set value = ? WHERE name = ?");
                 stmt.setString(1, optionValue);
                 stmt.setString(2, optionName);
                 stmt.execute();
             }
-            catch (SQLException e)
-            {
+            catch (SQLException e) {
                 LOG.error(e.getMessage());
             }
         }
         return true;
     }
-    
-    public static boolean delete(String optionName)
-    {
-        if (get(optionName) == null)
-        {
-            return false;
-        }
-        else
-        {
+
+    public static boolean delete(String optionName) {
+        if (get(optionName) != null) {
             try (Connection con = Db.getDb().getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");
                 stmt.setString(1, optionName);
+                int deletedRows = stmt.executeUpdate();
+                return deletedRows == 1;
             }
-            catch (SQLException e)
-            {
+            catch (SQLException e) {
                 LOG.error(e.getMessage());
-                return false;
             }
         }
-        
-        return true;
+        return false;
     }
-    
+
 }

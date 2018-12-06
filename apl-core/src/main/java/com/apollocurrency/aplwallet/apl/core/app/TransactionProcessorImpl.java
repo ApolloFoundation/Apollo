@@ -587,7 +587,7 @@ public final class TransactionProcessorImpl implements TransactionProcessor {
         BlockchainImpl.getInstance().writeLock();
         try {
             for (Transaction transaction : transactions) {
-                BlockDb.transactionCache.remove(transaction.getId());
+                AplGlobalObjects.getBlockDb().getTransactionCache().remove(transaction.getId());
                 if (TransactionDb.hasTransaction(transaction.getId())) {
                     continue;
                 }

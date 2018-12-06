@@ -735,7 +735,7 @@ public final class Shuffling {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
             long fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm() / 4;
             for (int i = 0; i < 3; i++) {
-                Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
+                Account previousGeneratorAccount = Account.getAccount(AplGlobalObjects.getBlockDb().findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
                 LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),

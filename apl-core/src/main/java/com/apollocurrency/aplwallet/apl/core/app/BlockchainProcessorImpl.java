@@ -342,7 +342,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 for (Object milestoneBlockId : milestoneBlockIds) {
                     long blockId = Convert.parseUnsignedLong((String) milestoneBlockId);
-                    if (BlockDb.hasBlock(blockId)) {
+                    if (AplGlobalObjects.getBlockDb().hasBlock(blockId)) {
                         if (lastMilestoneBlockId == null && milestoneBlockIds.size() > 1) {
                             peerHasMore = false;
                         }
@@ -383,7 +383,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 for (Object nextBlockId : nextBlockIds) {
                     long blockId = Convert.parseUnsignedLong((String)nextBlockId);
                     if (matching) {
-                        if (BlockDb.hasBlock(blockId)) {
+                        if (AplGlobalObjects.getBlockDb().hasBlock(blockId)) {
                             matchId = blockId;
                             matched = true;
                         } else {
@@ -1155,8 +1155,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             try {
                 setGetMoreBlocks(false);
-                //BlockDb.deleteBlock(Genesis.GENESIS_BLOCK_ID); // fails with stack overflow in H2
-                BlockDb.deleteAll();
+                //AplGlobalObjects.getBlockDb().deleteBlock(Genesis.GENESIS_BLOCK_ID); // fails with stack overflow in H2
+                AplGlobalObjects.getBlockDb().deleteAll();
                 addGenesisBlock();
             } finally {
                 setGetMoreBlocks(true);
@@ -1271,7 +1271,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void addBlock(BlockImpl block) {
         try (Connection con = Db.getDb().getConnection()) {
-            BlockDb.saveBlock(con, block);
+            AplGlobalObjects.getBlockDb().saveBlock(con, block);
             blockchain.setLastBlock(block);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -1279,13 +1279,13 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void addGenesisBlock() {
-        BlockImpl lastBlock = BlockDb.findLastBlock();
+        BlockImpl lastBlock = AplGlobalObjects.getBlockDb().findLastBlock();
         if (lastBlock != null) {
             LOG.info("Genesis block already in database");
             blockchain.setLastBlock(lastBlock);
-            BlockDb.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
+            AplGlobalObjects.getBlockDb().deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            genesisBlockId = BlockDb.findBlockIdAtHeight(0);
+            genesisBlockId = AplGlobalObjects.getBlockDb().findBlockIdAtHeight(0);
             LOG.info("Last block height: " + lastBlock.getHeight());
             return;
         }
@@ -1298,7 +1298,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             for (DerivedDbTable table : derivedTables) {
                 table.createSearchIndex(con);
             }
-            BlockDb.commit(genesisBlock);
+            AplGlobalObjects.getBlockDb().commit(genesisBlock);
             Db.getDb().commitTransaction();
         } catch (SQLException e) {
             Db.getDb().rollbackTransaction();
@@ -1343,7 +1343,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 TransactionProcessorImpl.getInstance().requeueAllUnconfirmedTransactions();
                 addBlock(block);
                 accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                BlockDb.commit(block);
+                AplGlobalObjects.getBlockDb().commit(block);
                 Db.getDb().commitTransaction();
             } catch (Exception e) {
                 Db.getDb().rollbackTransaction();
@@ -1594,7 +1594,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (RuntimeException e) {
                 LOG.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
                 Db.getDb().rollbackTransaction();
-                BlockImpl lastBlock = BlockDb.findLastBlock();
+                BlockImpl lastBlock = AplGlobalObjects.getBlockDb().findLastBlock();
                 blockchain.setLastBlock(lastBlock);
                 popOffTo(lastBlock);
                 throw e;
@@ -1610,7 +1610,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getHeight() == 0) {
             throw new RuntimeException("Cannot pop off genesis block");
         }
-        BlockImpl previousBlock = BlockDb.deleteBlocksFrom(block.getId());
+        BlockImpl previousBlock = AplGlobalObjects.getBlockDb().deleteBlocksFrom(block.getId());
         previousBlock.loadTransactions();
         blockchain.setLastBlock(previousBlock);
         blockListeners.notify(block, Event.BLOCK_POPPED);
@@ -1622,7 +1622,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             try {
                 scheduleScan(0, false);
-                BlockImpl lastBLock = BlockDb.deleteBlocksFrom(BlockDb.findBlockIdAtHeight(height));
+                BlockImpl lastBLock = AplGlobalObjects.getBlockDb().deleteBlocksFrom(AplGlobalObjects.getBlockDb().findBlockIdAtHeight(height));
                 blockchain.setLastBlock(lastBLock);
                 AplGlobalObjects.getChainConfig().rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
@@ -1878,14 +1878,14 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 Db.getDb().clearCache();
                 Db.getDb().commitTransaction();
                 LOG.debug("Rolled back derived tables");
-                BlockImpl currentBlock = BlockDb.findBlockAtHeight(height);
+                BlockImpl currentBlock = AplGlobalObjects.getBlockDb().findBlockAtHeight(height);
                 blockListeners.notify(currentBlock, Event.RESCAN_BEGIN);
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     Genesis.apply();
                 } else {
-                    blockchain.setLastBlock(BlockDb.findBlockAtHeight(height - 1));
+                    blockchain.setLastBlock(AplGlobalObjects.getBlockDb().findBlockAtHeight(height - 1));
                 }
                 if (shutdown) {
                     LOG.info("Scan will be performed at next start");
@@ -1906,7 +1906,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                         while (rs.next()) {
                             try {
                                 dbId = rs.getLong("db_id");
-                                currentBlock = BlockDb.loadBlock(con, rs, true);
+                                currentBlock = AplGlobalObjects.getBlockDb().loadBlock(con, rs, true);
                                 if (currentBlock.getHeight() > 0) {
                                     currentBlock.loadTransactions();
                                     if (currentBlock.getId() != currentBlockId || currentBlock.getHeight() > blockchain.getHeight() + 1) {
@@ -1952,7 +1952,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                 LOG.debug(e.toString(), e);
                                 LOG.debug("Applying block " + Long.toUnsignedString(currentBlockId) + " at height "
                                         + (currentBlock == null ? 0 : currentBlock.getHeight()) + " failed, deleting from database");
-                                BlockImpl lastBlock = BlockDb.deleteBlocksFrom(currentBlockId);
+                                BlockImpl lastBlock = AplGlobalObjects.getBlockDb().deleteBlocksFrom(currentBlockId);
                                 blockchain.setLastBlock(lastBlock);
                                 popOffTo(lastBlock);
                                 break outer;

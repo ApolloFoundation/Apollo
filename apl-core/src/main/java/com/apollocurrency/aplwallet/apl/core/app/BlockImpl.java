@@ -424,7 +424,7 @@ public final class BlockImpl implements Block {
                     break;
                 }
                 totalBackFees += backFees[i];
-                Account previousGeneratorAccount = Account.getAccount(BlockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
+                Account previousGeneratorAccount = Account.getAccount(AplGlobalObjects.getBlockDb().findBlockAtHeight(this.height - i - 1).getGeneratorId());
                 LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
                         this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
@@ -495,9 +495,9 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(BlockImpl previousBlock) {
         int blockchainHeight = previousBlock.height;
-        BlockImpl lastBlockForTimeAverage = BlockDb.findBlockAtHeight(blockchainHeight - 2);
+        BlockImpl lastBlockForTimeAverage = AplGlobalObjects.getBlockDb().findBlockAtHeight(blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            BlockImpl intermediateBlockForTimeAverage = BlockDb.findBlockAtHeight(blockchainHeight - 1);
+            BlockImpl intermediateBlockForTimeAverage = AplGlobalObjects.getBlockDb().findBlockAtHeight(blockchainHeight - 1);
             int thisBlockActualTime = this.timestamp - previousBlock.timestamp - this.timeout;
             int previousBlockTime = previousBlock.timestamp - previousBlock.timeout - intermediateBlockForTimeAverage.timestamp;
             int secondAvgBlockTime = intermediateBlockForTimeAverage.timestamp - intermediateBlockForTimeAverage.timeout - lastBlockForTimeAverage.timestamp;
