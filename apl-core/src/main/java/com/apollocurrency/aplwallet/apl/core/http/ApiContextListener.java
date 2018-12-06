@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
@@ -15,11 +16,20 @@ import java.util.concurrent.TimeUnit;
 
 @WebListener
 public class ApiContextListener implements ServletContextListener {
+
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects;// = CDI.current().select(AplGlobalObjects.class).get();
+
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
 
+        if (aplGlobalObjects == null) {
+            aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+        }
         // create the thread pool
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(AplCore.getIntProperty("apl.sseThreadPoolMinSize", 50), AplCore.getIntProperty("apl.sseThreadPoolMaxSize", 200), 60000L,
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                aplGlobalObjects.getIntProperty("apl.sseThreadPoolMinSize", 50),
+                aplGlobalObjects.getIntProperty("apl.sseThreadPoolMaxSize", 200), 60000L,
                 TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(100));
         servletContextEvent.getServletContext().setAttribute("executor",
                 executor);

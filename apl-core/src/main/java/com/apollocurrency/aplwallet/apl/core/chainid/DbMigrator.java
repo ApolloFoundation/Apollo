@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.chainid;
+package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import java.io.IOException;
 import java.nio.file.Path;

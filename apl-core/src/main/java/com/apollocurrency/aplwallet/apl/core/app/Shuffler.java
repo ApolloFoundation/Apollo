@@ -20,10 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,14 +35,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffler {
     private static final Logger LOG = getLogger(Shuffler.class);
 
-    private static final int MAX_SHUFFLERS = AplCore.getIntProperty("apl.maxNumberOfShufflers");
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+    private static final int MAX_SHUFFLERS = aplGlobalObjects.getIntProperty("apl.maxNumberOfShufflers");
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
 

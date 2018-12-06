@@ -21,13 +21,14 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,7 +37,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -46,6 +52,8 @@ public final class PassphraseRecovery {
     private static final Logger LOG = getLogger(PassphraseRecovery.class);
 
     final static Solution NO_SOLUTION = new Solution();
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
     public static void main(String[] args) {
         new PassphraseRecovery().recover();
@@ -54,14 +62,14 @@ public final class PassphraseRecovery {
     private void recover() {
         try {
             Map<Long, byte[]> publicKeys = getPublicKeys();
-            String wildcard = AplCore.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
+            String wildcard = aplGlobalObjects.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
             if ("".equals(wildcard)) {
                 LOG.info("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
                 return;
             }
             int[] passphraseChars = wildcard.chars().toArray();
             LOG.info("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
-            String positionsStr = AplCore.getStringProperty("recoveryPositions", "");
+            String positionsStr = aplGlobalObjects.getStringProperty("recoveryPositions", "");
             int[] positions;
             try {
                 if (positionsStr.length() == 0) {
@@ -76,7 +84,7 @@ public final class PassphraseRecovery {
                 LOG.info("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
                 return;
             }
-            String dictionaryStr = AplCore.getStringProperty("recoveryDictionary", "");
+            String dictionaryStr = aplGlobalObjects.getStringProperty("recoveryDictionary", "");
             char[] dictionary;
             switch(dictionaryStr.toLowerCase()) {
                 case "":

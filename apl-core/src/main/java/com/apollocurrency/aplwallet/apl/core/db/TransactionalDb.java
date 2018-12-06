@@ -21,10 +21,16 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
-import java.sql.*;
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,6 +41,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class TransactionalDb extends BasicDb {
     private static final Logger LOG = getLogger(TransactionalDb.class);
 
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
     private static final DbFactory factory = new DbFactory();
     private static final long stmtThreshold;
     private static final long txThreshold;
@@ -44,7 +52,7 @@ public class TransactionalDb extends BasicDb {
         stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
         txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
         txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
-        enableSqlLogs = AplCore.getBooleanProperty("apl.enableSqlLogs");
+        enableSqlLogs = aplGlobalObjects.getBooleanProperty("apl.enableSqlLogs");
     }
 
     private final ThreadLocal<DbConnection> localConnection = new ThreadLocal<>();
@@ -383,6 +391,6 @@ public class TransactionalDb extends BasicDb {
 
     private static long getPropertyOrDefault(String propertyName, long defaultValue) {
         long temp;
-        return (temp=AplCore.getIntProperty(propertyName)) != 0 ? temp : defaultValue;
+        return (temp=aplGlobalObjects.getIntProperty(propertyName)) != 0 ? temp : defaultValue;
     }
 }

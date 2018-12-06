@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.cdi;
+package com.apollocurrency.aplwallet.apl.util.cdi;
 
 import org.jboss.weld.bootstrap.spi.BeanDiscoveryMode;
 import org.jboss.weld.environment.se.Weld;

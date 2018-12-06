@@ -20,15 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
 import org.slf4j.Logger;
 
-import java.sql.*;
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,7 +42,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
 
-    private static final boolean isPollsProcessing = AplCore.getBooleanProperty("apl.processPolls");
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+    private static final boolean isPollsProcessing = aplGlobalObjects.getBooleanProperty("apl.processPolls");
 
     public static final class OptionResult {
 

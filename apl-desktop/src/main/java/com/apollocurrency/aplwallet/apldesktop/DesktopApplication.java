@@ -20,35 +20,6 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.net.ssl.HttpsURLConnection;
-import java.awt.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -93,6 +64,36 @@ import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.net.ssl.HttpsURLConnection;
+import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
 
@@ -105,8 +106,9 @@ public class DesktopApplication extends Application {
     private static volatile Stage mainStage;
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-    
 
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
     public static void refreshMainApplication() {
         MainApplication.refresh();
@@ -118,8 +120,8 @@ public class DesktopApplication extends Application {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        String defaultAccount = AplCore.getStringProperty("apl.defaultDesktopAccount");
-        if (defaultAccount != null && !defaultAccount.equals("")) {
+        String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
+        if (defaultAccount != null && !defaultAccount.isEmpty() && !defaultAccount.equals("")) {
             url += "?account=" + defaultAccount;
         }
         return url;
@@ -365,7 +367,7 @@ public class DesktopApplication extends Application {
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-                        mainStage.setTitle(AplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
+                        mainStage.setTitle(aplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
                         ars = (JSObject) webEngine.executeScript("NRS");
                         //JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
                         updateClientState("Desktop Wallet started");

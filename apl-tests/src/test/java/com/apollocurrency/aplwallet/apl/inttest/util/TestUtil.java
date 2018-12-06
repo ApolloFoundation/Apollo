@@ -5,9 +5,20 @@
 package com.apollocurrency.aplwallet.apl.inttest.util;
 
 import com.apollocurrency.aplwallet.api.dto.BasicAccount;
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
+import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.inttest.core.TransactionDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.Assert;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,23 +39,16 @@ import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-
-import com.apollocurrency.aplwallet.apl.inttest.core.TransactionDeserializer;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
-import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.junit.Assert;
-import org.slf4j.Logger;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class TestUtil {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
     private static final Logger LOG = getLogger(TestUtil.class);
+
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
     static {
         MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -144,7 +148,7 @@ public class TestUtil {
     }
 
     public static void deleteInKeystore(List<String> accounts) throws IOException {
-        deleteDir(Apl.getKeystoreDir(Apl.getStringProperty("apl.testnetKeystoreDir")),
+        deleteDir(Apl.getKeystoreDir(aplGlobalObjects.getStringProperty("apl.testnetKeystoreDir")),
                 (path -> accounts.stream().anyMatch(acc -> path.getFileName().toString().contains(acc))));
     }
 
@@ -171,7 +175,7 @@ public class TestUtil {
     public static void verifyJsonAccountRS(String json, String account) {
         verifyJsonAccount(json, account, "accountRS");
     }
-    
+
     public static void verifyJsonAccountId(String json, long accountId) {
         verifyJsonAccountRS(json, Convert.rsAccount(accountId));
     }

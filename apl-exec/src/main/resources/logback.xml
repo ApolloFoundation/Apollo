@@ -8,7 +8,7 @@
     <appender name="inMemory" class="com.apollocurrency.aplwallet.apl.util.MemoryAppender">
         <size>200</size>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M\(%line\) - %msg%n</pattern>
         </encoder>
     </appender>
     <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.core.app.LogDirPropertyDefiner">
@@ -30,15 +30,15 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.apollocurrency.aplwallet.apl" level="debug"/>
+    <logger name="com.apollocurrency.aplwallet.apl" level="debug" additivity="false"/>
     <!--Uncomment next line to enable trim duration logging-->
     <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
-    <logger name="org.eclipse.jetty" level="off"/>
-    <logger name="javax.servlet.level" level="off"/>
-    <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info"/>
-    <logger name="jdbc" level="off"/>
-    <logger name="jdbc.connection" level="info"/>
-    <logger name="jdbc.sqltiming" level="info"/>
+    <logger name="org.eclipse.jetty" level="off" additivity="false"/>
+    <logger name="javax.servlet.level" level="off" additivity="false"/>
+    <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
+    <logger name="jdbc" level="off" additivity="false"/>
+    <logger name="jdbc.connection" level="info" additivity="false"/>
+    <logger name="jdbc.sqltiming" level="info" additivity="false"/>
     <root level="severe">
         <appender-ref ref="console" />
         <appender-ref ref="file" />

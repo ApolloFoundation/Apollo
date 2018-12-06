@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.cdi;
+package com.apollocurrency.aplwallet.apl.util.cdi;
 
 import org.jboss.weld.environment.se.WeldContainer;
 import org.slf4j.Logger;

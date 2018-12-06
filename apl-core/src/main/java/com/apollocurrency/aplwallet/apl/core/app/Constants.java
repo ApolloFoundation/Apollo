@@ -20,24 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 public final class Constants {
 
-    public static final boolean isOffline = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.isOffline");
-    public static final boolean isLightClient = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.isLightClient");
-    public static final String customLoginWarning = AplGlobalObjects.getPropertiesLoader().getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+
+    public static final boolean isOffline = aplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.isOffline");
+    public static final boolean isLightClient = aplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.isLightClient");
+    public static final String customLoginWarning = aplGlobalObjects.getPropertiesLoader().getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
 
     public static final long ONE_APL = 100000000;
 
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
-    public static final int MAX_ROLLBACK = Math.max(AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.maxRollback"), 720);
+    public static final int MAX_ROLLBACK = Math.max(aplGlobalObjects.getPropertiesLoader().getIntProperty("apl.maxRollback"), 720);
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
-    public static final int FORGING_DELAY = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.forgingDelay");
-    public static final int FORGING_SPEEDUP = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.forgingSpeedup");
-    public static final int BATCH_COMMIT_SIZE = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
-    public static final int TRIM_TRANSACTION_TIME_THRESHHOLD = AplGlobalObjects.getPropertiesLoader().getIntProperty("apl.trimOperationsLogThreshold", 1000);
+    public static final int FORGING_DELAY = aplGlobalObjects.getPropertiesLoader().getIntProperty("apl.forgingDelay");
+    public static final int FORGING_SPEEDUP = aplGlobalObjects.getPropertiesLoader().getIntProperty("apl.forgingSpeedup");
+    public static final int BATCH_COMMIT_SIZE = aplGlobalObjects.getPropertiesLoader().getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
+    public static final int TRIM_TRANSACTION_TIME_THRESHHOLD = aplGlobalObjects.getPropertiesLoader().getIntProperty("apl.trimOperationsLogThreshold", 1000);
 
     public static final byte MAX_PHASING_VOTE_TRANSACTIONS = 10;
     public static final byte MAX_PHASING_WHITELIST_SIZE = 10;
@@ -54,7 +59,7 @@ public final class Constants {
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
 
-    public static final boolean INCLUDE_EXPIRED_PRUNABLE = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.includeExpiredPrunable");
+    public static final boolean INCLUDE_EXPIRED_PRUNABLE = aplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.includeExpiredPrunable");
 
     public static final int MAX_ACCOUNT_NAME_LENGTH = 100;
     public static final int MAX_ACCOUNT_DESCRIPTION_LENGTH = 1000;
@@ -128,7 +133,7 @@ public final class Constants {
     public static final int DEFAULT_PEER_PORT = 47874;
     public static final int TESTNET_PEER_PORT = 46874;
 
-    public static final boolean correctInvalidFees = AplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.correctInvalidFees");
+    public static final boolean correctInvalidFees = aplGlobalObjects.getPropertiesLoader().getBooleanProperty("apl.correctInvalidFees");
 
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

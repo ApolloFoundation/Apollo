@@ -25,6 +25,8 @@ import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.net.InetAddress;
 import java.util.Map;
 
@@ -33,6 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Forward ports using the UPnP protocol.
  */
+@Singleton
 public class UPnP {
     private static final Logger LOG = getLogger(UPnP.class);
 
@@ -49,6 +52,13 @@ public class UPnP {
 
     /** External address */
     private static InetAddress externalAddress;
+
+    private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static instance later
+
+    @Inject
+    public UPnP(AplGlobalObjects globalObjects) {
+        this.aplGlobalObjects = globalObjects;
+    }
 
     /**
      * Add a port to the UPnP mapping
@@ -133,16 +143,16 @@ public class UPnP {
         //
         try {
             //TODO: Stub. Find where that UPnP calling and fix properly...
-            if (!AplCore.getBooleanProperty("apl.enablePeerUPnP"))
+            if (!aplGlobalObjects.getBooleanProperty("apl.enablePeerUPnP"))
             {
                 LOG.info("UPnP disabled");
                 return;
             }
             
             LOG.info("Looking for UPnP gateway device...");
-            GatewayDevice.setHttpReadTimeout(AplCore.getIntProperty("apl.upnpGatewayTimeout", GatewayDevice.getHttpReadTimeout()));
+            GatewayDevice.setHttpReadTimeout(aplGlobalObjects.getIntProperty("apl.upnpGatewayTimeout", GatewayDevice.getHttpReadTimeout()));
             GatewayDiscover discover = new GatewayDiscover();
-            discover.setTimeout(AplCore.getIntProperty("apl.upnpDiscoverTimeout", discover.getTimeout()));
+            discover.setTimeout(aplGlobalObjects.getIntProperty("apl.upnpDiscoverTimeout", discover.getTimeout()));
             Map<InetAddress, GatewayDevice> gatewayMap = discover.discover();
             if (gatewayMap == null || gatewayMap.isEmpty()) {
                 LOG.debug("There are no UPnP gateway devices");

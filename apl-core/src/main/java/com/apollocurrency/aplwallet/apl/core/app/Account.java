@@ -20,8 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,43 +62,22 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
     private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
     private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
 
+    // TODO: YL remove static instance later
+    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
     private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore =
             new SimpleKeyStoreImpl(AplCore.getKeystoreDir(
                     AplGlobalObjects.getChainConfig().isTestnet() ?
-                            AplCore.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
-                            AplCore.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
+                            aplGlobalObjects.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
+                            aplGlobalObjects.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
             Genesis.loadGenesisAccounts();
 
@@ -291,7 +294,7 @@ public final class Account {
         }
 
     };
-    private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = AplCore.getBooleanProperty("apl.enablePublicKeyCache") ?
+    private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = aplGlobalObjects.getBooleanProperty("apl.enablePublicKeyCache") ?
             new ConcurrentHashMap<>() : null;
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
@@ -300,11 +303,11 @@ public final class Account {
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
-            AplCore.getBooleanProperty("apl.store2FAInFileSystem") ?
+            aplGlobalObjects.getBooleanProperty("apl.store2FAInFileSystem") ?
                     new TwoFactorAuthFileSystemRepository(AplCore.get2FADir(
                             AplGlobalObjects.getChainConfig().isTestnet() ?
-                                    AplCore.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
-                                    AplCore.getStringProperty("apl.dir2FA", "2fa")
+                                    aplGlobalObjects.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
+                                    aplGlobalObjects.getStringProperty("apl.dir2FA", "2fa")
                     )) :
                     new TwoFactorAuthRepositoryImpl(Db.getDb()));
 
