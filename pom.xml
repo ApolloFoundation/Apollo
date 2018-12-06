@@ -91,7 +91,7 @@
         <compile-plugin.version>3.8.0</compile-plugin.version>  
         
     </properties>
-    
+<!-- TODO: add profiles for testnet, release, etc -->    
     <profiles>
         <profile>
             <id>arm64</id>
@@ -131,6 +131,8 @@
                 -->
                 <skip.integration.tests>true</skip.integration.tests>
                 <skip.unit.tests>false</skip.unit.tests>
+                <zipExecutionPahse>none</zipExecutionPahse> 
+<!--                <zipExecutionPahse>package</zipExecutionPahse>   -->             
             </properties>
         </profile>
         <!-- The Configuration of the integration-test profile -->
@@ -150,6 +152,7 @@
                 -->
                 <skip.integration.tests>false</skip.integration.tests>
                 <skip.unit.tests>true</skip.unit.tests>
+                <zipExecutionPahse>none</zipExecutionPahse>                
             </properties>
         </profile>
         <!--Profile for running all tests-->
@@ -159,6 +162,7 @@
                 <build.profile.id>test-all</build.profile.id>
                 <skip.integration.tests>false</skip.integration.tests>
                 <skip.unit.tests>false</skip.unit.tests>
+                <zipExecutionPahse>none</zipExecutionPahse>                
             </properties>
         </profile>
     </profiles>

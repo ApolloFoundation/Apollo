@@ -12,7 +12,9 @@
     <artifactId>apl-exec</artifactId>
     <name>apl-exec</name>
     <packaging>jar</packaging>
-    
+    <properties>
+        <zipname>apollo-wallet</zipname>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.apollocurrency</groupId>
@@ -58,32 +60,59 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>./</classpathPrefix>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass> com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
                 <executions>
                     <execution>
-                        <id>copy-resources</id>
-                        <phase>initialize</phase>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>copy-resources</goal>
+                            <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/src/main/resources/io/firstbridge/fbc/core/model/i18n</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${basedir}/src/test/resources/i18n</directory>
-                                    <includes>
-                                        <include>*</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <overwrite>true</overwrite>
+                            <useBaseVersion>false</useBaseVersion>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>distro-assembly</id>
+                        <phase>${zipExecutionPahse}</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/zipdist.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>${zipname}-${project.version}</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>                                    
+
         </plugins>
     </build>
 </project>
