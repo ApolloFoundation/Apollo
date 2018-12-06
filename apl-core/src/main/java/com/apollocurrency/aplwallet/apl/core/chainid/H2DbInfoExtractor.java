@@ -2,7 +2,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.chainid;
+package com.apollocurrency.aplwallet.apl.core.chainid;
+
+import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
 import java.nio.file.Files;
@@ -12,8 +14,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.h2.jdbcx.JdbcDataSource;
 
 public class H2DbInfoExtractor implements DbInfoExtractor {
     private static final String DB_TYPE = "h2";

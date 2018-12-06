@@ -1,22 +1,25 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import static com.apollocurrency.aplwallet.apl.core.app.AplCore.runtimeMode;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.apollocurrency.aplwallet.apl.core.app.AplCore.runtimeMode;
 
 /**
  * Main Apollo startup class
@@ -24,11 +27,13 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 public class Apollo {
+    private static Logger log;// = LoggerFactory.getLogger(Apollo.class);
 
-    private AplCore core = new AplCore();
-    private static Logger LOG = LoggerFactory.getLogger(Apollo.class);
+    private AplCore core;
+    private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
 
     private void initCore() {
+        core = new AplCore();
         core.init();
     }
 
@@ -37,7 +42,10 @@ public class Apollo {
     }
 
     private void initUpdater() {
-        if (!core.getBooleanProperty("apl.allowUpdates", false)) {
+        if (aplGlobalObjects == null) {
+            aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+        }
+        if (!aplGlobalObjects.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
         UpdaterMediator mediator = new UpdaterMediatorImpl();
@@ -102,6 +110,7 @@ public class Apollo {
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
             app.initCore();
+            log = LoggerFactory.getLogger(Apollo.class);
 //           redirectSystemStreams("out");
 //            redirectSystemStreams("err");
             app.initAppStatusMsg();

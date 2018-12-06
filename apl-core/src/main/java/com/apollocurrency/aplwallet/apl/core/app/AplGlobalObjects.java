@@ -4,27 +4,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
-
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import org.slf4j.Logger;
+
+import javax.enterprise.context.ApplicationScoped;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * This class required for global accessed objects initialization without static initialization in Apl class
  *
  */
-//TODO: temporal class, should be deleted, when DI will be implemented
+@ApplicationScoped
 public class AplGlobalObjects {
     private static final Logger LOG = getLogger(AplGlobalObjects.class);
     private static final Map<String, GlobalObject<?>> OBJECTS = new ConcurrentHashMap<>();
@@ -37,6 +40,7 @@ public class AplGlobalObjects {
     private static final String DEFAULT_BLOCK_DB_NAME = "BlockDb";
     private static final String GET_EXEPTION_TEMPLATE = "Unable to get %s. %s is not an instance of %s";
 
+    public AplGlobalObjects() { } // for weld
 
     public static void createChainIdService(String chainIdFilePath) {
         ChainIdService chainIdService = new ChainIdServiceImpl(chainIdFilePath == null ? "chains.json" : chainIdFilePath);
@@ -130,4 +134,52 @@ public class AplGlobalObjects {
     public static UpdaterCore getUpdaterCore() {
         return get(UpdaterCore.class, DEFAULT_UPDATER_CORE_NAME);
     }
+
+    public static int getIntProperty(String name) {
+        return getIntProperty(name, 0);
+    }
+
+    public static int getIntProperty(String name, int defaultValue) {
+        return getPropertiesLoader().getIntProperty(name, defaultValue);
+    }
+
+    public static String getStringProperty(String name) {
+        return getStringProperty(name, null, false);
+    }
+
+    public static String getStringProperty(String name, String defaultValue) {
+        return getStringProperty(name, defaultValue, false);
+    }
+
+    public static String getStringProperty(String name, String defaultValue, boolean doNotLog) {
+        return getStringProperty(name, defaultValue, doNotLog, null);
+    }
+
+    public static String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
+        return getPropertiesLoader().getStringProperty(name, defaultValue, doNotLog, encoding);
+    }
+
+    public static List<String> getStringListProperty(String name) {
+        String value = getStringProperty(name);
+        if (value == null || value.length() == 0) {
+            return Collections.emptyList();
+        }
+        List<String> result = new ArrayList<>();
+        for (String s : value.split(";")) {
+            s = s.trim();
+            if (s.length() > 0) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    public static boolean getBooleanProperty(String name) {
+        return getBooleanProperty(name, false);
+    }
+
+    public static boolean getBooleanProperty(String name, boolean defaultValue) {
+        return getPropertiesLoader().getBooleanProperty(name, defaultValue);
+    }
+
 }

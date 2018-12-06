@@ -21,58 +21,54 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
-
-import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-
+import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdDbMigrator;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
+import com.apollocurrency.aplwallet.apl.core.chainid.DbInfoExtractor;
+import com.apollocurrency.aplwallet.apl.core.chainid.DbMigrator;
+import com.apollocurrency.aplwallet.apl.core.chainid.H2DbInfoExtractor;
+import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.model.Option;
+import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
-import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.chainid.ChainIdDbMigrator;
-import com.apollocurrency.aplwallet.apl.chainid.DbInfoExtractor;
-import com.apollocurrency.aplwallet.apl.chainid.DbMigrator;
-import com.apollocurrency.aplwallet.apl.chainid.H2DbInfoExtractor;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.db.model.Option;
-
-
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import java.io.IOException;
-import java.nio.file.Files;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AplCore {
-    private static final Logger LOG = LoggerFactory.getLogger(AplCore.class);
+    private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
 
     private static AplContainer container;
@@ -86,10 +82,10 @@ public final class AplCore {
 
     public static  RuntimeMode runtimeMode;
     public static  DirProvider dirProvider;
-    
+
     static {
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
-        dirProvider = RuntimeEnvironment.getDirProvider();        
+        dirProvider = RuntimeEnvironment.getDirProvider();
     }
     public static RuntimeMode getRuntimeMode() {
         return runtimeMode;
@@ -102,7 +98,7 @@ public final class AplCore {
     }
  
     public static boolean isDesktopApplicationEnabled() {
-        return RuntimeEnvironment.isDesktopApplicationEnabled() && AplCore.getBooleanProperty("apl.launchDesktopApplication");
+        return RuntimeEnvironment.isDesktopApplicationEnabled() && aplGlobalObjects.getBooleanProperty("apl.launchDesktopApplication");
     }
     
     private static void logSystemProperties() {
@@ -134,54 +130,6 @@ public final class AplCore {
 
     public static File getLogDir() {
         return dirProvider.getLogFileDir();
-    }
-
-
-    public static int getIntProperty(String name, int defaultValue) {
-        return AplGlobalObjects.getPropertiesLoader().getIntProperty(name, defaultValue);
-    }
-
-    public static String getStringProperty(String name) {
-        return getStringProperty(name, null, false);
-    }
-
-    public static String getStringProperty(String name, String defaultValue) {
-        return getStringProperty(name, defaultValue, false);
-    }
-
-    public static String getStringProperty(String name, String defaultValue, boolean doNotLog) {
-        return getStringProperty(name, defaultValue, doNotLog, null);
-    }
-
-    public static String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
-        return AplGlobalObjects.getPropertiesLoader().getStringProperty(name, defaultValue, doNotLog, encoding);
-    }
-
-    public static List<String> getStringListProperty(String name) {
-        String value = getStringProperty(name);
-        if (value == null || value.length() == 0) {
-            return Collections.emptyList();
-        }
-        List<String> result = new ArrayList<>();
-        for (String s : value.split(";")) {
-            s = s.trim();
-            if (s.length() > 0) {
-                result.add(s);
-            }
-        }
-        return result;
-    }
-
-    public static int getIntProperty(String name) {
-        return getIntProperty(name, 0);
-    }
-    
-    public static boolean getBooleanProperty(String name) {
-        return getBooleanProperty(name, false);
-    }
-
-    public static boolean getBooleanProperty(String name, boolean defaultValue) {
-        return AplGlobalObjects.getPropertiesLoader().getBooleanProperty(name, defaultValue);
     }
 
     public static Blockchain getBlockchain() {
@@ -221,17 +169,18 @@ public final class AplCore {
     }
 
 
-    public static void init() {
-        //TODO: solve this, static{} should be gone
-        // runtimeMode = RuntimeEnvironment.getRuntimeMode();
+    public void init() {
+        runtimeMode = RuntimeEnvironment.getRuntimeMode();
         System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
         // dirProvider = RuntimeEnvironment.getDirProvider();
-        System.out.println("User home folder " + dirProvider.getUserHomeDir());
+        LOG = getLogger(AplCore.class);
+        LOG.debug("User home folder '{}'", dirProvider.getUserHomeDir());
         AplGlobalObjects.createPropertiesLoader(dirProvider);
         if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
+            LOG.warn("Versions don't match = {} and {}", VERSION, AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version"));
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
-        }        
-        Init.init();
+        }
+        startUp();
     }
 
     public static void shutdown() {
@@ -244,23 +193,32 @@ public final class AplCore {
         Peers.shutdown();
         Db.shutdown();
         LOG.info(AplCore.APPLICATION + " server " + VERSION + " stopped.");
+        container.shutdown();
         runtimeMode.shutdown();
         AplCore.shutdown = true;
     }
 
+    private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
+    private static volatile boolean initialized = false;
 
-    private static class Init {
+//    private static class Init {
+    private void startUp() {
 
-        private static volatile boolean initialized = false;
+        if (initialized) {
+            throw new RuntimeException("Apl.init has already been called");
+        }
+        initialized = true;
 
-        static {
+//        static {
             try {
                 long startTime = System.currentTimeMillis();
-                AplGlobalObjects.createNtpTime();
+//                AplGlobalObjects.createNtpTime();
                 PropertiesLoader propertiesLoader = AplGlobalObjects.getPropertiesLoader();
                 AplGlobalObjects.createChainIdService(propertiesLoader.getStringProperty("apl.chainIdFilePath" , "chains.json"));
                 AplGlobalObjects.createBlockchainConfig(AplGlobalObjects.getChainIdService().getActiveChain(), propertiesLoader, false);
-                AplGlobalObjects.getChainConfig().init();
+//                AplGlobalObjects.getChainConfig().init();
+//                AplGlobalObjects.getChainConfig().updateToLatestConstants();
+
                 propertiesLoader.loadSystemProperties(
                         Arrays.asList(
                                 "socksProxyHost",
@@ -273,16 +231,21 @@ public final class AplCore {
 
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
-                Db.init();
-                container = AplContainer.builder().containerId("MAIN-APL-CDI")
+                this.container = AplContainer.builder().containerId("MAIN-APL-CDI").recursiveScanPackages(this.getClass())
                         .annotatedDiscoveryMode().build();
-//TODO: check: no such file                
+                aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+
+                Db.init();
+//TODO: check: no such file
   //              ChainIdDbMigration.migrate();
                 AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                 migrateDb();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
-                AplGlobalObjects.getChainConfig().updateToLatestConfig();
+
+                aplGlobalObjects.createNtpTime();
+                aplGlobalObjects.getChainConfig().init();
+                aplGlobalObjects.getChainConfig().updateToLatestConfig();
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
@@ -322,7 +285,7 @@ public final class AplCore {
                 runtimeMode.updateAppStatus("API initialization...");
                 API.init();
                 DebugTrace.init();
-                int timeMultiplier = (AplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(AplCore.getIntProperty("apl.timeMultiplier"), 1) : 1;
+                int timeMultiplier = (aplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(aplGlobalObjects.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), AplCore.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
@@ -379,11 +342,11 @@ public final class AplCore {
                 Option.set("secondDbMigrationRequired", "true");
                 LOG.debug("Db migration required");
                 Db.shutdown();
-                String dbDir = AplCore.getStringProperty(Db.PREFIX + "Dir");
+                String dbDir = aplGlobalObjects.getStringProperty(Db.PREFIX + "Dir");
                 String targetDbDir = AplCore.getDbDir(dbDir);
-                String dbName = AplCore.getStringProperty(Db.PREFIX + "Name");
-                String dbUser = AplCore.getStringProperty(Db.PREFIX + "Username");
-                String dbPassword = AplCore.getStringProperty(Db.PREFIX + "Password");
+                String dbName = aplGlobalObjects.getStringProperty(Db.PREFIX + "Name");
+                String dbUser = aplGlobalObjects.getStringProperty(Db.PREFIX + "Username");
+                String dbPassword = aplGlobalObjects.getStringProperty(Db.PREFIX + "Password");
                 String legacyDbDir = AplCore.getDbDir(dbDir, null, false);
                 String chainIdDbDir = AplCore.getDbDir(dbDir, true);
                 DbInfoExtractor dbInfoExtractor = new H2DbInfoExtractor(dbName, dbUser, dbPassword);
@@ -400,7 +363,7 @@ public final class AplCore {
                     }
                     AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                     Option.set("secondDbMigrationRequired", "false");
-                    boolean deleteOldDb = AplCore.getBooleanProperty("apl.deleteOldDbAfterMigration");
+                    boolean deleteOldDb = aplGlobalObjects.getBooleanProperty("apl.deleteOldDbAfterMigration");
                     if (deleteOldDb && oldDbPath != null) {
                         Option.set("oldDbPath", oldDbPath.toAbsolutePath().toString());
                     }
@@ -413,7 +376,7 @@ public final class AplCore {
         }
 
         private static void performDbMigrationCleanup() {
-            String dbDir = AplCore.getStringProperty(Db.PREFIX + "Dir");
+            String dbDir = aplGlobalObjects.getStringProperty(Db.PREFIX + "Dir");
             String targetDbDir = AplCore.getDbDir(dbDir);
             String oldDbPathOption = Option.get("oldDbPath");
             if (oldDbPathOption != null) {
@@ -444,13 +407,13 @@ public final class AplCore {
         }
 
         static Set<Integer> collectWorkingPorts() {
-            boolean testnet = AplGlobalObjects.getChainConfig().isTestnet();
-            final int port = testnet ?  Constants.TESTNET_API_PORT: AplCore.getIntProperty("apl.apiServerPort");
-            final int sslPort = testnet ? TESTNET_API_SSLPORT : AplCore.getIntProperty("apl.apiServerSSLPort");
-            boolean enableSSL = AplCore.getBooleanProperty("apl.apiSSL");
+            boolean testnet = aplGlobalObjects.getChainConfig().isTestnet();
+            final int port = testnet ?  Constants.TESTNET_API_PORT: aplGlobalObjects.getIntProperty("apl.apiServerPort");
+            final int sslPort = testnet ? TESTNET_API_SSLPORT : aplGlobalObjects.getIntProperty("apl.apiServerSSLPort");
+            boolean enableSSL = aplGlobalObjects.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
-            String myAddress = Convert.emptyToNull(AplCore.getStringProperty("apl.myAddress", "").trim());
+            String myAddress = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.myAddress", "").trim());
             if (myAddress != null) {
                 try {
                     int portIndex = myAddress.lastIndexOf(":");
@@ -465,7 +428,7 @@ public final class AplCore {
             if (peerPort == -1) {
                 peerPort = testnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
             }
-            int peerServerPort = AplCore.getIntProperty("apl.peerServerPort");
+            int peerServerPort = aplGlobalObjects.getIntProperty("apl.peerServerPort");
 
             Set<Integer> ports = new HashSet<>();
             ports.add(port);
@@ -485,20 +448,6 @@ public final class AplCore {
                 return false;
             }
         }
-
-
-
-        private static void init() {
-            if (initialized) {
-                throw new RuntimeException("Apl.init has already been called");
-            }
-            initialized = true;
-        }
-
-        private Init() {} // never
-
-    }
-
 
 
     private static Thread initSecureRandom() {
@@ -572,7 +521,7 @@ public final class AplCore {
     }
 
     
-//TODO: Core should not be statis anymore!
+//TODO: Core should not be static anymore!
     
     public AplCore() {
     }
