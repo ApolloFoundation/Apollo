@@ -65,6 +65,8 @@ import java.util.UUID;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
+import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AplCore {
@@ -80,19 +82,13 @@ public final class AplCore {
 
     private static volatile Time time = new Time.EpochTime();
 
-    public static  RuntimeMode runtimeMode;
-    public static  DirProvider dirProvider;
-
-    static {
-        runtimeMode = RuntimeEnvironment.getRuntimeMode();
-        dirProvider = RuntimeEnvironment.getDirProvider();
-    }
-    public static RuntimeMode getRuntimeMode() {
-        return runtimeMode;
-    }
-
     private static volatile boolean shutdown = false;
 
+    
+//TODO: Core should not be static anymore!  
+    public AplCore() {
+    }
+    
     public static boolean isShutdown() {
         return shutdown;
     }
@@ -101,36 +97,8 @@ public final class AplCore {
         return RuntimeEnvironment.isDesktopApplicationEnabled() && aplGlobalObjects.getBooleanProperty("apl.launchDesktopApplication");
     }
     
-    private static void logSystemProperties() {
-        String[] loggedProperties = new String[] {
-                "java.version",
-                "java.vm.version",
-                "java.vm.name",
-                "java.vendor",
-                "java.vm.vendor",
-                "java.home",
-                "java.library.path",
-                "java.class.path",
-                "os.arch",
-                "sun.arch.data.model",
-                "os.name",
-                "file.encoding",
-                "java.security.policy",
-                "java.security.manager",
-                RuntimeEnvironment.RUNTIME_MODE_ARG,
-                RuntimeEnvironment.DIRPROVIDER_ARG
-        };
-        for (String property : loggedProperties) {
-            LOG.debug("{} = {}", property, System.getProperty(property));
-        }
-        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
-        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
-        LOG.debug("processId = {}", getProcessId());
-    }
 
-    public static File getLogDir() {
-        return dirProvider.getLogFileDir();
-    }
+
 
     public static Blockchain getBlockchain() {
         return BlockchainImpl.getInstance();
@@ -170,12 +138,12 @@ public final class AplCore {
 
 
     public void init() {
-        runtimeMode = RuntimeEnvironment.getRuntimeMode();
-        System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
+
+        System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
         // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
-        LOG.debug("User home folder '{}'", dirProvider.getUserHomeDir());
-        AplGlobalObjects.createPropertiesLoader(dirProvider);
+        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getUserHomeDir());
+        AplGlobalObjects.createPropertiesLoader(AplCoreRuntime.getInstance().getDirProvider());
         if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
             LOG.warn("Versions don't match = {} and {}", VERSION, AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version"));
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
@@ -183,7 +151,7 @@ public final class AplCore {
         startUp();
     }
 
-    public static void shutdown() {
+    public void shutdown() {
         LOG.info("Shutting down...");
         AddOns.shutdown();
         API.shutdown();
@@ -194,10 +162,13 @@ public final class AplCore {
         Db.shutdown();
         LOG.info(AplCore.APPLICATION + " server " + VERSION + " stopped.");
         container.shutdown();
-        runtimeMode.shutdown();
         AplCore.shutdown = true;
     }
-
+    
+    private static void setServerStatus(ServerStatus status, URI wallet) {
+        AplCoreRuntime.getInstance().setServerStatus(status, wallet);
+    }
+    
     private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
     private static volatile boolean initialized = false;
 
@@ -224,10 +195,9 @@ public final class AplCore {
                                 "socksProxyHost",
                                 "socksProxyPort",
                                 "apl.enablePeerUPnP"));
-                logSystemProperties();
-                runtimeMode.init();
+                AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
-                runtimeMode.updateAppStatus("Database initialization...");
+                AppStatus.getInstance().update("Database initialization...");
 
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
@@ -250,7 +220,7 @@ public final class AplCore {
                 BlockchainProcessorImpl.getInstance();
                 Account.init();
                 AccountRestrictions.init();
-                runtimeMode.updateAppStatus("Account ledger initialization...");
+                AppStatus.getInstance().update("Account ledger initialization...");
                 AccountLedger.init();
                 Alias.init();
                 Asset.init();
@@ -276,13 +246,13 @@ public final class AplCore {
                 ShufflingParticipant.init();
                 PrunableMessage.init();
                 TaggedData.init();
-                runtimeMode.updateAppStatus("Peer server initialization...");
+                AppStatus.getInstance().update("Peer server initialization...");
                 Peers.init();
-                runtimeMode.updateAppStatus("API Proxy initialization...");
+                AppStatus.getInstance().update("API Proxy initialization...");
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();
-                runtimeMode.updateAppStatus("API initialization...");
+                AppStatus.getInstance().update("API initialization...");
                 API.init();
                 DebugTrace.init();
                 int timeMultiplier = (aplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(aplGlobalObjects.getIntProperty("apl.timeMultiplier"), 1) : 1;
@@ -300,7 +270,7 @@ public final class AplCore {
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = AplCore.APPLICATION + " server " + VERSION + " started successfully.";
                 LOG.info(message);
-                runtimeMode.updateAppStatus(message);
+                AppStatus.getInstance().update(message);
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
                 LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
                 LOG.info("Copyright © 2017-2018 Apollo Foundation.");
@@ -325,12 +295,13 @@ public final class AplCore {
                     }
                 }
                 LOG.error("Database initialization failed ", e);
-                runtimeMode.recoverDb();
+                //TODO: move DB operations to proper place
+                AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
             }
             catch (Exception e) {
                 LOG.error(e.getMessage(), e);
-                runtimeMode.alert(e.getMessage() + "\n" +
-                        "See additional information in " + dirProvider.getLogFileDir() + System.getProperty("file.separator") + "apl.log");
+                AppStatus.getInstance().alert(e.getMessage() + "\n" +
+                        "See additional information in " + AplCoreRuntime.getInstance().getLogDir() + System.getProperty("file.separator") + "apl.log");
                 System.exit(1);
             }
         }
@@ -343,16 +314,16 @@ public final class AplCore {
                 LOG.debug("Db migration required");
                 Db.shutdown();
                 String dbDir = aplGlobalObjects.getStringProperty(Db.PREFIX + "Dir");
-                String targetDbDir = AplCore.getDbDir(dbDir);
+                String targetDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir);
                 String dbName = aplGlobalObjects.getStringProperty(Db.PREFIX + "Name");
                 String dbUser = aplGlobalObjects.getStringProperty(Db.PREFIX + "Username");
                 String dbPassword = aplGlobalObjects.getStringProperty(Db.PREFIX + "Password");
-                String legacyDbDir = AplCore.getDbDir(dbDir, null, false);
-                String chainIdDbDir = AplCore.getDbDir(dbDir, true);
+                String legacyDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir, null, false);
+                String chainIdDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir, true);
                 DbInfoExtractor dbInfoExtractor = new H2DbInfoExtractor(dbName, dbUser, dbPassword);
                 DbMigrator dbMigrator = new ChainIdDbMigrator(chainIdDbDir, legacyDbDir, dbInfoExtractor);
                 try {
-                    runtimeMode.updateAppStatus("Performing database migration");
+                    AppStatus.getInstance().update("Performing database migration");
                     Path oldDbPath = dbMigrator.migrate(targetDbDir);
                     Db.init();
                     try (Connection connection = Db.getDb().getConnection()) {
@@ -377,7 +348,7 @@ public final class AplCore {
 
         private static void performDbMigrationCleanup() {
             String dbDir = aplGlobalObjects.getStringProperty(Db.PREFIX + "Dir");
-            String targetDbDir = AplCore.getDbDir(dbDir);
+            String targetDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir);
             String oldDbPathOption = Option.get("oldDbPath");
             if (oldDbPathOption != null) {
                 Path oldDbPath = Paths.get(oldDbPathOption);
@@ -398,9 +369,9 @@ public final class AplCore {
         public static void checkPorts() {
             Set<Integer> ports = collectWorkingPorts();
             for (Integer port : ports) {
-                if (!isTcpPortAvailable(port)) {
+                if (!RuntimeParams.isTcpPortAvailable(port)) {
                     String portErrorMessage = "Port " + port + " is already in use. Please, shutdown all Apollo processes and restart application!";
-                    runtimeMode.displayError("ERROR!!! " + portErrorMessage);
+                    AppStatus.getInstance().error("ERROR!!! " + portErrorMessage);
                     throw new RuntimeException(portErrorMessage);
                 }
             }
@@ -440,14 +411,7 @@ public final class AplCore {
             return ports;
         }
 
-        public static boolean isTcpPortAvailable(int port) {
-            try (ServerSocket serverSocket = new ServerSocket(port)) {
-                serverSocket.setReuseAddress(true);
-                return true;
-            } catch (Exception ex) {
-                return false;
-            }
-        }
+
 
 
     private static Thread initSecureRandom() {
@@ -468,62 +432,6 @@ public final class AplCore {
                         "Install haveged if on linux, or set apl.useStrongSecureRandom=false.");
             }
         } catch (InterruptedException ignore) {}
-    }
-
-
-    public static String getProcessId() {
-        String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
-        if (runtimeName == null) {
-            return "";
-        }
-        String[] tokens = runtimeName.split("@");
-        if (tokens.length == 2) {
-            return tokens[0];
-        }
-        return "";
-    }
-
-    public static String getDbDir(String dbDir, UUID chainId, boolean chainIdFirst) {
-        return dirProvider.getDbDir(dbDir, chainId, chainIdFirst);
-    }
-
-    public static String getDbDir(String dbDir, boolean chainIdFirst) {
-        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId(), chainIdFirst);
-    }
-
-    public static String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId(), false);
-    }
-
-    public static Path getKeystoreDir(String keystoreDir) {
-        return dirProvider.getKeystoreDir(keystoreDir).toPath();
-    }
-
-    public static Path get2FADir(String dir2FA) {
-        return Paths.get(dirProvider.getUserHomeDir(), dir2FA);
-    }
-
-
-    public static void updateLogFileHandler(Properties loggingProperties) {
-        dirProvider.updateLogFileHandler(loggingProperties);
-    }
-
-    public static String getUserHomeDir() {
-        return dirProvider.getUserHomeDir();
-    }
-
-    public static File getConfDir() {
-        return dirProvider.getConfDir();
-    }
-
-    private static void setServerStatus(ServerStatus status, URI wallet) {
-        runtimeMode.setServerStatus(status, wallet, dirProvider.getLogFileDir());
-    }
-
-    
-//TODO: Core should not be static anymore!
-    
-    public AplCore() {
     }
 
 }

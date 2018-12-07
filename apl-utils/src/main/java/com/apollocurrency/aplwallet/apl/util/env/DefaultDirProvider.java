@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,16 +67,18 @@ public class DefaultDirProvider implements DirProvider {
 
     @Override
     public String getUserHomeDir() {
-        return Paths.get(".").toAbsolutePath().getParent().toString();
+        return System.getProperty("user.home");
+        //return Paths.get(".").toAbsolutePath().getParent().toString();
     }
 
     @Override
     public File getBinDirectory() {
-        return Paths.get(getUserHomeDir()).resolve("classes").toFile();
+        String res = this.getClass().getClassLoader().getResource("").getPath();
+        return new File(res);
     }
 
-    public static void main(String[] args) {
-        Path path = Paths.get("apollo", "");
-        System.out.println( path.toAbsolutePath().toString());
-    }
-}
+    @Override
+    public File getKeystoreDir(String keystoreDir) {
+        return new File(getUserHomeDir(), keystoreDir);
+    }    
+ }

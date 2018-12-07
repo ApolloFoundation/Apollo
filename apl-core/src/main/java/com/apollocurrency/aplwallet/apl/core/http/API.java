@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.UPnP;
@@ -221,7 +222,7 @@ public final class API {
                 https_config.setSecurePort(sslPort);
                 https_config.addCustomizer(new SecureRequestCustomizer());
                 sslContextFactory = new SslContextFactory();
-                String keyStorePath = Paths.get(AplCore.getUserHomeDir()).resolve(Paths.get(aplGlobalObjects.getStringProperty("apl.keyStorePath"))).toString();
+                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(aplGlobalObjects.getStringProperty("apl.keyStorePath"))).toString();
                 LOG.info("Using keystore: " + keyStorePath);
                 sslContextFactory.setKeyStorePath(keyStorePath);
                 sslContextFactory.setKeyStorePassword(aplGlobalObjects.getStringProperty("apl.keyStorePassword", null, true));

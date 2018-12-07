@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.UUID;
 
-abstract class DesktopUserDirProvider implements DirProvider {
+abstract class DesktopUserDirProvider extends  DefaultDirProvider {
 
     public static final String LOG_FILE_PATTERN = "java.util.logging.FileHandler.pattern";
 
@@ -89,11 +89,4 @@ abstract class DesktopUserDirProvider implements DirProvider {
         return new File(getUserHomeDir(), "conf");
     }
 
-    @Override
-    public abstract String getUserHomeDir();
-
-    @Override
-    public File getBinDirectory() {
-        return Paths.get(getUserHomeDir()).resolve("classes").toFile();
-    }
 }

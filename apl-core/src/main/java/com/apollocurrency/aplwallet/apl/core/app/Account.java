@@ -74,7 +74,7 @@ public final class Account {
 
     private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore =
-            new SimpleKeyStoreImpl(AplCore.getKeystoreDir(
+            new SimpleKeyStoreImpl(AplCoreRuntime.getInstance().getKeystoreDir(
                     AplGlobalObjects.getChainConfig().isTestnet() ?
                             aplGlobalObjects.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
                             aplGlobalObjects.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
@@ -304,7 +304,7 @@ public final class Account {
 
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
             aplGlobalObjects.getBooleanProperty("apl.store2FAInFileSystem") ?
-                    new TwoFactorAuthFileSystemRepository(AplCore.get2FADir(
+                    new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir(
                             AplGlobalObjects.getChainConfig().isTestnet() ?
                                     aplGlobalObjects.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
                                     aplGlobalObjects.getStringProperty("apl.dir2FA", "2fa")

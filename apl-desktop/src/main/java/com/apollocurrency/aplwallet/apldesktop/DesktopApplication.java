@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apldesktop;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -351,7 +352,7 @@ public class DesktopApplication extends Application {
             browser.setMinHeight(height);
             browser.setMinWidth(width);
             webEngine = browser.getEngine();
-            webEngine.setUserDataDirectory(AplCore.getConfDir());
+            webEngine.setUserDataDirectory(AplCoreRuntime.getInstance().getConfDir());
 
             Worker<Void> loadWorker = webEngine.getLoadWorker();
             loadWorker.stateProperty().addListener((ov, oldState, newState) -> {

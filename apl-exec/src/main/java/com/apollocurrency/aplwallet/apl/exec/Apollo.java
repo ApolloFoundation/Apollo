@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -19,7 +20,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.core.app.AplCore.runtimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 
 /**
  * Main Apollo startup class
@@ -29,12 +32,18 @@ import static com.apollocurrency.aplwallet.apl.core.app.AplCore.runtimeMode;
 public class Apollo {
     private static Logger log;// = LoggerFactory.getLogger(Apollo.class);
 
-    private AplCore core;
+    public static  RuntimeMode runtimeMode;
+    public static  DirProvider dirProvider;
+    
+    private static AplCore core;
     private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
-
+    
     private void initCore() {
+        AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
         core = new AplCore();
+        AplCoreRuntime.getInstance().addCore(core);
         core.init();
+        
     }
 
     private static void printCommandLineArguments(String[] args) {
@@ -57,17 +66,27 @@ public class Apollo {
         AppStatus.setUpdater(new AppStatusUpdater() {
             @Override
             public void updateStatus(String status) {
-                core.runtimeMode.updateAppStatus(status);
+                runtimeMode.updateAppStatus(status);
+            }
+
+            @Override
+            public void alert(String message) {
+                runtimeMode.alert(message);
+            }
+
+            @Override
+            public void error(String message) {
+                runtimeMode.displayError(message);
             }
         });
     }
 
     private void launchDesktopApplication() {
-        core.runtimeMode.launchDesktopApplication();
+        runtimeMode.launchDesktopApplication();
     }
 
     public static void shutdown() {
-        AplCore.shutdown();
+        core.shutdown();
     }
 
     private static void redirectSystemStreams(String streamName) {
@@ -107,6 +126,8 @@ public class Apollo {
         System.out.println("Initializing " + AplCore.APPLICATION + " server version " + AplCore.VERSION);
         printCommandLineArguments(args);
         Apollo app = new Apollo();
+        runtimeMode = RuntimeEnvironment.getRuntimeMode();
+        dirProvider = RuntimeEnvironment.getDirProvider();        
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
             app.initCore();

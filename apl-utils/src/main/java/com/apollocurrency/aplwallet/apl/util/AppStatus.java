@@ -13,6 +13,16 @@ public class AppStatus {
             public void updateStatus(String status) {
                System.out.println(status);
             }
+
+            @Override
+            public void alert(String message) {
+               System.err.println(message);
+            }
+
+            @Override
+            public void error(String message) {
+               System.err.println(message);
+            }
         };
     }
     
@@ -30,5 +40,11 @@ public class AppStatus {
     
     public void update(String status){
         updater.updateStatus(status);
+    }
+    public void error(String status){
+        updater.error(status);
+    }
+    public void alert(String status){
+        updater.alert(status);
     }
 }

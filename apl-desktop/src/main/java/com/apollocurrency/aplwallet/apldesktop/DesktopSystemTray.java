@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.env;
+package com.apollocurrency.aplwallet.apldesktop;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -41,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.SystemTrayDataProvider;
 import org.slf4j.Logger;
 
@@ -191,7 +193,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
-        addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCore.getUserHomeDir()).toAbsolutePath()));
+        addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).toAbsolutePath()));
         addDataRow(statusPanel, "Database URL", Db.getDb() == null ? "unavailable" : Db.getDb().getUrl());
         addEmptyRow(statusPanel);
 
@@ -214,7 +216,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Max memory", humanReadableByteCount(Runtime.getRuntime().maxMemory()));
         addDataRow(statusPanel, "Total memory", humanReadableByteCount(Runtime.getRuntime().totalMemory()));
         addDataRow(statusPanel, "Free memory", humanReadableByteCount(Runtime.getRuntime().freeMemory()));
-        addDataRow(statusPanel, "Process id", AplCore.getProcessId());
+        addDataRow(statusPanel, "Process id", RuntimeParams.getProcessId());
         addEmptyRow(statusPanel);
         addDataRow(statusPanel, "Updated", dateFormat.format(new Date()));
         if (statusDialog == null || !statusDialog.isVisible()) {

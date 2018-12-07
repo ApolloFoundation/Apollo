@@ -7,5 +7,7 @@ package com.apollocurrency.aplwallet.apl.util;
  * @author alukin@gmail
  */
 public interface AppStatusUpdater {
-    public void updateStatus(String status);
+    public void updateStatus(String message);
+    public void alert(String message);
+    public void error(String message);   
 }
