@@ -341,7 +341,7 @@ public class DesktopApplication extends Application {
             mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
-            browser.setOnContextMenuRequested(new WalletContextMenu());
+           // browser.setOnContextMenuRequested(new WalletContextMenu());
             WebView invisible = new WebView();
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 1000);
@@ -368,7 +368,7 @@ public class DesktopApplication extends Application {
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
                         mainStage.setTitle(AplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
                         //ars = (JSObject) webEngine.executeScript("NRS");
-                        JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
+                        //JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
@@ -425,7 +425,7 @@ public class DesktopApplication extends Application {
             changelogStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
-            browser.setOnContextMenuRequested(new WalletContextMenu());
+           // browser.setOnContextMenuRequested(new WalletContextMenu());
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 500);
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 720);
@@ -466,6 +466,7 @@ public class DesktopApplication extends Application {
             warnAlert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
             warnAlert.getDialogPane().setContent(hbox);
             warnAlert.setHeaderText("Apollo desktop app shutdown will not" + System.lineSeparator() + " cause shutdown of Apollo wallet");
+            
             ButtonType clickedButton = warnAlert.showAndWait().orElse(ButtonType.NO);
             if (clickedButton == ButtonType.YES) {
                 System.exit(0);
