@@ -122,7 +122,7 @@ public final class Db {
     public static void tryToDeleteDb() throws IOException {
             db.shutdown();
             LOG.info("Removing db...");
-            Path dbPath = Paths.get(AplCore.getDbDir(aplGlobalObjects.getStringProperty(PREFIX + "Dir"))).getParent();
+            Path dbPath = Paths.get(AplCoreRuntime.getInstance().getDbDir(aplGlobalObjects.getStringProperty(PREFIX + "Dir"))).getParent();
             removeDb(dbPath);
             LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }

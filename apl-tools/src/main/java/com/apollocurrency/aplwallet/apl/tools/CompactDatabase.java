@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import org.slf4j.Logger;
 
@@ -85,7 +86,8 @@ public class CompactDatabase {
         }
         String dbUrl = aplGlobalObjects.getStringProperty(dbPrefix + "Url");
         if (dbUrl == null) {
-            String dbPath = AplCore.getDbDir(aplGlobalObjects.getStringProperty(dbPrefix + "Dir"));
+            //TODO: check that runtime is inited
+            String dbPath = AplCoreRuntime.getInstance().getDbDir(aplGlobalObjects.getStringProperty(dbPrefix + "Dir"));
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
         String dbParams = aplGlobalObjects.getStringProperty(dbPrefix + "Params");

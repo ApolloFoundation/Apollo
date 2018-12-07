@@ -18,9 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.env;
+package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.env.DesktopSystemTray;
+import com.apollocurrency.aplwallet.apldesktop.DesktopSystemTray;
 import com.apollocurrency.aplwallet.apl.util.env.LookAndFeel;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;

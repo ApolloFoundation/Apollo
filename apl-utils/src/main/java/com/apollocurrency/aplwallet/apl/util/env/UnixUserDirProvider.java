@@ -34,8 +34,4 @@ public class UnixUserDirProvider extends DesktopUserDirProvider {
         return APL_USER_HOME;
     }
 
-    @Override
-    public File getLogFileDir() {
-        return super.getLogFileDir();
-    }
 }

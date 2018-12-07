@@ -14,7 +14,7 @@ public class LogDirPropertyDefiner extends PropertyDefinerBase {
 
     @Override
     public String getPropertyValue() {
-        File logDir = AplCore.getLogDir();
+        File logDir = AplCoreRuntime.getInstance().getLogDir();
         if (logDir != null) {
             return logDir.toPath().resolve(logDirectory).toString();
         }

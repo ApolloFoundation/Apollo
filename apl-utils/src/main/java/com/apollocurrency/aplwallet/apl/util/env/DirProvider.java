@@ -27,25 +27,44 @@ import java.util.UUID;
 
 public interface DirProvider {
 
-    boolean isLoadPropertyFileFromUserDir();
+    public boolean isLoadPropertyFileFromUserDir();
 
-    void updateLogFileHandler(Properties loggingProperties);
+    public void updateLogFileHandler(Properties loggingProperties);
 
-    String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst);
-
-    File getLogFileDir();
-
-    File getConfDir();
-
-    default File getKeystoreDir(String keystoreDir) {
-        return new File(getUserHomeDir(), keystoreDir);
-    }
-
-
-
-    String getUserHomeDir();
-
-    default File getBinDirectory() {
+    public String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst);
+    
+    /**
+     * Directory for log files for certain platform and run mode
+     * @return File denoting path to directory where logs should go
+     */
+    public File getLogFileDir();
+    
+    /**
+     * Directory for configuration files. Default configuration for all
+     * platforms is in jar file resources. User or system administrator
+     * provided configuration overrides default configuration values.
+     * @return File denoting path to configuration files deirectory
+     */
+    public File getConfDir();
+    
+    /**
+     * Directory where keys are stored
+     * @param keystoreDir relative path from default key store directory
+     * @return File denoting path to key store directory
+     */
+    public File getKeystoreDir(String keystoreDir);
+    
+    /**
+     * User home directory on all platforms. It is user home and NEVER nothing else.
+     * @return File denoting path to user home
+     */
+    public String getUserHomeDir();
+   
+   /**
+    * Path to directory where main executable jar file is placed
+    * @return File denoting path to directory with main executable jar
+    */
+    public default File getBinDirectory() {
         return Paths.get("").toFile();
     }
 }
