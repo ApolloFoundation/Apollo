@@ -23,6 +23,7 @@ import java.util.Arrays;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.beust.jcommander.JCommander;
 
 /**
  * Main Apollo startup class
@@ -42,12 +43,7 @@ public class Apollo {
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
         core = new AplCore();
         AplCoreRuntime.getInstance().addCore(core);
-        core.init();
-        
-    }
-
-    private static void printCommandLineArguments(String[] args) {
-        System.out.println("Command line arguments: " + Arrays.toString(args));
+        core.init();        
     }
 
     private void initUpdater() {
@@ -114,17 +110,34 @@ public class Apollo {
                     System.setErr(new PrintStream(stream));
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+               // e.printStackTrace();
             }
         }
     }
 
     /**
-     * @param args the command line arguments
+     * @param argv the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] argv) {
         System.out.println("Initializing " + AplCore.APPLICATION + " server version " + AplCore.VERSION);
-        printCommandLineArguments(args);
+        CmdLineArgs args = new CmdLineArgs();
+        JCommander jc = JCommander.newBuilder()
+                .addObject(args)
+                .build();
+        jc.setProgramName(AplCore.APPLICATION);
+        try {
+            jc.parse(argv);
+        } catch (RuntimeException ex) {
+            System.err.println("Error parsing command line arguments.");
+            System.err.println(ex.getMessage());
+            jc.usage();
+            System.exit(PosixExitCodes.EX_USAGE.exitCode());
+        }            
+        if (args.help) {
+            jc.usage();
+            System.exit(PosixExitCodes.OK.exitCode());
+        }
+        
         Apollo app = new Apollo();
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
         dirProvider = RuntimeEnvironment.getDirProvider();        

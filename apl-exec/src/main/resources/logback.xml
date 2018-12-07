@@ -11,9 +11,9 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M\(%line\) - %msg%n</pattern>
         </encoder>
     </appender>
-    <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.core.app.LogDirPropertyDefiner">
+    <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.exec.LogDirPropertyDefiner">
         <logDirectory>
-            logback
+            apollo
         </logDirectory>
     </define>
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">

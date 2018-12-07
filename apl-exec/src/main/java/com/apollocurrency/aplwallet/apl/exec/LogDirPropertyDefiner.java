@@ -2,12 +2,13 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.exec;
 
 import java.io.File;
 import java.nio.file.Paths;
 
 import ch.qos.logback.core.PropertyDefinerBase;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 
 public class LogDirPropertyDefiner extends PropertyDefinerBase {
     private String logDirectory;
