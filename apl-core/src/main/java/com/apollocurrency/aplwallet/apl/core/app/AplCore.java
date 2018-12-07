@@ -97,32 +97,7 @@ public final class AplCore {
         return RuntimeEnvironment.isDesktopApplicationEnabled() && aplGlobalObjects.getBooleanProperty("apl.launchDesktopApplication");
     }
     
-    private static void logSystemProperties() {
-        String[] loggedProperties = new String[] {
-                "java.version",
-                "java.vm.version",
-                "java.vm.name",
-                "java.vendor",
-                "java.vm.vendor",
-                "java.home",
-                "java.library.path",
-                "java.class.path",
-                "os.arch",
-                "sun.arch.data.model",
-                "os.name",
-                "file.encoding",
-                "java.security.policy",
-                "java.security.manager",
-                RuntimeEnvironment.RUNTIME_MODE_ARG,
-                RuntimeEnvironment.DIRPROVIDER_ARG
-        };
-        for (String property : loggedProperties) {
-            LOG.debug("{} = {}", property, System.getProperty(property));
-        }
-        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
-        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
-        LOG.debug("processId = {}", RuntimeParams.getProcessId());
-    }
+
 
 
     public static Blockchain getBlockchain() {
@@ -220,7 +195,7 @@ public final class AplCore {
                                 "socksProxyHost",
                                 "socksProxyPort",
                                 "apl.enablePeerUPnP"));
-                logSystemProperties();
+                AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");
 

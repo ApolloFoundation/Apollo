@@ -6,7 +6,9 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import java.io.File;
 import java.net.URI;
@@ -16,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -23,6 +27,7 @@ import java.util.UUID;
  * @author alukin@gmail.com
  */
 public class AplCoreRuntime {
+    private static Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private List<AplCore> cores = new ArrayList<>();
  
     private  RuntimeMode runtimeMode;
@@ -102,4 +107,30 @@ public class AplCoreRuntime {
     public DirProvider getDirProvider(){
         return dirProvider;
     }
+    public static void logSystemProperties() {
+        String[] loggedProperties = new String[] {
+                "java.version",
+                "java.vm.version",
+                "java.vm.name",
+                "java.vendor",
+                "java.vm.vendor",
+                "java.home",
+                "java.library.path",
+                "java.class.path",
+                "os.arch",
+                "sun.arch.data.model",
+                "os.name",
+                "file.encoding",
+                "java.security.policy",
+                "java.security.manager",
+                RuntimeEnvironment.RUNTIME_MODE_ARG,
+                RuntimeEnvironment.DIRPROVIDER_ARG
+        };
+        for (String property : loggedProperties) {
+            LOG.debug("{} = {}", property, System.getProperty(property));
+        }
+        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
+        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
+        LOG.debug("processId = {}", RuntimeParams.getProcessId());
+    }    
 }
