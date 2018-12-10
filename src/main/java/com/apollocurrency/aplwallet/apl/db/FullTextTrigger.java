@@ -50,6 +50,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexFormatTooOldException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -875,10 +876,14 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                     indexLock.writeLock().unlock();
                 }
             }
+        } catch (IndexFormatTooOldException exc) {
+            getIndexPath(conn);
+            removeIndexFiles(conn);
+            reindex(conn);
         } catch (IOException | SQLException exc) {
             LOG.error("Unable to access the Lucene index", exc);
             throw new SQLException("Unable to access the Lucene index", exc);
-        } finally {
+        }  finally {
             if (obtainedUpdateLock) {
                 indexLock.updateLock().unlock();
             }
