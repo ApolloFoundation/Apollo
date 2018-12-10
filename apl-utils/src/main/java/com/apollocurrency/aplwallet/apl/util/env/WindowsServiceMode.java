@@ -21,10 +21,6 @@
 package com.apollocurrency.aplwallet.apl.util.env;
 
 public class WindowsServiceMode extends CommandLineMode implements RuntimeMode {
-    @Override
-    public void launchDesktopApplication() {
-        super.launchDesktopApplication();
-    }
 
     @Override
     public void shutdown() {

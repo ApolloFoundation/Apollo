@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import static java.awt.GraphicsEnvironment.isHeadless;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -116,8 +115,4 @@ public class RuntimeEnvironment {
         return new DefaultDirProvider();
     }
 
-    public static boolean isAMD64Architecture() {
-        String arch = System.getProperty("os.arch");
-        return arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64");
-    }
 }

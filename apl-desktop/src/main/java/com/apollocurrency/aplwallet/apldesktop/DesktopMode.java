@@ -20,10 +20,8 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apldesktop.DesktopSystemTray;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
-import com.apollocurrency.aplwallet.apl.util.env.SystemTrayDataProvider;
 import org.slf4j.Logger;
 
 import javax.swing.*;
@@ -72,7 +70,6 @@ public class DesktopMode implements RuntimeMode {
         desktopSystemTray.setToolTip(new SystemTrayDataProvider(status.getMessage(), wallet, logFileDir));
     }
 
-    @Override
     public void launchDesktopApplication() {
         LOG.info("Launching desktop wallet");
         try {

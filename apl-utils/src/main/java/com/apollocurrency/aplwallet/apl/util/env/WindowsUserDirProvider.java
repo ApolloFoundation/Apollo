@@ -24,7 +24,7 @@ package com.apollocurrency.aplwallet.apl.util.env;
 import java.io.File;
 import java.nio.file.Paths;
 
-public class WindowsUserDirProvider extends DesktopUserDirProvider {
+public class WindowsUserDirProvider extends DefaultDirProvider {
 
     private static final String APL_USER_HOME = Paths.get(System.getProperty("user.home"), "AppData", "Roaming", "APOLLO").toString();
             //Apl.APPLICATION.toUpperCase()).toString();

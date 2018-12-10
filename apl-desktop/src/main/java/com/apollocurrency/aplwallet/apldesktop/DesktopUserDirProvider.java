@@ -18,8 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util.env;
+package com.apollocurrency.aplwallet.apldesktop;
 
+import com.apollocurrency.aplwallet.apl.util.env.DefaultDirProvider;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
