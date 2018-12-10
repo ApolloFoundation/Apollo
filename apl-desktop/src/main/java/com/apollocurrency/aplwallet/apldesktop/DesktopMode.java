@@ -98,16 +98,16 @@ public class DesktopMode implements RuntimeMode {
         desktopSystemTray.alert(message);
     }
 
-    @Override
-    public void recoverDb() {
-        try {
-            desktopAppClass.getMethod("recoverDbUI").invoke(null);
-        }
-        catch (Exception e) {
-            //rethrow
-            throw new RuntimeException("Unable to show recover db dialog!", e);
-        }
-    }
+//    @Override
+//    public void recoverDb() {
+//        try {
+//            desktopAppClass.getMethod("recoverDbUI").invoke(null);
+//        }
+//        catch (Exception e) {
+//            //rethrow
+//            throw new RuntimeException("Unable to show recover db dialog!", e);
+//        }
+//    }
 
     @Override
     public void updateAppStatus(String newStatus) {

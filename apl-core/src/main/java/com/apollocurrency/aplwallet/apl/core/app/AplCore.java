@@ -298,7 +298,7 @@ public final class AplCore {
                 }
                 LOG.error("Database initialization failed ", e);
                 //TODO: move DB operations to proper place
-                AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
+                // AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
             }
             catch (Exception e) {
                 LOG.error(e.getMessage(), e);

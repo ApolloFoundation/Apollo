@@ -46,19 +46,19 @@ public class CommandLineMode implements RuntimeMode {
     @Override
     public void alert(String message) {}
 
-    @Override
-    public void recoverDb() {
+//    @Override
+//    public void recoverDb() {
         //simple db removing
 //        try {
- //TODO           Db.tryToDeleteDb();
-            LOG.info("Db was removed successfully. Please, restart the application!");
+//TODO           Db.tryToDeleteDb();
+//            LOG.info("Db was removed successfully. Please, restart the application!");
 //            System.exit(0);
 //        }
 //        catch (IOException e) {
 //            LOG.error("Cannot delete db", e);
 //            System.exit(1);
 //        }
-    }
+//    }
 
     @Override
     public void updateAppStatus(String newStatus) {

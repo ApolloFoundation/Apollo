@@ -77,7 +77,7 @@ public class Apollo {
     }
 
     private void launchDesktopApplication() {
-       // runtimeMode.launchDesktopApplication();
+       runtimeMode.launchDesktopApplication();
     }
 
     public static void shutdown() {
