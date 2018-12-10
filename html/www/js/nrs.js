@@ -278,6 +278,9 @@ var NRS = (function(NRS, $, undefined) {
 					var isOffline = false;
                     var customLoginWarning;
 					var peerPort = 0;
+
+					$('#transaction_time').text(response.blockTime + 's');
+					
 					for (var key in response) {
 						if (!response.hasOwnProperty(key)) {
 							continue;

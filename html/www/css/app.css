@@ -97,6 +97,22 @@ a:focus {
   width: 350px;
 }
 
+#blocks-page {
+  display: flex;
+}
+
+#blocks-page > .col-lg-3 {
+  display: flex;
+}
+
+#blocks-page > .col-lg-3 > div {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}
+
+
 .server-works .server-works-header {
 }
 
