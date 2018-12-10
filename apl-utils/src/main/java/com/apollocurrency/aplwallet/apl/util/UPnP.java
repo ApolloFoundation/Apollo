@@ -18,9 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.slf4j.Logger;
@@ -39,25 +39,32 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class UPnP {
     private static final Logger LOG = getLogger(UPnP.class);
 
-    /** Initialization done */
-    private static boolean initDone = false;
-
-    private static boolean isShutdown = false;
+    private boolean isShutdown = false;
 
     /** UPnP gateway device */
-    private static GatewayDevice gateway = null;
+    private GatewayDevice gateway = null;
 
     /** Local address */
-    private static InetAddress localAddress;
+    private  InetAddress localAddress;
 
     /** External address */
-    private static InetAddress externalAddress;
+    private InetAddress externalAddress;
+    
+    public static int TIMEOUT=15; //15 secons
 
-    private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static instance later
+//TODO: refactor core, remove from static context, make injectable
+//and then remove singleton boilerplate    
+    private static class UPnPHolder {
 
-    @Inject
-    public UPnP(AplGlobalObjects globalObjects) {
-        this.aplGlobalObjects = globalObjects;
+        private static final UPnP INSTANCE = new UPnP();
+    }
+    
+    public static UPnP getInstance(){
+        return UPnPHolder.INSTANCE;
+    }
+    
+//    @Inject
+    public UPnP() {
     }
 
     /**
@@ -65,9 +72,7 @@ public class UPnP {
      *
      * @param   port                Port to add
      */
-    public static synchronized void addPort(int port) {
-        if (!initDone)
-            init();
+    public synchronized void addPort(int port) {
         //
         // Ignore the request if we didn't find a gateway device
         //
@@ -93,12 +98,8 @@ public class UPnP {
      *
      * @param   port                Port to delete
      */
-    public static synchronized void deletePort(int port) {
-        if (!initDone || gateway == null)
-            return;
-        //
-        // Delete the port
-        //
+    public synchronized void deletePort(int port) {
+
         try {
             if (gateway.deletePortMapping(port, "TCP")) {
                 LOG.debug("Mapping deleted for port " + port);
@@ -115,9 +116,7 @@ public class UPnP {
      *
      * @return                      Local address or null if the address is not available
      */
-    public static synchronized InetAddress getLocalAddress() {
-        if (!initDone)
-            init();
+    public synchronized InetAddress getLocalAddress() {
         return localAddress;
     }
 
@@ -126,33 +125,24 @@ public class UPnP {
      *
      * @return                      External address or null if the address is not available
      */
-    public static synchronized InetAddress getExternalAddress() {
-        if (!initDone)
-            init();
+    public synchronized InetAddress getExternalAddress() {
         return externalAddress;
     }
 
     /**
      * Initialize the UPnP support
      */
-    private static void init() {
-        initDone = true;
+    private void init() {
         AppStatus.getInstance().update("UPnP initialization...");
         //
         // Discover the gateway devices on the local network
         //
         try {
-            //TODO: Stub. Find where that UPnP calling and fix properly...
-            if (!aplGlobalObjects.getBooleanProperty("apl.enablePeerUPnP"))
-            {
-                LOG.info("UPnP disabled");
-                return;
-            }
             
             LOG.info("Looking for UPnP gateway device...");
-            GatewayDevice.setHttpReadTimeout(aplGlobalObjects.getIntProperty("apl.upnpGatewayTimeout", GatewayDevice.getHttpReadTimeout()));
+            GatewayDevice.setHttpReadTimeout(TIMEOUT);
             GatewayDiscover discover = new GatewayDiscover();
-            discover.setTimeout(aplGlobalObjects.getIntProperty("apl.upnpDiscoverTimeout", discover.getTimeout()));
+            discover.setTimeout(TIMEOUT);
             Map<InetAddress, GatewayDevice> gatewayMap = discover.discover();
             if (gatewayMap == null || gatewayMap.isEmpty()) {
                 LOG.debug("There are no UPnP gateway devices");

@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.UPnP;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
@@ -160,7 +160,10 @@ public final class Peers {
 
     static final ExecutorService peersService = new QueuedThreadPool(2, 15, "Peers service");
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("Peers sending service"));
-
+    
+    //TODO: remove static context
+    private static final UPnP upnp = UPnP.getInstance();
+    
     static {
 
         String platform = aplGlobalObjects.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
@@ -196,7 +199,7 @@ public final class Peers {
                     }
                 }
                 if (!addrValid) {
-                    InetAddress extAddr = UPnP.getExternalAddress();
+                    InetAddress extAddr = upnp.getExternalAddress();
                     if (extAddr != null) {
                         for (InetAddress myAddr : myAddrs) {
                             if (extAddr.equals(myAddr)) {
@@ -467,7 +470,7 @@ public final class Peers {
                             Connector[] peerConnectors = peerServer.getConnectors();
                             for (Connector peerConnector : peerConnectors) {
                                 if (peerConnector instanceof ServerConnector)
-                                    UPnP.addPort(((ServerConnector)peerConnector).getPort());
+                                    upnp.addPort(((ServerConnector)peerConnector).getPort());
                             }
                         }
                         peerServer.start();
@@ -811,7 +814,7 @@ public final class Peers {
                     Connector[] peerConnectors = Init.peerServer.getConnectors();
                     for (Connector peerConnector : peerConnectors) {
                         if (peerConnector instanceof ServerConnector)
-                            UPnP.deletePort(((ServerConnector)peerConnector).getPort());
+                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
                     }
                 }
             } catch (Exception e) {

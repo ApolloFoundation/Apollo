@@ -67,6 +67,11 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
         </dependency>
+<!-- UPnP -->        
+        <dependency>
+            <groupId>org.bitlet</groupId>
+            <artifactId>weupnp</artifactId>
+        </dependency>        
         <!-- Apache Tika libs-->
         <dependency>
             <groupId>org.apache.tika</groupId>

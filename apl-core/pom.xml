@@ -146,10 +146,6 @@
             <artifactId>two-factor-auth</artifactId>
         </dependency>                 
         <dependency>
-            <groupId>org.bitlet</groupId>
-            <artifactId>weupnp</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>        

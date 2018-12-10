@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util.env;
+package com.apollocurrency.aplwallet.apldesktop;
 
 import javax.swing.*;
 
