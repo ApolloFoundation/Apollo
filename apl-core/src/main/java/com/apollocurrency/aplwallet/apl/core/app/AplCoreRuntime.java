@@ -5,6 +5,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
@@ -132,5 +133,6 @@ public class AplCoreRuntime {
         LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
         LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
         LOG.debug("processId = {}", RuntimeParams.getProcessId());
-    }    
+    } 
+    
 }

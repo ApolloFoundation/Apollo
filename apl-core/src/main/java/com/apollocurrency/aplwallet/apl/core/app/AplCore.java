@@ -59,6 +59,7 @@ import java.util.Set;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
+import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -204,7 +205,7 @@ public final class AplCore {
 //TODO: check: no such file
   //              ChainIdDbMigration.migrate();
                 AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
-                migrateDb();
+                DbMigratorTask.getInstance().migrateDb();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
@@ -307,67 +308,6 @@ public final class AplCore {
                 System.exit(1);
             }
         }
-
-        private static void migrateDb() {
-            String secondDbMigrationRequired = Option.get("secondDbMigrationRequired");
-            boolean secondMigrationRequired = secondDbMigrationRequired == null || Boolean.parseBoolean(secondDbMigrationRequired);
-            if (secondMigrationRequired) {
-                Option.set("secondDbMigrationRequired", "true");
-                LOG.debug("Db migration required");
-                Db.shutdown();
-                String dbDir = aplGlobalObjects.getStringProperty(Db.PREFIX + "Dir");
-                String targetDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir);
-                String dbName = aplGlobalObjects.getStringProperty(Db.PREFIX + "Name");
-                String dbUser = aplGlobalObjects.getStringProperty(Db.PREFIX + "Username");
-                String dbPassword = aplGlobalObjects.getStringProperty(Db.PREFIX + "Password");
-                String legacyDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir, null, false);
-                String chainIdDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir, true);
-                DbInfoExtractor dbInfoExtractor = new H2DbInfoExtractor(dbName, dbUser, dbPassword);
-                DbMigrator dbMigrator = new ChainIdDbMigrator(chainIdDbDir, legacyDbDir, dbInfoExtractor);
-                try {
-                    AppStatus.getInstance().update("Performing database migration");
-                    Path oldDbPath = dbMigrator.migrate(targetDbDir);
-                    Db.init();
-                    try (Connection connection = Db.getDb().getConnection()) {
-                        FullTextTrigger.reindex(connection);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
-                    AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
-                    Option.set("secondDbMigrationRequired", "false");
-                    boolean deleteOldDb = aplGlobalObjects.getBooleanProperty("apl.deleteOldDbAfterMigration");
-                    if (deleteOldDb && oldDbPath != null) {
-                        Option.set("oldDbPath", oldDbPath.toAbsolutePath().toString());
-                    }
-                }
-                catch (IOException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }
-            performDbMigrationCleanup();
-        }
-
-        private static void performDbMigrationCleanup() {
-            String dbDir = aplGlobalObjects.getStringProperty(Db.PREFIX + "Dir");
-            String targetDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir);
-            String oldDbPathOption = Option.get("oldDbPath");
-            if (oldDbPathOption != null) {
-                Path oldDbPath = Paths.get(oldDbPathOption);
-                if (Files.exists(oldDbPath)) {
-                    try {
-                        ChainIdDbMigrator.deleteAllWithExclusion(oldDbPath, Paths.get(targetDbDir));
-                        Option.delete("oldDbPath");
-                    }
-                    catch (IOException e) {
-                        LOG.error("Unable to delete old db");
-                    }
-                } else {
-                    Option.delete("oldDbPath");
-                }
-            }
-        }
-
         public static void checkPorts() {
             Set<Integer> ports = collectWorkingPorts();
             for (Integer port : ports) {

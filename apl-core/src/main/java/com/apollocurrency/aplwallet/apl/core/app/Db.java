@@ -113,7 +113,7 @@ public final class Db {
         );
     }
 
-    static void shutdown() {
+    public static void shutdown() {
         db.shutdown();
     }
 
@@ -126,7 +126,7 @@ public final class Db {
             removeDb(dbPath);
             LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }
-    static void removeDb(Path dbPath) throws IOException {
+    public static void removeDb(Path dbPath) throws IOException {
         Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
