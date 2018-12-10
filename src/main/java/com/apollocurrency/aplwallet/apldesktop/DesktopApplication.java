@@ -27,8 +27,6 @@ import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -81,6 +79,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -208,11 +207,13 @@ public class DesktopApplication extends Application {
             hbox.getChildren().add(text);
             text.setTextAlignment(TextAlignment.JUSTIFY);
             Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setResizable(true);
             alert.setHeaderText("Multiple Apollo wallets were launched");
             alert.setWidth(350);
             alert.setHeight(200);
             alert.getDialogPane().setContent(hbox);
-            alert.showAndWait() ;
+            alert.showAndWait();
+            
             System.exit(0);
         });
     }
@@ -341,7 +342,7 @@ public class DesktopApplication extends Application {
             mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
-           // browser.setOnContextMenuRequested(new WalletContextMenu());
+
             WebView invisible = new WebView();
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 1000);
@@ -447,7 +448,8 @@ public class DesktopApplication extends Application {
         }
 
         public<T> void showOnCloseWarnAlert(T event) {
-            Alert warnAlert = new Alert(Alert.AlertType.WARNING);
+
+            Alert warnAlert = new Alert(Alert.AlertType.WARNING, "", ButtonType.YES, ButtonType.NO);
             HBox hbox = new HBox();
             hbox.setAlignment(Pos.CENTER);
             hbox.setPadding(new Insets(5, 5, 0, 5));
@@ -456,15 +458,18 @@ public class DesktopApplication extends Application {
                     "background and will be available also in your browser at " + getUrl()+ ". If you want to close completely application -> " +
                     "click " +
                     "YES");
+           
             text.setFont(Font.font ("Verdana", 11));
 
             text.setTextAlignment(TextAlignment.JUSTIFY);
             hbox.setMaxSize(500, 250);
             text.setWrappingWidth(350);
             hbox.getChildren().add(text);
-            warnAlert.getButtonTypes().clear();
-            warnAlert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
             warnAlert.getDialogPane().setContent(hbox);
+            warnAlert.setResizable(true);
+            warnAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            warnAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+
             warnAlert.setHeaderText("Apollo desktop app shutdown will not" + System.lineSeparator() + " cause shutdown of Apollo wallet");
             
             ButtonType clickedButton = warnAlert.showAndWait().orElse(ButtonType.NO);
