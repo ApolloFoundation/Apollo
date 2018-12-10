@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.util.env;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Properties;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import org.slf4j.Logger;
 
 public class PropertiesLoader {

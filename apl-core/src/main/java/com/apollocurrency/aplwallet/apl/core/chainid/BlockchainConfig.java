@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;

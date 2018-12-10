@@ -24,11 +24,11 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.UPnP;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.ResourcePaths;
+import com.apollocurrency.aplwallet.apl.util.env.ResourcePaths;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -121,6 +121,8 @@ public final class API {
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
+    //TODO: remove static context
+    private static final UPnP upnp = UPnP.getInstance();    
     private static Thread serverKeysGenerator = new Thread(() -> {
 
         while (!Thread.currentThread().isInterrupted()) {
@@ -336,7 +338,7 @@ public final class API {
                         Connector[] apiConnectors = apiServer.getConnectors();
                         for (Connector apiConnector : apiConnectors) {
                             if (apiConnector instanceof ServerConnector)
-                                UPnP.addPort(((ServerConnector)apiConnector).getPort());
+                                upnp.addPort(((ServerConnector)apiConnector).getPort());
                         }
                     }
                     APIServlet.initClass();
@@ -376,7 +378,7 @@ public final class API {
                     Connector[] apiConnectors = apiServer.getConnectors();
                     for (Connector apiConnector : apiConnectors) {
                         if (apiConnector instanceof ServerConnector)
-                            UPnP.deletePort(((ServerConnector)apiConnector).getPort());
+                            upnp.deletePort(((ServerConnector)apiConnector).getPort());
                     }
                 }
             } catch (Exception e) {

@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.core.app.UPnP;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -110,7 +110,7 @@ public final class GetState extends APIServlet.APIRequestHandler {
         response.put("isOffline", Constants.isOffline);
         response.put("needsAdminPassword", !API.disableAdminPassword);
         response.put("customLoginWarning", Constants.customLoginWarning);
-        InetAddress externalAddress = UPnP.getExternalAddress();
+        InetAddress externalAddress = UPnP.getInstance().getExternalAddress();
         if (externalAddress != null) {
             response.put("upnpExternalAddress", externalAddress.getHostAddress());
         }

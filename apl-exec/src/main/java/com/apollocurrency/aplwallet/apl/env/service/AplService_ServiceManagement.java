@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.env.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.exec.Apollo;
-import com.apollocurrency.aplwallet.apl.util.env.LookAndFeel;
+import com.apollocurrency.aplwallet.apldesktop.LookAndFeel;
 
 import javax.swing.*;
 

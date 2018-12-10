@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl.util.env;
 
 import java.io.File;
 
