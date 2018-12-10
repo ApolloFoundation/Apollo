@@ -24,7 +24,6 @@ package com.apollocurrency.aplwallet.apl;
 import static com.apollocurrency.aplwallet.apl.Constants.DEFAULT_PEER_PORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.Constants.TESTNET_PEER_PORT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,15 +47,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.addons.AddOns;
-<<<<<<< HEAD
 import com.apollocurrency.aplwallet.apl.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdService;
-=======
 import com.apollocurrency.aplwallet.apl.chainid.ChainIdDbMigrator;
 import com.apollocurrency.aplwallet.apl.chainid.DbInfoExtractor;
 import com.apollocurrency.aplwallet.apl.chainid.DbMigrator;
 import com.apollocurrency.aplwallet.apl.chainid.H2DbInfoExtractor;
->>>>>>> 842e64c2cd2c735810cc307e11c609a7cb040215
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.dbmodel.Option;
@@ -73,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.util.Time;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class Apl {
     private static Logger LOG;
@@ -81,6 +78,7 @@ public final class Apl {
     private static AplContainer container;
     private static ChainIdService chainIdService;
     public static final Version VERSION = Version.from("1.24.0");
+
 
     public static final String APPLICATION = "Apollo";
     private static Thread shutdownHook;
@@ -103,7 +101,7 @@ public final class Apl {
         runtimeMode = RuntimeEnvironment.getRuntimeMode();
         System.out.printf("Runtime mode %s\n", runtimeMode.getClass().getName());
         dirProvider = RuntimeEnvironment.getDirProvider();
-        LOG = getLogger(Apl.class);
+        LOG = LoggerFactory.getLogger(Apl.class);
         System.out.println("User home folder " + dirProvider.getUserHomeDir());
         AplGlobalObjects.createPropertiesLoader(dirProvider);
         if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
@@ -310,14 +308,11 @@ public final class Apl {
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
                 Db.init();
-<<<<<<< HEAD
                 container = AplContainer.builder().containerId("MAIN-APL-CDI")
                         .annotatedDiscoveryMode().build();
-                ChainIdDbMigration.migrate();
-=======
+//                ChainIdDbMigration.migrate();
                 AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                 migrateDb();
->>>>>>> 842e64c2cd2c735810cc307e11c609a7cb040215
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
                 AplGlobalObjects.getChainConfig().updateToLatestConfig();
                 TransactionProcessorImpl.getInstance();

@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.peer;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.Apl;
 import com.apollocurrency.aplwallet.apl.Version;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -27,8 +29,6 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 final class GetInfo extends PeerServlet.PeerRequestHandler {
     private static final Logger LOG = getLogger(GetInfo.class);
@@ -50,6 +50,11 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
     }
 
     private GetInfo() {}
+
+    @Override
+    protected boolean isChainIdProtected() {
+        return false;
+    }
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
