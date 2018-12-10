@@ -23,15 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.eclipse.jetty.websocket.servlet.*;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -44,15 +35,35 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
+import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
+import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
+import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
+import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
-    private static final Logger LOG = getLogger(PeerServlet.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
 
     abstract static class PeerRequestHandler {
+
         abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
         abstract boolean rejectWhileDownloading();
+
+        protected boolean isChainIdProtected() {
+            return true;
+        }
     }
 
     private static final Map<String,PeerRequestHandler> peerRequestHandlers;
@@ -105,6 +116,12 @@ public final class PeerServlet extends WebSocketServlet {
         JSONObject response = new JSONObject();
         response.put("error", Errors.SEQUENCE_ERROR);
         SEQUENCE_ERROR = JSON.prepare(response);
+    }
+    private static final JSONStreamAware INCORRECT_CHAIN_ID;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("error", Errors.CHAIN_ID_ERROR);
+        INCORRECT_CHAIN_ID = JSON.prepare(response);
     }
 
     private static final JSONStreamAware MAX_INBOUND_CONNECTIONS;
@@ -171,6 +188,7 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Return the response
         //
+
         resp.setContentType("text/plain; charset=UTF-8");
         try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
             JSON.writeJSONString(jsonResponse, writer);
@@ -197,6 +215,10 @@ public final class PeerServlet extends WebSocketServlet {
         }
     }
 
+
+    protected boolean chainIdProtected() {
+        return true;
+    }
     /**
      * Process WebSocket POST request
      *
@@ -220,10 +242,14 @@ public final class PeerServlet extends WebSocketServlet {
         } else {
             peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
+            if (chainIdProtected()) {
+
+            }
         }
         //
         // Return the response
         //
+
         try {
             StringWriter writer = new StringWriter(1000);
             JSON.writeJSONString(jsonResponse, writer);
@@ -269,6 +295,14 @@ public final class PeerServlet extends WebSocketServlet {
             if (peerRequestHandler == null) {
                 return UNSUPPORTED_REQUEST_TYPE;
             }
+            if (peerRequestHandler.isChainIdProtected()) {
+                UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
+                Object chainIdObject = request.get("chainId");
+                if (chainIdObject == null || !chainId.toString().equals((chainIdObject.toString()))) {
+                    Peers.removePeer(peer);
+                    return INCORRECT_CHAIN_ID;
+                }
+            }
             if (peer.getState() == Peer.State.DISCONNECTED) {
                 peer.setState(Peer.State.CONNECTED);
             }
@@ -291,7 +325,7 @@ public final class PeerServlet extends WebSocketServlet {
                 }
             }
             return peerRequestHandler.processRequest(request, peer);
-        } catch (RuntimeException|ParseException|IOException e) {
+        } catch (RuntimeException| ParseException |IOException e) {
             LOG.debug("Error processing POST request: " + e.toString());
             peer.blacklist(e);
             return error(e);

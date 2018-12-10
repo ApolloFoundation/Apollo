@@ -18,6 +18,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import org.junit.Ignore;
 
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
@@ -33,6 +34,7 @@ public class DownloaderTest {
     /**
      * test with failing download scenario
      */
+    @Ignore
     @Test
     public void testTryDownloadWithInvalidUrl() {
 
@@ -49,6 +51,7 @@ public class DownloaderTest {
     /**
      * test with successful download scenario
      */
+    @Ignore
     @Test
     public void testTryDownloadWithSignedValidPayload() {
         DownloadInfo downloadInfo = new DownloadInfo();

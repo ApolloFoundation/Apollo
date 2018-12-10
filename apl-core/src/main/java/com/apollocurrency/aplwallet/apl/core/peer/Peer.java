@@ -22,10 +22,11 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import java.util.Set;
+import java.util.UUID;
+
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-
-import java.util.Set;
 
 public interface Peer extends Comparable<Peer> {
 
@@ -124,14 +125,14 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isApiConnectable();
 
-    int getChainId();
+    UUID getChainId();
 
     StringBuilder getPeerApiUri();
 
     String getBlacklistingCause();
 
-    JSONObject send(JSONStreamAware request);
+    JSONObject send(JSONStreamAware request, UUID chainId);
 
-    JSONObject send(JSONStreamAware request, int maxResponseSize);
+    JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect);
 
 }

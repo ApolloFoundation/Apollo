@@ -72,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -378,7 +379,7 @@ public final class Peers {
                             List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
                             dbPeers.forEach(entry -> {
                                 if (!entries.add(entry)) {
-                                    // Database entries override entries from apl.properties
+                                    // Database entries override entries from chains.json
                                     entries.remove(entry);
                                     entries.add(entry);
                                 }
@@ -549,7 +550,7 @@ public final class Peers {
                                 connectSet.add((PeerImpl)peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                             }
                             connectSet.forEach(peer -> futures.add(peersService.submit(() -> {
-                                peer.connect();
+                                peer.connect(AplGlobalObjects.getChainConfig().getChain().getChainId());
                                 if (peer.getState() == Peer.State.CONNECTED &&
                                             enableHallmarkProtection && peer.getWeight() == 0 &&
                                             hasTooManyOutboundConnections()) {
@@ -568,7 +569,7 @@ public final class Peers {
                         if (peer.getState() == Peer.State.CONNECTED
                                 && now - peer.getLastUpdated() > 3600
                                 && now - peer.getLastConnectAttempt() > 600) {
-                            peersService.submit(peer::connect);
+                            peersService.submit(()-> peer.connect(AplGlobalObjects.getChainConfig().getChain().getChainId()));
                         }
                         if (peer.getLastInboundRequest() != 0 &&
                                 now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
@@ -631,6 +632,7 @@ public final class Peers {
         {
             JSONObject request = new JSONObject();
             request.put("requestType", "getPeers");
+            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
             getPeersRequest = JSON.prepareRequest(request);
         }
 
@@ -648,7 +650,8 @@ public final class Peers {
                     if (peer == null) {
                         return;
                     }
-                    JSONObject response = peer.send(getPeersRequest, 10 * 1024 * 1024);
+                    JSONObject response = peer.send(getPeersRequest, AplGlobalObjects.getChainConfig().getChain().getChainId(), 10 * 1024 * 1024,
+                            false);
                     if (response == null) {
                         return;
                     }
@@ -697,7 +700,8 @@ public final class Peers {
                         request.put("requestType", "addPeers");
                         request.put("peers", myPeers);
                         request.put("services", myServices);            // Separate array for backwards compatibility
-                        peer.send(JSON.prepareRequest(request), 0);
+                        request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+                        peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId(), 0, false);
                     }
 
                 } catch (Exception e) {
@@ -723,8 +727,9 @@ public final class Peers {
             // the same announced address)
             //
             Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
+            UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
             Peers.peers.values().forEach(peer -> {
-                if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted() && now - peer.getLastUpdated() < 7*24*3600) {
+                if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted() && chainId.equals(peer.getChainId()) && now - peer.getLastUpdated() < 7*24*3600) {
                     currentPeers.put(peer.getAnnouncedAddress(),
                             new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
                 }
@@ -1042,7 +1047,7 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        ((PeerImpl)peer).connect();
+        ((PeerImpl)peer).connect(AplGlobalObjects.getChainConfig().getChain().getChainId());
     }
 
     public static void sendToSomePeers(Block block) {
@@ -1075,19 +1080,25 @@ public final class Peers {
             throw new RuntimeException(errorMessage);
         }
         sendingService.submit(() -> {
+            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
             final JSONStreamAware jsonRequest = JSON.prepareRequest(request);
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
+            UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
             for (final Peer peer : peers.values()) {
-
+                if (!chainId.equals(peer.getChainId())) {
+                    Peers.removePeer(peer);
+                    continue;
+                }
                 if (Peers.enableHallmarkProtection && peer.getWeight() < Peers.pushThreshold) {
                     continue;
                 }
 
                 if (!peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
                         && peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT) {
-                    Future<JSONObject> futureResponse = peersService.submit(() -> peer.send(jsonRequest));
+                    Future<JSONObject> futureResponse = peersService.submit(() -> peer.send(jsonRequest,
+                            AplGlobalObjects.getChainConfig().getChain().getChainId()));
                     expectedResponses.add(futureResponse);
                 }
                 if (expectedResponses.size() >= Peers.sendToPeersLimit - successful) {
@@ -1118,7 +1129,8 @@ public final class Peers {
     }
 
     public static List<Peer> getPublicPeers(final Peer.State state, final boolean applyPullThreshold) {
-        return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == state && peer.getAnnouncedAddress() != null
+        UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
+        return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == state && chainId.equals(peer.getChainId()) && peer.getAnnouncedAddress() != null
                 && (!applyPullThreshold || !Peers.enableHallmarkProtection || peer.getWeight() >= Peers.pullThreshold));
     }
 

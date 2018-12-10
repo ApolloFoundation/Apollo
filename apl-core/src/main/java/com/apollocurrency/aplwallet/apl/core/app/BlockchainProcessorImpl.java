@@ -182,7 +182,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (peer == null) {
                     return;
                 }
-                JSONObject response = peer.send(getCumulativeDifficultyRequest);
+                JSONObject response = peer.send(getCumulativeDifficultyRequest, AplGlobalObjects.getChainConfig().getChain().getChainId());
                 if (response == null) {
                     return;
                 }
@@ -271,7 +271,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                             continue;
                         }
                         String otherPeerCumulativeDifficulty;
-                        JSONObject otherPeerResponse = peer.send(getCumulativeDifficultyRequest);
+                        JSONObject otherPeerResponse = peer.send(getCumulativeDifficultyRequest, AplGlobalObjects.getChainConfig().getChain().getChainId());
                         if (otherPeerResponse == null || (otherPeerCumulativeDifficulty = (String) response.get("cumulativeDifficulty")) == null) {
                             continue;
                         }
@@ -324,7 +324,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     milestoneBlockIdsRequest.put("lastMilestoneBlockId", lastMilestoneBlockId);
                 }
 
-                JSONObject response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest));
+                JSONObject response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), AplGlobalObjects.getChainConfig().getChain().getChainId());
                 if (response == null) {
                     return 0;
                 }
@@ -368,7 +368,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 request.put("requestType", "getNextBlockIds");
                 request.put("blockId", Long.toUnsignedString(matchId));
                 request.put("limit", limit);
-                JSONObject response = peer.send(JSON.prepareRequest(request));
+                JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId());
                 if (response == null) {
                     return Collections.emptyList();
                 }
@@ -670,8 +670,10 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             request.put("requestType", "getNextBlocks");
             request.put("blockIds", idList);
             request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
+            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
             long startTime = System.currentTimeMillis();
-            JSONObject response = peer.send(JSON.prepareRequest(request), 10 * 1024 * 1024);
+            JSONObject response = peer.send(JSON.prepareRequest(request),AplGlobalObjects.getChainConfig().getChain().getChainId(),
+                    10 * 1024 * 1024, false);
             responseTime = System.currentTimeMillis() - startTime;
             if (response == null) {
                 return null;
@@ -889,7 +891,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     request.put("requestType", "getTransactions");
                     request.put("transactionIds", requestList);
-                    JSONObject response = peer.send(JSON.prepareRequest(request), 10 * 1024 * 1024);
+                    request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+                    JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId(),
+                            10 * 1024 * 1024, false);
                     if (response == null) {
                         return;
                     }
@@ -1243,7 +1247,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 continue;
             }
             LOG.debug("Connected to archive peer " + peer.getHost());
-            JSONObject response = peer.send(request);
+            JSONObject response = peer.send(request, AplGlobalObjects.getChainConfig().getChain().getChainId());
             if (response == null) {
                 continue;
             }

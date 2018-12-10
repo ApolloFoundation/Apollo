@@ -29,7 +29,21 @@
             <artifactId>apl-core</artifactId>
             <version>${project.version}</version>
         </dependency>  
-        
+         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${openjfx.version}</version>            
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${openjfx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${openjfx.version}</version>
+        </dependency>       
 <!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>

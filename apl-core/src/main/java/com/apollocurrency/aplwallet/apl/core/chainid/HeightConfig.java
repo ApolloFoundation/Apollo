@@ -39,7 +39,6 @@ public class HeightConfig {
         this.adaptiveBlockTime = adaptiveForgingSettings.getAdaptiveBlockTime();
         this.numberOfTransactionsInAdaptiveBlock = adaptiveForgingSettings.getNumberOfTransactions();
         this.consensusType = bp.getConsensus().getType();
-
     }
 
     public int getMaxNumberOfTransactions() {

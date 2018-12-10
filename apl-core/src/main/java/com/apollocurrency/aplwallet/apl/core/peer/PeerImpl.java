@@ -101,7 +101,7 @@ final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private volatile BlockchainState blockchainState;
-    private volatile int chainId = -1;
+    private volatile UUID chainId;
 
     PeerImpl(String host, String announcedAddress) {
         this.host = host;
@@ -217,11 +217,11 @@ final class PeerImpl implements Peer {
     }
 
     @Override
-    public int getChainId() {
+    public UUID getChainId() {
         return chainId;
     }
 
-    public void setChainId(int chainId) {
+    public void setChainId(UUID chainId) {
         this.chainId = chainId;
     }
 
@@ -473,12 +473,17 @@ final class PeerImpl implements Peer {
     }
 
     @Override
-    public JSONObject send(final JSONStreamAware request) {
-        return send(request, Peers.MAX_RESPONSE_SIZE);
+    public JSONObject send(final JSONStreamAware request, UUID chainId) {
+        return send(request, chainId, Peers.MAX_RESPONSE_SIZE, false);
     }
 
     @Override
-    public JSONObject send(final JSONStreamAware request, int maxResponseSize) {
+    public JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize, boolean firstConnect) {
+        if (!firstConnect && !targetChainId.equals(this.chainId) ) {
+            LOG.debug("Unable to send request to peer {} with chainId {}, expected {}",host, this.chainId == null ? "null" : this.chainId, targetChainId);
+            connect(targetChainId);
+            return null;
+        }
         JSONObject response = null;
         String log = null;
         boolean showLog = false;
@@ -587,7 +592,7 @@ final class PeerImpl implements Peer {
                 deactivate();
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error")) && request != Peers.getMyPeerInfoRequest()) {
                     LOG.debug("Sequence error, reconnecting to " + host);
-                    connect();
+                    connect(targetChainId);
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
                             response.toJSONString() + ", request was: " + JSON.toString(request) +
@@ -634,7 +639,8 @@ final class PeerImpl implements Peer {
         return getHost().compareTo(o.getHost());
     }
 
-    void connect() {
+
+    void connect(UUID targetChainId) {
         lastConnectAttempt = AplCore.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && announcedAddress != null) {
@@ -647,7 +653,7 @@ final class PeerImpl implements Peer {
                         PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, announcedAddress, true);
                         if (newPeer != null) {
                             Peers.addPeer(newPeer);
-                            newPeer.connect();
+                            newPeer.connect(targetChainId);
                         }
                         return;
                     }
@@ -656,7 +662,7 @@ final class PeerImpl implements Peer {
                     return;
                 }
             }
-            JSONObject response = send(Peers.getMyPeerInfoRequest());
+            JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE, true);
             if (response != null) {
                 if (response.get("error") != null) {
                     setState(State.NON_CONNECTED);
@@ -677,10 +683,11 @@ final class PeerImpl implements Peer {
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));
                 Object chainIdObject = response.get("chainId");
-                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(AplGlobalObjects.getChainConfig().getChain().getChainId())) {
-                    blacklist(String.format("Peer %s has different chainId %d", getAnnouncedAddress(), this.chainId));
+                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(targetChainId)) {
+                    Peers.removePeer(this);
                     return;
                 }
+                chainId = UUID.fromString(chainIdObject.toString());
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     String newAnnouncedAddress = Convert.emptyToNull((String) response.get("announcedAddress"));
                     if (newAnnouncedAddress != null) {

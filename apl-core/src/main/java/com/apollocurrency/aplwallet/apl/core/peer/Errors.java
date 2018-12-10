@@ -34,6 +34,7 @@ final class Errors {
     final static String DOWNLOADING = "Blockchain download in progress";
     final static String LIGHT_CLIENT = "Peer is in light mode";
     final static String CONNECTION_TIMEOUT = "Connection timed out";
+    final static String CHAIN_ID_ERROR = "Your peer connected to different chain!";
     final static String UPDATING = "Peer is updating now.";
 
     private Errors() {} // never
