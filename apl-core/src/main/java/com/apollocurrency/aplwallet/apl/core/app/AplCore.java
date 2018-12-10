@@ -60,6 +60,7 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_P
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -137,7 +138,7 @@ public final class AplCore {
         // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
         LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getUserHomeDir());
-        AplGlobalObjects.createPropertiesLoader(AplCoreRuntime.getInstance().getDirProvider());
+        AplGlobalObjects.createPropertiesLoader(AplCoreRuntime.getInstance().getDirProvider(),true);
         if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
             LOG.warn("Versions don't match = {} and {}", VERSION, AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version"));
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
@@ -210,6 +211,13 @@ public final class AplCore {
                 aplGlobalObjects.createNtpTime();
                 aplGlobalObjects.getChainConfig().init();
                 aplGlobalObjects.getChainConfig().updateToLatestConfig();
+                //TODO: move to application level this UPnP initialization
+                boolean enablePeerUPnP = aplGlobalObjects.getBooleanProperty("apl.enablePeerUPnP");
+                boolean enableAPIUPnP = aplGlobalObjects.getBooleanProperty("apl.enableAPIUPnP");
+                if(enableAPIUPnP || enablePeerUPnP){
+                    UPnP.TIMEOUT = aplGlobalObjects.getIntProperty("apl.upnpDiscoverTimeout",3000);
+                    UPnP.getInstance();
+                }
                 TransactionProcessorImpl.getInstance();
                 BlockchainProcessorImpl.getInstance();
                 Account.init();

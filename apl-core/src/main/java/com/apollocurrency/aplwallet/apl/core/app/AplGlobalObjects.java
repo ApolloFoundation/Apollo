@@ -91,10 +91,6 @@ public class AplGlobalObjects {
         }
         save(DEFAULT_PROPERTIES_LOADER_NAME, new GlobalObject<>(propertiesLoader, DEFAULT_PROPERTIES_LOADER_NAME));
     }
-    
-    public static void createPropertiesLoader(DirProvider dirProvider) {
-        createPropertiesLoader(dirProvider, true);
-    }
 
     public static void createBlockchainConfig(Chain chain, PropertiesLoader loader, boolean doInit) {
         BlockchainConfig blockchainConfig = new BlockchainConfig(chain, loader);
@@ -118,6 +114,7 @@ public class AplGlobalObjects {
             throw new RuntimeException(String.format(GET_EXEPTION_TEMPLATE, name, realObject.getClass(), clazz));
         }
     }
+    
     public static PropertiesLoader getPropertiesLoader() {
         return get(PropertiesLoader.class, DEFAULT_PROPERTIES_LOADER_NAME);
     }

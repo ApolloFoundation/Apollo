@@ -50,7 +50,7 @@ public class UPnP {
     /** External address */
     private InetAddress externalAddress;
     
-    public static int TIMEOUT=15; //15 secons
+    public static int TIMEOUT=1500; //1,5 secons
 
 //TODO: refactor core, remove from static context, make injectable
 //and then remove singleton boilerplate    
@@ -63,7 +63,8 @@ public class UPnP {
         return UPnPHolder.INSTANCE;
     }
     
-//    @Inject
+//TODO: Inject with properties    
+//    @Inject  
     public UPnP() {
     }
 
@@ -123,9 +124,10 @@ public class UPnP {
     /**
      * Return the external address
      *
-     * @return                      External address or null if the address is not available
+     * @return  External address or null if the address is not available
      */
     public synchronized InetAddress getExternalAddress() {
+        //TODO: set externalAddress from properties if we unable to do UPnP
         return externalAddress;
     }
 
