@@ -72,8 +72,6 @@ public class RuntimeEnvironment {
         return isHeadless;
     }
 
-
-
     public static RuntimeMode getRuntimeMode() {
         System.out.println("isHeadless=" + isHeadless());
         if (isWindowsService()) {

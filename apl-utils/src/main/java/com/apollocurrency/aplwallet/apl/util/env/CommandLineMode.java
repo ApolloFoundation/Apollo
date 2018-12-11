@@ -23,17 +23,15 @@ package com.apollocurrency.aplwallet.apl.util.env;
 import org.slf4j.Logger;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
+import org.slf4j.LoggerFactory;
 
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class CommandLineMode implements RuntimeMode {
-    private static Logger LOG;
+    private static Logger LOG = LoggerFactory.getLogger(CommandLineMode.class);
 
     @Override
     public void init() {
-        LOG = getLogger(CommandLineMode.class);
     }
 
     @Override
@@ -44,7 +42,9 @@ public class CommandLineMode implements RuntimeMode {
     public void shutdown() {}
 
     @Override
-    public void alert(String message) {}
+    public void alert(String message) {
+        LOG.warn(message);
+    }
 
 //    @Override
 //    public void recoverDb() {

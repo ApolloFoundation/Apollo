@@ -65,7 +65,6 @@ import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
 import java.io.IOException;
@@ -106,8 +105,8 @@ public class DesktopApplication extends Application {
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
 
-    // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+    //TODO: OL remove all references to this shit
+    // private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
     public static void refreshMainApplication() {
         MainApplication.refresh();
@@ -119,7 +118,9 @@ public class DesktopApplication extends Application {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
+//TODO:  WTF?        
+//        String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
+         String defaultAccount = "";
         if (defaultAccount != null && !defaultAccount.isEmpty() && !defaultAccount.equals("")) {
             url += "?account=" + defaultAccount;
         }
