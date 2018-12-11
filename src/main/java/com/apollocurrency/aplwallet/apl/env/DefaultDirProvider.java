@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.env;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.UUID;
 
 public class DefaultDirProvider implements DirProvider {
@@ -32,9 +31,6 @@ public class DefaultDirProvider implements DirProvider {
     public boolean isLoadPropertyFileFromUserDir() {
         return false;
     }
-
-    @Override
-    public void updateLogFileHandler(Properties loggingProperties) {}
 
     @Override
     public String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst) {
@@ -75,8 +71,4 @@ public class DefaultDirProvider implements DirProvider {
         return Paths.get(getUserHomeDir()).resolve("classes").toFile();
     }
 
-    public static void main(String[] args) {
-        Path path = Paths.get("apollo", "");
-        System.out.println( path.toAbsolutePath().toString());
-    }
 }

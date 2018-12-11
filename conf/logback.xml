@@ -29,11 +29,18 @@
         </encoder>
     </appender>
     <logger name="com.apollocurrency.aplwallet.apl" level="debug"/>
+
     <!--Uncomment next line to enable trim duration logging-->
     <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
+
+    <!--Forging debug-->
+    <!--<logger name="com.apollocurrency.aplwallet.apl.Generator" level="trace"/>-->
+
     <logger name="org.eclipse.jetty" level="off"/>
     <logger name="javax.servlet.level" level="off"/>
     <logger name="com.apollocurrency.aplwallet.apl.http.APIProxyServlet" level="info"/>
+
+    <!--Jdbc statements logging-->
     <logger name="jdbc" level="off"/>
     <logger name="jdbc.connection" level="info"/>
     <logger name="jdbc.sqltiming" level="info"/>

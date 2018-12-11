@@ -22,14 +22,11 @@ package com.apollocurrency.aplwallet.apl.env;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.UUID;
 
 public interface DirProvider {
 
     boolean isLoadPropertyFileFromUserDir();
-
-    void updateLogFileHandler(Properties loggingProperties);
 
     String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst);
 
