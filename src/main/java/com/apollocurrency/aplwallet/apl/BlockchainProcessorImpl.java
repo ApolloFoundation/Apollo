@@ -116,6 +116,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         {
             JSONObject request = new JSONObject();
             request.put("requestType", "getCumulativeDifficulty");
+            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
             getCumulativeDifficultyRequest = JSON.prepareRequest(request);
         }
 
@@ -312,6 +313,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             while (true) {
                 JSONObject milestoneBlockIdsRequest = new JSONObject();
                 milestoneBlockIdsRequest.put("requestType", "getMilestoneBlockIds");
+                milestoneBlockIdsRequest.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
                 if (lastMilestoneBlockId == null) {
                     milestoneBlockIdsRequest.put("lastBlockId", blockchain.getLastBlock().getStringId());
                 } else {
@@ -362,6 +364,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 request.put("requestType", "getNextBlockIds");
                 request.put("blockId", Long.toUnsignedString(matchId));
                 request.put("limit", limit);
+                request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
                 JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId());
                 if (response == null) {
                     return Collections.emptyList();
@@ -1232,6 +1235,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         requestList.add(Long.toUnsignedString(transactionId));
         json.put("requestType", "getTransactions");
         json.put("transactionIds", requestList);
+        json.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
         JSONStreamAware request = JSON.prepareRequest(json);
         for (Peer peer : peers) {
             if (peer.getState() != Peer.State.CONNECTED) {
