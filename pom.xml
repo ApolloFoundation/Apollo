@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.23.4</version>
+    <version>1.24.0</version>
     <packaging>jar</packaging>
     <name>Apollo wallet</name>
 
@@ -39,12 +39,13 @@
         <apache-commons-io.version>1.4</apache-commons-io.version>
         <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <apache-commons-net.version>3.6</apache-commons-net.version>
+        <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
         <jackson.version>2.9.3</jackson.version>
 
         <!--Indexing-->
-        <lucene.version>5.3.2</lucene.version>
+        <lucene.version>7.5.0</lucene.version>
 
         <!--Db-->
         <h2.version>1.4.196</h2.version>
@@ -137,6 +138,27 @@
 
     <dependencies>
         <!--Apache-commons-->
+<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${openjfx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${openjfx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${openjfx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${openjfx.version}</version>
+        </dependency>
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>

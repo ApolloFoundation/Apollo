@@ -269,7 +269,9 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 getAllUnconfirmedTransactionIds().forEach(transactionId -> exclude.add(Long.toUnsignedString(transactionId)));
                 Collections.sort(exclude);
                 request.put("exclude", exclude);
-                JSONObject response = peer.send(JSON.prepareRequest(request), 10 * 1024 * 1024);
+                request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+                JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId(),
+                        10 * 1024 * 1024, false);
                 if (response == null) {
                     return;
                 }

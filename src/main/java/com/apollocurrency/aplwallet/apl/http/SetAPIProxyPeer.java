@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.http;
 
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.API_PROXY_NO_OPEN_API_PEERS;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PEER_NOT_CONNECTED;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PEER_NOT_OPEN_API;
+import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_PEER;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.apollocurrency.aplwallet.apl.AplException;
 import com.apollocurrency.aplwallet.apl.peer.Peer;
 import com.apollocurrency.aplwallet.apl.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.API_PROXY_NO_OPEN_API_PEERS;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PEER_NOT_CONNECTED;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.PEER_NOT_OPEN_API;
-import static com.apollocurrency.aplwallet.apl.http.JSONResponses.UNKNOWN_PEER;
 
 public class SetAPIProxyPeer extends APIServlet.APIRequestHandler {
 
@@ -57,7 +57,7 @@ public class SetAPIProxyPeer extends APIServlet.APIRequestHandler {
             }
             return JSONData.peer(peer);
         }
-        Peer peer = Peers.findOrCreatePeer(peerAddress, false);
+        Peer peer = Peers.findOrCreatePeer(peerAddress,  false);
         if (peer == null) {
             return UNKNOWN_PEER;
         }

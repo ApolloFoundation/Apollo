@@ -27,8 +27,6 @@ import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -66,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.sun.javafx.scene.web.Debugger;
+import java.io.File;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -81,6 +80,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -208,15 +208,38 @@ public class DesktopApplication extends Application {
             hbox.getChildren().add(text);
             text.setTextAlignment(TextAlignment.JUSTIFY);
             Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setResizable(true);
             alert.setHeaderText("Multiple Apollo wallets were launched");
             alert.setWidth(350);
             alert.setHeight(200);
             alert.getDialogPane().setContent(hbox);
-            alert.showAndWait() ;
+            alert.showAndWait();
+            
             System.exit(0);
         });
     }
-
+    
+    private static void showInfoBox(String message) {
+        Platform.runLater(() -> {
+            Text text = new Text(message);
+            text.setWrappingWidth(330);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(10, 10, 0, 10));
+            hbox.getChildren().add(text);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setResizable(true);
+            alert.setHeaderText("Message");
+            alert.setWidth(350);
+            alert.setHeight(200);
+            alert.getDialogPane().setContent(hbox);
+            alert.showAndWait();
+            
+        });
+    }
+    
+    
     @Override
     public void start(Stage primaryStage) {
         mainStage = primaryStage;
@@ -341,7 +364,7 @@ public class DesktopApplication extends Application {
             mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
-            browser.setOnContextMenuRequested(new WalletContextMenu());
+
             WebView invisible = new WebView();
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 1000);
@@ -367,9 +390,8 @@ public class DesktopApplication extends Application {
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
                         mainStage.setTitle(AplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
-                        ars = (JSObject) webEngine.executeScript("NRS");
-                        //JSObject isDesktop = (JSObject) webEngine.executeScript("setDesctop");
-                        updateClientState("Desktop Wallet started");
+
+                      updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = Apl.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
                                 updateClientState(BlockchainProcessor.Event.BLOCK_PUSHED, block), BlockchainProcessor.Event.BLOCK_PUSHED);
@@ -377,7 +399,7 @@ public class DesktopApplication extends Application {
                                 updateClientState(BlockchainProcessor.Event.AFTER_BLOCK_APPLY, block), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
                         Apl.getTransactionProcessor().addListener(transaction ->
                                 updateClientState(TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS, transaction), TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
-
+/*
                         if (ENABLE_JAVASCRIPT_DEBUGGER) {
                             try {
                                 // Add the javafx_webview_debugger lib to the classpath
@@ -391,6 +413,7 @@ public class DesktopApplication extends Application {
                                 LOG.info("Cannot start JavaFx debugger", e);
                             }
                         }
+*/
                     });
 
             // Invoked by the webEngine popup handler
@@ -424,7 +447,7 @@ public class DesktopApplication extends Application {
             changelogStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
-            browser.setOnContextMenuRequested(new WalletContextMenu());
+           // browser.setOnContextMenuRequested(new WalletContextMenu());
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 500);
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 720);
@@ -446,7 +469,8 @@ public class DesktopApplication extends Application {
         }
 
         public<T> void showOnCloseWarnAlert(T event) {
-            Alert warnAlert = new Alert(Alert.AlertType.WARNING);
+
+            Alert warnAlert = new Alert(Alert.AlertType.WARNING, "", ButtonType.YES, ButtonType.NO);
             HBox hbox = new HBox();
             hbox.setAlignment(Pos.CENTER);
             hbox.setPadding(new Insets(5, 5, 0, 5));
@@ -455,16 +479,20 @@ public class DesktopApplication extends Application {
                     "background and will be available also in your browser at " + getUrl()+ ". If you want to close completely application -> " +
                     "click " +
                     "YES");
+           
             text.setFont(Font.font ("Verdana", 11));
 
             text.setTextAlignment(TextAlignment.JUSTIFY);
             hbox.setMaxSize(500, 250);
             text.setWrappingWidth(350);
             hbox.getChildren().add(text);
-            warnAlert.getButtonTypes().clear();
-            warnAlert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
             warnAlert.getDialogPane().setContent(hbox);
+            warnAlert.setResizable(true);
+            warnAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            warnAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+
             warnAlert.setHeaderText("Apollo desktop app shutdown will not" + System.lineSeparator() + " cause shutdown of Apollo wallet");
+            
             ButtonType clickedButton = warnAlert.showAndWait().orElse(ButtonType.NO);
             if (clickedButton == ButtonType.YES) {
                 System.exit(0);
@@ -505,7 +533,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
+           // Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")
@@ -629,6 +657,7 @@ public class DesktopApplication extends Application {
 
         private void downloadFile(byte[] data, String filename) {
             Path folderPath = Paths.get(System.getProperty("user.home"), "downloads");
+            folderPath.toFile().mkdirs();
             Path path = Paths.get(folderPath.toString(), filename);
             LOG.info("Downloading data to " + path.toAbsolutePath());
             try {
@@ -636,6 +665,7 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
+                
             }
             catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
@@ -652,11 +682,12 @@ public class DesktopApplication extends Application {
 
         private void growl(String msg, Exception e) {
             if (e == null) {
+                showInfoBox(msg);
                 LOG.info(msg);
             } else {
                 LOG.info(msg, e);
             }
-            ars.call("growl", msg);
+            //ars.call("growl", msg);
         }
 
 
