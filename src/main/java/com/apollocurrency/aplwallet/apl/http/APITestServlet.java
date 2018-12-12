@@ -72,7 +72,7 @@ public class APITestServlet extends HttpServlet {
             "                    readonly style='margin-top:8px;'></li>\n" +
             "               <li><input type='text' class='form-control' id='search' " +
             "                    placeholder='Search' style='margin-top:8px;'></li>\n" +
-            "                <li><a href='https://www.apollocurrency.com/' target='_blank' style='margin-left:20px;'>Wiki Docs</a></li>\n" +
+            "                <li><a href='/dashboard' style='margin-left:20px;'>Back to Dashboard</a></li>\n" +
             "           </ul>\n" +
             "       </div>\n" +
             "   </div>\n" +

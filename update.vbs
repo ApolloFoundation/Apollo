@@ -17,7 +17,10 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	WScript.Echo "Starting Platform Dependent Updater"
 	WScript.Echo "Waiting 3 sec"
 	WScript.Sleep 3000
-    WScript.Echo "Copy update files"
+	Dim oShell
+	Set oShell = WScript.CreateObject ("WScript.Shell")
+	oShell.Run "taskkill /f /im ""java.exe""", , True
+        WScript.Echo "Copy update files"
 
     Set fso = CreateObject("Scripting.FileSystemObject")
 	Set objFolder = fso.GetFolder(WScript.Arguments(1))

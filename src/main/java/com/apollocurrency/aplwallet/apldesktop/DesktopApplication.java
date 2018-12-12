@@ -64,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.sun.javafx.scene.web.Debugger;
+import java.io.File;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -217,7 +218,28 @@ public class DesktopApplication extends Application {
             System.exit(0);
         });
     }
-
+    
+    private static void showInfoBox(String message) {
+        Platform.runLater(() -> {
+            Text text = new Text(message);
+            text.setWrappingWidth(330);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(10, 10, 0, 10));
+            hbox.getChildren().add(text);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setResizable(true);
+            alert.setHeaderText("Message");
+            alert.setWidth(350);
+            alert.setHeight(200);
+            alert.getDialogPane().setContent(hbox);
+            alert.showAndWait();
+            
+        });
+    }
+    
+    
     @Override
     public void start(Stage primaryStage) {
         mainStage = primaryStage;
@@ -511,7 +533,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
+           // Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")
@@ -635,6 +657,7 @@ public class DesktopApplication extends Application {
 
         private void downloadFile(byte[] data, String filename) {
             Path folderPath = Paths.get(System.getProperty("user.home"), "downloads");
+            folderPath.toFile().mkdirs();
             Path path = Paths.get(folderPath.toString(), filename);
             LOG.info("Downloading data to " + path.toAbsolutePath());
             try {
@@ -642,6 +665,7 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
+                
             }
             catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
@@ -658,11 +682,12 @@ public class DesktopApplication extends Application {
 
         private void growl(String msg, Exception e) {
             if (e == null) {
+                showInfoBox(msg);
                 LOG.info(msg);
             } else {
                 LOG.info(msg, e);
             }
-            ars.call("growl", msg);
+            //ars.call("growl", msg);
         }
 
 
