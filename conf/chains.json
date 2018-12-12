@@ -161,10 +161,10 @@
           "type": "POS",
           "adaptiveForgingSettings":
           {
-            "enabled": "false",
+            "enabled": "false"
           }
         }
-      },
+      }
     ]
   },
   {
