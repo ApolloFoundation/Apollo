@@ -35,7 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -76,7 +76,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         private static final Logger LOG = getLogger(EventListener.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();    
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
     /** Maximum event users */
     static final int maxEventUsers = propertiesLoader.getIntProperty("apl.apiMaxEventUsers");
 

@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();    
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
     private static final boolean enableTransactionRebroadcasting = propertiesLoader.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static final boolean testUnconfirmedTransactions = propertiesLoader.getBooleanProperty("apl.testUnconfirmedTransactions");
     private static final int maxUnconfirmedTransactions;

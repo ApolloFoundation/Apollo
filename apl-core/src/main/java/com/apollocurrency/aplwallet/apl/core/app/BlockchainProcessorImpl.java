@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -76,7 +76,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     // TODO: YL remove static instance later
 
-   private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+   private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static final byte[] CHECKSUM_1 = AplGlobalObjects.getChainConfig().isTestnet() ?
             null
             :

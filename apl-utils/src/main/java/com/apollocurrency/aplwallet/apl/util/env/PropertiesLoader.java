@@ -1,43 +1,40 @@
-/*
- * Copyright © 2018 Apollo Foundation
- */
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.inject.Singleton;
 import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
-@Singleton
+/**
+ * Loads properties from different places
+ * @author alukin@gmail.com
+ */
 public class PropertiesLoader {
-    private static final Logger LOG = getLogger(PropertiesLoader.class);
+
     public static final String DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME = "apl-default.properties";
     public static final String DEFAULT_APL_PROPERTIES_FILE_NAME = "apl.properties";
     public static final String DEFAULT_APL_INSTALLER_PROPERTIES_FILE_NAME = "apl-installer.properties";
     public static final String DEFAULT_CONFIG_DIR = "conf";
-    private final Properties defaultProperties = new Properties();
-    private Properties properties = new Properties();
-    private DirProvider dirProvider;
     private final String defaultPropertiesFileName = DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME;
     private final String propertiesFileName= DEFAULT_APL_PROPERTIES_FILE_NAME;
     private final String installerPropertiesFileName=DEFAULT_APL_INSTALLER_PROPERTIES_FILE_NAME;
-    private final String configDir = DEFAULT_CONFIG_DIR;
-    private  Properties customProperties;
+    private final String configDir = DEFAULT_CONFIG_DIR;    
+    
+
+       private DirProvider dirProvider;
+       private static final Logger LOG = getLogger(PropertiesLoader.class);   
+       private Properties properties = new Properties();
+       private final Properties defaultProperties = new Properties();
+       private  Properties customProperties;
 
     public PropertiesLoader(DirProvider dirProvider) {
         this.dirProvider = dirProvider;
@@ -53,27 +50,7 @@ public class PropertiesLoader {
             properties.putAll(customProperties);
         }
     }
-
-    public Properties getDefaultProperties() {
-        return defaultProperties;
-    }
-
-    public void loadSystemProperties(List<String> propertiesNamesList) {
-        propertiesNamesList.forEach(propertyName -> {
-                String propertyValue;
-                if ((propertyValue = System.getProperty(propertyName)) != null) {
-                    Object oldPropertyValue = properties.setProperty(propertyName, propertyValue);
-                    if (oldPropertyValue == null) {
-                        LOG.info("System property set: {} -{}", propertyName, propertyValue);
-                    } else {
-                        LOG.warn("Replace property {} - {} by new system property: {}", propertyName, oldPropertyValue, propertyValue);
-                    }
-                }
-                else {
-                    LOG.debug("System property {} not defined", propertyName);
-                }
-        });
-    }
+ 
 
     protected Properties loadProperties(Properties properties, String propertiesFile, boolean isDefault, DirProvider dirProvider, String configDir) {
         try {
@@ -141,80 +118,21 @@ public class PropertiesLoader {
         }
     }
 
-    public int getIntProperty(String name) {
-        return getIntProperty(name, 0);
+    public void loadSystemProperties(List<String> propertiesNamesList) {
+        propertiesNamesList.forEach(propertyName -> {
+                String propertyValue;
+                if ((propertyValue = System.getProperty(propertyName)) != null) {
+                    Object oldPropertyValue = properties.setProperty(propertyName, propertyValue);
+                    if (oldPropertyValue == null) {
+                        LOG.info("System property set: {} -{}", propertyName, propertyValue);
+                    } else {
+                        LOG.warn("Replace property {} - {} by new system property: {}", propertyName, oldPropertyValue, propertyValue);
+                    }
+                }
+                else {
+                    LOG.debug("System property {} not defined", propertyName);
+                }
+        });
     }
-
-    public int getIntProperty(String name, int defaultValue) {
-        try {
-            int result = Integer.parseInt(properties.getProperty(name));
-            LOG.info(name + " = \"" + result + "\"");
-            return result;
-        } catch (NumberFormatException e) {
-            LOG.info(name + " not defined or not numeric, using default value " + defaultValue);
-            return defaultValue;
-        }
-    }
-
-    public String getStringProperty(String name) {
-        return getStringProperty(name, null, false);
-    }
-
-    public String getStringProperty(String name, String defaultValue) {
-        return getStringProperty(name, defaultValue, false);
-    }
-
-    public String getStringProperty(String name, String defaultValue, boolean doNotLog) {
-        return getStringProperty(name, defaultValue, doNotLog, null);
-    }
-
-    public String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
-        String value = properties.getProperty(name);
-        if (value != null && ! "".equals(value)) {
-            LOG.info(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
-        } else {
-            LOG.info(name + " not defined");
-            value = defaultValue;
-        }
-        if (encoding == null || value == null) {
-            return value;
-        }
-        try {
-            return new String(value.getBytes("ISO-8859-1"), encoding);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public List<String> getStringListProperty(String name) {
-        String value = getStringProperty(name);
-        if (value == null || value.length() == 0) {
-            return Collections.emptyList();
-        }
-        List<String> result = new ArrayList<>();
-        for (String s : value.split(";")) {
-            s = s.trim();
-            if (s.length() > 0) {
-                result.add(s);
-            }
-        }
-        return result;
-    }
-
-    public boolean getBooleanProperty(String name) {
-        return getBooleanProperty(name, false);
-    }
-
-    public boolean getBooleanProperty(String name, boolean defaultValue) {
-        String value = properties.getProperty(name);
-        if (Boolean.TRUE.toString().equals(value)) {
-            LOG.info(name + " = \"true\"");
-            return true;
-        } else if (Boolean.FALSE.toString().equals(value)) {
-            LOG.info(name + " = \"false\"");
-            return false;
-        }
-        LOG.info(name + " not defined, using default " + defaultValue);
-        return defaultValue;
-    }
+    
 }

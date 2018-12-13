@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -45,7 +45,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class DebugTrace {
     private static final Logger LOG = getLogger(DebugTrace.class);
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     
     static final String QUOTE = propertiesLoader.getStringProperty("apl.debugTraceQuote", "\"");
     static final String SEPARATOR = propertiesLoader.getStringProperty("apl.debugTraceSeparator", "\t");

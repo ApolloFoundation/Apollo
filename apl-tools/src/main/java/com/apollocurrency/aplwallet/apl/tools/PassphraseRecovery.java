@@ -21,11 +21,11 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
@@ -54,7 +54,7 @@ public final class PassphraseRecovery {
 
     final static Solution NO_SOLUTION = new Solution();
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     public static void main(String[] args) {
         new PassphraseRecovery().recover();
     }
@@ -62,14 +62,14 @@ public final class PassphraseRecovery {
     private void recover() {
         try {
             Map<Long, byte[]> publicKeys = getPublicKeys();
-            String wildcard = propertiesLoader.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
+            String wildcard = propertiesHolder.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
             if ("".equals(wildcard)) {
                 LOG.info("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
                 return;
             }
             int[] passphraseChars = wildcard.chars().toArray();
             LOG.info("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
-            String positionsStr = propertiesLoader.getStringProperty("recoveryPositions", "");
+            String positionsStr = propertiesHolder.getStringProperty("recoveryPositions", "");
             int[] positions;
             try {
                 if (positionsStr.length() == 0) {
@@ -84,7 +84,7 @@ public final class PassphraseRecovery {
                 LOG.info("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
                 return;
             }
-            String dictionaryStr = propertiesLoader.getStringProperty("recoveryDictionary", "");
+            String dictionaryStr = propertiesHolder.getStringProperty("recoveryDictionary", "");
             char[] dictionary;
             switch(dictionaryStr.toLowerCase()) {
                 case "":

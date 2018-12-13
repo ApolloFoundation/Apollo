@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -43,7 +43,7 @@ public final class Shuffler {
 
     // TODO: YL remove static instance later
 
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();    
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
     private static final int MAX_SHUFFLERS = propertiesLoader.getIntProperty("apl.maxNumberOfShufflers");
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();

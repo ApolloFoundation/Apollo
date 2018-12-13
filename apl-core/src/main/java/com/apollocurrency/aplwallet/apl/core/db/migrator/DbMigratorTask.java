@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.H2DbInfoExtractor;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.db.model.Option;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +34,7 @@ public class DbMigratorTask {
     private static Logger LOG = LoggerFactory.getLogger(DbMigratorTask.class);
      // TODO: YL remove static instance later
  
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();   
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();   
     
     private DbMigratorTask() {
     }
@@ -55,11 +55,11 @@ public class DbMigratorTask {
                 Option.set("secondDbMigrationRequired", "true");
                 LOG.debug("Db migration required");
                 Db.shutdown();
-                String dbDir = propertiesLoader.getStringProperty(Db.PREFIX + "Dir");
+                String dbDir = propertiesHolder.getStringProperty(Db.PREFIX + "Dir");
                 String targetDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir);
-                String dbName = propertiesLoader.getStringProperty(Db.PREFIX + "Name");
-                String dbUser = propertiesLoader.getStringProperty(Db.PREFIX + "Username");
-                String dbPassword = propertiesLoader.getStringProperty(Db.PREFIX + "Password");
+                String dbName = propertiesHolder.getStringProperty(Db.PREFIX + "Name");
+                String dbUser = propertiesHolder.getStringProperty(Db.PREFIX + "Username");
+                String dbPassword = propertiesHolder.getStringProperty(Db.PREFIX + "Password");
                 String legacyDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir, null, false);
                 String chainIdDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir, true);
                 DbInfoExtractor dbInfoExtractor = new H2DbInfoExtractor(dbName, dbUser, dbPassword);
@@ -76,7 +76,7 @@ public class DbMigratorTask {
                     }
                     AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                     Option.set("secondDbMigrationRequired", "false");
-                    boolean deleteOldDb = propertiesLoader.getBooleanProperty("apl.deleteOldDbAfterMigration");
+                    boolean deleteOldDb = propertiesHolder.getBooleanProperty("apl.deleteOldDbAfterMigration");
                     if (deleteOldDb && oldDbPath != null) {
                         Option.set("oldDbPath", oldDbPath.toAbsolutePath().toString());
                     }
@@ -89,7 +89,7 @@ public class DbMigratorTask {
         }
 
         public void performDbMigrationCleanup() {
-            String dbDir = propertiesLoader.getStringProperty(Db.PREFIX + "Dir");
+            String dbDir = propertiesHolder.getStringProperty(Db.PREFIX + "Dir");
             String targetDbDir = AplCoreRuntime.getInstance().getDbDir(dbDir);
             String oldDbPathOption = Option.get("oldDbPath");
             if (oldDbPathOption != null) {

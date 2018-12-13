@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -64,7 +64,7 @@ public final class FundingMonitor {
     /** Minimum funding interval */
     public static final int MIN_FUND_INTERVAL = 10;
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
 
     /** Maximum number of monitors */
     private static final int MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");

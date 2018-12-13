@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
@@ -80,7 +80,7 @@ public class AplGlobalObjects {
         save(DEFAULT_NTP_TIME_NAME, new GlobalObject<>(ntpTime, DEFAULT_NTP_TIME_NAME));
     }
 
-    public static void createBlockchainConfig(Chain chain, PropertiesLoader loader, boolean doInit) {
+    public static void createBlockchainConfig(Chain chain, PropertiesHolder loader, boolean doInit) {
         BlockchainConfig blockchainConfig = new BlockchainConfig(chain, loader);
         if (doInit) {
             blockchainConfig.init();
@@ -88,7 +88,7 @@ public class AplGlobalObjects {
         OBJECTS.put(DEFAULT_CHAIN_CONFIG_NAME, new GlobalObject<>(blockchainConfig, DEFAULT_CHAIN_CONFIG_NAME));
     }
     
-    public static void createBlockchainConfig(Chain chain, PropertiesLoader loader) {
+    public static void createBlockchainConfig(Chain chain, PropertiesHolder loader) {
         createBlockchainConfig(chain, loader, true);
     }
 

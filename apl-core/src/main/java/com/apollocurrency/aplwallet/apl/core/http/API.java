@@ -89,7 +89,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class API {
@@ -97,7 +97,7 @@ public final class API {
 
     // TODO: YL remove static instance later
    // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;

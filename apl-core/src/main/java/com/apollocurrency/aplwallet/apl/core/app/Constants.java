@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.spi.CDI;
 
 //TODO: Make this class true constants holder, move all properties-dependent vars out
@@ -29,7 +29,7 @@ public final class Constants {
 
     public static final String APPLICATION = "Apollo";
     // TODO: YL remove static instance later
-    private static PropertiesLoader pl = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder pl = CDI.current().select(PropertiesHolder.class).get();
 
     public static final boolean isOffline = pl.getBooleanProperty("apl.isOffline");
     public static final boolean isLightClient = pl.getBooleanProperty("apl.isLightClient");

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -45,7 +45,7 @@ public final class Poll extends AbstractPoll {
 
     // TODO: YL remove static instance later
 
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static final boolean isPollsProcessing = propertiesLoader.getBooleanProperty("apl.processPolls");
 
     public static final class OptionResult {

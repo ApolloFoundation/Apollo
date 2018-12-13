@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -32,11 +32,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class AfterStart implements AddOn {
     private static final Logger LOG = getLogger(AfterStart.class);
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     @Override
     public void init() {
-        String afterStartScript = propertiesLoader.getStringProperty("apl.afterStartScript");
+        String afterStartScript = propertiesHolder.getStringProperty("apl.afterStartScript");
         if (afterStartScript != null) {
             ThreadPool.runAfterStart("After start script", () -> {
                 try {

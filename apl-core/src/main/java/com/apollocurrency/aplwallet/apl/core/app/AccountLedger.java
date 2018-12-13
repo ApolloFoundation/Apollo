@@ -40,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -67,7 +67,7 @@ public class AccountLedger {
 
     // TODO: YL remove static instance later
 
-   private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+   private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
 
     /** Number of blocks to keep when trimming */
     public static final int trimKeep = propertiesLoader.getIntProperty("apl.ledgerTrimKeep", 30000);

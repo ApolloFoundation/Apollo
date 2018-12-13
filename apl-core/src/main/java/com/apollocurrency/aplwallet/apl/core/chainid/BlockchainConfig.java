@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public class BlockchainConfig {
     private volatile HeightConfig currentConfig;
     private Chain chain;
 
-    public BlockchainConfig(Chain chain, PropertiesLoader loader) {
+    public BlockchainConfig(Chain chain, PropertiesHolder loader) {
         this(chain,
              loader.getIntProperty("apl.testnetLeasingDelay", -1),
              loader.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),

@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.tools;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
@@ -53,7 +54,7 @@ public class CompactDatabase {
 
     // TODO: YL remove static instance later
  //   private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     /**
      * Compact the ARS database
      *
@@ -80,24 +81,24 @@ public class CompactDatabase {
         // Get the database URL
         //
         String dbPrefix = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
-        String dbType = propertiesLoader.getStringProperty(dbPrefix + "Type");
+        String dbType = propertiesHolder.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");
             return 1;
         }
-        String dbUrl = propertiesLoader.getStringProperty(dbPrefix + "Url");
+        String dbUrl = propertiesHolder.getStringProperty(dbPrefix + "Url");
         if (dbUrl == null) {
             //TODO: check that runtime is inited
-            String dbPath = AplCoreRuntime.getInstance().getDbDir(propertiesLoader.getStringProperty(dbPrefix + "Dir"));
+            String dbPath = AplCoreRuntime.getInstance().getDbDir(propertiesHolder.getStringProperty(dbPrefix + "Dir"));
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
-        String dbParams = propertiesLoader.getStringProperty(dbPrefix + "Params");
+        String dbParams = propertiesHolder.getStringProperty(dbPrefix + "Params");
         dbUrl += ";" + dbParams;
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
         }
-        String dbUsername = propertiesLoader.getStringProperty(dbPrefix + "Username", "sa");
-        String dbPassword = propertiesLoader.getStringProperty(dbPrefix + "Password", "sa", true);
+        String dbUsername = propertiesHolder.getStringProperty(dbPrefix + "Username", "sa");
+        String dbPassword = propertiesHolder.getStringProperty(dbPrefix + "Password", "sa", true);
         //
         // Get the database path.  This is the third colon-separated operand and is
         // terminated by a semi-colon or by the end of the string.

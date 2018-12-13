@@ -54,7 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -149,7 +149,7 @@ public final class APIServlet extends HttpServlet {
     }
 
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();    
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
     private static final boolean enforcePost = propertiesLoader.getBooleanProperty("apl.apiServerEnforcePOST");
     static final Map<String,APIRequestHandler> apiRequestHandlers;
     static final Map<String,APIRequestHandler> disabledRequestHandlers;

@@ -21,10 +21,9 @@
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -39,13 +38,13 @@ public final class AddOns {
     private static final Logger LOG = getLogger(AddOns.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static List<AddOn> addOns = new ArrayList<>(0);
 
     public static void init() {
         List<AddOn> addOnsList = new ArrayList<>(10);
 
-        propertiesLoader.getStringListProperty("apl.addOns").forEach(addOn -> {
+        propertiesHolder.getStringListProperty("apl.addOns").forEach(addOn -> {
             try {
                 addOnsList.add((AddOn)Class.forName(addOn).newInstance());
             } catch (ReflectiveOperationException e) {
@@ -53,7 +52,7 @@ public final class AddOns {
             }
         });
         addOns = Collections.unmodifiableList(addOnsList);
-        if (!addOns.isEmpty() && !propertiesLoader.getBooleanProperty("apl.disableSecurityPolicy")) {
+        if (!addOns.isEmpty() && !propertiesHolder.getBooleanProperty("apl.disableSecurityPolicy")) {
 //TODO: check it
             //           System.setProperty("java.security.policy", AplCore.isDesktopApplicationEnabled() ? "apldesktop.policy" : "apl.policy");
             LOG.info("Setting security manager with policy " + System.getProperty("java.security.policy"));

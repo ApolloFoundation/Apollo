@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.slf4j.Logger;

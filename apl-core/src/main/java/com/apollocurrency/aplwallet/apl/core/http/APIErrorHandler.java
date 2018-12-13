@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
@@ -17,7 +17,7 @@ public class APIErrorHandler extends ErrorPageErrorHandler {
 
     // TODO: YL remove static instance later
   
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     @Override
     public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if(response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND){

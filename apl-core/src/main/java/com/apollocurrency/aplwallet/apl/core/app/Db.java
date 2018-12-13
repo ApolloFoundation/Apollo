@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -40,7 +40,7 @@ public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     public static String PREFIX;
     private static BasicDb.DbProperties dbProperties;
     private static TransactionalDb db;

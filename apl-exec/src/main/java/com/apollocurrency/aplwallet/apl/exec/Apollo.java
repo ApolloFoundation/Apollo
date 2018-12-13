@@ -22,11 +22,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
+import java.util.Arrays;
 
 /**
  * Main Apollo startup class
@@ -46,8 +48,15 @@ public class Apollo {
     private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
 
     private static PropertiesLoader propertiesLoader;
+    private static PropertiesHolder propertiesHolder;
     
     private void initCore() {
+                propertiesLoader.loadSystemProperties(
+                        Arrays.asList(
+                                "socksProxyHost",
+                                "socksProxyPort",
+                                "apl.enablePeerUPnP"));
+        
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
         core = new AplCore();
         AplCoreRuntime.getInstance().addCore(core);
@@ -58,7 +67,7 @@ public class Apollo {
         if (aplGlobalObjects == null) {
             aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
         }
-        if (!propertiesLoader.getBooleanProperty("apl.allowUpdates", false)) {
+        if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
         UpdaterMediator mediator = new UpdaterMediatorImpl();
@@ -130,10 +139,13 @@ public class Apollo {
     public static void main(String[] argv) {
 
         Apollo app = new Apollo();
-        container = AplContainer.builder().containerId("MAIN-APL-CDI").recursiveScanPackages(AplCore.class)
-                        .annotatedDiscoveryMode().build();
+        container = AplContainer.builder().containerId("MAIN-APL-CDI")
+                .recursiveScanPackages(AplCore.class)
+                .recursiveScanPackages(PropertiesHolder.class)
+                .annotatedDiscoveryMode().build();
                   
         System.out.println("Initializing " + Constants.APPLICATION + " server version " + Constants.VERSION);
+        
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
@@ -153,7 +165,7 @@ public class Apollo {
         }
 
         dirProvider = RuntimeEnvironment.getDirProvider();
-//TODO: remove this plumb, descktop UI should be separate and use Core's API            
+//TODO: remove this plumb, descktop UI should be separated and should not use Core directly but via API            
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
         } else {
