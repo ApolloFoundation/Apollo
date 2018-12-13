@@ -6,35 +6,26 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
                
 @Singleton
 public class PropertiesHolder {
+    
     private static final Logger LOG = getLogger(PropertiesHolder.class);
 
-    private final Properties defaultProperties = new Properties();
-    private Properties properties = new Properties();
-    private  Properties customProperties;
+    private final Properties properties;
 
-
-    public Properties getDefaultProperties() {
-        return defaultProperties;
+    public PropertiesHolder(Properties properties) {
+        this.properties = properties;
     }
+    
 
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
