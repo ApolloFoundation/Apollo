@@ -50,8 +50,8 @@ public final class GetBlockchainStatus extends APIServlet.APIRequestHandler {
     @Override
     protected JSONObject processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        response.put("application", AplCore.APPLICATION);
-        response.put("version", AplCore.VERSION.toString());
+        response.put("application", Constants.APPLICATION);
+        response.put("version", Constants.VERSION.toString());
         response.put("time", AplCore.getEpochTime());
         Block lastBlock = AplCore.getBlockchain().getLastBlock();
         response.put("lastBlock", lastBlock.getStringId());

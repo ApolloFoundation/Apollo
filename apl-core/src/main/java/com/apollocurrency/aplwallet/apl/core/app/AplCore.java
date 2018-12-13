@@ -60,9 +60,6 @@ public final class AplCore {
 
     private static AplContainer container;
     private static ChainIdService chainIdService;
-    public static final Version VERSION = Version.from("1.24.0");
-
-    public static final String APPLICATION = "Apollo";
 
     private static volatile Time time = new Time.EpochTime();
 
@@ -122,9 +119,9 @@ public final class AplCore {
         // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
         LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getUserHomeDir());
-        if (!VERSION.equals(Version.from(propertiesLoader.getDefaultProperties().getProperty("apl.version")))) {
-            LOG.warn("Versions don't match = {} and {}", VERSION, propertiesLoader.getDefaultProperties().getProperty("apl.version"));
-            throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
+        if (!Constants.VERSION.equals(Version.from(propertiesLoader.getDefaultProperties().getProperty("apl.version")))) {
+            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesLoader.getDefaultProperties().getProperty("apl.version"));
+            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
         }
         startUp();
     }
@@ -138,7 +135,7 @@ public final class AplCore {
         BlockchainProcessorImpl.getInstance().shutdown();
         Peers.shutdown();
         Db.shutdown();
-        LOG.info(AplCore.APPLICATION + " server " + VERSION + " stopped.");
+        LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         container.shutdown();
         AplCore.shutdown = true;
     }
@@ -252,7 +249,7 @@ public final class AplCore {
                 testSecureRandom();
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
-                String message = AplCore.APPLICATION + " server " + VERSION + " started successfully.";
+                String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";
                 LOG.info(message);
                 AppStatus.getInstance().update(message);
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");

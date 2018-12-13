@@ -58,7 +58,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public Version getWalletVersion() {
-        return AplCore.VERSION;
+        return Constants.VERSION;
     }
 
     @Override

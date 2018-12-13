@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.env.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.exec.Apollo;
 import com.apollocurrency.aplwallet.apldesktop.LookAndFeel;
 
@@ -41,8 +42,8 @@ public class AplService_ServiceManagement {
     // Invoked when registering the service
     public static String[] serviceGetInfo() {
         return new String[]{
-                AplCore.APPLICATION + " Server", // Long name
-                "Manages the " + AplCore.APPLICATION + " cryptographic currency protocol", // Description
+                Constants.APPLICATION + " Server", // Long name
+                "Manages the " + Constants.APPLICATION + " cryptographic currency protocol", // Description
                 "true", // IsAutomatic
                 "true", // IsAcceptStop
                 "", // failure exe
@@ -57,7 +58,7 @@ public class AplService_ServiceManagement {
     }
 
     public static boolean serviceIsCreate() {
-        return JOptionPane.showConfirmDialog(null, "Do you want to install the " + AplCore.APPLICATION + " service ?", "Create Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(null, "Do you want to install the " + Constants.APPLICATION + " service ?", "Create Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     public static boolean serviceIsLaunch() {
@@ -65,7 +66,7 @@ public class AplService_ServiceManagement {
     }
 
     public static boolean serviceIsDelete() {
-        return JOptionPane.showConfirmDialog(null, "This " + AplCore.APPLICATION + " service is already installed. Do you want to delete it ?", "Delete Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(null, "This " + Constants.APPLICATION + " service is already installed. Do you want to delete it ?", "Delete Service", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     public static boolean serviceControl_Pause() {

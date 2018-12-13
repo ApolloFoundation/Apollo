@@ -178,7 +178,7 @@ final class PeerImpl implements Peer {
         boolean versionChanged = version == null || !version.equals(this.version);
         this.version = version;
         isOldVersion = false;
-        if (AplCore.APPLICATION.equals(application)) {
+        if (Constants.APPLICATION.equals(application)) {
             isOldVersion = Peers.isOldVersion(version, Constants.MIN_VERSION);
             if (isOldVersion) {
                 if (versionChanged) {

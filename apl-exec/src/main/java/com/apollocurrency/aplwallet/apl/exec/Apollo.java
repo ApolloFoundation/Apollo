@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.exec;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
@@ -123,12 +124,12 @@ public class Apollo {
      * @param argv the command line arguments
      */
     public static void main(String[] argv) {
-        System.out.println("Initializing " + AplCore.APPLICATION + " server version " + AplCore.VERSION);
+        System.out.println("Initializing " + Constants.APPLICATION + " server version " + Constants.VERSION);
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
                 .build();
-        jc.setProgramName(AplCore.APPLICATION);
+        jc.setProgramName(Constants.APPLICATION);
         try {
             jc.parse(argv);
         } catch (RuntimeException ex) {

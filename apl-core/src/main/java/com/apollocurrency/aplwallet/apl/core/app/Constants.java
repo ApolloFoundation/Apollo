@@ -24,7 +24,9 @@ import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import javax.enterprise.inject.spi.CDI;
 
 public final class Constants {
+    public static final Version VERSION = Version.from("1.24.0");
 
+    public static final String APPLICATION = "Apollo";
     // TODO: YL remove static instance later
     private static PropertiesLoader pl = CDI.current().select(PropertiesLoader.class).get();
 

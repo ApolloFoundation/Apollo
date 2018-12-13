@@ -275,8 +275,8 @@ public final class Peers {
             json.put("hallmark", Peers.myHallmark);
             servicesList.add(Peer.Service.HALLMARK);
         }
-        json.put("application", AplCore.APPLICATION);
-        json.put("version", AplCore.VERSION.toString());
+        json.put("application", Constants.APPLICATION);
+        json.put("version",Constants.VERSION.toString());
         json.put("platform", Peers.myPlatform);
         json.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
         json.put("shareAddress", Peers.shareMyAddress);
@@ -1184,7 +1184,7 @@ public final class Peers {
         return version.lessThan(minVersion);
     }
 
-    private static final Version MAX_VERSION = AplCore.VERSION;
+    private static final Version MAX_VERSION = Constants.VERSION;
 
     public static boolean isNewVersion(Version version) {
         if (version == null) {
