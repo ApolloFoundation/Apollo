@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -53,10 +54,12 @@ public final class Generator implements Comparable<Generator> {
     }
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-    private static final int MAX_FORGERS = aplGlobalObjects.getIntProperty("apl.maxNumberOfForgers");
-    private static final byte[] fakeForgingPublicKey = aplGlobalObjects.getBooleanProperty("apl.enableFakeForging") ?
-            Account.getPublicKey(Convert.parseAccountId(aplGlobalObjects.getStringProperty("apl.fakeForgingAccount"))) : null;
+
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    
+    private static final int MAX_FORGERS = propertiesLoader.getIntProperty("apl.maxNumberOfForgers");
+    private static final byte[] fakeForgingPublicKey = propertiesLoader.getBooleanProperty("apl.enableFakeForging") ?
+            Account.getPublicKey(Convert.parseAccountId(propertiesLoader.getStringProperty("apl.fakeForgingAccount"))) : null;
     private static volatile boolean suspendForging = false;
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
@@ -80,7 +83,7 @@ public final class Generator implements Comparable<Generator> {
                     BlockchainImpl.getInstance().updateLock();
                     try {
                         Block lastBlock = AplCore.getBlockchain().getLastBlock();
-                        if (lastBlock == null || lastBlock.getHeight() < aplGlobalObjects.getChainConfig().getLastKnownBlock()) {
+                        if (lastBlock == null || lastBlock.getHeight() < AplGlobalObjects.getChainConfig().getLastKnownBlock()) {
                             return;
                         }
                         final int generationLimit = AplCore.getEpochTime() - delayTime;
@@ -255,12 +258,12 @@ public final class Generator implements Comparable<Generator> {
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         return hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
-                || (aplGlobalObjects.getChainConfig().isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
+                || (AplGlobalObjects.getChainConfig().isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
                 || Constants.isOffline);
     }
 
     static boolean allowsFakeForging(byte[] publicKey) {
-        return aplGlobalObjects.getChainConfig().isTestnet() && publicKey != null && Arrays.equals(publicKey, fakeForgingPublicKey);
+        return AplGlobalObjects.getChainConfig().isTestnet() && publicKey != null && Arrays.equals(publicKey, fakeForgingPublicKey);
     }
 
     static BigInteger getHit(byte[] publicKey, Block block) {
@@ -299,7 +302,7 @@ public final class Generator implements Comparable<Generator> {
         this.accountId = Account.getId(publicKey);
         AplCore.getBlockchain().updateLock();
         try {
-            if (AplCore.getBlockchain().getHeight() >= aplGlobalObjects.getChainConfig().getLastKnownBlock()) {
+            if (AplCore.getBlockchain().getHeight() >= AplGlobalObjects.getChainConfig().getLastKnownBlock()) {
                 setLastBlock(AplCore.getBlockchain().getLastBlock());
             }
             sortedForgers = null;
@@ -393,7 +396,7 @@ public final class Generator implements Comparable<Generator> {
      *         >0 - when adaptive forging is enabled and new block should be generated with timestamp = calculated timestamp + returned value
      */
     private int[] getBlockTimeoutAndVersion(int timestamp, int generationLimit, Block lastBlock) {
-        int version = aplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled() ? Block.REGULAR_BLOCK_VERSION : Block.LEGACY_BLOCK_VERSION;
+        int version = AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled() ? Block.REGULAR_BLOCK_VERSION : Block.LEGACY_BLOCK_VERSION;
         int timeout = 0;
         // transactions at generator hit time
         boolean noTransactionsAtTimestamp =
@@ -404,13 +407,13 @@ public final class Generator implements Comparable<Generator> {
         int planedBlockTime = timestamp - lastBlock.getTimestamp();
         LOG.debug("Planed blockTime {} - uncg {}, unct {}", planedBlockTime,
                 noTransactionsAtGenerationLimit, noTransactionsAtTimestamp);
-        if (aplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled() // try to calculate timeout only when adaptive forging enabled
+        if (AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled() // try to calculate timeout only when adaptive forging enabled
                 && noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
-                && planedBlockTime < aplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime() // calculate timeout only for faster than predefined empty block
+                && planedBlockTime < AplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime() // calculate timeout only for faster than predefined empty block
         ) {
             int actualBlockTime = generationLimit - lastBlock.getTimestamp();
             LOG.debug("Act time:" + actualBlockTime);
-            if (actualBlockTime >= aplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime()) {
+            if (actualBlockTime >= AplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime()) {
                 // empty block can be generated by timeout
                 version = Block.ADAPTIVE_BLOCK_VERSION;
             } else if (!noTransactionsAtGenerationLimit && actualBlockTime >= planedBlockTime) {
@@ -423,7 +426,7 @@ public final class Generator implements Comparable<Generator> {
             LOG.debug("Timeout:" + timeout);
             return new int[] {timeout, version};
         }
-        if (aplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled() && noTransactionsAtTimestamp) {
+        if (AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled() && noTransactionsAtTimestamp) {
             version = Block.ADAPTIVE_BLOCK_VERSION;
         }
         return new int[] {timeout, version};

@@ -89,14 +89,16 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-
+   // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
@@ -109,13 +111,13 @@ public final class API {
     private static final Set<String> allowedBotHosts;
     private static final List<NetworkAddress> allowedBotNets;
     private static final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
-    public static final String adminPassword = aplGlobalObjects.getStringProperty("apl.adminPassword", "", true);
+    public static final String adminPassword = propertiesLoader.getStringProperty("apl.adminPassword", "", true);
     static final boolean disableAdminPassword;
-    static final int maxRecords = aplGlobalObjects.getIntProperty("apl.maxAPIRecords");
-    static final boolean enableAPIUPnP = aplGlobalObjects.getBooleanProperty("apl.enableAPIUPnP");
-    public static final int apiServerIdleTimeout = aplGlobalObjects.getIntProperty("apl.apiServerIdleTimeout");
-    public static final boolean apiServerCORS = aplGlobalObjects.getBooleanProperty("apl.apiServerCORS");
-    private static final String forwardedForHeader = aplGlobalObjects.getStringProperty("apl.forwardedForHeader");
+    static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
+    static final boolean enableAPIUPnP = propertiesLoader.getBooleanProperty("apl.enableAPIUPnP");
+    public static final int apiServerIdleTimeout = propertiesLoader.getIntProperty("apl.apiServerIdleTimeout");
+    public static final boolean apiServerCORS = propertiesLoader.getBooleanProperty("apl.apiServerCORS");
+    private static final String forwardedForHeader = propertiesLoader.getStringProperty("apl.forwardedForHeader");
 
     private static final Server apiServer;
 
@@ -149,15 +151,15 @@ public final class API {
 
     static {
         serverKeysGenerator.setDaemon(true);
-        List<String> disabled = new ArrayList<>(aplGlobalObjects.getStringListProperty("apl.disabledAPIs"));
+        List<String> disabled = new ArrayList<>(propertiesLoader.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
         disabledAPIs = Collections.unmodifiableList(disabled);
-        disabled = aplGlobalObjects.getStringListProperty("apl.disabledAPITags");
+        disabled = propertiesLoader.getStringListProperty("apl.disabledAPITags");
         Collections.sort(disabled);
         List<APITag> apiTags = new ArrayList<>(disabled.size());
         disabled.forEach(tagName -> apiTags.add(APITag.fromDisplayName(tagName)));
         disabledAPITags = Collections.unmodifiableList(apiTags);
-        List<String> allowedBotHostsList = aplGlobalObjects.getStringListProperty("apl.allowedBotHosts");
+        List<String> allowedBotHostsList = propertiesLoader.getStringListProperty("apl.allowedBotHosts");
         if (! allowedBotHostsList.contains("*")) {
             Set<String> hosts = new HashSet<>();
             List<NetworkAddress> nets = new ArrayList<>();
@@ -180,21 +182,21 @@ public final class API {
             allowedBotNets = null;
         }
 
-        boolean enableAPIServer = aplGlobalObjects.getBooleanProperty("apl.enableAPIServer");
+        boolean enableAPIServer = propertiesLoader.getBooleanProperty("apl.enableAPIServer");
         if (enableAPIServer) {
-            final int port = aplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : aplGlobalObjects.getIntProperty("apl.apiServerPort");
-            final int sslPort = aplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_SSLPORT : aplGlobalObjects.getIntProperty("apl.apiServerSSLPort");
-            final String host = aplGlobalObjects.getStringProperty("apl.apiServerHost");
-            disableAdminPassword = aplGlobalObjects.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
-            int maxThreadPoolSize = aplGlobalObjects.getIntProperty("apl.threadPoolMaxSize");
-            int minThreadPoolSize = aplGlobalObjects.getIntProperty("apl.threadPoolMinSize");
+            final int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
+            final int sslPort = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
+            final String host = propertiesLoader.getStringProperty("apl.apiServerHost");
+            disableAdminPassword = propertiesLoader.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
+            int maxThreadPoolSize = propertiesLoader.getIntProperty("apl.threadPoolMaxSize");
+            int minThreadPoolSize = propertiesLoader.getIntProperty("apl.threadPoolMinSize");
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
             threadPool.setName("API thread pool");
             apiServer = new Server(threadPool);
             ServerConnector connector;
-            boolean enableSSL = aplGlobalObjects.getBooleanProperty("apl.apiSSL");
+            boolean enableSSL = propertiesLoader.getBooleanProperty("apl.apiSSL");
             //
             // Create the HTTP connector
             //
@@ -224,16 +226,16 @@ public final class API {
                 https_config.setSecurePort(sslPort);
                 https_config.addCustomizer(new SecureRequestCustomizer());
                 sslContextFactory = new SslContextFactory();
-                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(aplGlobalObjects.getStringProperty("apl.keyStorePath"))).toString();
+                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(propertiesLoader.getStringProperty("apl.keyStorePath"))).toString();
                 LOG.info("Using keystore: " + keyStorePath);
                 sslContextFactory.setKeyStorePath(keyStorePath);
-                sslContextFactory.setKeyStorePassword(aplGlobalObjects.getStringProperty("apl.keyStorePassword", null, true));
+                sslContextFactory.setKeyStorePassword(propertiesLoader.getStringProperty("apl.keyStorePassword", null, true));
                 sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
                         "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5", "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
                         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA");
                 sslContextFactory.addExcludeProtocols("SSLv3");
-                sslContextFactory.setKeyStoreType(aplGlobalObjects.getStringProperty("apl.keyStoreType"));
-                List<String> ciphers = aplGlobalObjects.getStringListProperty("apl.apiSSLCiphers");
+                sslContextFactory.setKeyStoreType(propertiesLoader.getStringProperty("apl.keyStoreType"));
+                List<String> ciphers = propertiesLoader.getStringListProperty("apl.apiSSLCiphers");
                 if (!ciphers.isEmpty()) {
                     sslContextFactory.setIncludeCipherSuites(ciphers.toArray(new String[ciphers.size()]));
                 }
@@ -262,7 +264,7 @@ public final class API {
             HandlerList apiHandlers = new HandlerList();
 
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = ResourcePaths.find(aplGlobalObjects.getStringProperty("apl.apiResourceBase"));
+            String apiResourceBase = ResourcePaths.find(propertiesLoader.getStringProperty("apl.apiResourceBase"));
             if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
                 ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
                 defaultServletHolder.setInitParameter("dirAllowed", "false");
@@ -272,10 +274,10 @@ public final class API {
                 defaultServletHolder.setInitParameter("gzip", "true");
                 defaultServletHolder.setInitParameter("etags", "true");
                 apiHandler.addServlet(defaultServletHolder, "/*");
-                apiHandler.setWelcomeFiles(new String[]{aplGlobalObjects.getStringProperty("apl.apiWelcomeFile")});
+                apiHandler.setWelcomeFiles(new String[]{propertiesLoader.getStringProperty("apl.apiWelcomeFile")});
             }
 
-            String javadocResourceBase = aplGlobalObjects.getStringProperty("apl.javadocResourceBase");
+            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
             if (javadocResourceBase != null) {
                 ContextHandler contextHandler = new ContextHandler("/doc");
                 ResourceHandler docFileHandler = new ResourceHandler();
@@ -288,16 +290,16 @@ public final class API {
 
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(aplGlobalObjects.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                    null, Math.max(propertiesLoader.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
                     "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(aplGlobalObjects.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                    null, Math.max(propertiesLoader.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             GzipHandler gzipHandler = new GzipHandler();
-            if (!aplGlobalObjects.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
+            if (!propertiesLoader.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
                 gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
@@ -318,7 +320,7 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
 
-            if (aplGlobalObjects.getBooleanProperty("apl.apiFrameOptionsSameOrigin")) {
+            if (propertiesLoader.getBooleanProperty("apl.apiFrameOptionsSameOrigin")) {
                 FilterHolder filterHolder = apiHandler.addFilter(XFrameOptionsFilter.class, "/*", null);
                 filterHolder.setAsyncSupported(true);
             }

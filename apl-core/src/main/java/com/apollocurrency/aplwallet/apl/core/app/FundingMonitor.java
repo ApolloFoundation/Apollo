@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -63,10 +64,10 @@ public final class FundingMonitor {
     /** Minimum funding interval */
     public static final int MIN_FUND_INTERVAL = 10;
     // TODO: YL remove static instance later
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
 
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
     /** Maximum number of monitors */
-    private static final int MAX_MONITORS = aplGlobalObjects.getIntProperty("apl.maxNumberOfMonitors");
+    private static final int MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
     /** Monitor started */
     private static volatile boolean started = false;
@@ -646,8 +647,8 @@ public final class FundingMonitor {
                 AplCore.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = AplCore.getBlockchain().getHeight();
                 LOG.debug(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        aplGlobalObjects.getChainConfig().getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
-                        aplGlobalObjects.getChainConfig().getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
+                        AplGlobalObjects.getChainConfig().getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
+                        AplGlobalObjects.getChainConfig().getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
             }
         }
     }

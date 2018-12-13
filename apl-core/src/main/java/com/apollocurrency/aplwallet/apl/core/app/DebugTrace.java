@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -44,15 +45,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class DebugTrace {
     private static final Logger LOG = getLogger(DebugTrace.class);
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-
-    static final String QUOTE = aplGlobalObjects.getStringProperty("apl.debugTraceQuote", "\"");
-    static final String SEPARATOR = aplGlobalObjects.getStringProperty("apl.debugTraceSeparator", "\t");
-    static final boolean LOG_UNCONFIRMED = aplGlobalObjects.getBooleanProperty("apl.debugLogUnconfirmed");
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    
+    static final String QUOTE = propertiesLoader.getStringProperty("apl.debugTraceQuote", "\"");
+    static final String SEPARATOR = propertiesLoader.getStringProperty("apl.debugTraceSeparator", "\t");
+    static final boolean LOG_UNCONFIRMED = propertiesLoader.getBooleanProperty("apl.debugLogUnconfirmed");
 
     static void init() {
-        List<String> accountIdStrings = aplGlobalObjects.getStringListProperty("apl.debugTraceAccounts");
-        String logName = aplGlobalObjects.getStringProperty("apl.debugTraceLog");
+        List<String> accountIdStrings = propertiesLoader.getStringListProperty("apl.debugTraceAccounts");
+        String logName = propertiesLoader.getStringProperty("apl.debugTraceLog");
         if (accountIdStrings.isEmpty() || logName == null) {
             return;
         }

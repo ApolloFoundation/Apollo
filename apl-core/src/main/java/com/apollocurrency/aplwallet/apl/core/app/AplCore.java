@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
+import javax.inject.Inject;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AplCore {
@@ -67,7 +68,9 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    
+//    @Inject
+//    private PropertiesLoader propertiesLoader;
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();  
 //TODO: Core should not be static anymore!  
     public AplCore() {
     }
@@ -119,9 +122,8 @@ public final class AplCore {
         // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
         LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getUserHomeDir());
-        AplGlobalObjects.createPropertiesLoader(AplCoreRuntime.getInstance().getDirProvider(),true);
-        if (!VERSION.equals(Version.from(AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version")))) {
-            LOG.warn("Versions don't match = {} and {}", VERSION, AplGlobalObjects.getPropertiesLoader().getDefaultProperties().getProperty("apl.version"));
+        if (!VERSION.equals(Version.from(propertiesLoader.getDefaultProperties().getProperty("apl.version")))) {
+            LOG.warn("Versions don't match = {} and {}", VERSION, propertiesLoader.getDefaultProperties().getProperty("apl.version"));
             throw new RuntimeException("Using an apl-default.properties file from a version other than " + VERSION + " is not supported!!!");
         }
         startUp();
@@ -160,7 +162,6 @@ public final class AplCore {
             try {
                 long startTime = System.currentTimeMillis();
                 AplGlobalObjects.createNtpTime();
-                PropertiesLoader propertiesLoader = AplGlobalObjects.getPropertiesLoader();
                 AplGlobalObjects.createChainIdService(propertiesLoader.getStringProperty("apl.chainIdFilePath" , "chains.json"));
                 AplGlobalObjects.createBlockchainConfig(AplGlobalObjects.getChainIdService().getActiveChain(), propertiesLoader, false);
 //                AplGlobalObjects.getChainConfig().init();
@@ -193,10 +194,10 @@ public final class AplCore {
                 aplGlobalObjects.getChainConfig().init();
                 aplGlobalObjects.getChainConfig().updateToLatestConfig();
                 //TODO: move to application level this UPnP initialization
-                boolean enablePeerUPnP = aplGlobalObjects.getBooleanProperty("apl.enablePeerUPnP");
-                boolean enableAPIUPnP = aplGlobalObjects.getBooleanProperty("apl.enableAPIUPnP");
+                boolean enablePeerUPnP = propertiesLoader.getBooleanProperty("apl.enablePeerUPnP");
+                boolean enableAPIUPnP = propertiesLoader.getBooleanProperty("apl.enableAPIUPnP");
                 if(enableAPIUPnP || enablePeerUPnP){
-                    UPnP.TIMEOUT = aplGlobalObjects.getIntProperty("apl.upnpDiscoverTimeout",3000);
+                    UPnP.TIMEOUT = propertiesLoader.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP.getInstance();
                 }
                 TransactionProcessorImpl.getInstance();
@@ -238,7 +239,7 @@ public final class AplCore {
                 AppStatus.getInstance().update("API initialization...");
                 API.init();
                 DebugTrace.init();
-                int timeMultiplier = (aplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(aplGlobalObjects.getIntProperty("apl.timeMultiplier"), 1) : 1;
+                int timeMultiplier = (aplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(propertiesLoader.getIntProperty("apl.timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), AplCore.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
@@ -301,12 +302,12 @@ public final class AplCore {
 
         static Set<Integer> collectWorkingPorts() {
             boolean testnet = aplGlobalObjects.getChainConfig().isTestnet();
-            final int port = testnet ?  Constants.TESTNET_API_PORT: aplGlobalObjects.getIntProperty("apl.apiServerPort");
-            final int sslPort = testnet ? TESTNET_API_SSLPORT : aplGlobalObjects.getIntProperty("apl.apiServerSSLPort");
-            boolean enableSSL = aplGlobalObjects.getBooleanProperty("apl.apiSSL");
+            final int port = testnet ?  Constants.TESTNET_API_PORT: propertiesLoader.getIntProperty("apl.apiServerPort");
+            final int sslPort = testnet ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
+            boolean enableSSL = propertiesLoader.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
-            String myAddress = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.myAddress", "").trim());
+            String myAddress = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.myAddress", "").trim());
             if (myAddress != null) {
                 try {
                     int portIndex = myAddress.lastIndexOf(":");
@@ -321,7 +322,7 @@ public final class AplCore {
             if (peerPort == -1) {
                 peerPort = testnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
             }
-            int peerServerPort = aplGlobalObjects.getIntProperty("apl.peerServerPort");
+            int peerServerPort = propertiesLoader.getIntProperty("apl.peerServerPort");
 
             Set<Integer> ports = new HashSet<>();
             ports.add(port);

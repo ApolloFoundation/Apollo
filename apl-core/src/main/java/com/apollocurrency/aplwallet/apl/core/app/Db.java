@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -39,9 +40,8 @@ public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects;// = CDI.current().select(AplGlobalObjects.class).get();
-
-    public static String PREFIX;// = aplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
+    public static String PREFIX;
     private static BasicDb.DbProperties dbProperties;
     private static TransactionalDb db;
 
@@ -73,43 +73,39 @@ public final class Db {
     }
 
     public static void init() {
-        if (aplGlobalObjects == null) {
-            aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-        }
-        PREFIX = aplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
+
+        PREFIX = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
         init(
-                aplGlobalObjects.getIntProperty("apl.dbCacheKB")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Url")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Type")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Dir")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Name")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Params")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Username")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Password", null, true)
-                , aplGlobalObjects.getIntProperty("apl.maxDbConnections")
-                , aplGlobalObjects.getIntProperty("apl.dbLoginTimeout")
-                , aplGlobalObjects.getIntProperty("apl.dbDefaultLockTimeout") * 1000
-                , aplGlobalObjects.getIntProperty("apl.dbMaxMemoryRows")
+                 propertiesLoader.getIntProperty("apl.dbCacheKB")
+                , propertiesLoader.getStringProperty(PREFIX + "Url")
+                , propertiesLoader.getStringProperty(PREFIX + "Type")
+                , propertiesLoader.getStringProperty(PREFIX + "Dir")
+                , propertiesLoader.getStringProperty(PREFIX + "Name")
+                , propertiesLoader.getStringProperty(PREFIX + "Params")
+                , propertiesLoader.getStringProperty(PREFIX + "Username")
+                , propertiesLoader.getStringProperty(PREFIX + "Password", null, true)
+                , propertiesLoader.getIntProperty("apl.maxDbConnections")
+                , propertiesLoader.getIntProperty("apl.dbLoginTimeout")
+                , propertiesLoader.getIntProperty("apl.dbDefaultLockTimeout") * 1000
+                , propertiesLoader.getIntProperty("apl.dbMaxMemoryRows")
         );
     }
     public static void init(String dbUrl) {
-        if (aplGlobalObjects == null) {
-            aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-        }
-        PREFIX = aplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
+
+        PREFIX = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
         init(
-                aplGlobalObjects.getIntProperty("apl.dbCacheKB")
+                propertiesLoader.getIntProperty("apl.dbCacheKB")
                 , dbUrl
-                , aplGlobalObjects.getStringProperty(PREFIX + "Type")
+                , propertiesLoader.getStringProperty(PREFIX + "Type")
                 , null
                 , null
-                , aplGlobalObjects.getStringProperty(PREFIX + "Params")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Username")
-                , aplGlobalObjects.getStringProperty(PREFIX + "Password", null, true)
-                , aplGlobalObjects.getIntProperty("apl.maxDbConnections")
-                , aplGlobalObjects.getIntProperty("apl.dbLoginTimeout")
-                , aplGlobalObjects.getIntProperty("apl.dbDefaultLockTimeout") * 1000
-                , aplGlobalObjects.getIntProperty("apl.dbMaxMemoryRows")
+                , propertiesLoader.getStringProperty(PREFIX + "Params")
+                , propertiesLoader.getStringProperty(PREFIX + "Username")
+                , propertiesLoader.getStringProperty(PREFIX + "Password", null, true)
+                , propertiesLoader.getIntProperty("apl.maxDbConnections")
+                , propertiesLoader.getIntProperty("apl.dbLoginTimeout")
+                , propertiesLoader.getIntProperty("apl.dbDefaultLockTimeout") * 1000
+                , propertiesLoader.getIntProperty("apl.dbMaxMemoryRows")
         );
     }
 
@@ -122,7 +118,7 @@ public final class Db {
     public static void tryToDeleteDb() throws IOException {
             db.shutdown();
             LOG.info("Removing db...");
-            Path dbPath = Paths.get(AplCoreRuntime.getInstance().getDbDir(aplGlobalObjects.getStringProperty(PREFIX + "Dir"))).getParent();
+            Path dbPath = Paths.get(AplCoreRuntime.getInstance().getDbDir(propertiesLoader.getStringProperty(PREFIX + "Dir"))).getParent();
             removeDb(dbPath);
             LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }

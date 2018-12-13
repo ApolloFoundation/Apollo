@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
@@ -39,7 +40,9 @@ public class Apollo {
 
     private static AplCore core;
     private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
-
+    
+    private static PropertiesLoader propertiesLoader;
+    
     private void initCore() {
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
         core = new AplCore();
@@ -51,7 +54,7 @@ public class Apollo {
         if (aplGlobalObjects == null) {
             aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
         }
-        if (!aplGlobalObjects.getBooleanProperty("apl.allowUpdates", false)) {
+        if (!propertiesLoader.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
         UpdaterMediator mediator = new UpdaterMediatorImpl();

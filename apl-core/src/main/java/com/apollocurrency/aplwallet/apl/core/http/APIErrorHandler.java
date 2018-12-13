@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
@@ -15,13 +16,13 @@ import java.net.HttpURLConnection;
 public class APIErrorHandler extends ErrorPageErrorHandler {
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-
+  
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
     @Override
     public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if(response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND){
-            String apiResourceBase = aplGlobalObjects.getStringProperty("apl.apiResourceBase");
-            String apiWelcomePage = aplGlobalObjects.getStringProperty("apl.apiWelcomeFile");
+            String apiResourceBase = propertiesLoader.getStringProperty("apl.apiResourceBase");
+            String apiWelcomePage = propertiesLoader.getStringProperty("apl.apiWelcomeFile");
 
             response.setContentType("text/html");
             response.setHeader("X-FRAME-OPTIONS", "SAMEORIGIN");

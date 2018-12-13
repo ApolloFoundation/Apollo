@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -104,14 +105,14 @@ public final class Peers {
     static final Set<String> knownBlacklistedPeers;
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();    
     static final int connectTimeout;
     static final int readTimeout;
     static final int blacklistingPeriod;
     static final boolean getMorePeers;
-    static final int MAX_REQUEST_SIZE = aplGlobalObjects.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
-    static final int MAX_RESPONSE_SIZE = aplGlobalObjects.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
-    static final int MAX_MESSAGE_SIZE = aplGlobalObjects.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
+    static final int MAX_REQUEST_SIZE = propertiesLoader.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
+    static final int MAX_RESPONSE_SIZE = propertiesLoader.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
+    static final int MAX_MESSAGE_SIZE = propertiesLoader.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
     public static final int MIN_COMPRESS_SIZE = 256;
     static final boolean useWebSockets;
     static final int webSocketIdleTimeout;
@@ -142,7 +143,7 @@ public final class Peers {
     static final int MAX_APPLICATION_LENGTH = 20;
     static final int MAX_PLATFORM_LENGTH = 30;
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
-    static final boolean hideErrorDetails = aplGlobalObjects.getBooleanProperty("apl.hideErrorDetails");
+    static final boolean hideErrorDetails = propertiesLoader.getBooleanProperty("apl.hideErrorDetails");
 
     private static final JSONObject myPeerInfo;
     private static final List<Peer.Service> myServices;
@@ -167,12 +168,12 @@ public final class Peers {
     
     static {
 
-        String platform = aplGlobalObjects.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
+        String platform = propertiesLoader.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
         if (platform.length() > MAX_PLATFORM_LENGTH) {
             platform = platform.substring(0, MAX_PLATFORM_LENGTH);
         }
         myPlatform = platform;
-        myAddress = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.myAddress", "").trim());
+        myAddress = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.myAddress", "").trim());
         if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !AplGlobalObjects.getChainConfig().isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
@@ -219,13 +220,13 @@ public final class Peers {
                 LOG.warn("Your announced address is not valid: " + e.toString());
             }
         }
-        myPeerServerPort = aplGlobalObjects.getIntProperty("apl.peerServerPort");
+        myPeerServerPort = propertiesLoader.getIntProperty("apl.peerServerPort");
         if (myPeerServerPort == TESTNET_PEER_PORT && !AplGlobalObjects.getChainConfig().isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
-        shareMyAddress = aplGlobalObjects.getBooleanProperty("apl.shareMyAddress") && ! Constants.isOffline;
-        enablePeerUPnP = aplGlobalObjects.getBooleanProperty("apl.enablePeerUPnP");
-        myHallmark = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.myHallmark", "").trim());
+        shareMyAddress = propertiesLoader.getBooleanProperty("apl.shareMyAddress") && ! Constants.isOffline;
+        enablePeerUPnP = propertiesLoader.getBooleanProperty("apl.enablePeerUPnP");
+        myHallmark = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.myHallmark", "").trim());
         if (Peers.myHallmark != null && Peers.myHallmark.length() > 0) {
             try {
                 Hallmark hallmark = Hallmark.parseHallmark(Peers.myHallmark);
@@ -253,7 +254,7 @@ public final class Peers {
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
-                if (!aplGlobalObjects.getChainConfig().isTestnet()) {
+                if (!AplGlobalObjects.getChainConfig().isTestnet()) {
                     if (port >= 0)
                         announcedAddress = myAddress;
                     else
@@ -277,9 +278,9 @@ public final class Peers {
         json.put("application", AplCore.APPLICATION);
         json.put("version", AplCore.VERSION.toString());
         json.put("platform", Peers.myPlatform);
-        json.put("chainId", aplGlobalObjects.getChainConfig().getChain().getChainId());
+        json.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
         json.put("shareAddress", Peers.shareMyAddress);
-        if (!aplGlobalObjects.getChainConfig().isEnablePruning() && Constants.INCLUDE_EXPIRED_PRUNABLE) {
+        if (!AplGlobalObjects.getChainConfig().isEnablePruning() && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
         if (API.openAPIPort > 0) {
@@ -325,38 +326,38 @@ public final class Peers {
         LOG.debug("My peer info:\n" + json.toJSONString());
         myPeerInfo = json;
 
-        final List<String> defaultPeers = aplGlobalObjects.getChainConfig().getChain().getDefaultPeers();
-        wellKnownPeers = aplGlobalObjects.getChainConfig().getChain().getWellKnownPeers();
+        final List<String> defaultPeers = AplGlobalObjects.getChainConfig().getChain().getDefaultPeers();
+        wellKnownPeers = AplGlobalObjects.getChainConfig().getChain().getWellKnownPeers();
 
-        List<String> knownBlacklistedPeersList = aplGlobalObjects.getChainConfig().getChain().getBlacklistedPeers();
+        List<String> knownBlacklistedPeersList = AplGlobalObjects.getChainConfig().getChain().getBlacklistedPeers();
         if (knownBlacklistedPeersList.isEmpty()) {
             knownBlacklistedPeers = Collections.emptySet();
         } else {
             knownBlacklistedPeers = Collections.unmodifiableSet(new HashSet<>(knownBlacklistedPeersList));
         }
 
-        maxNumberOfInboundConnections = aplGlobalObjects.getIntProperty("apl.maxNumberOfInboundConnections");
-        maxNumberOfOutboundConnections = aplGlobalObjects.getIntProperty("apl.maxNumberOfOutboundConnections");
-        maxNumberOfConnectedPublicPeers = Math.min(aplGlobalObjects.getIntProperty("apl.maxNumberOfConnectedPublicPeers"),
+        maxNumberOfInboundConnections = propertiesLoader.getIntProperty("apl.maxNumberOfInboundConnections");
+        maxNumberOfOutboundConnections = propertiesLoader.getIntProperty("apl.maxNumberOfOutboundConnections");
+        maxNumberOfConnectedPublicPeers = Math.min(propertiesLoader.getIntProperty("apl.maxNumberOfConnectedPublicPeers"),
                 maxNumberOfOutboundConnections);
-        maxNumberOfKnownPeers = aplGlobalObjects.getIntProperty("apl.maxNumberOfKnownPeers");
-        minNumberOfKnownPeers = aplGlobalObjects.getIntProperty("apl.minNumberOfKnownPeers");
-        connectTimeout = aplGlobalObjects.getIntProperty("apl.connectTimeout");
-        readTimeout = aplGlobalObjects.getIntProperty("apl.readTimeout");
-        enableHallmarkProtection = aplGlobalObjects.getBooleanProperty("apl.enableHallmarkProtection") && !Constants.isLightClient;
-        pushThreshold = aplGlobalObjects.getIntProperty("apl.pushThreshold");
-        pullThreshold = aplGlobalObjects.getIntProperty("apl.pullThreshold");
-        useWebSockets = aplGlobalObjects.getBooleanProperty("apl.useWebSockets");
-        webSocketIdleTimeout = aplGlobalObjects.getIntProperty("apl.webSocketIdleTimeout");
-        isGzipEnabled = aplGlobalObjects.getBooleanProperty("apl.enablePeerServerGZIPFilter");
-        blacklistingPeriod = aplGlobalObjects.getIntProperty("apl.blacklistingPeriod") / 1000;
-        communicationLoggingMask = aplGlobalObjects.getIntProperty("apl.communicationLoggingMask");
-        sendToPeersLimit = aplGlobalObjects.getIntProperty("apl.sendToPeersLimit");
-        usePeersDb = aplGlobalObjects.getBooleanProperty("apl.usePeersDb") && ! Constants.isOffline;
-        savePeers = usePeersDb && aplGlobalObjects.getBooleanProperty("apl.savePeers");
-        getMorePeers = aplGlobalObjects.getBooleanProperty("apl.getMorePeers");
-        cjdnsOnly = aplGlobalObjects.getBooleanProperty("apl.cjdnsOnly");
-        ignorePeerAnnouncedAddress = aplGlobalObjects.getBooleanProperty("apl.ignorePeerAnnouncedAddress");
+        maxNumberOfKnownPeers = propertiesLoader.getIntProperty("apl.maxNumberOfKnownPeers");
+        minNumberOfKnownPeers = propertiesLoader.getIntProperty("apl.minNumberOfKnownPeers");
+        connectTimeout = propertiesLoader.getIntProperty("apl.connectTimeout");
+        readTimeout = propertiesLoader.getIntProperty("apl.readTimeout");
+        enableHallmarkProtection = propertiesLoader.getBooleanProperty("apl.enableHallmarkProtection") && !Constants.isLightClient;
+        pushThreshold = propertiesLoader.getIntProperty("apl.pushThreshold");
+        pullThreshold = propertiesLoader.getIntProperty("apl.pullThreshold");
+        useWebSockets = propertiesLoader.getBooleanProperty("apl.useWebSockets");
+        webSocketIdleTimeout = propertiesLoader.getIntProperty("apl.webSocketIdleTimeout");
+        isGzipEnabled = propertiesLoader.getBooleanProperty("apl.enablePeerServerGZIPFilter");
+        blacklistingPeriod = propertiesLoader.getIntProperty("apl.blacklistingPeriod") / 1000;
+        communicationLoggingMask = propertiesLoader.getIntProperty("apl.communicationLoggingMask");
+        sendToPeersLimit = propertiesLoader.getIntProperty("apl.sendToPeersLimit");
+        usePeersDb = propertiesLoader.getBooleanProperty("apl.usePeersDb") && ! Constants.isOffline;
+        savePeers = usePeersDb && propertiesLoader.getBooleanProperty("apl.savePeers");
+        getMorePeers = propertiesLoader.getBooleanProperty("apl.getMorePeers");
+        cjdnsOnly = propertiesLoader.getBooleanProperty("apl.cjdnsOnly");
+        ignorePeerAnnouncedAddress = propertiesLoader.getBooleanProperty("apl.ignorePeerAnnouncedAddress");
         if (useWebSockets && useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
@@ -431,11 +432,11 @@ public final class Peers {
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
-                final int port = aplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
+                final int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
                 connector.setPort(port);
-                final String host = aplGlobalObjects.getStringProperty("apl.peerServerHost");
+                final String host = propertiesLoader.getStringProperty("apl.peerServerHost");
                 connector.setHost(host);
-                connector.setIdleTimeout(aplGlobalObjects.getIntProperty("apl.peerServerIdleTimeout"));
+                connector.setIdleTimeout(propertiesLoader.getIntProperty("apl.peerServerIdleTimeout"));
                 connector.setReuseAddress(true);
                 peerServer.addConnector(connector);
 
@@ -445,12 +446,12 @@ public final class Peers {
                 ServletHolder peerServletHolder = new ServletHolder(new PeerServlet());
                 ctxHandler.addServlet(peerServletHolder, "/*");
 
-                if (aplGlobalObjects.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
+                if (propertiesLoader.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                     FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*",
                             EnumSet.of(DispatcherType.REQUEST));
-                    dosFilterHolder.setInitParameter("maxRequestsPerSec", aplGlobalObjects.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));
-                    dosFilterHolder.setInitParameter("delayMs", aplGlobalObjects.getStringProperty("apl.peerServerDoSFilter.delayMs"));
-                    dosFilterHolder.setInitParameter("maxRequestMs", aplGlobalObjects.getStringProperty("apl.peerServerDoSFilter.maxRequestMs"));
+                    dosFilterHolder.setInitParameter("maxRequestsPerSec", propertiesLoader.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));
+                    dosFilterHolder.setInitParameter("delayMs", propertiesLoader.getStringProperty("apl.peerServerDoSFilter.delayMs"));
+                    dosFilterHolder.setInitParameter("maxRequestMs", propertiesLoader.getStringProperty("apl.peerServerDoSFilter.maxRequestMs"));
                     dosFilterHolder.setInitParameter("trackSessions", "false");
                     dosFilterHolder.setAsyncSupported(true);
                 }
@@ -868,7 +869,7 @@ public final class Peers {
     }
 
     public static int getDefaultPeerPort() {
-        return aplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+        return AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
     }
 
     public static Collection<? extends Peer> getAllPeers() {
@@ -990,7 +991,7 @@ public final class Peers {
             return null;
         }
         peer = new PeerImpl(host, announcedAddress);
-        boolean testnet = aplGlobalObjects.getChainConfig().isTestnet();
+        boolean testnet = AplGlobalObjects.getChainConfig().isTestnet();
         if (testnet && peer.getPort() != TESTNET_PEER_PORT) {
             LOG.debug("Peer " + host + " on testnet is not using port " + TESTNET_PEER_PORT + ", ignoring");
             return null;
@@ -1250,7 +1251,7 @@ public final class Peers {
     private static void checkBlockchainState() {
         Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
                 (AplCore.getBlockchainProcessor().isDownloading() || AplCore.getBlockchain().getLastBlockTimestamp() < AplCore.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (AplCore.getBlockchain().getLastBlock().getBaseTarget() / aplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() > 10 && !AplGlobalObjects.getChainConfig().isTestnet()) ?
+                        (AplCore.getBlockchain().getLastBlock().getBaseTarget() / AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() > 10 && !AplGlobalObjects.getChainConfig().isTestnet()) ?
                                 Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {

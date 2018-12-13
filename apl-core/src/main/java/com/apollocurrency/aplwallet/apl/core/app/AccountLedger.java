@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -65,10 +66,11 @@ public class AccountLedger {
     private static final int logUnconfirmed;
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+
+   private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
 
     /** Number of blocks to keep when trimming */
-    public static final int trimKeep = aplGlobalObjects.getIntProperty("apl.ledgerTrimKeep", 30000);
+    public static final int trimKeep = propertiesLoader.getIntProperty("apl.ledgerTrimKeep", 30000);
 
     /** Blockchain */
     private static final Blockchain blockchain = AplCore.getBlockchain();
@@ -80,15 +82,15 @@ public class AccountLedger {
     private static final List<LedgerEntry> pendingEntries = new ArrayList<>();
 
     @Inject
-    public AccountLedger(AplGlobalObjects aplGlobalObjectsParam) {
-        aplGlobalObjects = aplGlobalObjectsParam; // TODO: YL remove static instance later
+    public AccountLedger() {
+      
     }
 
     /**
      * Process apl.ledgerAccounts
      */
     static {
-        List<String> ledgerAccounts = aplGlobalObjects.getStringListProperty("apl.ledgerAccounts");
+        List<String> ledgerAccounts = propertiesLoader.getStringListProperty("apl.ledgerAccounts");
         ledgerEnabled = !ledgerAccounts.isEmpty();
         trackAllAccounts = ledgerAccounts.contains("*");
         if (ledgerEnabled) {
@@ -107,7 +109,7 @@ public class AccountLedger {
         } else {
             LOG.info("Account ledger is not enabled");
         }
-        int temp = aplGlobalObjects.getIntProperty("apl.ledgerLogUnconfirmed", 1);
+        int temp = propertiesLoader.getIntProperty("apl.ledgerLogUnconfirmed", 1);
         logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
     }
 

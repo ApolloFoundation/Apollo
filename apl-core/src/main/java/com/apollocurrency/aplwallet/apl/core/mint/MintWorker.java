@@ -67,27 +67,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_PORT;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class MintWorker {
     private static final Logger LOG = getLogger(MintWorker.class);
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
     public static void main(String[] args) {
         MintWorker mintWorker = new MintWorker();
         mintWorker.mint();
     }
 
     private void mint() {
-        String currencyCode = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.mint.currencyCode"));
+        String currencyCode = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.mint.currencyCode"));
         if (currencyCode == null) {
             throw new IllegalArgumentException("apl.mint.currencyCode not specified");
         }
         byte[] keySeed = null;
-        String secretPhrase = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.mint.secretPhrase", null, true));
+        String secretPhrase = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.mint.secretPhrase", null, true));
         if (secretPhrase == null) {
-            String ks = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.mint.keySeed", null, true));
+            String ks = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.mint.keySeed", null, true));
             if (ks == null) {
                 throw new IllegalArgumentException("either apl.mint.secretPhrase or apl.mint.keySeed should be specified");
             } else {
@@ -98,8 +98,8 @@ public class MintWorker {
         }
 
 
-        boolean isSubmitted = aplGlobalObjects.getBooleanProperty("apl.mint.isSubmitted");
-        boolean isStopOnError = aplGlobalObjects.getBooleanProperty("apl.mint.stopOnError");
+        boolean isSubmitted = propertiesLoader.getBooleanProperty("apl.mint.isSubmitted");
+        boolean isStopOnError = propertiesLoader.getBooleanProperty("apl.mint.stopOnError");
         byte[] publicKeyHash = Crypto.sha256().digest(Crypto.getPublicKey(secretPhrase));
         long accountId = Convert.fullHashToId(publicKeyHash);
         String rsAccount = Convert2.rsAccount(accountId);
@@ -113,7 +113,7 @@ public class MintWorker {
         }
         byte algorithm = (byte)(long) currency.get("algorithm");
         byte decimal = (byte)(long) currency.get("decimals");
-        String unitsStr = aplGlobalObjects.getStringProperty("apl.mint.unitsPerMint");
+        String unitsStr = propertiesLoader.getStringProperty("apl.mint.unitsPerMint");
         double wholeUnits = 1;
         if (unitsStr != null && unitsStr.length() > 0) {
             wholeUnits = Double.parseDouble(unitsStr);
@@ -123,11 +123,11 @@ public class MintWorker {
         long counter = (long) mintingTarget.get("counter");
         byte[] target = Convert.parseHexString((String) mintingTarget.get("targetBytes"));
         BigInteger difficulty = new BigInteger((String)mintingTarget.get("difficulty"));
-        long initialNonce = aplGlobalObjects.getIntProperty("apl.mint.initialNonce");
+        long initialNonce = propertiesLoader.getIntProperty("apl.mint.initialNonce");
         if (initialNonce == 0) {
             initialNonce = new Random().nextLong();
         }
-        int threadPoolSize = aplGlobalObjects.getIntProperty("apl.mint.threadPoolSize");
+        int threadPoolSize = propertiesLoader.getIntProperty("apl.mint.threadPoolSize");
         if (threadPoolSize == 0) {
             threadPoolSize = Runtime.getRuntime().availableProcessors();
             LOG.debug("Thread pool size " + threadPoolSize);
@@ -244,7 +244,7 @@ public class MintWorker {
     private JSONObject getJsonResponse(Map<String, String> params) {
         JSONObject response;
         HttpURLConnection connection = null;
-        String host = Convert.emptyToNull(aplGlobalObjects.getStringProperty("apl.mint.serverAddress"));
+        String host = Convert.emptyToNull(propertiesLoader.getStringProperty("apl.mint.serverAddress"));
         if (host == null) {
             try {
                 host = InetAddress.getLocalHost().getHostAddress();
@@ -253,13 +253,13 @@ public class MintWorker {
             }
         }
         String protocol = "http";
-        boolean useHttps = aplGlobalObjects.getBooleanProperty("apl.mint.useHttps");
+        boolean useHttps = propertiesLoader.getBooleanProperty("apl.mint.useHttps");
         if (useHttps) {
             protocol = "https";
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        int port = aplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : aplGlobalObjects.getIntProperty("apl.apiServerPort");
+        int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
         String urlParams = getUrlParams(params);
         URL url;
         try {

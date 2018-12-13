@@ -20,8 +20,10 @@ import java.util.List;
 import java.util.Properties;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 
+@Singleton
 public class PropertiesLoader {
     private static final Logger LOG = getLogger(PropertiesLoader.class);
     public static final String DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME = "apl-default.properties";
@@ -30,64 +32,16 @@ public class PropertiesLoader {
     public static final String DEFAULT_CONFIG_DIR = "conf";
     private final Properties defaultProperties = new Properties();
     private Properties properties = new Properties();
-    private final DirProvider dirProvider;
-    private final String defaultPropertiesFileName;
-    private final String propertiesFileName;
-    private final String installerPropertiesFileName;
-    private final String configDir;
-    private final Properties customProperties;
+    private DirProvider dirProvider;
+    private final String defaultPropertiesFileName = DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME;
+    private final String propertiesFileName= DEFAULT_APL_PROPERTIES_FILE_NAME;
+    private final String installerPropertiesFileName=DEFAULT_APL_INSTALLER_PROPERTIES_FILE_NAME;
+    private final String configDir = DEFAULT_CONFIG_DIR;
+    private  Properties customProperties;
 
-    private PropertiesLoader(Builder builder) {
-        this.dirProvider = builder.dirProvider;
-        this.defaultPropertiesFileName = builder.defaultPropertiesFileName;
-        this.propertiesFileName = builder.propertiesFileName;
-        this.installerPropertiesFileName = builder.installerPropertiesFileName;
-        this.configDir = builder.configDir;
-        this.customProperties = builder.customProperties;
-    }
-    public static class Builder {
-        private DirProvider dirProvider;
-        private String defaultPropertiesFileName = DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME;
-        private String propertiesFileName = DEFAULT_APL_PROPERTIES_FILE_NAME;
-        private String installerPropertiesFileName = DEFAULT_APL_INSTALLER_PROPERTIES_FILE_NAME;
-        private String configDir = DEFAULT_CONFIG_DIR;
-        private Properties customProperties = new Properties();
-
-        public Builder(DirProvider dirProvider) {
-            this.dirProvider = dirProvider;
-        }
-
-        public Builder defaultPropertiesFileName(String defaultPropertiesFileName) {
-            this.defaultPropertiesFileName = defaultPropertiesFileName;
-            return this;
-        }
-        public Builder propertiesFileName(String propertiesFileName) {
-            this.propertiesFileName = propertiesFileName;
-            return this;
-        }
-        public Builder installerPropertiesFileName(String installerPropertiesFileName) {
-            this.installerPropertiesFileName = installerPropertiesFileName;
-            return this;
-        }
-        public Builder configDir(String configDir) {
-            this.configDir = configDir;
-            return this;
-        }
-        public Builder customProperties(Properties properties, boolean append) {
-            if (append) {
-                this.customProperties.putAll(properties);
-            } else {
-                this.customProperties = properties;
-            }
-            return this;
-        }
-        public Builder customProperties(Properties properties) {
-            return customProperties(properties, false);
-        }
-
-        public PropertiesLoader build() {
-            return new PropertiesLoader(this);
-        }
+    public PropertiesLoader(DirProvider dirProvider) {
+        this.dirProvider = dirProvider;
+        init();
     }
 
     public void init() {
@@ -121,7 +75,7 @@ public class PropertiesLoader {
         });
     }
 
-    protected static Properties loadProperties(Properties properties, String propertiesFile, boolean isDefault, DirProvider dirProvider, String configDir) {
+    protected Properties loadProperties(Properties properties, String propertiesFile, boolean isDefault, DirProvider dirProvider, String configDir) {
         try {
             // Load properties from location specified as command line parameter
             String configFile = System.getProperty(propertiesFile);

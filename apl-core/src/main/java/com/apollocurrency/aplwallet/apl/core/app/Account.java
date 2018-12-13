@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -70,14 +71,15 @@ public final class Account {
     private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
 
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
+
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
 
     private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore =
             new SimpleKeyStoreImpl(AplCoreRuntime.getInstance().getKeystoreDir(
                     AplGlobalObjects.getChainConfig().isTestnet() ?
-                            aplGlobalObjects.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
-                            aplGlobalObjects.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
+                            propertiesLoader.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
+                            propertiesLoader.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
             Genesis.loadGenesisAccounts();
 
@@ -294,7 +296,7 @@ public final class Account {
         }
 
     };
-    private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = aplGlobalObjects.getBooleanProperty("apl.enablePublicKeyCache") ?
+    private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = propertiesLoader.getBooleanProperty("apl.enablePublicKeyCache") ?
             new ConcurrentHashMap<>() : null;
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
@@ -303,11 +305,11 @@ public final class Account {
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
-            aplGlobalObjects.getBooleanProperty("apl.store2FAInFileSystem") ?
+            propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem") ?
                     new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir(
                             AplGlobalObjects.getChainConfig().isTestnet() ?
-                                    aplGlobalObjects.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
-                                    aplGlobalObjects.getStringProperty("apl.dir2FA", "2fa")
+                                    propertiesLoader.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
+                                    propertiesLoader.getStringProperty("apl.dir2FA", "2fa")
                     )) :
                     new TwoFactorAuthRepositoryImpl(Db.getDb()));
 

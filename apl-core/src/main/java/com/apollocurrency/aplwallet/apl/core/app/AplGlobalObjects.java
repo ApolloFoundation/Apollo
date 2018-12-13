@@ -12,17 +12,15 @@ import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
+
+//TODO: This class is mistake in DNA and must be removed completelly
 
 /**
  * This class required for global accessed objects initialization without static initialization in Apl class
@@ -35,7 +33,6 @@ public class AplGlobalObjects {
     private static final String DEFAULT_INIT_ERROR = "%s was not initialized before accessing";
     private static final String DEFAULT_CHAINID_SERVICE_NAME = "ChainIdService";
     private static final String DEFAULT_CHAIN_CONFIG_NAME = "BlockchainConfig";
-    private static final String DEFAULT_PROPERTIES_LOADER_NAME = "PropertiesLoader";
     private static final String DEFAULT_UPDATER_CORE_NAME = "UpdaterCore";
     private static final String DEFAULT_NTP_TIME_NAME = "NtpTime";
     private static final String DEFAULT_BLOCK_DB_NAME = "BlockDb";
@@ -72,7 +69,6 @@ public class AplGlobalObjects {
 
 
     public static void createUpdaterCore(boolean doInit, UpdaterCore updaterCore) {
-//        UpdaterCore updaterCore = new UpdaterCoreImpl(new UpdaterMediatorImpl());
         if (doInit) {
             updaterCore.init();
         }
@@ -82,14 +78,6 @@ public class AplGlobalObjects {
     public static void createNtpTime() {
         NtpTime ntpTime = new NtpTime();
         save(DEFAULT_NTP_TIME_NAME, new GlobalObject<>(ntpTime, DEFAULT_NTP_TIME_NAME));
-    }
-    
-    public static void createPropertiesLoader(DirProvider dirProvider, boolean doInit) {
-        PropertiesLoader propertiesLoader = new PropertiesLoader.Builder(dirProvider).build();
-        if (doInit) {
-            propertiesLoader.init();
-        }
-        save(DEFAULT_PROPERTIES_LOADER_NAME, new GlobalObject<>(propertiesLoader, DEFAULT_PROPERTIES_LOADER_NAME));
     }
 
     public static void createBlockchainConfig(Chain chain, PropertiesLoader loader, boolean doInit) {
@@ -114,10 +102,7 @@ public class AplGlobalObjects {
             throw new RuntimeException(String.format(GET_EXEPTION_TEMPLATE, name, realObject.getClass(), clazz));
         }
     }
-    
-    public static PropertiesLoader getPropertiesLoader() {
-        return get(PropertiesLoader.class, DEFAULT_PROPERTIES_LOADER_NAME);
-    }
+
 
     private static void validateInitialization(Object object, String component) {
         if (object == null) {
@@ -134,53 +119,6 @@ public class AplGlobalObjects {
     }
     public static UpdaterCore getUpdaterCore() {
         return get(UpdaterCore.class, DEFAULT_UPDATER_CORE_NAME);
-    }
-
-    public static int getIntProperty(String name) {
-        return getIntProperty(name, 0);
-    }
-
-    public static int getIntProperty(String name, int defaultValue) {
-        return getPropertiesLoader().getIntProperty(name, defaultValue);
-    }
-
-    public static String getStringProperty(String name) {
-        return getStringProperty(name, null, false);
-    }
-
-    public static String getStringProperty(String name, String defaultValue) {
-        return getStringProperty(name, defaultValue, false);
-    }
-
-    public static String getStringProperty(String name, String defaultValue, boolean doNotLog) {
-        return getStringProperty(name, defaultValue, doNotLog, null);
-    }
-
-    public static String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
-        return getPropertiesLoader().getStringProperty(name, defaultValue, doNotLog, encoding);
-    }
-
-    public static List<String> getStringListProperty(String name) {
-        String value = getStringProperty(name);
-        if (value == null || value.length() == 0) {
-            return Collections.emptyList();
-        }
-        List<String> result = new ArrayList<>();
-        for (String s : value.split(";")) {
-            s = s.trim();
-            if (s.length() > 0) {
-                result.add(s);
-            }
-        }
-        return result;
-    }
-
-    public static boolean getBooleanProperty(String name) {
-        return getBooleanProperty(name, false);
-    }
-
-    public static boolean getBooleanProperty(String name, boolean defaultValue) {
-        return getPropertiesLoader().getBooleanProperty(name, defaultValue);
     }
 
 }

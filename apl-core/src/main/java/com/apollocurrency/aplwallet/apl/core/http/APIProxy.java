@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -50,16 +51,15 @@ public class APIProxy {
         private static final APIProxy INSTANCE = new APIProxy();
     }
     // TODO: YL remove static instance later
-    private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-
+    private static PropertiesLoader propertiesLoader = CDI.current().select(PropertiesLoader.class).get();
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
     }
 
     static final boolean enableAPIProxy = Constants.isLightClient ||
-            (aplGlobalObjects.getBooleanProperty("apl.enableAPIProxy") && ! API.isOpenAPI);
-    private static final int blacklistingPeriod = aplGlobalObjects.getIntProperty("apl.apiProxyBlacklistingPeriod") / 1000;
-    static final String forcedServerURL = aplGlobalObjects.getStringProperty("apl.forceAPIProxyServerURL", "");
+            (propertiesLoader.getBooleanProperty("apl.enableAPIProxy") && ! API.isOpenAPI);
+    private static final int blacklistingPeriod = propertiesLoader.getIntProperty("apl.apiProxyBlacklistingPeriod") / 1000;
+    static final String forcedServerURL = propertiesLoader.getStringProperty("apl.forceAPIProxyServerURL", "");
 
     private volatile String forcedPeerHost;
     private volatile List<String> peersHosts = Collections.emptyList();
