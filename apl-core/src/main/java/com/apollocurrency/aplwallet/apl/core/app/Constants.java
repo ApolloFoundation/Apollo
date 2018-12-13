@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import javax.enterprise.inject.spi.CDI;
 
+//TODO: Make this class true constants holder, move all properties-dependent vars out
 public final class Constants {
     public static final Version VERSION = Version.from("1.24.0");
 

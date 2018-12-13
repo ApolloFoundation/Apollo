@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
@@ -157,10 +158,10 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!AplCore.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        if (!Constants.VERSION.toString().equals(Option.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
-            Option.set("Previous launch APP Version", AplCore.VERSION.toString());
+            Option.set("Previous launch APP Version", Constants.VERSION.toString());
             
         }
     }
@@ -262,7 +263,7 @@ public class DesktopApplication extends Application {
             pane.getChildren().add(indicator);
             Text statusText = new Text();
             Text versionText = new Text();
-            Version ver = AplCore.VERSION;
+            Version ver = Constants.VERSION;
             versionText.setId("version-text");
             versionText.setText("Wallet version " + ver);
             statusText.setId("status-text");

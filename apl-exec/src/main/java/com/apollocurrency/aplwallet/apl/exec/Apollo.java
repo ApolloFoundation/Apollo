@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
+import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +39,12 @@ public class Apollo {
 
     public static RuntimeMode runtimeMode;
     public static DirProvider dirProvider;
-
+    
+    private static AplContainer container;
+    
     private static AplCore core;
     private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
-    
+
     private static PropertiesLoader propertiesLoader;
     
     private void initCore() {
@@ -87,6 +90,7 @@ public class Apollo {
     }
 
     public static void shutdown() {
+        container.shutdown(); 
         core.shutdown();
     }
 
@@ -124,6 +128,11 @@ public class Apollo {
      * @param argv the command line arguments
      */
     public static void main(String[] argv) {
+
+        Apollo app = new Apollo();
+        container = AplContainer.builder().containerId("MAIN-APL-CDI").recursiveScanPackages(AplCore.class)
+                        .annotatedDiscoveryMode().build();
+                  
         System.out.println("Initializing " + Constants.APPLICATION + " server version " + Constants.VERSION);
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
@@ -143,7 +152,6 @@ public class Apollo {
             System.exit(PosixExitCodes.OK.exitCode());
         }
 
-        Apollo app = new Apollo();
         dirProvider = RuntimeEnvironment.getDirProvider();
 //TODO: remove this plumb, descktop UI should be separate and use Core's API            
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {

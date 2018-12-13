@@ -146,7 +146,7 @@ public class DesktopSystemTray {
 
         shutdown.addActionListener(e -> {
             if(JOptionPane.showConfirmDialog (null,
-                    "Sure you want to shutdown " + AplCore.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
+                    "Sure you want to shutdown " + Constants.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
                     "Shutdown",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 LOG.info("Shutdown requested by System Tray");
@@ -186,8 +186,8 @@ public class DesktopSystemTray {
         statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.Y_AXIS));
 
         addLabelRow(statusPanel, "Installation");
-        addDataRow(statusPanel, "Application", AplCore.APPLICATION);
-        addDataRow(statusPanel, "Version", AplCore.VERSION.toString());
+        addDataRow(statusPanel, "Application", Constants.APPLICATION);
+        addDataRow(statusPanel, "Version", Constants.VERSION.toString());
         addDataRow(statusPanel, "Network", (AplGlobalObjects.getChainConfig().isTestnet()) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
@@ -221,7 +221,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Updated", dateFormat.format(new Date()));
         if (statusDialog == null || !statusDialog.isVisible()) {
             JOptionPane pane = new JOptionPane(statusPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, imageIcon);
-            statusDialog = pane.createDialog(wrapper, AplCore.APPLICATION + " Server Status");
+            statusDialog = pane.createDialog(wrapper, Constants.APPLICATION + " Server Status");
             statusDialog.setVisible(true);
             statusDialog.dispose();
         } else {

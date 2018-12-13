@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
-import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -51,14 +50,11 @@ import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import javax.inject.Inject;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
-
-    private static AplContainer container;
     private static ChainIdService chainIdService;
 
     private static volatile Time time = new Time.EpochTime();
@@ -136,7 +132,6 @@ public final class AplCore {
         Peers.shutdown();
         Db.shutdown();
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
-        container.shutdown();
         AplCore.shutdown = true;
     }
     
@@ -175,8 +170,6 @@ public final class AplCore {
 
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
-                this.container = AplContainer.builder().containerId("MAIN-APL-CDI").recursiveScanPackages(this.getClass())
-                        .annotatedDiscoveryMode().build();
                 aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
                 Db.init();
