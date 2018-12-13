@@ -134,5 +134,9 @@ public class PropertiesLoader {
                 }
         });
     }
+
+    public Properties getProperties() {
+        return properties;
+    }
     
 }

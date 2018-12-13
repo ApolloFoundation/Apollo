@@ -20,13 +20,13 @@ public class PropertiesHolder {
     
     private static final Logger LOG = getLogger(PropertiesHolder.class);
 
-    private final Properties properties;
+    private Properties properties;
 
-    public PropertiesHolder(Properties properties) {
-        this.properties = properties;
+    public PropertiesHolder() {
     }
-    
-
+    public void init(Properties p){
+        properties = p;
+    }
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }

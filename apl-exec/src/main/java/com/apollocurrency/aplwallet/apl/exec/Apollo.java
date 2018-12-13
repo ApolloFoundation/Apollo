@@ -138,13 +138,9 @@ public class Apollo {
      */
     public static void main(String[] argv) {
 
-        Apollo app = new Apollo();
-        container = AplContainer.builder().containerId("MAIN-APL-CDI")
-                .recursiveScanPackages(AplCore.class)
-                .recursiveScanPackages(PropertiesHolder.class)
-                .annotatedDiscoveryMode().build();
+
                   
-        System.out.println("Initializing " + Constants.APPLICATION + " server version " + Constants.VERSION);
+//        System.out.println("Initializing " + Constants.APPLICATION + " server version " + Constants.VERSION);
         
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
@@ -165,6 +161,17 @@ public class Apollo {
         }
 
         dirProvider = RuntimeEnvironment.getDirProvider();
+        propertiesLoader = new PropertiesLoader(dirProvider);
+        propertiesLoader.init();
+
+        Apollo app = new Apollo();
+        container = AplContainer.builder().containerId("MAIN-APL-CDI")
+                .recursiveScanPackages(AplCore.class)
+                .recursiveScanPackages(PropertiesHolder.class)
+                .annotatedDiscoveryMode().build();        
+        propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        propertiesHolder.init(propertiesLoader.getProperties());
+        
 //TODO: remove this plumb, descktop UI should be separated and should not use Core directly but via API            
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
