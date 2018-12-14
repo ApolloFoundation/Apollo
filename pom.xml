@@ -87,6 +87,28 @@
                 <activation>
                     <activeByDefault>true</activeByDefault>
                 </activation>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-web</artifactId>
+                        <version>${openjfx.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-web</artifactId>
+                        <version>${openjfx.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-swing</artifactId>
+                        <version>${openjfx.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-controls</artifactId>
+                        <version>${openjfx.version}</version>
+                    </dependency>
+                </dependencies>
                 <properties>
                     <!--
                         Specifies the build.profile.id property that must be equal than the name of
@@ -139,26 +161,7 @@
     <dependencies>
         <!--Apache-commons-->
 <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
