@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.env;
 
-import com.apollocurrency.aplwallet.apl.Db;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Db;
+import org.slf4j.Logger;
 
 public class CommandLineMode implements RuntimeMode {
     private static Logger LOG;
@@ -65,7 +65,7 @@ public class CommandLineMode implements RuntimeMode {
 
     @Override
     public void updateAppStatus(String newStatus) {
-        LOG.info("Application status:", newStatus);
+        LOG.info("Application status: {}", newStatus);
     }
 
     @Override

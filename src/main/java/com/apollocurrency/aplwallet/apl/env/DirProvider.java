@@ -21,17 +21,30 @@
 package com.apollocurrency.aplwallet.apl.env;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.UUID;
 
 public interface DirProvider {
 
     boolean isLoadPropertyFileFromUserDir();
 
-    void updateLogFileHandler(Properties loggingProperties);
-
-    String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst);
+    default String getDbDir(String dbRelativeDir, UUID chainId, boolean chainIdFirst) {
+        String chainIdDir = chainId == null ? "" : String.valueOf(chainId);
+        Path dbDirRelativePath = Paths.get(dbRelativeDir);
+        Path userHomeDirPath = Paths.get(getUserHomeDir());
+        Path dbPath;
+        if (chainIdFirst) {
+            dbPath = userHomeDirPath
+                    .resolve(chainIdDir)
+                    .resolve(dbDirRelativePath);
+        } else {
+            dbPath = userHomeDirPath
+                    .resolve(dbDirRelativePath)
+                    .resolve(chainIdDir);
+        }
+        return dbPath.toString();
+    }
 
     File getLogFileDir();
 
