@@ -36,9 +36,10 @@ import java.util.Arrays;
  * @author alukin@gmail.com
  */
 public class Apollo {
-    
-//TODO: we have some black magic wil logger in core, so....
-    private static Logger log;// = LoggerFactory.getLogger(Apollo.class);
+    //This variable is used in LogDirPropertyDefiner configured in logback.xml
+    public static String logDir=".";
+    //We have dir provider configured in logback.xml so should init log later
+    private static Logger log;
 
     public static RuntimeMode runtimeMode;
     public static DirProvider dirProvider;
@@ -101,37 +102,7 @@ public class Apollo {
 
     public static void shutdown() {
         container.shutdown(); 
-        core.shutdown();
-    }
-
-    private static void redirectSystemStreams(String streamName) {
-        String isStandardRedirect = System.getProperty("apl.redirect.system." + streamName);
-        Path path = null;
-        if (isStandardRedirect != null) {
-            try {
-                path = Files.createTempFile("apl.system." + streamName + ".", ".log");
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        } else {
-            String explicitFileName = System.getProperty("apl.system." + streamName);
-            if (explicitFileName != null) {
-                path = Paths.get(explicitFileName);
-            }
-        }
-        if (path != null) {
-            try {
-                PrintStream stream = new PrintStream(Files.newOutputStream(path));
-                if (streamName.equals("out")) {
-                    System.setOut(new PrintStream(stream));
-                } else {
-                    System.setErr(new PrintStream(stream));
-                }
-            } catch (IOException e) {
-                // e.printStackTrace();
-            }
-        }
+        AplCoreRuntime.getInstance().shutdown();
     }
 
     /**
@@ -139,9 +110,8 @@ public class Apollo {
      */
     public static void main(String[] argv) {
 
-
-                  
-//        System.out.println("Initializing " + Constants.APPLICATION + " server version " + Constants.VERSION);
+        System.out.println("Initializing Apollo");
+        Apollo app = new Apollo();
         
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
@@ -162,16 +132,13 @@ public class Apollo {
         }
 
         dirProvider = RuntimeEnvironment.getDirProvider();
+        
+//load configuration files        
         propertiesLoader = new PropertiesLoader(dirProvider);
         propertiesLoader.init();
-
-        Apollo app = new Apollo();
-        container = AplContainer.builder().containerId("MAIN-APL-CDI")
-                .recursiveScanPackages(AplCore.class)
-                .recursiveScanPackages(PropertiesHolder.class)
-                .annotatedDiscoveryMode().build();        
-        app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        app.propertiesHolder.init(propertiesLoader.getProperties());
+//init logging        
+        logDir = dirProvider.getLogFileDir().getAbsolutePath();
+        log = LoggerFactory.getLogger(Apollo.class);
         
 //TODO: remove this plumb, descktop UI should be separated and should not use Core directly but via API            
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
@@ -180,13 +147,19 @@ public class Apollo {
             runtimeMode = RuntimeEnvironment.getRuntimeMode();
         }
         runtimeMode.init();
+        //inti CDI container
+        container = AplContainer.builder().containerId("MAIN-APL-CDI")
+                .recursiveScanPackages(AplCore.class)
+                .recursiveScanPackages(PropertiesHolder.class)
+                .annotatedDiscoveryMode().build();        
+        app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        app.propertiesHolder.init(propertiesLoader.getProperties());
+
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
-            app.initCore();
-            log = LoggerFactory.getLogger(Apollo.class);
-//           redirectSystemStreams("out");
-//            redirectSystemStreams("err");
+
             app.initAppStatusMsg();
+            app.initCore();
             app.launchDesktopApplication();
             app.initUpdater();
 

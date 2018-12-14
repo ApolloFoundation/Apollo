@@ -14,10 +14,9 @@
  *
  */
 
-/*
+ /*
  * Copyright © 2018 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.util.env;
 
 import java.lang.reflect.InvocationTargetException;
@@ -31,13 +30,14 @@ public class RuntimeEnvironment {
     private static final String osname = System.getProperty("os.name").toLowerCase();
     private static final boolean isHeadless;
     protected static final boolean hasJavaFX;
+
     static {
         boolean b;
         try {
             // Load by reflection to prevent exception in case java.awt does not exist
             Class graphicsEnvironmentClass = Class.forName("java.awt.GraphicsEnvironment");
             Method isHeadlessMethod = graphicsEnvironmentClass.getMethod("isHeadless");
-            b = (Boolean)isHeadlessMethod.invoke(null);
+            b = (Boolean) isHeadlessMethod.invoke(null);
         } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             b = true;
         }
@@ -80,35 +80,24 @@ public class RuntimeEnvironment {
             return new CommandLineMode();
         }
     }
-  
+
     public static boolean isDesktopEnabled() {
         return "desktop".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && !isHeadless();
     }
-    
+
     public static boolean isDesktopApplicationEnabled() {
         return isDesktopEnabled() && hasJavaFX;
     }
-    
+
     public static DirProvider getDirProvider() {
-        String dirProvider = System.getProperty(DIRPROVIDER_ARG);
-        if (dirProvider != null) {
-            try {
-                return (DirProvider)Class.forName(dirProvider).newInstance();
-            } catch (ReflectiveOperationException e) {
-                System.out.println("Failed to instantiate dirProvider " + dirProvider);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+        if (isWindowsRuntime()) {
+            return new WindowsUserDirProvider();
         }
-        if (isDesktopEnabled()) {
-            if (isWindowsRuntime()) {
-                return new WindowsUserDirProvider();
-            }
-            if (isUnixRuntime()) {
-                return new UnixUserDirProvider();
-            }
-            if (isMacRuntime()) {
-                return new MacUserDirProvider();
-            }
+        if (isUnixRuntime()) {
+            return new UnixUserDirProvider();
+        }
+        if (isMacRuntime()) {
+            return new MacUserDirProvider();
         }
         return new DefaultDirProvider();
     }

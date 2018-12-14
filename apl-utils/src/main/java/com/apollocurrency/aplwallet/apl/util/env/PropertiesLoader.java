@@ -11,11 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
-import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
+
 
 /**
- * Loads properties from different places
+ * Loads properties from different places.
+ * Please do not use logger here, it is not ready yet.
  * @author alukin@gmail.com
  */
 public class PropertiesLoader {
@@ -30,8 +30,7 @@ public class PropertiesLoader {
     private final String configDir = DEFAULT_CONFIG_DIR;    
     
 
-       private DirProvider dirProvider;
-       private static final Logger LOG = getLogger(PropertiesLoader.class);   
+       private DirProvider dirProvider;  
        private Properties properties = new Properties();
        private final Properties defaultProperties = new Properties();
        private  Properties customProperties;
@@ -124,13 +123,13 @@ public class PropertiesLoader {
                 if ((propertyValue = System.getProperty(propertyName)) != null) {
                     Object oldPropertyValue = properties.setProperty(propertyName, propertyValue);
                     if (oldPropertyValue == null) {
-                        LOG.info("System property set: {} -{}", propertyName, propertyValue);
+                        System.out.printf("System property set: {} -{}", propertyName, propertyValue);
                     } else {
-                        LOG.warn("Replace property {} - {} by new system property: {}", propertyName, oldPropertyValue, propertyValue);
+                        System.out.printf("Replace property {} - {} by new system property: {}", propertyName, oldPropertyValue, propertyValue);
                     }
                 }
                 else {
-                    LOG.debug("System property {} not defined", propertyName);
+                    System.out.printf("System property {} not defined", propertyName);
                 }
         });
     }

@@ -8,22 +8,16 @@ import java.io.File;
 import java.nio.file.Paths;
 
 import ch.qos.logback.core.PropertyDefinerBase;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 
 public class LogDirPropertyDefiner extends PropertyDefinerBase {
-    private String logDirectory;
-
+  
     @Override
     public String getPropertyValue() {
-        File logDir = AplCoreRuntime.getInstance().getLogDir();
-        if (logDir != null) {
-            return logDir.toPath().resolve(logDirectory).toString();
+        if (Apollo.logDir != null) {
+            File log = new File(Apollo.logDir);            
+            return log.getAbsolutePath().toString();
         }
-        return Paths.get("").resolve("logs").resolve(logDirectory).toAbsolutePath().toString();
-    }
-
-    public void setLogDirectory(String logDirectory) {
-        this.logDirectory = logDirectory;
+        return Paths.get("").resolve("logs").toAbsolutePath().toString();
     }
 }
 
