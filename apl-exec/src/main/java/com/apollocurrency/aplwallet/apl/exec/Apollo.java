@@ -48,7 +48,7 @@ public class Apollo {
     private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
 
     private static PropertiesLoader propertiesLoader;
-    private static PropertiesHolder propertiesHolder;
+    private PropertiesHolder propertiesHolder;
     
     private void initCore() {
                 propertiesLoader.loadSystemProperties(
@@ -169,8 +169,8 @@ public class Apollo {
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
                 .annotatedDiscoveryMode().build();        
-        propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        propertiesHolder.init(propertiesLoader.getProperties());
+        app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        app.propertiesHolder.init(propertiesLoader.getProperties());
         
 //TODO: remove this plumb, descktop UI should be separated and should not use Core directly but via API            
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
