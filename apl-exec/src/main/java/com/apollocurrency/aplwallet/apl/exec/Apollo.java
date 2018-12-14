@@ -36,7 +36,8 @@ import java.util.Arrays;
  * @author alukin@gmail.com
  */
 public class Apollo {
-
+    
+//TODO: we have some black magic wil logger in core, so....
     private static Logger log;// = LoggerFactory.getLogger(Apollo.class);
 
     public static RuntimeMode runtimeMode;
