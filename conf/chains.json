@@ -148,22 +148,6 @@
             "adaptiveBlockTime": 60
           }
         }
-      },
-      {
-        "height": 422180,
-        "maxNumberOfTransactions": 255,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 5,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 10000000000,
-        "consensus":
-        {
-          "type": "POS",
-          "adaptiveForgingSettings":
-          {
-            "enabled": "false"
-          }
-        }
       }
     ]
   },
@@ -176,7 +160,8 @@
       "163.172.146.173",
       "51.15.69.39",
       "51.15.59.37",
-      "51.15.114.68"
+      "51.15.114.68",
+      "51.15.140.80"
     ],
     "wellKnownPeers": [],
     "blacklistedPeers": [],
