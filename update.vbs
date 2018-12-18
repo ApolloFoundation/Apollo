@@ -20,6 +20,7 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	Dim oShell
 	Set oShell = WScript.CreateObject ("WScript.Shell")
 	oShell.Run "taskkill /f /im ""java.exe""", , True
+        oShell.Run "del /s /f /q " & chr(34) & Wscript.Arguments(0) & "\jre" & chr(34)
         WScript.Echo "Copy update files"
 
     Set fso = CreateObject("Scripting.FileSystemObject")

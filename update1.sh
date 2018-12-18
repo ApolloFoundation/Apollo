@@ -14,12 +14,23 @@ then
 	sleep $NEXT_WAIT_TIME
 	echo "Waiting more time to stop wallet..."
     done
+    
+    unamestr=`uname`
+    
+    if [[ "$unamestr" == 'Darwin' ]]; then
+	rm -rf $1/ApolloWallet.app/jre
+    fi
 
+    if [[ "$unamestr" == 'Linux' ]]; then
+	rm -rf $1/ApolloWallet/jre
+    fi
+    
     echo Copy update files
     cp -vRa $2/* $1
     
 
-    unamestr=`uname`
+
+    
     if [[ "$unamestr" == 'Darwin' ]]; then
 	mv "$1/ApolloWallet+Secure Transport.app" $1/../
 	mv "$1/ApolloWallet+Tor.app" $1/../
