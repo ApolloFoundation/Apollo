@@ -45,12 +45,12 @@ public final class GetForging extends APIServlet.APIRequestHandler {
     }
 
     private GetForging() {
-        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey", "passphrase", "account");
+        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
     }
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long id = ParameterParser.getAccountId(req, "account", false);
+        long id = ParameterParser.getAccountId(req, vaultAccountName(), false);
         byte[] publicKey = ParameterParser.getPublicKey(req, null, id, false);
         int elapsedTime = Apl.getEpochTime() - Apl.getBlockchain().getLastBlock().getTimestamp();
         if (publicKey != null) {
@@ -73,6 +73,7 @@ public final class GetForging extends APIServlet.APIRequestHandler {
         }
     }
 
+
     @Override
     protected boolean allowRequiredBlockParameters() {
         return false;
@@ -83,4 +84,8 @@ public final class GetForging extends APIServlet.APIRequestHandler {
         return true;
     }
 
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
 }
