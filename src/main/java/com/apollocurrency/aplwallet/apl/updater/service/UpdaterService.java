@@ -4,12 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import com.apollocurrency.aplwallet.apl.Transaction;
-import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+
+import com.apollocurrency.aplwallet.apl.Transaction;
+import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 
 public interface UpdaterService {
     String extractUrl(byte[] encryptedUrlBytes, Pattern urlPattern);
@@ -36,4 +37,5 @@ public interface UpdaterService {
 
     void clearAndSave(UpdateTransaction transaction);
 
+    DownloadInfo getDownloadInfo();
 }

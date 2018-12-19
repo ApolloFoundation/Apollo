@@ -609,7 +609,7 @@ public final class JSONData {
         json.put("downloadedVolume", peer.getDownloadedVolume());
         json.put("uploadedVolume", peer.getUploadedVolume());
         json.put("application", peer.getApplication());
-        json.put("version", peer.getVersion().toString());
+        json.put("version", peer.getVersion());
         json.put("platform", peer.getPlatform());
         if (peer.getApiPort() != 0) {
             json.put("apiPort", peer.getApiPort());

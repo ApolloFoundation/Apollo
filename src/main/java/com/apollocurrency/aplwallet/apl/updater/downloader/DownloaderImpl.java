@@ -6,13 +6,13 @@ package com.apollocurrency.aplwallet.apl.updater.downloader;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
-import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+
+import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
+import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
+import org.slf4j.Logger;
 
 public class DownloaderImpl implements Downloader {
     private static final Logger LOG = getLogger(DownloaderImpl.class);
@@ -32,6 +32,10 @@ public class DownloaderImpl implements Downloader {
     }
     public DownloaderImpl(DownloadInfo downloadInfo, int timeout, int maxAttempts, ConsistencyVerifier consistencyVerifier) {
         this(downloadInfo, timeout, maxAttempts, consistencyVerifier, new DefaultDownloadExecutor("apl-update", "update-package"));
+    }
+
+    public DownloadInfo getDownloadInfo() {
+        return info;
     }
 
     /**

@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.updater.core;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.apollocurrency.aplwallet.apl.Attachment;
 import com.apollocurrency.aplwallet.apl.Level;
 import com.apollocurrency.aplwallet.apl.Transaction;
@@ -24,9 +27,6 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
 
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
@@ -37,7 +37,6 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private UpdateTransactionProcessingListener updateTransactionProcessingListener;
     private Listener<UpdateData> updatePerformingListener;
     private AtomicReference<UpdateInfo> updateInfo;
-
 
     private void setUpdateInfo(UpdateInfo updateInfo) {
         this.updateInfo.getAndSet(updateInfo);
@@ -69,7 +68,8 @@ public class UpdaterCoreImpl implements UpdaterCore {
         this.updateTransactionVerifier = updateTransactionVerifier;
         this.updateTransactionProcessingListener = new UpdateTransactionProcessingListener(updateTransactionVerifier);
         this.updatePerformingListener = new UpdatePerformingListener();
-        this.updateInfo = new AtomicReference<>(new UpdateInfo());
+        UpdateInfo updateInfo = new UpdateInfo();
+        this.updateInfo = new AtomicReference<>(updateInfo);
     }
     
     @Override
@@ -149,6 +149,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
         setUpdateInfo(updater.getUpdateInfo());
+        getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }
