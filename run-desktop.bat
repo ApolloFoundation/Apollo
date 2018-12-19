@@ -57,7 +57,7 @@
 	)
 
 :startJava	
-	"%javaDir%"\bin\java.exe -jar -Xdock:icon=./favicon.ico -Dapl.runtime.mode=desktop Apollo.jar 
+	"%javaDir%"\bin\java.exe -jar -Dapl.runtime.mode=desktop Apollo.jar 
 
 :endProcess 
 	endlocal
