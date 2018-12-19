@@ -18,11 +18,11 @@ then
     unamestr=`uname`
     
     if [[ "$unamestr" == 'Darwin' ]]; then
-	rm -rf $1/ApolloWallet.app/jre
+	rm -rf $1/jre
     fi
 
     if [[ "$unamestr" == 'Linux' ]]; then
-	rm -rf $1/ApolloWallet/jre
+	rm -rf $1/jre
     fi
     
     echo Copy update files
