@@ -249,7 +249,7 @@ public final class Apl {
 
     public static void main(String[] args) {
         try {
-            shutdownHook = new Thread(Apl::shutdown);
+            shutdownHook = new Thread(Apl::shutdown, "ShutdownHookThread");
             Runtime.getRuntime().addShutdownHook(shutdownHook);
             init();
         } catch (Throwable t) {
@@ -285,6 +285,7 @@ public final class Apl {
             try {
                 long startTime = System.currentTimeMillis();
                 AplGlobalObjects.createNtpTime();
+
                 PropertiesLoader propertiesLoader = AplGlobalObjects.getPropertiesLoader();
                 AplGlobalObjects.createChainIdService(propertiesLoader.getStringProperty("apl.chainIdFilePath" , "chains.json"));
                 AplGlobalObjects.createBlockchainConfig(AplGlobalObjects.getChainIdService().getActiveChain(), propertiesLoader, false);
@@ -606,8 +607,6 @@ public final class Apl {
     public static Path get2FADir(String dir2FA) {
         return Paths.get(dirProvider.getUserHomeDir(), dir2FA);
     }
-
-
 
     public static String getUserHomeDir() {
         return dirProvider.getUserHomeDir();

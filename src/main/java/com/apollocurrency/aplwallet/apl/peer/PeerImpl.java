@@ -420,6 +420,7 @@ final class PeerImpl implements Peer {
 
     @Override
     public void remove() {
+        LOG.debug("Remove peer {}", getHost());
         webSocket.close();
         Peers.removePeer(this);
         Peers.notifyListeners(this, Peers.Event.REMOVE);
@@ -680,7 +681,7 @@ final class PeerImpl implements Peer {
                 analyzeHallmark((String) response.get("hallmark"));
                 Object chainIdObject = response.get("chainId");
                 if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(targetChainId)) {
-                    Peers.removePeer(this);
+                    remove();
                     return;
                 }
                 chainId = UUID.fromString(chainIdObject.toString());

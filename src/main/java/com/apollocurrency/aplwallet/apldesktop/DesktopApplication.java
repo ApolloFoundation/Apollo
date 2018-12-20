@@ -63,8 +63,6 @@ import com.apollocurrency.aplwallet.apl.http.API;
 import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
-import com.sun.javafx.scene.web.Debugger;
-import java.io.File;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -242,6 +240,7 @@ public class DesktopApplication extends Application {
     
     @Override
     public void start(Stage primaryStage) {
+        Thread.currentThread().setName("JavaFXApplicationThread");
         mainStage = primaryStage;
         screenStage = new Stage();
         showSplashScreen();
@@ -316,7 +315,7 @@ public class DesktopApplication extends Application {
                 Platform.runLater(() -> screenStage.hide());
                 shutdown.set(false);
             };
-            Thread updateSplashScreenThread = new Thread(statusUpdater, "Update splash screen status thread");
+            Thread updateSplashScreenThread = new Thread(statusUpdater, "SplashScreenStatusUpdateThread");
             updateSplashScreenThread.setDaemon(true);
             updateSplashScreenThread.start();
         }

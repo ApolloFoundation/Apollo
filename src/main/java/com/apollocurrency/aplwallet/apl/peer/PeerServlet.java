@@ -240,9 +240,6 @@ public final class PeerServlet extends WebSocketServlet {
         } else {
             peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
-            if (chainIdProtected()) {
-
-            }
         }
         //
         // Return the response

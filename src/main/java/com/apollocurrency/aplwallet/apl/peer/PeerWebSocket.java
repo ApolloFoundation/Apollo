@@ -93,7 +93,7 @@ public class PeerWebSocket {
     /** Thread pool for server request processing */
     private static final ExecutorService threadPool = new QueuedThreadPool(
                 Runtime.getRuntime().availableProcessors(),
-                Runtime.getRuntime().availableProcessors() * 4, "Peers websocket");
+                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocket");
 
     /** WebSocket session */
     private volatile Session session;

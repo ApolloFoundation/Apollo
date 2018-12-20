@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.db.DbIterator;
@@ -84,7 +85,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final BlockchainImpl blockchain = BlockchainImpl.getInstance();
 
-    private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
+    private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessorNetworkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
     private final boolean trimDerivedTables = Apl.getBooleanProperty("apl.trimDerivedTables");
     private final int defaultNumberOfForkConfirmations = Apl.getIntProperty(AplGlobalObjects.getChainConfig().isTestnet()
@@ -172,6 +173,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     return;
                 }
+
                 peerHasMore = true;
                 final Peer peer = Peers.getWeightedPeer(connectedPublicPeers);
                 if (peer == null) {
@@ -962,7 +964,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
         blockListeners.addListener(block -> Db.getDb().analyzeTables(), Event.RESCAN_END);
 
-        ThreadPool.runBeforeStart("Blockchain init", () -> {
+        ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
             addGenesisBlock();
             if (Apl.getBooleanProperty("apl.forceScan")) {
@@ -988,7 +990,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }, false);
 
         if (!Constants.isLightClient && !Constants.isOffline) {
-            ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 1);
+            ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 250, TimeUnit.MILLISECONDS);
         }
 
     }
@@ -1094,7 +1096,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void processPeerBlock(JSONObject request) throws AplException {
-        blockchain.writeLock();
+        blockchain.updateLock();
         try {
             BlockImpl lastBlock = blockchain.getLastBlock();
             long peerBlockPreviousBlockId = Convert.parseUnsignedLong((String) request.get("previousBlock"));
@@ -1140,7 +1142,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             }// else ignore the block
         }
         finally {
-            blockchain.writeUnlock();
+            blockchain.updateUnlock();
         }
     }
 
@@ -1641,7 +1643,6 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private int getBlockVersion(int previousBlockHeight) {
-
         return 3;
     }
 

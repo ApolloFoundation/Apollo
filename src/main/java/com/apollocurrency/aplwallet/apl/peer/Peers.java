@@ -156,8 +156,8 @@ public final class Peers {
 
     static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
-    static final ExecutorService peersService = new QueuedThreadPool(2, 15, "Peers service");
-    private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("Peers sending service"));
+    static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
+    private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
 
     static {
 
@@ -358,7 +358,7 @@ public final class Peers {
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
 
         if (!Constants.isOffline) {
-            ThreadPool.runBeforeStart("Peer loader", new Runnable() {
+            ThreadPool.runBeforeStart("PeerLoader", new Runnable() {
 
                 private final Set<PeerDb.Entry> entries = new HashSet<>();
 
@@ -397,7 +397,7 @@ public final class Peers {
             }, false);
         }
 
-        ThreadPool.runAfterStart("Unresolved peers analyzer",() -> {
+        ThreadPool.runAfterStart("UnresolvedPeersAnalyzer",() -> {
             for (Future<String> unresolvedPeer : unresolvedPeers) {
                 try {
                     String badAddress = unresolvedPeer.get(5, TimeUnit.SECONDS);
@@ -459,7 +459,7 @@ public final class Peers {
 
                 peerServer.setHandler(ctxHandler);
                 peerServer.setStopAtShutdown(true);
-                ThreadPool.runBeforeStart("Peers UPnP ports init", () -> {
+                ThreadPool.runBeforeStart("PeersUPnPInit", () -> {
                     try {
                         if (enablePeerUPnP) {
                             Connector[] peerConnectors = peerServer.getConnectors();
@@ -1082,7 +1082,6 @@ public final class Peers {
             UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
             for (final Peer peer : peers.values()) {
                 if (!chainId.equals(peer.getChainId())) {
-                    Peers.removePeer(peer);
                     continue;
                 }
                 if (Peers.enableHallmarkProtection && peer.getWeight() < Peers.pushThreshold) {

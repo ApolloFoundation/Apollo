@@ -4,10 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
-import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,8 +13,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.updater.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterMediator;
+import org.slf4j.Logger;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
     private static final Logger LOG = getLogger(AbstractPlatformDependentUpdater.class);
@@ -53,7 +53,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             }
             updaterMediator.shutdownApplication();
 
-        }, "Updater Apollo shutdown thread").start();
+        }, "UpdaterShutdown").start();
     }
 
     abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException;
@@ -63,16 +63,15 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             LOG.debug("Waiting apl shutdown...");
             while (!updaterMediator.isShutdown()) {
                 try {
-                    LOG.trace("WAITING...");
                     TimeUnit.MILLISECONDS.sleep(100);
                 }
                 catch (InterruptedException e) {
                     LOG.debug(e.toString(), e);
                 }
             }
-            LOG.debug("Apl was shutdown");
+            LOG.debug("Application was shutdown");
             runScript(updateDirectory);
-        }, "Platform dependent update thread");
+        }, "PlatformDependentUpdateThread");
         scriptRunner.start();
     }
 

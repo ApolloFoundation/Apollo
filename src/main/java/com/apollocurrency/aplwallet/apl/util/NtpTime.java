@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.Constants;
-import java.io.IOException;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
@@ -20,8 +20,8 @@ public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
     private static volatile long timeOffset = 0;
-    private static final int REFRESH_FREQUENCY = 60;
-            
+    private static final int DEFAULT_REFRESH_FREQUENCY = 60;
+    private static final Runnable timeUpdateTask = () -> { setTimeDrift(); };
     private static void setTimeDrift() {
         NTPUDPClient client = new NTPUDPClient();
 
@@ -53,11 +53,18 @@ public class NtpTime {
         return System.currentTimeMillis() + timeOffset;
     }
 
-    public NtpTime() {
-        setTimeDrift();
-        Runnable timeUpdate = () -> { setTimeDrift(); };
-        ThreadPool.scheduleThread("NTP Update", timeUpdate, REFRESH_FREQUENCY, TimeUnit.SECONDS);                        
+    private final int refreshFrequency;
+    private final TimeUnit timeUnit;
+    public NtpTime(int refreshFrequency, TimeUnit timeUnit) {
+        this.refreshFrequency = refreshFrequency;
+        this.timeUnit = timeUnit;
     }
-    
-            
+
+    public void start() {
+        ThreadPool.scheduleThread("NTPUpdate", timeUpdateTask, refreshFrequency, timeUnit);
+    }
+
+    public NtpTime() {
+        this(DEFAULT_REFRESH_FREQUENCY, TimeUnit.SECONDS);
+    }
 }

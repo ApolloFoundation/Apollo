@@ -20,17 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.Apl;
-import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.Apl;
+import com.apollocurrency.aplwallet.apl.ThreadFactoryImpl;
+import org.slf4j.Logger;
 
 public final class ThreadPool {
     private static final Logger LOG = getLogger(ThreadPool.class);
@@ -85,7 +89,7 @@ public final class ThreadPool {
         lastBeforeStartJobs = null;
 
         LOG.debug("Starting " + backgroundJobs.size() + " background jobs");
-        scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("scheduled background pool"));
+        scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("ScheduledBackgroundPool"));
         for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
             scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, Math.max(entry.getValue() / timeMultiplier, 1), TimeUnit.MILLISECONDS);
         }

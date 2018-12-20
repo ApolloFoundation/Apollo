@@ -119,9 +119,11 @@ public final class API {
 
         while (!Thread.currentThread().isInterrupted()) {
             synchronized (API.class) {
-                byte[] seed = Crypto.getSecureRandom().generateSeed(32);
-                privateKey = Crypto.getPrivateKey(seed);
-                publicKey = Crypto.getPublicKey(seed);
+                byte[] keyBytes = new byte[32];
+                Crypto.getSecureRandom().nextBytes(keyBytes);
+                byte[] keySeed = Crypto.getKeySeed(keyBytes);
+                privateKey = Crypto.getPrivateKey(keySeed);
+                publicKey = Crypto.getPublicKey(keySeed);
             }
             try {
                 TimeUnit.MINUTES.sleep(10);
@@ -183,7 +185,7 @@ public final class API {
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
-            threadPool.setName("API thread pool");
+            threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
             ServerConnector connector;
             boolean enableSSL = Apl.getBooleanProperty("apl.apiSSL");
@@ -323,7 +325,7 @@ public final class API {
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
 
-            ThreadPool.runBeforeStart("UPnP ports init", () -> {
+            ThreadPool.runBeforeStart("APIInit", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {

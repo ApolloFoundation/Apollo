@@ -35,7 +35,7 @@ public class AplGlobalObjects {
     private static final String DEFAULT_UPDATER_CORE_NAME = "UpdaterCore";
     private static final String DEFAULT_NTP_TIME_NAME = "NtpTime";
     private static final String DEFAULT_BLOCK_DB_NAME = "BlockDb";
-    private static final String GET_EXEPTION_TEMPLATE = "Unable to get %s. %s is not an instance of %s";
+    private static final String GET_EXCEPTION_TEMPLATE = "Unable to get %s. %s is not an instance of %s";
 
 
     public static void createChainIdService(String chainIdFilePath) {
@@ -76,6 +76,7 @@ public class AplGlobalObjects {
 
     public static void createNtpTime() {
         NtpTime ntpTime = new NtpTime();
+        ntpTime.start();
         save(DEFAULT_NTP_TIME_NAME, new GlobalObject<>(ntpTime, DEFAULT_NTP_TIME_NAME));
     }
     public static void createPropertiesLoader(DirProvider dirProvider, boolean doInit) {
@@ -107,7 +108,7 @@ public class AplGlobalObjects {
         if (clazz.isInstance(realObject)) {
             return clazz.cast(realObject);
         } else {
-            throw new RuntimeException(String.format(GET_EXEPTION_TEMPLATE, name, realObject.getClass(), clazz));
+            throw new RuntimeException(String.format(GET_EXCEPTION_TEMPLATE, name, realObject.getClass(), clazz));
         }
     }
     public static PropertiesLoader getPropertiesLoader() {
