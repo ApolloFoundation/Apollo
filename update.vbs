@@ -20,9 +20,16 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	Dim oShell
 	Set oShell = WScript.CreateObject ("WScript.Shell")
 	oShell.Run "taskkill /f /im ""java.exe""", , True
-        WScript.Echo "Copy update files"
+	WScript.Echo "Waiting 3 sec"
+	WScript.Sleep 3000
+	oShell.Run "taskkill /f /im ""java.exe""", , True
+	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
+	oShell.CurrentDirectory = WScript.Arguments(1)
+	oShell.Run "install_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34), 1, True
 
-    Set fso = CreateObject("Scripting.FileSystemObject")
+	WScript.Echo "Copy update files"
+
+	Set fso = CreateObject("Scripting.FileSystemObject")
 	Set objFolder = fso.GetFolder(WScript.Arguments(1))
 
 	Wscript.Echo objFolder.Path
@@ -43,7 +50,6 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	Set objShell = Wscript.CreateObject("WScript.Shell")
 	objShell.CurrentDirectory = WScript.Arguments(0)
     	objShell.Run "make_transport_shortcut.vbs" & " " & chr(34) & WScript.Arguments(0) & chr(34) & "\.."
- 	objShell.Run chr(34) & WScript.Arguments(0) & "\replace_apl_db.bat" & chr(34)
     if  ("true" = LCase(WScript.Arguments(2))) Then
         WScript.Echo "Start desktop application"
  	objShell.Run chr(34) & WScript.Arguments(0) & "\start-desktop.vbs" & chr(34)

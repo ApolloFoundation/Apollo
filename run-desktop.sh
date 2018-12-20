@@ -4,4 +4,4 @@ if [ -x jre/bin/java ]; then
 else
     JAVA=java
 fi
-${JAVA}  -Dapl.runtime.mode=desktop -cp addons/classes:addons/lib/* -jar Apollo.jar
+${JAVA} -Xdock:icon=./favicon.ico -Dapl.runtime.mode=desktop -cp addons/classes:addons/lib/* -jar Apollo.jar
