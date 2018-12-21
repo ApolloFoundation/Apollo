@@ -23,6 +23,8 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Base32 BASE_32 = new Base32();
     private static final String ISSUER_URL_TEMPLATE = "&issuer=Apollo-%s-%d";
     private static final int SECRET_LENGTH = 32;
+    private static final int UPPER_BOUND_OF_RANDOM_SUFFIX_NUMBER = 1_000_000;
+    private static final String DEFAULT_CHARSET = "UTF-8";
 
     private TwoFactorAuthRepository repository;
     private final Random random;
@@ -70,10 +72,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     private String getQrCodeUrl(String rsAccount, String base32Secret) {
         try {
-            String charset = "UTF-8";
-            String baseUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(URLEncoder.encode(rsAccount, charset), base32Secret);
-            String issuerUrlPart = String.format(ISSUER_URL_TEMPLATE, issuerSuffix, random.nextInt(1_000_000));
-            return baseUrl + URLEncoder.encode(issuerUrlPart, charset);
+            String baseUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(URLEncoder.encode(rsAccount, DEFAULT_CHARSET), base32Secret);
+            String issuerUrlPart = String.format(ISSUER_URL_TEMPLATE, issuerSuffix, random.nextInt(UPPER_BOUND_OF_RANDOM_SUFFIX_NUMBER));
+            return baseUrl + URLEncoder.encode(issuerUrlPart, DEFAULT_CHARSET);
         }
         catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e.toString(), e);
