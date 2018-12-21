@@ -64,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.sun.javafx.scene.web.Debugger;
+import com.sun.javafx.webkit.WebConsoleListener;
 import java.io.File;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -391,6 +392,12 @@ public class DesktopApplication extends Application {
             
             webEngine.setUserDataDirectory(Apl.getConfDir());
 
+            WebConsoleListener.setDefaultListener(new WebConsoleListener(){
+                @Override
+                public void messageAdded(WebView webView, String message, int lineNumber, String sourceId) {
+                    LOG.debug("Console: [" + sourceId + ":" + lineNumber + "] " + message);
+                }
+            });
             Worker<Void> loadWorker = webEngine.getLoadWorker();
             loadWorker.stateProperty().addListener(
                     (ov, oldState, newState) -> {
