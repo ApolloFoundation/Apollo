@@ -92,6 +92,9 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
+import org.w3c.dom.Document;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -359,19 +362,33 @@ public class DesktopApplication extends Application {
         public static MainApplication getInstance() {
             return instance;
         }
-           
+        
+        private static WebView browser;
+        private static WebView invisible;
+        
+        private static void enableFirebug(final WebEngine engine) {
+            engine.executeScript("if (!document.getElementById('FirebugLite')){E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');E['setAttribute']('id', 'FirebugLite');E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');E['setAttribute']('FirebugLite', '4');(document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);E = new Image;E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');}"); 
+        }
+        
         public void startDesktopApplication() {
             mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-            WebView browser = new WebView();
+            browser = new WebView();
 
-            WebView invisible = new WebView();
+            invisible = new WebView();
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 1000);
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 1618);
             browser.setMinHeight(height);
             browser.setMinWidth(width);
             webEngine = browser.getEngine();
+            webEngine.documentProperty().addListener(new ChangeListener<Document>() {
+            
+                @Override public void changed(ObservableValue<? extends Document> prop, Document oldDoc, Document newDoc) {
+                   enableFirebug(webEngine);
+                }
+            });
+            
             webEngine.setUserDataDirectory(Apl.getConfDir());
 
             Worker<Void> loadWorker = webEngine.getLoadWorker();
