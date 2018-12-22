@@ -20,9 +20,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.security.GeneralSecurityException;
-import java.util.Random;
-
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.util.Convert;
@@ -35,6 +32,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import util.TwoFactorAuthUtil;
 
+import java.security.GeneralSecurityException;
+import java.util.Random;
+
 @RunWith(MockitoJUnitRunner.class)
 public class TwoFactorAuthServiceTest {
     @Mock
@@ -43,7 +43,7 @@ public class TwoFactorAuthServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        service = new TwoFactorAuthServiceImpl(repository);
+        service = new TwoFactorAuthServiceImpl(repository, "test");
     }
 
     @Test

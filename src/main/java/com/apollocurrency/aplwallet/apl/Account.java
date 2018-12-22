@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.db.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.http.ParameterParser;
@@ -305,7 +306,8 @@ public final class Account {
                                     Apl.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
                                     Apl.getStringProperty("apl.dir2FA", "2fa")
                     )) :
-                    new TwoFactorAuthRepositoryImpl(Db.getDb()));
+                    new TwoFactorAuthRepositoryImpl(Db.getDb()),
+            Apl.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.isDesktopApplicationEnabled() ? "desktop" : "web"));
 
     static {
 

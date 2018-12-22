@@ -26,7 +26,7 @@ import java.util.Random;
 
 public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
-    private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository);
+    private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
     @Test
     public void testEnable() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT3.getId());
