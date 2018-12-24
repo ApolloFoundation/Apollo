@@ -19,8 +19,12 @@ if [[ "$unamestr" == 'Linux' ]]; then
     cd ..
 fi
 
+xdock=''
 
+if [[ "$unamestr" == 'Darwin' ]]; then
+  xdock=-Xdock:icon=./favicon.ico
+fi
 
-${JAVA} -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false -jar Apollo.jar
+${JAVA} $xdock -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false -jar Apollo.jar
 
 
