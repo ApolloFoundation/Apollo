@@ -39,6 +39,7 @@ then
 	mv $1/jdk-11.0.1/Contents/Home $1/jre
 	rm -rf $1/jdk-11.0.1
     fi
+    rm -rf $1/jdk-11.0.1
     
     rm $1/jre.tar.gz
 
