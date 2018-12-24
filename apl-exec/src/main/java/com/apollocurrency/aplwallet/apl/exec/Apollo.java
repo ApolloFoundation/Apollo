@@ -134,8 +134,7 @@ public class Apollo {
         dirProvider = RuntimeEnvironment.getDirProvider();
         
 //load configuration files        
-        propertiesLoader = new PropertiesLoader(dirProvider);
-        propertiesLoader.init();
+        propertiesLoader = new PropertiesLoader(dirProvider, args.isResourceIgnored(), args.configDir);
 //init logging        
         logDir = dirProvider.getLogFileDir().getAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);

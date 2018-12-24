@@ -27,31 +27,28 @@ public class PropertiesLoader {
     private final String defaultPropertiesFileName = DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME;
     private final String propertiesFileName= DEFAULT_APL_PROPERTIES_FILE_NAME;
     private final String installerPropertiesFileName=DEFAULT_APL_INSTALLER_PROPERTIES_FILE_NAME;
-    private final String configDir = DEFAULT_CONFIG_DIR;    
     
+    private String configDir = "";    
+    private boolean ignoreResources=false;
 
-       private DirProvider dirProvider;  
-       private Properties properties = new Properties();
-       private final Properties defaultProperties = new Properties();
-       private  Properties customProperties;
+       private final DirProvider dirProvider;  
+       private final Properties properties = new Properties();
 
-    public PropertiesLoader(DirProvider dirProvider) {
+    public PropertiesLoader(DirProvider dirProvider, boolean ignoreResources, String configDir) {
         this.dirProvider = dirProvider;
+        this.configDir = configDir;
+        this.ignoreResources = ignoreResources;
         init();
     }
 
-    public void init() {
-        loadProperties(defaultProperties, defaultPropertiesFileName, true, dirProvider, configDir);
-        properties.putAll(defaultProperties);
-        loadProperties(properties, installerPropertiesFileName, true, dirProvider, configDir);
-        loadProperties(properties, propertiesFileName, false, dirProvider, configDir);
-        if (customProperties != null && !customProperties.isEmpty()) {
-            properties.putAll(customProperties);
-        }
+    private void init() {
+        loadProperties(defaultPropertiesFileName, dirProvider, configDir);
+        loadProperties(installerPropertiesFileName, dirProvider, configDir);
+        loadProperties(propertiesFileName, dirProvider, configDir);
     }
  
 
-    protected Properties loadProperties(Properties properties, String propertiesFile, boolean isDefault, DirProvider dirProvider, String configDir) {
+    protected Properties loadProperties(String propertiesFile, DirProvider dirProvider, String configDir) {
         try {
             // Load properties from location specified as command line parameter
             String configFile = System.getProperty(propertiesFile);
@@ -70,9 +67,6 @@ public class PropertiesLoader {
                     if (is != null) {
                         System.out.printf("Loading %s from classpath\n", propertiesFile);
                         properties.load(is);
-                        if (isDefault) {
-                            return properties;
-                        }
                     }
                     // load non-default properties files from the user folder
                     if (!dirProvider.isLoadPropertyFileFromUserDir()) {

@@ -19,7 +19,7 @@ public class CmdLineArgs {
     public boolean ingnoreResources = false;
     @Parameter(names = {"--resources-path","-r"}, description = "Load all resources from specified path. Sytem resources ignored.")
     public String resourcesPath="";
-    @Parameter(names = {"--config-dir","-c"}, description = "Load all configuration and resources from specified path. Sytem resources not ignored.")
+    @Parameter(names = {"--config-dir","-c"}, description = "Load all configuration and resources from specified path. Sytem resources not ignored, standard config search is ignored.")
     public String configDir="";
     @Parameter(names = {"--log-dir","-l"}, description = "Save log files to from specified directory.")
     public String logDir="";
@@ -27,5 +27,8 @@ public class CmdLineArgs {
     public String dbDir="";
     @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile="";
-     
+   
+    public boolean isResourceIgnored(){
+        return !resourcesPath.isEmpty() || ingnoreResources;
+    }
 }
