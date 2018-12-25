@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -91,6 +92,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import java.io.File;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopApplication extends Application {
@@ -354,7 +356,7 @@ public class DesktopApplication extends Application {
             browser.setMinHeight(height);
             browser.setMinWidth(width);
             webEngine = browser.getEngine();
-            webEngine.setUserDataDirectory(AplCoreRuntime.getInstance().getConfDir());
+            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getDirProvider().getUserConfigDirectory()));
 
             Worker<Void> loadWorker = webEngine.getLoadWorker();
             loadWorker.stateProperty().addListener((ov, oldState, newState) -> {

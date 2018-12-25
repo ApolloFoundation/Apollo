@@ -61,11 +61,6 @@ public class DefaultDirProvider implements DirProvider {
     }
 
     @Override
-    public File getConfDir() {
-        return new File(getUserHomeDir(), "conf");
-    }
-
-    @Override
     public String getUserHomeDir() {
         return System.getProperty("user.home");
         //return Paths.get(".").toAbsolutePath().getParent().toString();
@@ -81,4 +76,14 @@ public class DefaultDirProvider implements DirProvider {
     public File getKeystoreDir(String keystoreDir) {
         return new File(getUserHomeDir(), keystoreDir);
     }    
+
+    @Override
+    public String getSysConfigDirectory() {
+        return "/etc/apollo";
+    }
+
+    @Override
+    public String getUserConfigDirectory() {
+        return getUserHomeDir()+"/.apollo";
+    }
  }

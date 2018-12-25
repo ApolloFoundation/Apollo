@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.util.env;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -40,14 +39,6 @@ public interface DirProvider {
     public File getLogFileDir();
     
     /**
-     * Directory for configuration files. Default configuration for all
-     * platforms is in jar file resources. User or system administrator
-     * provided configuration overrides default configuration values.
-     * @return File denoting path to configuration files deirectory
-     */
-    public File getConfDir();
-    
-    /**
      * Directory where keys are stored
      * @param keystoreDir relative path from default key store directory
      * @return File denoting path to key store directory
@@ -64,7 +55,15 @@ public interface DirProvider {
     * Path to directory where main executable jar file is placed
     * @return File denoting path to directory with main executable jar
     */
-    public default File getBinDirectory() {
-        return Paths.get("").toFile();
-    }
+    public File getBinDirectory();
+    /**
+     * Path to system config directory, depends on OS
+     * @return Path to system config directory
+     */
+    public String getSysConfigDirectory();
+    /**
+     * Path to user's config directory, depends on OS
+     * @return Path to user's config directory
+     */
+    public String getUserConfigDirectory();
 }

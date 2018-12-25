@@ -95,13 +95,6 @@ public class AplCoreRuntime {
         return dirProvider.getUserHomeDir();
     }
 
-    public  File getConfDir() {
-        return dirProvider.getConfDir();
-    }
-  
-    public File getLogDir() {
-        return dirProvider.getLogFileDir();
-    }
     public RuntimeMode getRuntimeMode(){
         return runtimeMode;
     }

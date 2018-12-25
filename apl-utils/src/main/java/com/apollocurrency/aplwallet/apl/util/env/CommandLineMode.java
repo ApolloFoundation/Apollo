@@ -35,7 +35,9 @@ public class CommandLineMode implements RuntimeMode {
     }
 
     @Override
-    public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {}
+    public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {
+        LOG.info("Server ststus: {}",status.getMessage());
+    }
 
 
     @Override

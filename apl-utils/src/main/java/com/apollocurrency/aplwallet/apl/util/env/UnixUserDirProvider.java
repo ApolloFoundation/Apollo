@@ -20,16 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import java.nio.file.Paths;
-
 public class UnixUserDirProvider extends DefaultDirProvider {
-//TODO: 
-    private static final String APL_USER_HOME = Paths.get(System.getProperty("user.home"), "."+"apollo").toString();
-// + Apl.APPLICATION.toLowerCase()).toString();
-
-    @Override
-    public String getUserHomeDir() {
-        return APL_USER_HOME;
-    }
 
 }

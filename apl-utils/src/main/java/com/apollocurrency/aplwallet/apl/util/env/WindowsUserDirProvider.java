@@ -28,7 +28,7 @@ public class WindowsUserDirProvider extends DefaultDirProvider {
 
     private static final String APL_USER_HOME = Paths.get(System.getProperty("user.home"), "AppData", "Roaming", "APOLLO").toString();
             //Apl.APPLICATION.toUpperCase()).toString();
-
+//TODO: User's home should be user's home, and nothing else
     @Override
     public String getUserHomeDir() {
         return APL_USER_HOME;

@@ -270,7 +270,7 @@ public final class AplCore {
             catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 AppStatus.getInstance().alert(e.getMessage() + "\n" +
-                        "See additional information in " + AplCoreRuntime.getInstance().getLogDir() + System.getProperty("file.separator") + "apl.log");
+                        "See additional information in log files");
                 System.exit(1);
             }
         }
