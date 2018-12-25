@@ -150,7 +150,7 @@
         }
       },
       {
-        "height": 449000,
+        "height": 448999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
