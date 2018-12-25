@@ -20,6 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-public class UnixUserDirProvider extends DefaultDirProvider {
+public class UnixUserDirProvider extends DirProvider {
+
+    public UnixUserDirProvider(boolean isServiceMode) {
+        super(isServiceMode);
+    }
 
 }

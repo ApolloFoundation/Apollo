@@ -27,8 +27,8 @@ import java.net.URI;
 import org.slf4j.LoggerFactory;
 
 
-public class CommandLineMode implements RuntimeMode {
-    private static Logger LOG = LoggerFactory.getLogger(CommandLineMode.class);
+public class UserMode implements RuntimeMode {
+    private static Logger LOG = LoggerFactory.getLogger(UserMode.class);
 
     @Override
     public void init() {

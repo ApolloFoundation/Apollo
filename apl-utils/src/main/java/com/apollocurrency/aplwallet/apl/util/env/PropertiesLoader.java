@@ -35,7 +35,9 @@ public class PropertiesLoader {
 
     public PropertiesLoader(DirProvider dirProvider, boolean ignoreResources, String configDir) {
         this.dirProvider = dirProvider;
-        this.configDir = configDir;
+        if(configDir!=null){
+          this.configDir = configDir;
+        }
         this.ignoreResources = ignoreResources;
         init();
     }
@@ -55,7 +57,7 @@ public class PropertiesLoader {
         } else {
             d.mkdirs();
             for (String n : propFileNames) {
-                String fn = DEFAULT_CONFIG_DIR + n;
+                String fn = DEFAULT_CONFIG_DIR +"/"+ n;
                 try (InputStream is = ClassLoader.getSystemResourceAsStream(fn)) {
                     FileOutputStream os = new FileOutputStream(destDir + "/" + n);
                     byte[] buf = new byte[4096];
@@ -64,7 +66,7 @@ public class PropertiesLoader {
                         os.write(buf, 0, sz);
                     }
                     os.close();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     System.err.println("Can not find resource: " + fn);
                 }
             }
@@ -75,7 +77,7 @@ public class PropertiesLoader {
 
         Properties p = new Properties();
         for (String n : propFileNames) {
-            String fn = DEFAULT_CONFIG_DIR + n;
+            String fn = DEFAULT_CONFIG_DIR +"/"+ n;
             try (InputStream is = ClassLoader.getSystemResourceAsStream(fn)) {
                 p.clear();
                 p.load(is);
@@ -102,8 +104,7 @@ public class PropertiesLoader {
                     Properties prop = new Properties();
                     prop.load(is);
                     properties.putAll(prop);
-                } catch (FileNotFoundException ex) {
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                 }
             }
         }

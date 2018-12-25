@@ -23,6 +23,10 @@ package com.apollocurrency.aplwallet.apl.util.env;
 import java.util.Properties;
 
 public class MacUserDirProvider extends UnixUserDirProvider {
+
+    public MacUserDirProvider(boolean isServiceMode) {
+        super(isServiceMode);
+    }
     @Override
     public void updateLogFileHandler(Properties loggingProperties) {
         super.updateLogFileHandler(loggingProperties);

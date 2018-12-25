@@ -34,6 +34,10 @@ public class AplCoreRuntime {
     private  RuntimeMode runtimeMode;
     private  DirProvider dirProvider;
     
+    private static class AplCoreRuntimeHolder {
+        private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
+    } 
+    
     private AplCoreRuntime() {
     }
     
@@ -54,9 +58,8 @@ public class AplCoreRuntime {
         runtimeMode.setServerStatus(status, wallet, dirProvider.getLogFileDir());
     }
     
-    private static class AplCoreRuntimeHolder {
-        private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
-    }
+
+    
     public void shutdown(){
         for(AplCore c: cores){
             c.shutdown();
@@ -83,16 +86,15 @@ public class AplCoreRuntime {
     }
 
     public  Path get2FADir(String dir2FA) {
-        return Paths.get(dirProvider.getUserHomeDir(), dir2FA);
+        return Paths.get(dirProvider.getAppHomeDir(), dir2FA);
     }
-
 
     public void updateLogFileHandler(Properties loggingProperties) {
         dirProvider.updateLogFileHandler(loggingProperties);
     }
 
     public String getUserHomeDir() {
-        return dirProvider.getUserHomeDir();
+        return dirProvider.getAppHomeDir();
     }
 
     public RuntimeMode getRuntimeMode(){

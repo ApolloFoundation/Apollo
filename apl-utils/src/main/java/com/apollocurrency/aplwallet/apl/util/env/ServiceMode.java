@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-public class WindowsServiceMode extends CommandLineMode implements RuntimeMode {
+public class ServiceMode extends UserMode implements RuntimeMode {
 
     @Override
     public void shutdown() {

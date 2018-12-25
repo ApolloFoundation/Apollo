@@ -19,8 +19,10 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env;
 
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.prefs.Preferences;
 
 public class RuntimeEnvironment {
 
@@ -30,6 +32,7 @@ public class RuntimeEnvironment {
     private static final String osname = System.getProperty("os.name").toLowerCase();
     private static final boolean isHeadless;
     protected static final boolean hasJavaFX;
+    private static boolean isServiceMode = false;
 
     static {
         boolean b;
@@ -50,34 +53,53 @@ public class RuntimeEnvironment {
             b = false;
         }
         hasJavaFX = b;
+        isServiceMode = isServiceMode();
     }
 
-    private static boolean isWindowsRuntime() {
+    public static boolean isWindowsRuntime() {
         return osname.startsWith("windows");
     }
 
-    private static boolean isUnixRuntime() {
+    public static boolean isUnixRuntime() {
         return osname.contains("nux") || osname.contains("nix") || osname.contains("aix") || osname.contains("bsd") || osname.contains("sunos");
     }
 
-    private static boolean isMacRuntime() {
+    public static boolean isMacRuntime() {
         return osname.contains("mac");
     }
 
-    private static boolean isWindowsService() {
-        return "service".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && isWindowsRuntime();
+    public static boolean isServiceMode() {
+        return "service".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG));
     }
 
-    private static boolean isHeadless() {
+    public static boolean isHeadless() {
         return isHeadless;
+    }
+
+    public static boolean isAdmin() {
+        Preferences prefs = Preferences.systemRoot();
+        PrintStream systemErr = System.err;
+        synchronized (systemErr) {    // better synchroize to avoid problems with other threads that access System.err
+            System.setErr(null);
+            try {
+                prefs.put("foo", "bar"); // SecurityException on Windows
+                prefs.remove("foo");
+                prefs.flush(); // BackingStoreException on Linux
+                return true;
+            } catch (Exception e) {
+                return false;
+            } finally {
+                System.setErr(systemErr);
+            }
+        }
     }
 
     public static RuntimeMode getRuntimeMode() {
         System.out.println("isHeadless=" + isHeadless());
-        if (isWindowsService()) {
-            return new WindowsServiceMode();
+        if (isServiceMode()) {
+            return new ServiceMode();
         } else {
-            return new CommandLineMode();
+            return new UserMode();
         }
     }
 
@@ -91,15 +113,15 @@ public class RuntimeEnvironment {
 
     public static DirProvider getDirProvider() {
         if (isWindowsRuntime()) {
-            return new WindowsUserDirProvider();
+            return new WindowsUserDirProvider(isServiceMode);
         }
         if (isUnixRuntime()) {
-            return new UnixUserDirProvider();
+            return new UnixUserDirProvider(isServiceMode);
         }
         if (isMacRuntime()) {
-            return new MacUserDirProvider();
+            return new MacUserDirProvider(isServiceMode);
         }
-        return new DefaultDirProvider();
+        return new DirProvider(isServiceMode);
     }
 
 }
