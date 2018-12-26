@@ -82,7 +82,7 @@ public class HeightMonitor {
     public void start() {
         try {
             client.start();
-            executor.scheduleWithFixedDelay(this::doBlockCompare,0, delay, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(this::doBlockCompare, 0, delay, TimeUnit.SECONDS);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
@@ -123,36 +123,24 @@ public class HeightMonitor {
         for (MaxBlocksDiffCounter maxBlocksDiffCounter : maxBlocksDiffCounters) {
             maxBlocksDiffCounter.update(currentMaxBlocksDiff);
         }
-        try {
-            TimeUnit.SECONDS.sleep(30);
-        }
-        catch (InterruptedException e) {
-            logger.error("Thread sleep was unexpectedly interrupted");
-        }
     }
 
     private Map<String, List<Block>> getPeersBlocks() {
         List<String> peersUrls = peerIps.stream().map(peer -> "http://" + peer + ":6876/apl").collect(Collectors.toList());
         Map<String, List<Block>> peerBlocks = new HashMap<>();
         for (int i = 0; i < peersUrls.size(); i++) {
-            try {
-                List<Block> blocksList = getBlocksList(peersUrls.get(i));
-                peerBlocks.put(peerIps.get(i), blocksList);
-            }
-            catch (Throwable e) {
-                logger.info("Error: {} Cannot connect to peer: {}",
-                        e.getMessage(), peerIps.get(i));
-                peerBlocks.put(peerIps.get(i), new ArrayList<>());
-            }
+            List<Block> blocksList = getBlocksList(peersUrls.get(i));
+            peerBlocks.put(peerIps.get(i), blocksList);
         }
         return peerBlocks;
     }
 
     private String getBlocksJson(String peerUrl) throws InterruptedException, ExecutionException, TimeoutException {
         Request request = client.newRequest(peerUrl)
-                .method(HttpMethod.GET).param("requestType", "getBlocks");
+                .method(HttpMethod.GET)
+                .param("requestType", "getBlocks");
         ContentResponse response = request.send();
-        if (response.getStatus() != HttpStatus.OK_200 ) {
+        if (response.getStatus() != HttpStatus.OK_200) {
             return "";
         }
         return response.getContentAsString();
@@ -177,6 +165,95 @@ public class HeightMonitor {
 
     }
 
+
+    private class MaxBlocksDiffCounter {
+        private int period;
+        private int value;
+        private long lastResetTime = System.currentTimeMillis() / (1000 * 60);
+
+        private MaxBlocksDiffCounter(int period) {
+            this.period = period;
+        }
+
+        private void update(int currentBlockDiff) {
+            value = Math.max(value, currentBlockDiff);
+            logger.info("MAX Blocks diff for last {}h is {} blocks", period, value);
+            long currentTime = System.currentTimeMillis() / 1000 / 60;
+            if (currentTime - lastResetTime >= period * 60) {
+                lastResetTime = currentTime;
+                value = currentBlockDiff;
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        List<String> peers = readPeers(args.length > 0 ? args[0] : DEFAULT_PEERS_FILE);
+
+        String logFile =
+                args.length > 1 ? args[1] != null && !args[1].trim().isEmpty() ? args[1] : DEFAULT_LOG_FILE : DEFAULT_LOG_FILE;
+
+        List<Integer> periods = args.length > 2
+                ? args[2] != null && !args[2].trim().isEmpty()
+                ? Arrays.stream(args[2].split(" ")).map(Integer::parseInt).collect(Collectors.toList())
+                : DEFAULT_PERIODS
+                : DEFAULT_PERIODS;
+
+        int delay = args.length > 3 ? args[3] != null && !args[3].trim().isEmpty() ? Integer.parseInt(args[3]) : DEFAULT_DELAY : DEFAULT_DELAY;
+
+        HeightMonitor heightMonitor = new HeightMonitor(peers, logFile, periods, delay);
+        Runtime.getRuntime().addShutdownHook(new Thread(heightMonitor::stop));
+        heightMonitor.start();
+    }
+
+    private static List<String> readPeers(String arg) {
+        try {
+            return Files.readAllLines(Paths.get(arg));
+        }
+        catch (IOException e) {
+            System.out.println("Cannot read file " + arg);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private static Block findLastMutualBlock(List<Block> blocksToCompare, List<Block> targetBlocks) {
+        for (Block block : blocksToCompare) {
+            if (targetBlocks.contains(block)) {
+                return block;
+            }
+        }
+        return null;
+    }
+
+    private static Logger createLoggerFor(Class<?> clazz, String file) {
+        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        PatternLayoutEncoder ple = new PatternLayoutEncoder();
+
+        ple.setPattern("%date %level [%thread] %logger{10} [%file:%line] %msg%n");
+        ple.setContext(lc);
+        ple.start();
+
+        FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
+        fileAppender.setFile(file);
+        fileAppender.setEncoder(ple);
+        fileAppender.setContext(lc);
+        fileAppender.start();
+
+        ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
+        consoleAppender.setEncoder(ple);
+        consoleAppender.setContext(lc);
+        consoleAppender.start();
+
+        Logger jettyLogger = lc.getLogger("org.eclipse.jetty");
+        jettyLogger.setLevel(Level.OFF);
+
+        Logger logger = (Logger) getLogger(clazz);
+        logger.addAppender(fileAppender);
+        logger.addAppender(consoleAppender);
+        logger.setLevel(Level.INFO);
+        logger.setAdditive(false); /* set to true if root should log too */
+
+        return logger;
+    }
 
     private static class Block {
         private long id;
@@ -275,91 +352,5 @@ public class HeightMonitor {
             this.version = version;
             this.generatorId = generatorId;
         }
-    }
-
-    private class MaxBlocksDiffCounter {
-        private int period;
-        private int value;
-        private long lastResetTime = System.currentTimeMillis() / (1000 * 60);
-
-        private MaxBlocksDiffCounter(int period) {
-            this.period = period;
-        }
-
-        private void update(int currentBlockDiff) {
-            value = Math.max(value, currentBlockDiff);
-            logger.info("MAX Blocks diff for last {}h is {} blocks", period, value);
-            long currentTime = System.currentTimeMillis() / 1000 / 60;
-            if (currentTime - lastResetTime >= period * 60) {
-                lastResetTime = currentTime;
-                value = currentBlockDiff;
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        List<String> peers = readPeers(args.length > 0 ? args[0] : DEFAULT_PEERS_FILE);
-
-        String logFile =
-                args.length > 1 ? args[1] != null && !args[1].trim().isEmpty() ? args[1] : DEFAULT_LOG_FILE : DEFAULT_LOG_FILE;
-
-        List<Integer> periods = args.length > 2
-                ? args[2] != null && !args[2].trim().isEmpty()
-                    ? Arrays.stream(args[2].split(" ")).map(Integer::parseInt).collect(Collectors.toList())
-                    : DEFAULT_PERIODS
-                : DEFAULT_PERIODS;
-
-        int delay = args.length > 3 ? args[3] != null && !args[3].trim().isEmpty() ? Integer.parseInt(args[3]) : DEFAULT_DELAY : DEFAULT_DELAY;
-
-        HeightMonitor heightMonitor = new HeightMonitor(peers, logFile, periods, delay);
-        Runtime.getRuntime().addShutdownHook(new Thread(heightMonitor::stop));
-        heightMonitor.start();
-    }
-
-    private static List<String> readPeers(String arg) {
-        try {
-            return Files.readAllLines(Paths.get(arg));
-        }
-        catch (IOException e) {
-            System.out.println("Cannot read file "  + arg);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    private static Block findLastMutualBlock(List<Block> blocksToCompare, List<Block> targetBlocks) {
-        for (Block block : blocksToCompare) {
-            if (targetBlocks.contains(block)) {
-                return block;
-            }
-        }
-        return null;
-    }
-
-    private static Logger createLoggerFor(Class<?> clazz, String file) {
-        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        PatternLayoutEncoder ple = new PatternLayoutEncoder();
-
-        ple.setPattern("%date %level [%thread] %logger{10} [%file:%line] %msg%n");
-        ple.setContext(lc);
-        ple.start();
-        FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
-        fileAppender.setFile(file);
-        fileAppender.setEncoder(ple);
-        fileAppender.setContext(lc);
-        fileAppender.start();
-        ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
-        consoleAppender.setEncoder(ple);
-        consoleAppender.setContext(lc);
-        consoleAppender.start();
-        Logger jettyLogger = lc.getLogger("org.eclipse.jetty");
-        jettyLogger.setLevel(Level.OFF);
-
-        Logger logger = (Logger) getLogger(clazz);
-        logger.addAppender(fileAppender);
-        logger.addAppender(consoleAppender);
-        logger.setLevel(Level.INFO);
-        logger.setAdditive(false); /* set to true if root should log too */
-
-        return logger;
     }
 }
