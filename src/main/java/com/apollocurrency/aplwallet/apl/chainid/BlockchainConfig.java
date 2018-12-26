@@ -76,7 +76,7 @@ public class BlockchainConfig {
         currentConfig = new HeightConfig(chain.getBlockchainProperties().get(0), testnet);
         ConfigChangeListener configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties());
         BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_PUSHED);
+                BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
         BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_POPPED);
         BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
@@ -92,11 +92,16 @@ public class BlockchainConfig {
         }
         updateToHeight(lastBlock.getHeight(), true);
     }
+
+    public void reset() {
+        updateToHeight(0, true);
+    }
     private void updateToHeight(int height, boolean inclusive) {
         Objects.requireNonNull(chain);
 
         HeightConfig latestConfig = getConfigAtHeight(height, inclusive);
         if (currentConfig != null) {
+            LOG.info("Set current config to {}", currentConfig);
             currentConfig = latestConfig;
         } else {
             LOG.error("No configs at all!");
@@ -104,6 +109,7 @@ public class BlockchainConfig {
     }
 
     public void rollback(int height) {
+        LOG.info("Rollback blockchain config to {} height", height);
         updateToHeight(height, true);
     }
 
@@ -132,20 +138,20 @@ public class BlockchainConfig {
         public ConfigChangeListener(Map<Integer, BlockchainProperties> propertiesMap) {
             this.propertiesMap = new ConcurrentHashMap<>(propertiesMap);
             this.targetHeights = Collections.unmodifiableSet(propertiesMap.keySet());
-            String stringConstantsChangeHeights =
+            String stringConfigChangeHeights =
                     targetHeights.stream().map(Object::toString).collect(Collectors.joining(
                             ","));
-            LOG.debug("Constants updates at heights: {}",
-                    stringConstantsChangeHeights.isEmpty() ? "none" : stringConstantsChangeHeights);
+            LOG.debug("Config updates at heights: {}",
+                    stringConfigChangeHeights.isEmpty() ? "none" : stringConfigChangeHeights);
         }
 
         @Override
         public void notify(Block block) {
             int currentHeight = block.getHeight();
             if (targetHeights.contains(currentHeight)) {
-                LOG.info("Updating constants at height {}", currentHeight);
+                LOG.info("Updating chain config at height {}", currentHeight);
                 currentConfig = new HeightConfig(propertiesMap.get(currentHeight), testnet);
-                LOG.info("New constants applied: {}", currentConfig);
+                LOG.info("New chain config applied: {}", currentConfig);
             }
         }
     }

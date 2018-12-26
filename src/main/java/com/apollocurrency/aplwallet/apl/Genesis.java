@@ -89,6 +89,7 @@ public final class Genesis {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
+        AplGlobalObjects.getChainConfig().reset();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         String loadingPublicKeysString = "Loading public keys";
