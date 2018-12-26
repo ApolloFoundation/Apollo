@@ -100,7 +100,7 @@ public class HeightConfig {
     @Override
     public String toString() {
         return "HeightConfig{" +
-                ", blockTime=" + blockTime +
+                "blockTime=" + blockTime +
                 ", initialBaseTarget=" + initialBaseTarget +
                 ", minBlockTimeLimit=" + minBlockTimeLimit +
                 ", maxBlockTimeLimit=" + maxBlockTimeLimit +

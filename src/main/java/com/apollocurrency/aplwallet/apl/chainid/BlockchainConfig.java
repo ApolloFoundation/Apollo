@@ -79,8 +79,6 @@ public class BlockchainConfig {
                 BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
         BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_POPPED);
-        BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_SCANNED);
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
