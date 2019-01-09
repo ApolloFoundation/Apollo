@@ -115,10 +115,11 @@ public final class AplCore {
         // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
         LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppHomeDir());
-        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
-            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
-            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
-        }
+//TODO: Do we really need this check?        
+//        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
+//            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
+//            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
+//        }
         startUp();
     }
 

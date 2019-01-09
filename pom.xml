@@ -99,81 +99,74 @@
         <compile-plugin.version>3.8.0</compile-plugin.version>  
         
     </properties>
-<!-- TODO: add profiles for testnet, release, etc -->    
+    
+<!-- We have following profiles: prod, dev, debug 
+     1. prod: profile for production network with appropriate resources
+     2. dev:  profile for development, contains resources for man testnet    
+         Default profile:  debug
+         Resources for profiles:
+             dev:  resources-dev
+             prod: resources-prod
+             debug: the same as dev but without zip assembly
+-->    
     <profiles>
-        <profile>
-            <id>arm64</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>com/apollocurrency/aplwallet/apldesktop/*</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <!-- The Configuration of the development profile -->
         <profile>
             <id>dev</id>
             <activation>
+                <property>
+                    <name>develop</name>
+                </property>
+            </activation>
+            <properties>
+                <zipExecutionPahse>package</zipExecutionPahse>               
+            </properties>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources-dev</directory>
+                    </resource>
+                </resources>
+            </build>            
+        </profile>
+        <!-- The Configuration of the debug profile -->
+        <profile>
+            <id>debug</id>
+            <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <!--
-                    Specifies the build.profile.id property that must be equal than the name of
-                    the directory that contains the profile specific configuration file.
-                    Because the name of the directory that contains the configuration file of the
-                    development profile is dev, we must set the value of the build.profile.id
-                    property to dev.
-                -->
-                <!--Do not exclude nothing! But this property should be specified for successful build-->
-                <!--<exclude.path>${project.build.testSourceDirectory}</exclude.path>-->
-                <build.profile.id>dev</build.profile.id>
-                <!--
-                    Only unit tests are run when the development profile is active
-                -->
-                <skip.integration.tests>true</skip.integration.tests>
-                <skip.unit.tests>false</skip.unit.tests>
                 <zipExecutionPahse>none</zipExecutionPahse>
-<!--                <zipExecutionPahse>package</zipExecutionPahse>  -->               
             </properties>
-        </profile>
-        <!-- The Configuration of the integration-test profile -->
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources-dev</directory>
+                    </resource>
+                </resources>
+            </build>            
+        </profile>        
+        <!-- The Configuration of the production profile -->
         <profile>
-            <id>integration-test</id>
+            <id>prod</id>
+            <activation>
+                <property>
+                    <name>production</name>
+                </property>
+            </activation>
             <properties>
-                <!--
-                    Specifies the build.profile.id property that must be equal than the name of
-                    the directory that contains the profile specific configuration file.
-                    Because the name of the directory that contains the configuration file of the
-                    integration-test profile is integration-test, we must set the value of the
-                    build.profile.id property to integration-test.
-                -->
-                <build.profile.id>integration-test</build.profile.id>
-                <!--
-                    Only integration tests are run when the integration-test profile is active
-                -->
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>true</skip.unit.tests>
-                <zipExecutionPahse>none</zipExecutionPahse>                
+                <zipExecutionPahse>package</zipExecutionPahse>              
             </properties>
-        </profile>
-        <!--Profile for running all tests-->
-        <profile>
-            <id>test-all</id>
-            <properties>
-                <build.profile.id>test-all</build.profile.id>
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>false</skip.unit.tests>
-                <zipExecutionPahse>none</zipExecutionPahse>                
-            </properties>
-        </profile>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources-prod</directory>
+                    </resource>
+                </resources>
+            </build>            
+        </profile>        
     </profiles>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -516,54 +509,6 @@
                 <version>3.0.6</version>
                 <scope>test</scope>
             </dependency>
-
-            <!-- Plugins management -->
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-jdbc</artifactId>
-                <version>${spring.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-context</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-jcl</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>javax.transaction</groupId>
-                        <artifactId>javax.transaction-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.derby</groupId>
-                        <artifactId>derby</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.derby</groupId>
-                        <artifactId>derbyclient</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.hsqldb</groupId>
-                        <artifactId>hsqldb</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-reflect</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-stdlib</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-stdlib</artifactId>
-                    </exclusion>
-                </exclusions>
-                <scope>test</scope>
-            </dependency>
-
-
             <dependency>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

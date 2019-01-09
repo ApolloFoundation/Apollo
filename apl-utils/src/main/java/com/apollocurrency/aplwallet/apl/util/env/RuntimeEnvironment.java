@@ -75,7 +75,11 @@ public class RuntimeEnvironment {
     public static boolean isHeadless() {
         return isHeadless;
     }
-
+    
+/**
+ * Not very good but working method to get info about user super privileges
+ * @return true if current user has admin/root provilieges
+ */
     public static boolean isAdmin() {
         Preferences prefs = Preferences.systemRoot();
         PrintStream systemErr = System.err;

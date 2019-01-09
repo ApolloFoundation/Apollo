@@ -127,7 +127,10 @@ public class Apollo {
         }
 
         dirProvider = RuntimeEnvironment.getDirProvider();
-        
+
+        if(RuntimeEnvironment.isAdmin()){
+            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
+        }
 //load configuration files        
         propertiesLoader = new PropertiesLoader(dirProvider, args.isResourceIgnored(), args.configDir);
 //init logging        
