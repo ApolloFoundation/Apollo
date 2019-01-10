@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 //TODO: Make this class true constants holder, move all properties-dependent vars out
 public final class Constants {
-    public static final Version VERSION = Version.from("1.24.0");
+    public static final Version VERSION = Version.from("1.26.1");
 
     public static final String APPLICATION = "Apollo";
     // TODO: YL remove static instance later

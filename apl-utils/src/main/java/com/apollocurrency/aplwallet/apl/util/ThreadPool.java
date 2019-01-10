@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.util;
 
 //import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 public final class ThreadPool {
     private static final Logger LOG = getLogger(ThreadPool.class);
@@ -78,7 +78,9 @@ public final class ThreadPool {
             aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
         }
         if (! aplGlobalObjects.getBooleanProperty("apl.disable" + name + "Thread")) {
+        */
             backgroundJobs.put(runnable, timeUnit.toMillis(delay));
+        /*
         } else {
             LOG.info("Will not run " + name + " thread");
         }
