@@ -47,6 +47,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
@@ -101,7 +102,7 @@ final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private volatile BlockchainState blockchainState;
-    private volatile UUID chainId;
+    private AtomicReference<UUID> chainId;
 
     PeerImpl(String host, String announcedAddress) {
         this.host = host;
@@ -222,11 +223,11 @@ final class PeerImpl implements Peer {
 
     @Override
     public UUID getChainId() {
-        return chainId;
+        return chainId.get();
     }
 
     public void setChainId(UUID chainId) {
-        this.chainId = chainId;
+        this.chainId.set(chainId);
     }
 
     @Override
@@ -500,8 +501,8 @@ final class PeerImpl implements Peer {
             return null;
         }
         JSONObject response = null;
-        String log = null;
-        boolean showLog = false;
+        String log = "";
+        boolean showLog = true;
         HttpURLConnection connection = null;
         int communicationLoggingMask = Peers.communicationLoggingMask;
 
@@ -698,7 +699,7 @@ final class PeerImpl implements Peer {
                 setApiServerIdleTimeout(response.get("apiServerIdleTimeout"));
                 setBlockchainState(response.get("blockchainState"));
                 lastUpdated = lastConnectAttempt;
-                Version peerVersion = Version.from((String) response.get("version"));
+                Version peerVersion = new Version((String) response.get("version"));
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("PEER-Connect: version {}", peerVersion);
                 }
@@ -711,7 +712,7 @@ final class PeerImpl implements Peer {
                     Peers.removePeer(this);
                     return;
                 }
-                chainId = UUID.fromString(chainIdObject.toString());
+                chainId.set(UUID.fromString(chainIdObject.toString()));
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     String newAnnouncedAddress = Convert.emptyToNull((String) response.get("announcedAddress"));
                     if (newAnnouncedAddress != null) {

@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import java.util.Objects;
 
 public class Version implements Comparable<Version> {
-    private int majorVersion;
-    private int intermediateVersion;
-    private int minorVersion;
+    private final int majorVersion;
+    private final int intermediateVersion;
+    private final int minorVersion;
 
     public Version(int majorVersion, int intermediateVersion, int minorVersion) {
         this.majorVersion = majorVersion;
@@ -17,11 +17,15 @@ public class Version implements Comparable<Version> {
         this.minorVersion = minorVersion;
     }
 
-    public Version() {
-    }
-
     public Version(String versionString) {
-        parseVersion(this, versionString);
+        Objects.requireNonNull(versionString);
+        if (!versionString.matches("\\d+\\.\\d+\\.\\d+")) {
+            throw new RuntimeException("Incorrect versionString :  " + versionString);
+        }
+        String[] versionNumbers = versionString.split("\\.");
+        majorVersion = (Integer.parseInt(versionNumbers[0]));
+        intermediateVersion = Integer.parseInt(versionNumbers[1]);
+        minorVersion = (Integer.parseInt(versionNumbers[2]));
     }
     @Override
     public String toString() {
@@ -48,40 +52,12 @@ public class Version implements Comparable<Version> {
         return majorVersion;
     }
 
-    public void setMajorVersion(int majorVersion) {
-        this.majorVersion = majorVersion;
-    }
-
     public int getIntermediateVersion() {
         return intermediateVersion;
     }
 
-    public void setIntermediateVersion(int intermediateVersion) {
-        this.intermediateVersion = intermediateVersion;
-    }
-
     public int getMinorVersion() {
         return minorVersion;
-    }
-
-    public void setMinorVersion(int minorVersion) {
-        this.minorVersion = minorVersion;
-    }
-
-    public static Version from(String versionString) {
-        return parseVersion(new Version(), versionString);
-    }
-
-    private static Version parseVersion(Version v, String versionString) {
-        Objects.requireNonNull(versionString);
-        if (!versionString.matches("\\d+\\.\\d+\\.\\d+")) {
-            throw new RuntimeException("Incorrect versionString :  " + versionString);
-        }
-        String[] versionNumbers = versionString.split("\\.");
-        v.setMajorVersion(Integer.parseInt(versionNumbers[0]));
-        v.setIntermediateVersion(Integer.parseInt(versionNumbers[1]));
-        v.setMinorVersion(Integer.parseInt(versionNumbers[2]));
-        return v;
     }
 
     @Override
