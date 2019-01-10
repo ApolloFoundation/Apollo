@@ -171,11 +171,11 @@ final class PeerImpl implements Peer {
     }
 
     @Override
-    public Version getVersion() {
+    public synchronized Version getVersion() {
         return version;
     }
 
-    void setVersion(Version version) {
+    synchronized void setVersion(Version version) {
         boolean versionChanged = version == null || !version.equals(this.version);
         this.version = version;
         isOldVersion = false;
@@ -193,7 +193,7 @@ final class PeerImpl implements Peer {
         }
         if (LOG.isDebugEnabled()) {
 
-            LOG.debug("Peer - {} set version - {}", host, version);
+            LOG.debug("VERSION - Peer - {} set version - {}", host, version);
         }
     }
 
