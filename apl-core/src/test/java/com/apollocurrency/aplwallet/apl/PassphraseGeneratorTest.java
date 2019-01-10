@@ -5,8 +5,7 @@
 package com.apollocurrency.aplwallet.apl;
 
 import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +14,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PassphraseGeneratorTest {
     private static final List<String> dictionary = new ArrayList<>();
@@ -41,10 +43,10 @@ public class PassphraseGeneratorTest {
             Files.write(dictionaryPath, dictionary);
             PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(5, 9, dictionaryPath.toUri().toURL());
             String passphrase = passphraseGenerator.generate();
-            Assert.assertNotNull(passphrase);
+            assertNotNull(passphrase);
             String[] words = passphrase.split(" ");
-            Assert.assertTrue(words.length >= 5);
-            Assert.assertTrue(words.length <= 9);
+            assertTrue(words.length >= 5);
+            assertTrue(words.length <= 9);
             dictionary.containsAll(Arrays.asList(words));
         }
         finally {
@@ -56,10 +58,10 @@ public class PassphraseGeneratorTest {
     public void testGeneratePassphrase() {
         PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(3, 8, dictionary);
         String passphrase = passphraseGenerator.generate();
-        Assert.assertNotNull(passphrase);
+        assertNotNull(passphrase);
         String[] words = passphrase.split(" ");
-        Assert.assertTrue(words.length >= 3);
-        Assert.assertTrue(words.length <= 8);
+        assertTrue(words.length >= 3);
+        assertTrue(words.length <= 8);
         dictionary.containsAll(Arrays.asList(words));
     }
 }

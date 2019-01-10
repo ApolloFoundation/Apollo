@@ -8,9 +8,10 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
-import org.junit.Assert;
 
 import java.security.GeneralSecurityException;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TwoFactorAuthUtil {
     private TwoFactorAuthUtil() {}
@@ -28,8 +29,8 @@ public class TwoFactorAuthUtil {
     }
 
     public static void verifySecretCode(TwoFactorAuthDetails details, String accountRS) {
-        Assert.assertTrue(details.getQrCodeUrl().contains(details.getSecret()));
-        Assert.assertTrue(details.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(accountRS,
+        assertTrue(details.getQrCodeUrl().contains(details.getSecret()));
+        assertTrue(details.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(accountRS,
                 details.getSecret())));
     }
 }

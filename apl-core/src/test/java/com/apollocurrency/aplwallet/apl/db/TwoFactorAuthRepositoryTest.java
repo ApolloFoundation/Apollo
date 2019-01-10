@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.AbstractTwoFactorAuthRepositoryTest;
-import org.junit.AfterClass;
-import org.junit.Before;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 
 
 public class TwoFactorAuthRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {
@@ -28,12 +28,12 @@ static {
         super(new TwoFactorAuthRepositoryImpl(manipulator.getDb()));
     }
 
-    @AfterClass
+    @AfterAll
     public static void shutdown() throws Exception {
         manipulator.shutdown();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         manipulator.populate();
     }

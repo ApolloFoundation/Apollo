@@ -9,8 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.app.LegacyAccountGenerator;
 import com.apollocurrency.aplwallet.apl.core.app.AccountGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LegacyAccountGeneratorTest {
     private AccountGenerator accountGenerator = new LegacyAccountGenerator();
@@ -22,16 +26,16 @@ public class LegacyAccountGeneratorTest {
     public void testGenerateAccount() {
         GeneratedAccount actualAcc = accountGenerator.generate(PASSPHRASE);
         byte[] keySeed = Crypto.getKeySeed(actualAcc.getSecretBytes());
-        Assert.assertArrayEquals(actualAcc.getPrivateKey(), Crypto.getPrivateKey(keySeed));
-        Assert.assertArrayEquals(actualAcc.getPublicKey(), Crypto.getPublicKey(keySeed));
+        assertArrayEquals(actualAcc.getPrivateKey(), Crypto.getPrivateKey(keySeed));
+        assertArrayEquals(actualAcc.getPublicKey(), Crypto.getPublicKey(keySeed));
         byte[] signature = Crypto.sign(MESSAGE.getBytes(), actualAcc.getPrivateKey());
-        Assert.assertTrue(Crypto.verify(signature, MESSAGE.getBytes(), actualAcc.getPublicKey()));
-        Assert.assertEquals(PASSPHRASE, actualAcc.getPassphrase());
-        Assert.assertEquals(actualAcc.getId(), Convert.getId(actualAcc.getPublicKey()));
+        assertTrue(Crypto.verify(signature, MESSAGE.getBytes(), actualAcc.getPublicKey()));
+        assertEquals(PASSPHRASE, actualAcc.getPassphrase());
+        assertEquals(actualAcc.getId(), Convert.getId(actualAcc.getPublicKey()));
     }
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGenerateAccountNullPassphrase() {
-        accountGenerator.generate(null);
+        assertThrows(RuntimeException.class, () -> accountGenerator.generate(null));
     }
 
 }

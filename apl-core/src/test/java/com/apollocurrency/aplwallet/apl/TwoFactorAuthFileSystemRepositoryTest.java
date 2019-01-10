@@ -13,19 +13,20 @@ import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepositor
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+
 import java.nio.file.FileVisitResult;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Predicate;
-import org.junit.After;
-import org.junit.Before;
 
 public class TwoFactorAuthFileSystemRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {
 
     private TwoFactorAuthRepository repository;
     private  Path repositoryPath;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         repositoryPath = Files.createTempDirectory("test2faFSrepository");
         repository = new TwoFactorAuthFileSystemRepository(repositoryPath);
@@ -55,7 +56,7 @@ public class TwoFactorAuthFileSystemRepositoryTest extends AbstractTwoFactorAuth
         });
     }
     
-    @After
+    @AfterEach
     public  void tearDown() throws IOException {
      deleteDir(repositoryPath, (path)-> true);
     }
