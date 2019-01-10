@@ -694,7 +694,11 @@ final class PeerImpl implements Peer {
                 setApiServerIdleTimeout(response.get("apiServerIdleTimeout"));
                 setBlockchainState(response.get("blockchainState"));
                 lastUpdated = lastConnectAttempt;
-                setVersion(Version.from((String) response.get("version")));
+                Version peerVersion = Version.from((String) response.get("version"));
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("PEER-Connect: version {}", peerVersion);
+                }
+                setVersion(peerVersion);
                 setPlatform((String) response.get("platform"));
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));
@@ -750,7 +754,7 @@ final class PeerImpl implements Peer {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                     }
                 } else if (!isBlacklisted()) {
-                    blacklist("Old version: " + version);
+                    blacklist("Old version: " + this.version);
                 }
             } else {
                 //LOG.debug("Failed to connect to peer " + peerAddress);

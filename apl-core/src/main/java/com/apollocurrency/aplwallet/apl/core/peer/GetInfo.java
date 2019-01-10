@@ -106,6 +106,9 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
             LOG.error("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("PEER-GetINFO: version {}", version);
+        }
         peerImpl.setVersion(version);
 
         String platform = (String)request.get("platform");
