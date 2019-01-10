@@ -4,20 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
-import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
-import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
-import org.junit.jupiter.api.Test;
-
-import java.security.GeneralSecurityException;
-import java.util.Random;
-
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
@@ -31,6 +17,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 
+import java.security.GeneralSecurityException;
+import java.util.Random;
+
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
+import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import org.junit.jupiter.api.Test;
+
 public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
     private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
@@ -38,7 +38,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testEnable() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT3.getId());
-        TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.rsAccount(ACCOUNT3.getId()));
+        TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.defaultRsAccount(ACCOUNT3.getId()));
         assertFalse(service.isEnabled(ACCOUNT3.getId()));
     }
 
@@ -51,7 +51,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     @Test
     public void testEnableNotConfirmed() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT2.getId());
-        TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.rsAccount(ACCOUNT2.getId()));
+        TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.defaultRsAccount(ACCOUNT2.getId()));
         assertFalse(service.isEnabled(ACCOUNT2.getId()));
     }
 
@@ -134,7 +134,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     public void testConfirmNotExists() throws GeneralSecurityException {
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
         Status2FA status2FA = service.confirm(ACCOUNT3.getId(), currentCode);
-        assertEquals(Status2FA.NOT_FOUND,status2FA);
+        assertEquals(Status2FA.NOT_ENABLED,status2FA);
         assertFalse(service.isEnabled(ACCOUNT3.getId()));
     }
 }
