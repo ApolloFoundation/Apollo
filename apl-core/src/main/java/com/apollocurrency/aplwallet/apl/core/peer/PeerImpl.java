@@ -479,6 +479,17 @@ final class PeerImpl implements Peer {
 
     @Override
     public JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize, boolean firstConnect) {
+        if (LOG.isTraceEnabled()) {
+            StringWriter out = new StringWriter();
+            String reqAsString = null;
+            try {
+                request.writeJSONString(out);
+                reqAsString = out.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            LOG.trace("SEND() Request = '{}'\n, host='{}', firstConnect='{}'", reqAsString, host, firstConnect);
+        }
         if (!firstConnect && !targetChainId.equals(this.chainId) ) {
             LOG.debug("Unable to send request to peer {} with chainId {}, expected {}",host, this.chainId == null ? "null" : this.chainId, targetChainId);
             connect(targetChainId);
@@ -498,6 +509,7 @@ final class PeerImpl implements Peer {
                 String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
                 LOG.debug("Connecting to '{}'...", wsConnectString);
                 useWebSocket = webSocket.startClient(URI.create(wsConnectString));
+                LOG.trace("Connected '{}'... ? = {}", wsConnectString, useWebSocket);
             }
             //
             // Send the request and process the response
@@ -512,6 +524,7 @@ final class PeerImpl implements Peer {
                 if (communicationLoggingMask != 0)
                     log = "WebSocket " + host + ": " + wsRequest;
                 String wsResponse = webSocket.doPost(wsRequest);
+                LOG.trace("WS Response = '{}'", wsResponse);
                 updateUploadedVolume(wsRequest.length());
                 if (maxResponseSize > 0) {
                     if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
@@ -527,7 +540,9 @@ final class PeerImpl implements Peer {
                 //
                 // Send the request using HTTP
                 //
-                URL url = new URL("http://" + host + ":" + getPort() + "/apl");
+                String urlString = "http://" + host + ":" + getPort() + "/apl";
+                URL url = new URL(urlString);
+                LOG.debug("Connecting to URL = {}...", urlString);
                 if (communicationLoggingMask != 0)
                     log = "\"" + url.toString() + "\": " + JSON.toString(request);
                 connection = (HttpURLConnection) url.openConnection();
@@ -589,6 +604,7 @@ final class PeerImpl implements Peer {
             // Check for an error response
             //
             if (response != null && response.get("error") != null) {
+                LOG.debug("ERROR RESPONSE = {}", response);
                 deactivate();
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error")) && request != Peers.getMyPeerInfoRequest()) {
                     LOG.debug("Sequence error, reconnecting to " + host);
