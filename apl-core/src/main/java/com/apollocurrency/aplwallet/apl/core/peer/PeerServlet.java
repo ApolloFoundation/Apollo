@@ -305,6 +305,9 @@ public final class PeerServlet extends WebSocketServlet {
                 peer.setState(Peer.State.CONNECTED);
             }
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Peer - {} Request was - {}", peer.getHost(), request.get("requestType"));
+                }
                 return SEQUENCE_ERROR;
             }
             if (!peer.isInbound()) {

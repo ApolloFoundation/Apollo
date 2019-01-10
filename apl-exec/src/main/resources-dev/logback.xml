@@ -31,7 +31,7 @@
         </encoder>
     </appender>
     <logger name="com.apollocurrency.aplwallet" level="debug"/>
-<!--    <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
+    <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>
     <!--Uncomment next line to enable trim duration logging-->
     <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
     <logger name="org.eclipse.jetty" level="off" additivity="false"/>
