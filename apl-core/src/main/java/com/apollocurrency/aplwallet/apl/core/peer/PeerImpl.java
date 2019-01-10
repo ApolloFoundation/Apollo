@@ -102,7 +102,7 @@ final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private volatile BlockchainState blockchainState;
-    private AtomicReference<UUID> chainId;
+    private AtomicReference<UUID> chainId = new AtomicReference<>();
 
     PeerImpl(String host, String announcedAddress) {
         this.host = host;
@@ -495,8 +495,9 @@ final class PeerImpl implements Peer {
             }
             LOG.trace("SEND() Request = '{}'\n, host='{}', firstConnect='{}'", reqAsString, host, firstConnect);
         }
-        if (!firstConnect && !targetChainId.equals(this.chainId) ) {
-            LOG.debug("Unable to send request to peer {} with chainId {}, expected {}",host, this.chainId == null ? "null" : this.chainId, targetChainId);
+        if (!firstConnect && !targetChainId.equals(this.chainId.get()) ) {
+            LOG.debug("Unable to send request to peer {} with chainId {}, expected {}",host, this.chainId.get() == null ? "null" : this.chainId.get(),
+                    targetChainId);
             connect(targetChainId);
             return null;
         }
