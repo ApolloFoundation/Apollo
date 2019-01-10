@@ -1,7 +1,7 @@
 <configuration scan="true" scanPeriod="30 seconds">
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
     <!--Memory handler for the GetLog API with a 200-message ring buffer-->
@@ -17,17 +17,17 @@
         </logDirectory>
     </define>
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGDIR}/apl.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>${LOGDIR}/apl-%d{yyyy-MM-dd}_%i.log</fileNamePattern>
-            <!-- each file should be at most 10MB, keep 30 days worth of history, but at most 1GB -->
-            <maxFileSize>10MB</maxFileSize>
+            <fileNamePattern>${LOGDIR}/apl-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
+            <maxFileSize>100MB</maxFileSize>
+            <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
 
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
     <logger name="com.apollocurrency.aplwallet.apl" level="debug" additivity="false"/>

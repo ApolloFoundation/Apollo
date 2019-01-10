@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
@@ -27,9 +23,14 @@ import static org.mockito.Mockito.verify;
 import java.security.GeneralSecurityException;
 import java.util.Random;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,7 +38,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TwoFactorAuthServiceTest {
@@ -47,7 +47,7 @@ public class TwoFactorAuthServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        service = new TwoFactorAuthServiceImpl(repository);
+        service = new TwoFactorAuthServiceImpl(repository, "test");
     }
 
     @Test

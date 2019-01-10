@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,9 +31,10 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -295,14 +292,15 @@ public final class PeerServlet extends WebSocketServlet {
             if (peerRequestHandler == null) {
                 return UNSUPPORTED_REQUEST_TYPE;
             }
-            if (peerRequestHandler.isChainIdProtected()) {
-                UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
-                Object chainIdObject = request.get("chainId");
-                if (chainIdObject == null || !chainId.toString().equals((chainIdObject.toString()))) {
-                    Peers.removePeer(peer);
-                    return INCORRECT_CHAIN_ID;
-                }
-            }
+//            uncomment this to check requests from peers
+            //            if (peerRequestHandler.isChainIdProtected()) {
+//                UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
+//                Object chainIdObject = request.get("chainId");
+//                if (chainIdObject == null || !chainId.toString().equals((chainIdObject.toString()))) {
+//                    Peers.removePeer(peer);
+//                    return INCORRECT_CHAIN_ID;
+//                }
+//            }
             if (peer.getState() == Peer.State.DISCONNECTED) {
                 peer.setState(Peer.State.CONNECTED);
             }

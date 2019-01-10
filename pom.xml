@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.24.0</version>
+    <version>1.26.1</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -13,24 +13,24 @@
         <name>Apollo Foundation</name>
         <url>https://www.apollocurrency.com/</url>
     </organization>
-  
+
     <modules>
         <module>apl-api</module>
         <module>apl-crypto</module>
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
-<!-- 
+<!--
      Tt is a whole mess at the moment. commented out. Please!!! Integration test
      SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
      ant it MUST use REST API only!
--->     
+-->
 <!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
     </modules>
-  
+
     <properties>
         <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -80,7 +80,7 @@
         <spring.version>5.0.7.RELEASE</spring.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
-        <!-- TODO: cleanup -->        
+        <!-- TODO: cleanup -->
         <jetty.version>9.4.12.v20180830</jetty.version>
         <apache-tika.version>1.17</apache-tika.version>
         <bitlet.version>0.1.4</bitlet.version>
@@ -96,19 +96,19 @@
         <jdbi3-sqlobject.version>3.5.1</jdbi3-sqlobject.version>
         <lombok.version>1.18.4</lombok.version>
         <surefire-plugin.version>2.22.1</surefire-plugin.version>
-        <compile-plugin.version>3.8.0</compile-plugin.version>  
-        
+        <compile-plugin.version>3.8.0</compile-plugin.version>
+
     </properties>
-    
-<!-- We have following profiles: prod, dev, debug 
+
+<!-- We have following profiles: prod, dev, debug
      1. prod: profile for production network with appropriate resources
-     2. dev:  profile for development, contains resources for man testnet    
+     2. dev:  profile for development, contains resources for man testnet
          Default profile:  debug
          Resources for profiles:
              dev:  resources-dev
              prod: resources-prod
              debug: the same as dev but without zip assembly
--->    
+-->
     <profiles>
         <!-- The Configuration of the development profile -->
         <profile>
@@ -119,7 +119,7 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPahse>package</zipExecutionPahse>               
+                <zipExecutionPahse>package</zipExecutionPahse>
             </properties>
             <build>
                 <resources>
@@ -127,7 +127,7 @@
                         <directory>src/main/resources-dev</directory>
                     </resource>
                 </resources>
-            </build>            
+            </build>
         </profile>
         <!-- The Configuration of the debug profile -->
         <profile>
@@ -144,8 +144,8 @@
                         <directory>src/main/resources-dev</directory>
                     </resource>
                 </resources>
-            </build>            
-        </profile>        
+            </build>
+        </profile>
         <!-- The Configuration of the production profile -->
         <profile>
             <id>prod</id>
@@ -155,7 +155,7 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPahse>package</zipExecutionPahse>              
+                <zipExecutionPahse>package</zipExecutionPahse>
             </properties>
             <build>
                 <resources>
@@ -163,8 +163,8 @@
                         <directory>src/main/resources-prod</directory>
                     </resource>
                 </resources>
-            </build>            
-        </profile>        
+            </build>
+        </profile>
     </profiles>
 
     <dependencyManagement>
@@ -272,7 +272,7 @@
                 <artifactId>jetty-servlets</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
-                
+
             <!-- REST:  Need to put api here because strange things happens without it  -->
             <dependency>
                 <groupId>javax.ws.rs</groupId>
@@ -420,7 +420,7 @@
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${apache-commons-codec.version}</version>
-            </dependency>           
+            </dependency>
             <!--JDBI libs-->
             <dependency>
                 <groupId>com.zaxxer</groupId>
@@ -516,7 +516,7 @@
             </dependency>
 
         </dependencies>
-    </dependencyManagement>            
+    </dependencyManagement>
 
     <build>
         <pluginManagement>
@@ -591,5 +591,5 @@
             </plugin>
         </plugins>
     </build>
-            
+
 </project>

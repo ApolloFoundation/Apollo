@@ -4,11 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
@@ -19,19 +14,24 @@ import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.INVALI
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.MAX_2FA_ATTEMPTS;
 import static org.mockito.Mockito.spy;
 
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
-import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
-import org.junit.Assert;
-import org.junit.Test;
-import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
-
 import java.security.GeneralSecurityException;
 import java.util.Random;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
+import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import org.junit.Assert;
+import org.junit.Test;
+
 public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
     private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
-    private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository);
+    private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
     @Test
     public void testEnable() {
         TwoFactorAuthDetails authDetails = service.enable(ACCOUNT3.getId());

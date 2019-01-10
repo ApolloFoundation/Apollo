@@ -20,8 +20,35 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
+import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.net.ssl.HttpsURLConnection;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -67,34 +94,6 @@ import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.awt.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
-import java.io.File;
-import static org.slf4j.LoggerFactory.getLogger;
-
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
 
@@ -121,7 +120,7 @@ public class DesktopApplication extends Application {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-//TODO:  WTF?        
+//TODO:  WTF?
 //        String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
          String defaultAccount = "";
         if (defaultAccount != null && !defaultAccount.isEmpty() && !defaultAccount.equals("")) {
@@ -223,6 +222,27 @@ public class DesktopApplication extends Application {
             System.exit(0);
         });
     }
+
+    private static void showInfoBox(String message) {
+        Platform.runLater(() -> {
+            Text text = new Text(message);
+            text.setWrappingWidth(330);
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(10, 10, 0, 10));
+            hbox.getChildren().add(text);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setResizable(true);
+            alert.setHeaderText("Message");
+            alert.setWidth(350);
+            alert.setHeight(200);
+            alert.getDialogPane().setContent(hbox);
+            alert.showAndWait();
+
+        });
+    }
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -343,21 +363,37 @@ public class DesktopApplication extends Application {
         public static MainApplication getInstance() {
             return instance;
         }
-           
+
+        private static WebView browser;
+        private static WebView invisible;
+
+        private static void enableFirebug(final WebEngine engine) {
+            //uncomment it to enable firebug
+            //engine.executeScript("if (!document.getElementById('FirebugLite')){E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');E['setAttribute']('id', 'FirebugLite');E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');E['setAttribute']('FirebugLite', '4');(document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);E = new Image;E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');}");
+        }
+
         public void startDesktopApplication() {
             mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-            WebView browser = new WebView();
+            browser = new WebView();
 
-            WebView invisible = new WebView();
+            invisible = new WebView();
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 1000);
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 1618);
             browser.setMinHeight(height);
             browser.setMinWidth(width);
             webEngine = browser.getEngine();
+//            webEngine.documentProperty().addListener((ChangeListener<Document>) (prop, oldDoc, newDoc) -> enableFirebug(webEngine));
+
             webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getDirProvider().getUserConfigDirectory()));
 
+//            WebConsoleListener.setDefaultListener(new WebConsoleListener(){
+//                @Override
+//                public void messageAdded(WebView webView, String message, int lineNumber, String sourceId) {
+//                    LOG.debug("Console: [" + sourceId + ":" + lineNumber + "] " + message);
+//                }
+//            });
             Worker<Void> loadWorker = webEngine.getLoadWorker();
             loadWorker.stateProperty().addListener((ov, oldState, newState) -> {
                         LOG.debug("loadWorker old state " + oldState + " new state " + newState);
@@ -517,7 +553,7 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(String msg) {
-            Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
+           // Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")
@@ -641,6 +677,7 @@ public class DesktopApplication extends Application {
 
         private void downloadFile(byte[] data, String filename) {
             Path folderPath = Paths.get(System.getProperty("user.home"), "downloads");
+            folderPath.toFile().mkdirs();
             Path path = Paths.get(folderPath.toString(), filename);
             LOG.info("Downloading data to " + path.toAbsolutePath());
             try {
@@ -648,6 +685,7 @@ public class DesktopApplication extends Application {
                 outputStream.write(data);
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
+
             }
             catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
@@ -664,11 +702,12 @@ public class DesktopApplication extends Application {
 
         private void growl(String msg, Exception e) {
             if (e == null) {
+                showInfoBox(msg);
                 LOG.info(msg);
             } else {
                 LOG.info(msg, e);
             }
-            ars.call("growl", msg);
+            //ars.call("growl", msg);
         }
 
 

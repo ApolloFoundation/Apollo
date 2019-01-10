@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import org.slf4j.Logger;
-
 import java.io.File;
 import java.net.URI;
+
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
@@ -36,7 +36,7 @@ public class UserMode implements RuntimeMode {
 
     @Override
     public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {
-        LOG.info("Server ststus: {}",status.getMessage());
+        LOG.info("Server status: {}", status.getMessage());
     }
 
 
@@ -64,7 +64,7 @@ public class UserMode implements RuntimeMode {
 
     @Override
     public void updateAppStatus(String newStatus) {
-        LOG.info("Application status:", newStatus);
+        LOG.info("Application status: {}", newStatus);
     }
 
     @Override

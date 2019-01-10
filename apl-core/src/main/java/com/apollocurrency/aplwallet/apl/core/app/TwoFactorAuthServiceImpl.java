@@ -4,13 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
+import java.util.Random;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -20,14 +21,26 @@ import org.slf4j.Logger;
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
-    private static final String ISSUER_URL_PART = "%26issuer%3DApolloWallet";
+    private static final String ISSUER_URL_TEMPLATE = "&issuer=Apollo-%s-%d";
     private static final int SECRET_LENGTH = 32;
+    private static final int UPPER_BOUND_OF_RANDOM_SUFFIX_NUMBER = 1_000_000;
+    private static final String DEFAULT_CHARSET = "UTF-8";
 
     private TwoFactorAuthRepository repository;
+    private final Random random;
+    private final String issuerSuffix;
 
+    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix) {
+        this(repository, issuerSuffix, new Random());
+    }
 
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository) {
+    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random) {
+        if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
+            throw new IllegalArgumentException("issuerSuffix cannot be null or empty");
+        }
         this.repository = repository;
+        this.random = random;
+        this.issuerSuffix = issuerSuffix.trim();
     }
 
     @Override
@@ -59,8 +72,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     private String getQrCodeUrl(String rsAccount, String base32Secret) {
         try {
-            String baseUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(URLEncoder.encode(rsAccount, "UTF-8"), base32Secret);
-            return baseUrl + ISSUER_URL_PART;
+            String baseUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(URLEncoder.encode(rsAccount, DEFAULT_CHARSET), base32Secret);
+            String issuerUrlPart = String.format(ISSUER_URL_TEMPLATE, issuerSuffix, random.nextInt(UPPER_BOUND_OF_RANDOM_SUFFIX_NUMBER));
+            return baseUrl + URLEncoder.encode(issuerUrlPart, DEFAULT_CHARSET);
         }
         catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e.toString(), e);

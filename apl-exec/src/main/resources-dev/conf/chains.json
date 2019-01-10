@@ -150,7 +150,7 @@
         }
       },
       {
-        "height": 449000,
+        "height": 448999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
@@ -162,6 +162,23 @@
           "adaptiveForgingSettings":
           {
             "enabled": "false"
+          }
+        }
+      },
+      {
+        "height": 1024000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
           }
         }
       }
@@ -214,6 +231,23 @@
           {
             "enabled": "true",
             "adaptiveBlockTime": 60
+          }
+        }
+       },
+       {
+        "height": 42300,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
           }
         }
        }
