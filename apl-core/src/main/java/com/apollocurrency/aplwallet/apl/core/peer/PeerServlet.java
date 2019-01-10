@@ -306,7 +306,9 @@ public final class PeerServlet extends WebSocketServlet {
             }
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Peer - {} Request was - {}", peer.getHost(), request.get("requestType"));
+                    LOG.debug("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
+                    LOG.debug("Peer List =[{}], dumping...", Peers.getAllPeers().size());
+                    Peers.getAllPeers().stream().forEach(peerHost -> LOG.debug("{}", peerHost));
                 }
                 return SEQUENCE_ERROR;
             }
