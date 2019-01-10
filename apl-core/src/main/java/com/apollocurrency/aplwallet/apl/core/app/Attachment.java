@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -29,13 +28,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Platform;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -3629,7 +3629,7 @@ public interface Attachment extends Appendix {
                 byte[] secondUrlPart = new byte[secondUrlPartLength];
                 buffer.get(secondUrlPart);
                 url = new DoubleByteArrayTuple(firstUrlPart, secondUrlPart);
-                version = Version.from(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
+                version = new Version(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_VERSION_LENGTH).trim());
                 int hashLength = buffer.getShort();
                 hash = new byte[hashLength];
                 buffer.get(hash);
@@ -3646,7 +3646,7 @@ public interface Attachment extends Appendix {
             byte[] firstUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("first")).trim()));
             byte[] secondUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("second")).trim()));
             url = new DoubleByteArrayTuple(firstUrlPart, secondUrlPart);
-            version = Version.from(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
+            version = new Version(Convert.nullToEmpty((String) attachmentData.get("version")).trim());
             hash = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("hash")).trim());
         }
 

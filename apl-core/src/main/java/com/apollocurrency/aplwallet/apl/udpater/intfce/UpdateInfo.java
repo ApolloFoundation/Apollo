@@ -125,7 +125,7 @@ public class UpdateInfo implements Cloneable{
             throw new RuntimeException(e.toString(), e);
         }
         if (this.version != null) {
-            clone.setVersion(Version.from(version.toString()));
+            clone.setVersion(new Version(version.toString()));
         }
         DownloadInfo downloadInfo = new DownloadInfo();
         downloadInfo.setDownloadState(this.downloadInfo.getDownloadState());

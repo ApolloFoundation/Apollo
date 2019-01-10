@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Platform;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -18,17 +12,28 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,11 +42,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
 @RunWith(MockitoJUnitRunner.class)
 public class UpdaterCoreTest {
 
@@ -49,7 +49,7 @@ public class UpdaterCoreTest {
             Platform.current(),
             Architecture.current(),
             new DoubleByteArrayTuple(new byte[0], new byte[0]),
-            Version.from("1.0.8"),
+            new Version("1.0.8"),
             new byte[0],
             (byte) 0);
     @Mock
@@ -147,7 +147,7 @@ public class UpdaterCoreTest {
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
-        when(updaterMediatorInstance.getWalletVersion()).thenReturn(Version.from("1.0.7"));
+        when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
         spy.init();
 
@@ -168,7 +168,7 @@ public class UpdaterCoreTest {
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
-        when(updaterMediatorInstance.getWalletVersion()).thenReturn(Version.from("1.0.7"));
+        when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
         spy.init();
 

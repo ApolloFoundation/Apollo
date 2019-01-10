@@ -4,25 +4,25 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
-import com.apollocurrency.aplwallet.apl.util.Platform;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
+import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ public class UpdaterDbTest {
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(TransactionType.Update.IMPORTANT, transaction.getType());
         Assert.assertEquals(104595, transaction.getHeight());
-        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), Version.from("1.0.8"));
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
         Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), (
@@ -61,7 +61,7 @@ public class UpdaterDbTest {
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(TransactionType.Update.CRITICAL, transaction.getType());
         Assert.assertEquals(104671, transaction.getHeight());
-        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), Version.from("1.0.8"));
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.AMD64);
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
         Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), ("a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));

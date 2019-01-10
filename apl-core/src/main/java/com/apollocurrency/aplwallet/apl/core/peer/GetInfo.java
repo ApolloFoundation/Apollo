@@ -100,7 +100,7 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
 
         Version version = null;
         try {
-            version = Version.from((String)request.get("version"));
+            version = new Version((String)request.get("version"));
         }
         catch (Exception e) {
             LOG.error("Cannot parse version.", e);

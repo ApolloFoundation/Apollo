@@ -3,18 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
 
 public final class SendUpdateTransaction extends CreateTransaction {
 
@@ -38,7 +38,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
         Platform platform = Platform.valueOf(Convert.nullToEmpty(req.getParameter("platform")).trim());
         byte[] urlFirstPart = ParameterParser.getBytes(req, "urlFirstPart", true);
         byte[] urlSecondPart = ParameterParser.getBytes(req, "urlSecondPart", true);
-        Version version = Version.from(Convert.nullToEmpty(req.getParameter("version")).trim());
+        Version version = new Version(Convert.nullToEmpty(req.getParameter("version")).trim());
         byte[] hash = ParameterParser.getBytes(req, "hash", true);
         byte level = ParameterParser.getByte(req, "level", (byte)0, Byte.MAX_VALUE, true);
         if (urlFirstPart.length != Constants.UPDATE_URL_PART_LENGTH) {
