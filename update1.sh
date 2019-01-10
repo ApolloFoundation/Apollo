@@ -20,19 +20,19 @@ if  [ -d $1 ] && [ -d $2 ] && [ -n $3 ]
 then
     
     notify "Starting Apollo Updater"
-#    notify "Stopping Apollo Wallet"
+    notify "Stopping Apollo Wallet"
 
     NEXT_WAIT_TIME=0
     
     until [ $(ps aux | grep Apollo.jar | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
-#	notify "Waiting more time to stop wallet..."
+	notify "Waiting more time to stop Apollo Wallet..."
     done
     
 
     
-#    notify "Copying update files...."
+    notify "Copying update files...."
     cp -vRa $2/* $1
     
     
@@ -54,7 +54,7 @@ then
 
 # Install JRE
 #    notify "Installing Java Runtime..."
-    bash ./update2.sh $1
+#    bash ./update2.sh $1
 
     if [[ "$unamestr" == 'Darwin' ]]; then
 	chmod 755 $1/jre/bin/* $1/jre/lib/lib*
@@ -75,10 +75,10 @@ then
     
     if [ $3 == true ]
     then
-#        notify "Starting desktop application..."
+        notify "Starting desktop application..."
         ./start-desktop.sh
     else
-#        notify "Starting command line application..."
+        notify "Starting command line application..."
         ./start.sh
     fi
 
