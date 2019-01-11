@@ -6,17 +6,18 @@ package com.apollocurrency.aplwallet.apl.updater.repository;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
-import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.slf4j.Logger;
-
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
+import org.slf4j.Logger;
 
 public class UpdaterDbRepository implements UpdaterRepository {
     private static final Logger LOG = getLogger(UpdaterDbRepository.class);
@@ -27,6 +28,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
     private UpdaterMediator updaterMediator;
     private ConnectionProvider connectionProvider;
 
+    @Inject
     public UpdaterDbRepository(UpdaterMediator updaterMediator) {
         this.updaterMediator = updaterMediator;
         this.connectionProvider = updaterMediator.getConnectionProvider();

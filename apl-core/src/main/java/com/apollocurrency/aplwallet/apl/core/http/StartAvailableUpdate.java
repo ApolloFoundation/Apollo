@@ -3,10 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -27,9 +28,10 @@ public final class StartAvailableUpdate extends APIServlet.APIRequestHandler {
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject object = new JSONObject();
-        boolean started = AplGlobalObjects.getUpdaterCore().startAvailableUpdate();
+        UpdaterCore updaterCore = CDI.current().select(UpdaterCore.class).get();
+        boolean started = updaterCore.startAvailableUpdate();
         object.put("updateStarted", started);
-        object.put("updateInfo", AplGlobalObjects.getUpdaterCore().getUpdateInfo().json());
+        object.put("updateInfo", updaterCore.getUpdateInfo().json());
         return object;
     }
 

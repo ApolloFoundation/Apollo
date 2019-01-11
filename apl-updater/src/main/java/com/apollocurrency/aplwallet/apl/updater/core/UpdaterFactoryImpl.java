@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
+import javax.inject.Inject;
+
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
@@ -15,6 +17,7 @@ public class UpdaterFactoryImpl implements UpdaterFactory {
     private UpdaterMediator updaterMediator;
     private UpdaterService updaterService;
 
+    @Inject
     public UpdaterFactoryImpl(UpdaterMediator updaterMediator, UpdaterService updaterService) {
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;

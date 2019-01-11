@@ -1,29 +1,27 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import javax.enterprise.inject.spi.CDI;
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
-import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main Apollo startup class
@@ -67,9 +65,8 @@ public class Apollo {
         if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
-        UpdaterMediator mediator = new UpdaterMediatorImpl();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(mediator);
-        AplGlobalObjects.createUpdaterCore(true, updaterCore);
+        UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
+        updaterCore.init();
     }
 
     private void initAppStatusMsg() {
@@ -104,7 +101,6 @@ public class Apollo {
      * @param argv the command line arguments
      */
     public static void main(String[] argv) {
-
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
         
@@ -133,7 +129,7 @@ public class Apollo {
         }
 //load configuration files        
         propertiesLoader = new PropertiesLoader(dirProvider, args.isResourceIgnored(), args.configDir);
-//init logging        
+//init logging
         logDir = dirProvider.getLogFileDir().getAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
         
@@ -148,13 +144,13 @@ public class Apollo {
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
-                .annotatedDiscoveryMode().build();        
+                .recursiveScanPackages(Updater.class)
+                .annotatedDiscoveryMode().build();
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(propertiesLoader.getProperties());
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
-
             app.initAppStatusMsg();
             app.initCore();
             app.launchDesktopApplication();

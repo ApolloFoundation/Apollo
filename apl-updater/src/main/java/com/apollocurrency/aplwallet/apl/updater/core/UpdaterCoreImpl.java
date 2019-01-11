@@ -4,20 +4,25 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifier;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifierImpl;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
@@ -25,10 +30,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-
+@Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
     private UpdaterService updaterService;
@@ -54,13 +56,16 @@ public class UpdaterCoreImpl implements UpdaterCore {
                 new UpdateTransactionVerifierImpl(updaterMediator, updaterService));
     }
 
+    @Inject
     public UpdaterCoreImpl(UpdaterMediator updaterMediator) {
         this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator);
     }
 
+
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateTransactionVerifier updateTransactionVerifier) {
         this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService), updateTransactionVerifier);
     }
+
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdaterFactory updaterFactory,
                            UpdateTransactionVerifier updateTransactionVerifier) {

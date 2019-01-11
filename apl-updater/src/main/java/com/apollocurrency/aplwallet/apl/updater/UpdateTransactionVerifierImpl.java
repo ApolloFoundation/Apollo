@@ -4,19 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Platform;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
 import java.util.regex.Pattern;
 
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
+import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.slf4j.Logger;
 
 
@@ -36,6 +37,7 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
         this.urlTemplate = urlTemplate;
     }
 
+    @Inject
     public UpdateTransactionVerifierImpl(UpdaterMediator updaterMediator, UpdaterService updaterService) {
         this(DEFAULT_URL_TEMPLATE, updaterMediator, updaterService);
     }
