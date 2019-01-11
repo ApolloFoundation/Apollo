@@ -190,7 +190,7 @@
     "active": true,
     "defaultPeers": [
     ],
-    "wellKnownPeers": ["51.15.250.32"],
+    "wellKnownPeers": ["51.15.250.32", "51.15.253.171"],
     "blacklistedPeers": [],
     "name": "Apollo testnet",
     "description": "Apollo main test chain",
