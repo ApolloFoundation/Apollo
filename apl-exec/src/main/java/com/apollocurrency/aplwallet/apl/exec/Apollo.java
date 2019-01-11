@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
-import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
+//import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import java.util.Arrays;
 
@@ -137,12 +137,12 @@ public class Apollo {
         logDir = dirProvider.getLogFileDir().getAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
         
-//TODO: remove this plumb, descktop UI should be separated and should not use Core directly but via API            
-        if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
-            runtimeMode = new DesktopMode();
-        } else {
+//TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
+//        if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
+//            runtimeMode = new DesktopMode();
+//        } else {
             runtimeMode = RuntimeEnvironment.getRuntimeMode();
-        }
+//        }
         runtimeMode.init();
         //inti CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")

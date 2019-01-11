@@ -63,7 +63,7 @@ public final class AplCore {
 
 //    @Inject
 //    private PropertiesHolder propertiesHolder;
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();  
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 //TODO: Core should not be static anymore!  
     public AplCore() {
     }
@@ -275,7 +275,7 @@ public final class AplCore {
                 System.exit(1);
             }
         }
-        public static void checkPorts() {
+        public void checkPorts() {
             Set<Integer> ports = collectWorkingPorts();
             for (Integer port : ports) {
                 if (!RuntimeParams.isTcpPortAvailable(port)) {
@@ -286,7 +286,7 @@ public final class AplCore {
             }
         }
 
-        static Set<Integer> collectWorkingPorts() {
+        private Set<Integer> collectWorkingPorts() {
             boolean testnet = aplGlobalObjects.getChainConfig().isTestnet();
             final int port = testnet ?  Constants.TESTNET_API_PORT: propertiesHolder.getIntProperty("apl.apiServerPort");
             final int sslPort = testnet ? TESTNET_API_SSLPORT : propertiesHolder.getIntProperty("apl.apiServerSSLPort");
