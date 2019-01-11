@@ -4,21 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 //TODO: This class is mistake in DNA and must be removed completelly
 
@@ -31,7 +28,6 @@ public class AplGlobalObjects {
     private static final Logger LOG = getLogger(AplGlobalObjects.class);
     private static final Map<String, GlobalObject<?>> OBJECTS = new ConcurrentHashMap<>();
     private static final String DEFAULT_INIT_ERROR = "%s was not initialized before accessing";
-    private static final String DEFAULT_CHAINID_SERVICE_NAME = "ChainIdService";
     private static final String DEFAULT_CHAIN_CONFIG_NAME = "BlockchainConfig";
     private static final String DEFAULT_UPDATER_CORE_NAME = "UpdaterCore";
     private static final String DEFAULT_NTP_TIME_NAME = "NtpTime";
@@ -39,11 +35,6 @@ public class AplGlobalObjects {
     private static final String GET_EXEPTION_TEMPLATE = "Unable to get %s. %s is not an instance of %s";
 
     public AplGlobalObjects() { } // for weld
-
-    public static void createChainIdService(String chainIdFilePath) {
-        ChainIdService chainIdService = new ChainIdServiceImpl(chainIdFilePath == null ? "chains.json" : chainIdFilePath);
-        save(DEFAULT_CHAINID_SERVICE_NAME, new GlobalObject<>(chainIdService, DEFAULT_CHAINID_SERVICE_NAME));
-    }
 
     public static void createBlockDb(ConnectionProvider connectionProvider) {
         BlockDb blockDb = new BlockDb(connectionProvider);
@@ -73,11 +64,6 @@ public class AplGlobalObjects {
             updaterCore.init();
         }
         save(DEFAULT_UPDATER_CORE_NAME, new GlobalObject<>(updaterCore, DEFAULT_UPDATER_CORE_NAME));
-    }
-
-    public static void createNtpTime() {
-        NtpTime ntpTime = new NtpTime();
-        save(DEFAULT_NTP_TIME_NAME, new GlobalObject<>(ntpTime, DEFAULT_NTP_TIME_NAME));
     }
 
     public static void createBlockchainConfig(Chain chain, PropertiesHolder loader, boolean doInit) {
@@ -114,9 +100,6 @@ public class AplGlobalObjects {
         return get(BlockchainConfig.class, DEFAULT_CHAIN_CONFIG_NAME);
     }
 
-    public static ChainIdService getChainIdService() {
-        return get(ChainIdService.class, DEFAULT_CHAINID_SERVICE_NAME);
-    }
     public static UpdaterCore getUpdaterCore() {
         return get(UpdaterCore.class, DEFAULT_UPDATER_CORE_NAME);
     }

@@ -20,25 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.AsyncContext;
@@ -59,7 +41,24 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 /**
  * EventListener listens for peer, block, transaction and account ledger events as
@@ -73,7 +72,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
  */
 class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
-        private static final Logger LOG = getLogger(EventListener.class);
+    private static final Logger LOG = getLogger(EventListener.class);
+    private static NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
@@ -98,7 +98,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         eventTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                long oldestTime = NtpTime.getTime() - eventTimeout*1000;
+                long oldestTime = ntpTime.getTime() - eventTimeout*1000;
                 eventListeners.values().forEach(listener -> {
                     if (listener.getTimestamp() < oldestTime) {
                         listener.deactivateListener();
@@ -360,7 +360,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 events = new ArrayList<>();
                 events.addAll(pendingEvents);
                 pendingEvents.clear();
-                timestamp = NtpTime.getTime();
+                timestamp = ntpTime.getTime();
             } else {
                 //
                 // Wait for an event
@@ -370,7 +370,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 context.addListener(this);
                 context.setTimeout(timeout*1000);
                 pendingWaits.add(context);
-                timestamp = NtpTime.getTime();
+                timestamp = ntpTime.getTime();
             }
         } finally {
             lock.unlock();
@@ -395,7 +395,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 }
                 HttpServletResponse resp = (HttpServletResponse)context.getResponse();
                 JSONObject response = EventWait.formatResponse(events);
-                response.put("requestProcessingTime", NtpTime.getTime()-timestamp);
+                response.put("requestProcessingTime", ntpTime.getTime()-timestamp);
                 try (Writer writer = resp.getWriter()) {
                     response.writeJSONString(writer);
                 } catch (IOException exc) {
@@ -404,7 +404,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                 }
                 context.complete();
                 aborted = false;
-                timestamp = NtpTime.getTime();
+                timestamp = ntpTime.getTime();
             }
         } finally {
             lock.unlock();
@@ -441,7 +441,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
         try {
             pendingWaits.remove(context);
             context.complete();
-            timestamp = NtpTime.getTime();
+            timestamp = ntpTime.getTime();
             LOG.debug("Error detected during event wait for "+address, event.getThrowable());
         } finally {
             lock.unlock();
@@ -470,7 +470,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
             pendingWaits.remove(context);
             JSONObject response = new JSONObject();
             response.put("events", new JSONArray());
-            response.put("requestProcessingTime", NtpTime.getTime()-timestamp);
+            response.put("requestProcessingTime", ntpTime.getTime() - timestamp);
             try (Writer writer = context.getResponse().getWriter()) {
                 response.writeJSONString(writer);
             } catch (IOException exc) {
@@ -478,7 +478,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
                                                      address, exc.toString()));
             }
             context.complete();
-            timestamp = NtpTime.getTime();
+            timestamp = ntpTime.getTime();
         } finally {
             lock.unlock();
         }

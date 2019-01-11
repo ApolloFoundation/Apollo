@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -105,8 +106,8 @@ import org.slf4j.Logger;
  *   CREATE TRIGGER trigger_name AFTER INSERT,UPDATE,DELETE ON table_name FOR EACH ROW CALL "com.apollocurrency.aplwallet.apl.db.FullTextTrigger"
  */
 public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
-        private static final Logger LOG = getLogger(FullTextTrigger.class);
-
+    private static final Logger LOG = getLogger(FullTextTrigger.class);
+    private static NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
     /** ARS is active */
     private static volatile boolean isActive = false;
@@ -748,7 +749,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
-            long now = NtpTime.getTime();
+            long now = ntpTime.getTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
             document.add(new TextField("_TABLE", tableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");

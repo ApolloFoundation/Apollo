@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Singleton;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import javax.inject.Singleton;
 import org.slf4j.Logger;
-               
+
 @Singleton
 public class PropertiesHolder {
     
