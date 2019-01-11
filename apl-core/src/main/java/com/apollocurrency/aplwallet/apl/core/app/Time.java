@@ -20,20 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 
 public interface Time {
 
     int getTime();
 
     final class EpochTime implements Time {
+        private NtpTime ntpTime;
+
+        @Inject
+        public EpochTime(NtpTime ntpTime) {
+            this.ntpTime = ntpTime;
+        }
 
         public int getTime() {
-            return Convert2.toEpochTime(NtpTime.getTime());
+            return Convert2.toEpochTime(ntpTime.getTime());
             //return Convert.toEpochTime(System.currentTimeMillis());
         }
 

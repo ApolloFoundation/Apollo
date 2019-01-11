@@ -65,7 +65,7 @@ public class DirProvider {
      * @return Path to application dir inside of user home
      */
     public String getAppHomeDir() {
-        return System.getProperty("user.home")+File.separator+APPLICATION_DIR_NAME;
+        return System.getProperty("user.home") + File.separator + APPLICATION_DIR_NAME;
     }
      /**
      * User home directory on all platforms. It is user home and NEVER nothing else.

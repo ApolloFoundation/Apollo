@@ -21,49 +21,50 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.spi.CDI;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.spi.CDI;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
-import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
-import com.apollocurrency.aplwallet.apl.util.AppStatus;
-import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
     private static ChainIdService chainIdService;
 
-    private static volatile Time time = new Time.EpochTime();
+    private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
 
     private static volatile boolean shutdown = false;
 
 //    @Inject
 //    private PropertiesHolder propertiesHolder;
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();  
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 //TODO: Core should not be static anymore!  
     public AplCore() {
     }
@@ -154,9 +155,11 @@ public final class AplCore {
 //        static {
             try {
                 long startTime = System.currentTimeMillis();
-                AplGlobalObjects.createNtpTime();
-                AplGlobalObjects.createChainIdService(propertiesHolder.getStringProperty("apl.chainIdFilePath" , "chains.json"));
-                AplGlobalObjects.createBlockchainConfig(AplGlobalObjects.getChainIdService().getActiveChain(), propertiesHolder, false);
+                chainIdService = new ChainIdServiceImpl(propertiesHolder.getStringProperty("apl.chainIdFilePath", "chains.json"));
+                AplGlobalObjects.createBlockchainConfig(chainIdService.getActiveChain(), propertiesHolder, false);
+                CDI.current().select(NtpTime.class).get().start();
+
+
 //                AplGlobalObjects.getChainConfig().init();
 //                AplGlobalObjects.getChainConfig().updateToLatestConstants();
 
@@ -176,7 +179,6 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                aplGlobalObjects.createNtpTime();
                 aplGlobalObjects.getChainConfig().init();
                 aplGlobalObjects.getChainConfig().updateToLatestConfig();
                 //TODO: move to application level this UPnP initialization
@@ -275,7 +277,7 @@ public final class AplCore {
                 System.exit(1);
             }
         }
-        public static void checkPorts() {
+        void checkPorts() {
             Set<Integer> ports = collectWorkingPorts();
             for (Integer port : ports) {
                 if (!RuntimeParams.isTcpPortAvailable(port)) {
@@ -286,7 +288,7 @@ public final class AplCore {
             }
         }
 
-        static Set<Integer> collectWorkingPorts() {
+        private Set<Integer> collectWorkingPorts() {
             boolean testnet = aplGlobalObjects.getChainConfig().isTestnet();
             final int port = testnet ?  Constants.TESTNET_API_PORT: propertiesHolder.getIntProperty("apl.apiServerPort");
             final int sslPort = testnet ? TESTNET_API_SSLPORT : propertiesHolder.getIntProperty("apl.apiServerSSLPort");

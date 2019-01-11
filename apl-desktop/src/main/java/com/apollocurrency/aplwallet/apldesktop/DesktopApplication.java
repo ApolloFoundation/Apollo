@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apldesktop;
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
 import java.io.File;
@@ -106,7 +107,6 @@ public class DesktopApplication extends Application {
     private static volatile Stage mainStage;
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-
     //TODO: OL remove all references to this shit
     // private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
@@ -339,6 +339,7 @@ public class DesktopApplication extends Application {
         private volatile long updateTime;
         private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
+        private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
         private MainApplication() {
         }
@@ -544,9 +545,9 @@ public class DesktopApplication extends Application {
                 return;
             }
             unconfirmedTransactionUpdates.addAll(transactions);
-            if (NtpTime.getTime() - updateTime > 3000L) {
+            if (ntpTime.getTime() - updateTime > 3000L) {
                 String msg = transactionEvent.toString() + " ids " + unconfirmedTransactionUpdates.stream().map(Transaction::getStringId).collect(Collectors.joining(","));
-                updateTime = NtpTime.getTime();
+                updateTime = ntpTime.getTime();
                 unconfirmedTransactionUpdates = new ArrayList<>();
                 updateClientState(msg);
             }

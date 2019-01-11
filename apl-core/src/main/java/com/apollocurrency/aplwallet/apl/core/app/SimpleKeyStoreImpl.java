@@ -6,7 +6,8 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
+ import javax.enterprise.inject.spi.CDI;
+ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
+     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
      public SimpleKeyStoreImpl(Path keyStoreDirPath, byte version) {
          if (version < 0) {
@@ -161,7 +163,7 @@ import org.slf4j.Logger;
 
      private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
          byte[] nonce = generateBytes(16);
-         long timestamp = NtpTime.getTime();
+         long timestamp = ntpTime.getTime();
          byte[] key = Crypto.getKeySeed(passphrase, nonce, Convert.longToBytes(timestamp));
          byte[] encryptedSecretBytes = Crypto.aesEncrypt(secretBytes, key);
          return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, version, nonce, timestamp);
