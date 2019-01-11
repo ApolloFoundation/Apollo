@@ -6,13 +6,31 @@
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
     <version>1.26.1</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
     <organization>
         <name>Apollo Foundation</name>
         <url>https://www.apollocurrency.com/</url>
     </organization>
+
+    <modules>
+        <module>apl-api</module>
+        <module>apl-crypto</module>
+        <module>apl-utils</module>
+        <module>apl-core</module>
+        <module>apl-updater</module>
+<!--
+     Tt is a whole mess at the moment. commented out. Please!!! Integration test
+     SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
+     ant it MUST use REST API only!
+-->
+<!--        <module>apl-tests</module> -->
+        <module>apl-tools</module>
+        <module>apl-exec</module>
+        <module>apl-desktop</module>
+    </modules>
+
     <properties>
         <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,8 +43,6 @@
 
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
-        <jetty.version>9.3.22.v20171030</jetty.version>
-        <websocket.version>9.3.22.v20171030</websocket.version>
 
         <!--Crypto-->
         <bcprov.version>1.54</bcprov.version>
@@ -35,15 +51,16 @@
         <zxing.version>3.3.0</zxing.version>
 
         <!--Tools-->
-        <apache-commons-lang.version>3.7</apache-commons-lang.version>
+        <apache-commons-lang.version>3.8.1</apache-commons-lang.version>
         <apache-commons-io.version>1.4</apache-commons-io.version>
         <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <apache-commons-net.version>3.6</apache-commons-net.version>
+
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.13</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.9.3</jackson.version>
-
+        <jackson.version>2.9.6</jackson.version>
+        <tika.version>1.19.1</tika.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -63,701 +80,516 @@
         <spring.version>5.0.7.RELEASE</spring.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
+        <!-- TODO: cleanup -->
+        <jetty.version>9.4.12.v20180830</jetty.version>
+        <apache-tika.version>1.17</apache-tika.version>
+        <bitlet.version>0.1.4</bitlet.version>
+        <weld.version>3.0.5.Final</weld.version>
+        <weld-junit5.version>1.3.1.Final</weld-junit5.version>
+        <rs-api.version>2.1.1</rs-api.version>
+        <resteasy.version>3.6.1.Final</resteasy.version>
+        <swagger.version>1.5.21</swagger.version>
+        <junit-5-bom.version>5.3.1</junit-5-bom.version>
+        <hikari.version>3.2.0</hikari.version>
+        <jcommander.version>1.72</jcommander.version>
+        <jdbi3-core.version>3.5.1</jdbi3-core.version>
+        <jdbi3-sqlobject.version>3.5.1</jdbi3-sqlobject.version>
+        <lombok.version>1.18.4</lombok.version>
+        <surefire-plugin.version>2.22.1</surefire-plugin.version>
+        <compile-plugin.version>3.8.0</compile-plugin.version>
+
     </properties>
+
+<!-- We have following profiles: prod, dev, debug
+     1. prod: profile for production network with appropriate resources
+     2. dev:  profile for development, contains resources for man testnet
+         Default profile:  debug
+         Resources for profiles:
+             dev:  resources-dev
+             prod: resources-prod
+             debug: the same as dev but without zip assembly
+-->
     <profiles>
+        <!-- The Configuration of the development profile -->
         <profile>
-            <id>arm64</id>
+            <id>dev</id>
+            <activation>
+                <property>
+                    <name>develop</name>
+                </property>
+            </activation>
+            <properties>
+                <zipExecutionPahse>package</zipExecutionPahse>
+            </properties>
             <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>com/apollocurrency/aplwallet/apldesktop/*</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources-dev</directory>
+                    </resource>
+                </resources>
             </build>
         </profile>
-            <!-- The Configuration of the development profile -->
-            <profile>
-                <id>dev</id>
-                <activation>
-                    <activeByDefault>true</activeByDefault>
-                </activation>
-                <dependencies>
- <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
-                  <dependency>
-
-   <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-media</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-media</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-media</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${openjfx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-              </dependencies>
-                <properties>
-                    <!--
-                        Specifies the build.profile.id property that must be equal than the name of
-                        the directory that contains the profile specific configuration file.
-                        Because the name of the directory that contains the configuration file of the
-                        development profile is dev, we must set the value of the build.profile.id
-                        property to dev.
-                    -->
-                        <!--Do not exclude nothing! But this property should be specified for successful build-->
-                        <!--<exclude.path>${project.build.testSourceDirectory}</exclude.path>-->
-                    <build.profile.id>dev</build.profile.id>
-                    <!--
-                        Only unit tests are run when the development profile is active
-                    -->
-                    <skip.integration.tests>true</skip.integration.tests>
-                    <skip.unit.tests>false</skip.unit.tests>
-                </properties>
-            </profile>
-            <!-- The Configuration of the integration-test profile -->
-            <profile>
-                <id>integration-test</id>
-                <properties>
-                    <!--
-                        Specifies the build.profile.id property that must be equal than the name of
-                        the directory that contains the profile specific configuration file.
-                        Because the name of the directory that contains the configuration file of the
-                        integration-test profile is integration-test, we must set the value of the
-                        build.profile.id property to integration-test.
-                    -->
-                    <build.profile.id>integration-test</build.profile.id>
-                    <!--
-                        Only integration tests are run when the integration-test profile is active
-                    -->
-                    <skip.integration.tests>false</skip.integration.tests>
-                    <skip.unit.tests>true</skip.unit.tests>
-                </properties>
-            </profile>
-        <!--Profile for running all tests-->
+        <!-- The Configuration of the debug profile -->
         <profile>
-            <id>test-all</id>
+            <id>debug</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
-                <build.profile.id>test-all</build.profile.id>
-                <skip.integration.tests>false</skip.integration.tests>
-                <skip.unit.tests>false</skip.unit.tests>
+                <zipExecutionPahse>none</zipExecutionPahse>
             </properties>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources-dev</directory>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+        <!-- The Configuration of the production profile -->
+        <profile>
+            <id>prod</id>
+            <activation>
+                <property>
+                    <name>production</name>
+                </property>
+            </activation>
+            <properties>
+                <zipExecutionPahse>package</zipExecutionPahse>
+            </properties>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources-prod</directory>
+                    </resource>
+                </resources>
+            </build>
         </profile>
     </profiles>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <!--Logging-->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.log4jdbc</groupId>
+                <artifactId>log4jdbc</artifactId>
+                <version>${log4jdbc.version}</version>
+            </dependency>
 
-    <dependencies>
-        <!--Apache-commons-->
-        <dependency>
-            <groupId>commons-net</groupId>
-            <artifactId>commons-net</artifactId>
-            <version>${apache-commons-net.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${apache-commons-codec.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${apache-commons-lang.version}</version>
-        </dependency>
-        <!--Qr code-->
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>core</artifactId>
-            <version>${zxing.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>${bcprov.version}</version>
-        </dependency>
+            <!-- json-simple should be gone after new REST completion -->
+            <dependency>
+                <groupId>com.googlecode.json-simple</groupId>
+                <artifactId>json-simple</artifactId>
+                <version>${json-simple.version}</version>
+            </dependency>
+            <!-- json-simple should be gone after new REST completion -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-json-org</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
 
+            <!--Lucene libs-->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queries</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queryparser</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analyzers-common</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>javase</artifactId>
-            <version>${zxing.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>${servlet-api.version}</version>
-        </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${servlet-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-proxy</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-client</artifactId>
+                <version>${jetty.version}</version>
+                <classifier>hybrid</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-server</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlets</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
 
-        <!--Jackson-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
+            <!-- REST:  Need to put api here because strange things happens without it  -->
+            <dependency>
+                <groupId>javax.ws.rs</groupId>
+                <artifactId>javax.ws.rs-api</artifactId>
+                <version>${rs-api.version}</version>
+            </dependency>
+            <!-- RESTEasy runtime dependencies -->
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-servlet-initializer</artifactId>
+                <version>${resteasy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jackson-provider</artifactId>
+                <version>${resteasy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jackson2-provider</artifactId>
+                <version>${resteasy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-validator-provider-11</artifactId>
+                <version>${resteasy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-cdi</artifactId>
+                <version>${resteasy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jaxrs</artifactId>
+                <version>${resteasy.version}</version>
+            </dependency>
 
-        <!--2fa api-->
-        <dependency>
-            <groupId>com.j256.two-factor-auth</groupId>
-            <artifactId>two-factor-auth</artifactId>
-            <version>1.0</version>
-        </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>3.2.1.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-annotations</artifactId>
+                <version>2.1.0.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-processor</artifactId>
+                <version>2.1.0.Final</version>
+            </dependency>
 
-        <!--Jetty server-->
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-client</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-continuation</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-http</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-io</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-proxy</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-security</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
+            <!--2fa api-->
+            <dependency>
+                <groupId>com.j256.two-factor-auth</groupId>
+                <artifactId>two-factor-auth</artifactId>
+                <version>1.0</version>
+            </dependency>
 
-        <!--Json simple-->
-        <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>${json-simple.version}</version>
-        </dependency>
+            <!-- Swagger runtime dependencies -->
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-jaxrs</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
 
-        <!--Tests-->
-        <dependency>
-            <groupId>net.javacrumbs.json-unit</groupId>
-            <artifactId>json-unit-core</artifactId>
-            <version>${json-unit.version}</version>
-        </dependency>
+            <!-- Apache Tika libs-->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-parsers</artifactId>
+                <version>${tika.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.cxf</groupId>
+                        <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.bitlet</groupId>
+                <artifactId>weupnp</artifactId>
+                <version>${bitlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>core</artifactId>
+                <version>${zxing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>javase</artifactId>
+                <version>${zxing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${bcprov.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>net.javacrumbs.json-unit</groupId>
-            <artifactId>json-unit-fluent</artifactId>
-            <version>${json-unit.version}</version>
-            <scope>test</scope>
-        </dependency>
-<!--OkHttp SSE client-->
-        <dependency>
-            <groupId>com.squareup.okhttp</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>${okhttp.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.launchdarkly</groupId>
-            <artifactId>okhttp-eventsource</artifactId>
-            <version>${okhttp-eventsource.version}</version>
-            <scope>test</scope>
-        </dependency>
+            <dependency>
+                <groupId>org.jboss.weld.se</groupId>
+                <artifactId>weld-se-core</artifactId>
+                <version>${weld.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.weld.servlet</groupId>
+                <artifactId>weld-servlet-shaded</artifactId>
+                <version>${weld.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.weld</groupId>
+                <artifactId>weld-junit5</artifactId>
+                <version>${weld-junit5.version}</version>
+                <scope>test</scope>
+            </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${apache-commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${apache-commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${apache-commons-codec.version}</version>
+            </dependency>
+            <!--JDBI libs-->
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikari.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.beust</groupId>
+                <artifactId>jcommander</artifactId>
+                <version>${jcommander.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-core</artifactId>
+                <version>${jdbi3-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-sqlobject</artifactId>
+                <version>${jdbi3-sqlobject.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>commons-net</groupId>
+                <artifactId>commons-net</artifactId>
+                <version>${apache-commons-net.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>1.3.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <version>${spring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-context</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-jcl</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.transaction</groupId>
-                    <artifactId>javax.transaction-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.derby</groupId>
-                    <artifactId>derby</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.derby</groupId>
-                    <artifactId>derbyclient</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.hsqldb</groupId>
-                    <artifactId>hsqldb</artifactId>
-                </exclusion>
-                <exclusion>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-reflect</artifactId>
-            </exclusion>
-                <exclusion>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                </exclusion>
-
-
-
-            </exclusions>
-            <scope>test</scope>
-        </dependency>
-
-        <!--Lucene-->
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queries</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-
-
-        <!--Logging-->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.log4jdbc</groupId>
-            <artifactId>log4jdbc</artifactId>
-            <version>${log4jdbc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
-            <version>3.0.6</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--Tika-->
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <version>${tika.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers</artifactId>
-            <version>${tika.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${apache-commons-io.version}</version>
-        </dependency>
-
-        <!--Websocket api-->
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-api</artifactId>
-            <version>${websocket.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-client</artifactId>
-            <version>${websocket.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-common</artifactId>
-            <version>${websocket.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
-            <version>${websocket.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-servlet</artifactId>
-            <version>${websocket.version}</version>
-        </dependency>
-
-        <!--UPnP-->
-        <dependency>
-            <groupId>org.bitlet</groupId>
-            <artifactId>weupnp</artifactId>
-            <version>${upnp.version}</version>
-        </dependency>
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-
-                <executions>
-                    <!--
-                        Invokes both the integration-test and the verify goals of the
-                        Failsafe Maven plugin
-                    -->
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <!--
-                                Skips integration tests if the value of skip.integration.tests
-                                property is true
-                            -->
-                            <systemPropertyVariables>
-                                <walletWorkingDir>${project.build.directory}</walletWorkingDir>
-                            </systemPropertyVariables>
-                            <includes>
-                                <include>com.apollocurrency.aplwallet.apl.http.*</include>
-                            </includes>
-                            <skipTests>${skip.integration.tests}</skipTests>
-                            <forkCount>1</forkCount>
-                            <reuseForks>false</reuseForks>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
+            <!--TEST frameworks-->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-5-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+            <!--Tests-->
+            <dependency>
+                <groupId>net.javacrumbs.json-unit</groupId>
+                <artifactId>json-unit-core</artifactId>
+                <version>${json-unit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.javacrumbs.json-unit</groupId>
+                <artifactId>json-unit-fluent</artifactId>
+                <version>${json-unit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!--OkHttp SSE client-->
+            <dependency>
+                <groupId>com.squareup.okhttp</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.launchdarkly</groupId>
+                <artifactId>okhttp-eventsource</artifactId>
+                <version>${okhttp-eventsource.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.janino</groupId>
+                <artifactId>janino</artifactId>
+                <version>3.0.6</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
-                <configuration>
-                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
-                    <skipTests>${skip.unit.tests}</skipTests>
-                    <!-- Excludes integration tests when unit tests are run -->
-                    <excludes>
-                        <exclude>com.apollocurrency.aplwallet.apl.http.*, **/*IntegrationTest.java, **/IT*.java</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
+                <version>${surefire-plugin.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                    <configuration>
+                        <useSystemClassLoader>false</useSystemClassLoader>
+                    </configuration>
+                    <!--    JDK 11
+                                        <dependencies>
+                                            <dependency>
+                                                <groupId>org.ow2.asm</groupId>
+                                                <artifactId>asm</artifactId>
+                                                <version>6.2</version>
+                                            </dependency>
+                                        </dependencies>
+                    -->
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${compile-plugin.version}</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+                <!-- Maven Assembly Plugin -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
-                <executions>
-                    <!-- Add a new source directory to our build -->
-                    <execution>
-                        <id>add-integration-test-sources</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Configures the source directory of our integration tests -->
-                            <sources>
-                                <source>src/integration-test/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                    <!-- Add a new resource directory to our build -->
-                    <execution>
-                        <id>add-integration-test-resources</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>add-test-resource</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Configures the resource directory of our integration tests -->
-                            <resources>
-                                <!--
-                                    Placeholders that are found from the files located in the configured resource
-                                    directories are replaced with the property values found from the profile
-                                    specific configuration file.
-                                -->
-                                <resource>
-                                    <filtering>true</filtering>
-                                    <directory>src/integration-test/resources</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <finalName>Apollo</finalName>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <classpathLayoutType>simple</classpathLayoutType>
-                            <mainClass>com.apollocurrency.aplwallet.apl.Apl</mainClass>
-                        </manifest>
-                        <manifestEntries>
-                            <Class-Path>conf/</Class-Path>
-                            </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <!-- here the phase you need -->
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>conf</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
                 <version>1.6.0</version>
-                <configuration>
-                    <executable>java</executable>
-                    <arguments>
-                        <argument>-Dapl.runtime.mode=desktop</argument>
-                        <argument>-Djava.library.path=${project.build.directory}/lib</argument>
-                        <!--<argument>-Djava.util.logging.manager=com.apollocurrency.aplwallet.apl.util.AplLogManager</argument>-->
-                        <argument>-classpath</argument>
-                        <argument>${project.basedir}/conf;${project.build.directory}/classes;${project.build.directory}/lib/*;${project.basedir}/conf/logging.properties;${project.basedir}/conf/logging-default.properties</argument>
-                        <argument>com.apollocurrency.aplwallet.apl.Apl</argument>
-                    </arguments>
-                </configuration>
+                <inherited>false</inherited>
+                <!--<executions>
+                   <execution>
+                       <id>Version Calculation</id>
+                       <phase>validate</phase>
+                       <goals>
+                           <goal>exec</goal>
+                       </goals>
+                       <configuration>
+                          <executable>${basedir}/git-sha-1.sh</executable>
+                        </configuration>
+                    </execution>
+                </executions>-->
+            </plugin>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.1</version>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <showDeprecation>false</showDeprecation>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>

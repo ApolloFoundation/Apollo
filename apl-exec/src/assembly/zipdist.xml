@@ -1,0 +1,55 @@
+
+
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    <id>zipdist</id>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}/../bin</directory>
+            <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>          
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../conf</directory>
+            <outputDirectory>conf</outputDirectory>
+            <fileMode>0755</fileMode>          
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../release-notes/</directory>
+            <outputDirectory>doc</outputDirectory>
+            <fileMode>0644</fileMode>          
+        </fileSet>     
+        <fileSet>
+            <directory>${project.basedir}/../html/</directory>
+            <outputDirectory>html</outputDirectory>
+        </fileSet>     
+        <fileSet>
+            <directory>${project.basedir}/../</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>README*</include>
+                <include>LICENSE*</include>
+                <include>CHANGELOG*</include>
+            </includes>
+        </fileSet>        
+    </fileSets> 
+     <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
+        <file>
+            <source> ${project.build.directory}/Apollo.jar</source>
+            <outputDirectory>/</outputDirectory>
+        </file>
+     </files>     
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+             <excludes>
+                <exclude>${project.groupId}:${project.artifactId}:jar:*</exclude>
+            </excludes>           
+        </dependencySet>
+    </dependencySets>
+</assembly>
