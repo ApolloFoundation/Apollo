@@ -4,17 +4,27 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.regex.Pattern;
+
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.updater.*;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
+import com.apollocurrency.aplwallet.apl.updater.AuthorityChecker;
+import com.apollocurrency.aplwallet.apl.updater.AuthorityCheckerImpl;
+import com.apollocurrency.aplwallet.apl.updater.ConsoleSecurityAlertSender;
+import com.apollocurrency.aplwallet.apl.updater.JarUnpacker;
+import com.apollocurrency.aplwallet.apl.updater.SecurityAlertSender;
+import com.apollocurrency.aplwallet.apl.updater.SimpleUrlExtractor;
+import com.apollocurrency.aplwallet.apl.updater.Unpacker;
+import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
+import com.apollocurrency.aplwallet.apl.updater.UrlExtractor;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
 
 public class UpdaterServiceImpl implements UpdaterService {
     private static final UrlExtractor defaultUrlExtractor = new SimpleUrlExtractor(new RSADoubleDecryptor());
@@ -41,6 +51,7 @@ public class UpdaterServiceImpl implements UpdaterService {
         this(new ConsoleSecurityAlertSender(), new JarUnpacker(""), new AuthorityCheckerImpl(UpdaterConstants.CA_CERTIFICATE_URL), downloader, defaultUrlExtractor, repository);
     }
 
+    @Inject
     public UpdaterServiceImpl(UpdaterRepository repository) {
         this(defaultDownloader, repository);
     }

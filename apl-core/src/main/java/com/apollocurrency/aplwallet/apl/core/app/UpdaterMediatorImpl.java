@@ -4,20 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import org.slf4j.Logger;
 public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
+
+    public UpdaterMediatorImpl() {} //for weld
 
     @Override
     public void shutdownApplication() {
