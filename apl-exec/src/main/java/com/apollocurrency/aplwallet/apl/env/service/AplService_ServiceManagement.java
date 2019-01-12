@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.env.service;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.exec.Apollo;
-import com.apollocurrency.aplwallet.apldesktop.LookAndFeel;
+//import com.apollocurrency.aplwallet.apldesktop.LookAndFeel;
 
 import javax.swing.*;
 
@@ -31,7 +31,7 @@ import javax.swing.*;
 public class AplService_ServiceManagement {
 
     public static boolean serviceInit() {
-        LookAndFeel.init();
+//        LookAndFeel.init();
         new Thread(() -> {
             String[] args = {};
             Apollo.main(args);

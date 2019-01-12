@@ -22,6 +22,26 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
+import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
+import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -45,30 +65,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
-
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
-import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
-import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
 
 final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
@@ -191,10 +192,7 @@ final class PeerImpl implements Peer {
                 Peers.notifyListeners(this, Peers.Event.BLACKLIST);
             }
         }
-        if (LOG.isDebugEnabled()) {
-
-            LOG.debug("VERSION - Peer - {} set version - {}", host, version);
-        }
+        LOG.trace("VERSION - Peer - {} set version - {}", host, version);
     }
 
     @Override
@@ -503,7 +501,7 @@ final class PeerImpl implements Peer {
         }
         JSONObject response = null;
         String log = "";
-        boolean showLog = true;
+        boolean showLog = false;
         HttpURLConnection connection = null;
         int communicationLoggingMask = Peers.communicationLoggingMask;
 
@@ -530,7 +528,7 @@ final class PeerImpl implements Peer {
                 if (communicationLoggingMask != 0)
                     log = "WebSocket " + host + ": " + wsRequest;
                 String wsResponse = webSocket.doPost(wsRequest);
-                LOG.trace("WS Response = '{}'", wsResponse);
+                LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
                 updateUploadedVolume(wsRequest.length());
                 if (maxResponseSize > 0) {
                     if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
@@ -645,7 +643,7 @@ final class PeerImpl implements Peer {
             }
         }
         if (showLog) {
-            LOG.info(log + "\n");
+            LOG.info(log);
         }
 
         return response;
@@ -701,9 +699,7 @@ final class PeerImpl implements Peer {
                 setBlockchainState(response.get("blockchainState"));
                 lastUpdated = lastConnectAttempt;
                 Version peerVersion = new Version((String) response.get("version"));
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("PEER-Connect: version {}", peerVersion);
-                }
+                LOG.trace("PEER-Connect: version {}", peerVersion);
                 setVersion(peerVersion);
                 setPlatform((String) response.get("platform"));
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
@@ -969,6 +965,21 @@ final class PeerImpl implements Peer {
             uri.append(apiPort);
         }
         return uri;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PeerImpl peer = (PeerImpl) o;
+        return port == peer.port &&
+                Objects.equals(host, peer.host) &&
+                Objects.equals(announcedAddress, peer.announcedAddress);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, announcedAddress, port);
     }
 
     @Override

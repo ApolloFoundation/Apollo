@@ -371,10 +371,11 @@ public final class Peers {
 
                 @Override
                 public void run() {
+                    LOG.trace("'Peer loader': thread starting...");
                     final int now = AplCore.getEpochTime();
                     wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
                     if (usePeersDb) {
-                        LOG.debug("Loading known peers from the database...");
+                        LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
                         defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
                         if (savePeers) {
                             List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
@@ -383,9 +384,13 @@ public final class Peers {
                                     // Database entries override entries from chains.json
                                     entries.remove(entry);
                                     entries.add(entry);
+                                    LOG.trace("'Peer loader': Peer Loaded from db = {}", entry);
                                 }
                             });
                         }
+                    }
+                    if (entries.size() > 0) {
+                        LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
                     }
                     entries.forEach(entry -> {
                         Future<String> unresolvedAddress = peersService.submit(() -> {
@@ -394,12 +399,15 @@ public final class Peers {
                                 peer.setLastUpdated(entry.getLastUpdated());
                                 peer.setServices(entry.getServices());
                                 Peers.addPeer(peer);
+                                LOG.trace("'Peer loader': Put 'well known' Peer from db into 'Peers Map' = {}", entry);
                                 return null;
                             }
                             return entry.getAddress();
                         });
                         unresolvedPeers.add(unresolvedAddress);
                     });
+                    LOG.trace("'Peer loader': thread finished. Peers [{}] =\n{}", Peers.getAllPeers().size());
+                    Peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("'Peer loader': dump = {}", peerHost));
                 }
             }, false);
         }
@@ -919,16 +927,18 @@ public final class Peers {
     }
 
     public static PeerImpl findOrCreatePeer(String announcedAddress, boolean create) {
-        if (announcedAddress == null) {
+        if (announcedAddress == null || announcedAddress.isEmpty()) {
             return null;
         }
         announcedAddress = announcedAddress.trim().toLowerCase();
         PeerImpl peer;
         if ((peer = peers.get(announcedAddress)) != null) {
+            LOG.trace("Return 0 = {}", peer);
             return peer;
         }
         String host = selfAnnouncedAddresses.get(announcedAddress);
         if (host != null && (peer = peers.get(host)) != null) {
+            LOG.trace("Return 1 = {}", peer);
             return peer;
         }
         try {
@@ -938,10 +948,12 @@ public final class Peers {
                 return null;
             }
             if ((peer = peers.get(host)) != null) {
+                LOG.trace("Return 2 = {}", peer);
                 return peer;
             }
             String host2 = selfAnnouncedAddresses.get(host);
             if (host2 != null && (peer = peers.get(host2)) != null) {
+                LOG.trace("Return 3 = {}", peer);
                 return peer;
             }
             InetAddress inetAddress = InetAddress.getByName(host);
@@ -978,6 +990,7 @@ public final class Peers {
 
         PeerImpl peer;
         if ((peer = peers.get(host)) != null) {
+            LOG.debug("Return existing peer from map {}", peer);
             return peer;
         }
         if (!create) {
@@ -1007,12 +1020,14 @@ public final class Peers {
         Peer oldPeer = peers.get(peer.getHost());
         if (oldPeer != null) {
             String oldAnnouncedAddress = oldPeer.getAnnouncedAddress();
-            if (oldAnnouncedAddress != null && !oldAnnouncedAddress.equals(newAnnouncedAddress)) {
+            if (oldAnnouncedAddress != null && !oldAnnouncedAddress.isEmpty()
+                    && newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()
+                    && !oldAnnouncedAddress.equals(newAnnouncedAddress)) {
                 LOG.debug("Removing old announced address " + oldAnnouncedAddress + " for peer " + oldPeer.getHost());
                 selfAnnouncedAddresses.remove(oldAnnouncedAddress);
             }
         }
-        if (newAnnouncedAddress != null) {
+        if (newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()) {
             String oldHost = selfAnnouncedAddresses.put(newAnnouncedAddress, peer.getHost());
             if (oldHost != null && !peer.getHost().equals(oldHost)) {
                 LOG.debug("Announced address " + newAnnouncedAddress + " now maps to peer " + peer.getHost()
@@ -1032,9 +1047,23 @@ public final class Peers {
     }
 
     public static boolean addPeer(Peer peer) {
-        if (peers.put(peer.getHost(), (PeerImpl) peer) == null) {
+        if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()) {
+            // put new or replace previous
+            if (!peers.containsKey(peer.getHost())) {
+                peers.put(peer.getHost(), (PeerImpl) peer);
+                if (peer.getVersion() == null) {
+                    LOG.warn("Added incorrect Peer = {}", peer);
+                }
+            } else {
+                peers.replace(peer.getHost(), (PeerImpl) peer);
+                if (peer.getVersion() == null) {
+                    LOG.warn("Replaced by incorrect Peer = {}", peer);
+                }
+            }
             listeners.notify(peer, Event.NEW_PEER);
             return true;
+        } else {
+            LOG.trace("NOT added, attempt to PUT incorrect = {}", peer);
         }
         return false;
     }
@@ -1087,6 +1116,7 @@ public final class Peers {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
             for (final Peer peer : peers.values()) {
+
                 if (Peers.enableHallmarkProtection && peer.getWeight() < Peers.pushThreshold) {
                     continue;
                 }

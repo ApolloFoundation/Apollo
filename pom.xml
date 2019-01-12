@@ -28,7 +28,7 @@
 <!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
-        <module>apl-desktop</module>
+<!--        <module>apl-desktop</module>-->
     </modules>
 
     <properties>
