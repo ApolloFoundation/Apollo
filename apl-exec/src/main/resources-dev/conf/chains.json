@@ -414,6 +414,71 @@
         {
           "type": "POS"
         }
+      },
+      {
+        "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+        "isTestnet": true,
+        "active": false,
+        "defaultPeers": [
+          "51.15.250.32",
+          "51.15.253.171"
+        ],
+        "wellKnownPeers": [],
+        "blacklistedPeers": [],
+        "name": "Apollo experimental testnet",
+        "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+        "symbol": "Apollo",
+        "prefix": "APL",
+        "project": "Apollo",
+        "genesisLocation": "data/genesisAccounts-testnet.json",
+        "blockchainProperties": [
+          {
+            "height": 0,
+            "maxNumberOfTransactions": 255,
+            "blockTime": 60,
+            "maxBlockTimeLimit": 67,
+            "minBlockTimeLimit": 53,
+            "maxBalance": 30000000000,
+            "consensus":
+            {
+              "type": "POS"
+            }
+          },
+          {
+            "height": 2000,
+            "maxNumberOfTransactions": 300,
+            "blockTime": 2,
+            "maxBlockTimeLimit": 4,
+            "minBlockTimeLimit": 1,
+            "maxBalance": 30000000000,
+            "consensus":
+            {
+              "type": "POS",
+              "adaptiveForgingSettings":
+              {
+                "enabled": "true",
+                "adaptiveBlockTime": 60
+              }
+            }
+          },
+          {
+            "height": 42300,
+            "maxNumberOfTransactions": 300,
+            "blockTime": 2,
+            "maxBlockTimeLimit": 4,
+            "minBlockTimeLimit": 1,
+            "maxBalance": 30000000000,
+            "consensus":
+            {
+              "type": "POS",
+              "adaptiveForgingSettings":
+              {
+                "enabled": "true",
+                "adaptiveBlockTime": 10
+              }
+            }
+          }
+        ]
       }
     ]
   }
