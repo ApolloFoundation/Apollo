@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.spi.CDI;
 import java.util.Arrays;
 
-//import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
+import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 
 /**
  * Main Apollo startup class
@@ -135,11 +135,11 @@ public class Apollo {
         log = LoggerFactory.getLogger(Apollo.class);
         
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
-//        if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
-//            runtimeMode = new DesktopMode();
-//        } else {
+        if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
+            runtimeMode = new DesktopMode();
+        } else {
             runtimeMode = RuntimeEnvironment.getRuntimeMode();
-//        }
+        }
         runtimeMode.init();
         //inti CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
