@@ -67,7 +67,7 @@ final class PeerDb {
 
         @Override
         public String toString() {
-            return "Entry{" +
+            return "PeerEntry{" +
                     "address='" + address + '\'' +
                     ", services=" + services +
                     ", lastUpdated=" + lastUpdated +
