@@ -1047,14 +1047,23 @@ public final class Peers {
     }
 
     public static boolean addPeer(Peer peer) {
-        if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()
-                && !peers.containsKey(peer.getHost())
-                /*&& peers.put(peer.getHost(), (PeerImpl) peer) == null*/) {
-            peers.put(peer.getHost(), (PeerImpl) peer);
+        if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()) {
+            // put new or replace previous
+            if (!peers.containsKey(peer.getHost())) {
+                peers.put(peer.getHost(), (PeerImpl) peer);
+                if (peer.getVersion() == null) {
+                    LOG.warn("Added incorrect Peer = {}", peer);
+                }
+            } else {
+                peers.replace(peer.getHost(), (PeerImpl) peer);
+                if (peer.getVersion() == null) {
+                    LOG.warn("Replaced by incorrect Peer = {}", peer);
+                }
+            }
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         } else {
-            LOG.trace("NOT added, attempt to PUT incorrect/existing Peer = {}", peer);
+            LOG.trace("NOT added, attempt to PUT incorrect = {}", peer);
         }
         return false;
     }
