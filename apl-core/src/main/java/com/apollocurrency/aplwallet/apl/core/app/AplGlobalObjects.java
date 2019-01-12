@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
@@ -59,13 +58,6 @@ public class AplGlobalObjects {
     }
 
 
-    public static void createUpdaterCore(boolean doInit, UpdaterCore updaterCore) {
-        if (doInit) {
-            updaterCore.init();
-        }
-        save(DEFAULT_UPDATER_CORE_NAME, new GlobalObject<>(updaterCore, DEFAULT_UPDATER_CORE_NAME));
-    }
-
     public static void createBlockchainConfig(Chain chain, PropertiesHolder loader, boolean doInit) {
         BlockchainConfig blockchainConfig = new BlockchainConfig(chain, loader);
         if (doInit) {
@@ -99,9 +91,4 @@ public class AplGlobalObjects {
     public static BlockchainConfig getChainConfig() {
         return get(BlockchainConfig.class, DEFAULT_CHAIN_CONFIG_NAME);
     }
-
-    public static UpdaterCore getUpdaterCore() {
-        return get(UpdaterCore.class, DEFAULT_UPDATER_CORE_NAME);
-    }
-
 }

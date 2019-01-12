@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import org.json.simple.JSONStreamAware;
 
 public class GetUpdateStatus extends APIServlet.APIRequestHandler {
@@ -26,6 +27,6 @@ public class GetUpdateStatus extends APIServlet.APIRequestHandler {
 
     @Override
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        return AplGlobalObjects.getUpdaterCore().getUpdateInfo().json();
+        return CDI.current().select(UpdaterCore.class).get().getUpdateInfo().json();
     }
 }
