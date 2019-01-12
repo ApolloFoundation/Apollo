@@ -531,7 +531,7 @@ final class PeerImpl implements Peer {
                 if (communicationLoggingMask != 0)
                     log = "WebSocket " + host + ": " + wsRequest;
                 String wsResponse = webSocket.doPost(wsRequest);
-                LOG.trace("WS Response = '{}'", wsResponse);
+                LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
                 updateUploadedVolume(wsRequest.length());
                 if (maxResponseSize > 0) {
                     if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
