@@ -1033,9 +1033,14 @@ public final class Peers {
     }
 
     public static boolean addPeer(Peer peer) {
-        if (peers.put(peer.getHost(), (PeerImpl) peer) == null) {
+        if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()
+                && !peers.containsKey(peer.getHost())
+                /*&& peers.put(peer.getHost(), (PeerImpl) peer) == null*/) {
+            peers.put(peer.getHost(), (PeerImpl) peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
+        } else {
+            LOG.warn("Attempt to add incorrect Peer = {}", peer);
         }
         return false;
     }

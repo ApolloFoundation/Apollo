@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -969,6 +970,21 @@ final class PeerImpl implements Peer {
             uri.append(apiPort);
         }
         return uri;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PeerImpl peer = (PeerImpl) o;
+        return port == peer.port &&
+                Objects.equals(host, peer.host) &&
+                Objects.equals(announcedAddress, peer.announcedAddress);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, announcedAddress, port);
     }
 
     @Override
