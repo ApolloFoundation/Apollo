@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.io.BufferedWriter;
@@ -40,7 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 public final class DebugTrace {
     private static final Logger LOG = getLogger(DebugTrace.class);
@@ -125,6 +125,7 @@ public final class DebugTrace {
     private final Set<Long> accountIds;
     private final String logName;
     private PrintWriter log;
+    private BlockDb blockDb = CDI.current().select(BlockDb.class).get();
 
     private DebugTrace(Set<Long> accountIds, String logName) {
         this.accountIds = accountIds;
@@ -277,7 +278,7 @@ public final class DebugTrace {
             long fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm()/ 4;
             int height = AplCore.getBlockchain().getHeight();
             for (int i = 0; i < 3; i++) {
-                long generatorId = AplGlobalObjects.getBlockDb().findBlockAtHeight(height - i - 1).getGeneratorId();
+                long generatorId = blockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
                 if (include(generatorId)) {
                     Map<String, String> generatorMap = getValues(generatorId, false);
                     generatorMap.put("generation fee", String.valueOf(fee));
@@ -507,7 +508,7 @@ public final class DebugTrace {
                     break;
                 }
                 totalBackFees += backFees[i];
-                long previousGeneratorId = AplGlobalObjects.getBlockDb().findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
+                long previousGeneratorId = blockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
                 if (include(previousGeneratorId)) {
                     Map<String,String> map = getValues(previousGeneratorId, false);
                     map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceAPL()));

@@ -20,13 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
@@ -43,7 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -56,7 +56,7 @@ public final class Generator implements Comparable<Generator> {
     // TODO: YL remove static instance later
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    
+    private static BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private static final int MAX_FORGERS = propertiesLoader.getIntProperty("apl.maxNumberOfForgers");
     private static final byte[] fakeForgingPublicKey = propertiesLoader.getBooleanProperty("apl.enableFakeForging") ?
             Account.getPublicKey(Convert.parseAccountId(propertiesLoader.getStringProperty("apl.fakeForgingAccount"))) : null;
@@ -468,7 +468,7 @@ public final class Generator implements Comparable<Generator> {
         Blockchain blockchain = AplCore.getBlockchain();
         synchronized(activeGenerators) {
             if (!generatorsInitialized) {
-                activeGeneratorIds.addAll(AplGlobalObjects.getBlockDb().getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
+                activeGeneratorIds.addAll(blockDb.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
                 activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
                 LOG.debug(activeGeneratorIds.size() + " block generators found");
                 AplCore.getBlockchainProcessor().addListener(block -> {

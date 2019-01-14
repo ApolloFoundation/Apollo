@@ -20,15 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
 public abstract class ShufflingTransaction extends TransactionType {
@@ -61,7 +62,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * Constants.ONE_APL);
     private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
-
+    protected final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
 
     private ShufflingTransaction() {}
 
@@ -422,7 +423,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         boolean isPruned(long transactionId) {
-            Transaction transaction = TransactionDb.findTransaction(transactionId);
+            Transaction transaction = transactionDb.findTransaction(transactionId);
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -686,7 +687,8 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = TransactionDb.findTransactionByFullHash(participant.getDataTransactionFullHash(), AplCore.getBlockchain().getHeight());
+            Transaction dataProcessingTransaction = transactionDb.findTransactionByFullHash(participant.getDataTransactionFullHash(),
+                    AplCore.getBlockchain().getHeight());
             if (dataProcessingTransaction == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }

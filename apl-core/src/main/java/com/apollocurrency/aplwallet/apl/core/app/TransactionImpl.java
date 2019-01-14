@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -31,9 +31,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -1013,7 +1014,7 @@ final class TransactionImpl implements Transaction {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " exceeds blockchain height " + blockchainHeight);
                 }
-                if (AplGlobalObjects.getBlockDb().findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
+                if (CDI.current().select(BlockDb.class).get().findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
                             + ", transaction was generated on a fork");

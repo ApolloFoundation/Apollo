@@ -1,5 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import javax.enterprise.inject.spi.CDI;
+import java.util.Arrays;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
@@ -15,14 +18,10 @@ import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.spi.CDI;
-import java.util.Arrays;
-
-import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 
 /**
  * Main Apollo startup class

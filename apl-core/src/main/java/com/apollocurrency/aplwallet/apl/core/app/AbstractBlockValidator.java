@@ -6,10 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Objects;
+
 import org.slf4j.Logger;
 
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
+    private BlockDb blockDb;
+
+    public AbstractBlockValidator(BlockDb blockDb) {
+        Objects.requireNonNull(blockDb, "BlockDb is null");
+        this.blockDb = blockDb;
+    }
 
     @Override
     public void validate(BlockImpl block, BlockImpl previousLastBlock, int curTime) throws BlockchainProcessor.BlockNotAcceptedException {
@@ -28,7 +36,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
-        if (block.getId() == 0L || AplGlobalObjects.getBlockDb().hasBlock(block.getId(), previousLastBlock.getHeight())) {
+        if (block.getId() == 0L || blockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
         if (!block.verifyGenerationSignature() && !Generator.allowsFakeForging(block.getGeneratorPublicKey())) {

@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -28,21 +27,10 @@ public class AplGlobalObjects {
     private static final Map<String, GlobalObject<?>> OBJECTS = new ConcurrentHashMap<>();
     private static final String DEFAULT_INIT_ERROR = "%s was not initialized before accessing";
     private static final String DEFAULT_CHAIN_CONFIG_NAME = "BlockchainConfig";
-    private static final String DEFAULT_UPDATER_CORE_NAME = "UpdaterCore";
-    private static final String DEFAULT_NTP_TIME_NAME = "NtpTime";
     private static final String DEFAULT_BLOCK_DB_NAME = "BlockDb";
     private static final String GET_EXEPTION_TEMPLATE = "Unable to get %s. %s is not an instance of %s";
 
     public AplGlobalObjects() { } // for weld
-
-    public static void createBlockDb(ConnectionProvider connectionProvider) {
-        BlockDb blockDb = new BlockDb(connectionProvider);
-        save(DEFAULT_BLOCK_DB_NAME, new GlobalObject<>(blockDb, DEFAULT_BLOCK_DB_NAME));
-    }
-
-    public static BlockDb getBlockDb() {
-        return get(BlockDb.class, DEFAULT_BLOCK_DB_NAME);
-    }
 
 
     private static<T> void save(String name, GlobalObject<T> object) {

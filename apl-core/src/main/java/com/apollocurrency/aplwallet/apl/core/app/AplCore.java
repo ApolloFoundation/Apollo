@@ -174,7 +174,7 @@ public final class AplCore {
                 Db.init();
 //TODO: check: no such file
   //              ChainIdDbMigration.migrate();
-                AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
+
                 DbMigratorTask.getInstance().migrateDb();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);

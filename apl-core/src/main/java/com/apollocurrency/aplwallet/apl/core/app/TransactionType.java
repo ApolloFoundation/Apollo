@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -3099,7 +3100,8 @@ public abstract class TransactionType {
                 if ((attachment.jsonIsPruned() || attachment.getData() == null) && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
-                TransactionImpl uploadTransaction = TransactionDb.findTransaction(attachment.getTaggedDataId(), AplCore.getBlockchain().getHeight());
+                TransactionImpl uploadTransaction = CDI.current().select(TransactionDb.class).get().findTransaction(attachment.getTaggedDataId(),
+                        AplCore.getBlockchain().getHeight());
                 if (uploadTransaction == null) {
                     throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
                 }

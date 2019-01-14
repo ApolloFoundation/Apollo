@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -155,6 +156,7 @@ public class TaggedData {
 
     };
 
+    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     public static final class Tag {
 
         private static final DbKey.StringKeyFactory<Tag> tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
@@ -534,7 +536,7 @@ public class TaggedData {
         if (AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = TransactionDb.findTransaction(taggedDataId);
+                TransactionImpl uploadTransaction = transactionDb.findTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment);
                 Tag.add(taggedData);
             }
@@ -553,7 +555,7 @@ public class TaggedData {
         Tag.add(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : TaggedData.getExtendTransactionIds(transaction.getId())) {
-            Transaction extendTransaction = TransactionDb.findTransaction(extendTransactionId);
+            Transaction extendTransaction = transactionDb.findTransaction(extendTransactionId);
             if (extendTransaction.getTimestamp() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {

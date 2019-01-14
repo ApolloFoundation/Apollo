@@ -5,9 +5,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.db.migrator;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.ConnectionProviderImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdDbMigrator;
 import com.apollocurrency.aplwallet.apl.core.chainid.DbInfoExtractor;
@@ -16,13 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.db.model.Option;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +73,7 @@ public class DbMigratorTask {
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
                     }
-                    AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
+//                    AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
                     Option.set("secondDbMigrationRequired", "false");
                     boolean deleteOldDb = propertiesHolder.getBooleanProperty("apl.deleteOldDbAfterMigration");
                     if (deleteOldDb && oldDbPath != null) {

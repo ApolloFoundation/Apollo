@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
@@ -17,13 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockDb;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
 import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public class BlockchainConfig {
@@ -48,11 +48,11 @@ public class BlockchainConfig {
     private volatile HeightConfig currentConfig;
     private Chain chain;
 
-    public BlockchainConfig(Chain chain, PropertiesHolder loader) {
+    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
         this(chain,
-             loader.getIntProperty("apl.testnetLeasingDelay", -1),
-             loader.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
-             loader.getIntProperty("apl.maxPrunableLifetime")
+             holder.getIntProperty("apl.testnetLeasingDelay", -1),
+             holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
+             holder.getIntProperty("apl.maxPrunableLifetime")
                 );
     }
     public BlockchainConfig(Chain chain, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations, int maxPrunableLifetime) {
@@ -86,7 +86,8 @@ public class BlockchainConfig {
     }
 
     public void updateToLatestConfig() {
-        BlockImpl lastBlock = AplGlobalObjects.getBlockDb().findLastBlock();
+//        move BlockDb to constructor later
+        BlockImpl lastBlock = CDI.current().select(BlockDb.class).get().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");
             return;

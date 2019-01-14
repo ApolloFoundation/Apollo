@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -3511,7 +3512,8 @@ public interface Attachment extends Appendix {
                 hash = super.getHash();
             }
             if (hash == null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload)TransactionDb.findTransaction(taggedDataId).getAttachment();
+                TaggedDataUpload taggedDataUpload =
+                        (TaggedDataUpload) CDI.current().select(TransactionDb.class).get().findTransaction(taggedDataId).getAttachment();
                 hash = taggedDataUpload.getHash();
             }
             return hash;

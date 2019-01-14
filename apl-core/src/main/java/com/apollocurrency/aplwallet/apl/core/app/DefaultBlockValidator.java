@@ -4,11 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
+@Singleton
 public class DefaultBlockValidator extends AbstractBlockValidator {
+    @Inject
+    public DefaultBlockValidator(BlockDb blockDb) {
+        super(blockDb);
+    }
 
     @Override
     void validatePreviousHash(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
