@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;

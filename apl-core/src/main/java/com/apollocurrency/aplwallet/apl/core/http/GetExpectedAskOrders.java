@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -68,7 +68,7 @@ public final class GetExpectedAskOrders extends APIServlet.APIRequestHandler {
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 
-        List<? extends Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+        List<Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
         if (sortByPrice) {
             Collections.sort(transactions, priceComparator);
         }

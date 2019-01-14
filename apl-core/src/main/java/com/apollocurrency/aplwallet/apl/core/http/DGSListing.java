@@ -15,15 +15,15 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -78,7 +78,7 @@ public final class DGSListing extends CreateTransaction {
             return INCORRECT_DGS_LISTING_TAGS;
         }
 
-        Appendix.PrunablePlainMessage prunablePlainMessage = (Appendix.PrunablePlainMessage)ParameterParser.getPlainMessage(req, true);
+        PrunablePlainMessage prunablePlainMessage = (PrunablePlainMessage)ParameterParser.getPlainMessage(req, true);
         if (prunablePlainMessage != null) {
             if (prunablePlainMessage.isText()) {
                 return MESSAGE_NOT_BINARY;

@@ -15,11 +15,24 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+
+import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -39,29 +52,35 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class TransactionImpl implements Transaction {
+public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
+
+    @Inject
+    private BlockchainImpl blockchain;
 
     static final class BuilderImpl implements Builder {
 
-        private final short deadline;
-        private final byte[] senderPublicKey;
-        private final long amountATM;
-        private final long feeATM;
-        private final TransactionType type;
-        private final byte version;
+        @Inject
+        private BlockchainImpl blockchain;
+
+        private short deadline;
+        private byte[] senderPublicKey;
+        private long amountATM;
+        private long feeATM;
+        private TransactionType type;
+        private byte version;
         private Attachment.AbstractAttachment attachment;
 
         private long recipientId;
         private byte[] referencedTransactionFullHash;
         private byte[] signature;
-        private Appendix.Message message;
-        private Appendix.EncryptedMessage encryptedMessage;
-        private Appendix.EncryptToSelfMessage encryptToSelfMessage;
-        private Appendix.PublicKeyAnnouncement publicKeyAnnouncement;
-        private Appendix.Phasing phasing;
-        private Appendix.PrunablePlainMessage prunablePlainMessage;
-        private Appendix.PrunableEncryptedMessage prunableEncryptedMessage;
+        private Message message;
+        private EncryptedMessage encryptedMessage;
+        private EncryptToSelfMessage encryptToSelfMessage;
+        private PublicKeyAnnouncement publicKeyAnnouncement;
+        private Phasing phasing;
+        private PrunablePlainMessage prunablePlainMessage;
+        private PrunableEncryptedMessage prunableEncryptedMessage;
         private long blockId;
         private int height = Integer.MAX_VALUE;
         private long id;
@@ -73,6 +92,9 @@ final class TransactionImpl implements Transaction {
         private int ecBlockHeight;
         private long ecBlockId;
         private short index = -1;
+
+        public BuilderImpl() { // for weld
+        }
 
         BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                     Attachment.AbstractAttachment attachment) {
@@ -91,13 +113,19 @@ final class TransactionImpl implements Transaction {
                 timestamp = AplCore.getEpochTime();
             }
             if (!ecBlockSet) {
-                Block ecBlock = BlockchainImpl.getInstance().getECBlock(timestamp);
+                lookupAndInjectBlockchain();
+                Block ecBlock = blockchain.getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
             return new TransactionImpl(this, keySeed);
         }
 
+        private void lookupAndInjectBlockchain() {
+            if (blockchain == null) {
+                blockchain = CDI.current().select(BlockchainImpl.class).get();
+            }
+        }
         @Override
         public TransactionImpl build() throws AplException.NotValidException {
             return build(null);
@@ -125,43 +153,43 @@ final class TransactionImpl implements Transaction {
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.Message message) {
+        public BuilderImpl appendix(Message message) {
             this.message = message;
             return this;
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.EncryptedMessage encryptedMessage) {
+        public BuilderImpl appendix(EncryptedMessage encryptedMessage) {
             this.encryptedMessage = encryptedMessage;
             return this;
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.EncryptToSelfMessage encryptToSelfMessage) {
+        public BuilderImpl appendix(EncryptToSelfMessage encryptToSelfMessage) {
             this.encryptToSelfMessage = encryptToSelfMessage;
             return this;
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.PublicKeyAnnouncement publicKeyAnnouncement) {
+        public BuilderImpl appendix(PublicKeyAnnouncement publicKeyAnnouncement) {
             this.publicKeyAnnouncement = publicKeyAnnouncement;
             return this;
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.PrunablePlainMessage prunablePlainMessage) {
+        public BuilderImpl appendix(PrunablePlainMessage prunablePlainMessage) {
             this.prunablePlainMessage = prunablePlainMessage;
             return this;
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.PrunableEncryptedMessage prunableEncryptedMessage) {
+        public BuilderImpl appendix(PrunableEncryptedMessage prunableEncryptedMessage) {
             this.prunableEncryptedMessage = prunableEncryptedMessage;
             return this;
         }
 
         @Override
-        public BuilderImpl appendix(Appendix.Phasing phasing) {
+        public BuilderImpl appendix(Phasing phasing) {
             this.phasing = phasing;
             return this;
         }
@@ -228,33 +256,33 @@ final class TransactionImpl implements Transaction {
 
     }
 
-    private final short deadline;
+    private short deadline;
     private volatile byte[] senderPublicKey;
-    private final long recipientId;
-    private final long amountATM;
-    private final long feeATM;
-    private final byte[] referencedTransactionFullHash;
-    private final TransactionType type;
-    private final int ecBlockHeight;
-    private final long ecBlockId;
-    private final byte version;
-    private final int timestamp;
-    private final byte[] signature;
-    private final Attachment.AbstractAttachment attachment;
-    private final Appendix.Message message;
-    private final Appendix.EncryptedMessage encryptedMessage;
-    private final Appendix.EncryptToSelfMessage encryptToSelfMessage;
-    private final Appendix.PublicKeyAnnouncement publicKeyAnnouncement;
-    private final Appendix.Phasing phasing;
-    private final Appendix.PrunablePlainMessage prunablePlainMessage;
-    private final Appendix.PrunableEncryptedMessage prunableEncryptedMessage;
+    private long recipientId;
+    private long amountATM;
+    private long feeATM;
+    private byte[] referencedTransactionFullHash;
+    private TransactionType type;
+    private int ecBlockHeight;
+    private long ecBlockId;
+    private byte version;
+    private int timestamp;
+    private byte[] signature;
+    private Attachment.AbstractAttachment attachment;
+    private Message message;
+    private EncryptedMessage encryptedMessage;
+    private EncryptToSelfMessage encryptToSelfMessage;
+    private PublicKeyAnnouncement publicKeyAnnouncement;
+    private Phasing phasing;
+    private PrunablePlainMessage prunablePlainMessage;
+    private PrunableEncryptedMessage prunableEncryptedMessage;
 
-    private final List<Appendix.AbstractAppendix> appendages;
-    private final int appendagesSize;
+    private List<AbstractAppendix> appendages;
+    private int appendagesSize;
 
     private volatile int height = Integer.MAX_VALUE;
     private volatile long blockId;
-    private volatile BlockImpl block;
+    private volatile Block block;
     private volatile int blockTimestamp = -1;
     private volatile short index = -1;
     private volatile long id;
@@ -264,6 +292,7 @@ final class TransactionImpl implements Transaction {
     private volatile DbKey dbKey;
     private volatile byte[] bytes = null;
 
+    public TransactionImpl() {} // for weld
 
     private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
 
@@ -285,7 +314,7 @@ final class TransactionImpl implements Transaction {
 		this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
 
-        List<Appendix.AbstractAppendix> list = new ArrayList<>();
+        List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
             list.add(this.attachment);
         }
@@ -343,6 +372,12 @@ final class TransactionImpl implements Transaction {
 
     }
 
+    private void lookupAndInjectBlockchain() {
+        if (this.blockchain == null) {
+            this.blockchain = CDI.current().select(BlockchainImpl.class).get();
+        }
+    }
+
     @Override
     public short getDeadline() {
         return deadline;
@@ -380,7 +415,8 @@ final class TransactionImpl implements Transaction {
         return Convert.toHexString(referencedTransactionFullHash);
     }
 
-    byte[] referencedTransactionFullHash() {
+    @Override
+    public byte[] referencedTransactionFullHash() {
         return referencedTransactionFullHash;
     }
 
@@ -389,7 +425,7 @@ final class TransactionImpl implements Transaction {
         return height;
     }
 
-    void setHeight(int height) {
+    public void setHeight(int height) {
         this.height = height;
     }
 
@@ -414,21 +450,21 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public BlockImpl getBlock() {
+    public Block getBlock() {
         if (block == null && blockId != 0) {
             block = BlockchainImpl.getInstance().getBlock(blockId);
         }
         return block;
     }
 
-    void setBlock(BlockImpl block) {
+    public void setBlock(Block block) {
         this.block = block;
         this.blockId = block.getId();
         this.height = block.getHeight();
         this.blockTimestamp = block.getTimestamp();
     }
 
-    void unsetBlock() {
+    public void unsetBlock() {
         this.block = null;
         this.blockId = 0;
         this.blockTimestamp = -1;
@@ -445,7 +481,7 @@ final class TransactionImpl implements Transaction {
         return index;
     }
 
-    void setIndex(int index) {
+    public void setIndex(int index) {
         this.index = (short)index;
     }
 
@@ -471,24 +507,24 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public List<Appendix.AbstractAppendix> getAppendages() {
+    public List<AbstractAppendix> getAppendages() {
         return getAppendages(false);
     }
 
     @Override
-    public List<Appendix.AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        for (Appendix.AbstractAppendix appendage : appendages) {
+    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
+        for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this, includeExpiredPrunable);
         }
         return appendages;
     }
 
     @Override
-    public List<Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        List<Appendix> result = new ArrayList<>();
+    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
+        List<AbstractAppendix> result = new ArrayList<>();
         appendages.forEach(appendix -> {
             if (filter.test(appendix)) {
-                appendix.loadPrunable(this, includeExpiredPrunable);
+                (appendix).loadPrunable(this, includeExpiredPrunable);
                 result.add(appendix);
             }
         });
@@ -529,7 +565,8 @@ final class TransactionImpl implements Transaction {
         return Convert.toHexString(fullHash());
     }
 
-    byte[] fullHash() {
+    @Override
+    public byte[] fullHash() {
         if (fullHash == null) {
             getId();
         }
@@ -544,7 +581,7 @@ final class TransactionImpl implements Transaction {
         return senderId;
     }
 
-    DbKey getDbKey() {
+    public DbKey getDbKey() {
         if (dbKey == null) {
             dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(getId());
         }
@@ -552,54 +589,55 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public Appendix.Message getMessage() {
+    public Message getMessage() {
         return message;
     }
 
     @Override
-    public Appendix.EncryptedMessage getEncryptedMessage() {
+    public EncryptedMessage getEncryptedMessage() {
         return encryptedMessage;
     }
 
     @Override
-    public Appendix.EncryptToSelfMessage getEncryptToSelfMessage() {
+    public EncryptToSelfMessage getEncryptToSelfMessage() {
         return encryptToSelfMessage;
     }
 
     @Override
-    public Appendix.Phasing getPhasing() {
+    public Phasing getPhasing() {
         return phasing;
     }
 
-    boolean attachmentIsPhased() {
+    public boolean attachmentIsPhased() {
         return attachment.isPhased(this);
     }
 
-    Appendix.PublicKeyAnnouncement getPublicKeyAnnouncement() {
+    @Override
+    public PublicKeyAnnouncement getPublicKeyAnnouncement() {
         return publicKeyAnnouncement;
     }
 
     @Override
-    public Appendix.PrunablePlainMessage getPrunablePlainMessage() {
+    public PrunablePlainMessage getPrunablePlainMessage() {
         if (prunablePlainMessage != null) {
             prunablePlainMessage.loadPrunable(this);
         }
         return prunablePlainMessage;
     }
 
-    boolean hasPrunablePlainMessage() {
+    public boolean hasPrunablePlainMessage() {
         return prunablePlainMessage != null;
     }
 
     @Override
-    public Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage() {
+    public PrunableEncryptedMessage getPrunableEncryptedMessage() {
         if (prunableEncryptedMessage != null) {
             prunableEncryptedMessage.loadPrunable(this);
         }
         return prunableEncryptedMessage;
     }
 
-    boolean hasPrunableEncryptedMessage() {
+    public boolean hasPrunableEncryptedMessage() {
         return prunableEncryptedMessage != null;
     }
 
@@ -607,7 +645,7 @@ final class TransactionImpl implements Transaction {
         return Arrays.copyOf(bytes(), bytes.length);
     }
 
-    byte[] bytes() {
+    public byte[] bytes() {
         if (bytes == null) {
             try {
                 ByteBuffer buffer = ByteBuffer.allocate(getSize());
@@ -685,31 +723,31 @@ final class TransactionImpl implements Transaction {
             }
             int position = 1;
             if ((flags & position) != 0 || (version == 0 && transactionType == TransactionType.Messaging.ARBITRARY_MESSAGE)) {
-                builder.appendix(new Appendix.Message(buffer));
+                builder.appendix(new Message(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.EncryptedMessage(buffer));
+                builder.appendix(new EncryptedMessage(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
+                builder.appendix(new PublicKeyAnnouncement(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
+                builder.appendix(new EncryptToSelfMessage(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.Phasing(buffer));
+                builder.appendix(new Phasing(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.PrunablePlainMessage(buffer));
+                builder.appendix(new PrunablePlainMessage(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
+                builder.appendix(new PrunableEncryptedMessage(buffer));
             }
             if (buffer.hasRemaining()) {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
@@ -736,11 +774,11 @@ final class TransactionImpl implements Transaction {
             if (taggedDataExtend != null) {
                 builder.appendix(taggedDataExtend);
             }
-            Appendix.PrunablePlainMessage prunablePlainMessage = Appendix.PrunablePlainMessage.parse(prunableAttachments);
+            PrunablePlainMessage prunablePlainMessage = PrunablePlainMessage.parse(prunableAttachments);
             if (prunablePlainMessage != null) {
                 builder.appendix(prunablePlainMessage);
             }
-            Appendix.PrunableEncryptedMessage prunableEncryptedMessage = Appendix.PrunableEncryptedMessage.parse(prunableAttachments);
+            PrunableEncryptedMessage prunableEncryptedMessage = PrunableEncryptedMessage.parse(prunableAttachments);
             if (prunableEncryptedMessage != null) {
                 builder.appendix(prunableEncryptedMessage);
             }
@@ -772,7 +810,7 @@ final class TransactionImpl implements Transaction {
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
         json.put("signature", Convert.toHexString(signature));
         JSONObject attachmentJSON = new JSONObject();
-        for (Appendix.AbstractAppendix appendage : appendages) {
+        for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
             attachmentJSON.putAll(appendage.getJSONObject());
         }
@@ -786,7 +824,7 @@ final class TransactionImpl implements Transaction {
     @Override
     public JSONObject getPrunableAttachmentJSON() {
         JSONObject prunableJSON = null;
-        for (Appendix.AbstractAppendix appendage : appendages) {
+        for (AbstractAppendix appendage : appendages) {
             if (appendage instanceof Appendix.Prunable) {
                 appendage.loadPrunable(this);
                 if (prunableJSON == null) {
@@ -845,13 +883,13 @@ final class TransactionImpl implements Transaction {
                 builder.recipientId(recipientId);
             }
             if (attachmentData != null) {
-                builder.appendix(Appendix.Message.parse(attachmentData));
-                builder.appendix(Appendix.EncryptedMessage.parse(attachmentData));
-                builder.appendix((Appendix.PublicKeyAnnouncement.parse(attachmentData)));
-                builder.appendix(Appendix.EncryptToSelfMessage.parse(attachmentData));
-                builder.appendix(Appendix.Phasing.parse(attachmentData));
-                builder.appendix(Appendix.PrunablePlainMessage.parse(attachmentData));
-                builder.appendix(Appendix.PrunableEncryptedMessage.parse(attachmentData));
+                builder.appendix(Message.parse(attachmentData));
+                builder.appendix(EncryptedMessage.parse(attachmentData));
+                builder.appendix(PublicKeyAnnouncement.parse(attachmentData));
+                builder.appendix(EncryptToSelfMessage.parse(attachmentData));
+                builder.appendix(Phasing.parse(attachmentData));
+                builder.appendix(PrunablePlainMessage.parse(attachmentData));
+                builder.appendix(PrunableEncryptedMessage.parse(attachmentData));
             }
             return builder;
         } catch (AplException.NotValidException|RuntimeException e) {
@@ -901,7 +939,7 @@ final class TransactionImpl implements Transaction {
     @Override
     public int getFullSize() {
         int fullSize = getSize() - appendagesSize;
-        for (Appendix.AbstractAppendix appendage : getAppendages()) {
+        for (AbstractAppendix appendage : getAppendages()) {
             fullSize += appendage.getFullSize();
         }
         return fullSize;
@@ -985,22 +1023,24 @@ final class TransactionImpl implements Transaction {
         }
 
         boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPoll.getPoll(getId()) != null;
-        for (Appendix.AbstractAppendix appendage : appendages) {
+        for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
             if (! appendage.verifyVersion()) {
                 throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
             }
+            lookupAndInjectBlockchain();
             if (validatingAtFinish) {
-                appendage.validateAtFinish(this);
+                appendage.validateAtFinish(this, blockchain.getHeight());
             } else {
-                appendage.validate(this);
+                appendage.validate(this, blockchain.getHeight());
             }
         }
 
         if (getFullSize() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
-        int blockchainHeight = AplCore.getBlockchain().getHeight();
+        lookupAndInjectBlockchain();
+        int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
             long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
             if (feeATM < minimumFeeATM) {
@@ -1046,7 +1086,7 @@ final class TransactionImpl implements Transaction {
         if (attachmentIsPhased()) {
             senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeATM);
         }
-        for (Appendix.AbstractAppendix appendage : appendages) {
+        for (AbstractAppendix appendage : appendages) {
             if (!appendage.isPhased(this)) {
                 appendage.loadPrunable(this);
                 appendage.apply(this, senderAccount, recipientAccount);
@@ -1059,7 +1099,7 @@ final class TransactionImpl implements Transaction {
         type.undoUnconfirmed(this, senderAccount);
     }
 
-    boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
@@ -1087,7 +1127,7 @@ final class TransactionImpl implements Transaction {
 
     private long getMinimumFeeATM(int blockchainHeight) {
         long totalFee = 0;
-        for (Appendix.AbstractAppendix appendage : appendages) {
+        for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
             if (blockchainHeight < appendage.getBaselineFeeHeight()) {
                 return 0; // No need to validate fees before baseline block

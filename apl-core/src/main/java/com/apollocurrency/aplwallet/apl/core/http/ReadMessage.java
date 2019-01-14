@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -30,7 +30,9 @@ import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -73,9 +75,9 @@ public final class ReadMessage extends APIServlet.APIRequestHandler {
         }
 
         JSONObject response = new JSONObject();
-        Appendix.Message message = transaction.getMessage();
-        Appendix.EncryptedMessage encryptedMessage = transaction.getEncryptedMessage();
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = transaction.getEncryptToSelfMessage();
+        Message message = transaction.getMessage();
+        EncryptedMessage encryptedMessage = transaction.getEncryptedMessage();
+        EncryptToSelfMessage encryptToSelfMessage = transaction.getEncryptToSelfMessage();
         if (message == null && encryptedMessage == null && encryptToSelfMessage == null && prunableMessage == null) {
             return NO_MESSAGE;
         }

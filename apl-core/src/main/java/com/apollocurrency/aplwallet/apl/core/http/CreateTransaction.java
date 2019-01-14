@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -34,9 +34,15 @@ import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -92,7 +98,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
     }
 
-    private Appendix.Phasing parsePhasing(HttpServletRequest req) throws ParameterException {
+    private Phasing parsePhasing(HttpServletRequest req) throws ParameterException {
         int finishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
                 AplCore.getBlockchain().getHeight() + 1,
                 AplCore.getBlockchain().getHeight() + Constants.MAX_PHASING_DURATION + 1,
@@ -115,7 +121,7 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
-        return new Appendix.Phasing(finishHeight, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+        return new Phasing(finishHeight, phasingParams, linkedFullHashes, hashedSecret, algorithm);
     }
 
     final PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
@@ -146,32 +152,32 @@ abstract class CreateTransaction extends APIServlet.APIRequestHandler {
         String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && (secretPhrase != null || passphrase != null);
-        Appendix.EncryptedMessage encryptedMessage = null;
-        Appendix.PrunableEncryptedMessage prunableEncryptedMessage = null;
+        EncryptedMessage encryptedMessage = null;
+        PrunableEncryptedMessage prunableEncryptedMessage = null;
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
             Account recipient = Account.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
-                prunableEncryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient,
+                prunableEncryptedMessage = (PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient,
                         senderAccount.getId(),true);
             } else {
-                encryptedMessage = (Appendix.EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, senderAccount.getId(), false);
+                encryptedMessage = (EncryptedMessage) ParameterParser.getEncryptedMessage(req, recipient, senderAccount.getId(), false);
             }
         }
-        Appendix.EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, senderAccount.getId());
-        Appendix.Message message = null;
-        Appendix.PrunablePlainMessage prunablePlainMessage = null;
+        EncryptToSelfMessage encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, senderAccount.getId());
+        Message message = null;
+        PrunablePlainMessage prunablePlainMessage = null;
         if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
-            prunablePlainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
+            prunablePlainMessage = (PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
         } else {
-            message = (Appendix.Message) ParameterParser.getPlainMessage(req, false);
+            message = (Message) ParameterParser.getPlainMessage(req, false);
         }
-        Appendix.PublicKeyAnnouncement publicKeyAnnouncement = null;
+        PublicKeyAnnouncement publicKeyAnnouncement = null;
         String recipientPublicKey = Convert.emptyToNull(req.getParameter("recipientPublicKey"));
         if (recipientPublicKey != null) {
-            publicKeyAnnouncement = new Appendix.PublicKeyAnnouncement(Convert.parseHexString(recipientPublicKey));
+            publicKeyAnnouncement = new PublicKeyAnnouncement(Convert.parseHexString(recipientPublicKey));
         }
 
-        Appendix.Phasing phasing = null;
+        Phasing phasing = null;
         boolean phased = "true".equalsIgnoreCase(req.getParameter("phased"));
         if (phased) {
             phasing = parsePhasing(req);

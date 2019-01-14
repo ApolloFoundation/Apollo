@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -43,6 +43,8 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -362,7 +364,7 @@ public final class Account {
                 publicKeyCache.remove(accountDbKeyFactory.newKey(block.getGeneratorId()));
                 block.getTransactions().forEach(transaction -> {
                     publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof Appendix.PublicKeyAnnouncement), false).isEmpty()) {
+                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncement), false).isEmpty()) {
                         publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getRecipientId()));
                     }
                     if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
@@ -977,7 +979,7 @@ public final class Account {
         return decrypted;
     }
 
-    static boolean setOrVerify(long accountId, byte[] key) {
+    public static boolean setOrVerify(long accountId, byte[] key) {
         DbKey dbKey = publicKeyDbKeyFactory.newKey(accountId);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
@@ -1348,7 +1350,7 @@ public final class Account {
         propertyListeners.notify(accountProperty, Event.DELETE_PROPERTY);
     }
 
-    void apply(byte[] key) {
+    public void apply(byte[] key) {
         apply(key, false);
     }
 
@@ -1553,7 +1555,7 @@ public final class Account {
         logEntryConfirmed(event, eventId, amountATM, feeATM);
     }
 
-    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+    public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToUnconfirmedBalanceATM(event, eventId, amountATM, 0);
     }
 

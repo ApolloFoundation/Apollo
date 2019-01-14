@@ -15,11 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static com.apollocurrency.aplwallet.apl.core.app.TransactionType.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -156,7 +158,7 @@ public final class AccountRestrictions {
                 LOG.debug("Account control no longer valid: " + e.getMessage());
                 return;
             }
-            Appendix.Phasing phasingAppendix = transaction.getPhasing();
+            Phasing phasingAppendix = transaction.getPhasing();
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }
@@ -227,7 +229,7 @@ public final class AccountRestrictions {
         }
     }
 
-    static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         return
                 senderAccount.getControls().contains(ControlType.PHASING_ONLY)

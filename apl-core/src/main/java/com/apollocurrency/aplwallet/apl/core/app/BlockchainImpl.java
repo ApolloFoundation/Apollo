@@ -15,13 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.context.ApplicationScoped;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,10 +35,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 
-public final class BlockchainImpl implements Blockchain {
+@ApplicationScoped
+public class BlockchainImpl implements Blockchain {
 
     private static final BlockchainImpl instance = new BlockchainImpl();
 
@@ -50,7 +52,7 @@ public final class BlockchainImpl implements Blockchain {
     private BlockchainImpl() {}
 
     private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
-    private final AtomicReference<BlockImpl> lastBlock = new AtomicReference<>();
+    private final AtomicReference<Block> lastBlock = new AtomicReference<>();
 
     @Override
     public void readLock() {
@@ -72,38 +74,38 @@ public final class BlockchainImpl implements Blockchain {
         lock.updateLock().unlock();
     }
 
-    void writeLock() {
+    public void writeLock() {
         lock.writeLock().lock();
     }
 
-    void writeUnlock() {
+    public void writeUnlock() {
         lock.writeLock().unlock();
     }
 
     @Override
-    public BlockImpl getLastBlock() {
+    public Block getLastBlock() {
         return lastBlock.get();
     }
 
-    void setLastBlock(BlockImpl block) {
+    public void setLastBlock(Block block) {
         lastBlock.set(block);
     }
 
     @Override
     public int getHeight() {
-        BlockImpl last = lastBlock.get();
+        Block last = lastBlock.get();
         return last == null ? 0 : last.getHeight();
     }
 
     @Override
     public int getLastBlockTimestamp() {
-        BlockImpl last = lastBlock.get();
+        Block last = lastBlock.get();
         return last == null ? 0 : last.getTimestamp();
     }
 
     @Override
-    public BlockImpl getLastBlock(int timestamp) {
-        BlockImpl block = lastBlock.get();
+    public Block getLastBlock(int timestamp) {
+        Block block = lastBlock.get();
         if (timestamp >= block.getTimestamp()) {
             return block;
         }
@@ -111,8 +113,8 @@ public final class BlockchainImpl implements Blockchain {
     }
     //load transactions
     @Override
-    public BlockImpl getBlock(long blockId) {
-        BlockImpl block = lastBlock.get();
+    public Block getBlock(long blockId) {
+        Block block = lastBlock.get();
         if (block.getId() == blockId) {
             return block;
         }
@@ -125,7 +127,7 @@ public final class BlockchainImpl implements Blockchain {
     }
     //load transactions
     @Override
-    public DbIterator<BlockImpl> getAllBlocks() {
+    public DbIterator<Block> getAllBlocks() {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -138,7 +140,7 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<BlockImpl> getBlocks(int from, int to) {
+    public DbIterator<Block> getBlocks(int from, int to) {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -154,12 +156,12 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<BlockImpl> getBlocks(long accountId, int timestamp) {
+    public DbIterator<Block> getBlocks(long accountId, int timestamp) {
         return getBlocks(accountId, timestamp, 0, -1);
     }
 
     @Override
-    public DbIterator<BlockImpl> getBlocks(long accountId, int timestamp, int from, int to) {
+    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -194,7 +196,7 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<BlockImpl> getBlocks(Connection con, PreparedStatement pstmt) {
+    public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, BlockDb::loadBlock);
     }
 
@@ -234,12 +236,12 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public List<BlockImpl> getBlocksAfter(long blockId, int limit) {
+    public List<Block> getBlocksAfter(long blockId, int limit) {
         if (limit <= 0) {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<BlockImpl> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
+        List<Block> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
         synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
             BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
             if (block != null) {
@@ -272,12 +274,12 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public List<BlockImpl> getBlocksAfter(long blockId, List<Long> blockList) {
+    public List<Block> getBlocksAfter(long blockId, List<Long> blockList) {
         if (blockList.isEmpty()) {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<BlockImpl> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
+        List<Block> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
         synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
             BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
             if (block != null) {
@@ -328,8 +330,8 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public BlockImpl getBlockAtHeight(int height) {
-        BlockImpl block = lastBlock.get();
+    public Block getBlockAtHeight(int height) {
+        Block block = lastBlock.get();
         if (height > block.getHeight()) {
             throw new IllegalArgumentException("Invalid height " + height + ", current blockchain is at " + block.getHeight());
         }
@@ -340,7 +342,7 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public BlockImpl getECBlock(int timestamp) {
+    public Block getECBlock(int timestamp) {
         Block block = getLastBlock(timestamp);
         if (block == null) {
             return getBlockAtHeight(0);
@@ -380,7 +382,7 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getAllTransactions() {
+    public DbIterator<Transaction> getAllTransactions() {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -393,13 +395,13 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
+    public DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
         return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false, true);
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    public DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                        int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
         if (phasedOnly && nonPhasedOnly) {
@@ -541,7 +543,7 @@ public final class BlockchainImpl implements Blockchain {
         }
     }
     @Override
-    public DbIterator<TransactionImpl> getReferencingTransactions(long transactionId, int from, int to) {
+    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -560,7 +562,7 @@ public final class BlockchainImpl implements Blockchain {
         }
     }
     @Override
-    public DbIterator<TransactionImpl> getTransactions(byte type, byte subtype, int from, int to) {
+    public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -626,19 +628,19 @@ public final class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public DbIterator<TransactionImpl> getTransactions(Connection con, PreparedStatement pstmt) {
+    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, TransactionDb::loadTransaction);
     }
     //phased transactions
     @Override
-    public List<TransactionImpl> getExpectedTransactions(Filter<Transaction> filter) {
+    public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         BlockchainProcessorImpl blockchainProcessor = BlockchainProcessorImpl.getInstance();
-        List<TransactionImpl> result = new ArrayList<>();
+        List<Transaction> result = new ArrayList<>();
         readLock();
         try {
-            try (DbIterator<TransactionImpl> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
-                for (TransactionImpl phasedTransaction : phasedTransactions) {
+            try (DbIterator<Transaction> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
+                for (Transaction phasedTransaction : phasedTransactions) {
                     try {
                         phasedTransaction.validate();
                         if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -302,7 +302,7 @@ public final class ShufflingParticipant {
         return getData(shufflingId, accountId);
     }
 
-    static byte[][] getData(long shufflingId, long accountId) {
+    public static byte[][] getData(long shufflingId, long accountId) {
         ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
         return shufflingData != null ? shufflingData.data : null;
     }
@@ -313,7 +313,7 @@ public final class ShufflingParticipant {
         }
     }
 
-    static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
+    public static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
         if (data != null && getData(shufflingId, accountId) == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
         }

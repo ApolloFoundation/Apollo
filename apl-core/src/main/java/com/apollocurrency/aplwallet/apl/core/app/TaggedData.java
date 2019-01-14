@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -547,7 +548,7 @@ public class TaggedData {
         }
     }
 
-    static void restore(Transaction transaction, Attachment.TaggedDataUpload attachment, int blockTimestamp, int height) {
+    public static void restore(Transaction transaction, Attachment.TaggedDataUpload attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
         Tag.add(taggedData, height);

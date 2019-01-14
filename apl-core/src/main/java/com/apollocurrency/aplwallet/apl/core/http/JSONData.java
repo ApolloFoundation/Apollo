@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -35,12 +35,12 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
 import com.apollocurrency.aplwallet.apl.core.app.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;

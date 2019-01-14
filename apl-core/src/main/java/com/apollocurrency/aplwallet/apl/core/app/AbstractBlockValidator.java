@@ -1,6 +1,7 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
+
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
@@ -12,7 +13,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
 
     @Override
-    public void validate(BlockImpl block, BlockImpl previousLastBlock, int curTime) throws BlockchainProcessor.BlockNotAcceptedException {
+    public void validate(Block block, Block previousLastBlock, int curTime) throws BlockchainProcessor.BlockNotAcceptedException {
         if (previousLastBlock.getId() != block.getPreviousBlockId()) {
             throw new BlockchainProcessor.BlockOutOfOrderException("Previous block id doesn't match", block);
         }
@@ -61,14 +62,14 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
     }
 
-    abstract void validatePreviousHash(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validatePreviousHash(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void verifySignature(BlockImpl block) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void verifySignature(Block block) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateAdaptiveBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validateAdaptiveBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateInstantBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validateInstantBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateRegularBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validateRegularBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
 }

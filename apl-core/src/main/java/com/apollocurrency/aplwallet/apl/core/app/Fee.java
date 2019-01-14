@@ -15,10 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
 
 public interface Fee {
 

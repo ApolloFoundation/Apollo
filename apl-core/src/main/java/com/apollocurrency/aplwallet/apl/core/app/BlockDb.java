@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -339,7 +339,7 @@ public final class BlockDb {
         }
     }
 
-    void saveBlock(Connection con, BlockImpl block) {
+    void saveBlock(Connection con, Block block) {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "

@@ -15,11 +15,21 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -32,6 +42,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import java.util.Map;
 
 class UnconfirmedTransaction implements Transaction {
 
@@ -141,6 +152,10 @@ class UnconfirmedTransaction implements Transaction {
         return transaction.getHeight();
     }
 
+    public void setHeight(int height) {
+        this.transaction.setHeight(height);
+    }
+
     @Override
     public long getBlockId() {
         return transaction.getBlockId();
@@ -149,6 +164,17 @@ class UnconfirmedTransaction implements Transaction {
     @Override
     public Block getBlock() {
         return transaction.getBlock();
+    }
+
+    public void setBlock(Block block) {
+        this.transaction.setBlock(block);
+        this.transaction.setHeight(block.getHeight());
+    }
+
+    public void unsetBlock() {
+        this.transaction.unsetBlock();
+        // must keep the height set, as transactions already having been included in a popped-off block before
+        // get priority when sorted for inclusion in a new block
     }
 
     @Override
@@ -187,6 +213,11 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public byte[] referencedTransactionFullHash() {
+        return transaction.getReferencedTransactionFullHash().getBytes();
+    }
+
+    @Override
     public byte[] getSignature() {
         return transaction.getSignature();
     }
@@ -194,6 +225,11 @@ class UnconfirmedTransaction implements Transaction {
     @Override
     public String getFullHash() {
         return transaction.getFullHash();
+    }
+
+    @Override
+    public byte[] fullHash() {
+        return transaction.getFullHash() != null ? transaction.getFullHash().getBytes() : new byte[]{};
     }
 
     @Override
@@ -222,6 +258,11 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public byte[] bytes() {
+        return transaction.bytes();
+    }
+
+    @Override
     public byte[] getUnsignedBytes() {
         return transaction.getUnsignedBytes();
     }
@@ -247,46 +288,65 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public Appendix.Message getMessage() {
+    public Message getMessage() {
         return transaction.getMessage();
     }
 
     @Override
-    public Appendix.PrunablePlainMessage getPrunablePlainMessage() {
+    public PrunablePlainMessage getPrunablePlainMessage() {
         return transaction.getPrunablePlainMessage();
     }
 
+    public boolean hasPrunablePlainMessage() {
+        return transaction.getPrunablePlainMessage() != null;
+    }
+
     @Override
-    public Appendix.EncryptedMessage getEncryptedMessage() {
+    public EncryptedMessage getEncryptedMessage() {
         return transaction.getEncryptedMessage();
     }
 
     @Override
-    public Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage() {
+    public PrunableEncryptedMessage getPrunableEncryptedMessage() {
         return transaction.getPrunableEncryptedMessage();
     }
 
-    public Appendix.EncryptToSelfMessage getEncryptToSelfMessage() {
+    public boolean hasPrunableEncryptedMessage() {
+        return transaction.getPrunableEncryptedMessage() != null;
+    }
+
+
+    public EncryptToSelfMessage getEncryptToSelfMessage() {
         return transaction.getEncryptToSelfMessage();
     }
 
     @Override
-    public Appendix.Phasing getPhasing() {
+    public Phasing getPhasing() {
         return transaction.getPhasing();
     }
 
     @Override
-    public List<? extends Appendix> getAppendages() {
+    public boolean attachmentIsPhased() {
+        return transaction.attachmentIsPhased();
+    }
+
+    @Override
+    public PublicKeyAnnouncement getPublicKeyAnnouncement() {
+        return transaction.getPublicKeyAnnouncement();
+    }
+
+    @Override
+    public List<AbstractAppendix> getAppendages() {
         return transaction.getAppendages();
     }
 
     @Override
-    public List<? extends Appendix> getAppendages(boolean includeExpiredPrunable) {
+    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
         return transaction.getAppendages(includeExpiredPrunable);
     }
 
     @Override
-    public List<? extends Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
+    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
         return transaction.getAppendages(filter, includeExpiredPrunable);
     }
 
@@ -304,6 +364,32 @@ class UnconfirmedTransaction implements Transaction {
     public short getIndex() {
         return transaction.getIndex();
     }
+
+    public void setIndex(int index) {
+    }
+
+    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+        if (!transaction.attachmentIsPhased() && !atAcceptanceHeight) {
+            // can happen for phased transactions having non-phasable attachment
+            return false;
+        }
+        if (atAcceptanceHeight) {
+            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // all are checked at acceptance height for block duplicates
+            if (transaction.getType().isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // phased are not further checked at acceptance height
+            if (attachmentIsPhased()) {
+                return false;
+            }
+        }
+        // non-phased at acceptance height, and phased at execution height
+        return transaction.getType().isDuplicate(this, duplicates);
+    }
+
 
     @Override
     public String toString() {

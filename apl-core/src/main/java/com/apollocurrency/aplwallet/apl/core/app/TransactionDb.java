@@ -15,11 +15,19 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -38,7 +46,7 @@ import java.util.List;
 public final class TransactionDb {
 
 
-    static TransactionImpl findTransaction(long transactionId) {
+    public static TransactionImpl findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
@@ -71,7 +79,7 @@ public final class TransactionDb {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    public static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
@@ -219,25 +227,25 @@ public final class TransactionDb {
                 }
             }
             if (rs.getBoolean("has_message")) {
-                builder.appendix(new Appendix.Message(buffer));
+                builder.appendix(new Message(buffer));
             }
             if (rs.getBoolean("has_encrypted_message")) {
-                builder.appendix(new Appendix.EncryptedMessage(buffer));
+                builder.appendix(new EncryptedMessage(buffer));
             }
             if (rs.getBoolean("has_public_key_announcement")) {
-                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
+                builder.appendix(new PublicKeyAnnouncement(buffer));
             }
             if (rs.getBoolean("has_encrypttoself_message")) {
-                builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
+                builder.appendix(new EncryptToSelfMessage(buffer));
             }
             if (rs.getBoolean("phased")) {
-                builder.appendix(new Appendix.Phasing(buffer));
+                builder.appendix(new Phasing(buffer));
             }
             if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new Appendix.PrunablePlainMessage(buffer));
+                builder.appendix(new PrunablePlainMessage(buffer));
             }
             if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
+                builder.appendix(new PrunableEncryptedMessage(buffer));
             }
 
             return builder.build();
@@ -247,7 +255,7 @@ public final class TransactionDb {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(long blockId) {
+    static List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
             BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
@@ -263,12 +271,12 @@ public final class TransactionDb {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
+    static List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
             try (ResultSet rs = pstmt.executeQuery()) {
-                List<TransactionImpl> list = new ArrayList<>();
+                List<Transaction> list = new ArrayList<>();
                 while (rs.next()) {
                     list.add(loadTransaction(con, rs));
                 }
@@ -310,10 +318,10 @@ public final class TransactionDb {
         return result;
     }
 
-    static void saveTransactions(Connection con, List<TransactionImpl> transactions) {
+    static void saveTransactions(Connection con, List<Transaction> transactions) {
         try {
             short index = 0;
-            for (TransactionImpl transaction : transactions) {
+            for (Transaction transaction : transactions) {
                 try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
                         + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
                         + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "

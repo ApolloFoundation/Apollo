@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
@@ -61,7 +61,7 @@ public final class GetAskOrders extends APIServlet.APIRequestHandler {
         long[] cancellations = null;
         if (showExpectedCancellations) {
             Filter<Transaction> filter = transaction -> transaction.getType() == TransactionType.ColoredCoins.ASK_ORDER_CANCELLATION;
-            List<? extends Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+            List<Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {
                 Attachment.ColoredCoinsOrderCancellation attachment = (Attachment.ColoredCoinsOrderCancellation) transactions.get(i).getAttachment();

@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -175,7 +176,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
@@ -293,7 +294,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
@@ -325,7 +326,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return SHUFFLING_PROCESSING_FEE;
         }
 
@@ -413,7 +414,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -447,7 +448,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return SHUFFLING_RECIPIENTS_FEE;
         }
 
@@ -528,7 +529,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -613,7 +614,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         @Override
@@ -641,7 +642,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return SHUFFLING_PROCESSING_FEE;
         }
 
@@ -727,7 +728,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {

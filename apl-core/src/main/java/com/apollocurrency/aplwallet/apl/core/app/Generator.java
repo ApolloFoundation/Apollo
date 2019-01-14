@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -96,8 +96,8 @@ public final class Generator implements Comparable<Generator> {
                                     int timestamp = generator.getTimestamp(generationLimit);
                                     if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
                                         LOG.debug("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
-                                        List<BlockImpl> poppedOffBlock = BlockchainProcessorImpl.getInstance().popOffTo(previousBlock);
-                                        for (BlockImpl block : poppedOffBlock) {
+                                        List<Block> poppedOffBlock = BlockchainProcessorImpl.getInstance().popOffTo(previousBlock);
+                                        for (Block block : poppedOffBlock) {
                                             TransactionProcessorImpl.getInstance().processLater(block.getTransactions());
                                         }
                                         lastBlock = previousBlock;

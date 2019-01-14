@@ -15,17 +15,28 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 public interface Transaction {
 
@@ -37,19 +48,19 @@ public interface Transaction {
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
-        Builder appendix(Appendix.Message message);
+        Builder appendix(Message message);
 
-        Builder appendix(Appendix.EncryptedMessage encryptedMessage);
+        Builder appendix(EncryptedMessage encryptedMessage);
 
-        Builder appendix(Appendix.EncryptToSelfMessage encryptToSelfMessage);
+        Builder appendix(EncryptToSelfMessage encryptToSelfMessage);
 
-        Builder appendix(Appendix.PublicKeyAnnouncement publicKeyAnnouncement);
+        Builder appendix(PublicKeyAnnouncement publicKeyAnnouncement);
 
-        Builder appendix(Appendix.PrunablePlainMessage prunablePlainMessage);
+        Builder appendix(PrunablePlainMessage prunablePlainMessage);
 
-        Builder appendix(Appendix.PrunableEncryptedMessage prunableEncryptedMessage);
+        Builder appendix(PrunableEncryptedMessage prunableEncryptedMessage);
 
-        Builder appendix(Appendix.Phasing phasing);
+        Builder appendix(Phasing phasing);
 
         Builder timestamp(int timestamp);
 
@@ -75,11 +86,19 @@ public interface Transaction {
 
     int getHeight();
 
+    void setHeight(int height);
+
     long getBlockId();
 
     Block getBlock();
 
+    void setBlock(Block block);
+
+    void unsetBlock();
+
     short getIndex();
+
+    void setIndex(int index);
 
     int getTimestamp();
 
@@ -95,9 +114,13 @@ public interface Transaction {
 
     String getReferencedTransactionFullHash();
 
+    byte[] referencedTransactionFullHash();
+
     byte[] getSignature();
 
     String getFullHash();
+
+    byte[] fullHash();
 
     TransactionType getType();
 
@@ -109,6 +132,8 @@ public interface Transaction {
 
     byte[] getBytes();
 
+    byte[] bytes();
+
     byte[] getUnsignedBytes();
 
     JSONObject getJSONObject();
@@ -119,25 +144,35 @@ public interface Transaction {
 
     int getFullSize();
 
-    Appendix.Message getMessage();
+    Message getMessage();
 
-    Appendix.EncryptedMessage getEncryptedMessage();
+    EncryptedMessage getEncryptedMessage();
 
-    Appendix.EncryptToSelfMessage getEncryptToSelfMessage();
+    EncryptToSelfMessage getEncryptToSelfMessage();
 
-    Appendix.Phasing getPhasing();
+    Phasing getPhasing();
 
-    Appendix.PrunablePlainMessage getPrunablePlainMessage();
+    boolean attachmentIsPhased();
 
-    Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage();
+    PublicKeyAnnouncement getPublicKeyAnnouncement();
 
-    List<? extends Appendix> getAppendages();
+    PrunablePlainMessage getPrunablePlainMessage();
 
-    List<? extends Appendix> getAppendages(boolean includeExpiredPrunable);
+    boolean hasPrunablePlainMessage();
 
-    List<? extends Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
+    PrunableEncryptedMessage getPrunableEncryptedMessage();
+
+    boolean hasPrunableEncryptedMessage();
+
+    List<AbstractAppendix> getAppendages();
+
+    List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable);
+
+    List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
 
     int getECBlockHeight();
 
     long getECBlockId();
+
+    boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight);
 }

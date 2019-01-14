@@ -1,12 +1,12 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Singleton;
+import javax.enterprise.context.ApplicationScoped;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 
-@Singleton
+@ApplicationScoped
 public class PropertiesHolder {
     
     private static final Logger LOG = getLogger(PropertiesHolder.class);

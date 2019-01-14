@@ -15,13 +15,14 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -76,8 +77,8 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
             return UNKNOWN_TRANSACTION;
         }
         long account = ParameterParser.getAccountId(req, "account", false);
-        Appendix.PrunablePlainMessage plainMessage = (Appendix.PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
-        Appendix.PrunableEncryptedMessage encryptedMessage = (Appendix.PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null,
+        PrunablePlainMessage plainMessage = (PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
+        PrunableEncryptedMessage encryptedMessage = (PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null,
                 account,true);
 
         if (plainMessage == null && encryptedMessage == null) {
@@ -88,7 +89,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
         }
 
         if (plainMessage != null) {
-            Appendix.PrunablePlainMessage myPlainMessage = transaction.getPrunablePlainMessage();
+            PrunablePlainMessage myPlainMessage = transaction.getPrunablePlainMessage();
             if (myPlainMessage == null) {
                 return NO_SUCH_PLAIN_MESSAGE;
             }
@@ -99,7 +100,7 @@ public final class VerifyPrunableMessage extends APIServlet.APIRequestHandler {
             response.put("verify", true);
             return response;
         } else if (encryptedMessage != null) {
-            Appendix.PrunableEncryptedMessage myEncryptedMessage = transaction.getPrunableEncryptedMessage();
+            PrunableEncryptedMessage myEncryptedMessage = transaction.getPrunableEncryptedMessage();
             if (myEncryptedMessage == null) {
                 return NO_SUCH_ENCRYPTED_MESSAGE;
             }

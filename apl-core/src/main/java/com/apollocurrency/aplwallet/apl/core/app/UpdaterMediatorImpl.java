@@ -1,12 +1,12 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Singleton;
+import javax.enterprise.context.ApplicationScoped;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
 
-@Singleton
+@ApplicationScoped
 public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
 

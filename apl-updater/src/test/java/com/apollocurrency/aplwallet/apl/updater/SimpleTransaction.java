@@ -1,12 +1,21 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -14,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 public class SimpleTransaction implements Transaction {
     private long id;
@@ -91,9 +101,18 @@ public class SimpleTransaction implements Transaction {
         return null;
     }
 
+    public void setBlock(Block block) {
+    }
+
+    public void unsetBlock() {
+    }
+
     @Override
     public short getIndex() {
         return 0;
+    }
+
+    public void setIndex(int index) {
     }
 
     @Override
@@ -132,6 +151,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public byte[] referencedTransactionFullHash() {
+        return new byte[]{};
+    }
+
+    @Override
     public byte[] getSignature() {
         return new byte[0];
     }
@@ -139,6 +163,11 @@ public class SimpleTransaction implements Transaction {
     @Override
     public String getFullHash() {
         return null;
+    }
+
+    @Override
+    public byte[] fullHash() {
+        return new byte[]{};
     }
 
     @Override
@@ -163,6 +192,11 @@ public class SimpleTransaction implements Transaction {
 
     @Override
     public byte[] getBytes() {
+        return new byte[0];
+    }
+
+    @Override
+    public byte[] bytes() {
         return new byte[0];
     }
 
@@ -192,47 +226,65 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public Appendix.Message getMessage() {
+    public Message getMessage() {
         return null;
     }
 
     @Override
-    public Appendix.EncryptedMessage getEncryptedMessage() {
+    public EncryptedMessage getEncryptedMessage() {
         return null;
     }
 
     @Override
-    public Appendix.EncryptToSelfMessage getEncryptToSelfMessage() {
+    public EncryptToSelfMessage getEncryptToSelfMessage() {
         return null;
     }
 
     @Override
-    public Appendix.Phasing getPhasing() {
+    public Phasing getPhasing() {
         return null;
     }
 
     @Override
-    public Appendix.PrunablePlainMessage getPrunablePlainMessage() {
+    public boolean attachmentIsPhased() {
+        return false;
+    }
+
+    @Override
+    public PublicKeyAnnouncement getPublicKeyAnnouncement() {
+        return null;
+    }
+
+    public boolean hasPrunablePlainMessage() {
+        return false;
+    }
+
+    public boolean hasPrunableEncryptedMessage() {
+        return false;
+    }
+
+    @Override
+    public PrunablePlainMessage getPrunablePlainMessage() {
         return null;
     }
 
     @Override
-    public Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage() {
+    public PrunableEncryptedMessage getPrunableEncryptedMessage() {
         return null;
     }
 
     @Override
-    public List<? extends Appendix> getAppendages() {
+    public List<AbstractAppendix> getAppendages() {
         return null;
     }
 
     @Override
-    public List<? extends Appendix> getAppendages(boolean includeExpiredPrunable) {
+    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
         return null;
     }
 
     @Override
-    public List<? extends Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
+    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
         return null;
     }
 
@@ -245,5 +297,29 @@ public class SimpleTransaction implements Transaction {
     public long getECBlockId() {
         return 0;
     }
+
+
+    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+        if (!attachmentIsPhased() && !atAcceptanceHeight) {
+            // can happen for phased transactions having non-phasable attachment
+            return false;
+        }
+        if (atAcceptanceHeight) {
+            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // all are checked at acceptance height for block duplicates
+            if (type.isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // phased are not further checked at acceptance height
+            if (attachmentIsPhased()) {
+                return false;
+            }
+        }
+        // non-phased at acceptance height, and phased at execution height
+        return type.isDuplicate(this, duplicates);
+    }
+
 }
 
