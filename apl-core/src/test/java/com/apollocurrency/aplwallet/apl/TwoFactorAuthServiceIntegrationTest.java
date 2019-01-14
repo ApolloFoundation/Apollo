@@ -28,10 +28,21 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 
+@EnableWeld
 public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
+
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+            NtpTime.class
+    ).build();
+
     private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
     private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
 
