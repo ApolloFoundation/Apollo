@@ -107,7 +107,7 @@ import org.slf4j.Logger;
  */
 public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
     private static final Logger LOG = getLogger(FullTextTrigger.class);
-    private static NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
+    private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
     /** ARS is active */
     private static volatile boolean isActive = false;

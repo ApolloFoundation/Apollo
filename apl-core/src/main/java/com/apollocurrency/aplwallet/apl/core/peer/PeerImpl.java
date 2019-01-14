@@ -172,11 +172,11 @@ final class PeerImpl implements Peer {
     }
 
     @Override
-    public synchronized Version getVersion() {
+    public Version getVersion() {
         return version;
     }
 
-    synchronized void setVersion(Version version) {
+    void setVersion(Version version) {
         boolean versionChanged = version == null || !version.equals(this.version);
         this.version = version;
         isOldVersion = false;
