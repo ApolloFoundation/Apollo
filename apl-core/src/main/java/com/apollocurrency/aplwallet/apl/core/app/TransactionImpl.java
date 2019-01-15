@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 final class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     static final class BuilderImpl implements Builder {
 
@@ -955,7 +957,7 @@ final class TransactionImpl implements Transaction {
 
     @Override
     public void validate() throws AplException.ValidationException {
-        long maxBalanceAtm = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM();
+        long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         if (timestamp == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
                 || feeATM > maxBalanceAtm
                 || amountATM < 0
@@ -998,7 +1000,7 @@ final class TransactionImpl implements Transaction {
             }
         }
 
-        if (getFullSize() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
+        if (getFullSize() > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
         int blockchainHeight = AplCore.getBlockchain().getHeight();
@@ -1006,7 +1008,7 @@ final class TransactionImpl implements Transaction {
             long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
             if (feeATM < minimumFeeATM) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                        ((double) feeATM) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
+                        ((double) feeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                         blockchainHeight));
             }
             if (ecBlockId != 0) {
@@ -1042,7 +1044,7 @@ final class TransactionImpl implements Transaction {
         }
         if (referencedTransactionFullHash != null) {
             senderAccount.addToUnconfirmedBalanceATM(getType().getLedgerEvent(), getId(),
-                    0, AplGlobalObjects.getChainConfig().getUnconfirmedPoolDepositAtm());
+                    0, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
         if (attachmentIsPhased()) {
             senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeATM);

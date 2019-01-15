@@ -172,7 +172,7 @@
   {
     "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1",
     "isTestnet": true,
-    "active": true,
+    "active": false,
     "defaultPeers": [
       "51.15.235.41",
       "163.172.146.173",
@@ -386,7 +386,7 @@
   {
     "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
     "isTestnet": true,
-    "active": false,
+    "active": true,
     "defaultPeers": [
       "51.15.250.32",
       "51.15.253.171",

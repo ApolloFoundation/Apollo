@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -45,7 +46,7 @@ public final class BlockchainImpl implements Blockchain {
     private static final BlockchainImpl instance = new BlockchainImpl();
     private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
-
+    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     static BlockchainImpl getInstance() {
         return instance;
     }
@@ -511,8 +512,8 @@ public final class BlockchainImpl implements Blockchain {
                 pstmt.setInt(++i, height);
             }
             int prunableExpiration = Math.max(0, Constants.INCLUDE_EXPIRED_PRUNABLE && includeExpiredPrunable ?
-                                        AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() :
-                                        AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime());
+                                        AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
+                                        AplCore.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
             if (withMessage) {
                 pstmt.setInt(++i, prunableExpiration);
             }

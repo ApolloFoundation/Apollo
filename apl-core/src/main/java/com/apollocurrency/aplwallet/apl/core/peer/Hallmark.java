@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import javax.enterprise.inject.spi.CDI;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -27,12 +28,12 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 public final class Hallmark {
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     public static int parseDate(String dateValue) {
         return Integer.parseInt(dateValue.substring(0, 4)) * 10000
                 + Integer.parseInt(dateValue.substring(5, 7)) * 100
@@ -51,7 +52,7 @@ public final class Hallmark {
         if (host.length() == 0 || host.length() > 100) {
             throw new IllegalArgumentException("Hostname length should be between 1 and 100");
         }
-        long maxBalanceAPL = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL();
+        long maxBalanceAPL = blockchainConfig.getCurrentConfig().getMaxBalanceAPL();
         if (weight <= 0 || weight > maxBalanceAPL) {
             throw new IllegalArgumentException("Weight should be between 1 and " + maxBalanceAPL);
         }
@@ -105,7 +106,7 @@ public final class Hallmark {
         byte[] data = new byte[hallmarkBytes.length - 64];
         System.arraycopy(hallmarkBytes, 0, data, 0, data.length);
 
-        boolean isValid = host.length() < 100 && weight > 0 && weight <= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL()
+        boolean isValid = host.length() < 100 && weight > 0 && weight <= blockchainConfig.getCurrentConfig().getMaxBalanceAPL()
                 && Crypto.verify(signature, data, publicKey);
         try {
             return new Hallmark(hallmarkString, publicKey, signature, host, weight, date, isValid);

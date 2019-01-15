@@ -294,7 +294,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
 //            uncomment this to check requests from peers
             //            if (peerRequestHandler.isChainIdProtected()) {
-//                UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
+//                UUID chainId = blockchainConfig.getChain().getChainId();
 //                Object chainIdObject = request.get("chainId");
 //                if (chainIdObject == null || !chainId.toString().equals((chainIdObject.toString()))) {
 //                    Peers.removePeer(peer);

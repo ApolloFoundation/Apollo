@@ -25,14 +25,15 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_REFUND;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
 public final class DGSRefund extends CreateTransaction {
@@ -74,7 +75,7 @@ public final class DGSRefund extends CreateTransaction {
         } catch (RuntimeException e) {
             return INCORRECT_DGS_REFUND;
         }
-        if (refundATM < 0 || refundATM > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+        if (refundATM < 0 || refundATM > CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM()) {
             return INCORRECT_DGS_REFUND;
         }
 

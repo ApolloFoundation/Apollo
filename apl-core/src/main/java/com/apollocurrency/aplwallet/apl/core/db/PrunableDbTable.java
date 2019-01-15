@@ -22,17 +22,19 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import org.slf4j.Logger;
 
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
+    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
@@ -57,10 +59,10 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     }
 
     protected void prune() {
-        if (AplGlobalObjects.getChainConfig().isEnablePruning()) {
+        if (blockchainConfig.isEnablePruning()) {
             try (Connection con = db.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmt.setInt(1, AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime());
+                pstmt.setInt(1, AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
                 int deleted;
                 do {
                     deleted = pstmt.executeUpdate();

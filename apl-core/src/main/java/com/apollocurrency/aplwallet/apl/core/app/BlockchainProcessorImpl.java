@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
@@ -77,13 +78,15 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     // TODO: YL remove static instance later
 
    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static final byte[] CHECKSUM_1 = AplGlobalObjects.getChainConfig().isTestnet() ?
+   private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static final byte[] CHECKSUM_1 = blockchainConfig.isTestnet() ?
             null
             :
             null;
 
     private static final BlockchainProcessorImpl instance =
-            new BlockchainProcessorImpl(new DefaultBlockValidator(CDI.current().select(BlockDb.class).get()));
+            new BlockchainProcessorImpl(new DefaultBlockValidator(CDI.current().select(BlockDb.class).get(),
+                    CDI.current().select(BlockchainConfig.class).get()));
 
 
     public static BlockchainProcessorImpl getInstance() {
@@ -99,7 +102,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
     private final boolean trimDerivedTables = propertiesLoader.getBooleanProperty("apl.trimDerivedTables");
-    private final int defaultNumberOfForkConfirmations = propertiesLoader.getIntProperty(AplGlobalObjects.getChainConfig().isTestnet()
+    private final int defaultNumberOfForkConfirmations = propertiesLoader.getIntProperty(blockchainConfig.isTestnet()
             ? "apl.testnetNumberOfForkConfirmations" : "apl.numberOfForkConfirmations");
     private final boolean simulateEndlessDownload = propertiesLoader.getBooleanProperty("apl.simulateEndlessDownload");
 
@@ -128,7 +131,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         {
             JSONObject request = new JSONObject();
             request.put("requestType", "getCumulativeDifficulty");
-            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+            request.put("chainId", blockchainConfig.getChain().getChainId());
             getCumulativeDifficultyRequest = JSON.prepareRequest(request);
         }
 
@@ -189,7 +192,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (peer == null) {
                     return;
                 }
-                JSONObject response = peer.send(getCumulativeDifficultyRequest, AplGlobalObjects.getChainConfig().getChain().getChainId());
+                JSONObject response = peer.send(getCumulativeDifficultyRequest, blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return;
                 }
@@ -278,7 +281,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                             continue;
                         }
                         String otherPeerCumulativeDifficulty;
-                        JSONObject otherPeerResponse = peer.send(getCumulativeDifficultyRequest, AplGlobalObjects.getChainConfig().getChain().getChainId());
+                        JSONObject otherPeerResponse = peer.send(getCumulativeDifficultyRequest, blockchainConfig.getChain().getChainId());
                         if (otherPeerResponse == null || (otherPeerCumulativeDifficulty = (String) response.get("cumulativeDifficulty")) == null) {
                             continue;
                         }
@@ -325,14 +328,14 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             while (true) {
                 JSONObject milestoneBlockIdsRequest = new JSONObject();
                 milestoneBlockIdsRequest.put("requestType", "getMilestoneBlockIds");
-                milestoneBlockIdsRequest.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+                milestoneBlockIdsRequest.put("chainId", blockchainConfig.getChain().getChainId());
                 if (lastMilestoneBlockId == null) {
                     milestoneBlockIdsRequest.put("lastBlockId", blockchain.getLastBlock().getStringId());
                 } else {
                     milestoneBlockIdsRequest.put("lastMilestoneBlockId", lastMilestoneBlockId);
                 }
 
-                JSONObject response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), AplGlobalObjects.getChainConfig().getChain().getChainId());
+                JSONObject response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return 0;
                 }
@@ -376,8 +379,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 request.put("requestType", "getNextBlockIds");
                 request.put("blockId", Long.toUnsignedString(matchId));
                 request.put("limit", limit);
-                request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId());
+                request.put("chainId", blockchainConfig.getChain().getChainId());
+                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return Collections.emptyList();
                 }
@@ -679,9 +682,9 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             request.put("requestType", "getNextBlocks");
             request.put("blockIds", idList);
             request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
-            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+            request.put("chainId", blockchainConfig.getChain().getChainId());
             long startTime = System.currentTimeMillis();
-            JSONObject response = peer.send(JSON.prepareRequest(request),AplGlobalObjects.getChainConfig().getChain().getChainId(),
+            JSONObject response = peer.send(JSON.prepareRequest(request),blockchainConfig.getChain().getChainId(),
                     10 * 1024 * 1024, false);
             responseTime = System.currentTimeMillis() - startTime;
             if (response == null) {
@@ -900,8 +903,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     request.put("requestType", "getTransactions");
                     request.put("transactionIds", requestList);
-                    request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
-                    JSONObject response = peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId(),
+                    request.put("chainId", blockchainConfig.getChain().getChainId());
+                    JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),
                             10 * 1024 * 1024, false);
                     if (response == null) {
                         return;
@@ -1193,8 +1196,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         Db.getDb().beginTransaction();
         try (Connection con = Db.getDb().getConnection()) {
             int now = AplCore.getEpochTime();
-            int minTimestamp = Math.max(1, now - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime());
-            int maxTimestamp = Math.max(minTimestamp, now - AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) - 1;
+            int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
+            int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
             List<TransactionDb.PrunableTransaction> transactionList =
                     transactionDb.findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {
@@ -1247,7 +1250,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         requestList.add(Long.toUnsignedString(transactionId));
         json.put("requestType", "getTransactions");
         json.put("transactionIds", requestList);
-        json.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+        json.put("chainId", blockchainConfig.getChain().getChainId());
         JSONStreamAware request = JSON.prepareRequest(json);
         for (Peer peer : peers) {
             if (peer.getState() != Peer.State.CONNECTED) {
@@ -1257,7 +1260,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 continue;
             }
             LOG.debug("Connected to archive peer " + peer.getHost());
-            JSONObject response = peer.send(request, AplGlobalObjects.getChainConfig().getChain().getChainId());
+            JSONObject response = peer.send(request, blockchainConfig.getChain().getChainId());
             if (response == null) {
                 continue;
             }
@@ -1493,7 +1496,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             block.apply();
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
-            int fromTimestamp = AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime();
+            int fromTimestamp = AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
             for (TransactionImpl transaction : block.getTransactions()) {
                 try {
                     transaction.apply();
@@ -1642,7 +1645,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                 scheduleScan(0, false);
                 BlockImpl lastBLock = blockDb.deleteBlocksFrom(blockDb.findBlockIdAtHeight(height));
                 blockchain.setLastBlock(lastBLock);
-                AplGlobalObjects.getChainConfig().rollback(lastBLock.getHeight());
+                blockchainConfig.rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
             } finally {
                 scan(0, false);
@@ -1700,8 +1703,8 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
-        int maxPayloadLength = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength();
-        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxNumberOfTransactions()) {
+        int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
+        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
             int prevNumberOfNewTransactions = sortedTransactions.size();
             for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
                 int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();

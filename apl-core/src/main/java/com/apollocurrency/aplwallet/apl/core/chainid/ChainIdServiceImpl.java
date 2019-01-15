@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -14,11 +17,13 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+@ApplicationScoped
 public class ChainIdServiceImpl implements ChainIdService {
     private static final String DEFAULT_CONFIG_LOCATION = "conf/chains.json";
-    private String chainsConfigFileLocations;
+    private final String chainsConfigFileLocations;
 
+    @Inject
+    @Named("chainsConfigFilePath")
     public ChainIdServiceImpl(String chainsConfigFileLocation) {
         this.chainsConfigFileLocations = chainsConfigFileLocation;
     }

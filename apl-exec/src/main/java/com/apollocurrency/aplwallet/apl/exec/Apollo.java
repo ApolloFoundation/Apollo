@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
@@ -40,11 +39,14 @@ public class Apollo {
     private static AplContainer container;
     
     private static AplCore core;
-    private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
 
     private static PropertiesLoader propertiesLoader;
     private PropertiesHolder propertiesHolder;
-    
+
+    public static PropertiesLoader getPropertiesLoader() {
+        return propertiesLoader;
+    }
+
     private void initCore() {
                 propertiesLoader.loadSystemProperties(
                         Arrays.asList(
@@ -53,15 +55,12 @@ public class Apollo {
                                 "apl.enablePeerUPnP"));
         
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
-        core = new AplCore();
+        core = CDI.current().select(AplCore.class).get();
         AplCoreRuntime.getInstance().addCore(core);
         core.init();
     }
 
     private void initUpdater() {
-        if (aplGlobalObjects == null) {
-            aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-        }
         if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
@@ -147,7 +146,7 @@ public class Apollo {
                 .recursiveScanPackages(Updater.class)
                 .annotatedDiscoveryMode().build();
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        app.propertiesHolder.init(propertiesLoader.getProperties());
+//        app.propertiesHolder.init(propertiesLoader.getProperties());
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));

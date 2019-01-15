@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -3063,7 +3064,7 @@ public interface Attachment extends Appendix {
     }
 
     final class ShufflingCancellation extends AbstractShufflingAttachment {
-
+        private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         private final byte[][] blameData;
         private final byte[][] keySeeds;
         private final long cancellingAccountId;
@@ -3077,7 +3078,7 @@ public interface Attachment extends Appendix {
             this.blameData = new byte[count][];
             for (int i = 0; i < count; i++) {
                 int size = buffer.getInt();
-                if (size > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
+                if (size > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
                     throw new AplException.NotValidException("Invalid data size " + size);
                 }
                 this.blameData[i] = new byte[size];

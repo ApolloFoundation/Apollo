@@ -6,7 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
@@ -25,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
-
+@ApplicationScoped
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
 
@@ -48,16 +51,23 @@ public class BlockchainConfig {
     private volatile HeightConfig currentConfig;
     private Chain chain;
 
-    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
-        this(chain,
+    @Inject
+    public BlockchainConfig(PropertiesHolder holder, ChainIdService chainIdService) {
+        this(chainIdService,
              holder.getIntProperty("apl.testnetLeasingDelay", -1),
              holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
              holder.getIntProperty("apl.maxPrunableLifetime")
                 );
     }
-    public BlockchainConfig(Chain chain, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations, int maxPrunableLifetime) {
+    public BlockchainConfig(ChainIdService chainIdService, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations,
+                            int maxPrunableLifetime) {
 
-        this.chain                          = chain;
+        try {
+            this.chain = chainIdService.getActiveChain();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Cannot get active chain");
+        }
         this.testnet                        = chain.isTestnet();
         this.projectName                    = chain.getProject();
         this.accountPrefix                  = chain.getPrefix();
@@ -85,7 +95,7 @@ public class BlockchainConfig {
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    public void updateToLatestConfig() {
+    public void updateToBlock() {
 //        move BlockDb to constructor later
         BlockImpl lastBlock = CDI.current().select(BlockDb.class).get().findLastBlock();
         if (lastBlock == null) {
