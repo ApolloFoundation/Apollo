@@ -343,7 +343,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
 
  The database triggers cannot be re-activated after they have been deactivated.</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>active</code> - TRUE to enable database triggers</dd>
 </dl>
 </li>
@@ -371,7 +371,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
                     throws java.sql.SQLException</pre>
 <div class="block">Reindex all of the indexed tables</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - SQL connection</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code>java.sql.SQLException</code> - Unable to reindex tables</dd>
@@ -391,7 +391,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
                         throws java.sql.SQLException</pre>
 <div class="block">Create the fulltext index for a table</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - SQL connection</dd>
 <dd><code>schema</code> - Schema name</dd>
 <dd><code>table</code> - Table name</dd>
@@ -413,7 +413,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
                       throws java.sql.SQLException</pre>
 <div class="block">Drop the fulltext index for a table</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - SQL connection</dd>
 <dd><code>schema</code> - Schema name</dd>
 <dd><code>table</code> - Table name</dd>
@@ -432,7 +432,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
                     throws java.sql.SQLException</pre>
 <div class="block">Drop all fulltext indexes</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - SQL connection</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code>java.sql.SQLException</code> - Unable to drop fulltext indexes</dd>
@@ -461,7 +461,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
    KEYS    - Primary key values (Long[]) - this is always the DB_ID value for the table row
    SCORE   - Lucene score (Float)</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - SQL connection</dd>
 <dd><code>schema</code> - Schema name</dd>
 <dd><code>table</code> - Table name</dd>
@@ -490,7 +490,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
           throws java.sql.SQLException</pre>
 <div class="block">Initialize the trigger (Trigger interface)</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - Database connection</dd>
 <dd><code>schema</code> - Database schema name</dd>
 <dd><code>trigger</code> - Database trigger name</dd>
@@ -544,7 +544,7 @@ implements <a href="../../apl/db/TransactionalDb.TransactionCallback.html" title
           throws java.sql.SQLException</pre>
 <div class="block">Trigger has fired (Trigger interface)</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>conn</code> - Database connection</dd>
 <dd><code>oldRow</code> - The old row or null</dd>
 <dd><code>newRow</code> - The new row or null</dd>

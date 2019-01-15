@@ -255,7 +255,7 @@ extends java.lang.Object</pre>
 <pre>public&nbsp;PeerWebSocket(<a href="../../apl/peer/PeerServlet.html" title="class in apl.peer">PeerServlet</a>&nbsp;peerServlet)</pre>
 <div class="block">Create a server socket</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>peerServlet</code> - Servlet for request processing</dd>
 </dl>
 </li>
@@ -278,7 +278,7 @@ extends java.lang.Object</pre>
                     throws java.io.IOException</pre>
 <div class="block">Start a client session</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>uri</code> - Server URI</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>TRUE if the WebSocket connection was completed</dd>
@@ -296,7 +296,7 @@ extends java.lang.Object</pre>
 <pre>public&nbsp;void&nbsp;onConnect(Session&nbsp;session)</pre>
 <div class="block">WebSocket connection complete</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>session</code> - WebSocket session</dd>
 </dl>
 </li>
@@ -341,7 +341,7 @@ extends java.lang.Object</pre>
  waiting for a response.  This method is used by the connection
  originator.</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>request</code> - Request message</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Response message</dd>
@@ -363,7 +363,7 @@ extends java.lang.Object</pre>
 
  This method is used by the connection acceptor to return the POST response</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>requestId</code> - Request identifier</dd>
 <dd><code>response</code> - Response message</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
@@ -382,7 +382,7 @@ extends java.lang.Object</pre>
                       int&nbsp;len)</pre>
 <div class="block">Process a socket message</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>inbuf</code> - Message buffer</dd>
 <dd><code>off</code> - Starting offset</dd>
 <dd><code>len</code> - Message length</dd>
@@ -399,7 +399,7 @@ extends java.lang.Object</pre>
                     java.lang.String&nbsp;reason)</pre>
 <div class="block">WebSocket session has been closed</div>
 <dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
+<dt><span class="paramLabel">Helper.Parameters:</span></dt>
 <dd><code>statusCode</code> - Status code</dd>
 <dd><code>reason</code> - Reason message</dd>
 </dl>

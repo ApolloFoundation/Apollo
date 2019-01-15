@@ -29,6 +29,7 @@
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
+        <module>api-integration-tests</module>
     </modules>
 
     <properties>
