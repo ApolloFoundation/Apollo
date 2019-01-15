@@ -146,7 +146,6 @@ public class Apollo {
                 .recursiveScanPackages(Updater.class)
                 .annotatedDiscoveryMode().build();
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-//        app.propertiesHolder.init(propertiesLoader.getProperties());
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));

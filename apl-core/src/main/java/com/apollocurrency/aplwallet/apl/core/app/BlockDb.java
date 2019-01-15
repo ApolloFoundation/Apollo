@@ -56,22 +56,21 @@ public class BlockDb {
     private final SortedMap<Integer, BlockImpl> heightMap;     
     private final Map<Long, TransactionImpl> transactionCache;
     private final ConnectionProvider connectionProvider;
+    private TransactionDb transactionDb;
+
     public BlockDb(int blockCacheSize, Map<Long, BlockImpl> blockCache, SortedMap<Integer, BlockImpl> heightMap,
                    Map<Long, TransactionImpl> transactionCache, ConnectionProvider connectionProvider) {
         Objects.requireNonNull(connectionProvider, "Connection provider is null");
-//        Objects.requireNonNull(transactionDb, "Transaction db is null");
-
         this.blockCacheSize = blockCacheSize;
         this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
         this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
         this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
         this.connectionProvider = connectionProvider;
-//        this.transactionDb = transactionDb;
     }
 
     @Inject
     public BlockDb(ConnectionProvider connectionProvider) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, null, null, null, connectionProvider);
+        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), connectionProvider);
     }
 
     public void attachCacheListener() {
@@ -339,13 +338,18 @@ public class BlockDb {
             return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
                     cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, loadTransactions ?
-                    CDI.current().select(TransactionDb.class).get().findBlockTransactions(con,
+                    getTransactionDb().findBlockTransactions(con,
                     id) :
                     null);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
+    private TransactionDb getTransactionDb() {
+        if (transactionDb == null) this.transactionDb = CDI.current().select(TransactionDb.class).get();
+        return transactionDb;
+    }
+
 
     void saveBlock(Connection con, BlockImpl block) {
         try {
