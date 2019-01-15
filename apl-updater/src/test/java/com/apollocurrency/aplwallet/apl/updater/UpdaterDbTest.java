@@ -84,6 +84,10 @@ public class UpdaterDbTest {
         UpdateTransaction last = repository.getLast();
     }
     private class MockUpdaterMediator extends UpdaterMediatorImpl {
+        public MockUpdaterMediator() {
+            super(null);
+        }
+
         @Override
         public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
             try {

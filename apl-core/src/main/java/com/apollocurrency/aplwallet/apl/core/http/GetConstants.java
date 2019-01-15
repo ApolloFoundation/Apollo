@@ -22,12 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyType;
@@ -38,8 +38,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -69,9 +70,10 @@ public final class GetConstants extends APIServlet.APIRequestHandler {
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
-                response.put("coinSymbol", AplGlobalObjects.getChainConfig().getCoinSymbol());
-                response.put("accountPrefix", AplGlobalObjects.getChainConfig().getAccountPrefix());
-                response.put("projectName", AplGlobalObjects.getChainConfig().getProjectName());
+                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+                response.put("coinSymbol", blockchainConfig.getCoinSymbol());
+                response.put("accountPrefix", blockchainConfig.getAccountPrefix());
+                response.put("projectName", blockchainConfig.getProjectName());
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
                 outer:

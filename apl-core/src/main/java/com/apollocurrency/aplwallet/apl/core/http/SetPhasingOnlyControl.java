@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 /**
  * Sets an account control that blocks transactions unless they are phased with certain parameters
@@ -83,7 +84,7 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
     protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         Account account = ParameterParser.getSenderAccount(request);
         PhasingParams phasingParams = parsePhasingParams(request, "control");
-        long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), false);
+        long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), false);
         short minDuration = (short)ParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         short maxDuration = (short) ParameterParser.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         return createTransaction(request, account, new Attachment.SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration));

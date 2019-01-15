@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -32,10 +32,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -58,9 +60,11 @@ public interface Appendix {
         boolean hasPrunableData();
         void restorePrunableData(Transaction transaction, int blockTimestamp, int height);
         default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+            BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
             return AplCore.getEpochTime() - transaction.getTimestamp() <
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
-                            AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() : AplGlobalObjects.getChainConfig().getMinPrunableLifetime());
+                            blockchainConfig.getMaxPrunableLifetime() :
+                            blockchainConfig.getMinPrunableLifetime());
         }
     }
 
@@ -70,7 +74,7 @@ public interface Appendix {
 
 
     abstract class AbstractAppendix implements Appendix {
-
+        protected final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         private final byte version;
 
         AbstractAppendix(JSONObject attachmentData) {
@@ -318,6 +322,7 @@ public interface Appendix {
             }
         };
 
+
         static PrunablePlainMessage parse(JSONObject attachmentData) {
             if (!hasAppendix(appendixName, attachmentData)) {
                 return null;
@@ -417,14 +422,14 @@ public interface Appendix {
             if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
                 throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
             }
-            if (msg == null && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+            if (msg == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
             }
         }
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            if (AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime()) {
+            if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
                 PrunableMessage.add((TransactionImpl)transaction, this);
             }
         }
@@ -715,7 +720,7 @@ public interface Appendix {
                 throw new AplException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
             }
             EncryptedData ed = getEncryptedData();
-            if (ed == null && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+            if (ed == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
             }
             if (ed != null) {
@@ -735,7 +740,7 @@ public interface Appendix {
 
         @Override
         void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            if (AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime()) {
+            if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
                 PrunableMessage.add((TransactionImpl)transaction, this);
             }
         }
@@ -1351,7 +1356,7 @@ public interface Appendix {
                     if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                         throw new AplException.NotValidException("Duplicate linked transaction ids");
                     }
-                    TransactionImpl linkedTransaction = TransactionDb.findTransactionByFullHash(hash, currentHeight);
+                    TransactionImpl linkedTransaction = CDI.current().select(TransactionDb.class).get().findTransactionByFullHash(hash, currentHeight);
                     if (linkedTransaction != null) {
                         if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                             throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");

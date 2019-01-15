@@ -55,12 +55,12 @@ import java.util.concurrent.TimeoutException;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -106,6 +106,7 @@ public final class Peers {
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     static final int connectTimeout;
     static final int readTimeout;
     static final int blacklistingPeriod;
@@ -174,7 +175,7 @@ public final class Peers {
         }
         myPlatform = platform;
         myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());
-        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !AplGlobalObjects.getChainConfig().isTestnet()) {
+        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !blockchainConfig.isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
         String myHost = null;
@@ -221,7 +222,7 @@ public final class Peers {
             }
         }
         myPeerServerPort = propertiesHolder.getIntProperty("apl.peerServerPort");
-        if (myPeerServerPort == TESTNET_PEER_PORT && !AplGlobalObjects.getChainConfig().isTestnet()) {
+        if (myPeerServerPort == TESTNET_PEER_PORT && !blockchainConfig.isTestnet()) {
             throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
         }
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! Constants.isOffline;
@@ -254,7 +255,7 @@ public final class Peers {
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
-                if (!AplGlobalObjects.getChainConfig().isTestnet()) {
+                if (!blockchainConfig.isTestnet()) {
                     if (port >= 0)
                         announcedAddress = myAddress;
                     else
@@ -278,9 +279,9 @@ public final class Peers {
         json.put("application", Constants.APPLICATION);
         json.put("version",Constants.VERSION.toString());
         json.put("platform", Peers.myPlatform);
-        json.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+        json.put("chainId", blockchainConfig.getChain().getChainId());
         json.put("shareAddress", Peers.shareMyAddress);
-        if (!AplGlobalObjects.getChainConfig().isEnablePruning() && Constants.INCLUDE_EXPIRED_PRUNABLE) {
+        if (!blockchainConfig.isEnablePruning() && Constants.INCLUDE_EXPIRED_PRUNABLE) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
         if (API.openAPIPort > 0) {
@@ -326,10 +327,10 @@ public final class Peers {
         LOG.debug("My peer info:\n" + json.toJSONString());
         myPeerInfo = json;
 
-        final List<String> defaultPeers = AplGlobalObjects.getChainConfig().getChain().getDefaultPeers();
-        wellKnownPeers = AplGlobalObjects.getChainConfig().getChain().getWellKnownPeers();
+        final List<String> defaultPeers = blockchainConfig.getChain().getDefaultPeers();
+        wellKnownPeers = blockchainConfig.getChain().getWellKnownPeers();
 
-        List<String> knownBlacklistedPeersList = AplGlobalObjects.getChainConfig().getChain().getBlacklistedPeers();
+        List<String> knownBlacklistedPeersList = blockchainConfig.getChain().getBlacklistedPeers();
         if (knownBlacklistedPeersList.isEmpty()) {
             knownBlacklistedPeers = Collections.emptySet();
         } else {
@@ -440,7 +441,7 @@ public final class Peers {
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
-                final int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
+                final int port = blockchainConfig.isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
                 connector.setPort(port);
                 final String host = propertiesHolder.getStringProperty("apl.peerServerHost");
                 connector.setHost(host);
@@ -559,7 +560,7 @@ public final class Peers {
                                 connectSet.add((PeerImpl)peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                             }
                             connectSet.forEach(peer -> futures.add(peersService.submit(() -> {
-                                peer.connect(AplGlobalObjects.getChainConfig().getChain().getChainId());
+                                peer.connect(blockchainConfig.getChain().getChainId());
                                 if (peer.getState() == Peer.State.CONNECTED &&
                                             enableHallmarkProtection && peer.getWeight() == 0 &&
                                             hasTooManyOutboundConnections()) {
@@ -578,7 +579,7 @@ public final class Peers {
                         if (peer.getState() == Peer.State.CONNECTED
                                 && now - peer.getLastUpdated() > 3600
                                 && now - peer.getLastConnectAttempt() > 600) {
-                            peersService.submit(()-> peer.connect(AplGlobalObjects.getChainConfig().getChain().getChainId()));
+                            peersService.submit(()-> peer.connect(blockchainConfig.getChain().getChainId()));
                         }
                         if (peer.getLastInboundRequest() != 0 &&
                                 now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
@@ -641,7 +642,7 @@ public final class Peers {
         {
             JSONObject request = new JSONObject();
             request.put("requestType", "getPeers");
-            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+            request.put("chainId", blockchainConfig.getChain().getChainId());
             getPeersRequest = JSON.prepareRequest(request);
         }
 
@@ -659,7 +660,7 @@ public final class Peers {
                     if (peer == null) {
                         return;
                     }
-                    JSONObject response = peer.send(getPeersRequest, AplGlobalObjects.getChainConfig().getChain().getChainId(), 10 * 1024 * 1024,
+                    JSONObject response = peer.send(getPeersRequest, blockchainConfig.getChain().getChainId(), 10 * 1024 * 1024,
                             false);
                     if (response == null) {
                         return;
@@ -709,8 +710,8 @@ public final class Peers {
                         request.put("requestType", "addPeers");
                         request.put("peers", myPeers);
                         request.put("services", myServices);            // Separate array for backwards compatibility
-                        request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
-                        peer.send(JSON.prepareRequest(request), AplGlobalObjects.getChainConfig().getChain().getChainId(), 0, false);
+                        request.put("chainId", blockchainConfig.getChain().getChainId());
+                        peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(), 0, false);
                     }
 
                 } catch (Exception e) {
@@ -736,7 +737,7 @@ public final class Peers {
             // the same announced address)
             //
             Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
-            UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
+            UUID chainId = blockchainConfig.getChain().getChainId();
             Peers.peers.values().forEach(peer -> {
                 if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted() && chainId.equals(peer.getChainId()) && now - peer.getLastUpdated() < 7*24*3600) {
                     currentPeers.put(peer.getAnnouncedAddress(),
@@ -877,7 +878,7 @@ public final class Peers {
     }
 
     public static int getDefaultPeerPort() {
-        return AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+        return blockchainConfig.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
     }
 
     public static Collection<? extends Peer> getAllPeers() {
@@ -1004,7 +1005,7 @@ public final class Peers {
             return null;
         }
         peer = new PeerImpl(host, announcedAddress);
-        boolean testnet = AplGlobalObjects.getChainConfig().isTestnet();
+        boolean testnet = blockchainConfig.isTestnet();
         if (testnet && peer.getPort() != TESTNET_PEER_PORT) {
             LOG.debug("Peer " + host + " on testnet is not using port " + TESTNET_PEER_PORT + ", ignoring");
             return null;
@@ -1077,7 +1078,7 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        ((PeerImpl)peer).connect(AplGlobalObjects.getChainConfig().getChain().getChainId());
+        ((PeerImpl)peer).connect(blockchainConfig.getChain().getChainId());
     }
 
     public static void sendToSomePeers(Block block) {
@@ -1110,7 +1111,7 @@ public final class Peers {
             throw new RuntimeException(errorMessage);
         }
         sendingService.submit(() -> {
-            request.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
+            request.put("chainId", blockchainConfig.getChain().getChainId());
             final JSONStreamAware jsonRequest = JSON.prepareRequest(request);
 
             int successful = 0;
@@ -1124,7 +1125,7 @@ public final class Peers {
                 if (!peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
                         && peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT) {
                     Future<JSONObject> futureResponse = peersService.submit(() -> peer.send(jsonRequest,
-                            AplGlobalObjects.getChainConfig().getChain().getChainId()));
+                            blockchainConfig.getChain().getChainId()));
                     expectedResponses.add(futureResponse);
                 }
                 if (expectedResponses.size() >= Peers.sendToPeersLimit - successful) {
@@ -1155,7 +1156,7 @@ public final class Peers {
     }
 
     public static List<Peer> getPublicPeers(final Peer.State state, final boolean applyPullThreshold) {
-        UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
+        UUID chainId = blockchainConfig.getChain().getChainId();
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == state && chainId.equals(peer.getChainId()) && peer.getAnnouncedAddress() != null
                 && (!applyPullThreshold || !Peers.enableHallmarkProtection || peer.getWeight() >= Peers.pullThreshold));
     }
@@ -1274,9 +1275,11 @@ public final class Peers {
     }
 
     private static void checkBlockchainState() {
-        Peer.BlockchainState state = Constants.isLightClient ? Peer.BlockchainState.LIGHT_CLIENT :
-                (AplCore.getBlockchainProcessor().isDownloading() || AplCore.getBlockchain().getLastBlockTimestamp() < AplCore.getEpochTime() - 600) ? Peer.BlockchainState.DOWNLOADING :
-                        (AplCore.getBlockchain().getLastBlock().getBaseTarget() / AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() > 10 && !AplGlobalObjects.getChainConfig().isTestnet()) ?
+        Peer.BlockchainState state = Constants.isLightClient
+                ? Peer.BlockchainState.LIGHT_CLIENT
+                : (AplCore.getBlockchainProcessor().isDownloading() || AplCore.getBlockchain().getLastBlockTimestamp() < AplCore.getEpochTime() - 600)
+                ? Peer.BlockchainState.DOWNLOADING :
+                        (AplCore.getBlockchain().getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10 && !blockchainConfig.isTestnet()) ?
                                 Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {

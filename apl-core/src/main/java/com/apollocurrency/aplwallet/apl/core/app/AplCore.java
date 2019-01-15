@@ -27,14 +27,15 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_P
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -65,8 +66,11 @@ public final class AplCore {
 //    @Inject
 //    private PropertiesHolder propertiesHolder;
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-//TODO: Core should not be static anymore!  
-    public AplCore() {
+//TODO: Core should not be static anymore!
+    private final BlockchainConfig blockchainConfig;
+    @Inject
+    public AplCore(BlockchainConfig config) {
+        this.blockchainConfig = config;
     }
     
     public static boolean isShutdown() {
@@ -141,7 +145,6 @@ public final class AplCore {
         AplCoreRuntime.getInstance().setServerStatus(status, wallet);
     }
     
-    private static AplGlobalObjects aplGlobalObjects; // TODO: YL remove static later
     private static volatile boolean initialized = false;
 
 //    private static class Init {
@@ -155,13 +158,12 @@ public final class AplCore {
 //        static {
             try {
                 long startTime = System.currentTimeMillis();
-                chainIdService = new ChainIdServiceImpl(propertiesHolder.getStringProperty("apl.chainIdFilePath", "chains.json"));
-                AplGlobalObjects.createBlockchainConfig(chainIdService.getActiveChain(), propertiesHolder, false);
+                chainIdService = CDI.current().select(ChainIdService.class).get();
                 CDI.current().select(NtpTime.class).get().start();
 
 
-//                AplGlobalObjects.getChainConfig().init();
-//                AplGlobalObjects.getChainConfig().updateToLatestConstants();
+//                blockchainConfig.init();
+//                blockchainConfig.updateToLatestConstants();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -169,18 +171,18 @@ public final class AplCore {
 
                 checkPorts();
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
-                aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
 
                 Db.init();
 //TODO: check: no such file
   //              ChainIdDbMigration.migrate();
-                AplGlobalObjects.createBlockDb(new ConnectionProviderImpl());
+
                 DbMigratorTask.getInstance().migrateDb();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                aplGlobalObjects.getChainConfig().init();
-                aplGlobalObjects.getChainConfig().updateToLatestConfig();
+                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+                blockchainConfig.init();
+                blockchainConfig.updateToBlock();
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
@@ -227,7 +229,8 @@ public final class AplCore {
                 AppStatus.getInstance().update("API initialization...");
                 API.init();
                 DebugTrace.init();
-                int timeMultiplier = (aplGlobalObjects.getChainConfig().isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl.timeMultiplier"), 1) : 1;
+                int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
+                        ".timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
                     setTime(new Time.FasterTime(Math.max(getEpochTime(), AplCore.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
@@ -252,7 +255,7 @@ public final class AplCore {
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
 
-                if (AplGlobalObjects.getChainConfig().isTestnet()) {
+                if (blockchainConfig.isTestnet()) {
                     LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
                 }
             }
@@ -289,7 +292,7 @@ public final class AplCore {
         }
 
         private Set<Integer> collectWorkingPorts() {
-            boolean testnet = aplGlobalObjects.getChainConfig().isTestnet();
+            boolean testnet = blockchainConfig.isTestnet();
             final int port = testnet ?  Constants.TESTNET_API_PORT: propertiesHolder.getIntProperty("apl.apiServerPort");
             final int sslPort = testnet ? TESTNET_API_SSLPORT : propertiesHolder.getIntProperty("apl.apiServerSSLPort");
             boolean enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -3062,7 +3064,7 @@ public interface Attachment extends Appendix {
     }
 
     final class ShufflingCancellation extends AbstractShufflingAttachment {
-
+        private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         private final byte[][] blameData;
         private final byte[][] keySeeds;
         private final long cancellingAccountId;
@@ -3076,7 +3078,7 @@ public interface Attachment extends Appendix {
             this.blameData = new byte[count][];
             for (int i = 0; i < count; i++) {
                 int size = buffer.getInt();
-                if (size > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
+                if (size > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
                     throw new AplException.NotValidException("Invalid data size " + size);
                 }
                 this.blameData[i] = new byte[size];
@@ -3511,7 +3513,8 @@ public interface Attachment extends Appendix {
                 hash = super.getHash();
             }
             if (hash == null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload)TransactionDb.findTransaction(taggedDataId).getAttachment();
+                TaggedDataUpload taggedDataUpload =
+                        (TaggedDataUpload) CDI.current().select(TransactionDb.class).get().findTransaction(taggedDataId).getAttachment();
                 hash = taggedDataUpload.getHash();
             }
             return hash;

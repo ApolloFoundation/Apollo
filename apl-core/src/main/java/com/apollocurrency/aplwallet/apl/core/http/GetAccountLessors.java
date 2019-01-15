@@ -20,13 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -65,7 +66,7 @@ public final class GetAccountLessors extends APIServlet.APIRequestHandler {
                     Account lessor = lessors.next();
                     JSONObject lessorJSON = new JSONObject();
                     JSONData.putAccount(lessorJSON, "lessor", lessor.getId());
-                    lessorJSON.put("guaranteedBalanceATM", String.valueOf(lessor.getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), height)));
+                    lessorJSON.put("guaranteedBalanceATM", String.valueOf(lessor.getGuaranteedBalanceATM( CDI.current().select(BlockchainConfig.class).get().getGuaranteedBalanceConfirmations(), height)));
                     lessorsJSON.add(lessorJSON);
                 }
             }

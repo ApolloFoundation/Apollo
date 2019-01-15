@@ -5,13 +5,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
-import java.io.File;
+import javax.enterprise.inject.spi.CDI;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
+import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +34,15 @@ public class AplCoreRuntime {
  
     private  RuntimeMode runtimeMode;
     private  DirProvider dirProvider;
-    
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
     private static class AplCoreRuntimeHolder {
         private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
     } 
     
     private AplCoreRuntime() {
     }
-    
+
     public void setup(RuntimeMode runtimeMode, DirProvider dirProvider){
         this.runtimeMode =runtimeMode;
         this.dirProvider = dirProvider;
@@ -74,11 +76,11 @@ public class AplCoreRuntime {
     }
 
     public  String getDbDir(String dbDir, boolean chainIdFirst) {
-        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId(), chainIdFirst);
+        return dirProvider.getDbDir(dbDir, blockchainConfig.getChain().getChainId(), chainIdFirst);
     }
 
     public  String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, AplGlobalObjects.getChainConfig().getChain().getChainId(), false);
+        return dirProvider.getDbDir(dbDir, blockchainConfig.getChain().getChainId(), false);
     }
 
     public  Path getKeystoreDir(String keystoreDir) {

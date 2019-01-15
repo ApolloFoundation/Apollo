@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,8 +32,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -60,7 +61,9 @@ public final class DumpPeers extends APIServlet.APIRequestHandler {
 
         Version version = new Version(Convert.nullToEmpty(req.getParameter("version")));
 
-        int weight = ParameterParser.getInt(req, "weight", 0, (int) AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL(), false);
+        int weight =
+                ParameterParser.getInt(req, "weight", 0, (int) CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL(),
+                false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();

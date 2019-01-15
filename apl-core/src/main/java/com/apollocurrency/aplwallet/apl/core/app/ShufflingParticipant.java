@@ -20,9 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
@@ -31,15 +41,8 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 public final class ShufflingParticipant {
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final Logger LOG = getLogger(ShufflingParticipant.class);
 
     public enum State {
@@ -308,7 +311,7 @@ public final class ShufflingParticipant {
     }
 
     void setData(byte[][] data, int timestamp) {
-        if (data != null && AplCore.getEpochTime() - timestamp < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() && getData() == null) {
+        if (data != null && AplCore.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, AplCore.getBlockchain().getHeight()));
         }
     }

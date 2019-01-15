@@ -20,19 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.spi.CDI;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 
 public final class Convert2 {
 
-
     private Convert2() {} //never
 
     //TODO: rewrite other classes without defaultRsAccount
     public static String rsAccount(long accountId) {
-        return AplGlobalObjects.getChainConfig().getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
+        return CDI.current().select(BlockchainConfig .class).get().getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
@@ -50,7 +51,7 @@ public final class Convert2 {
 
 
     public static long parseAPL(String apl) {
-        return Convert.parseStringFraction(apl, 8, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL());
+        return Convert.parseStringFraction(apl, 8, CDI.current().select(BlockchainConfig .class).get().getCurrentConfig().getMaxBalanceAPL());
     }
 
 

@@ -1,10 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
-
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -12,6 +7,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
 public class APIErrorHandler extends ErrorPageErrorHandler {
 

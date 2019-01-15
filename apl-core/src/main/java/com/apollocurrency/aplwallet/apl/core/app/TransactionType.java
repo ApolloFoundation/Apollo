@@ -20,10 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,10 +31,13 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.util.AplException.ValidationException;
 import com.apollocurrency.aplwallet.apl.core.app.Attachment.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.AplException.ValidationException;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;
@@ -98,6 +100,8 @@ public abstract class TransactionType {
     private static final byte SUBTYPE_UPDATE_CRITICAL = 0;
     private static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     private static final byte SUBTYPE_UPDATE_MINOR = 2;
+
+    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -239,7 +243,7 @@ public abstract class TransactionType {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, AplGlobalObjects.getChainConfig().getUnconfirmedPoolDepositAtm());
+            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
@@ -277,7 +281,7 @@ public abstract class TransactionType {
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
             senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), 0,
-                    AplGlobalObjects.getChainConfig().getUnconfirmedPoolDepositAtm());
+                    blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
     }
 
@@ -430,7 +434,7 @@ public abstract class TransactionType {
 
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-                if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid ordinary payment");
                 }
             }
@@ -466,7 +470,7 @@ public abstract class TransactionType {
 
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-                if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid private payment");
                 }
             }
@@ -694,7 +698,7 @@ public abstract class TransactionType {
                     throw new AplException.NotValidException("Missing alias name");
                 }
                 long priceATM = attachment.getPriceATM();
-                if (priceATM < 0 || priceATM > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                if (priceATM < 0 || priceATM > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid alias sell price: " + priceATM);
                 }
                 if (priceATM == 0) {
@@ -1348,7 +1352,7 @@ public abstract class TransactionType {
                     throw new AplException.NotValidException("Invalid account property: " + attachment.getJSONObject());
                 }
                 if (transaction.getAmountATM() != 0) {
-                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + AplGlobalObjects.getChainConfig().getCoinSymbol());
+                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new AplException.NotValidException("Setting Genesis account properties not allowed");
@@ -1416,7 +1420,7 @@ public abstract class TransactionType {
                             + " does not belong to " + Long.toUnsignedString(transaction.getRecipientId()));
                 }
                 if (transaction.getAmountATM() != 0) {
-                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + AplGlobalObjects.getChainConfig().getCoinSymbol());
+                    throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
                 }
                 if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
                     throw new AplException.NotValidException("Deleting Genesis account properties not allowed");
@@ -1742,7 +1746,7 @@ public abstract class TransactionType {
             @Override
             public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
-                if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
+                if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()
                         || attachment.getAssetId() == 0) {
                     throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
                 }
@@ -2205,7 +2209,7 @@ public abstract class TransactionType {
                         || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH
                         || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH
                         || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-                        || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                        || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
                 }
                 Appendix.PrunablePlainMessage prunablePlainMessage = transaction.getPrunablePlainMessage();
@@ -2345,7 +2349,7 @@ public abstract class TransactionType {
             void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.DigitalGoodsPriceChange attachment = (Attachment.DigitalGoodsPriceChange) transaction.getAttachment();
                 DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
-                if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
+                if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()
                         || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                     throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
                 }
@@ -2497,7 +2501,7 @@ public abstract class TransactionType {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
                 DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
                 if (attachment.getQuantity() <= 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-                        || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
+                        || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()
                         || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
                 }
@@ -2596,7 +2600,7 @@ public abstract class TransactionType {
                         throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
                     }
                 }
-                if (attachment.getDiscountATM() < 0 || attachment.getDiscountATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
+                if (attachment.getDiscountATM() < 0 || attachment.getDiscountATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()
                         || (purchase != null &&
                         (purchase.getBuyerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getSellerId()
@@ -2749,7 +2753,7 @@ public abstract class TransactionType {
             void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
                 DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(attachment.getPurchaseId());
-                if (attachment.getRefundATM() < 0 || attachment.getRefundATM() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()
+                if (attachment.getRefundATM() < 0 || attachment.getRefundATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()
                         || (purchase != null &&
                         (purchase.getBuyerId() != transaction.getRecipientId()
                                 || transaction.getSenderId() != purchase.getSellerId()))) {
@@ -2844,7 +2848,7 @@ public abstract class TransactionType {
                 if (transaction.getAmountATM() != 0) {
                     throw new AplException.NotValidException("Transaction amount must be 0 for effective balance leasing");
                 }
-                if (attachment.getPeriod() < AplGlobalObjects.getChainConfig().getLeasingDelay() || attachment.getPeriod() > 65535) {
+                if (attachment.getPeriod() < blockchainConfig.getLeasingDelay() || attachment.getPeriod() > 65535) {
                     throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
                 }
                 byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
@@ -2906,9 +2910,9 @@ public abstract class TransactionType {
                 }
                 long maxFees = attachment.getMaxFees();
                 long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_APL;
-                if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double)maxFees)/Constants.ONE_APL,
-                            AplGlobalObjects.getChainConfig().getCoinSymbol()));
+                            blockchainConfig.getCoinSymbol()));
                 }
                 short minDuration = attachment.getMinDuration();
                 if (minDuration < 0 || (minDuration > 0 && minDuration < 3) || minDuration >= Constants.MAX_PHASING_DURATION) {
@@ -3025,7 +3029,7 @@ public abstract class TransactionType {
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
-                if (attachment.getData() == null && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+                if (attachment.getData() == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 if (attachment.getData() != null) {
@@ -3096,10 +3100,11 @@ public abstract class TransactionType {
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
-                if ((attachment.jsonIsPruned() || attachment.getData() == null) && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+                if ((attachment.jsonIsPruned() || attachment.getData() == null) && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
-                TransactionImpl uploadTransaction = TransactionDb.findTransaction(attachment.getTaggedDataId(), AplCore.getBlockchain().getHeight());
+                TransactionImpl uploadTransaction = CDI.current().select(TransactionDb.class).get().findTransaction(attachment.getTaggedDataId(),
+                        AplCore.getBlockchain().getHeight());
                 if (uploadTransaction == null) {
                     throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
                 }
@@ -3115,7 +3120,7 @@ public abstract class TransactionType {
                     }
                 }
                 TaggedData taggedData = TaggedData.getData(attachment.getTaggedDataId());
-                if (taggedData != null && taggedData.getTransactionTimestamp() > AplCore.getEpochTime() + 6 * AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+                if (taggedData != null && taggedData.getTransactionTimestamp() > AplCore.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }
             }

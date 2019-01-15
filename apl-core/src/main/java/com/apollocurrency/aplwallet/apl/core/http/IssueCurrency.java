@@ -20,15 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
 /**
@@ -143,7 +144,9 @@ public final class IssueCurrency extends CreateTransaction {
         long reserveSupply = ParameterParser.getLong(req, "reserveSupply", 0, maxSupply, false);
         long initialSupply = ParameterParser.getLong(req, "initialSupply", 0, maxSupply, false);
         int issuanceHeight = ParameterParser.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);
-        long minReservePerUnit = ParameterParser.getLong(req, "minReservePerUnitATM", 1, AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), false);
+        long minReservePerUnit = ParameterParser.getLong(req, "minReservePerUnitATM", 1,
+                CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),
+                false);
         int minDifficulty = ParameterParser.getInt(req, "minDifficulty", 1, 255, false);
         int maxDifficulty = ParameterParser.getInt(req, "maxDifficulty", 1, 255, false);
         byte ruleset = ParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);

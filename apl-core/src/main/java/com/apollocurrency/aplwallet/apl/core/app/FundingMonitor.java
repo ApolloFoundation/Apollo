@@ -20,6 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -31,17 +43,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Monitor account balances based on account properties
@@ -65,7 +66,7 @@ public final class FundingMonitor {
     public static final int MIN_FUND_INTERVAL = 10;
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     /** Maximum number of monitors */
     private static final int MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -647,8 +648,8 @@ public final class FundingMonitor {
                 AplCore.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = AplCore.getBlockchain().getHeight();
                 LOG.debug(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        AplGlobalObjects.getChainConfig().getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
-                        AplGlobalObjects.getChainConfig().getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
+                        blockchainConfig.getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
+                        blockchainConfig.getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
             }
         }
     }

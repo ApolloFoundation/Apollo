@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.io.BufferedWriter;
@@ -40,13 +37,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 public final class DebugTrace {
     private static final Logger LOG = getLogger(DebugTrace.class);
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     static final String QUOTE = propertiesLoader.getStringProperty("apl.debugTraceQuote", "\"");
     static final String SEPARATOR = propertiesLoader.getStringProperty("apl.debugTraceSeparator", "\t");
     static final boolean LOG_UNCONFIRMED = propertiesLoader.getBooleanProperty("apl.debugLogUnconfirmed");
@@ -125,6 +126,7 @@ public final class DebugTrace {
     private final Set<Long> accountIds;
     private final String logName;
     private PrintWriter log;
+    private BlockDb blockDb = CDI.current().select(BlockDb.class).get();
 
     private DebugTrace(Set<Long> accountIds, String logName) {
         this.accountIds = accountIds;
@@ -271,13 +273,13 @@ public final class DebugTrace {
         long blamedAccountId = shuffling.getAssigneeAccountId();
         if (blamedAccountId != 0 && include(blamedAccountId)) {
             Map<String,String> map = getValues(blamedAccountId, false);
-            map.put("transaction fee", String.valueOf(-AplGlobalObjects.getChainConfig().getShufflingDepositAtm()));
+            map.put("transaction fee", String.valueOf(-blockchainConfig.getShufflingDepositAtm()));
             map.put("event", "shuffling blame");
             log(map);
-            long fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm()/ 4;
+            long fee = blockchainConfig.getShufflingDepositAtm()/ 4;
             int height = AplCore.getBlockchain().getHeight();
             for (int i = 0; i < 3; i++) {
-                long generatorId = AplGlobalObjects.getBlockDb().findBlockAtHeight(height - i - 1).getGeneratorId();
+                long generatorId = blockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
                 if (include(generatorId)) {
                     Map<String, String> generatorMap = getValues(generatorId, false);
                     generatorMap.put("generation fee", String.valueOf(fee));
@@ -285,7 +287,7 @@ public final class DebugTrace {
                     log(generatorMap);
                 }
             }
-            fee = AplGlobalObjects.getChainConfig().getShufflingDepositAtm() - 3 * fee;
+            fee = blockchainConfig.getShufflingDepositAtm() - 3 * fee;
             long generatorId = AplCore.getBlockchain().getLastBlock().getGeneratorId();
             if (include(generatorId)) {
                 Map<String,String> generatorMap = getValues(generatorId, false);
@@ -440,7 +442,7 @@ public final class DebugTrace {
         Map<String,String> map = getValues(accountId, false);
         map.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         String amount = String.valueOf(isRecipient ? shuffling.getAmount() : -shuffling.getAmount());
-        String deposit = String.valueOf(isRecipient ? AplGlobalObjects.getChainConfig().getShufflingDepositAtm() : -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
+        String deposit = String.valueOf(isRecipient ? blockchainConfig.getShufflingDepositAtm() : -blockchainConfig.getShufflingDepositAtm());
         if (shuffling.getHoldingType() == HoldingType.APL) {
             map.put("transaction amount", amount);
         } else if (shuffling.getHoldingType() == HoldingType.ASSET) {
@@ -507,7 +509,7 @@ public final class DebugTrace {
                     break;
                 }
                 totalBackFees += backFees[i];
-                long previousGeneratorId = AplGlobalObjects.getBlockDb().findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
+                long previousGeneratorId = blockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
                 if (include(previousGeneratorId)) {
                     Map<String,String> map = getValues(previousGeneratorId, false);
                     map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceAPL()));

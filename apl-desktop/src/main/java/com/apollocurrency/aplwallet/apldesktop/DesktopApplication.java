@@ -50,7 +50,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -67,6 +66,8 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -94,6 +95,7 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -107,9 +109,7 @@ public class DesktopApplication extends Application {
     private static volatile Stage mainStage;
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-    //TODO: OL remove all references to this shit
-    // private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     public static void refreshMainApplication() {
         MainApplication.refresh();
     }
@@ -410,7 +410,7 @@ public class DesktopApplication extends Application {
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
 
-                        mainStage.setTitle(AplGlobalObjects.getChainConfig().getProjectName() + " Desktop - " + webEngine.getLocation());
+                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
 
                         updateClientState("Desktop Wallet started");
                         BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();

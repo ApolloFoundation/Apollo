@@ -20,9 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,15 +37,14 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 /**
  * Maintain a ledger of changes to selected accounts
@@ -68,6 +68,7 @@ public class AccountLedger {
     // TODO: YL remove static instance later
 
    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+   private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     /** Number of blocks to keep when trimming */
     public static final int trimKeep = propertiesLoader.getIntProperty("apl.ledgerTrimKeep", 30000);
@@ -227,7 +228,7 @@ public class AccountLedger {
         if (!isUnconfirmed && logUnconfirmed == 2) {
             return false;
         }
-        if (trimKeep > 0 && blockchain.getHeight() <= AplGlobalObjects.getChainConfig().getLastKnownBlock() - trimKeep) {
+        if (trimKeep > 0 && blockchain.getHeight() <= blockchainConfig.getLastKnownBlock() - trimKeep) {
             return false;
         }
         //
