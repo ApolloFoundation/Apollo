@@ -141,4 +141,5 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
         }
     }
 
+    void resumeBlockchainDownloading();
 }
