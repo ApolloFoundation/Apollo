@@ -1031,44 +1031,6 @@ public final class ParameterParser {
         }
     }
 
-    public static class TwoFactorAuthParameters {
-        long accountId;
-        String passphrase;
-        String secretPhrase;
-
-        public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
-            if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
-                throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
-            }
-        }
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public String getPassphrase() {
-            return passphrase;
-        }
-
-        public String getSecretPhrase() {
-            return secretPhrase;
-        }
-
-        public boolean isSecretPhrasePresent() {
-            return secretPhrase != null;
-        }
-
-        public boolean isPassphrasePresent() {
-            return passphrase != null;
-        }
-
-        public TwoFactorAuthParameters(long accountId, String passphrase, String secretPhrase) {
-            this.accountId = accountId;
-            this.passphrase = passphrase;
-            this.secretPhrase = secretPhrase;
-        }
-    }
-
-
     public static class FileData {
         private final Part part;
         private String filename;

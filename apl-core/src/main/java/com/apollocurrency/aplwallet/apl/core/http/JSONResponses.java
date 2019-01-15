@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -463,7 +463,7 @@ public final class JSONResponses {
         PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
     }
 
-    static JSONStreamAware missing(String... paramNames) {
+    public static JSONStreamAware missing(String... paramNames) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
         if (paramNames.length == 1) {
@@ -474,18 +474,18 @@ public final class JSONResponses {
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware either(String... paramNames) {
+    public static JSONStreamAware either(String... paramNames) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
         response.put("errorDescription", "Not more than one of " + Arrays.toString(paramNames) + " can be specified");
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware incorrect(String paramName) {
+    public static JSONStreamAware incorrect(String paramName) {
         return incorrect(paramName, null);
     }
 
-    static JSONStreamAware incorrect(String paramName, String details) {
+    public static JSONStreamAware incorrect(String paramName, String details) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 4);
         response.put("errorDescription", "Incorrect \"" + paramName + (details != null ? "\" " + details : "\""));
@@ -517,14 +517,14 @@ public final class JSONResponses {
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware fileNotFound(String objectName) {
+    public static JSONStreamAware fileNotFound(String objectName) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 10);
         response.put("errorDescription", "File not found " + objectName);
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware error(String error) {
+    public static JSONStreamAware error(String error) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 11);
         response.put("errorDescription", error);
@@ -538,7 +538,7 @@ public final class JSONResponses {
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware notEnoughHolding(HoldingType holdingType) {
+    public static JSONStreamAware notEnoughHolding(HoldingType holdingType) {
         switch (holdingType) {
             case APL:
                 return JSONResponses.NOT_ENOUGH_FUNDS;

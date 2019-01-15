@@ -57,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -860,10 +861,10 @@ public final class Account {
     }
 
     public static void verify2FA(HttpServletRequest req, String accountName) throws ParameterException {
-        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
+        TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
 
         if (Account.isEnabled2FA(params2FA.getAccountId())) {
-            ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
+            TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
             int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             Status2FA status2FA;
             long accountId;
