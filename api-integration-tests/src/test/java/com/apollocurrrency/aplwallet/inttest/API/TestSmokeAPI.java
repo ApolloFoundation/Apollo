@@ -1,6 +1,6 @@
-package TestsAPI;
+package com.apollocurrrency.aplwallet.inttest.API;
 
-import Helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
@@ -11,9 +11,9 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static Helper.TestHelper.addParameters;
-import static Helper.TestHelper.httpCallGet;
-import static Helper.TestHelper.httpCallPost;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.addParameters;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallGet;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallPost;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

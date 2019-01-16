@@ -1,6 +1,6 @@
-package TestsAPI;
+package com.apollocurrrency.aplwallet.inttest.API;
 
-import Helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-import static Helper.TestHelper.*;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.*;

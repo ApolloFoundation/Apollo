@@ -1,4 +1,4 @@
-package Helper;
+package com.apollocurrrency.aplwallet.inttest.helper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;

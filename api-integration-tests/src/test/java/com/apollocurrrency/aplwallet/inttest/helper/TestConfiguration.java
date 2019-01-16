@@ -1,4 +1,4 @@
-package Helper;
+package com.apollocurrrency.aplwallet.inttest.helper;
 
 import java.util.Properties;
 
