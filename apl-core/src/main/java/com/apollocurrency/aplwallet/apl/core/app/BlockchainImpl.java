@@ -45,11 +45,15 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 @ApplicationScoped
 public class BlockchainImpl implements Blockchain {
 
-    private static final BlockchainImpl instance = new BlockchainImpl();
+    private static BlockchainImpl instance;
     private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
     static BlockchainImpl getInstance() {
+        if (instance == null) {
+            instance = CDI.current().select(BlockchainImpl.class).get();
+        }
         return instance;
     }
 

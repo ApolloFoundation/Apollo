@@ -459,7 +459,10 @@ public class TransactionImpl implements Transaction {
     }
 
     public void setBlock(Block block) {
-        throw new UnsupportedOperationException("Incorrect method 'setBlock()' call on 'confirmed' transaction instance.");
+        this.block = block;
+        this.blockId = block.getId();
+        this.height = block.getHeight();
+        this.blockTimestamp = block.getTimestamp();
     }
 
     public void unsetBlock() {
