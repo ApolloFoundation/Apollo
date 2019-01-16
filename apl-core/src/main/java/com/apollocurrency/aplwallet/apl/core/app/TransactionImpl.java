@@ -20,30 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-
 import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
-
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -53,6 +39,18 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
@@ -258,29 +256,29 @@ public class TransactionImpl implements Transaction {
 
     }
 
-    private short deadline;
+    private final short deadline;
     private volatile byte[] senderPublicKey;
-    private long recipientId;
-    private long amountATM;
-    private long feeATM;
-    private byte[] referencedTransactionFullHash;
-    private TransactionType type;
-    private int ecBlockHeight;
-    private long ecBlockId;
-    private byte version;
-    private int timestamp;
-    private byte[] signature;
-    private Attachment.AbstractAttachment attachment;
-    private MessageAppendix message;
-    private EncryptedMessageAppendix encryptedMessage;
-    private EncryptToSelfMessageAppendix encryptToSelfMessage;
-    private PublicKeyAnnouncementAppendix publicKeyAnnouncement;
-    private PhasingAppendix phasing;
-    private PrunablePlainMessageAppendix prunablePlainMessage;
-    private PrunableEncryptedMessageAppendix prunableEncryptedMessage;
+    private final long recipientId;
+    private final long amountATM;
+    private final long feeATM;
+    private final byte[] referencedTransactionFullHash;
+    private final TransactionType type;
+    private final int ecBlockHeight;
+    private final long ecBlockId;
+    private final byte version;
+    private final int timestamp;
+    private final byte[] signature;
+    private final Attachment.AbstractAttachment attachment;
+    private final MessageAppendix message;
+    private final EncryptedMessageAppendix encryptedMessage;
+    private final EncryptToSelfMessageAppendix encryptToSelfMessage;
+    private final PublicKeyAnnouncementAppendix publicKeyAnnouncement;
+    private final PhasingAppendix phasing;
+    private final PrunablePlainMessageAppendix prunablePlainMessage;
+    private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
 
-    private List<AbstractAppendix> appendages;
-    private int appendagesSize;
+    private final List<AbstractAppendix> appendages;
+    private final int appendagesSize;
 
     private volatile int height = Integer.MAX_VALUE;
     private volatile long blockId;
