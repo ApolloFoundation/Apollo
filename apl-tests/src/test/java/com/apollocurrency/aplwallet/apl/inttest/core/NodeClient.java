@@ -572,7 +572,7 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode versionString = root.get("version");
-        return Version.from(versionString.asText()); // .from(String) was removed in class!
+        return new Version(versionString.asText()); // .from(String) was removed in class!
     }
 
     public List<ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {
