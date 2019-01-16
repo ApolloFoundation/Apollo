@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

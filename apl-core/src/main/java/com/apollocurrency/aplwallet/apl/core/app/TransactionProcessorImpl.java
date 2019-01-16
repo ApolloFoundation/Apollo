@@ -44,8 +44,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -817,14 +818,14 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         // Process each prunable appendage
                         //
                         appendageLoop: for (Appendix appendage : transaction.getAppendages()) {
-                            if ((appendage instanceof Appendix.Prunable)) {
+                            if ((appendage instanceof Prunable)) {
                                 //
                                 // Don't load the prunable data if we already have the data
                                 //
                                 for (Appendix myAppendage : myTransaction.getAppendages()) {
                                     if (myAppendage.getClass() == appendage.getClass()) {
                                         ((AbstractAppendix)myAppendage).loadPrunable(myTransaction, true);
-                                        if (((Appendix.Prunable)myAppendage).hasPrunableData()) {
+                                        if (((Prunable)myAppendage).hasPrunableData()) {
                                             LOG.debug(String.format("Already have prunable data for transaction %s %s appendage",
                                                     myTransaction.getStringId(), ((AbstractAppendix)myAppendage).getAppendixName()));
                                             continue appendageLoop;
@@ -835,10 +836,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                 //
                                 // Load the prunable data
                                 //
-                                if (((Appendix.Prunable)appendage).hasPrunableData()) {
+                                if (((Prunable)appendage).hasPrunableData()) {
                                     LOG.debug(String.format("Loading prunable data for transaction %s %s appendage",
                                             Long.toUnsignedString(transaction.getId()), ((AbstractAppendix)appendage).getAppendixName()));
-                                    ((Appendix.Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
+                                    ((Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
                                 } else {
                                     foundAllData = false;
                                 }

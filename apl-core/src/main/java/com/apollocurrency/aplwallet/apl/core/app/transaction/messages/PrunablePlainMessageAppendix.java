@@ -2,9 +2,9 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app.messages;
+package com.apollocurrency.aplwallet.apl.core.app.transaction.messages;
 
-import static com.apollocurrency.aplwallet.apl.core.app.messages.Appendix.hasAppendix;
+import static com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix.hasAppendix;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
@@ -23,7 +23,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class PrunablePlainMessageAppendix extends AbstractAppendix implements Appendix.Prunable {
+public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();

@@ -2,7 +2,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app.messages;
+package com.apollocurrency.aplwallet.apl.core.app.transaction.messages;
 
 import java.nio.ByteBuffer;
 
@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncryptedMessageAppendix implements Appendix.Encryptable {
+public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncryptedMessageAppendix implements Encryptable {
 
     private final byte[] messageToEncrypt;
     private final byte[] recipientPublicKey;

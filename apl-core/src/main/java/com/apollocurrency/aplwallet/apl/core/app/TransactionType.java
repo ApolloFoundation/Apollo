@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -38,7 +38,7 @@ import java.util.Map;
 import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.util.AplException.ValidationException;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.tika.Tika;

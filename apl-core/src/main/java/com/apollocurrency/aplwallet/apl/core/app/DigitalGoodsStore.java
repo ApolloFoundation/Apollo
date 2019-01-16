@@ -22,9 +22,9 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;

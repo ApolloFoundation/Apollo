@@ -3,7 +3,7 @@
  */
 
 
-package com.apollocurrency.aplwallet.apl.core.app.messages;
+package com.apollocurrency.aplwallet.apl.core.app.transaction.messages;
 
 import java.nio.ByteBuffer;
 

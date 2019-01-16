@@ -20,16 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Encryptable;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -340,8 +342,8 @@ public class TransactionImpl implements Transaction {
         this.appendages = Collections.unmodifiableList(list);
         int appendagesSize = 0;
         for (Appendix appendage : appendages) {
-            if (keySeed != null && appendage instanceof Appendix.Encryptable) {
-                ((Appendix.Encryptable)appendage).encrypt(keySeed);
+            if (keySeed != null && appendage instanceof Encryptable) {
+                ((Encryptable)appendage).encrypt(keySeed);
             }
             appendagesSize += appendage.getSize();
         }
@@ -457,19 +459,11 @@ public class TransactionImpl implements Transaction {
     }
 
     public void setBlock(Block block) {
-        this.block = block;
-        this.blockId = block.getId();
-        this.height = block.getHeight();
-        this.blockTimestamp = block.getTimestamp();
+        throw new UnsupportedOperationException("Incorrect method 'setBlock()' call on 'confirmed' transaction instance.");
     }
 
     public void unsetBlock() {
-        this.block = null;
-        this.blockId = 0;
-        this.blockTimestamp = -1;
-        this.index = -1;
-        // must keep the height set, as transactions already having been included in a popped-off block before
-        // get priority when sorted for inclusion in a new block
+        throw new UnsupportedOperationException("Incorrect method 'unsetBlock()' call on 'confirmed' transaction instance.");
     }
 
     @Override
@@ -824,7 +818,7 @@ public class TransactionImpl implements Transaction {
     public JSONObject getPrunableAttachmentJSON() {
         JSONObject prunableJSON = null;
         for (AbstractAppendix appendage : appendages) {
-            if (appendage instanceof Appendix.Prunable) {
+            if (appendage instanceof Prunable) {
                 appendage.loadPrunable(this);
                 if (prunableJSON == null) {
                     prunableJSON = appendage.getJSONObject();

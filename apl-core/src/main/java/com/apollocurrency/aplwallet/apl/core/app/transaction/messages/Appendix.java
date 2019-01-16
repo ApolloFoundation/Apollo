@@ -18,17 +18,13 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app.messages;
+package com.apollocurrency.aplwallet.apl.core.app.transaction.messages;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
@@ -49,22 +45,6 @@ public interface Appendix {
     void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
     void validate(Transaction transaction, int blockHeight ) throws AplException.ValidationException;
 
-    interface Prunable {
-        byte[] getHash();
-        boolean hasPrunableData();
-        void restorePrunableData(Transaction transaction, int blockTimestamp, int height);
-        default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-            BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-            return AplCore.getEpochTime() - transaction.getTimestamp() <
-                    (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
-                            blockchainConfig.getMaxPrunableLifetime() :
-                            blockchainConfig.getMinPrunableLifetime());
-        }
-    }
-
-    interface Encryptable {
-        void encrypt(byte[] keySeed);
-    }
     static boolean hasAppendix(String appendixName, JSONObject attachmentData) {
         return attachmentData.get("version." + appendixName) != null;
     }

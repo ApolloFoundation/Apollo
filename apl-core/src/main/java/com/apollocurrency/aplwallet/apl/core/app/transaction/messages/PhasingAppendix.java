@@ -2,7 +2,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app.messages;
+package com.apollocurrency.aplwallet.apl.core.app.transaction.messages;
 
 import static org.slf4j.LoggerFactory.getLogger;
 

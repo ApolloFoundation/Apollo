@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static com.apollocurrency.aplwallet.apl.core.app.TransactionType.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;

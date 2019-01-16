@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -379,7 +380,7 @@ public class TransactionDb {
                     pstmt.setBoolean(++i, transaction.getPhasing() != null);
                     pstmt.setBoolean(++i, transaction.hasPrunablePlainMessage());
                     pstmt.setBoolean(++i, transaction.hasPrunableEncryptedMessage());
-                    pstmt.setBoolean(++i, transaction.getAttachment() instanceof Appendix.Prunable);
+                    pstmt.setBoolean(++i, transaction.getAttachment() instanceof Prunable);
                     pstmt.setInt(++i, transaction.getECBlockHeight());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getECBlockId());
                     pstmt.setShort(++i, index++);

@@ -46,6 +46,7 @@ public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
+    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     private final int version;
@@ -189,7 +190,6 @@ public final class BlockImpl implements Block {
 
     @Override
     public List<Transaction> getTransactions() {
-/*
         if (this.blockTransactions == null) {
             List<Transaction> transactions = Collections.unmodifiableList(transactionDb.findBlockTransactions(getId()));
             for (Transaction transaction : transactions) {
@@ -198,8 +198,6 @@ public final class BlockImpl implements Block {
             this.blockTransactions = transactions;
         }
         return this.blockTransactions;
-*/
-        return this.blockTransactions != null ? this.blockTransactions : Collections.emptyList();
     }
 
     @Override
