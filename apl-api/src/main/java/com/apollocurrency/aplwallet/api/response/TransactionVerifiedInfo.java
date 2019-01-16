@@ -35,8 +35,8 @@ public class TransactionVerifiedInfo extends TransactionInfo {
         this.senderPublicKey = info.senderPublicKey;
         this.recipient = info.recipient;
         this.recipientRS = info.recipientRS;
-        this.amountNQT = info.amountNQT;
-        this.feeNQT = info.feeNQT;
+        this.amountATM = info.amountATM;
+        this.feeATM = info.feeATM;
         this.referencedTransactionFullHash = info.referencedTransactionFullHash;
         this.signature = info.signature;
         this.signatureHash = info.signatureHash;
@@ -66,8 +66,8 @@ public class TransactionVerifiedInfo extends TransactionInfo {
                 ", timestamp=" + timestamp +
                 ", recipient='" + recipient + '\'' +
                 ", recipientRS='" + recipientRS + '\'' +
-                ", amountNQT='" + amountNQT + '\'' +
-                ", feeNQT='" + feeNQT + '\'' +
+                ", amountATM='" + amountATM + '\'' +
+                ", feeATM='" + feeATM + '\'' +
                 ", fullHash='" + fullHash + '\'' +
                 ", transaction='" + transaction + '\'' +
                 ", sender='" + sender + '\'' +

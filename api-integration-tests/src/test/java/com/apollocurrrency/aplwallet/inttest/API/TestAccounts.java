@@ -52,7 +52,7 @@ public class TestAccounts {
         log.trace("Get Account = {}", account.accountRS);
         assertEquals(account.accountRS,testConfiguration.getTestUser());
         assertNotNull(account.account,"Check account");
-        assertNotNull(account.balanceNQT,"Check balanceATM");
+        assertNotNull(account.balanceATM,"Check balanceATM");
         assertNotNull(account.publicKey,"Check publicKey");
     }
 
@@ -145,15 +145,15 @@ public class TestAccounts {
     @DisplayName("Verify Get Guaranteed Balance endpoint")
     public void testGetGuaranteedBalance() throws IOException {
         BalanceDTO balance = getGuaranteedBalance(testConfiguration.getTestUser(), 2000);
-        assertTrue(balance.guaranteedBalanceNQT > 1);
+        assertTrue(balance.guaranteedBalanceATM > 1);
     }
 
     @Test
     @DisplayName("Verify Get Balance endpoint")
     public void testGetBalance() throws IOException {
         BalanceDTO balance = getBalance(testConfiguration.getTestUser());
-        assertTrue(balance.balanceNQT > 1);
-        assertTrue(balance.unconfirmedBalanceNQT > 1);
+        assertTrue(balance.balanceATM > 1);
+        assertTrue(balance.unconfirmedBalanceATM > 1);
     }
 
     public BlockListInfoResponse getAccountBlocks(String account) throws IOException {
@@ -260,9 +260,9 @@ public class TestAccounts {
     private CreateTransactionResponse sendMoney(String recipient, int moneyAmount) throws IOException {
       addParameters(RequestType.requestType,RequestType.sendMoney);
       addParameters(Parameters.recipient, recipient);
-      addParameters(Parameters.amountNQT, moneyAmount+"00000000");
+      addParameters(Parameters.amountATM, moneyAmount+"00000000");
       addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
-      addParameters(Parameters.feeNQT, "500000000");
+      addParameters(Parameters.feeATM, "500000000");
       addParameters(Parameters.deadline, 1440);
       Response response = httpCallPost();
       assertEquals(200, response.code());

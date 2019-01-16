@@ -8,13 +8,14 @@ import io.swagger.annotations.ApiModel;
 //@ApiModel("List of scheduled transaction with optional attachment data")
 @ApiModel
 public class GetAccountResponse extends ResponseBase {
-    public String balanceNQT;
-    public String forgedBalanceNQT;
+    public String balanceATM;
+    public String forgedBalanceATM;
     public String accountRS;
     public String publicKey;
-    public String unconfirmedBalanceNQT;
+    public String unconfirmedBalanceATM;
     public String account;
     public long numberOfBlocks;
     public long requestProcessingTime;
     public String name;
+    public boolean is2FA;
 }

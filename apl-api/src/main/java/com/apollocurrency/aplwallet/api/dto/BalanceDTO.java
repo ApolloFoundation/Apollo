@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BalanceDTO {
-    public long balanceNQT;
-    public long forgedBalanceNQT;
+    public long balanceATM;
+    public long forgedBalanceATM;
     public long requestProcessingTime;
-    public long unconfirmedBalanceNQT;
-    public long guaranteedBalanceNQT;
+    public long unconfirmedBalanceATM;
+    public long guaranteedBalanceATM;
 
 }

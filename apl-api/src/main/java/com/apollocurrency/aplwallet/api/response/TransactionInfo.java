@@ -31,9 +31,9 @@ public class TransactionInfo extends ResponseBase{
     @ApiModelProperty("Transaction recipient ID in Reed-Solomon format")
     public String recipientRS;
     @ApiModelProperty("Transaction amount")
-    public String amountNQT;
+    public String amountATM;
     @ApiModelProperty("Transaction free amount")
-    public String feeNQT;
+    public String feeATM;
     @ApiModelProperty("Transaction reference full hash")
     public String referencedTransactionFullHash;
     @ApiModelProperty("Transaction signature")
@@ -81,8 +81,8 @@ public class TransactionInfo extends ResponseBase{
                 ", timestamp=" + timestamp +
                 ", recipient='" + recipient + '\'' +
                 ", recipientRS='" + recipientRS + '\'' +
-                ", amountNQT='" + amountNQT + '\'' +
-                ", feeNQT='" + feeNQT + '\'' +
+                ", amountATM='" + amountATM + '\'' +
+                ", feeATM='" + feeATM + '\'' +
                 ", fullHash='" + fullHash + '\'' +
                 ", transaction='" + transaction + '\'' +
                 ", sender='" + sender + '\'' +
