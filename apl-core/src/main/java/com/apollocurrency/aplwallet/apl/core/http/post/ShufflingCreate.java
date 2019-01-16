@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.HoldingType;
@@ -53,9 +54,10 @@ public final class ShufflingCreate extends CreateTransaction {
         HoldingType holdingType = ParameterParser.getHoldingType(req);
         long holdingId = ParameterParser.getHoldingId(req, holdingType);
         long amount = ParameterParser.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
-        if (holdingType == HoldingType.APL && amount < AplGlobalObjects.getChainConfig().getShufflingDepositAtm()) {
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        if (holdingType == HoldingType.APL && amount < blockchainConfig.getShufflingDepositAtm()) {
             return JSONResponses.incorrect("amount",
-                    "Minimum shuffling amount is " + AplGlobalObjects.getChainConfig().getShufflingDepositAtm() / Constants.ONE_APL + " " + AplGlobalObjects.getChainConfig().getCoinSymbol());
+                    "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / Constants.ONE_APL + " " + blockchainConfig.getCoinSymbol());
         }
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);

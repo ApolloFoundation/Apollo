@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
@@ -22,7 +23,12 @@ import org.slf4j.Logger;
 public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
 
-    public UpdaterMediatorImpl() {} //for weld
+    private TransactionDb transactionDb;
+
+    @Inject
+    public UpdaterMediatorImpl(TransactionDb transactionDb) {
+        this.transactionDb = transactionDb;
+    }
 
     @Override
     public void shutdownApplication() {
@@ -83,6 +89,6 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-        return TransactionDb.loadTransaction(connection, rs);
+        return transactionDb.loadTransaction(connection, rs);
     }
 }

@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -69,23 +70,24 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("isDownloading", blockchainProcessor.isDownloading());
         response.put("maxRollback", Constants.MAX_ROLLBACK);
         response.put("currentMinRollbackHeight", AplCore.getBlockchainProcessor().getMinRollbackHeight());
-        response.put("isTestnet", AplGlobalObjects.getChainConfig().isTestnet());
-        response.put("maxPrunableLifetime", AplGlobalObjects.getChainConfig().getMaxPrunableLifetime());
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        response.put("isTestnet", blockchainConfig.isTestnet());
+        response.put("maxPrunableLifetime", blockchainConfig.getMaxPrunableLifetime());
         response.put("includeExpiredPrunable", Constants.INCLUDE_EXPIRED_PRUNABLE);
         response.put("correctInvalidFees", Constants.correctInvalidFees);
         response.put("ledgerTrimKeep", AccountLedger.trimKeep);
-        response.put("chainId", AplGlobalObjects.getChainConfig().getChain().getChainId());
-        response.put("chainName", AplGlobalObjects.getChainConfig().getChain().getName());
-        response.put("chainDescription", AplGlobalObjects.getChainConfig().getChain().getDescription());
-        response.put("blockTime", AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime());
-        response.put("adaptiveForging", AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled());
-        response.put("emptyBlockTime", AplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime());
-        response.put("consensus", AplGlobalObjects.getChainConfig().getCurrentConfig().getConsensusType());
-        response.put("maxBlockPayloadLength", AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength());
-        response.put("initialBaseTarget", Long.toUnsignedString(AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget()));
-        response.put("coinSymbol", AplGlobalObjects.getChainConfig().getCoinSymbol());
-        response.put("accountPrefix", AplGlobalObjects.getChainConfig().getAccountPrefix());
-        response.put("projectName", AplGlobalObjects.getChainConfig().getProjectName());
+        response.put("chainId", blockchainConfig.getChain().getChainId());
+        response.put("chainName", blockchainConfig.getChain().getName());
+        response.put("chainDescription", blockchainConfig.getChain().getDescription());
+        response.put("blockTime", blockchainConfig.getCurrentConfig().getBlockTime());
+        response.put("adaptiveForging", blockchainConfig.getCurrentConfig().isAdaptiveForgingEnabled());
+        response.put("emptyBlockTime", blockchainConfig.getCurrentConfig().getAdaptiveBlockTime());
+        response.put("consensus", blockchainConfig.getCurrentConfig().getConsensusType());
+        response.put("maxBlockPayloadLength", blockchainConfig.getCurrentConfig().getMaxPayloadLength());
+        response.put("initialBaseTarget", Long.toUnsignedString(blockchainConfig.getCurrentConfig().getInitialBaseTarget()));
+        response.put("coinSymbol", blockchainConfig.getCoinSymbol());
+        response.put("accountPrefix", blockchainConfig.getAccountPrefix());
+        response.put("projectName", blockchainConfig.getProjectName());
         JSONArray servicesArray = new JSONArray();
         Peers.getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);

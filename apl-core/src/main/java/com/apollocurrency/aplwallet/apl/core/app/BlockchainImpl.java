@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.context.ApplicationScoped;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -44,7 +46,9 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 public class BlockchainImpl implements Blockchain {
 
     private static final BlockchainImpl instance = new BlockchainImpl();
-
+    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
+    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     static BlockchainImpl getInstance() {
         return instance;
     }
@@ -109,7 +113,7 @@ public class BlockchainImpl implements Blockchain {
         if (timestamp >= block.getTimestamp()) {
             return block;
         }
-        return AplGlobalObjects.getBlockDb().findLastBlock(timestamp);
+        return blockDb.findLastBlock(timestamp);
     }
     //load transactions
     @Override
@@ -118,12 +122,12 @@ public class BlockchainImpl implements Blockchain {
         if (block.getId() == blockId) {
             return block;
         }
-        return AplGlobalObjects.getBlockDb().findBlock(blockId);
+        return blockDb.findBlock(blockId);
     }
 
     @Override
     public boolean hasBlock(long blockId) {
-        return lastBlock.get().getId() == blockId || AplGlobalObjects.getBlockDb().hasBlock(blockId);
+        return lastBlock.get().getId() == blockId || blockDb.hasBlock(blockId);
     }
     //load transactions
     @Override
@@ -197,17 +201,17 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, BlockDb::loadBlock);
+        return new DbIterator<>(con, pstmt, blockDb::loadBlock);
     }
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
         // Check the block cache
-        List<Long> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
+        List<Long> result = new ArrayList<>(blockDb.getBlockCacheSize());
+        synchronized(blockDb.getBlockCache()) {
+            BlockImpl block = blockDb.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = AplGlobalObjects.getBlockDb().getHeightMap().tailMap(block.getHeight() + 1).values();
+                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
                 for (BlockImpl cacheBlock : cacheMap) {
                     if (result.size() >= limit) {
                         break;
@@ -241,11 +245,11 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<Block> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
+        List<Block> result = new ArrayList<>(blockDb.getBlockCacheSize());
+        synchronized(blockDb.getBlockCache()) {
+            BlockImpl block = blockDb.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = AplGlobalObjects.getBlockDb().getHeightMap().tailMap(block.getHeight() + 1).values();
+                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
                 for (BlockImpl cacheBlock : cacheMap) {
                     if (result.size() >= limit) {
                         break;
@@ -264,7 +268,7 @@ public class BlockchainImpl implements Blockchain {
             pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(AplGlobalObjects.getBlockDb().loadBlock(con, rs, true));
+                    result.add(blockDb.loadBlock(con, rs, true));
                 }
             }
         } catch (SQLException e) {
@@ -279,11 +283,11 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<Block> result = new ArrayList<>(AplGlobalObjects.getBlockDb().getBlockCacheSize());
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
+        List<Block> result = new ArrayList<>(blockDb.getBlockCacheSize());
+        synchronized(blockDb.getBlockCache()) {
+            BlockImpl block = blockDb.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = AplGlobalObjects.getBlockDb().getHeightMap().tailMap(block.getHeight() + 1).values();
+                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
                 int index = 0;
                 for (BlockImpl cacheBlock : cacheMap) {
                     if (result.size() >= blockList.size() || cacheBlock.getId() != blockList.get(index++)) {
@@ -304,7 +308,7 @@ public class BlockchainImpl implements Blockchain {
             try (ResultSet rs = pstmt.executeQuery()) {
                 int index = 0;
                 while (rs.next()) {
-                    BlockImpl block = AplGlobalObjects.getBlockDb().loadBlock(con, rs, true);
+                    BlockImpl block = blockDb.loadBlock(con, rs, true);
                     if (block.getId() != blockList.get(index++)) {
                         break;
                     }
@@ -326,7 +330,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        return AplGlobalObjects.getBlockDb().findBlockIdAtHeight(height);
+        return blockDb.findBlockIdAtHeight(height);
     }
 
     @Override
@@ -338,7 +342,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block;
         }
-        return AplGlobalObjects.getBlockDb().findBlockAtHeight(height);
+        return blockDb.findBlockAtHeight(height);
     }
 
     @Override
@@ -347,27 +351,27 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return getBlockAtHeight(0);
         }
-        return AplGlobalObjects.getBlockDb().findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
+        return blockDb.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
     }
 
     @Override
     public TransactionImpl getTransaction(long transactionId) {
-        return TransactionDb.findTransaction(transactionId);
+        return transactionDb.findTransaction(transactionId);
     }
 
     @Override
     public TransactionImpl getTransactionByFullHash(String fullHash) {
-        return TransactionDb.findTransactionByFullHash(Convert.parseHexString(fullHash));
+        return transactionDb.findTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
     public boolean hasTransaction(long transactionId) {
-        return TransactionDb.hasTransaction(transactionId);
+        return transactionDb.hasTransaction(transactionId);
     }
 
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
-        return TransactionDb.hasTransactionByFullHash(Convert.parseHexString(fullHash));
+        return transactionDb.hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
@@ -510,8 +514,8 @@ public class BlockchainImpl implements Blockchain {
                 pstmt.setInt(++i, height);
             }
             int prunableExpiration = Math.max(0, Constants.INCLUDE_EXPIRED_PRUNABLE && includeExpiredPrunable ?
-                                        AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() :
-                                        AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime());
+                                        AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
+                                        AplCore.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
             if (withMessage) {
                 pstmt.setInt(++i, prunableExpiration);
             }
@@ -629,7 +633,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, TransactionDb::loadTransaction);
+        return new DbIterator<>(con, pstmt, transactionDb::loadTransaction);
     }
     //phased transactions
     @Override

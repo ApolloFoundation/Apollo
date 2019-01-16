@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.messages;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
@@ -53,9 +54,11 @@ public interface Appendix {
         boolean hasPrunableData();
         void restorePrunableData(Transaction transaction, int blockTimestamp, int height);
         default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+            BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
             return AplCore.getEpochTime() - transaction.getTimestamp() <
                     (includeExpiredPrunable && Constants.INCLUDE_EXPIRED_PRUNABLE ?
-                            AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() : AplGlobalObjects.getChainConfig().getMinPrunableLifetime());
+                            blockchainConfig.getMaxPrunableLifetime() :
+                            blockchainConfig.getMinPrunableLifetime());
         }
     }
 

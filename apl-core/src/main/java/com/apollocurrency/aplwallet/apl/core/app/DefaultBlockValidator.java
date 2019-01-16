@@ -5,14 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.Arrays;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 @ApplicationScoped
 public class DefaultBlockValidator extends AbstractBlockValidator {
 
-    public DefaultBlockValidator() { // for weld
+    @Inject
+    public DefaultBlockValidator(BlockDb blockDb, BlockchainConfig blockchainConfig) {
+        super(blockDb, blockchainConfig);
     }
 
     @Override
@@ -33,21 +37,21 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     @Override
     void validateAdaptiveBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         int actualBlockTime = block.getTimestamp() - previousBlock.getTimestamp();
-        if (actualBlockTime < AplGlobalObjects.getChainConfig().getCurrentConfig().getAdaptiveBlockTime() && block.getTransactions().size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
+        if (actualBlockTime < blockchainConfig.getCurrentConfig().getAdaptiveBlockTime() && block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid adaptive block. " + actualBlockTime, null);
         }
     }
 
     @Override
     void validateInstantBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (block.getTransactions().size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
+        if (block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Incorrect instant block", block);
         }
     }
 
     @Override
     void validateRegularBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (block.getTransactions().size() <= AplGlobalObjects.getChainConfig().getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
+        if (block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Incorrect regular block", block);
         }
     }

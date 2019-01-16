@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -54,6 +56,9 @@ public class TaggedData {
 
     };
 
+    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
     private static final VersionedPrunableDbTable<TaggedData> taggedDataTable = new VersionedPrunableDbTable<TaggedData>(
             "tagged_data", taggedDataKeyFactory, "name,description,tags") {
 
@@ -74,11 +79,11 @@ public class TaggedData {
 
         @Override
         protected void prune() {
-            if (AplGlobalObjects.getChainConfig().isEnablePruning()) {
+            if (blockchainConfig.isEnablePruning()) {
                 try (Connection con = db.getConnection();
                      PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                              + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                    int expiration = AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime();
+                    int expiration = AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
                     pstmtSelect.setInt(1, expiration);
                     Map<String,Integer> expiredTags = new HashMap<>();
                     try (ResultSet rs = pstmtSelect.executeQuery()) {
@@ -507,7 +512,7 @@ public class TaggedData {
     }
 
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
-        if (AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() && attachment.getData() != null) {
+        if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment);
@@ -523,19 +528,19 @@ public class TaggedData {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         Timestamp timestamp = timestampTable.get(dbKey);
-        if (transaction.getTimestamp() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime() > timestamp.timestamp) {
+        if (transaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp.timestamp) {
             timestamp.timestamp = transaction.getTimestamp();
         } else {
-            timestamp.timestamp = timestamp.timestamp + Math.min(AplGlobalObjects.getChainConfig().getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.timestamp);
+            timestamp.timestamp = timestamp.timestamp + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.timestamp);
         }
         timestampTable.insert(timestamp);
         List<Long> extendTransactionIds = extendTable.get(dbKey);
         extendTransactionIds.add(transaction.getId());
         extendTable.insert(taggedDataId, extendTransactionIds);
-        if (AplCore.getEpochTime() - AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() < timestamp.timestamp) {
+        if (AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = TransactionDb.findTransaction(taggedDataId);
+                TransactionImpl uploadTransaction = transactionDb.findTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment);
                 Tag.add(taggedData);
             }
@@ -554,11 +559,11 @@ public class TaggedData {
         Tag.add(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : TaggedData.getExtendTransactionIds(transaction.getId())) {
-            Transaction extendTransaction = TransactionDb.findTransaction(extendTransactionId);
-            if (extendTransaction.getTimestamp() - AplGlobalObjects.getChainConfig().getMinPrunableLifetime() > timestamp) {
+            Transaction extendTransaction = transactionDb.findTransaction(extendTransactionId);
+            if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {
-                timestamp = timestamp + Math.min(AplGlobalObjects.getChainConfig().getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp);
+                timestamp = timestamp + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp);
             }
             taggedData.transactionTimestamp = timestamp;
             taggedData.blockTimestamp = extendTransaction.getBlockTimestamp();

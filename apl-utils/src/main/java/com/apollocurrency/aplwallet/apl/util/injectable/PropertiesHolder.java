@@ -24,9 +24,15 @@ public class PropertiesHolder {
 
     public PropertiesHolder() {
     }
-    public void init(Properties p){
-        properties = p;
+
+
+    public PropertiesHolder(Properties properties) {
+        this.properties = properties;
     }
+
+//    public void init(Properties p){
+//        properties = p;
+//    }
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }

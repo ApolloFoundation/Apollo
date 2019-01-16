@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -54,7 +56,7 @@ public final class Genesis {
     private static final String GENESIS_ACCOUNTS_JSON_PATH = "data/genesisAccounts";
     private static final String GENESIS_ACCOUNTS_JSON_PATH_TESTNET_SUFFIX = "-testnet.json";
     private static final String GENESIS_ACCOUNTS_JSON_PATH_MAINNET_SUFFIX = ".json";
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
@@ -72,14 +74,14 @@ public final class Genesis {
 
     private static byte[] loadGenesisAccountsJSON() {
         MessageDigest digest = Crypto.sha256();
-        String path = "conf/"+AplGlobalObjects.getChainConfig().getChain().getGenesisLocation();
+        String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
         } catch (ParseException|IOException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
-        digest.update((byte)(AplGlobalObjects.getChainConfig().isTestnet() ? 1 : 0));
+        digest.update((byte)(blockchainConfig.isTestnet() ? 1 : 0));
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         return digest.digest();
     }
@@ -120,11 +122,11 @@ public final class Genesis {
                 Db.getDb().commitTransaction();
             }
         }
-        long maxBalanceATM = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM();
+        long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
-        LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol());
+        LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
@@ -132,7 +134,7 @@ public final class Genesis {
     }
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
-            String path = "conf/"+AplGlobalObjects.getChainConfig().getChain().getGenesisLocation();
+            String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
             try (InputStreamReader is = new InputStreamReader(
                     Genesis.class.getClassLoader().getResourceAsStream(path))) {
                 ObjectMapper objectMapper = new ObjectMapper();

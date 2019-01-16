@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -45,6 +47,7 @@ public final class PhasingPoll extends AbstractPoll {
 
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
+    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
 
     public static HashFunction getHashFunction(byte code) {
         try {
@@ -369,7 +372,7 @@ public final class PhasingPoll extends AbstractPoll {
             List<TransactionImpl> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add(TransactionDb.findTransaction(rs.getLong("transaction_id")));
+                    transactions.add(transactionDb.findTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -462,7 +465,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public byte[] getFullHash() {
-        return TransactionDb.getFullHash(this.id);
+        return transactionDb.getFullHash(this.id);
     }
 
     public List<byte[]> getLinkedFullHashes() {
@@ -490,7 +493,7 @@ public final class PhasingPoll extends AbstractPoll {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
             for (byte[] hash : getLinkedFullHashes()) {
-                if (TransactionDb.hasTransactionByFullHash(hash, height)) {
+                if (transactionDb.hasTransactionByFullHash(hash, height)) {
                     count += 1;
                 }
             }

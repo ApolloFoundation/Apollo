@@ -21,15 +21,16 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Currency;
+import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.Currency;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -69,7 +70,7 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
         long amountPerUnitATM = ParameterParser.getLong(req, "amountPerUnitATM", 1L,
-                AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM(), true);
+                CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
         Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new Attachment.MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
         return createTransaction(req, account, attachment);

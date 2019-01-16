@@ -22,6 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -40,7 +44,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 
 import org.slf4j.Logger;
-public final class BlockDb {
+
+@ApplicationScoped
+public class BlockDb {
     private static final Logger LOG = getLogger(BlockDb.class);
 
     /** Block cache */
@@ -51,20 +57,21 @@ public final class BlockDb {
     private final SortedMap<Integer, BlockImpl> heightMap;     
     private final Map<Long, TransactionImpl> transactionCache;
     private final ConnectionProvider connectionProvider;
+    private TransactionDb transactionDb;
+
     public BlockDb(int blockCacheSize, Map<Long, BlockImpl> blockCache, SortedMap<Integer, BlockImpl> heightMap,
                    Map<Long, TransactionImpl> transactionCache, ConnectionProvider connectionProvider) {
+        Objects.requireNonNull(connectionProvider, "Connection provider is null");
         this.blockCacheSize = blockCacheSize;
         this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
         this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
         this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
-        if (connectionProvider == null) {
-            throw new IllegalArgumentException("Connection provider is null");
-        }
         this.connectionProvider = connectionProvider;
     }
 
+    @Inject
     public BlockDb(ConnectionProvider connectionProvider) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, null, null, null, connectionProvider);
+        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), connectionProvider);
     }
 
     public void attachCacheListener() {
@@ -303,11 +310,11 @@ public final class BlockDb {
         return generators;
     }
 
-    static BlockImpl loadBlock(Connection con, ResultSet rs) {
+    BlockImpl loadBlock(Connection con, ResultSet rs) {
         return loadBlock(con, rs, false);
     }
 
-    static BlockImpl loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
+    BlockImpl loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         try {
             int version = rs.getInt("version");
             int timestamp = rs.getInt("timestamp");
@@ -331,13 +338,19 @@ public final class BlockDb {
             int timeout = rs.getInt("timeout");
             return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
-                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, loadTransactions ? TransactionDb.findBlockTransactions(con,
+                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, loadTransactions ?
+                    getTransactionDb().findBlockTransactions(con,
                     id) :
                     null);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
+    private TransactionDb getTransactionDb() {
+        if (transactionDb == null) this.transactionDb = CDI.current().select(TransactionDb.class).get();
+        return transactionDb;
+    }
+
 
     void saveBlock(Connection con, Block block) {
         try {
@@ -364,7 +377,7 @@ public final class BlockDb {
                 pstmt.setLong(++i, block.getGeneratorId());
                 pstmt.setInt(++i, block.getTimeout());
                 pstmt.executeUpdate();
-                TransactionDb.saveTransactions(con, block.getTransactions());
+                CDI.current().select(TransactionDb.class).get().saveTransactions(con, block.getTransactions());
             }
             if (block.getPreviousBlockId() != 0) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")) {

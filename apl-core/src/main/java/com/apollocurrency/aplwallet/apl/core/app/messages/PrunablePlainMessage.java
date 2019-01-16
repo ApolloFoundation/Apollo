@@ -6,17 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.app.messages;
 
 import static com.apollocurrency.aplwallet.apl.core.app.messages.Appendix.hasAppendix;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -25,6 +26,7 @@ import org.json.simple.JSONObject;
 public class PrunablePlainMessage extends AbstractAppendix implements Appendix.Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
+    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
@@ -132,14 +134,14 @@ public class PrunablePlainMessage extends AbstractAppendix implements Appendix.P
         if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
             throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
         }
-        if (msg == null && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+        if (msg == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
         }
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime()) {
+        if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
             PrunableMessage.add((TransactionImpl)transaction, this);
         }
     }

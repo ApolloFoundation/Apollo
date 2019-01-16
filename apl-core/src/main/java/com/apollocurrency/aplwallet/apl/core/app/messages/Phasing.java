@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.messages;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
@@ -177,7 +178,8 @@ public class Phasing extends AbstractAppendix {
                 if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                     throw new AplException.NotValidException("Duplicate linked transaction ids");
                 }
-                TransactionImpl linkedTransaction = TransactionDb.findTransactionByFullHash(hash, currentHeight);
+                TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+                TransactionImpl linkedTransaction = transactionDb.findTransactionByFullHash(hash, currentHeight);
                 if (linkedTransaction != null) {
                     if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                         throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");

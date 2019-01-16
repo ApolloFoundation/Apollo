@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
@@ -17,15 +20,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockDb;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
 import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+@ApplicationScoped
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
 
@@ -48,16 +52,23 @@ public class BlockchainConfig {
     private volatile HeightConfig currentConfig;
     private Chain chain;
 
-    public BlockchainConfig(Chain chain, PropertiesHolder loader) {
-        this(chain,
-             loader.getIntProperty("apl.testnetLeasingDelay", -1),
-             loader.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
-             loader.getIntProperty("apl.maxPrunableLifetime")
+    @Inject
+    public BlockchainConfig(PropertiesHolder holder, ChainIdService chainIdService) {
+        this(chainIdService,
+             holder.getIntProperty("apl.testnetLeasingDelay", -1),
+             holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
+             holder.getIntProperty("apl.maxPrunableLifetime")
                 );
     }
-    public BlockchainConfig(Chain chain, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations, int maxPrunableLifetime) {
+    public BlockchainConfig(ChainIdService chainIdService, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations,
+                            int maxPrunableLifetime) {
 
-        this.chain                          = chain;
+        try {
+            this.chain = chainIdService.getActiveChain();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Cannot get active chain");
+        }
         this.testnet                        = chain.isTestnet();
         this.projectName                    = chain.getProject();
         this.accountPrefix                  = chain.getPrefix();
@@ -85,8 +96,9 @@ public class BlockchainConfig {
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    public void updateToLatestConfig() {
-        BlockImpl lastBlock = AplGlobalObjects.getBlockDb().findLastBlock();
+    public void updateToBlock() {
+//        move BlockDb to constructor later
+        BlockImpl lastBlock = CDI.current().select(BlockDb.class).get().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");
             return;

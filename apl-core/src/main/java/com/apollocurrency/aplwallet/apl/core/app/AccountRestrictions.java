@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import static com.apollocurrency.aplwallet.apl.core.app.TransactionType.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,14 +34,15 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
-import com.apollocurrency.aplwallet.apl.util.AplException.AccountControlException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException.AccountControlException;
 import org.slf4j.Logger;
 
 public final class AccountRestrictions {
@@ -48,6 +50,7 @@ public final class AccountRestrictions {
 
 
     public static final class PhasingOnly {
+        private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
         public static PhasingOnly get(long accountId) {
             return phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).
@@ -147,7 +150,7 @@ public final class AccountRestrictions {
         private void checkTransaction(Transaction transaction) throws AccountControlException {
             if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL,
-                        AplGlobalObjects.getChainConfig().getCoinSymbol()));
+                        blockchainConfig.getCoinSymbol()));
             }
             if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
                 return;

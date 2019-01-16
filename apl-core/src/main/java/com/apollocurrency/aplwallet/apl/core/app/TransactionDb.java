@@ -28,10 +28,12 @@ import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -42,18 +44,28 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-public final class TransactionDb {
+@ApplicationScoped
+public class TransactionDb {
+
+    private final BlockDb blockDb;
+
+    @Inject
+    public TransactionDb(BlockDb blockDb) {
+        Objects.requireNonNull(blockDb);
+        this.blockDb = blockDb;
+    }
 
 
-    public static TransactionImpl findTransaction(long transactionId) {
+    public TransactionImpl findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    static TransactionImpl findTransaction(long transactionId, int height) {
+    TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized (blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getHeight() <= height ? transaction : null;
             }
@@ -75,15 +87,15 @@ public final class TransactionDb {
         }
     }
 
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash) {
+    TransactionImpl findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    public static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    public TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
@@ -107,14 +119,14 @@ public final class TransactionDb {
         }
     }
 
-    static boolean hasTransaction(long transactionId) {
+    boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    static boolean hasTransaction(long transactionId, int height) {
+    boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
             }
@@ -131,15 +143,15 @@ public final class TransactionDb {
         }
     }
 
-    static boolean hasTransactionByFullHash(byte[] fullHash) {
+    boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
 
-    static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.fullHash(), fullHash));
@@ -157,10 +169,10 @@ public final class TransactionDb {
         }
     }
 
-    static byte[] getFullHash(long transactionId) {
+    byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.fullHash();
             }
@@ -177,7 +189,7 @@ public final class TransactionDb {
         }
     }
 
-    static TransactionImpl loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+    TransactionImpl loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         try {
 
             byte type = rs.getByte("type");
@@ -255,10 +267,10 @@ public final class TransactionDb {
         }
     }
 
-    static List<Transaction> findBlockTransactions(long blockId) {
+    List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
+        synchronized(blockDb.getBlockCache()) {
+            BlockImpl block = blockDb.getBlockCache().get(blockId);
             if (block != null) {
                 return block.getTransactions();
             }
@@ -271,7 +283,7 @@ public final class TransactionDb {
         }
     }
 
-    static List<Transaction> findBlockTransactions(Connection con, long blockId) {
+    List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
@@ -290,7 +302,7 @@ public final class TransactionDb {
         }
     }
 
-    static List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
@@ -318,7 +330,7 @@ public final class TransactionDb {
         return result;
     }
 
-    static void saveTransactions(Connection con, List<Transaction> transactions) {
+    void saveTransactions(Connection con, List<Transaction> transactions) {
         try {
             short index = 0;
             for (Transaction transaction : transactions) {

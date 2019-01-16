@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -77,13 +78,9 @@ public final class Account {
     // TODO: YL remove static instance later
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final Logger LOG = getLogger(Account.class);
-    private static final KeyStore keystore =
-            new SimpleKeyStoreImpl(AplCoreRuntime.getInstance().getKeystoreDir(
-                    AplGlobalObjects.getChainConfig().isTestnet() ?
-                            propertiesLoader.getStringProperty("apl.testnetKeystoreDir","testnet_keystore") :
-                            propertiesLoader.getStringProperty("apl.keystoreDir","keystore")), (byte)0);
+    private static final KeyStore keystore = CDI.current().select(KeyStore.class).get();
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
             Genesis.loadGenesisAccounts();
 
@@ -114,7 +111,7 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            if (height <= AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations()) {
+            if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
                 return;
             }
             super.trim(height);
@@ -122,7 +119,7 @@ public final class Account {
 
         @Override
         public void checkAvailable(int height) {
-            if (height > AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations()) {
+            if (height > blockchainConfig.getGuaranteedBalanceConfirmations()) {
                 super.checkAvailable(height);
                 return;
             }
@@ -266,7 +263,7 @@ public final class Account {
             try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmtDelete.setInt(1, height - AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations());
+                pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
@@ -311,7 +308,7 @@ public final class Account {
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
             propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem") ?
                     new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir(
-                            AplGlobalObjects.getChainConfig().isTestnet() ?
+                            blockchainConfig.isTestnet() ?
                                     propertiesLoader.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
                                     propertiesLoader.getStringProperty("apl.dir2FA", "2fa")
                     )) :
@@ -1106,7 +1103,7 @@ public final class Account {
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
-                effectiveBalanceATM += getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), height);
+                effectiveBalanceATM += getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), height);
             }
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
@@ -1135,7 +1132,7 @@ public final class Account {
                      + (height < blockchainHeight ? " AND height <= ? " : "")
                      + " GROUP BY account_id ORDER BY account_id")) {
             pstmt.setObject(1, lessorIds);
-            pstmt.setInt(2, height - AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations());
+            pstmt.setInt(2, height - blockchainConfig.getGuaranteedBalanceConfirmations());
             if (height < blockchainHeight) {
                 pstmt.setInt(3, height);
             }
@@ -1171,14 +1168,14 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM() {
-        return getGuaranteedBalanceATM(AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations(), AplCore.getBlockchain().getHeight());
+        return getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), AplCore.getBlockchain().getHeight());
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
         AplCore.getBlockchain().readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + AplGlobalObjects.getChainConfig().getGuaranteedBalanceConfirmations() < AplCore.getBlockchainProcessor().getMinRollbackHeight()
+            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < AplCore.getBlockchainProcessor().getMinRollbackHeight()
                     || height > AplCore.getBlockchain().getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
@@ -1283,7 +1280,7 @@ public final class Account {
     void leaseEffectiveBalance(long lesseeId, int period) {
         int height = AplCore.getBlockchain().getHeight();
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));
-        int leasingDelay = AplGlobalObjects.getChainConfig().getLeasingDelay();
+        int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
                     height + leasingDelay,

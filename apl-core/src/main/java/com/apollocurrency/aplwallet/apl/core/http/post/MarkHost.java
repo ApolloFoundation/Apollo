@@ -27,9 +27,10 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_D
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HOST;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_WEIGHT;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -77,7 +78,7 @@ public final class MarkHost extends AbstractAPIRequestHandler {
         int weight;
         try {
             weight = Integer.parseInt(weightValue);
-            if (weight <= 0 || weight > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL()) {
+            if (weight <= 0 || weight > CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL()) {
                 return INCORRECT_WEIGHT;
             }
         } catch (NumberFormatException e) {

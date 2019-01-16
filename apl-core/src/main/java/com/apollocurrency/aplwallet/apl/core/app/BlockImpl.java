@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -33,9 +33,11 @@ import java.util.Collections;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -43,6 +45,8 @@ import org.slf4j.Logger;
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
+
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     private final int version;
     private final int timestamp;
@@ -59,14 +63,15 @@ public final class BlockImpl implements Block {
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty = BigInteger.ZERO;
-    private long baseTarget = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget();
+    private long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
     private volatile long nextBlockId;
     private int height = -1;
     private volatile long id;
     private volatile String stringId = null;
     private volatile long generatorId;
     private volatile byte[] bytes = null;
-
+//    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
 
     BlockImpl(byte[] generatorPublicKey, byte[] generationSignature) {
         this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey, generationSignature, new byte[64],
@@ -186,7 +191,7 @@ public final class BlockImpl implements Block {
     public List<Transaction> getTransactions() {
 /*
         if (this.blockTransactions == null) {
-            List<Transaction> transactions = Collections.unmodifiableList(TransactionDb.findBlockTransactions(getId()));
+            List<Transaction> transactions = Collections.unmodifiableList(transactionDb.findBlockTransactions(getId()));
             for (Transaction transaction : transactions) {
                 transaction.setBlock(this);
             }
@@ -433,15 +438,15 @@ public final class BlockImpl implements Block {
                     break;
                 }
                 totalBackFees += backFees[i];
-                Account previousGeneratorAccount = Account.getAccount(AplGlobalObjects.getBlockDb().findBlockAtHeight(this.height - i - 1).getGeneratorId());
-                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(),
+                Account previousGeneratorAccount = Account.getAccount(blockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
+                LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                         this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, AplGlobalObjects.getChainConfig().getCoinSymbol(), this.height);
+            LOG.debug("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, blockchainConfig.getCoinSymbol(), this.height);
         }
         generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
         generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);
@@ -479,7 +484,7 @@ public final class BlockImpl implements Block {
         int blockchainHeight = previousBlock.getHeight();
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             int blocktimeAverage = getBlockTimeAverage(previousBlock);
-            HeightConfig config = AplGlobalObjects.getChainConfig().getCurrentConfig();
+            HeightConfig config = blockchainConfig.getCurrentConfig();
             int blockTime = config.getBlockTime();
             if (blocktimeAverage > blockTime) {
                 int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
@@ -505,9 +510,9 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        BlockImpl lastBlockForTimeAverage = AplGlobalObjects.getBlockDb().findBlockAtHeight(blockchainHeight - 2);
+        BlockImpl lastBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            BlockImpl intermediateBlockForTimeAverage = AplGlobalObjects.getBlockDb().findBlockAtHeight(blockchainHeight - 1);
+            BlockImpl intermediateBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 1);
             int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
             int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateBlockForTimeAverage.timestamp;
             int secondAvgBlockTime = intermediateBlockForTimeAverage.timestamp - intermediateBlockForTimeAverage.timeout - lastBlockForTimeAverage.timestamp;
