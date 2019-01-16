@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -2215,7 +2215,7 @@ public abstract class TransactionType {
                         || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
                 }
-                PrunablePlainMessage prunablePlainMessage = transaction.getPrunablePlainMessage();
+                PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
                 if (prunablePlainMessage != null) {
                     byte[] image = prunablePlainMessage.getMessage();
                     if (image != null) {

@@ -18,12 +18,12 @@ import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public abstract class AbstractEncryptedMessage extends AbstractAppendix {
+public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
     private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendage) {
-            return ((AbstractEncryptedMessage)appendage).getEncryptedDataLength() - 16;
+            return ((AbstractEncryptedMessageAppendix)appendage).getEncryptedDataLength() - 16;
         }
     };
 
@@ -31,7 +31,7 @@ public abstract class AbstractEncryptedMessage extends AbstractAppendix {
     private boolean isText;
     private boolean isCompressed;
 
-    public AbstractEncryptedMessage(ByteBuffer buffer) throws AplException.NotValidException {
+    public AbstractEncryptedMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         int length = buffer.getInt();
         this.isText = length < 0;
@@ -46,7 +46,7 @@ public abstract class AbstractEncryptedMessage extends AbstractAppendix {
         this.isCompressed = getVersion() != 2;
     }
 
-    public AbstractEncryptedMessage(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
+    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
         super(attachmentJSON);
         byte[] data = Convert.parseHexString((String)encryptedMessageJSON.get("data"));
         byte[] nonce = Convert.parseHexString((String) encryptedMessageJSON.get("nonce"));
@@ -56,7 +56,7 @@ public abstract class AbstractEncryptedMessage extends AbstractAppendix {
         this.isCompressed = isCompressed == null || Boolean.TRUE.equals(isCompressed);
     }
 
-    public AbstractEncryptedMessage(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
+    public AbstractEncryptedMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
         super(isCompressed ? 1 : 2);
         this.encryptedData = encryptedData;
         this.isText = isText;

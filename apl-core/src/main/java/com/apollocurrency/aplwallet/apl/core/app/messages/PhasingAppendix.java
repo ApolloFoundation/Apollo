@@ -33,14 +33,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-public class Phasing extends AbstractAppendix {
-    private static final Logger LOG = getLogger(Phasing.class);
+public class PhasingAppendix extends AbstractAppendix {
+    private static final Logger LOG = getLogger(PhasingAppendix.class);
 
     private static final String appendixName = "Phasing";
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
-        Phasing phasing = (Phasing)appendage;
+        PhasingAppendix phasing = (PhasingAppendix)appendage;
         if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
             fee += 20 * Constants.ONE_APL;
         } else {
@@ -53,11 +53,11 @@ public class Phasing extends AbstractAppendix {
         return fee;
     };
 
-    public static Phasing parse(JSONObject attachmentData) {
+    public static PhasingAppendix parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        return new Phasing(attachmentData);
+        return new PhasingAppendix(attachmentData);
     }
 
     private final int finishHeight;
@@ -66,7 +66,7 @@ public class Phasing extends AbstractAppendix {
     private final byte[] hashedSecret;
     private final byte algorithm;
 
-    public Phasing(ByteBuffer buffer) {
+    public PhasingAppendix(ByteBuffer buffer) {
         super(buffer);
         finishHeight = buffer.getInt();
         params = new PhasingParams(buffer);
@@ -91,7 +91,7 @@ public class Phasing extends AbstractAppendix {
         algorithm = buffer.get();
     }
 
-    public Phasing(JSONObject attachmentData) {
+    public PhasingAppendix(JSONObject attachmentData) {
         super(attachmentData);
         finishHeight = ((Long) attachmentData.get("phasingFinishHeight")).intValue();
         params = new PhasingParams(attachmentData);
@@ -114,7 +114,7 @@ public class Phasing extends AbstractAppendix {
         }
     }
 
-    public Phasing(int finishHeight, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
+    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
         this.finishHeight = finishHeight;
         this.params = phasingParams;
         this.linkedFullHashes = Convert.nullToEmpty(linkedFullHashes);

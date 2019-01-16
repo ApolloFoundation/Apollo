@@ -22,9 +22,9 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -981,7 +981,7 @@ public final class DigitalGoodsStore {
     }
 
     static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
-                       EncryptedMessage encryptedMessage) {
+                       EncryptedMessageAppendix encryptedMessage) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
         seller.addToBalanceATM(event, eventId, -refundATM);
@@ -994,7 +994,7 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.REFUND);
     }
 
-    static void feedback(long purchaseId, EncryptedMessage encryptedMessage, Message message) {
+    static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         if (encryptedMessage != null) {
             purchase.addFeedbackNote(encryptedMessage.getEncryptedData());

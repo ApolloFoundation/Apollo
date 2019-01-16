@@ -11,29 +11,29 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class EncryptedMessage extends AbstractEncryptedMessage {
+public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
 
     private static final String appendixName = "EncryptedMessage";
 
-    public static EncryptedMessage parse(JSONObject attachmentData) {
+    public static EncryptedMessageAppendix parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
         if (((JSONObject)attachmentData.get("encryptedMessage")).get("data") == null) {
-            return new UnencryptedEncryptedMessage(attachmentData);
+            return new UnencryptedEncryptedMessageAppendix(attachmentData);
         }
-        return new EncryptedMessage(attachmentData);
+        return new EncryptedMessageAppendix(attachmentData);
     }
 
-    public EncryptedMessage(ByteBuffer buffer) throws AplException.NotValidException {
+    public EncryptedMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
     }
 
-    public EncryptedMessage(JSONObject attachmentData) {
+    public EncryptedMessageAppendix(JSONObject attachmentData) {
         super(attachmentData, (JSONObject)attachmentData.get("encryptedMessage"));
     }
 
-    public EncryptedMessage(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
+    public EncryptedMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
         super(encryptedData, isText, isCompressed);
     }
 

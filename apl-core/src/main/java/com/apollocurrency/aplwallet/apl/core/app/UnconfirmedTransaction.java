@@ -22,14 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -288,12 +288,12 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public Message getMessage() {
+    public MessageAppendix getMessage() {
         return transaction.getMessage();
     }
 
     @Override
-    public PrunablePlainMessage getPrunablePlainMessage() {
+    public PrunablePlainMessageAppendix getPrunablePlainMessage() {
         return transaction.getPrunablePlainMessage();
     }
 
@@ -302,12 +302,12 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public EncryptedMessage getEncryptedMessage() {
+    public EncryptedMessageAppendix getEncryptedMessage() {
         return transaction.getEncryptedMessage();
     }
 
     @Override
-    public PrunableEncryptedMessage getPrunableEncryptedMessage() {
+    public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
         return transaction.getPrunableEncryptedMessage();
     }
 
@@ -316,12 +316,12 @@ class UnconfirmedTransaction implements Transaction {
     }
 
 
-    public EncryptToSelfMessage getEncryptToSelfMessage() {
+    public EncryptToSelfMessageAppendix getEncryptToSelfMessage() {
         return transaction.getEncryptToSelfMessage();
     }
 
     @Override
-    public Phasing getPhasing() {
+    public PhasingAppendix getPhasing() {
         return transaction.getPhasing();
     }
 
@@ -331,7 +331,7 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public PublicKeyAnnouncement getPublicKeyAnnouncement() {
+    public PublicKeyAnnouncementAppendix getPublicKeyAnnouncement() {
         return transaction.getPublicKeyAnnouncement();
     }
 

@@ -70,14 +70,14 @@ import java.util.StringJoiner;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.UnencryptedEncryptToSelfMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.UnencryptedEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.UnencryptedPrunableEncryptedMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.UnencryptedEncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.UnencryptedEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.UnencryptedPrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
@@ -417,7 +417,7 @@ public final class ParameterParser {
         return new EncryptedData(data, nonce);
     }
 
-    public static EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
+    public static EncryptToSelfMessageAppendix getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -439,9 +439,9 @@ public final class ParameterParser {
             }
         }
         if (encryptedData != null) {
-            return new EncryptToSelfMessage(encryptedData, isText, compress);
+            return new EncryptToSelfMessageAppendix(encryptedData, isText, compress);
         } else {
-            return new UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
+            return new UnencryptedEncryptToSelfMessageAppendix(plainMessageBytes, isText, compress);
         }
     }
 
@@ -751,9 +751,9 @@ public final class ParameterParser {
         if (messageValue != null) {
             try {
                 if (prunable) {
-                    return new PrunablePlainMessage(messageValue, messageIsText);
+                    return new PrunablePlainMessageAppendix(messageValue, messageIsText);
                 } else {
-                    return new Message(messageValue, messageIsText);
+                    return new MessageAppendix(messageValue, messageIsText);
                 }
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
@@ -777,9 +777,9 @@ public final class ParameterParser {
                 messageIsText = false;
             }
             if (prunable) {
-                return new PrunablePlainMessage(message, messageIsText);
+                return new PrunablePlainMessageAppendix(message, messageIsText);
             } else {
-                return new Message(message, messageIsText);
+                return new MessageAppendix(message, messageIsText);
             }
         } catch (IOException | ServletException e) {
             LOG.debug("error in reading file data", e);
@@ -840,15 +840,15 @@ public final class ParameterParser {
         }
         if (encryptedData != null) {
             if (prunable) {
-                return new PrunableEncryptedMessage(encryptedData, isText, compress);
+                return new PrunableEncryptedMessageAppendix(encryptedData, isText, compress);
             } else {
-                return new EncryptedMessage(encryptedData, isText, compress);
+                return new EncryptedMessageAppendix(encryptedData, isText, compress);
             }
         } else {
             if (prunable) {
-                return new UnencryptedPrunableEncryptedMessage(plainMessageBytes, isText, compress, recipientPublicKey);
+                return new UnencryptedPrunableEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
             } else {
-                return new UnencryptedEncryptedMessage(plainMessageBytes, isText, compress, recipientPublicKey);
+                return new UnencryptedEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
             }
         }
     }

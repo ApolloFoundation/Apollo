@@ -14,31 +14,31 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class PublicKeyAnnouncement extends AbstractAppendix {
+public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     private static final String appendixName = "PublicKeyAnnouncement";
 
-    public static PublicKeyAnnouncement parse(JSONObject attachmentData) {
+    public static PublicKeyAnnouncementAppendix parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        return new PublicKeyAnnouncement(attachmentData);
+        return new PublicKeyAnnouncementAppendix(attachmentData);
     }
 
     private final byte[] publicKey;
 
-    public PublicKeyAnnouncement(ByteBuffer buffer) {
+    public PublicKeyAnnouncementAppendix(ByteBuffer buffer) {
         super(buffer);
         this.publicKey = new byte[32];
         buffer.get(this.publicKey);
     }
 
-    public PublicKeyAnnouncement(JSONObject attachmentData) {
+    public PublicKeyAnnouncementAppendix(JSONObject attachmentData) {
         super(attachmentData);
         this.publicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
     }
 
-    public PublicKeyAnnouncement(byte[] publicKey) {
+    public PublicKeyAnnouncementAppendix(byte[] publicKey) {
         this.publicKey = publicKey;
     }
 

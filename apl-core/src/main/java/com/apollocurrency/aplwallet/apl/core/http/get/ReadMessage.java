@@ -30,9 +30,9 @@ import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -81,9 +81,9 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
         }
 
         JSONObject response = new JSONObject();
-        Message message = transaction.getMessage();
-        EncryptedMessage encryptedMessage = transaction.getEncryptedMessage();
-        EncryptToSelfMessage encryptToSelfMessage = transaction.getEncryptToSelfMessage();
+        MessageAppendix message = transaction.getMessage();
+        EncryptedMessageAppendix encryptedMessage = transaction.getEncryptedMessage();
+        EncryptToSelfMessageAppendix encryptToSelfMessage = transaction.getEncryptToSelfMessage();
         if (message == null && encryptedMessage == null && encryptToSelfMessage == null && prunableMessage == null) {
             return NO_MESSAGE;
         }

@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class PrunableEncryptedMessage extends AbstractAppendix implements Appendix.Prunable {
+public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Appendix.Prunable {
 
     private static final String appendixName = "PrunableEncryptedMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -34,15 +34,15 @@ public class PrunableEncryptedMessage extends AbstractAppendix implements Append
         }
     };
 
-    public static PrunableEncryptedMessage parse(JSONObject attachmentData) {
+    public static PrunableEncryptedMessageAppendix parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
         JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptedMessage");
         if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
-            return new UnencryptedPrunableEncryptedMessage(attachmentData);
+            return new UnencryptedPrunableEncryptedMessageAppendix(attachmentData);
         }
-        return new PrunableEncryptedMessage(attachmentData);
+        return new PrunableEncryptedMessageAppendix(attachmentData);
     }
 
     private final byte[] hash;
@@ -51,7 +51,7 @@ public class PrunableEncryptedMessage extends AbstractAppendix implements Append
     private final boolean isCompressed;
     private volatile PrunableMessage prunableMessage;
 
-    public PrunableEncryptedMessage(ByteBuffer buffer) {
+    public PrunableEncryptedMessageAppendix(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(this.hash);
@@ -60,7 +60,7 @@ public class PrunableEncryptedMessage extends AbstractAppendix implements Append
         this.isCompressed = false;
     }
 
-    public PrunableEncryptedMessage(JSONObject attachmentJSON) {
+    public PrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
         super(attachmentJSON);
         String hashString = Convert.emptyToNull((String) attachmentJSON.get("encryptedMessageHash"));
         JSONObject encryptedMessageJSON = (JSONObject) attachmentJSON.get("encryptedMessage");
@@ -79,7 +79,7 @@ public class PrunableEncryptedMessage extends AbstractAppendix implements Append
         }
     }
 
-    public PrunableEncryptedMessage(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
+    public PrunableEncryptedMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
         this.encryptedData = encryptedData;
         this.isText = isText;
         this.isCompressed = isCompressed;

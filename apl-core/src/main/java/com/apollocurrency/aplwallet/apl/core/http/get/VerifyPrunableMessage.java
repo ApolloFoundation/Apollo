@@ -21,8 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -81,8 +81,8 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
             return UNKNOWN_TRANSACTION;
         }
         long account = ParameterParser.getAccountId(req, "account", false);
-        PrunablePlainMessage plainMessage = (PrunablePlainMessage) ParameterParser.getPlainMessage(req, true);
-        PrunableEncryptedMessage encryptedMessage = (PrunableEncryptedMessage) ParameterParser.getEncryptedMessage(req, null,
+        PrunablePlainMessageAppendix plainMessage = (PrunablePlainMessageAppendix) ParameterParser.getPlainMessage(req, true);
+        PrunableEncryptedMessageAppendix encryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, null,
                 account,true);
 
         if (plainMessage == null && encryptedMessage == null) {
@@ -93,7 +93,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
         }
 
         if (plainMessage != null) {
-            PrunablePlainMessage myPlainMessage = transaction.getPrunablePlainMessage();
+            PrunablePlainMessageAppendix myPlainMessage = transaction.getPrunablePlainMessage();
             if (myPlainMessage == null) {
                 return NO_SUCH_PLAIN_MESSAGE;
             }
@@ -104,7 +104,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
             response.put("verify", true);
             return response;
         } else if (encryptedMessage != null) {
-            PrunableEncryptedMessage myEncryptedMessage = transaction.getPrunableEncryptedMessage();
+            PrunableEncryptedMessageAppendix myEncryptedMessage = transaction.getPrunableEncryptedMessage();
             if (myEncryptedMessage == null) {
                 return NO_SUCH_ENCRYPTED_MESSAGE;
             }

@@ -16,28 +16,28 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class Message extends AbstractAppendix {
+public class MessageAppendix extends AbstractAppendix {
 
     private static final String appendixName = "Message";
 
-    public static Message parse(JSONObject attachmentData) {
+    public static MessageAppendix parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        return new Message(attachmentData);
+        return new MessageAppendix(attachmentData);
     }
 
     private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
         @Override
         public int getSize(TransactionImpl transaction, Appendix appendage) {
-            return ((Message)appendage).getMessage().length;
+            return ((MessageAppendix)appendage).getMessage().length;
         }
     };
 
     private final byte[] message;
     private final boolean isText;
 
-    public Message(ByteBuffer buffer) throws AplException.NotValidException {
+    public MessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         int messageLength = buffer.getInt();
         this.isText = messageLength < 0; // ugly hack
@@ -54,26 +54,26 @@ public class Message extends AbstractAppendix {
         }
     }
 
-    public Message(JSONObject attachmentData) {
+    public MessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
         String messageString = (String)attachmentData.get("message");
         this.isText = Boolean.TRUE.equals(attachmentData.get("messageIsText"));
         this.message = isText ? Convert.toBytes(messageString) : Convert.parseHexString(messageString);
     }
 
-    public Message(byte[] message) {
+    public MessageAppendix(byte[] message) {
         this(message, false);
     }
 
-    public Message(String string) {
+    public MessageAppendix(String string) {
         this(Convert.toBytes(string), true);
     }
 
-    public Message(String string, boolean isText) {
+    public MessageAppendix(String string, boolean isText) {
         this(isText ? Convert.toBytes(string) : Convert.parseHexString(string), isText);
     }
 
-    public Message(byte[] message, boolean isText) {
+    public MessageAppendix(byte[] message, boolean isText) {
         this.message = message;
         this.isText = isText;
     }
@@ -130,7 +130,7 @@ public class Message extends AbstractAppendix {
 
     @Override
     public String toString() {
-        return "Message{" +
+        return "MessageAppendix{" +
                 "message=" + new String(message) +
                 ", isText=" + isText +
                 '}';

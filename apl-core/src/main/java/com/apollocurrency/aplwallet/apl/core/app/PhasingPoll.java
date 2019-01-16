@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -401,7 +401,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
 
-    public static void addPoll(Transaction transaction, Phasing appendix) {
+    public static void addPoll(Transaction transaction, PhasingAppendix appendix) {
         PhasingPoll poll = new PhasingPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.whitelist;
@@ -424,7 +424,7 @@ public final class PhasingPoll extends AbstractPoll {
     private final byte[] hashedSecret;
     private final byte algorithm;
 
-    private PhasingPoll(Transaction transaction, Phasing appendix) {
+    private PhasingPoll(Transaction transaction, PhasingAppendix appendix) {
         super(transaction.getId(), transaction.getSenderId(), appendix.getFinishHeight(), appendix.getVoteWeighting());
         this.dbKey = phasingPollDbKeyFactory.newKey(this.id);
         this.quorum = appendix.getQuorum();

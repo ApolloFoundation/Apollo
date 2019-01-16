@@ -14,11 +14,11 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class UnencryptedEncryptToSelfMessage extends EncryptToSelfMessage implements Appendix.Encryptable {
+public class UnencryptedEncryptToSelfMessageAppendix extends EncryptToSelfMessageAppendix implements Appendix.Encryptable {
 
     private final byte[] messageToEncrypt;
 
-    public UnencryptedEncryptToSelfMessage(JSONObject attachmentData) {
+    public UnencryptedEncryptToSelfMessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
         setEncryptedData(null);
         JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptToSelfMessage");
@@ -26,7 +26,7 @@ public class UnencryptedEncryptToSelfMessage extends EncryptToSelfMessage implem
         messageToEncrypt = isText() ? Convert.toBytes(messageToEncryptString) : Convert.parseHexString(messageToEncryptString);
     }
 
-    public UnencryptedEncryptToSelfMessage(byte[] messageToEncrypt, boolean isText, boolean isCompressed) {
+    public UnencryptedEncryptToSelfMessageAppendix(byte[] messageToEncrypt, boolean isText, boolean isCompressed) {
         super(null, isText, isCompressed);
         this.messageToEncrypt = messageToEncrypt;
     }

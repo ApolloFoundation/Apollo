@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static com.apollocurrency.aplwallet.apl.core.app.TransactionType.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -161,7 +161,7 @@ public final class AccountRestrictions {
                 LOG.debug("Account control no longer valid: " + e.getMessage());
                 return;
             }
-            Phasing phasingAppendix = transaction.getPhasing();
+            PhasingAppendix phasingAppendix = transaction.getPhasing();
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }

@@ -22,14 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -48,19 +48,19 @@ public interface Transaction {
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
-        Builder appendix(Message message);
+        Builder appendix(MessageAppendix message);
 
-        Builder appendix(EncryptedMessage encryptedMessage);
+        Builder appendix(EncryptedMessageAppendix encryptedMessage);
 
-        Builder appendix(EncryptToSelfMessage encryptToSelfMessage);
+        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
 
-        Builder appendix(PublicKeyAnnouncement publicKeyAnnouncement);
+        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
 
-        Builder appendix(PrunablePlainMessage prunablePlainMessage);
+        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
 
-        Builder appendix(PrunableEncryptedMessage prunableEncryptedMessage);
+        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
 
-        Builder appendix(Phasing phasing);
+        Builder appendix(PhasingAppendix phasing);
 
         Builder timestamp(int timestamp);
 
@@ -144,23 +144,23 @@ public interface Transaction {
 
     int getFullSize();
 
-    Message getMessage();
+    MessageAppendix getMessage();
 
-    EncryptedMessage getEncryptedMessage();
+    EncryptedMessageAppendix getEncryptedMessage();
 
-    EncryptToSelfMessage getEncryptToSelfMessage();
+    EncryptToSelfMessageAppendix getEncryptToSelfMessage();
 
-    Phasing getPhasing();
+    PhasingAppendix getPhasing();
 
     boolean attachmentIsPhased();
 
-    PublicKeyAnnouncement getPublicKeyAnnouncement();
+    PublicKeyAnnouncementAppendix getPublicKeyAnnouncement();
 
-    PrunablePlainMessage getPrunablePlainMessage();
+    PrunablePlainMessageAppendix getPrunablePlainMessage();
 
     boolean hasPrunablePlainMessage();
 
-    PrunableEncryptedMessage getPrunableEncryptedMessage();
+    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
 
     boolean hasPrunableEncryptedMessage();
 

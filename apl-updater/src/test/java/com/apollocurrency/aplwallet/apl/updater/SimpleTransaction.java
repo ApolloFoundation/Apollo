@@ -7,15 +7,15 @@ package com.apollocurrency.aplwallet.apl.updater;
 import com.apollocurrency.aplwallet.apl.core.app.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Message;
-import com.apollocurrency.aplwallet.apl.core.app.messages.Phasing;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PublicKeyAnnouncement;
+import com.apollocurrency.aplwallet.apl.core.app.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -226,22 +226,22 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public Message getMessage() {
+    public MessageAppendix getMessage() {
         return null;
     }
 
     @Override
-    public EncryptedMessage getEncryptedMessage() {
+    public EncryptedMessageAppendix getEncryptedMessage() {
         return null;
     }
 
     @Override
-    public EncryptToSelfMessage getEncryptToSelfMessage() {
+    public EncryptToSelfMessageAppendix getEncryptToSelfMessage() {
         return null;
     }
 
     @Override
-    public Phasing getPhasing() {
+    public PhasingAppendix getPhasing() {
         return null;
     }
 
@@ -251,7 +251,7 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public PublicKeyAnnouncement getPublicKeyAnnouncement() {
+    public PublicKeyAnnouncementAppendix getPublicKeyAnnouncement() {
         return null;
     }
 
@@ -264,12 +264,12 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public PrunablePlainMessage getPrunablePlainMessage() {
+    public PrunablePlainMessageAppendix getPrunablePlainMessage() {
         return null;
     }
 
     @Override
-    public PrunableEncryptedMessage getPrunableEncryptedMessage() {
+    public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
         return null;
     }
 

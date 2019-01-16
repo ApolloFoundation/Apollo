@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessage;
-import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessage;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -143,12 +143,12 @@ public final class PrunableMessage {
         this.transactionTimestamp = transaction.getTimestamp();
     }
 
-    private void setPlain(PrunablePlainMessage appendix) {
+    private void setPlain(PrunablePlainMessageAppendix appendix) {
         this.message = appendix.getMessage();
         this.messageIsText = appendix.isText();
     }
 
-    private void setEncrypted(PrunableEncryptedMessage appendix) {
+    private void setEncrypted(PrunableEncryptedMessageAppendix appendix) {
         this.encryptedData = appendix.getEncryptedData();
         this.encryptedMessageIsText = appendix.isText();
         this.isCompressed = appendix.isCompressed();
@@ -276,11 +276,11 @@ public final class PrunableMessage {
         return Account.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }
 
-    public static void add(TransactionImpl transaction, PrunablePlainMessage appendix) {
+    public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {
         add(transaction, appendix, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
     }
 
-    public static void add(TransactionImpl transaction, PrunablePlainMessage appendix, int blockTimestamp, int height) {
+    public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getMessage() != null) {
             PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {
@@ -295,11 +295,11 @@ public final class PrunableMessage {
         }
     }
 
-    public static void add(TransactionImpl transaction, PrunableEncryptedMessage appendix) {
+    public static void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix) {
         add(transaction, appendix, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
     }
 
-    public static void add(TransactionImpl transaction, PrunableEncryptedMessage appendix, int blockTimestamp, int height) {
+    public static void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
                 PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {

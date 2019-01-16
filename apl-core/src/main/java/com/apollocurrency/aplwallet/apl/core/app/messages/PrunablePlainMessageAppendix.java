@@ -23,7 +23,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public class PrunablePlainMessage extends AbstractAppendix implements Appendix.Prunable {
+public class PrunablePlainMessageAppendix extends AbstractAppendix implements Appendix.Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -35,11 +35,11 @@ public class PrunablePlainMessage extends AbstractAppendix implements Appendix.P
         }
     };
 
-    public static PrunablePlainMessage parse(JSONObject attachmentData) {
+    public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
         if (!hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        return new PrunablePlainMessage(attachmentData);
+        return new PrunablePlainMessageAppendix(attachmentData);
     }
 
     private byte[] hash;
@@ -47,7 +47,7 @@ public class PrunablePlainMessage extends AbstractAppendix implements Appendix.P
     private boolean isText;
     private volatile PrunableMessage prunableMessage;
 
-    public PrunablePlainMessage(ByteBuffer buffer) {
+    public PrunablePlainMessageAppendix(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(this.hash);
@@ -55,7 +55,7 @@ public class PrunablePlainMessage extends AbstractAppendix implements Appendix.P
         this.isText = false;
     }
 
-    public PrunablePlainMessage(JSONObject attachmentData) {
+    public PrunablePlainMessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
         String hashString = Convert.emptyToNull((String) attachmentData.get("messageHash"));
         String messageString = Convert.emptyToNull((String) attachmentData.get("message"));
@@ -70,19 +70,19 @@ public class PrunablePlainMessage extends AbstractAppendix implements Appendix.P
         }
     }
 
-    public PrunablePlainMessage(byte[] message) {
+    public PrunablePlainMessageAppendix(byte[] message) {
         this(message, false);
     }
 
-    public PrunablePlainMessage(String string) {
+    public PrunablePlainMessageAppendix(String string) {
         this(Convert.toBytes(string), true);
     }
 
-    public PrunablePlainMessage(String string, boolean isText) {
+    public PrunablePlainMessageAppendix(String string, boolean isText) {
         this(Convert.toBytes(string, isText), isText);
     }
 
-    public PrunablePlainMessage(byte[] message, boolean isText) {
+    public PrunablePlainMessageAppendix(byte[] message, boolean isText) {
         this.message = message;
         this.isText = isText;
         this.hash = null;
