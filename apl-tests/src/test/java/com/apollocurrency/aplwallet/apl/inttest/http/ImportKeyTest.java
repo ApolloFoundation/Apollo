@@ -10,9 +10,10 @@ import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import java.io.IOException;
 import java.util.Random;
 
-import com.apollocurrency.aplwallet.apl.KeyStore;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStore;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.Assert;
 import org.junit.Test;
 import com.apollocurrency.aplwallet.apl.inttest.util.TestUtil;
@@ -29,7 +30,7 @@ public class ImportKeyTest extends DeleteGeneratedAccountsTest {
     public void testImportKey() throws IOException {
         byte[] secretBytes = generateSecretBytes(32);
         String passphrase = nodeClient.importKey(TEST_LOCALHOST, PASSPHRASE, Convert.toHexString(secretBytes));
-        generatedAccounts.add(Convert.rsAccount(Convert.getId(Crypto.getPublicKey(secretBytes))));
+        generatedAccounts.add(Convert2.rsAccount(Convert.getId(Crypto.getPublicKey(secretBytes))));
 
         Assert.assertEquals(PASSPHRASE, passphrase);
     }
@@ -54,7 +55,7 @@ public class ImportKeyTest extends DeleteGeneratedAccountsTest {
         byte[] secretBytes = generateSecretBytes(32);
 
         String passphrase = nodeClient.importKey(TEST_LOCALHOST, null, Convert.toHexString(secretBytes));
-        generatedAccounts.add(Convert.rsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)))));
+        generatedAccounts.add(Convert2.rsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)))));
         Assert.assertNotEquals(PASSPHRASE, passphrase);
         String[] passphraseWords = passphrase.split(" ");
         Assert.assertTrue(passphraseWords.length >=10 && passphraseWords.length <=15);
