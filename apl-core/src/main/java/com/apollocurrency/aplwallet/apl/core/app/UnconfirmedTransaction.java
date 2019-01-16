@@ -223,13 +223,13 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public String getFullHash() {
-        return transaction.getFullHash();
+    public String getFullHashString() {
+        return transaction.getFullHashString();
     }
 
     @Override
-    public byte[] fullHash() {
-        return transaction.getFullHash() != null ? transaction.getFullHash().getBytes() : new byte[]{};
+    public byte[] getFullHash() {
+        return transaction.getFullHashString() != null ? transaction.getFullHashString().getBytes() : new byte[]{};
     }
 
     @Override

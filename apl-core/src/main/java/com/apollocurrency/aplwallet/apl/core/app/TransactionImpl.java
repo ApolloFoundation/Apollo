@@ -59,12 +59,9 @@ public class TransactionImpl implements Transaction {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     @Inject
-    private BlockchainImpl blockchain;
+    private static BlockchainImpl blockchain;
 
     static final class BuilderImpl implements Builder {
-
-        @Inject
-        private BlockchainImpl blockchain;
 
         private short deadline;
         private byte[] senderPublicKey;
@@ -117,18 +114,20 @@ public class TransactionImpl implements Transaction {
             }
             if (!ecBlockSet) {
                 lookupAndInjectBlockchain();
-                Block ecBlock = blockchain.getECBlock(timestamp);
+                Block ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
             return new TransactionImpl(this, keySeed);
         }
 
-        private void lookupAndInjectBlockchain() {
+        private Blockchain lookupAndInjectBlockchain() {
             if (blockchain == null) {
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
             }
+            return blockchain;
         }
+
         @Override
         public TransactionImpl build() throws AplException.NotValidException {
             return build(null);
@@ -295,8 +294,6 @@ public class TransactionImpl implements Transaction {
     private volatile DbKey dbKey;
     private volatile byte[] bytes = null;
 
-    public TransactionImpl() {} // for weld
-
     private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
 
         this.timestamp = builder.timestamp;
@@ -375,10 +372,11 @@ public class TransactionImpl implements Transaction {
 
     }
 
-    private void lookupAndInjectBlockchain() {
+    private Blockchain lookupAndInjectBlockchain() {
         if (this.blockchain == null) {
             this.blockchain = CDI.current().select(BlockchainImpl.class).get();
         }
+        return blockchain;
     }
 
     @Override
@@ -564,12 +562,12 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public String getFullHash() {
-        return Convert.toHexString(fullHash());
+    public String getFullHashString() {
+        return Convert.toHexString(getFullHash());
     }
 
     @Override
-    public byte[] fullHash() {
+    public byte[] getFullHash() {
         if (fullHash == null) {
             getId();
         }
@@ -1031,19 +1029,17 @@ public class TransactionImpl implements Transaction {
             if (! appendage.verifyVersion()) {
                 throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
             }
-            lookupAndInjectBlockchain();
             if (validatingAtFinish) {
-                appendage.validateAtFinish(this, blockchain.getHeight());
+                appendage.validateAtFinish(this, lookupAndInjectBlockchain().getHeight());
             } else {
-                appendage.validate(this, blockchain.getHeight());
+                appendage.validate(this, lookupAndInjectBlockchain().getHeight());
             }
         }
 
         if (getFullSize() > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
-        lookupAndInjectBlockchain();
-        int blockchainHeight = blockchain.getHeight();
+        int blockchainHeight = lookupAndInjectBlockchain().getHeight();
         if (!validatingAtFinish) {
             long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
             if (feeATM < minimumFeeATM) {

@@ -101,7 +101,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
-                response.put("fullHash", transaction.getFullHash());
+                response.put("fullHash", transaction.getFullHashString());
             }
 
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();

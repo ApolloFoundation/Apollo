@@ -118,9 +118,9 @@ public interface Transaction {
 
     byte[] getSignature();
 
-    String getFullHash();
+    String getFullHashString();
 
-    byte[] fullHash();
+    byte[] getFullHash();
 
     TransactionType getType();
 

@@ -161,12 +161,12 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public String getFullHash() {
+    public String getFullHashString() {
         return null;
     }
 
     @Override
-    public byte[] fullHash() {
+    public byte[] getFullHash() {
         return new byte[]{};
     }
 

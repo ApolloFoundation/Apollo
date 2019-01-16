@@ -81,7 +81,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
             Transaction transaction = builder.build();
             AplCore.getTransactionProcessor().broadcast(transaction);
             response.put("transaction", transaction.getStringId());
-            response.put("fullHash", transaction.getFullHash());
+            response.put("fullHash", transaction.getFullHashString());
         } catch (AplException.ValidationException|RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }

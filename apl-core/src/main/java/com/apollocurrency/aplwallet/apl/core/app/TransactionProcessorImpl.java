@@ -810,7 +810,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 //
                 for (Object transactionJSON : transactions) {
                     TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject)transactionJSON);
-                    TransactionImpl myTransaction = transactionDb.findTransactionByFullHash(transaction.fullHash());
+                    TransactionImpl myTransaction = transactionDb.findTransactionByFullHash(transaction.getFullHash());
                     if (myTransaction != null) {
                         boolean foundAllData = true;
                         //

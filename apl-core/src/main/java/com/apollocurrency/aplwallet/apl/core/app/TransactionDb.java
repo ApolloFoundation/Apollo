@@ -98,7 +98,7 @@ public class TransactionDb {
             TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
+                        Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
             }
         }
         // Search the database
@@ -154,7 +154,7 @@ public class TransactionDb {
             TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash));
+                        Arrays.equals(transaction.getFullHash(), fullHash));
             }
         }
         // Search the database
@@ -174,7 +174,7 @@ public class TransactionDb {
         synchronized(blockDb.getBlockCache()) {
             TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
-                return transaction.fullHash();
+                return transaction.getFullHash();
             }
         }
         // Search the database
@@ -370,7 +370,7 @@ public class TransactionDb {
                         pstmt.setBytes(++i, buffer.array());
                     }
                     pstmt.setInt(++i, transaction.getBlockTimestamp());
-                    pstmt.setBytes(++i, transaction.fullHash());
+                    pstmt.setBytes(++i, transaction.getFullHash());
                     pstmt.setByte(++i, transaction.getVersion());
                     pstmt.setBoolean(++i, transaction.getMessage() != null);
                     pstmt.setBoolean(++i, transaction.getEncryptedMessage() != null);
