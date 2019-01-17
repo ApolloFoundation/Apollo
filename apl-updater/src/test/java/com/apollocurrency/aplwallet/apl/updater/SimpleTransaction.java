@@ -297,28 +297,5 @@ public class SimpleTransaction implements Transaction {
         return 0;
     }
 
-
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
-        if (!attachmentIsPhased() && !atAcceptanceHeight) {
-            // can happen for phased transactions having non-phasable attachment
-            return false;
-        }
-        if (atAcceptanceHeight) {
-            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
-                return true;
-            }
-            // all are checked at acceptance height for block duplicates
-            if (type.isBlockDuplicate(this, duplicates)) {
-                return true;
-            }
-            // phased are not further checked at acceptance height
-            if (attachmentIsPhased()) {
-                return false;
-            }
-        }
-        // non-phased at acceptance height, and phased at execution height
-        return type.isDuplicate(this, duplicates);
-    }
-
 }
 

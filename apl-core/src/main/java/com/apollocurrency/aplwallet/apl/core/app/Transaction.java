@@ -172,5 +172,7 @@ public interface Transaction {
 
     long getECBlockId();
 
-    boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight);
+    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+        return false;
+    }
 }
