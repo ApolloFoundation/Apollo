@@ -15,14 +15,14 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -85,9 +85,9 @@ public final class AddOns {
         });
     }
 
-    public static void registerAPIRequestHandlers(Map<String,APIServlet.APIRequestHandler> map) {
+    public static void registerAPIRequestHandlers(Map<String, AbstractAPIRequestHandler> map) {
         for (AddOn addOn : addOns) {
-            APIServlet.APIRequestHandler requestHandler = addOn.getAPIRequestHandler();
+            AbstractAPIRequestHandler requestHandler = addOn.getAPIRequestHandler();
             if (requestHandler != null) {
                 if (!requestHandler.getAPITags().contains(APITag.ADDONS)) {
                     LOG.error("Add-on " + addOn.getClass().getName()

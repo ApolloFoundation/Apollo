@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -112,8 +112,8 @@ public final class API {
     private static final List<NetworkAddress> allowedBotNets;
     private static final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     public static final String adminPassword = propertiesLoader.getStringProperty("apl.adminPassword", "", true);
-    static final boolean disableAdminPassword;
-    static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
+    public static final boolean disableAdminPassword;
+    public static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
     static final boolean enableAPIUPnP = propertiesLoader.getBooleanProperty("apl.enableAPIUPnP");
     public static final int apiServerIdleTimeout = propertiesLoader.getIntProperty("apl.apiServerIdleTimeout");
     public static final boolean apiServerCORS = propertiesLoader.getBooleanProperty("apl.apiServerCORS");

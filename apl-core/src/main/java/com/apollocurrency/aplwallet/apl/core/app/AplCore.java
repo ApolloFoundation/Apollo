@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -35,6 +35,7 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -68,6 +69,7 @@ public final class AplCore {
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 //TODO: Core should not be static anymore!
     private final BlockchainConfig blockchainConfig;
+    
     @Inject
     public AplCore(BlockchainConfig config) {
         this.blockchainConfig = config;
@@ -144,7 +146,7 @@ public final class AplCore {
     private static void setServerStatus(ServerStatus status, URI wallet) {
         AplCoreRuntime.getInstance().setServerStatus(status, wallet);
     }
-    
+
     private static volatile boolean initialized = false;
 
 //    private static class Init {

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -37,7 +37,13 @@ public interface Blockchain {
 
     void updateUnlock();
 
+    void writeLock();
+
+    void writeUnlock();
+
     Block getLastBlock();
+
+    void setLastBlock(Block block);
 
     Block getLastBlock(int timestamp);
 
@@ -53,21 +59,21 @@ public interface Blockchain {
 
     DbIterator<? extends Block> getAllBlocks();
 
-    DbIterator<? extends Block> getBlocks(int from, int to);
+    DbIterator<Block> getBlocks(int from, int to);
 
-    DbIterator<? extends Block> getBlocks(long accountId, int timestamp);
+    DbIterator<Block> getBlocks(long accountId, int timestamp);
 
-    DbIterator<? extends Block> getBlocks(long accountId, int timestamp, int from, int to);
+    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
     int getBlockCount(long accountId);
 
-    DbIterator<? extends Block> getBlocks(Connection con, PreparedStatement pstmt);
+    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
-    List<? extends Block> getBlocksAfter(long blockId, int limit);
+    List<Block> getBlocksAfter(long blockId, int limit);
 
-    List<? extends Block> getBlocksAfter(long blockId, List<Long> blockList);
+    List<Block> getBlocksAfter(long blockId, List<Long> blockList);
 
     long getBlockIdAtHeight(int height);
 
@@ -83,23 +89,23 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    DbIterator<? extends Transaction> getAllTransactions();
+    DbIterator<Transaction> getAllTransactions();
 
-    DbIterator<? extends Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
+    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                       boolean includeExpiredPrunable);
 
-    DbIterator<? extends Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
-    DbIterator<? extends Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+    DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
-    List<? extends Transaction> getExpectedTransactions(Filter<Transaction> filter);
+    List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
 
-    DbIterator<? extends Transaction> getReferencingTransactions(long transactionId, int from, int to);
+    DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to);
 
-    DbIterator<? extends Transaction> getTransactions(byte type, byte subtype, int from, int to);
+    DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
 }

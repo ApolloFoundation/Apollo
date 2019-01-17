@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -621,7 +622,7 @@ public final class Shuffling {
         byte[][] data = attachment.getData();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
         participant.setData(data, transaction.getTimestamp());
-        participant.setProcessed(((TransactionImpl) transaction).fullHash());
+        participant.setProcessed(transaction.getFullHash());
         if (data != null && data.length == 0) {
             // couldn't decrypt all data from previous participants
             cancelBy(participant);
@@ -637,7 +638,7 @@ public final class Shuffling {
         long participantId = transaction.getSenderId();
         this.recipientPublicKeys = attachment.getRecipientPublicKeys();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
-        participant.setProcessed(((TransactionImpl) transaction).fullHash());
+        participant.setProcessed(transaction.getFullHash());
         if (recipientPublicKeys.length == 0) {
             // couldn't decrypt all data from previous participants
             cancelBy(participant);

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -156,7 +156,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
             throw new ParameterException(JSONResponses.PROXY_MISSING_REQUEST_TYPE);
         }
 
-        APIServlet.APIRequestHandler apiRequestHandler = APIServlet.apiRequestHandlers.get(requestType);
+        AbstractAPIRequestHandler apiRequestHandler = APIServlet.apiRequestHandlers.get(requestType);
         if (apiRequestHandler == null) {
             if (APIServlet.disabledRequestHandlers.containsKey(requestType)) {
                 throw new ParameterException(JSONResponses.ERROR_DISABLED);
@@ -190,7 +190,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     }
 
     private boolean isForwardable(String requestType) {
-        APIServlet.APIRequestHandler apiRequestHandler = APIServlet.apiRequestHandlers.get(requestType);
+        AbstractAPIRequestHandler apiRequestHandler = APIServlet.apiRequestHandlers.get(requestType);
         return
                 apiRequestHandler.requireBlockchain()
                 && !apiRequestHandler.requireFullClient()

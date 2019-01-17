@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.inttest.util;
 
 import com.apollocurrency.aplwallet.api.dto.BasicAccount;
 import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
-import com.apollocurrency.aplwallet.apl.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.inttest.core.TransactionDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;

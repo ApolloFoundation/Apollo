@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -44,6 +44,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -62,7 +65,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-final class TransactionProcessorImpl implements TransactionProcessor {
+public class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
     // TODO: YL remove static instance later
@@ -80,7 +83,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
 
     private static final TransactionProcessorImpl instance = new TransactionProcessorImpl();
 
-    static TransactionProcessorImpl getInstance() {
+    public static TransactionProcessorImpl getInstance() {
         return instance;
     }
 
@@ -345,7 +348,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         return transactionListeners.removeListener(listener, eventType);
     }
 
-    void notifyListeners(List<? extends Transaction> transactions, Event eventType) {
+    public void notifyListeners(List<? extends Transaction> transactions, Event eventType) {
         transactionListeners.notify(transactions, eventType);
     }
 
@@ -561,7 +564,7 @@ final class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    void removeUnconfirmedTransaction(TransactionImpl transaction) {
+    void removeUnconfirmedTransaction(Transaction transaction) {
         if (!Db.getDb().isInTransaction()) {
             try {
                 Db.getDb().beginTransaction();
@@ -581,8 +584,8 @@ final class TransactionProcessorImpl implements TransactionProcessor {
             pstmt.setLong(1, transaction.getId());
             int deleted = pstmt.executeUpdate();
             if (deleted > 0) {
-                transaction.undoUnconfirmed();
-                transactionCache.remove(transaction.getDbKey());
+                ((TransactionImpl)transaction).undoUnconfirmed();
+                transactionCache.remove(((TransactionImpl)transaction).getDbKey());
                 transactionListeners.notify(Collections.singletonList(transaction), Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
             }
         } catch (SQLException e) {
@@ -808,23 +811,23 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                 //
                 for (Object transactionJSON : transactions) {
                     TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject)transactionJSON);
-                    TransactionImpl myTransaction = transactionDb.findTransactionByFullHash(transaction.fullHash());
+                    TransactionImpl myTransaction = transactionDb.findTransactionByFullHash(transaction.getFullHash());
                     if (myTransaction != null) {
                         boolean foundAllData = true;
                         //
                         // Process each prunable appendage
                         //
-                        appendageLoop: for (Appendix.AbstractAppendix appendage : transaction.getAppendages()) {
-                            if ((appendage instanceof Appendix.Prunable)) {
+                        appendageLoop: for (Appendix appendage : transaction.getAppendages()) {
+                            if ((appendage instanceof Prunable)) {
                                 //
                                 // Don't load the prunable data if we already have the data
                                 //
-                                for (Appendix.AbstractAppendix myAppendage : myTransaction.getAppendages()) {
+                                for (Appendix myAppendage : myTransaction.getAppendages()) {
                                     if (myAppendage.getClass() == appendage.getClass()) {
-                                        myAppendage.loadPrunable(myTransaction, true);
-                                        if (((Appendix.Prunable)myAppendage).hasPrunableData()) {
+                                        ((AbstractAppendix)myAppendage).loadPrunable(myTransaction, true);
+                                        if (((Prunable)myAppendage).hasPrunableData()) {
                                             LOG.debug(String.format("Already have prunable data for transaction %s %s appendage",
-                                                    myTransaction.getStringId(), myAppendage.getAppendixName()));
+                                                    myTransaction.getStringId(), ((AbstractAppendix)myAppendage).getAppendixName()));
                                             continue appendageLoop;
                                         }
                                         break;
@@ -833,10 +836,10 @@ final class TransactionProcessorImpl implements TransactionProcessor {
                                 //
                                 // Load the prunable data
                                 //
-                                if (((Appendix.Prunable)appendage).hasPrunableData()) {
+                                if (((Prunable)appendage).hasPrunableData()) {
                                     LOG.debug(String.format("Loading prunable data for transaction %s %s appendage",
-                                            Long.toUnsignedString(transaction.getId()), appendage.getAppendixName()));
-                                    ((Appendix.Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
+                                            Long.toUnsignedString(transaction.getId()), ((AbstractAppendix)appendage).getAppendixName()));
+                                    ((Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
                                 } else {
                                     foundAllData = false;
                                 }

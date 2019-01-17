@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * Class for handling phasing parameters shared between {@link Appendix.Phasing} and {@link AccountRestrictions.PhasingOnly}
+ * Class for handling phasing parameters shared between {@link Phasing} and {@link AccountRestrictions.PhasingOnly}
  */
 public final class PhasingParams {
 
@@ -38,7 +38,7 @@ public final class PhasingParams {
     private final long[] whitelist;
     private final VoteWeighting voteWeighting;
     
-    PhasingParams(ByteBuffer buffer) {
+    public PhasingParams(ByteBuffer buffer) {
         byte votingModel = buffer.get();
         quorum = buffer.getLong();
         long minBalance = buffer.getLong();
@@ -56,7 +56,7 @@ public final class PhasingParams {
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
     
-    PhasingParams(JSONObject attachmentData) {
+    public PhasingParams(JSONObject attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
         byte votingModel = ((Long) attachmentData.get("phasingVotingModel")).byteValue();
@@ -89,11 +89,11 @@ public final class PhasingParams {
         this.voteWeighting = voteWeighting;
     }
 
-    int getMySize() {
+    public int getMySize() {
         return 1 + 8 + 8 + 1 + 8 * whitelist.length + 8 + 1;
     }
     
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.put(voteWeighting.getVotingModel().getCode());
         buffer.putLong(quorum);
         buffer.putLong(voteWeighting.getMinBalance());
@@ -105,7 +105,7 @@ public final class PhasingParams {
         buffer.put(voteWeighting.getMinBalanceModel().getCode());
     }
     
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         json.put("phasingQuorum", quorum);
         json.put("phasingMinBalance", voteWeighting.getMinBalance());
         json.put("phasingVotingModel", voteWeighting.getVotingModel().getCode());
@@ -120,7 +120,7 @@ public final class PhasingParams {
         }
     }
 
-    void validate() throws ValidationException {
+    public void validate() throws ValidationException {
         if (whitelist.length > Constants.MAX_PHASING_WHITELIST_SIZE) {
             throw new AplException.NotValidException("Whitelist is too big");
         }
@@ -203,7 +203,7 @@ public final class PhasingParams {
 
     }
 
-    void checkApprovable() throws AplException.NotCurrentlyValidException {
+    public void checkApprovable() throws AplException.NotCurrentlyValidException {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
                 && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");

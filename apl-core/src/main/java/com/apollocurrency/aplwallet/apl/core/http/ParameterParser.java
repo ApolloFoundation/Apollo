@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -70,9 +70,17 @@ import java.util.StringJoiner;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UnencryptedEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyBuyOffer;
@@ -83,11 +91,11 @@ import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -409,7 +417,7 @@ public final class ParameterParser {
         return new EncryptedData(data, nonce);
     }
 
-    public static Appendix.EncryptToSelfMessage getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
+    public static EncryptToSelfMessageAppendix getEncryptToSelfMessage(HttpServletRequest req, long senderId) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
@@ -431,9 +439,9 @@ public final class ParameterParser {
             }
         }
         if (encryptedData != null) {
-            return new Appendix.EncryptToSelfMessage(encryptedData, isText, compress);
+            return new EncryptToSelfMessageAppendix(encryptedData, isText, compress);
         } else {
-            return new Appendix.UnencryptedEncryptToSelfMessage(plainMessageBytes, isText, compress);
+            return new UnencryptedEncryptToSelfMessageAppendix(plainMessageBytes, isText, compress);
         }
     }
 
@@ -743,9 +751,9 @@ public final class ParameterParser {
         if (messageValue != null) {
             try {
                 if (prunable) {
-                    return new Appendix.PrunablePlainMessage(messageValue, messageIsText);
+                    return new PrunablePlainMessageAppendix(messageValue, messageIsText);
                 } else {
-                    return new Appendix.Message(messageValue, messageIsText);
+                    return new MessageAppendix(messageValue, messageIsText);
                 }
             } catch (RuntimeException e) {
                 throw new ParameterException(INCORRECT_ARBITRARY_MESSAGE);
@@ -769,9 +777,9 @@ public final class ParameterParser {
                 messageIsText = false;
             }
             if (prunable) {
-                return new Appendix.PrunablePlainMessage(message, messageIsText);
+                return new PrunablePlainMessageAppendix(message, messageIsText);
             } else {
-                return new Appendix.Message(message, messageIsText);
+                return new MessageAppendix(message, messageIsText);
             }
         } catch (IOException | ServletException e) {
             LOG.debug("error in reading file data", e);
@@ -832,15 +840,15 @@ public final class ParameterParser {
         }
         if (encryptedData != null) {
             if (prunable) {
-                return new Appendix.PrunableEncryptedMessage(encryptedData, isText, compress);
+                return new PrunableEncryptedMessageAppendix(encryptedData, isText, compress);
             } else {
-                return new Appendix.EncryptedMessage(encryptedData, isText, compress);
+                return new EncryptedMessageAppendix(encryptedData, isText, compress);
             }
         } else {
             if (prunable) {
-                return new Appendix.UnencryptedPrunableEncryptedMessage(plainMessageBytes, isText, compress, recipientPublicKey);
+                return new UnencryptedPrunableEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
             } else {
-                return new Appendix.UnencryptedEncryptedMessage(plainMessageBytes, isText, compress, recipientPublicKey);
+                return new UnencryptedEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
             }
         }
     }
@@ -1024,44 +1032,6 @@ public final class ParameterParser {
             return publicKey != null;
         }
     }
-
-    public static class TwoFactorAuthParameters {
-        long accountId;
-        String passphrase;
-        String secretPhrase;
-
-        public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
-            if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
-                throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
-            }
-        }
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public String getPassphrase() {
-            return passphrase;
-        }
-
-        public String getSecretPhrase() {
-            return secretPhrase;
-        }
-
-        public boolean isSecretPhrasePresent() {
-            return secretPhrase != null;
-        }
-
-        public boolean isPassphrasePresent() {
-            return passphrase != null;
-        }
-
-        public TwoFactorAuthParameters(long accountId, String passphrase, String secretPhrase) {
-            this.accountId = accountId;
-            this.passphrase = passphrase;
-            this.secretPhrase = secretPhrase;
-        }
-    }
-
 
     public static class FileData {
         private final Part part;

@@ -6,6 +6,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
+import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,11 +21,6 @@ import java.util.Properties;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

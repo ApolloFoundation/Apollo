@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -59,7 +59,9 @@ public interface Block {
 
     byte[] getPayloadHash();
 
-    List<? extends Transaction> getTransactions();
+    List<Transaction> getTransactions();
+
+    void setTransactions(List<Transaction> transactions);
 
     byte[] getGenerationSignature();
 
@@ -70,6 +72,12 @@ public interface Block {
     BigInteger getCumulativeDifficulty();
 
     byte[] getBytes();
+
+    boolean verifyBlockSignature();
+
+    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException;
+
+    void setPrevious(Block block);
 
     JSONObject getJSONObject();
 

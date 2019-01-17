@@ -15,18 +15,16 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.enterprise.context.ApplicationScoped;
 import java.net.InetAddress;
 import java.util.Map;
 
@@ -35,7 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Forward ports using the UPnP protocol.
  */
-@Singleton
+@ApplicationScoped
 public class UPnP {
     private static final Logger LOG = getLogger(UPnP.class);
 

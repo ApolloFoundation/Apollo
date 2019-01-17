@@ -15,11 +15,17 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -31,13 +37,10 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.AplException.ValidationException;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;
@@ -259,7 +262,7 @@ public abstract class TransactionType {
 
     abstract boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
-    final void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
@@ -285,14 +288,14 @@ public abstract class TransactionType {
         }
     }
 
-    abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
+    public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         return false;
     }
 
     // isBlockDuplicate and isDuplicate share the same duplicates map, but isBlockDuplicate check is done first
-    boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         return false;
     }
 
@@ -341,19 +344,19 @@ public abstract class TransactionType {
         return true;
     }
 
-    Fee getBaselineFee(Transaction transaction) {
+    public Fee getBaselineFee(Transaction transaction) {
         return Fee.DEFAULT_FEE;
     }
 
-    Fee getNextFee(Transaction transaction) {
+    public Fee getNextFee(Transaction transaction) {
         return getBaselineFee(transaction);
     }
 
-    int getBaselineFeeHeight() {
+    public int getBaselineFeeHeight() {
         return 1;
     }
 
-    int getNextFeeHeight() {
+    public int getNextFeeHeight() {
         return Integer.MAX_VALUE;
     }
 
@@ -392,7 +395,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         @Override
@@ -494,7 +497,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         public final static TransactionType ARBITRARY_MESSAGE = new Messaging() {
@@ -582,7 +585,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return ALIAS_FEE;
             }
 
@@ -609,7 +612,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 return Alias.getAlias(((Attachment.MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null
                         && isDuplicate(Messaging.ALIAS_ASSIGNMENT, "", duplicates, true);
             }
@@ -928,7 +931,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return POLL_FEE;
             }
 
@@ -1000,7 +1003,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 return isDuplicate(Messaging.POLL_CREATION, getName(), duplicates, true);
             }
 
@@ -1133,7 +1136,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return PHASING_VOTE_FEE;
             }
 
@@ -1257,7 +1260,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return ACCOUNT_INFO_FEE;
             }
 
@@ -1287,7 +1290,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 return isDuplicate(Messaging.ACCOUNT_INFO, getName(), duplicates, true);
             }
 
@@ -1329,7 +1332,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return ACCOUNT_PROPERTY_FEE;
             }
 
@@ -1484,7 +1487,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return ASSET_ISSUANCE_FEE;
             }
 
@@ -1521,7 +1524,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             }
 
             @Override
@@ -1545,7 +1548,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
                 return !isSingletonIssuance(transaction) && isDuplicate(ColoredCoins.ASSET_ISSUANCE, getName(), duplicates, true);
             }
 
@@ -1621,7 +1624,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
                 senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityATU());
@@ -1707,7 +1710,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete)transaction.getAttachment();
                 senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityATU());
@@ -1818,7 +1821,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
                 senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(),
                         attachment.getAssetId(), attachment.getQuantityATU());
@@ -1871,7 +1874,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
                 senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
@@ -1887,7 +1890,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             }
 
             @Override
@@ -2065,7 +2068,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
                 long assetId = attachment.getAssetId();
                 Asset asset = Asset.getAsset(assetId, attachment.getHeight());
@@ -2141,7 +2144,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         @Override
@@ -2181,7 +2184,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return DGS_LISTING_FEE;
             }
 
@@ -2212,7 +2215,7 @@ public abstract class TransactionType {
                         || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
                 }
-                Appendix.PrunablePlainMessage prunablePlainMessage = transaction.getPrunablePlainMessage();
+                PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
                 if (prunablePlainMessage != null) {
                     byte[] image = prunablePlainMessage.getMessage();
                     if (image != null) {
@@ -2232,7 +2235,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
                 return isDuplicate(DigitalGoods.LISTING, getName(), duplicates, true);
             }
 
@@ -2484,7 +2487,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsPurchase attachment = (Attachment.DigitalGoodsPurchase) transaction.getAttachment();
                 senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                         Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
@@ -2565,7 +2568,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            Fee getBaselineFee(Transaction transaction) {
+            public Fee getBaselineFee(Transaction transaction) {
                 return DGS_DELIVERY_FEE;
             }
 
@@ -2737,7 +2740,7 @@ public abstract class TransactionType {
             }
 
             @Override
-            void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
                 Attachment.DigitalGoodsRefund attachment = (Attachment.DigitalGoodsRefund) transaction.getAttachment();
                 senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getRefundATM());
             }
@@ -2803,7 +2806,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
@@ -2976,7 +2979,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return TAGGED_DATA_FEE;
         }
 
@@ -2986,7 +2989,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         @Override
@@ -3163,7 +3166,7 @@ public abstract class TransactionType {
         }
 
         @Override
-        final void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         @Override
@@ -3196,7 +3199,7 @@ public abstract class TransactionType {
         void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {}
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return UPDATE_FEE;
         }
 

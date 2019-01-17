@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
+
 @ApplicationScoped
  public class SimpleKeyStoreImpl implements KeyStore {
      private static final Logger LOG = getLogger(SimpleKeyStoreImpl.class);

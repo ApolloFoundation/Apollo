@@ -15,13 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public interface AddOn {
 
     default void shutdown() {}
 
-    default APIServlet.APIRequestHandler getAPIRequestHandler() {
+    default AbstractAPIRequestHandler getAPIRequestHandler() {
         return null;
     }
 

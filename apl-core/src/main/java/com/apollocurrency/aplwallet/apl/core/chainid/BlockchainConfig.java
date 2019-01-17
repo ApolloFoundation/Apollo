@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+
 @ApplicationScoped
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);

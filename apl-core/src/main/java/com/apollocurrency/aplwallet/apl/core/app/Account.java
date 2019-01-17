@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -43,6 +43,8 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -56,6 +58,7 @@ import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -359,7 +362,7 @@ public final class Account {
                 publicKeyCache.remove(accountDbKeyFactory.newKey(block.getGeneratorId()));
                 block.getTransactions().forEach(transaction -> {
                     publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof Appendix.PublicKeyAnnouncement), false).isEmpty()) {
+                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
                         publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getRecipientId()));
                     }
                     if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
@@ -855,10 +858,10 @@ public final class Account {
     }
 
     public static void verify2FA(HttpServletRequest req, String accountName) throws ParameterException {
-        ParameterParser.TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
+        TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
 
         if (Account.isEnabled2FA(params2FA.getAccountId())) {
-            ParameterParser.TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
+            TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
             int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             Status2FA status2FA;
             long accountId;
@@ -974,7 +977,7 @@ public final class Account {
         return decrypted;
     }
 
-    static boolean setOrVerify(long accountId, byte[] key) {
+    public static boolean setOrVerify(long accountId, byte[] key) {
         DbKey dbKey = publicKeyDbKeyFactory.newKey(accountId);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
@@ -1345,7 +1348,7 @@ public final class Account {
         propertyListeners.notify(accountProperty, Event.DELETE_PROPERTY);
     }
 
-    void apply(byte[] key) {
+    public void apply(byte[] key) {
         apply(key, false);
     }
 
@@ -1550,7 +1553,7 @@ public final class Account {
         logEntryConfirmed(event, eventId, amountATM, feeATM);
     }
 
-    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+    public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToUnconfirmedBalanceATM(event, eventId, amountATM, 0);
     }
 
