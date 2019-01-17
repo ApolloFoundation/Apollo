@@ -15,7 +15,7 @@ public class LogDirPropertyDefiner extends PropertyDefinerBase {
     public String getPropertyValue() {
         if (Apollo.logDir != null) {
             File log = new File(Apollo.logDir);            
-            return log.getAbsolutePath().toString();
+            return log.getAbsolutePath();
         }
         return Paths.get("").resolve("logs").toAbsolutePath().toString();
     }

@@ -303,13 +303,9 @@ public final class Account {
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
-            propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem") ?
-                    new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir(
-                            blockchainConfig.isTestnet() ?
-                                    propertiesLoader.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
-                                    propertiesLoader.getStringProperty("apl.dir2FA", "2fa")
-                    )) :
-                    new TwoFactorAuthRepositoryImpl(Db.getDb()),
+            propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem")
+                    ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
+                    : new TwoFactorAuthRepositoryImpl(Db.getDb()),
             propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.isDesktopApplicationEnabled() ? "desktop" : "web"));
 
     static {

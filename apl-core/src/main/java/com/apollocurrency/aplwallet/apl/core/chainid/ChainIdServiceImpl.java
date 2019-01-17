@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -22,8 +20,6 @@ public class ChainIdServiceImpl implements ChainIdService {
     private static final String DEFAULT_CONFIG_LOCATION = "conf/chains.json";
     private final String chainsConfigFileLocations;
 
-    @Inject
-    @Named("chainsConfigFilePath")
     public ChainIdServiceImpl(String chainsConfigFileLocation) {
         this.chainsConfigFileLocations = chainsConfigFileLocation;
     }
@@ -32,7 +28,7 @@ public class ChainIdServiceImpl implements ChainIdService {
         this(DEFAULT_CONFIG_LOCATION);
     }
 
-    private List<Chain> readChains() throws IOException {
+    public List<Chain> getAll() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InputStream is = getClass().getClassLoader().getResourceAsStream(chainsConfigFileLocations);
@@ -43,12 +39,12 @@ public class ChainIdServiceImpl implements ChainIdService {
     }
 
     public Chain getActiveChain() throws IOException {
-        List<Chain> chains = readChains();
+        List<Chain> chains = getAll();
         List<Chain> activeChains = chains.stream().filter(Chain::isActive).collect(Collectors.toList());
         if (activeChains.size() == 0) {
-            throw new RuntimeException("No active blockchain to connect!");
+            throw new RuntimeException("No active chain specified!");
         } else if (activeChains.size() > 1) {
-            throw new RuntimeException("Only one blockchain can be active at the moment!");
+            throw new RuntimeException("Only one chain can be active at the moment!");
         }
         return activeChains.get(0);
     }

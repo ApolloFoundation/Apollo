@@ -1,21 +1,28 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
@@ -99,7 +106,7 @@ public class Apollo {
     /**
      * @param argv the command line arguments
      */
-    public static void main(String[] argv) {
+    public static void main(String[] argv) throws IOException {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
         
@@ -121,15 +128,19 @@ public class Apollo {
             System.exit(PosixExitCodes.OK.exitCode());
         }
 
-        dirProvider = RuntimeEnvironment.getDirProvider();
 
         if(RuntimeEnvironment.isAdmin()){
             System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
         }
 //load configuration files        
-        propertiesLoader = new PropertiesLoader(dirProvider, args.isResourceIgnored(), args.configDir);
+        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME);
+        propertiesLoader = new PropertiesLoader(configDirProvider,
+                args.isResourceIgnored(),
+                args.configDir);
 //init logging
-        logDir = dirProvider.getLogFileDir().getAbsolutePath();
+
+        dirProvider = createDirProvider(args);
+        logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
         log = LoggerFactory.getLogger(Apollo.class);
         
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
@@ -158,6 +169,15 @@ public class Apollo {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
+    }
+
+    private static DirProvider createDirProvider(CmdLineArgs args) throws IOException {
+        ChainIdServiceImpl chainIdService = new ChainIdServiceImpl();
+        PredefinedDirLocations userDefinedDirLocations =
+                new PredefinedDirLocations(args.dbDir, args.logDir, args.vaultKeystoreDir, args.pidFile, args.twoFactorAuthDir);
+        UUID chainId = chainIdService.getActiveChain().getChainId();
+
+        return new DirProviderFactory().getInstance(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, userDefinedDirLocations);
     }
 
 }

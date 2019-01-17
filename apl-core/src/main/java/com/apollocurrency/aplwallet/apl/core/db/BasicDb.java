@@ -29,7 +29,6 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -206,7 +205,7 @@ public class BasicDb implements DataSource {
         String dbUrl = dbProperties.dbUrl;
         if (dbUrl == null) {
             //TODO: dbDir must be in constructor params
-            String dbDir = AplCoreRuntime.getInstance().getDbDir(dbProperties.dbDir);
+            String dbDir = AplCoreRuntime.getInstance().getDbDir().toString();
             String dbFileName = dbProperties.dbFileName;
             dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.dbType, dbDir + "/" + dbFileName, dbProperties.dbParams);
         }

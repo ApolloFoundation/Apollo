@@ -29,12 +29,12 @@ public class PropertyBasedFileConfig {
     @Produces
     @Named("chainsConfigFilePath")
     public String getChainsConfigFileLocation() {
-        return getOrDefault("apl.chainsConfigFilePath", "conf/chains.json");
+        return "conf/chains.json";
     }
     @Produces
     @Named("keystoreDirPath")
     public Path getKeystoreDirFilePath() {
-        return AplCoreRuntime.getInstance().getKeystoreDir(getOrDefault("apl.keystoreDir", "conf/chains.json"));
+        return AplCoreRuntime.getInstance().getVaultKeystoreDir().toAbsolutePath();
     }
 
     private String getOrDefault(String property, String defaultValue) {

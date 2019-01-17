@@ -115,17 +115,4 @@ public class RuntimeEnvironment {
         return isDesktopEnabled() && hasJavaFX;
     }
 
-    public static DirProvider getDirProvider() {
-        if (isWindowsRuntime()) {
-            return new WindowsUserDirProvider(isServiceMode);
-        }
-        if (isUnixRuntime()) {
-            return new UnixUserDirProvider(isServiceMode);
-        }
-        if (isMacRuntime()) {
-            return new MacUserDirProvider(isServiceMode);
-        }
-        return new DirProvider(isServiceMode);
-    }
-
 }

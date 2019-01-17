@@ -10,13 +10,13 @@ import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.UUID;
 
-public class DirProvider {
+public class DefaultDirProvider {
     public static String APPLICATION_NAME="apollo";
     public static String APPLICATION_DIR_NAME="."+APPLICATION_NAME;
     
     private boolean serviceMode;
     
-    public DirProvider(boolean isServiceMode) {
+    public DefaultDirProvider(boolean isServiceMode) {
         serviceMode = isServiceMode;
     }
     

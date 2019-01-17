@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -120,7 +119,7 @@ public final class Db {
     public static void tryToDeleteDb() throws IOException {
             db.shutdown();
             LOG.info("Removing db...");
-            Path dbPath = Paths.get(AplCoreRuntime.getInstance().getDbDir(propertiesLoader.getStringProperty(PREFIX + "Dir"))).getParent();
+            Path dbPath = AplCoreRuntime.getInstance().getDbDir();
             removeDb(dbPath);
             LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }
