@@ -195,7 +195,6 @@ public class SimpleTransaction implements Transaction {
         return new byte[0];
     }
 
-    @Override
     public byte[] bytes() {
         return new byte[0];
     }

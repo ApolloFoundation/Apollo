@@ -471,7 +471,7 @@ public final class BlockImpl implements Block {
 
     void loadTransactions() {
         for (Transaction transaction : getTransactions()) {
-            transaction.bytes();
+            ((TransactionImpl)transaction).bytes();
             transaction.getAppendages();
         }
     }

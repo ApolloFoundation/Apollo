@@ -132,8 +132,6 @@ public interface Transaction {
 
     byte[] getBytes();
 
-    byte[] bytes();
-
     byte[] getUnsignedBytes();
 
     JSONObject getJSONObject();

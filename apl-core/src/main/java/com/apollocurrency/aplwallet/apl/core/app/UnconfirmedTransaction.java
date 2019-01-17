@@ -257,7 +257,6 @@ class UnconfirmedTransaction implements Transaction {
         return transaction.getBytes();
     }
 
-    @Override
     public byte[] bytes() {
         return transaction.bytes();
     }

@@ -1681,7 +1681,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
             pstmt.setInt(2, toHeight);
             try (DbIterator<Transaction> iterator = blockchain.getTransactions(con, pstmt)) {
                 while (iterator.hasNext()) {
-                    digest.update(iterator.next().bytes());
+                    digest.update(((TransactionImpl)iterator.next()).bytes());
                 }
             }
         } catch (SQLException e) {
@@ -1956,7 +1956,7 @@ public final class BlockchainProcessorImpl implements BlockchainProcessor {
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                         for (Transaction transaction : currentBlock.getTransactions()) {
-                                            byte[] transactionBytes = transaction.bytes();
+                                            byte[] transactionBytes = ((TransactionImpl)transaction).bytes();
                                             if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
                                                         + transaction.getJSONObject().toJSONString());
