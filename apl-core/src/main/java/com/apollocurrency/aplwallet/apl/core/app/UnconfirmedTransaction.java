@@ -167,14 +167,11 @@ class UnconfirmedTransaction implements Transaction {
     }
 
     public void setBlock(Block block) {
-        this.transaction.setBlock(block);
-        this.transaction.setHeight(block.getHeight());
+        throw new UnsupportedOperationException("Incorrect method 'setBlock()' call on 'unconfirmed' transaction instance.");
     }
 
     public void unsetBlock() {
-        this.transaction.unsetBlock();
-        // must keep the height set, as transactions already having been included in a popped-off block before
-        // get priority when sorted for inclusion in a new block
+        throw new UnsupportedOperationException("Incorrect method 'unsetBlock()' call on 'unconfirmed' transaction instance.");
     }
 
     @Override

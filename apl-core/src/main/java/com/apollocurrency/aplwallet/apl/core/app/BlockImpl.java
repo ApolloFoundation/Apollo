@@ -465,7 +465,7 @@ public final class BlockImpl implements Block {
         short index = 0;
         for (Transaction transaction : getTransactions()) {
             transaction.setBlock(this);
-            ((TransactionImpl)transaction).setIndex(index++);
+            transaction.setIndex(index++);
         }
     }
 
