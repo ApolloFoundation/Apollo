@@ -724,7 +724,7 @@ public final class ParameterParser {
         if (transactionJSON != null) {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
-                return AplCore.newTransactionBuilder(json);
+                return Transaction.newTransactionBuilder(json);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -735,7 +735,7 @@ public final class ParameterParser {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
-                return AplCore.newTransactionBuilder(bytes, prunableAttachments);
+                return Transaction.newTransactionBuilder(bytes, prunableAttachments);
             } catch (AplException.ValidationException|RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();

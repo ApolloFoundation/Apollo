@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -58,7 +57,7 @@ public final class GetExpectedTransactions extends AbstractAPIRequestHandler {
         Filter<Transaction> filter = accountIds.isEmpty() ? transaction -> true :
                 transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
 
-        List<? extends Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();

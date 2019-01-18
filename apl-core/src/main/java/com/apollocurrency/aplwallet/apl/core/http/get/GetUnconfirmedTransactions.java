@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
@@ -61,7 +60,7 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
         JSONArray transactions = new JSONArray();
         if (accountIds.isEmpty()) {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
-                    AplCore.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
+                    lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                     transaction -> transaction.getType() != TransactionType.Payment.PRIVATE,
                     firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
@@ -71,7 +70,7 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
             }
         } else {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
-                    AplCore.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
+                    lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                     transaction -> transaction.getType() != TransactionType.Payment.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
                             accountIds.contains(transaction.getRecipientId())),
                     firstIndex, lastIndex)) {

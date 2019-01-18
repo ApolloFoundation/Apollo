@@ -61,7 +61,7 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
         PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
         if (prunableMessage == null && retrieve) {
-            if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = PrunableMessage.getPrunableMessage(transactionId);

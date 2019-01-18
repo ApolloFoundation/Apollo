@@ -57,7 +57,7 @@ public final class ExtendTaggedData extends CreateTransaction {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null) {
-            Transaction transaction = AplCore.getBlockchain().getTransaction(transactionId);
+            Transaction transaction = lookupBlockchain().getTransaction(transactionId);
             if (transaction == null || transaction.getType() != TransactionType.Data.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }

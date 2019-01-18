@@ -11,7 +11,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_T
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -53,11 +53,12 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
         long transactionId = 0;
         Transaction transaction;
         try {
+            Blockchain blockchain = lookupBlockchain();
             if (transactionIdString != null) {
                 transactionId = Convert.parseUnsignedLong(transactionIdString);
-                transaction = AplCore.getBlockchain().getTransaction(transactionId);
+                transaction = blockchain.getTransaction(transactionId);
             } else {
-                transaction = AplCore.getBlockchain().getTransactionByFullHash(transactionFullHash);
+                transaction = blockchain.getTransactionByFullHash(transactionFullHash);
                 if (transaction == null) {
                     return UNKNOWN_TRANSACTION;
                 }
@@ -68,7 +69,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
         }
         JSONObject response;
         if (transaction == null) {
-            transaction = AplCore.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
+            transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
             if (transaction == null || !transaction.getType().equals(TransactionType.Payment.PRIVATE) || transaction.getType().equals(TransactionType.Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
                 return UNKNOWN_TRANSACTION;
             }

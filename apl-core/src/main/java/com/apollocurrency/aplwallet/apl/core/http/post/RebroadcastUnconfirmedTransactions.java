@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -47,7 +46,7 @@ public final class RebroadcastUnconfirmedTransactions extends AbstractAPIRequest
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            AplCore.getTransactionProcessor().rebroadcastAllUnconfirmedTransactions();
+            lookupTransactionProcessor().rebroadcastAllUnconfirmedTransactions();
             response.put("done", true);
         } catch (RuntimeException e) {
             JSONData.putException(response, e);

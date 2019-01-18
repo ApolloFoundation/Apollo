@@ -21,6 +21,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
@@ -47,13 +49,16 @@ import java.util.List;
 
 public final class DigitalGoodsStore {
 
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+
     public enum Event {
         GOODS_LISTED, GOODS_DELISTED, GOODS_PRICE_CHANGE, GOODS_QUANTITY_CHANGE,
         PURCHASE, DELIVERY, REFUND, FEEDBACK
     }
 
-    static {
-        AplCore.getBlockchainProcessor().addListener(block -> {
+//    static {
+    private static void initListener() {
+        blockchainProcessor.addListener(block -> {
             if (block.getHeight() == 0) {
                 return;
             }
@@ -97,6 +102,7 @@ public final class DigitalGoodsStore {
         Tag.init();
         Goods.init();
         Purchase.init();
+        initListener();
     }
 
     public static final class Tag {

@@ -15,7 +15,8 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
@@ -35,6 +36,8 @@ import org.slf4j.Logger;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
+    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final String appendixName = "Phasing";
 
@@ -165,7 +168,7 @@ public class PhasingAppendix extends AbstractAppendix {
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         params.validate();
-        int currentHeight = AplCore.getBlockchain().getHeight();
+        int currentHeight = blockchain.getHeight();
         if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
                 throw new AplException.NotValidException("Invalid number of linkedFullHashes " + linkedFullHashes.length);
@@ -252,7 +255,7 @@ public class PhasingAppendix extends AbstractAppendix {
                 appendage.apply(transaction, senderAccount, recipientAccount);
             }
         });
-        TransactionProcessorImpl.getInstance().notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
+        transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
         LOG.debug("Transaction " + transaction.getStringId() + " has been released");
     }
 
@@ -261,7 +264,7 @@ public class PhasingAppendix extends AbstractAppendix {
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         senderAccount.addToUnconfirmedBalanceATM(AccountLedger.LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                 transaction.getAmountATM());
-        TransactionProcessorImpl.getInstance()
+        transactionProcessor
                 .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
         LOG.debug("Transaction " + transaction.getStringId() + " has been rejected");
     }
@@ -293,16 +296,16 @@ public class PhasingAppendix extends AbstractAppendix {
                 try {
                     release(transaction);
                     poll.finish(result);
-                    LOG.debug("Early finish of transaction " + transaction.getStringId() + " at height " + AplCore.getBlockchain().getHeight());
+                    LOG.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
                 } catch (RuntimeException e) {
                     LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
                 }
             } else {
-                LOG.debug("At height " + AplCore.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()
+                LOG.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
                         + " is duplicate, cannot finish early");
             }
         } else {
-            LOG.debug("At height " + AplCore.getBlockchain().getHeight() + " phased transaction " + transaction.getStringId()
+            LOG.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
                     + " does not yet meet quorum, cannot finish early");
         }
     }

@@ -8,7 +8,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
@@ -47,7 +46,7 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
         int lastIndex = ParameterParser.getLastIndex(req);
         JSONArray transactions = new JSONArray();
         try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
-                AplCore.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
+                lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                 transaction -> data.getAccountId() == transaction.getSenderId() || data.getAccountId() == transaction.getRecipientId(),
                 firstIndex, lastIndex)) {
             while (transactionsIterator.hasNext()) {

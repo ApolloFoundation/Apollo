@@ -22,8 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import org.slf4j.Logger;
 
@@ -31,12 +31,16 @@ import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 public final class Demo implements AddOn {
     private static final Logger LOG = getLogger(Demo.class);
 
+    private BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+
     @Override
     public void init() {
-        AplCore.getBlockchainProcessor().addListener(block -> LOG.info("Block " + block.getStringId()
+        blockchainProcessor.addListener(block -> LOG.info("Block " + block.getStringId()
                 + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
                 + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL()),
                 BlockchainProcessor.Event.BEFORE_BLOCK_APPLY);

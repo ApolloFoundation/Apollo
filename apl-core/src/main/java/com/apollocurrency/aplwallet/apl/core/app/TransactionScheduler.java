@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -32,16 +32,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 public class TransactionScheduler {
     private static final Logger LOG = getLogger(TransactionScheduler.class);
 
     private static final Map<Transaction, TransactionScheduler> transactionSchedulers = new ConcurrentHashMap<>();
+    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
     public static void schedule(Filter<Transaction> filter, Transaction transaction) {
         if (transactionSchedulers.size() >= 100) {
             throw new RuntimeException("Cannot schedule more than 100 transactions! Please restart your node if you want to clear existing scheduled transactions.");
         }
-        transactionSchedulers.put(transaction, new TransactionScheduler(filter, transaction));
+        TransactionScheduler transactionScheduler = new TransactionScheduler(filter, transaction);
+        transactionScheduler.init();
+        transactionSchedulers.put(transaction, transactionScheduler);
     }
 
     public static List<Transaction> getScheduledTransactions(long accountId) {
@@ -66,8 +71,9 @@ public class TransactionScheduler {
         return null;
     }
 
-    static {
-        TransactionProcessorImpl.getInstance().addListener(transactions -> {
+//    static {
+    public void init() {
+        transactionProcessor.addListener(transactions -> {
             Iterator<Map.Entry<Transaction, TransactionScheduler>> iterator = transactionSchedulers.entrySet().iterator();
             while (iterator.hasNext()) {
                 Map.Entry<Transaction, TransactionScheduler> entry = iterator.next();
@@ -101,7 +107,7 @@ public class TransactionScheduler {
             return false;
         }
         try {
-            TransactionProcessorImpl.getInstance().broadcast(transaction);
+            transactionProcessor.broadcast(transaction);
             return true;
         } catch (AplException.ValidationException e) {
             LOG.info("Failed to broadcast: " + e.getMessage());

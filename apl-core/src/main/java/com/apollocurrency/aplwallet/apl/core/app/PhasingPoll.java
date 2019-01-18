@@ -48,6 +48,7 @@ public final class PhasingPoll extends AbstractPoll {
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
     private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static HashFunction getHashFunction(byte code) {
         try {
@@ -254,7 +255,7 @@ public final class PhasingPoll extends AbstractPoll {
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -280,7 +281,7 @@ public final class PhasingPoll extends AbstractPoll {
             pstmt.setLong(++i, voterId);
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -312,7 +313,7 @@ public final class PhasingPoll extends AbstractPoll {
             }
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -335,7 +336,7 @@ public final class PhasingPoll extends AbstractPoll {
             pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);

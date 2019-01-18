@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -47,7 +47,7 @@ public class BlockchainConfig {
     private long unconfirmedPoolDepositAtm;
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
-
+    private static BlockchainProcessor blockchainProcessor;
 
     private volatile HeightConfig currentConfig;
     private Chain chain;
@@ -83,19 +83,26 @@ public class BlockchainConfig {
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
     }
+
     public void init() {
 
         currentConfig = new HeightConfig(chain.getBlockchainProperties().get(0), testnet);
         ConfigChangeListener configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties());
-        BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
+        lookupBlockchainProcessor().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_PUSHED);
-        BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
+        lookupBlockchainProcessor().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_POPPED);
-        BlockchainProcessorImpl.getInstance().addListener(configChangeListener,
+        lookupBlockchainProcessor().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_SCANNED);
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
+    private BlockchainProcessor lookupBlockchainProcessor() {
+        if (blockchainProcessor == null) {
+            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        }
+        return blockchainProcessor;
+    }
     public void updateToBlock() {
 //        move BlockDb to constructor later
         BlockImpl lastBlock = CDI.current().select(BlockDb.class).get().findLastBlock();

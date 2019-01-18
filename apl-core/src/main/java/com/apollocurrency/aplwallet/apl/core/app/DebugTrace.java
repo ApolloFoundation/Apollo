@@ -52,6 +52,8 @@ public final class DebugTrace {
     static final String QUOTE = propertiesLoader.getStringProperty("apl.debugTraceQuote", "\"");
     static final String SEPARATOR = propertiesLoader.getStringProperty("apl.debugTraceSeparator", "\t");
     static final boolean LOG_UNCONFIRMED = propertiesLoader.getBooleanProperty("apl.debugLogUnconfirmed");
+    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
     static void init() {
         List<String> accountIdStrings = propertiesLoader.getStringListProperty("apl.debugTraceAccounts");
@@ -68,7 +70,7 @@ public final class DebugTrace {
             accountIds.add(Convert.parseAccountId(accountId));
         }
         final DebugTrace debugTrace = addDebugTrace(accountIds, logName);
-        AplCore.getBlockchainProcessor().addListener(block -> debugTrace.resetLog(), BlockchainProcessor.Event.RESCAN_BEGIN);
+        blockchainProcessor.addListener(block -> debugTrace.resetLog(), BlockchainProcessor.Event.RESCAN_BEGIN);
         LOG.debug("Debug tracing of " + (accountIdStrings.contains("*") ? "ALL"
                 : String.valueOf(accountIds.size())) + " accounts enabled");
     }
@@ -95,9 +97,9 @@ public final class DebugTrace {
         }
         Account.addLeaseListener(accountLease -> debugTrace.trace(accountLease, true), Account.Event.LEASE_STARTED);
         Account.addLeaseListener(accountLease -> debugTrace.trace(accountLease, false), Account.Event.LEASE_ENDED);
-        AplCore.getBlockchainProcessor().addListener(debugTrace::traceBeforeAccept, BlockchainProcessor.Event.BEFORE_BLOCK_ACCEPT);
-        AplCore.getBlockchainProcessor().addListener(debugTrace::trace, BlockchainProcessor.Event.BEFORE_BLOCK_APPLY);
-        AplCore.getTransactionProcessor().addListener(transactions -> debugTrace.traceRelease(transactions.get(0)), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
+        blockchainProcessor.addListener(debugTrace::traceBeforeAccept, BlockchainProcessor.Event.BEFORE_BLOCK_ACCEPT);
+        blockchainProcessor.addListener(debugTrace::trace, BlockchainProcessor.Event.BEFORE_BLOCK_APPLY);
+        transactionProcessor.addListener(transactions -> debugTrace.traceRelease(transactions.get(0)), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
         Shuffling.addListener(debugTrace::traceShufflingDistribute, Shuffling.Event.SHUFFLING_DONE);
         Shuffling.addListener(debugTrace::traceShufflingCancel, Shuffling.Event.SHUFFLING_CANCELLED);
         return debugTrace;

@@ -44,7 +44,7 @@ import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
-class UnconfirmedTransaction implements Transaction {
+public class UnconfirmedTransaction implements Transaction {
 
     private final TransactionImpl transaction;
     private final long arrivalTimestamp;

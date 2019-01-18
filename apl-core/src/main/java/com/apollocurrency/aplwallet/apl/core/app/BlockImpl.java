@@ -48,6 +48,8 @@ public final class BlockImpl implements Block {
 
     private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockDb blockDb = CDI.current().select(BlockDb.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private final int version;
     private final int timestamp;
@@ -71,8 +73,6 @@ public final class BlockImpl implements Block {
     private volatile String stringId = null;
     private volatile long generatorId;
     private volatile byte[] bytes = null;
-//    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
-    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
 
     BlockImpl(byte[] generatorPublicKey, byte[] generationSignature) {
         this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey, generationSignature, new byte[64],
@@ -388,7 +388,7 @@ public final class BlockImpl implements Block {
 
         try {
 
-            Block previousBlock = BlockchainImpl.getInstance().getBlock(getPreviousBlockId());
+            Block previousBlock = blockchain.getBlock(getPreviousBlockId());
             if (previousBlock == null) {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }

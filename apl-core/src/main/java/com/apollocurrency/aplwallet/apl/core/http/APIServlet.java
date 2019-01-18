@@ -44,6 +44,10 @@ import java.util.Map;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -61,6 +65,7 @@ public final class APIServlet extends HttpServlet {
     private static final boolean enforcePost = propertiesLoader.getBooleanProperty("apl.apiServerEnforcePOST");
     public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     static {
 
@@ -174,25 +179,25 @@ public final class APIServlet extends HttpServlet {
             final long requireLastBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                     ParameterParser.getUnsignedLong(req, "requireLastBlock", false) : 0;
             if (requireBlockId != 0 || requireLastBlockId != 0) {
-                AplCore.getBlockchain().readLock();
+                blockchain.readLock();
             }
             try {
                 try {
                     if (apiRequestHandler.startDbTransaction()) {
                         Db.getDb().beginTransaction();
                     }
-                    if (requireBlockId != 0 && !AplCore.getBlockchain().hasBlock(requireBlockId)) {
+                    if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
                         return;
                     }
-                    if (requireLastBlockId != 0 && requireLastBlockId != AplCore.getBlockchain().getLastBlock().getId()) {
+                    if (requireLastBlockId != 0 && requireLastBlockId != blockchain.getLastBlock().getId()) {
                         response = REQUIRED_LAST_BLOCK_NOT_FOUND;
                         return;
                     }
                     response = apiRequestHandler.processRequest(req, resp);
                     logRequestTime = apiRequestHandler.logRequestTime();
                     if (requireLastBlockId == 0 && requireBlockId != 0 && response instanceof JSONObject) {
-                        ((JSONObject) response).put("lastBlock", AplCore.getBlockchain().getLastBlock().getStringId());
+                        ((JSONObject) response).put("lastBlock", blockchain.getLastBlock().getStringId());
                     }
                 } finally {
                     if (apiRequestHandler.startDbTransaction()) {
@@ -201,7 +206,7 @@ public final class APIServlet extends HttpServlet {
                 }
             } finally {
                 if (requireBlockId != 0 || requireLastBlockId != 0) {
-                    AplCore.getBlockchain().readUnlock();
+                    blockchain.readUnlock();
                 }
             }
         } catch (ParameterException e) {

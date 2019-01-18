@@ -145,6 +145,7 @@ public final class Shuffling {
     private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
     private static final Listeners<Shuffling, Event> listeners = new Listeners<>();
 
@@ -170,31 +171,6 @@ public final class Shuffling {
         }
 
     };
-
-    static {
-        AplCore.getBlockchainProcessor().addListener(block -> {
-
-            if (block.getTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
-                    || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
-                return;
-            }
-            List<Shuffling> shufflings = new ArrayList<>();
-            try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
-                for (Shuffling shuffling : iterator) {
-                    if (!shuffling.isFull(block)) {
-                        shufflings.add(shuffling);
-                    }
-                }
-            }
-            shufflings.forEach(shuffling -> {
-                if (--shuffling.blocksRemaining <= 0) {
-                    shuffling.cancel(block);
-                } else {
-                    shufflingTable.insert(shuffling);
-                }
-            });
-        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-    }
 
     public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -290,7 +266,30 @@ public final class Shuffling {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    static void init() {}
+    static void init() {
+        blockchainProcessor.addListener(block -> {
+
+            if (block.getTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+                    || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
+                return;
+            }
+            List<Shuffling> shufflings = new ArrayList<>();
+            try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
+                for (Shuffling shuffling : iterator) {
+                    if (!shuffling.isFull(block)) {
+                        shufflings.add(shuffling);
+                    }
+                }
+            }
+            shufflings.forEach(shuffling -> {
+                if (--shuffling.blocksRemaining <= 0) {
+                    shuffling.cancel(block);
+                } else {
+                    shufflingTable.insert(shuffling);
+                }
+            });
+        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+    }
 
     private final long id;
     private final DbKey dbKey;

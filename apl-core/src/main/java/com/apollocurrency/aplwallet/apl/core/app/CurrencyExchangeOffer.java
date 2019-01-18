@@ -15,10 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-12019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
+import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
@@ -33,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class CurrencyExchangeOffer {
+
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
     public static final class AvailableOffers {
 
@@ -60,9 +64,10 @@ public abstract class CurrencyExchangeOffer {
 
     }
 
-    static {
-
-        AplCore.getBlockchainProcessor().addListener(block -> {
+//    static {
+    public static void init() {
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        blockchainProcessor.addListener(block -> {
             List<CurrencyBuyOffer> expired = new ArrayList<>();
             try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
                 for (CurrencyBuyOffer offer : offers) {

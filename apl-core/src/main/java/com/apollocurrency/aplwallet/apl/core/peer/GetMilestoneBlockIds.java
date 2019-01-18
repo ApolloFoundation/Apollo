@@ -15,13 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -54,10 +54,11 @@ final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
             JSONArray milestoneBlockIds = new JSONArray();
 
             String lastBlockIdString = (String) request.get("lastBlockId");
+            Blockchain blockchain = lookupBlockchain();
             if (lastBlockIdString != null) {
                 long lastBlockId = Convert.parseUnsignedLong(lastBlockIdString);
-                long myLastBlockId = AplCore.getBlockchain().getLastBlock().getId();
-                if (myLastBlockId == lastBlockId || AplCore.getBlockchain().hasBlock(lastBlockId)) {
+                long myLastBlockId = blockchain.getLastBlock().getId();
+                if (myLastBlockId == lastBlockId || blockchain.hasBlock(lastBlockId)) {
                     milestoneBlockIds.add(lastBlockIdString);
                     response.put("milestoneBlockIds", milestoneBlockIds);
                     if (myLastBlockId == lastBlockId) {
@@ -71,10 +72,10 @@ final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
             int height;
             int jump;
             int limit = 10;
-            int blockchainHeight = AplCore.getBlockchain().getHeight();
+            int blockchainHeight = blockchain.getHeight();
             String lastMilestoneBlockIdString = (String) request.get("lastMilestoneBlockId");
             if (lastMilestoneBlockIdString != null) {
-                Block lastMilestoneBlock = AplCore.getBlockchain().getBlock(Convert.parseUnsignedLong(lastMilestoneBlockIdString));
+                Block lastMilestoneBlock = blockchain.getBlock(Convert.parseUnsignedLong(lastMilestoneBlockIdString));
                 if (lastMilestoneBlock == null) {
                     throw new IllegalStateException("Don't have block " + lastMilestoneBlockIdString);
                 }
@@ -89,11 +90,11 @@ final class GetMilestoneBlockIds extends PeerServlet.PeerRequestHandler {
                 response.put("error", "Old getMilestoneBlockIds protocol not supported, please upgrade");
                 return response;
             }
-            blockId = AplCore.getBlockchain().getBlockIdAtHeight(height);
+            blockId = blockchain.getBlockIdAtHeight(height);
 
             while (height > 0 && limit-- > 0) {
                 milestoneBlockIds.add(Long.toUnsignedString(blockId));
-                blockId = AplCore.getBlockchain().getBlockIdAtHeight(height);
+                blockId = blockchain.getBlockIdAtHeight(height);
                 height = height - jump;
             }
             response.put("milestoneBlockIds", milestoneBlockIds);

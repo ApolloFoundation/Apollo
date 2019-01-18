@@ -48,6 +48,7 @@ public final class Poll extends AbstractPoll {
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static final boolean isPollsProcessing = propertiesLoader.getBooleanProperty("apl.processPolls");
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
     public static final class OptionResult {
 
@@ -195,11 +196,9 @@ public final class Poll extends AbstractPoll {
         pollTable.insert(poll);
     }
 
-    static void init() {}
-
-    static {
+    static void init() {
         if (Poll.isPollsProcessing) {
-            AplCore.getBlockchainProcessor().addListener(block -> {
+            blockchainProcessor.addListener(block -> {
                 int height = block.getHeight();
                 Poll.checkPolls(height);
             }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
@@ -355,7 +354,7 @@ public final class Poll extends AbstractPoll {
 
     private List<OptionResult> countResults(VoteWeighting voteWeighting) {
         int countHeight = Math.min(finishHeight, AplCore.getBlockchain().getHeight());
-        if (countHeight < AplCore.getBlockchainProcessor().getMinRollbackHeight()) {
+        if (countHeight < blockchainProcessor.getMinRollbackHeight()) {
             return null;
         }
         return countResults(voteWeighting, countHeight);

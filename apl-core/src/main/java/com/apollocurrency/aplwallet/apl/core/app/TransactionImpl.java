@@ -57,6 +57,7 @@ import java.util.Map;
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
     @Inject
     private static BlockchainImpl blockchain;
@@ -349,7 +350,7 @@ public class TransactionImpl implements Transaction {
         }
         this.appendagesSize = appendagesSize;
         if (builder.feeATM <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
-            int effectiveHeight = (height < Integer.MAX_VALUE ? height : AplCore.getBlockchain().getHeight());
+            int effectiveHeight = (height < Integer.MAX_VALUE ? height : lookupAndInjectBlockchain().getHeight());
             long minFee = getMinimumFeeATM(effectiveHeight);
             feeATM = Math.max(minFee, builder.feeATM);
         } else {
@@ -453,7 +454,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public Block getBlock() {
         if (block == null && blockId != 0) {
-            block = BlockchainImpl.getInstance().getBlock(blockId);
+            block = lookupAndInjectBlockchain().getBlock(blockId);
         }
         return block;
     }
@@ -584,7 +585,7 @@ public class TransactionImpl implements Transaction {
 
     public DbKey getDbKey() {
         if (dbKey == null) {
-            dbKey = TransactionProcessorImpl.getInstance().unconfirmedTransactionDbKeyFactory.newKey(getId());
+            dbKey = transactionProcessor.getUnconfirmedTransactionDbKeyFactory().newKey(getId());
         }
         return dbKey;
     }

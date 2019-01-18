@@ -35,7 +35,6 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -43,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
@@ -52,7 +50,6 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 public final class AplCore {
@@ -60,16 +57,14 @@ public final class AplCore {
 
     private static ChainIdService chainIdService;
 
-    private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
-
     private static volatile boolean shutdown = false;
 
-//    @Inject
-//    private PropertiesHolder propertiesHolder;
+    private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-//TODO: Core should not be static anymore!
     private final BlockchainConfig blockchainConfig;
-    
+    private static Blockchain blockchain;
+    private static BlockchainProcessor blockchainProcessor;
+
     @Inject
     public AplCore(BlockchainConfig config) {
         this.blockchainConfig = config;
@@ -80,11 +75,12 @@ public final class AplCore {
     }
  
     public static Blockchain getBlockchain() {
-        return BlockchainImpl.getInstance();
+        return blockchain;
     }
 
+/*
     public static BlockchainProcessor getBlockchainProcessor() {
-        return BlockchainProcessorImpl.getInstance();
+        return blockchainProcessor;
     }
 
     public static TransactionProcessor getTransactionProcessor() {
@@ -106,6 +102,7 @@ public final class AplCore {
     public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
         return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
     }
+*/
 
     public static int getEpochTime() {
         return time.getTime();
@@ -136,7 +133,7 @@ public final class AplCore {
         API.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
-        BlockchainProcessorImpl.getInstance().shutdown();
+        blockchainProcessor.shutdown();
         Peers.shutdown();
         Db.shutdown();
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
@@ -182,8 +179,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-                blockchainConfig.init();
+                blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToBlock();
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
@@ -192,8 +188,11 @@ public final class AplCore {
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP.getInstance();
                 }
-                TransactionProcessorImpl.getInstance();
-                BlockchainProcessorImpl.getInstance();
+                TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
+                blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                blockchain = CDI.current().select(BlockchainImpl.class).get();
+                transactionProcessor.init();
+
                 Account.init();
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");
@@ -235,7 +234,7 @@ public final class AplCore {
                         ".timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
                 if (timeMultiplier > 1) {
-                    setTime(new Time.FasterTime(Math.max(getEpochTime(), AplCore.getBlockchain().getLastBlock().getTimestamp()), timeMultiplier));
+                    setTime(new Time.FasterTime(Math.max(getEpochTime(), blockchain.getLastBlock().getTimestamp()), timeMultiplier));
                     LOG.info("TIME WILL FLOW " + timeMultiplier + " TIMES FASTER!");
                 }
                 try {

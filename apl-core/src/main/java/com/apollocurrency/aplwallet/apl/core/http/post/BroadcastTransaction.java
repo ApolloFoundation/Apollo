@@ -79,7 +79,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            AplCore.getTransactionProcessor().broadcast(transaction);
+            lookupTransactionProcessor().broadcast(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
         } catch (AplException.ValidationException|RuntimeException e) {
