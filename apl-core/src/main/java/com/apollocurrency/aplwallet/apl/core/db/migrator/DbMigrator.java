@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.chainid;
+package com.apollocurrency.aplwallet.apl.core.db.migrator;
 
 import java.io.IOException;
 import java.nio.file.Path;

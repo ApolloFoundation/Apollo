@@ -36,7 +36,6 @@ import java.util.Set;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -176,7 +175,7 @@ public final class AplCore {
 //TODO: check: no such file
   //              ChainIdDbMigration.migrate();
 
-                DbMigratorTask.getInstance().migrateDb();
+//                DbMigratorTask.getInstance().migrateDb();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 

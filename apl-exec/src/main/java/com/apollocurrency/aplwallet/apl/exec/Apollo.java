@@ -139,7 +139,8 @@ public class Apollo {
                 args.configDir);
 //init logging
 
-        dirProvider = createDirProvider(args);
+        EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
+        dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
         log = LoggerFactory.getLogger(Apollo.class);
         
@@ -171,19 +172,14 @@ public class Apollo {
         }
     }
 
-    private static DirProvider createDirProvider(CmdLineArgs args) {
-        ChainIdServiceImpl chainIdService = new ChainIdServiceImpl();
-        PredefinedDirLocations userDefinedDirLocations =
-                new PredefinedDirLocations(args.dbDir, args.logDir, args.vaultKeystoreDir, args.pidFile, args.twoFactorAuthDir);
-        UUID chainId;
+    private static DirProvider createDirProvider(PredefinedDirLocations dirLocations, boolean isService) {
         try {
-            chainId = chainIdService.getActiveChain().getChainId();
+            ChainIdServiceImpl chainIdService = new ChainIdServiceImpl();
+            UUID chainId = chainIdService.getActiveChain().getChainId();
+            return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
         }
         catch (IOException e) {
             throw new RuntimeException("Unable to create dirProvider, cannot load chains config", e);
         }
-
-        return new DirProviderFactory().getInstance(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, userDefinedDirLocations);
     }
-
 }
