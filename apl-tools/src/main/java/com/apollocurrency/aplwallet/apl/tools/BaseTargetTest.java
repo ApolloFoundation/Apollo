@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.tools;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -30,18 +31,18 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 public final class BaseTargetTest {
         private static final Logger LOG = getLogger(BaseTargetTest.class);
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static final long MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
+    private static final long MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * (blockchainConfig.isTestnet() ? blockchainConfig.getCurrentConfig().getMaxBalanceAPL() : 50);
 
-    private static final long MIN_BASE_TARGET = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() * 9 / 10;
-    private static final long MAX_BASE_TARGET = AplGlobalObjects.getChainConfig().getCurrentConfig().getInitialBaseTarget() * (AplGlobalObjects.getChainConfig().isTestnet() ? AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL() : 50);
-
-    private static final int MIN_BLOCKTIME_LIMIT = AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime() - 7;
-    private static final int MAX_BLOCKTIME_LIMIT = AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime() + 7;
+    private static final int MIN_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() - 7;
+    private static final int MAX_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() + 7;
 
     private static final int GAMMA = 64;
 
@@ -57,7 +58,7 @@ public final class BaseTargetTest {
 
     private static long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
-        int blockTime = AplGlobalObjects.getChainConfig().getCurrentConfig().getBlockTime();
+        int blockTime = blockchainConfig.getCurrentConfig().getBlockTime();
         if (blocktimeEMA > blockTime) {
             baseTarget = (previousBaseTarget * Math.min(blocktimeEMA, MAX_BLOCKTIME_LIMIT)) / blockTime;
         } else {
@@ -114,7 +115,7 @@ public final class BaseTargetTest {
 
             int count = 0;
 
-            String dbLocation = AplGlobalObjects.getChainConfig().isTestnet() ? "apl_test_db" : "apl_db";
+            String dbLocation = blockchainConfig.isTestnet() ? "apl_test_db" : "apl_db";
 
             try (Connection con = DriverManager.getConnection("jdbc:h2:./" + dbLocation + "/apl;DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE", "sa", "sa");
                  PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM block WHERE height > " + height + " ORDER BY db_id ASC");

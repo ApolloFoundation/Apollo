@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
@@ -34,13 +31,18 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     public static String PREFIX;
     private static BasicDb.DbProperties dbProperties;
     private static TransactionalDb db;
@@ -74,7 +76,7 @@ public final class Db {
 
     public static void init() {
 
-        PREFIX = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
+        PREFIX = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
         init(
                  propertiesLoader.getIntProperty("apl.dbCacheKB")
                 , propertiesLoader.getStringProperty(PREFIX + "Url")
@@ -92,7 +94,7 @@ public final class Db {
     }
     public static void init(String dbUrl) {
 
-        PREFIX = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
+        PREFIX = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
         init(
                 propertiesLoader.getIntProperty("apl.dbCacheKB")
                 , dbUrl

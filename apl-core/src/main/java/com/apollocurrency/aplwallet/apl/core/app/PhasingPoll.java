@@ -15,11 +15,14 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -44,6 +47,7 @@ public final class PhasingPoll extends AbstractPoll {
 
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
+    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
 
     public static HashFunction getHashFunction(byte code) {
         try {
@@ -242,7 +246,7 @@ public final class PhasingPoll extends AbstractPoll {
         return phasingPollTable.get(phasingPollDbKeyFactory.newKey(id));
     }
 
-    static DbIterator<TransactionImpl> getFinishingTransactions(int height) {
+    static DbIterator<Transaction> getFinishingTransactions(int height) {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -257,7 +261,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    public static DbIterator<TransactionImpl> getVoterPhasedTransactions(long voterId, int from, int to) {
+    public static DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -283,7 +287,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    public static DbIterator<TransactionImpl> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    public static DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                            long accountId, boolean withoutWhitelist, int from, int to) {
 
         Connection con = null;
@@ -315,7 +319,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    public static DbIterator<TransactionImpl> getAccountPhasedTransactions(long accountId, int from, int to) {
+    public static DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         Connection con = null;
         try {
             con = Db.getDb().getConnection();
@@ -368,7 +372,7 @@ public final class PhasingPoll extends AbstractPoll {
             List<TransactionImpl> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add(TransactionDb.findTransaction(rs.getLong("transaction_id")));
+                    transactions.add(transactionDb.findTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -397,7 +401,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
 
-    static void addPoll(Transaction transaction, Appendix.Phasing appendix) {
+    public static void addPoll(Transaction transaction, PhasingAppendix appendix) {
         PhasingPoll poll = new PhasingPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.whitelist;
@@ -420,7 +424,7 @@ public final class PhasingPoll extends AbstractPoll {
     private final byte[] hashedSecret;
     private final byte algorithm;
 
-    private PhasingPoll(Transaction transaction, Appendix.Phasing appendix) {
+    private PhasingPoll(Transaction transaction, PhasingAppendix appendix) {
         super(transaction.getId(), transaction.getSenderId(), appendix.getFinishHeight(), appendix.getVoteWeighting());
         this.dbKey = phasingPollDbKeyFactory.newKey(this.id);
         this.quorum = appendix.getQuorum();
@@ -447,7 +451,7 @@ public final class PhasingPoll extends AbstractPoll {
         this.algorithm = algorithm;
     }
 
-    void finish(long result) {
+    public void finish(long result) {
         PhasingPollResult phasingPollResult = new PhasingPollResult(this, result);
         resultTable.insert(phasingPollResult);
     }
@@ -461,7 +465,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public byte[] getFullHash() {
-        return TransactionDb.getFullHash(this.id);
+        return transactionDb.getFullHash(this.id);
     }
 
     public List<byte[]> getLinkedFullHashes() {
@@ -489,7 +493,7 @@ public final class PhasingPoll extends AbstractPoll {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
             for (byte[] hash : getLinkedFullHashes()) {
-                if (TransactionDb.hasTransactionByFullHash(hash, height)) {
+                if (transactionDb.hasTransactionByFullHash(hash, height)) {
                     count += 1;
                 }
             }

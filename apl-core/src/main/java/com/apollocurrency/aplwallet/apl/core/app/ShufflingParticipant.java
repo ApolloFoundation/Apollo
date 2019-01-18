@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -39,7 +40,10 @@ import java.util.Arrays;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 public final class ShufflingParticipant {
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final Logger LOG = getLogger(ShufflingParticipant.class);
 
     public enum State {
@@ -302,18 +306,18 @@ public final class ShufflingParticipant {
         return getData(shufflingId, accountId);
     }
 
-    static byte[][] getData(long shufflingId, long accountId) {
+    public static byte[][] getData(long shufflingId, long accountId) {
         ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
         return shufflingData != null ? shufflingData.data : null;
     }
 
     void setData(byte[][] data, int timestamp) {
-        if (data != null && AplCore.getEpochTime() - timestamp < AplGlobalObjects.getChainConfig().getMaxPrunableLifetime() && getData() == null) {
+        if (data != null && AplCore.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, AplCore.getBlockchain().getHeight()));
         }
     }
 
-    static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
+    public static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
         if (data != null && getData(shufflingId, accountId) == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
         }

@@ -15,15 +15,15 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -45,10 +45,10 @@ public final class PopOffCounter implements AddOn {
     }
 
     @Override
-    public APIServlet.APIRequestHandler getAPIRequestHandler() {
-        return new APIServlet.APIRequestHandler(new APITag[]{APITag.ADDONS, APITag.BLOCKS}) {
+    public AbstractAPIRequestHandler getAPIRequestHandler() {
+        return new AbstractAPIRequestHandler(new APITag[]{APITag.ADDONS, APITag.BLOCKS}) {
             @Override
-            protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
+            public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
                 JSONObject response = new JSONObject();
                 response.put("numberOfPopOffs", numberOfPopOffs);
                 return response;

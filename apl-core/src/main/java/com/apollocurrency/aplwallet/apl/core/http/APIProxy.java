@@ -15,19 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
@@ -40,7 +33,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 public class APIProxy {
     private static final Logger LOG = getLogger(APIProxy.class);
@@ -75,7 +74,7 @@ public class APIProxy {
         final EnumSet<APITag> notForwardedTags = EnumSet.of(APITag.DEBUG, APITag.NETWORK);
 
         for (APIEnum api : APIEnum.values()) {
-            APIServlet.APIRequestHandler handler = api.getHandler();
+            AbstractAPIRequestHandler handler = api.getHandler();
             if (handler.requireBlockchain() && !Collections.disjoint(handler.getAPITags(), notForwardedTags)) {
                 requests.add(api.getName());
             }
@@ -168,7 +167,7 @@ public class APIProxy {
         return resultPeer;
     }
 
-    Peer setForcedPeer(Peer peer) {
+    public Peer setForcedPeer(Peer peer) {
         if (peer != null) {
             forcedPeerHost = peer.getHost();
             mainPeerAnnouncedAddress = peer.getAnnouncedAddress();
@@ -180,7 +179,7 @@ public class APIProxy {
         }
     }
 
-    String getMainPeerAnnouncedAddress() {
+    public String getMainPeerAnnouncedAddress() {
         // The first client request GetBlockchainState is handled by the server
         // Not by the proxy. In order to report a peer to the client we have
         // To select some initial peer.
@@ -193,11 +192,11 @@ public class APIProxy {
         return mainPeerAnnouncedAddress;
     }
 
-    static boolean isActivated() {
+    public static boolean isActivated() {
         return Constants.isLightClient || (enableAPIProxy && AplCore.getBlockchainProcessor().isDownloading());
     }
 
-    boolean blacklistHost(String host) {
+    public boolean blacklistHost(String host) {
         if (blacklistedPeers.size() > 1000) {
             LOG.info("Too many blacklisted peers");
             return false;

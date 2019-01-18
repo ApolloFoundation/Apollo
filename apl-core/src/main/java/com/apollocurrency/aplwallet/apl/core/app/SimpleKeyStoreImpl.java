@@ -6,8 +6,11 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
- import javax.enterprise.inject.spi.CDI;
- import java.io.IOException;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -18,8 +21,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -27,23 +30,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
 
+@ApplicationScoped
  public class SimpleKeyStoreImpl implements KeyStore {
      private static final Logger LOG = getLogger(SimpleKeyStoreImpl.class);
+     private static final byte DEFAULT_VERSION = 0;
      private Path keystoreDirPath;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
      private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
-     public SimpleKeyStoreImpl(Path keyStoreDirPath, byte version) {
+    @Inject
+    public SimpleKeyStoreImpl(@Named("keystoreDirPath") Path keystoreDir) {
+        this(keystoreDir, DEFAULT_VERSION);
+    }
+
+     public SimpleKeyStoreImpl(Path keystoreDir, byte version) {
          if (version < 0) {
              throw new IllegalArgumentException("version should be positive");
          }
-         this.version = version;
-         this.keystoreDirPath = keyStoreDirPath;
-         if (!Files.exists(keyStoreDirPath)) {
+         this.version = DEFAULT_VERSION;
+         this.keystoreDirPath = keystoreDir;
+         if (!Files.exists(keystoreDirPath)) {
              try {
-                 Files.createDirectories(keyStoreDirPath);
+                 Files.createDirectories(keystoreDirPath);
              }
              catch (IOException e) {
                  throw new RuntimeException(e.toString(), e);

@@ -15,16 +15,19 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import javax.enterprise.inject.spi.CDI;
 import java.util.EnumSet;
 import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
 /**
  * Define and validate currency capabilities
@@ -96,7 +99,7 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
 
-                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
 
                     throw new AplException.NotValidException("Minimum reserve per unit is too large");
                 }
@@ -271,7 +274,7 @@ public enum CurrencyType {
 
     private static void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
-            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", AplGlobalObjects.getChainConfig().getCoinSymbol()));
+            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", blockchainConfig.getCoinSymbol()));
         }
 
         final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
@@ -313,7 +316,7 @@ public enum CurrencyType {
                 throw new AplException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
             }
         }
-        if (code.contains(AplGlobalObjects.getChainConfig().getCoinSymbol()) || AplGlobalObjects.getChainConfig().getCoinSymbol().toLowerCase().equals(normalizedName)) {
+        if (code.contains(blockchainConfig.getCoinSymbol()) || blockchainConfig.getCoinSymbol().toLowerCase().equals(normalizedName)) {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;
@@ -331,4 +334,5 @@ public enum CurrencyType {
         }
     }
 
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 }

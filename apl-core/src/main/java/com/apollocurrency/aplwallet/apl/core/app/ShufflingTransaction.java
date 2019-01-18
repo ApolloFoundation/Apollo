@@ -15,23 +15,27 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
 public abstract class ShufflingTransaction extends TransactionType {
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     private static final byte SUBTYPE_SHUFFLING_CREATION = 0;
     private static final byte SUBTYPE_SHUFFLING_REGISTRATION = 1;
@@ -61,7 +65,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * Constants.ONE_APL);
     private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
-
+    protected final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
 
     private ShufflingTransaction() {}
 
@@ -114,9 +118,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = attachment.getHoldingType();
             long amount = attachment.getAmount();
             if (holdingType == HoldingType.APL) {
-                if (amount < AplGlobalObjects.getChainConfig().getShufflingDepositAtm() || amount > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                if (amount < blockchainConfig.getShufflingDepositAtm() || amount > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                     throw new AplException.NotValidException("Invalid ATM amount " + amount
-                            + ", minimum is " + AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
+                            + ", minimum is " + blockchainConfig.getShufflingDepositAtm());
                 }
             } else if (holdingType == HoldingType.ASSET) {
                 Asset asset = Asset.getAsset(attachment.getHoldingId());
@@ -154,9 +158,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
-                        && senderAccount.getUnconfirmedBalanceATM() >= AplGlobalObjects.getChainConfig().getShufflingDepositAtm()) {
+                        && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
-                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
                     return true;
                 }
             } else {
@@ -175,12 +179,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
-                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), blockchainConfig.getShufflingDepositAtm());
             } else {
                 senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getAmount());
             }
@@ -271,9 +275,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                        && senderAccount.getUnconfirmedBalanceATM() >= AplGlobalObjects.getChainConfig().getShufflingDepositAtm()) {
+                        && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
+                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
                     return true;
                 }
             } else {
@@ -293,13 +297,13 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), shuffling.getAmount());
-                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), AplGlobalObjects.getChainConfig().getShufflingDepositAtm());
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), blockchainConfig.getShufflingDepositAtm());
             } else {
                 senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), shuffling.getAmount());
             }
@@ -325,7 +329,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return SHUFFLING_PROCESSING_FEE;
         }
 
@@ -372,7 +376,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
             byte[][] data = attachment.getData();
-            if (data == null && AplCore.getEpochTime() - transaction.getTimestamp() < AplGlobalObjects.getChainConfig().getMinPrunableLifetime()) {
+            if (data == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             if (data != null) {
@@ -413,7 +417,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -422,7 +426,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         boolean isPruned(long transactionId) {
-            Transaction transaction = TransactionDb.findTransaction(transactionId);
+            Transaction transaction = transactionDb.findTransaction(transactionId);
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -447,7 +451,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return SHUFFLING_RECIPIENTS_FEE;
         }
 
@@ -528,7 +532,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -613,7 +617,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         }
 
         @Override
@@ -641,7 +645,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        Fee getBaselineFee(Transaction transaction) {
+        public Fee getBaselineFee(Transaction transaction) {
             return SHUFFLING_PROCESSING_FEE;
         }
 
@@ -686,7 +690,8 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = TransactionDb.findTransactionByFullHash(participant.getDataTransactionFullHash(), AplCore.getBlockchain().getHeight());
+            Transaction dataProcessingTransaction = transactionDb.findTransactionByFullHash(participant.getDataTransactionFullHash(),
+                    AplCore.getBlockchain().getHeight());
             if (dataProcessingTransaction == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }
@@ -727,7 +732,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
         @Override
         public boolean isPhasable() {

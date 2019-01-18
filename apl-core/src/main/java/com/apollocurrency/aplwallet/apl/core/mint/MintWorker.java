@@ -15,18 +15,18 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.mint;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -74,6 +74,7 @@ public class MintWorker {
     private static final Logger LOG = getLogger(MintWorker.class);
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     public static void main(String[] args) {
         MintWorker mintWorker = new MintWorker();
         mintWorker.mint();
@@ -259,7 +260,7 @@ public class MintWorker {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : propertiesHolder.getIntProperty("apl.apiServerPort");
+        int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesHolder.getIntProperty("apl.apiServerPort");
         String urlParams = getUrlParams(params);
         URL url;
         try {

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -132,7 +132,7 @@ public class APITestServlet extends HttpServlet {
 
     private static final SortedMap<String, SortedSet<String>> requestTags = new TreeMap<>();
     static {
-        for (Map.Entry<String, APIServlet.APIRequestHandler> entry : APIServlet.apiRequestHandlers.entrySet()) {
+        for (Map.Entry<String, AbstractAPIRequestHandler> entry : APIServlet.apiRequestHandlers.entrySet()) {
             String requestType = entry.getKey();
             Set<APITag> apiTags = entry.getValue().getAPITags();
             for (APITag apiTag : apiTags) {
@@ -187,7 +187,7 @@ public class APITestServlet extends HttpServlet {
             writer.print(buildLinks(req));
             writer.print(HEADER2);
             String requestType = Convert.nullToEmpty(req.getParameter("requestType"));
-            APIServlet.APIRequestHandler requestHandler = APIServlet.apiRequestHandlers.get(requestType);
+            AbstractAPIRequestHandler requestHandler = APIServlet.apiRequestHandlers.get(requestType);
             StringBuilder bufJSCalls = new StringBuilder();
             String nodeType = "Full Node";
             if (Constants.isLightClient) {
@@ -232,7 +232,7 @@ public class APITestServlet extends HttpServlet {
         return "<div class='alert alert-" + msgType + "' role='alert'>" + msg + "</div>\n";
     }
 
-    private static String form(HttpServletRequest req, String requestType, boolean singleView, APIServlet.APIRequestHandler requestHandler) {
+    private static String form(HttpServletRequest req, String requestType, boolean singleView, AbstractAPIRequestHandler requestHandler) {
         String className = requestHandler.getClass().getName();
         List<String> parameters = requestHandler.getParameters();
         boolean requirePost = requestHandler.requirePost();

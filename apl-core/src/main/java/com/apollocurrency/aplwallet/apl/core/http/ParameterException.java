@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -27,11 +27,11 @@ public final class ParameterException extends AplException {
 
     private final JSONStreamAware errorResponse;
 
-    ParameterException(JSONStreamAware errorResponse) {
+    public ParameterException(JSONStreamAware errorResponse) {
         this.errorResponse = errorResponse;
     }
 
-    JSONStreamAware getErrorResponse() {
+    public JSONStreamAware getErrorResponse() {
         return errorResponse;
     }
 

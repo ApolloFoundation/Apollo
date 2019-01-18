@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2109 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.addons;

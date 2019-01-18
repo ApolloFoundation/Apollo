@@ -15,11 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -65,7 +67,7 @@ public final class FundingMonitor {
     public static final int MIN_FUND_INTERVAL = 10;
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     /** Maximum number of monitors */
     private static final int MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -647,8 +649,8 @@ public final class FundingMonitor {
                 AplCore.getTransactionProcessor().broadcast(transaction);
                 monitoredAccount.height = AplCore.getBlockchain().getHeight();
                 LOG.debug(String.format("%s funding transaction %s for %f %s submitted from %s to %s",
-                        AplGlobalObjects.getChainConfig().getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
-                        AplGlobalObjects.getChainConfig().getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
+                        blockchainConfig.getCoinSymbol(), transaction.getStringId(), (double)monitoredAccount.amount / Constants.ONE_APL,
+                        blockchainConfig.getCoinSymbol(), monitor.accountName, monitoredAccount.accountName));
             }
         }
     }

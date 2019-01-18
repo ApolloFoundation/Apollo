@@ -22,12 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -104,6 +106,8 @@ final class PeerImpl implements Peer {
     private volatile long services;
     private volatile BlockchainState blockchainState;
     private AtomicReference<UUID> chainId = new AtomicReference<>();
+
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     PeerImpl(String host, String announcedAddress) {
         this.host = host;
@@ -351,7 +355,7 @@ final class PeerImpl implements Peer {
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = AplCore.getBlockchain().getHeight();
         }
-        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL());
+        return (int)(adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / blockchainConfig.getCurrentConfig().getMaxBalanceAPL());
     }
 
     @Override
@@ -854,7 +858,7 @@ final class PeerImpl implements Peer {
             }
 
             for (PeerImpl peer : groupedPeers) {
-                peer.adjustedWeight = AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
+                peer.adjustedWeight = blockchainConfig.getCurrentConfig().getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
                 Peers.notifyListeners(peer, Peers.Event.WEIGHT);
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
@@ -9,7 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.inject.Inject;
 import java.util.regex.Pattern;
 
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;

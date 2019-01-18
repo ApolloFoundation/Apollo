@@ -1,17 +1,17 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.apollocurrency.aplwallet.apl.core.app.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-@Singleton
+@ApplicationScoped
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
     private UpdaterService updaterService;

@@ -1,18 +1,32 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
+
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Objects;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import org.slf4j.Logger;
 
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
+    private BlockDb blockDb;
+    protected BlockchainConfig blockchainConfig;
+
+    public AbstractBlockValidator(BlockDb blockDb, BlockchainConfig blockchainConfig) {
+        Objects.requireNonNull(blockDb, "BlockDb is null");
+        Objects.requireNonNull(blockchainConfig, "Blockchain config is null");
+
+        this.blockDb = blockDb;
+        this.blockchainConfig = blockchainConfig;
+    }
 
     @Override
-    public void validate(BlockImpl block, BlockImpl previousLastBlock, int curTime) throws BlockchainProcessor.BlockNotAcceptedException {
+    public void validate(Block block, Block previousLastBlock, int curTime) throws BlockchainProcessor.BlockNotAcceptedException {
         if (previousLastBlock.getId() != block.getPreviousBlockId()) {
             throw new BlockchainProcessor.BlockOutOfOrderException("Previous block id doesn't match", block);
         }
@@ -28,7 +42,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
-        if (block.getId() == 0L || AplGlobalObjects.getBlockDb().hasBlock(block.getId(), previousLastBlock.getHeight())) {
+        if (block.getId() == 0L || blockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
         if (!block.verifyGenerationSignature() && !Generator.allowsFakeForging(block.getGeneratorPublicKey())) {
@@ -37,15 +51,15 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
         }
 
-        if (block.getTransactions().size() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxNumberOfTransactions()) {
+        if (block.getTransactions().size() > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getTransactions().size(), block);
         }
-        if (block.getPayloadLength() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
+        if (block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
         }
         switch (block.getVersion()) {
             case Block.LEGACY_BLOCK_VERSION:
-                if (AplGlobalObjects.getChainConfig().getCurrentConfig().isAdaptiveForgingEnabled()) {
+                if (blockchainConfig.getCurrentConfig().isAdaptiveForgingEnabled()) {
                     throw new BlockchainProcessor.BlockNotAcceptedException("Legacy blocks are not accepting during adaptive forging", block);
                 }
                 break;
@@ -61,14 +75,14 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
     }
 
-    abstract void validatePreviousHash(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validatePreviousHash(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void verifySignature(BlockImpl block) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void verifySignature(Block block) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateAdaptiveBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validateAdaptiveBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateInstantBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validateInstantBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
-    abstract void validateRegularBlock(BlockImpl block, BlockImpl previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
+    abstract void validateRegularBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException;
 
 }

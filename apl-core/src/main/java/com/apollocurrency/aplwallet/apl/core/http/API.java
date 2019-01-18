@@ -15,44 +15,18 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.env.ResourcePaths;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import org.eclipse.jetty.security.ConstraintMapping;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
-import org.eclipse.jetty.security.SecurityHandler;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.eclipse.jetty.util.security.Constraint;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_PORT;
+import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.Filter;
@@ -83,14 +57,40 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_PORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
+import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.env.ResourcePaths;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.SecurityHandler;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
@@ -98,7 +98,7 @@ public final class API {
     // TODO: YL remove static instance later
    // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
@@ -112,8 +112,8 @@ public final class API {
     private static final List<NetworkAddress> allowedBotNets;
     private static final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     public static final String adminPassword = propertiesLoader.getStringProperty("apl.adminPassword", "", true);
-    static final boolean disableAdminPassword;
-    static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
+    public static final boolean disableAdminPassword;
+    public static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
     static final boolean enableAPIUPnP = propertiesLoader.getBooleanProperty("apl.enableAPIUPnP");
     public static final int apiServerIdleTimeout = propertiesLoader.getIntProperty("apl.apiServerIdleTimeout");
     public static final boolean apiServerCORS = propertiesLoader.getBooleanProperty("apl.apiServerCORS");
@@ -184,8 +184,8 @@ public final class API {
 
         boolean enableAPIServer = propertiesLoader.getBooleanProperty("apl.enableAPIServer");
         if (enableAPIServer) {
-            final int port = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
-            final int sslPort = AplGlobalObjects.getChainConfig().isTestnet() ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
+            final int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
+            final int sslPort = blockchainConfig.isTestnet() ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
             final String host = propertiesLoader.getStringProperty("apl.apiServerHost");
             disableAdminPassword = propertiesLoader.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
             int maxThreadPoolSize = propertiesLoader.getIntProperty("apl.threadPoolMaxSize");

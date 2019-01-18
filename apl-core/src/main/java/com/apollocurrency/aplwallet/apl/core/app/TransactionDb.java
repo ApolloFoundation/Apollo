@@ -15,15 +15,26 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -34,18 +45,28 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-public final class TransactionDb {
+@ApplicationScoped
+public class TransactionDb {
+
+    private final BlockDb blockDb;
+
+    @Inject
+    public TransactionDb(BlockDb blockDb) {
+        Objects.requireNonNull(blockDb);
+        this.blockDb = blockDb;
+    }
 
 
-    static TransactionImpl findTransaction(long transactionId) {
+    public TransactionImpl findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    static TransactionImpl findTransaction(long transactionId, int height) {
+    TransactionImpl findTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized (blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getHeight() <= height ? transaction : null;
             }
@@ -67,18 +88,18 @@ public final class TransactionDb {
         }
     }
 
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash) {
+    TransactionImpl findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    static TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    public TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash) ? transaction : null);
+                        Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
             }
         }
         // Search the database
@@ -99,14 +120,14 @@ public final class TransactionDb {
         }
     }
 
-    static boolean hasTransaction(long transactionId) {
+    boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    static boolean hasTransaction(long transactionId, int height) {
+    boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
             }
@@ -123,18 +144,18 @@ public final class TransactionDb {
         }
     }
 
-    static boolean hasTransactionByFullHash(byte[] fullHash) {
+    boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
 
-    static boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.fullHash(), fullHash));
+                        Arrays.equals(transaction.getFullHash(), fullHash));
             }
         }
         // Search the database
@@ -149,12 +170,12 @@ public final class TransactionDb {
         }
     }
 
-    static byte[] getFullHash(long transactionId) {
+    byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            TransactionImpl transaction = AplGlobalObjects.getBlockDb().getTransactionCache().get(transactionId);
+        synchronized(blockDb.getBlockCache()) {
+            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
-                return transaction.fullHash();
+                return transaction.getFullHash();
             }
         }
         // Search the database
@@ -169,7 +190,7 @@ public final class TransactionDb {
         }
     }
 
-    static TransactionImpl loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+    TransactionImpl loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         try {
 
             byte type = rs.getByte("type");
@@ -219,25 +240,25 @@ public final class TransactionDb {
                 }
             }
             if (rs.getBoolean("has_message")) {
-                builder.appendix(new Appendix.Message(buffer));
+                builder.appendix(new MessageAppendix(buffer));
             }
             if (rs.getBoolean("has_encrypted_message")) {
-                builder.appendix(new Appendix.EncryptedMessage(buffer));
+                builder.appendix(new EncryptedMessageAppendix(buffer));
             }
             if (rs.getBoolean("has_public_key_announcement")) {
-                builder.appendix(new Appendix.PublicKeyAnnouncement(buffer));
+                builder.appendix(new PublicKeyAnnouncementAppendix(buffer));
             }
             if (rs.getBoolean("has_encrypttoself_message")) {
-                builder.appendix(new Appendix.EncryptToSelfMessage(buffer));
+                builder.appendix(new EncryptToSelfMessageAppendix(buffer));
             }
             if (rs.getBoolean("phased")) {
-                builder.appendix(new Appendix.Phasing(buffer));
+                builder.appendix(new PhasingAppendix(buffer));
             }
             if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new Appendix.PrunablePlainMessage(buffer));
+                builder.appendix(new PrunablePlainMessageAppendix(buffer));
             }
             if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new Appendix.PrunableEncryptedMessage(buffer));
+                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
 
             return builder.build();
@@ -247,10 +268,10 @@ public final class TransactionDb {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(long blockId) {
+    List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized(AplGlobalObjects.getBlockDb().getBlockCache()) {
-            BlockImpl block = AplGlobalObjects.getBlockDb().getBlockCache().get(blockId);
+        synchronized(blockDb.getBlockCache()) {
+            BlockImpl block = blockDb.getBlockCache().get(blockId);
             if (block != null) {
                 return block.getTransactions();
             }
@@ -263,12 +284,12 @@ public final class TransactionDb {
         }
     }
 
-    static List<TransactionImpl> findBlockTransactions(Connection con, long blockId) {
+    List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
             try (ResultSet rs = pstmt.executeQuery()) {
-                List<TransactionImpl> list = new ArrayList<>();
+                List<Transaction> list = new ArrayList<>();
                 while (rs.next()) {
                     list.add(loadTransaction(con, rs));
                 }
@@ -282,7 +303,7 @@ public final class TransactionDb {
         }
     }
 
-    static List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
@@ -310,10 +331,10 @@ public final class TransactionDb {
         return result;
     }
 
-    static void saveTransactions(Connection con, List<TransactionImpl> transactions) {
+    void saveTransactions(Connection con, List<Transaction> transactions) {
         try {
             short index = 0;
-            for (TransactionImpl transaction : transactions) {
+            for (Transaction transaction : transactions) {
                 try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
                         + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
                         + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
@@ -350,7 +371,7 @@ public final class TransactionDb {
                         pstmt.setBytes(++i, buffer.array());
                     }
                     pstmt.setInt(++i, transaction.getBlockTimestamp());
-                    pstmt.setBytes(++i, transaction.fullHash());
+                    pstmt.setBytes(++i, transaction.getFullHash());
                     pstmt.setByte(++i, transaction.getVersion());
                     pstmt.setBoolean(++i, transaction.getMessage() != null);
                     pstmt.setBoolean(++i, transaction.getEncryptedMessage() != null);
@@ -359,7 +380,7 @@ public final class TransactionDb {
                     pstmt.setBoolean(++i, transaction.getPhasing() != null);
                     pstmt.setBoolean(++i, transaction.hasPrunablePlainMessage());
                     pstmt.setBoolean(++i, transaction.hasPrunableEncryptedMessage());
-                    pstmt.setBoolean(++i, transaction.getAttachment() instanceof Appendix.Prunable);
+                    pstmt.setBoolean(++i, transaction.getAttachment() instanceof Prunable);
                     pstmt.setInt(++i, transaction.getECBlockHeight());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getECBlockId());
                     pstmt.setShort(++i, index++);

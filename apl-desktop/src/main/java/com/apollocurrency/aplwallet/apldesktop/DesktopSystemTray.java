@@ -34,7 +34,6 @@ import java.util.Locale;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -45,12 +44,14 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import org.slf4j.Logger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import javax.enterprise.inject.spi.CDI;
 
 public class DesktopSystemTray {
     private static final Logger LOG = getLogger(DesktopSystemTray.class);
 
     public static final int DELAY = 1000;
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private SystemTray tray;
     private final JFrame wrapper = new JFrame();
     private JDialog statusDialog;
@@ -188,7 +189,7 @@ public class DesktopSystemTray {
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Constants.APPLICATION);
         addDataRow(statusPanel, "Version", Constants.VERSION.toString());
-        addDataRow(statusPanel, "Network", (AplGlobalObjects.getChainConfig().isTestnet()) ? "TestNet" : "MainNet");
+        addDataRow(statusPanel, "Network", (blockchainConfig.isTestnet()) ? "TestNet" : "MainNet");
         addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));

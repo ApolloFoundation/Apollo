@@ -22,9 +22,8 @@ package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -53,8 +52,8 @@ public class CompactDatabase {
     private static final Logger LOG = getLogger(CompactDatabase.class);
 
     // TODO: YL remove static instance later
- //   private static AplGlobalObjects aplGlobalObjects = CDI.current().select(AplGlobalObjects.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     /**
      * Compact the ARS database
      *
@@ -62,7 +61,7 @@ public class CompactDatabase {
      */
     public static void main(String[] args) {
 //TODO: Check
-        AplCore core = new AplCore();
+        AplCore core = new AplCore(blockchainConfig);
         core.init();
         //
         // Compact the database
@@ -80,7 +79,7 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-        String dbPrefix = AplGlobalObjects.getChainConfig().isTestnet() ? "apl.testDb" : "apl.db";
+        String dbPrefix = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
         String dbType = propertiesHolder.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");
