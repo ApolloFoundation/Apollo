@@ -120,7 +120,6 @@ public class AplCoreRuntime {
                 "java.security.policy",
                 "java.security.manager",
                 RuntimeEnvironment.RUNTIME_MODE_ARG,
-                RuntimeEnvironment.DIRPROVIDER_ARG
         };
         for (String property : loggedProperties) {
             LOG.debug("{} = {}", property, System.getProperty(property));

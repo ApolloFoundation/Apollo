@@ -20,7 +20,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getInstallationConfigDirectory() {
-        return this.getClass().getClassLoader().getResource("").getPath() + "/conf";
+        return this.getClass().getClassLoader().getResource("").getPath() + "conf";
     }
 
     @Override

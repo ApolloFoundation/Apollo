@@ -106,7 +106,7 @@ public class Apollo {
     /**
      * @param argv the command line arguments
      */
-    public static void main(String[] argv) throws IOException {
+    public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
         
@@ -171,11 +171,17 @@ public class Apollo {
         }
     }
 
-    private static DirProvider createDirProvider(CmdLineArgs args) throws IOException {
+    private static DirProvider createDirProvider(CmdLineArgs args) {
         ChainIdServiceImpl chainIdService = new ChainIdServiceImpl();
         PredefinedDirLocations userDefinedDirLocations =
                 new PredefinedDirLocations(args.dbDir, args.logDir, args.vaultKeystoreDir, args.pidFile, args.twoFactorAuthDir);
-        UUID chainId = chainIdService.getActiveChain().getChainId();
+        UUID chainId;
+        try {
+            chainId = chainIdService.getActiveChain().getChainId();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Unable to create dirProvider, cannot load chains config", e);
+        }
 
         return new DirProviderFactory().getInstance(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, userDefinedDirLocations);
     }

@@ -27,7 +27,6 @@ import java.util.prefs.Preferences;
 public class RuntimeEnvironment {
 
     public static final String RUNTIME_MODE_ARG = "apl.runtime.mode";
-    public static final String DIRPROVIDER_ARG = "apl.runtime.dirProvider";
 
     private static final String osname = System.getProperty("os.name").toLowerCase();
     private static final boolean isHeadless;
