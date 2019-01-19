@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-12019 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -37,6 +37,7 @@ import java.util.List;
 public abstract class CurrencyExchangeOffer {
 
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static final class AvailableOffers {
 
@@ -149,7 +150,8 @@ public abstract class CurrencyExchangeOffer {
             counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountATM);
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
             counterAccount.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
-            Exchange.addExchange(transaction, currencyId, offer, account.getId(), offer.getAccountId(), curUnits);
+            Exchange.addExchange(transaction, currencyId, offer, account.getId(),
+                    offer.getAccountId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
         account.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountATM);
@@ -203,7 +205,8 @@ public abstract class CurrencyExchangeOffer {
                     )
             );
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, -curUnits);
-            Exchange.addExchange(transaction, currencyId, offer, offer.getAccountId(), account.getId(), curUnits);
+            Exchange.addExchange(transaction, currencyId, offer, offer.getAccountId(),
+                    account.getId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
         account.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId,
@@ -244,7 +247,7 @@ public abstract class CurrencyExchangeOffer {
         this.limit = limit;
         this.supply = supply;
         this.expirationHeight = expirationHeight;
-        this.creationHeight = AplCore.getBlockchain().getHeight();
+        this.creationHeight = blockchain.getHeight();
         this.transactionIndex = transactionIndex;
         this.transactionHeight = transactionHeight;
     }
@@ -277,7 +280,7 @@ public abstract class CurrencyExchangeOffer {
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setShort(++i, this.transactionIndex);
             pstmt.setInt(++i, this.transactionHeight);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

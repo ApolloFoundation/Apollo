@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
@@ -75,6 +77,7 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     void save(Connection con) throws SQLException {
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
                 + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -91,7 +94,7 @@ public class UnconfirmedTransaction implements Transaction {
                 pstmt.setNull(++i, Types.VARCHAR);
             }
             pstmt.setLong(++i, arrivalTimestamp);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

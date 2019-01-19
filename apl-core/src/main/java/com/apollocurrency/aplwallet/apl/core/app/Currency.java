@@ -102,7 +102,7 @@ public final class Currency {
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
                 pstmt.setLong(++i, this.currentReservePerUnitATM);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -236,7 +236,7 @@ public final class Currency {
         this.initialSupply = attachment.getInitialSupply();
         this.reserveSupply = attachment.getReserveSupply();
         this.maxSupply = attachment.getMaxSupply();
-        this.creationHeight = AplCore.getBlockchain().getHeight();
+        this.creationHeight = blockchain.getHeight();
         this.issuanceHeight = attachment.getIssuanceHeight();
         this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
         this.minDifficulty = attachment.getMinDifficulty();
@@ -311,7 +311,7 @@ public final class Currency {
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

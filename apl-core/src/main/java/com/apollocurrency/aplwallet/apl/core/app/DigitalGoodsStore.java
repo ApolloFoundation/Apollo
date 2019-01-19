@@ -50,6 +50,7 @@ import java.util.List;
 public final class DigitalGoodsStore {
 
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public enum Event {
         GOODS_LISTED, GOODS_DELISTED, GOODS_PRICE_CHANGE, GOODS_QUANTITY_CHANGE,
@@ -213,7 +214,7 @@ public final class DigitalGoodsStore {
                 pstmt.setString(++i, this.tag);
                 pstmt.setInt(++i, this.inStockCount);
                 pstmt.setInt(++i, this.totalCount);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -330,7 +331,7 @@ public final class DigitalGoodsStore {
             this.quantity = attachment.getQuantity();
             this.priceATM = attachment.getPriceATM();
             this.delisted = false;
-            this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+            this.timestamp = blockchain.getLastBlockTimestamp();
             this.hasImage = transaction.getPrunablePlainMessage() != null;
         }
 
@@ -365,7 +366,7 @@ public final class DigitalGoodsStore {
                 pstmt.setLong(++i, this.priceATM);
                 pstmt.setBoolean(++i, this.delisted);
                 pstmt.setBoolean(++i, this.hasImage);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -500,7 +501,7 @@ public final class DigitalGoodsStore {
                     int i = 0;
                     pstmt.setLong(++i, purchase.getId());
                     i = setEncryptedData(pstmt, encryptedData, ++i);
-                    pstmt.setInt(i, AplCore.getBlockchain().getHeight());
+                    pstmt.setInt(i, blockchain.getHeight());
                     pstmt.executeUpdate();
                 }
             }
@@ -530,7 +531,7 @@ public final class DigitalGoodsStore {
                     int i = 0;
                     pstmt.setLong(++i, purchase.getId());
                     pstmt.setString(++i, publicFeedback);
-                    pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                    pstmt.setInt(++i, blockchain.getHeight());
                     pstmt.executeUpdate();
                 }
             }
@@ -665,7 +666,7 @@ public final class DigitalGoodsStore {
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
             final int timestamp = block.getTimestamp();
-            Blockchain bc = AplCore.getBlockchain();
+            Blockchain bc = blockchain;
             long privBlockId = block.getPreviousBlockId();
             Block privBlock = bc.getBlock(privBlockId);
             
@@ -711,7 +712,7 @@ public final class DigitalGoodsStore {
             this.priceATM = attachment.getPriceATM();
             this.deadline = attachment.getDeliveryDeadlineTimestamp();
             this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
-            this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+            this.timestamp = blockchain.getLastBlockTimestamp();
             this.isPending = true;
         }
 
@@ -759,7 +760,7 @@ public final class DigitalGoodsStore {
                 pstmt.setBoolean(++i, this.hasPublicFeedbacks);
                 pstmt.setLong(++i, this.discountATM);
                 pstmt.setLong(++i, this.refundATM);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }

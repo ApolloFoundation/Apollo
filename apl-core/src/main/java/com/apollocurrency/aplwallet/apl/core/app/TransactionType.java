@@ -105,6 +105,7 @@ public abstract class TransactionType {
     private static final byte SUBTYPE_UPDATE_MINOR = 2;
 
     private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -2083,9 +2084,9 @@ public abstract class TransactionType {
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment)transaction.getAttachment();
-                if (attachment.getHeight() > AplCore.getBlockchain().getHeight()) {
+                if (attachment.getHeight() > blockchain.getHeight()) {
                     throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight()
-                            + ", must not exceed current blockchain height " + AplCore.getBlockchain().getHeight());
+                            + ", must not exceed current blockchain height " + blockchain.getHeight());
                 }
                 if (attachment.getHeight() <= attachment.getFinishValidationHeight(transaction) - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
                     throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight()
@@ -2101,9 +2102,9 @@ public abstract class TransactionType {
                     throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
                 }
                 AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
-                if (lastDividend != null && lastDividend.getHeight() > AplCore.getBlockchain().getHeight() - 60) {
+                if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
                     throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId())
-                            + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + AplCore.getBlockchain().getHeight()
+                            + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight()
                             + ", limit is one dividend per 60 blocks");
                 }
             }
@@ -2518,7 +2519,7 @@ public abstract class TransactionType {
                 if (attachment.getQuantity() > goods.getQuantity() || attachment.getPriceATM() != goods.getPriceATM()) {
                     throw new AplException.NotCurrentlyValidException("Goods price or quantity changed: " + attachment.getJSONObject());
                 }
-                if (attachment.getDeliveryDeadlineTimestamp() <= AplCore.getBlockchain().getLastBlockTimestamp()) {
+                if (attachment.getDeliveryDeadlineTimestamp() <= blockchain.getLastBlockTimestamp()) {
                     throw new AplException.NotCurrentlyValidException("Delivery deadline has already expired: " + attachment.getDeliveryDeadlineTimestamp());
                 }
             }
@@ -3107,7 +3108,7 @@ public abstract class TransactionType {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 TransactionImpl uploadTransaction = CDI.current().select(TransactionDb.class).get().findTransaction(attachment.getTaggedDataId(),
-                        AplCore.getBlockchain().getHeight());
+                        blockchain.getHeight());
                 if (uploadTransaction == null) {
                     throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
                 }

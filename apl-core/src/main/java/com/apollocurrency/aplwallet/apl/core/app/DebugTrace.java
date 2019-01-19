@@ -54,6 +54,7 @@ public final class DebugTrace {
     static final boolean LOG_UNCONFIRMED = propertiesLoader.getBooleanProperty("apl.debugLogUnconfirmed");
     static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     static void init() {
         List<String> accountIdStrings = propertiesLoader.getStringListProperty("apl.debugTraceAccounts");
@@ -280,7 +281,7 @@ public final class DebugTrace {
             map.put("event", "shuffling blame");
             log(map);
             long fee = blockchainConfig.getShufflingDepositAtm()/ 4;
-            int height = AplCore.getBlockchain().getHeight();
+            int height = blockchain.getHeight();
             for (int i = 0; i < 3; i++) {
                 long generatorId = blockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
                 if (include(generatorId)) {
@@ -291,7 +292,7 @@ public final class DebugTrace {
                 }
             }
             fee = blockchainConfig.getShufflingDepositAtm() - 3 * fee;
-            long generatorId = AplCore.getBlockchain().getLastBlock().getGeneratorId();
+            long generatorId = blockchain.getLastBlock().getGeneratorId();
             if (include(generatorId)) {
                 Map<String,String> generatorMap = getValues(generatorId, false);
                 generatorMap.put("generation fee", String.valueOf(fee));
@@ -306,8 +307,8 @@ public final class DebugTrace {
         map.put("account", Long.toUnsignedString(account.getId()));
         map.put("lessor guaranteed balance", String.valueOf(account.getGuaranteedBalanceATM()));
         map.put("lessee", Long.toUnsignedString(lesseeId));
-        map.put("timestamp", String.valueOf(AplCore.getBlockchain().getLastBlock().getTimestamp()));
-        map.put("height", String.valueOf(AplCore.getBlockchain().getHeight()));
+        map.put("timestamp", String.valueOf(blockchain.getLastBlock().getTimestamp()));
+        map.put("height", String.valueOf(blockchain.getHeight()));
         map.put("event", "lessor guaranteed balance");
         return map;
     }
@@ -413,8 +414,8 @@ public final class DebugTrace {
         Account account = Account.getAccount(accountId);
         map.put("balance", String.valueOf(account != null ? account.getBalanceATM() : 0));
         map.put("unconfirmed balance", String.valueOf(account != null ? account.getUnconfirmedBalanceATM() : 0));
-        map.put("timestamp", String.valueOf(AplCore.getBlockchain().getLastBlock().getTimestamp()));
-        map.put("height", String.valueOf(AplCore.getBlockchain().getHeight()));
+        map.put("timestamp", String.valueOf(blockchain.getLastBlock().getTimestamp()));
+        map.put("height", String.valueOf(blockchain.getHeight()));
         map.put("event", unconfirmed ? "unconfirmed balance" : "balance");
         return map;
     }
@@ -544,8 +545,8 @@ public final class DebugTrace {
         } else {
             map.put("asset balance", String.valueOf(accountAsset.getQuantityATU()));
         }
-        map.put("timestamp", String.valueOf(AplCore.getBlockchain().getLastBlock().getTimestamp()));
-        map.put("height", String.valueOf(AplCore.getBlockchain().getHeight()));
+        map.put("timestamp", String.valueOf(blockchain.getLastBlock().getTimestamp()));
+        map.put("height", String.valueOf(blockchain.getHeight()));
         map.put("event", "asset balance");
         return map;
     }
@@ -559,8 +560,8 @@ public final class DebugTrace {
         } else {
             map.put("currency balance", String.valueOf(accountCurrency.getUnits()));
         }
-        map.put("timestamp", String.valueOf(AplCore.getBlockchain().getLastBlock().getTimestamp()));
-        map.put("height", String.valueOf(AplCore.getBlockchain().getHeight()));
+        map.put("timestamp", String.valueOf(blockchain.getLastBlock().getTimestamp()));
+        map.put("height", String.valueOf(blockchain.getHeight()));
         map.put("event", "currency balance");
         return map;
     }
@@ -569,8 +570,8 @@ public final class DebugTrace {
         Map<String,String> map = new HashMap<>();
         map.put("account", Long.toUnsignedString(accountId));
         map.put("event", start ? "lease begin" : "lease end");
-        map.put("timestamp", String.valueOf(AplCore.getBlockchain().getLastBlock().getTimestamp()));
-        map.put("height", String.valueOf(AplCore.getBlockchain().getHeight()));
+        map.put("timestamp", String.valueOf(blockchain.getLastBlock().getTimestamp()));
+        map.put("height", String.valueOf(blockchain.getHeight()));
         map.put("lessee", Long.toUnsignedString(accountLease.getCurrentLesseeId()));
         return map;
     }
@@ -670,8 +671,8 @@ public final class DebugTrace {
         } else if (attachment == Attachment.ARBITRARY_MESSAGE) {
             map = new HashMap<>();
             map.put("account", Long.toUnsignedString(accountId));
-            map.put("timestamp", String.valueOf(AplCore.getBlockchain().getLastBlock().getTimestamp()));
-            map.put("height", String.valueOf(AplCore.getBlockchain().getHeight()));
+            map.put("timestamp", String.valueOf(blockchain.getLastBlock().getTimestamp()));
+            map.put("height", String.valueOf(blockchain.getHeight()));
             map.put("event", attachment == Attachment.ARBITRARY_MESSAGE ? "message" : "encrypted message");
             if (isRecipient) {
                 map.put("sender", Long.toUnsignedString(transaction.getSenderId()));

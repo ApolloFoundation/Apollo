@@ -74,11 +74,11 @@ public final class AplCore {
         return shutdown;
     }
  
+/*
     public static Blockchain getBlockchain() {
         return blockchain;
     }
 
-/*
     public static BlockchainProcessor getBlockchainProcessor() {
         return blockchainProcessor;
     }
@@ -210,6 +210,7 @@ public final class AplCore {
                 Vote.init();
                 PhasingVote.init();
                 Currency.init();
+                CurrencyExchangeOffer.init();
                 CurrencyBuyOffer.init();
                 CurrencySellOffer.init();
                 CurrencyFounder.init();

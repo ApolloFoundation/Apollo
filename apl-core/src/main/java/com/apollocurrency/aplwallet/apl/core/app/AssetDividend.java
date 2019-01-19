@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -124,8 +126,9 @@ public final class AssetDividend {
         this.dividendHeight = attachment.getHeight();
         this.totalDividend = totalDividend;
         this.numAccounts = numAccounts;
-        this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
-        this.height = AplCore.getBlockchain().getHeight();
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        this.timestamp = blockchain.getLastBlockTimestamp();
+        this.height = blockchain.getHeight();
     }
 
     private AssetDividend(ResultSet rs, DbKey dbKey) throws SQLException {

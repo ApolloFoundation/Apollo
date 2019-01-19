@@ -15,10 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
+import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -99,13 +101,14 @@ public class CurrencyFounder {
     }
 
     private void save(Connection con) throws SQLException {
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest) "
                 + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.getCurrencyId());
             pstmt.setLong(++i, this.getAccountId());
             pstmt.setLong(++i, this.getAmountPerUnitATM());
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

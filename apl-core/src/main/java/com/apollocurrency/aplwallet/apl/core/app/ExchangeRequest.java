@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -119,7 +121,8 @@ public final class ExchangeRequest {
         this.units = attachment.getUnits();
         this.rate = attachment.getRateATM();
         this.isBuy = isBuy;
-        Block block = AplCore.getBlockchain().getLastBlock();
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        Block block = blockchain.getLastBlock();
         this.height = block.getHeight();
         this.timestamp = block.getTimestamp();
     }

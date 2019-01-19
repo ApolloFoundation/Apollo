@@ -69,7 +69,8 @@ import java.util.StringJoiner;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
@@ -105,6 +106,7 @@ import org.slf4j.Logger;
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
@@ -655,7 +657,7 @@ public final class ParameterParser {
     }
 
     public static int getNumberOfConfirmations(HttpServletRequest req) throws ParameterException {
-        return getInt(req, "numberOfConfirmations", 0, AplCore.getBlockchain().getHeight(), false);
+        return getInt(req, "numberOfConfirmations", 0, blockchain.getHeight(), false);
     }
 
     public static int getHeight(HttpServletRequest req) throws ParameterException {
@@ -663,7 +665,7 @@ public final class ParameterParser {
         if (heightValue != null) {
             try {
                 int height = Integer.parseInt(heightValue);
-                if (height < 0 || height > AplCore.getBlockchain().getHeight()) {
+                if (height < 0 || height > blockchain.getHeight()) {
                     throw new ParameterException(INCORRECT_HEIGHT);
                 }
                 return height;

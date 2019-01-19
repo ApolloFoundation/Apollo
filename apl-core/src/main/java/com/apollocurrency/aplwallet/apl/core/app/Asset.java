@@ -36,6 +36,7 @@ import java.sql.SQLException;
 public final class Asset {
 
     private static BlockchainProcessor blockchainProcessor;
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final DbKey.LongKeyFactory<Asset> assetDbKeyFactory = new DbKey.LongKeyFactory<Asset>("id") {
 
@@ -69,8 +70,8 @@ public final class Asset {
             if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
                 throw new IllegalArgumentException("Historical data as of height " + height +" not available.");
             }
-            if (height > AplCore.getBlockchain().getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + AplCore.getBlockchain().getHeight());
+            if (height > blockchain.getHeight()) {
+                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
             }
         }
 
@@ -162,7 +163,7 @@ public final class Asset {
             pstmt.setLong(++i, this.initialQuantityATU);
             pstmt.setLong(++i, this.quantityATU);
             pstmt.setByte(++i, this.decimals);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
