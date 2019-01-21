@@ -1,10 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -28,6 +23,11 @@ import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
 
 /**
  * Main Apollo startup class
@@ -127,7 +127,7 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
-
+        System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
 
         if(RuntimeEnvironment.isAdmin()){
             System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
@@ -138,7 +138,6 @@ public class Apollo {
                 args.isResourceIgnored(),
                 args.configDir);
 //init logging
-
         EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();

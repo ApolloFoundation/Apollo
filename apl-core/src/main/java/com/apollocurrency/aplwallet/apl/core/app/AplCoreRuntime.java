@@ -5,12 +5,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
@@ -19,6 +13,12 @@ import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -64,17 +64,6 @@ public class AplCoreRuntime {
         runtimeMode.shutdown();
     }
 
-//    public String getDbDir(String dbDir, UUID chainId, boolean chainIdFirst) {
-//        return dirProvider.getDbDir(dbDir, chainId, chainIdFirst);
-//    }
-
-//    public  String getDbDir(String dbDir, boolean chainIdFirst) {
-//        return dirProvider.getDbDir(dbDir, blockchainConfig.getChain().getChainId(), chainIdFirst);
-//    }
-
-    //    public  String getDbDir(String dbDir) {
-//        return dirProvider.getDbDir(dbDir, blockchainConfig.getChain().getChainId(), false);
-//    }
     public Path getDbDir() {
         return dirProvider.getDbDir();
     }
@@ -83,15 +72,9 @@ public class AplCoreRuntime {
         return dirProvider.getVaultKeystoreDir();
     }
 
-    //    public  Path getKeystoreDir(String keystoreDir) {
-//        return dirProvider.getKeystoreDir(keystoreDir).toPath();
-//    }
     public Path get2FADir() {
         return dirProvider.get2FADir();
     }
-//    public  Path get2FADir(String dir2FA) {
-//        return Paths.get(dirProvider.getAppHomeDir(), dir2FA);
-//    }
 
     public String getUserHomeDir() {
         return dirProvider.getAppBaseDir().toString();

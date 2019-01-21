@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 public interface DbInfoExtractor {
 
-    int getHeight(String dbDir);
+    int getHeight(String dbPath);
 
-    Path getPath(String dbDir);
+    Path getPath(String dbPath);
 }

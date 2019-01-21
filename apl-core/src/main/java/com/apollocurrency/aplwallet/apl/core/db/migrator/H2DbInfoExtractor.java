@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.migrator;
 
+import org.h2.jdbcx.JdbcDataSource;
+
 import javax.sql.DataSource;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,31 +15,27 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.jdbcx.JdbcDataSource;
-
 public class H2DbInfoExtractor implements DbInfoExtractor {
     private static final String DB_TYPE = "h2";
     private static final String DB_SUFFIX = ".h2.db";
-    private final String dbName;
     private final String user;
     private final String password;
 
-    public H2DbInfoExtractor(String dbName, String user, String password) {
-        this.dbName = dbName;
+    public H2DbInfoExtractor(String user, String password) {
         this.user = user;
         this.password = password;
     }
 
-    private static String createDbUrl(String dbDir, String dbName, String type) {
-        return String.format("jdbc:%s:%s;MV_STORE=FALSE", type, dbDir + "/" + dbName);
+    private static String createDbUrl(String dbPath, String type) {
+        return String.format("jdbc:%s:%s;MV_STORE=FALSE", type, dbPath);
     }
 
-    private Path createDbPath(String dbDir) {
-        return Paths.get(dbDir, dbName + DB_SUFFIX);
+    private Path createDbPath(String dbPath) {
+        return Paths.get(dbPath + DB_SUFFIX);
     }
     @Override
-    public int getHeight(String dbDir) {
-        DataSource dataSource = createDataSource(dbDir);
+    public int getHeight(String dbPath) {
+        DataSource dataSource = createDataSource(dbPath);
         if (dataSource != null) {
             int height = getHeight(dataSource);
             shutdownDb(dataSource);
@@ -46,25 +44,25 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
     }
 
     @Override
-    public Path getPath(String dbDir) {
-        return createDbPath(dbDir);
+    public Path getPath(String dbPath) {
+        return createDbPath(dbPath);
     }
 
     protected void shutdownDb(DataSource dataSource) {
         try {
             Connection connection = dataSource.getConnection();
-            connection.createStatement().execute("SHUTDOWN");
+            connection.createStatement().execute("SHUTDOWN COMPACT");
         }
         catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    protected DataSource createDataSource(String dbDir) {
-        if (!checkPath(dbDir)) {
+    protected DataSource createDataSource(String dbPath) {
+        if (!checkPath(dbPath)) {
             return null;
         }
-        String dbUrl = createDbUrl(dbDir, dbName, DB_TYPE);
+        String dbUrl = createDbUrl(dbPath, DB_TYPE);
         JdbcDataSource jdbcDataSource = new JdbcDataSource();
         jdbcDataSource.setPassword(password);
         jdbcDataSource.setUser(user);

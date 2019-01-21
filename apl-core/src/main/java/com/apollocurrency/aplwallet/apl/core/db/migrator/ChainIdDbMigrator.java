@@ -6,22 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.db.migrator;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+
 public class ChainIdDbMigrator implements DbMigrator {
-    private final String chainIdDbDir;
-    private final String legacyDbDir;
+    private final List<Path> dbPaths;
     private final DbInfoExtractor dbInfoExtractor;
 
     private static final Logger LOG = getLogger(ChainIdDbMigrator.class);
@@ -38,26 +32,29 @@ public class ChainIdDbMigrator implements DbMigrator {
         }
     }
 
-    public ChainIdDbMigrator(String chainIdDbDir, String legacyDbDir, DbInfoExtractor dbInfoExtractor) {
-        this.chainIdDbDir = chainIdDbDir;
-        this.legacyDbDir = legacyDbDir;
+    public ChainIdDbMigrator(List<Path> dbPaths, DbInfoExtractor dbInfoExtractor) {
+        this.dbPaths = dbPaths;
         this.dbInfoExtractor = dbInfoExtractor;
     }
 
 
     public DbInfo getOldDbInfo() {
-
-        int chainIdDbHeight = dbInfoExtractor.getHeight(chainIdDbDir);
-        if (chainIdDbHeight != 0) {
-            return new DbInfo(dbInfoExtractor.getPath(chainIdDbDir), Paths.get(chainIdDbDir).getParent(), chainIdDbHeight);
+        for (Path dbPath : dbPaths) {
+            int height = dbInfoExtractor.getHeight(dbPath.toAbsolutePath().toString());
+            if (height != 0) {
+                return new DbInfo(dbInfoExtractor.getPath(dbPath.toAbsolutePath().toString()), dbPath.getParent(), height);
+            }
         }
-
-        int legacyDbHeight = dbInfoExtractor.getHeight(legacyDbDir);
-        if (legacyDbHeight != 0) {
-
-            return new DbInfo(dbInfoExtractor.getPath(legacyDbDir), Paths.get(legacyDbDir), legacyDbHeight);
-        } else return null;
+        return null;
     }
+
+//    private Path getRootDbDir(Path dbPath, Path currentDbPath) {
+//        Path rootDbRoot = dbPath;
+//        while (!currentDbPath.startsWith(rootDbRoot.getParent())) {
+//            rootDbRoot = rootDbRoot.getParent();
+//        }
+//        return rootDbRoot;
+//    }
 
     /**
      * {@inheritDoc}
@@ -68,18 +65,19 @@ public class ChainIdDbMigrator implements DbMigrator {
      * migrated database will be returned, otherwise null will be returned
      * </p>
      */
+
     @Override
-    public Path migrate(String targetDbDir) throws IOException {
+    public Path migrate(String targetDbPath) throws IOException {
         DbInfo oldDbInfo = getOldDbInfo();
         if (oldDbInfo != null) {
             LOG.info("Found old db for migration at path {}", oldDbInfo.dbPath);
             int height = oldDbInfo.height;
             if (height > 0) {
-                LOG.info("Db {} has blocks - {}. Do migration to {}", oldDbInfo.dbPath, height, targetDbDir);
-                Path targetDbDirPath = dbInfoExtractor.getPath(targetDbDir);
-                Files.copy(oldDbInfo.dbPath, targetDbDirPath, StandardCopyOption.REPLACE_EXISTING);
+                Path targetDbFullPath = dbInfoExtractor.getPath(targetDbPath);
+                LOG.info("Db {} has blocks - {}. Do migration to {}", oldDbInfo.dbPath, height, targetDbFullPath);
+                Files.copy(oldDbInfo.dbPath, targetDbFullPath, StandardCopyOption.REPLACE_EXISTING);
             }
-            int actualDbHeight = dbInfoExtractor.getHeight(targetDbDir);
+            int actualDbHeight = dbInfoExtractor.getHeight(targetDbPath);
             if (actualDbHeight != height) {
                 throw new RuntimeException(String.format("Db was migrated with errors. Expected height - %d, actual - %d. Application restart is " +
                         "needed.", height, actualDbHeight));
@@ -89,35 +87,6 @@ public class ChainIdDbMigrator implements DbMigrator {
             LOG.info("Nothing to migrate");
             return null;
         }
-    }
-
-    public static void deleteAllWithExclusion(Path pathToDelete, Path pathToExclude) throws IOException {
-
-        List<Path> excludedPaths = Files.walk(pathToExclude.normalize()).collect(Collectors.toList());
-        if (pathToExclude.startsWith(pathToDelete)) {
-            Path relativePath = pathToDelete.relativize(pathToExclude);
-            for (Path aRelativePath : relativePath) {
-                excludedPaths.add(aRelativePath);
-            }
-            excludedPaths.add(pathToDelete.normalize());
-        }
-        Files.walkFileTree(pathToDelete.normalize(), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (!excludedPaths.contains(file)) {
-                    Files.delete(file);
-                }
-                return super.visitFile(file, attrs);
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                if (!excludedPaths.contains(dir)) {
-                    Files.delete(dir);
-                }
-                return super.postVisitDirectory(dir, exc);
-            }
-        });
     }
 }
 
