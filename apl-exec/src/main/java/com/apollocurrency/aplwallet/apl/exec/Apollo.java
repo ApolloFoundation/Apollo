@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Main Apollo startup class
@@ -134,10 +137,10 @@ public class Apollo {
         log = LoggerFactory.getLogger(Apollo.class);
 //check webUI
         System.out.println("=== Bin directory is: "+dirProvider.getBinDirectory().getAbsolutePath());
+        Future<Boolean> unzipRes; 
         WebUiExtractor we = new WebUiExtractor(dirProvider);
-        if(!we.checkInstalled()){
-            we.install();
-        }
+        ExecutorService execService = Executors.newFixedThreadPool(1);
+        unzipRes = execService.submit(we);
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
@@ -159,6 +162,9 @@ public class Apollo {
             app.initCore();
             app.launchDesktopApplication();
             app.initUpdater();
+            if(unzipRes.get()!=true){
+                System.err.println("Error! WebUI is not installed!");
+            }
 
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());

@@ -1,7 +1,13 @@
 package com.apollocurrency.aplwallet.apl.exec.webui;
 
+import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 /**
@@ -12,20 +18,29 @@ import java.util.concurrent.Callable;
 public class WebUiExtractor implements Callable<Boolean>{
     private static String webUiZipFile = "web-wallet.zip";
     private DirProvider dirProvider;
+    public final static String WEB_UI_DIR="webui";
 
     public WebUiExtractor(DirProvider dirProvider) {
         this.dirProvider = dirProvider;
     }
     
-    private File findZip(){
+    private File findWebUiZip(){
       File res = null;
-      File dir = dirProvider.getBinDirectory();
-      File[] filesList = dir.listFiles();
+      File dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+File.separator+"lib");
+      if(!dir.exists()){//we are in dev. env or tests
+          dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+"/apl-exec/target/lib");
+      }
+      File[] filesList = dir.listFiles(new FileFilter(){
+          @Override
+          public boolean accept(File pathname) {
+              return pathname.getName().endsWith("zip");
+          }
+      });
         for(File f : filesList){
             if(f.isFile()){
-                System.out.println(f.getName());
                 if(f.getName().equalsIgnoreCase(webUiZipFile)){
-                 System.out.println("Found: "+f.getName());   
+                  res = new File(dir.getAbsolutePath()+File.separator+f.getName());
+                  break;
                 }
             }
         }  
@@ -33,15 +48,15 @@ public class WebUiExtractor implements Callable<Boolean>{
     }
     
     private File findDest(){
-        File res = null;
+        File res = new File(dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR);
         return res;
     }
     
     public boolean checkInstalled() {
         boolean res;
-        File zip = findZip();
+        File zip = findWebUiZip();
         File dest = findDest();
-        if(dest==null){
+        if(!dest.exists()){
             res=false;
         }else{
             long lmd = dest.lastModified();
@@ -50,9 +65,26 @@ public class WebUiExtractor implements Callable<Boolean>{
         }
         return res;
     }
-
+    
+    public void removeDir(String path){
+        try {
+            Files.walk(Paths.get(path))
+                    .map(Path::toFile)
+                    .sorted((o1, o2) -> -o1.compareTo(o2))
+                    .forEach(File::delete);
+        } catch (IOException ex) {
+        }
+    }
+    
     public boolean install() {
-        boolean res = true;
+        boolean res=true;
+        if(!checkInstalled()){
+            File dest = findDest();
+            if(dest.exists()){
+              removeDir(dest.getAbsolutePath());
+            }
+            res=Zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());            
+        }
         return res;
     }
 
