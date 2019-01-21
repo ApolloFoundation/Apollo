@@ -111,7 +111,7 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
         sellOfferTable.delete(sellOffer);
     }
 
-    static void init() {}
+    public static void init() {}
 
     private final DbKey dbKey;
 

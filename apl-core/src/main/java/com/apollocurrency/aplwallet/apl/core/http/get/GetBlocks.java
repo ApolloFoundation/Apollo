@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -58,7 +57,7 @@ public final class GetBlocks extends AbstractAPIRequestHandler {
         boolean includeExecutedPhased = "true".equalsIgnoreCase(req.getParameter("includeExecutedPhased"));
 
         JSONArray blocks = new JSONArray();
-        try (DbIterator<? extends Block> iterator = AplCore.getBlockchain().getBlocks(firstIndex, lastIndex)) {
+        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Block block = iterator.next();
                 if (block.getTimestamp() < timestamp) {

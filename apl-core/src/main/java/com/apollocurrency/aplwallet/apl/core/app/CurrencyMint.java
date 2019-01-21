@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Manages currency proof of work minting
@@ -136,13 +138,14 @@ public final class CurrencyMint {
     }
 
     private void save(Connection con) throws SQLException {
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest) "
                 + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
             pstmt.setLong(++i, this.counter);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

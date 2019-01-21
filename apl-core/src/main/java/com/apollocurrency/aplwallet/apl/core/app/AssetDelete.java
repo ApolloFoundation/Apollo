@@ -15,10 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
+import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -117,8 +119,9 @@ public final class AssetDelete {
         this.assetId = assetId;
         this.accountId = transaction.getSenderId();
         this.quantityATU = quantityATU;
-        this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
-        this.height = AplCore.getBlockchain().getHeight();
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        this.timestamp = blockchain.getLastBlockTimestamp();
+        this.height = blockchain.getHeight();
     }
 
     private AssetDelete(ResultSet rs, DbKey dbKey) throws SQLException {

@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -76,7 +75,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        Transaction transaction = AplCore.getBlockchain().getTransaction(transactionId);
+        Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }

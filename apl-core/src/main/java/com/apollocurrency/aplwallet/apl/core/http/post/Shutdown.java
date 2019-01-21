@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import org.json.simple.JSONObject;
@@ -47,7 +46,7 @@ public final class Shutdown extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         boolean scan = "true".equalsIgnoreCase(req.getParameter("scan"));
         if (scan) {
-            AplCore.getBlockchainProcessor().fullScanWithShutdown();
+            lookupBlockchainProcessor().fullScanWithShutdown();
         } else {
             new Thread(() -> System.exit(0)).start();
         }

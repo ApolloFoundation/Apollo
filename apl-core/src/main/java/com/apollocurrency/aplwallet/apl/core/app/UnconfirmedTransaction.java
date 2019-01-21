@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
@@ -44,11 +46,12 @@ import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
-class UnconfirmedTransaction implements Transaction {
+public class UnconfirmedTransaction implements Transaction {
 
     private final TransactionImpl transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp) {
         this.transaction = transaction;
@@ -91,7 +94,7 @@ class UnconfirmedTransaction implements Transaction {
                 pstmt.setNull(++i, Types.VARCHAR);
             }
             pstmt.setLong(++i, arrivalTimestamp);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

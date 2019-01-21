@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
@@ -72,7 +71,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         JSONObject response = GetBlockchainStatus.getInstance().processRequest(req);
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
-            response.put("numberOfTransactions", AplCore.getBlockchain().getTransactionCount());
+            response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
             response.put("numberOfAccounts", Account.getCount());
             response.put("numberOfAssets", Asset.getCount());
             int askCount = Order.Ask.getCount();

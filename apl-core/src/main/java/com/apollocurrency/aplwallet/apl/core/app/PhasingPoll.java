@@ -48,6 +48,7 @@ public final class PhasingPoll extends AbstractPoll {
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
     private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static HashFunction getHashFunction(byte code) {
         try {
@@ -72,7 +73,7 @@ public final class PhasingPoll extends AbstractPoll {
             this.dbKey = resultDbKeyFactory.newKey(this.id);
             this.result = result;
             this.approved = result >= poll.getQuorum();
-            this.height = AplCore.getBlockchain().getHeight();
+            this.height = blockchain.getHeight();
         }
 
         private PhasingPollResult(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -178,7 +179,7 @@ public final class PhasingPoll extends AbstractPoll {
                 int i = 0;
                 pstmt.setLong(++i, poll.getId());
                 pstmt.setLong(++i, accountId);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -207,7 +208,7 @@ public final class PhasingPoll extends AbstractPoll {
                 pstmt.setLong(++i, poll.getId());
                 pstmt.setBytes(++i, linkedFullHash);
                 pstmt.setLong(++i, Convert.fullHashToId(linkedFullHash));
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -254,7 +255,7 @@ public final class PhasingPoll extends AbstractPoll {
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -276,11 +277,11 @@ public final class PhasingPoll extends AbstractPoll {
                     + "ORDER BY transaction.height DESC, transaction.transaction_index DESC "
                     + DbUtils.limitsClause(from, to));
             int i = 0;
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.setLong(++i, voterId);
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -306,13 +307,13 @@ public final class PhasingPoll extends AbstractPoll {
             int i = 0;
             pstmt.setLong(++i, holdingId);
             pstmt.setByte(++i, votingModel.getCode());
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             if (accountId != 0) {
                 pstmt.setLong(++i, accountId);
             }
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -332,10 +333,10 @@ public final class PhasingPoll extends AbstractPoll {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return BlockchainImpl.getInstance().getTransactions(con, pstmt);
+            return blockchain.getTransactions(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -352,7 +353,7 @@ public final class PhasingPoll extends AbstractPoll {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
@@ -362,14 +363,14 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    public static List<? extends Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
+    public static List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                      "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
             pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);
-            List<TransactionImpl> transactions = new ArrayList<>();
+            List<Transaction> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     transactions.add(transactionDb.findTransaction(rs.getLong("transaction_id")));
@@ -390,7 +391,7 @@ public final class PhasingPoll extends AbstractPoll {
                      " AND phasing_poll.finish_height > ?")) {
             int i = 0;
             pstmt.setLong(++i, accountId);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getLong("fees");
@@ -489,7 +490,7 @@ public final class PhasingPoll extends AbstractPoll {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.NONE) {
             return 0;
         }
-        int height = Math.min(this.finishHeight, AplCore.getBlockchain().getHeight());
+        int height = Math.min(this.finishHeight, blockchain.getHeight());
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
             for (byte[] hash : getLinkedFullHashes()) {
@@ -532,7 +533,7 @@ public final class PhasingPoll extends AbstractPoll {
             pstmt.setByte(++i, voteWeighting.getMinBalanceModel().getCode());
             DbUtils.setBytes(pstmt, ++i, hashedSecret);
             pstmt.setByte(++i, algorithm);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

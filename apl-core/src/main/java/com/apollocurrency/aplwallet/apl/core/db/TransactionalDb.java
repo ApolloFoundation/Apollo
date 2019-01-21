@@ -15,12 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class TransactionalDb extends BasicDb {
     private static final Logger LOG = getLogger(TransactionalDb.class);
 
     // TODO: YL remove static instance later
-
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static final DbFactory factory = new DbFactory();
     private static final long stmtThreshold;
@@ -158,7 +159,7 @@ public class TransactionalDb extends BasicDb {
         long elapsed = now - ((DbConnection)con).txStart;
         if (elapsed >= txThreshold) {
             logThreshold(String.format("Database transaction required %.3f seconds at height %d",
-                                       (double)elapsed/1000.0, AplCore.getBlockchain().getHeight()));
+                                       (double)elapsed/1000.0, blockchain.getHeight()));
         } else {
             long count, times;
             boolean logStats = false;
@@ -295,7 +296,7 @@ public class TransactionalDb extends BasicDb {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > stmtThreshold)
                 logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, AplCore.getBlockchain().getHeight(), sql));
+                                           (double)elapsed/1000.0, blockchain.getHeight(), sql));
             return b;
         }
 
@@ -306,7 +307,7 @@ public class TransactionalDb extends BasicDb {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > stmtThreshold)
                 logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, AplCore.getBlockchain().getHeight(), sql));
+                                           (double)elapsed/1000.0, blockchain.getHeight(), sql));
             return r;
         }
 
@@ -317,7 +318,7 @@ public class TransactionalDb extends BasicDb {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > stmtThreshold)
                 logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, AplCore.getBlockchain().getHeight(), sql));
+                                           (double)elapsed/1000.0, blockchain.getHeight(), sql));
             return c;
         }
     }
@@ -334,7 +335,7 @@ public class TransactionalDb extends BasicDb {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > stmtThreshold)
                 logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, AplCore.getBlockchain().getHeight(), getSQL()));
+                                           (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
             return b;
         }
 
@@ -345,7 +346,7 @@ public class TransactionalDb extends BasicDb {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > stmtThreshold)
                 logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, AplCore.getBlockchain().getHeight(), getSQL()));
+                                           (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
             return r;
         }
 
@@ -356,7 +357,7 @@ public class TransactionalDb extends BasicDb {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > stmtThreshold)
                 logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, AplCore.getBlockchain().getHeight(), getSQL()));
+                                           (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
             return c;
         }
     }

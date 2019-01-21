@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
@@ -286,7 +288,8 @@ public abstract class MonetarySystem extends TransactionType {
             if (currency != null) {
                 reserveSupply = currency.getReserveSupply();
             } else { // currency must have been deleted, get reserve supply from the original issuance transaction
-                Transaction currencyIssuance = AplCore.getBlockchain().getTransaction(attachment.getCurrencyId());
+                Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+                Transaction currencyIssuance = blockchain.getTransaction(attachment.getCurrencyId());
                 Attachment.MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
                 reserveSupply = currencyIssuanceAttachment.getReserveSupply();
             }

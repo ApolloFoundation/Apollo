@@ -86,7 +86,7 @@ public final class Genesis {
         return digest.digest();
     }
 
-    static BlockImpl newGenesisBlock() {
+    static Block newGenesisBlock() {
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadGenesisAccountsJSON());
     }
 

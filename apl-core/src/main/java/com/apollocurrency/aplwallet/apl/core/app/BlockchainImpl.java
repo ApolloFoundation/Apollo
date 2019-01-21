@@ -45,19 +45,21 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 @ApplicationScoped
 public class BlockchainImpl implements Blockchain {
 
-    private static BlockchainImpl instance;
     private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
+/*
     static BlockchainImpl getInstance() {
         if (instance == null) {
             instance = CDI.current().select(BlockchainImpl.class).get();
         }
         return instance;
     }
+    private static BlockchainImpl instance;
+*/
 
-    private BlockchainImpl() {}
+    public BlockchainImpl() {}
 
     private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
@@ -359,12 +361,12 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public TransactionImpl getTransaction(long transactionId) {
+    public Transaction getTransaction(long transactionId) {
         return transactionDb.findTransaction(transactionId);
     }
 
     @Override
-    public TransactionImpl getTransactionByFullHash(String fullHash) {
+    public Transaction getTransactionByFullHash(String fullHash) {
         return transactionDb.findTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
@@ -643,7 +645,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-        BlockchainProcessorImpl blockchainProcessor = BlockchainProcessorImpl.getInstance();
+        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         List<Transaction> result = new ArrayList<>();
         readLock();
         try {
@@ -658,6 +660,7 @@ public class BlockchainImpl implements Blockchain {
                     }
                 }
             }
+
             blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
                         TransactionImpl transaction = unconfirmedTransaction.getTransaction();

@@ -51,7 +51,7 @@ public final class GetECBlock extends AbstractAPIRequestHandler {
         if (timestamp == 0) {
             timestamp = AplCore.getEpochTime();
         }
-        Block ecBlock = AplCore.getBlockchain().getECBlock(timestamp);
+        Block ecBlock = lookupBlockchain().getECBlock(timestamp);
         JSONObject response = new JSONObject();
         response.put("ecBlockId", ecBlock.getStringId());
         response.put("ecBlockHeight", ecBlock.getHeight());

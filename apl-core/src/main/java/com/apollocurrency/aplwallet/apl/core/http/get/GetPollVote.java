@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -56,8 +55,8 @@ public class GetPollVote extends AbstractAPIRequestHandler {
         if (vote != null) {
             int countHeight;
             JSONData.VoteWeighter weighter = null;
-            if (includeWeights && (countHeight = Math.min(poll.getFinishHeight(), AplCore.getBlockchain().getHeight()))
-                    >= AplCore.getBlockchainProcessor().getMinRollbackHeight()) {
+            if (includeWeights && (countHeight = Math.min(poll.getFinishHeight(), lookupBlockchain().getHeight()))
+                    >= lookupBlockchainProcessor().getMinRollbackHeight()) {
                 VoteWeighting voteWeighting = poll.getVoteWeighting();
                 VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
                 weighter = voterId -> votingModel.calcWeight(voteWeighting, voterId, countHeight);

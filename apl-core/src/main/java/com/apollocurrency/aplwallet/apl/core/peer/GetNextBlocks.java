@@ -15,13 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
@@ -59,19 +59,20 @@ final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
         List<? extends Block> blocks;
         long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
         List<String> stringList = (List<String>)request.get("blockIds");
+        Blockchain blockchain = lookupBlockchain();
         if (stringList != null) {
             if (stringList.size() > 36) {
                 return TOO_MANY_BLOCKS_REQUESTED;
             }
             List<Long> idList = new ArrayList<>();
             stringList.forEach(stringId -> idList.add(Convert.parseUnsignedLong(stringId)));
-            blocks = AplCore.getBlockchain().getBlocksAfter(blockId, idList);
+            blocks = blockchain.getBlocksAfter(blockId, idList);
         } else {
             long limit = Convert.parseLong(request.get("limit"));
             if (limit > 36) {
                 return TOO_MANY_BLOCKS_REQUESTED;
             }
-            blocks = AplCore.getBlockchain().getBlocksAfter(blockId, limit > 0 ? (int)limit : 36);
+            blocks = blockchain.getBlocksAfter(blockId, limit > 0 ? (int)limit : 36);
         }
         blocks.forEach(block -> nextBlocksArray.add(block.getJSONObject()));
         response.put("nextBlocks", nextBlocksArray);

@@ -145,6 +145,8 @@ public final class Shuffling {
     private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final Listeners<Shuffling, Event> listeners = new Listeners<>();
 
@@ -170,31 +172,6 @@ public final class Shuffling {
         }
 
     };
-
-    static {
-        AplCore.getBlockchainProcessor().addListener(block -> {
-
-            if (block.getTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
-                    || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
-                return;
-            }
-            List<Shuffling> shufflings = new ArrayList<>();
-            try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
-                for (Shuffling shuffling : iterator) {
-                    if (!shuffling.isFull(block)) {
-                        shufflings.add(shuffling);
-                    }
-                }
-            }
-            shufflings.forEach(shuffling -> {
-                if (--shuffling.blocksRemaining <= 0) {
-                    shuffling.cancel(block);
-                } else {
-                    shufflingTable.insert(shuffling);
-                }
-            });
-        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-    }
 
     public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -290,7 +267,30 @@ public final class Shuffling {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    static void init() {}
+    static void init() {
+        blockchainProcessor.addListener(block -> {
+
+            if (block.getTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+                    || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
+                return;
+            }
+            List<Shuffling> shufflings = new ArrayList<>();
+            try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
+                for (Shuffling shuffling : iterator) {
+                    if (!shuffling.isFull(block)) {
+                        shufflings.add(shuffling);
+                    }
+                }
+            }
+            shufflings.forEach(shuffling -> {
+                if (--shuffling.blocksRemaining <= 0) {
+                    shuffling.cancel(block);
+                } else {
+                    shufflingTable.insert(shuffling);
+                }
+            });
+        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+    }
 
     private final long id;
     private final DbKey dbKey;
@@ -364,7 +364,7 @@ public final class Shuffling {
             DbUtils.setLongZeroToNull(pstmt, ++i, this.assigneeAccountId);
             DbUtils.setArrayEmptyToNull(pstmt, ++i, this.recipientPublicKeys);
             pstmt.setByte(++i, this.registrantCount);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -464,7 +464,7 @@ public final class Shuffling {
         byte[] shufflingStateHash = null;
         int participantIndex = 0;
         List<ShufflingParticipant> shufflingParticipants = new ArrayList<>();
-        AplCore.getBlockchain().readLock();
+        blockchain.readLock();
         // Read the participant list for the shuffling
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             for (ShufflingParticipant participant : participants) {
@@ -479,7 +479,7 @@ public final class Shuffling {
                 shufflingStateHash = getParticipantsHash(shufflingParticipants);
             }
         } finally {
-            AplCore.getBlockchain().readUnlock();
+            blockchain.readUnlock();
         }
         boolean isLast = participantIndex == participantCount - 1;
         // decrypt the tokens bundled in the current data
@@ -539,7 +539,7 @@ public final class Shuffling {
     }
 
     public Attachment.ShufflingCancellation revealKeySeeds(final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
-        AplCore.getBlockchain().readLock();
+        blockchain.readLock();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             if (cancellingAccountId != this.assigneeAccountId) {
                 throw new RuntimeException(String.format("Current shuffling cancellingAccountId %s does not match %s",
@@ -594,7 +594,7 @@ public final class Shuffling {
             return new Attachment.ShufflingCancellation(this.id, data, keySeeds.toArray(new byte[keySeeds.size()][]),
                     shufflingStateHash, cancellingAccountId);
         } finally {
-            AplCore.getBlockchain().readUnlock();
+            blockchain.readUnlock();
         }
     }
 

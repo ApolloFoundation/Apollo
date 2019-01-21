@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
@@ -68,13 +67,13 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
 
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        Transaction transaction = AplCore.getBlockchain().getTransaction(transactionId);
+        Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
         PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
         if (prunableMessage == null && (transaction.getPrunablePlainMessage() != null || transaction.getPrunableEncryptedMessage() != null) && retrieve) {
-            if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = PrunableMessage.getPrunableMessage(transactionId);

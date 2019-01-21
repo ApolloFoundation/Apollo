@@ -46,10 +46,12 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
@@ -85,10 +87,10 @@ public class EventListener implements Runnable, AsyncListener, TransactionalDb.T
     public static final int eventTimeout = Math.max(propertiesLoader.getIntProperty("apl.apiEventTimeout"), 15);
 
     /** Blockchain processor */
-    static final BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
+    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
 
     /** Transaction processor */
-    static final TransactionProcessor transactionProcessor = AplCore.getTransactionProcessor();
+    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
     /** Active event users */
     public static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();

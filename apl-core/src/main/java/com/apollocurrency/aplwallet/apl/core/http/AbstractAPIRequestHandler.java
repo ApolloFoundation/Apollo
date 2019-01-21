@@ -1,7 +1,10 @@
-
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -11,6 +14,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -19,6 +28,24 @@ public abstract class AbstractAPIRequestHandler {
     private List<String> parameters;
     private String fileParameter;
     private Set<APITag> apiTags;
+    private Blockchain blockchain;
+    private BlockchainProcessor blockchainProcessor;
+    private TransactionProcessor transactionProcessor;
+
+    protected Blockchain lookupBlockchain() {
+        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        return blockchain;
+    }
+
+    protected BlockchainProcessor lookupBlockchainProcessor() {
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        return blockchainProcessor;
+    }
+
+    protected TransactionProcessor lookupTransactionProcessor() {
+        if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        return transactionProcessor;
+    }
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);

@@ -21,9 +21,9 @@
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import org.slf4j.Logger;
 
@@ -31,6 +31,8 @@ import java.io.*;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.spi.CDI;
 
 public final class DownloadTimer implements AddOn {
         private static final Logger LOG = getLogger(DownloadTimer.class);
@@ -44,7 +46,8 @@ public final class DownloadTimer implements AddOn {
 
             writer = new PrintWriter((new BufferedWriter(new OutputStreamWriter(new FileOutputStream("downloadtime.csv")))), true);
             writer.println("height,time,dtime,bps,transations,dtransactions,tps");
-            AplCore.getBlockchainProcessor().addListener(new Listener<Block>() {
+            BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+            blockchainProcessor.addListener(new Listener<Block>() {
 
                 final int interval = 10000;
                 final long startTime = System.currentTimeMillis();

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,6 +44,8 @@ public final class Currency {
         BEFORE_DISTRIBUTE_CROWDFUNDING, BEFORE_UNDO_CROWDFUNDING, BEFORE_DELETE
     }
 
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static final DbKey.LongKeyFactory<Currency> currencyDbKeyFactory = new DbKey.LongKeyFactory<Currency>("id") {
 
         @Override
@@ -99,7 +102,7 @@ public final class Currency {
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
                 pstmt.setLong(++i, this.currentReservePerUnitATM);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -191,11 +194,15 @@ public final class Currency {
 
     }
 
+/*
     static {
         AplCore.getBlockchainProcessor().addListener(new CrowdFundingListener(), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
     }
+*/
 
-    static void init() {}
+    public static void init() {
+        blockchainProcessor.addListener(new CrowdFundingListener(), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+    }
 
     private final long currencyId;
 
@@ -229,7 +236,7 @@ public final class Currency {
         this.initialSupply = attachment.getInitialSupply();
         this.reserveSupply = attachment.getReserveSupply();
         this.maxSupply = attachment.getMaxSupply();
-        this.creationHeight = AplCore.getBlockchain().getHeight();
+        this.creationHeight = blockchain.getHeight();
         this.issuanceHeight = attachment.getIssuanceHeight();
         this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
         this.minDifficulty = attachment.getMinDifficulty();
@@ -304,7 +311,7 @@ public final class Currency {
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -395,7 +402,7 @@ public final class Currency {
     }
 
     public boolean isActive() {
-        return issuanceHeight <= BlockchainImpl.getInstance().getHeight();
+        return issuanceHeight <= blockchain.getHeight();
     }
 
     private CurrencySupply getSupplyData() {

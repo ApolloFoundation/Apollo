@@ -15,12 +15,11 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -69,7 +68,7 @@ public final class SignTransactions {
     }
     private static String signTransaction(String transactionBytesHexString, byte[] keySeed) throws AplException.NotValidException {
         byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
-        Transaction.Builder builder = AplCore.newTransactionBuilder(transactionBytes);
+        Transaction.Builder builder = Transaction.newTransactionBuilder(transactionBytes);
         Transaction transaction = builder.build(keySeed);
         return Convert.toHexString(transaction.getBytes());
     }
