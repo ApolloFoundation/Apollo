@@ -6,21 +6,33 @@ package com.apollocurrency.aplwallet.apl.core.db.model;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import org.slf4j.Logger;
 
-//TODO: Refactor as ORM
+//TODO: Refactor to CDI
 
-public class Option {
-    private static final Logger LOG = getLogger(Option.class);
+public class OptionDAO {
+    private static final Logger LOG = getLogger(OptionDAO.class);
+    private DataSource dataSource;
 
-    public static String get(String optionName) {
-        try (Connection con = Db.getDb().getConnection()) {
+    public OptionDAO() {
+        this.dataSource = Db.getDb();
+    }
+
+    public OptionDAO(DataSource dataSource) {
+        Objects.requireNonNull(dataSource, "Data source cannot be null");
+        this.dataSource = dataSource;
+    }
+
+    public String get(String optionName) {
+        try (Connection con = dataSource.getConnection()) {
             PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
             stmt.setString(1, optionName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -35,9 +47,9 @@ public class Option {
         return null;
     }
 
-    public static boolean set(String optionName, String optionValue) {
+    public boolean set(String optionName, String optionValue) {
         if (get(optionName) == null) {
-            try (Connection con = Db.getDb().getConnection()) {
+            try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
                 stmt.setString(1, optionName);
                 stmt.setString(2, optionValue);
@@ -47,7 +59,7 @@ public class Option {
                 LOG.error(e.getMessage());
             }
         } else {
-            try (Connection con = Db.getDb().getConnection()) {
+            try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("UPDATE option set value = ? WHERE name = ?");
                 stmt.setString(1, optionValue);
                 stmt.setString(2, optionName);
@@ -60,7 +72,7 @@ public class Option {
         return true;
     }
 
-    public static boolean delete(String optionName) {
+    public boolean delete(String optionName) {
         if (get(optionName) != null) {
             try (Connection con = Db.getDb().getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");

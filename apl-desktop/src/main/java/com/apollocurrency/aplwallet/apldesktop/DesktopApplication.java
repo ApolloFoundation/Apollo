@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apldesktop;
@@ -60,7 +60,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.db.model.Option;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -107,6 +107,7 @@ public class DesktopApplication extends Application {
     private static volatile boolean isLaunched;
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
+    private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -159,10 +160,10 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!Constants.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
-            Option.set("Previous launch APP Version", Constants.VERSION.toString());
+            optionDAO.set("Previous launch APP Version", Constants.VERSION.toString());
             
         }
     }

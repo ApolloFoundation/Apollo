@@ -1,10 +1,8 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db.migrator;
-
-import org.h2.jdbcx.JdbcDataSource;
+package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import javax.sql.DataSource;
 import java.nio.file.Files;
@@ -14,6 +12,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.h2.jdbcx.JdbcConnectionPool;
 
 public class H2DbInfoExtractor implements DbInfoExtractor {
     private static final String DB_TYPE = "h2";
@@ -35,7 +35,7 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
     }
     @Override
     public int getHeight(String dbPath) {
-        DataSource dataSource = createDataSource(dbPath);
+        JdbcConnectionPool dataSource = createDataSource(dbPath);
         if (dataSource != null) {
             int height = getHeight(dataSource);
             shutdownDb(dataSource);
@@ -48,26 +48,22 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
         return createDbPath(dbPath);
     }
 
-    protected void shutdownDb(DataSource dataSource) {
+    protected void shutdownDb(JdbcConnectionPool dataSource) {
         try {
             Connection connection = dataSource.getConnection();
-            connection.createStatement().execute("SHUTDOWN COMPACT");
+            connection.createStatement().execute("SHUTDOWN");
         }
         catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    protected DataSource createDataSource(String dbPath) {
+    protected JdbcConnectionPool createDataSource(String dbPath) {
         if (!checkPath(dbPath)) {
             return null;
         }
         String dbUrl = createDbUrl(dbPath, DB_TYPE);
-        JdbcDataSource jdbcDataSource = new JdbcDataSource();
-        jdbcDataSource.setPassword(password);
-        jdbcDataSource.setUser(user);
-        jdbcDataSource.setURL(dbUrl);
-        return jdbcDataSource;
+        return JdbcConnectionPool.create(dbUrl, user, password);
     }
 
     private boolean checkPath(String dbDir) {

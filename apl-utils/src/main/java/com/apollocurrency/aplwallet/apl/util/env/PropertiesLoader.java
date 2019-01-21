@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.env;
 
 import java.io.File;
@@ -19,12 +22,10 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
  */
 public class PropertiesLoader {
 
-    public static final String DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME = "apl-default.properties";
     public static final String DEFAULT_APL_PROPERTIES_FILE_NAME = "apl.properties";
     public static final String DEFAULT_CONFIG_DIR = "conf";
 
     private String[] propFileNames = {
-            DEFAULT_APL_DEFAULT_PROPERTIES_FILE_NAME,
             DEFAULT_APL_PROPERTIES_FILE_NAME
     };
     private String configDir = "";
@@ -78,7 +79,7 @@ public class PropertiesLoader {
 
         Properties p = new Properties();
         for (String n : propFileNames) {
-            String fn = DEFAULT_CONFIG_DIR + "/" + n;
+            String fn = DEFAULT_CONFIG_DIR + File.separator + n;
             try (InputStream is = ClassLoader.getSystemResourceAsStream(fn)) {
                 p.clear();
                 p.load(is);
@@ -101,7 +102,7 @@ public class PropertiesLoader {
         }
         for (String d : searchDirs) {
             for (String f : propertiesFiles) {
-                String p = d + "/" + f;
+                String p = d + File.separator + f;
                 try (FileInputStream is = new FileInputStream(p)) {
                     Properties prop = new Properties();
                     prop.load(is);

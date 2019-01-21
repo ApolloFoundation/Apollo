@@ -30,13 +30,13 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import org.apache.commons.lang3.StringUtils;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
 public class BasicDb implements DataSource {
     private static final Logger LOG = getLogger(BasicDb.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
-    private static final DbException DB_NOT_INITIALIZED_EXCEPTION = new DbException(DB_INITIALIZATION_ERROR_TEXT);
 
     @Override
     public Connection getConnection(String username, String password) {
@@ -51,7 +51,7 @@ public class BasicDb implements DataSource {
 
     private void requireInitialization() {
         if (!initialized) {
-            throw DB_NOT_INITIALIZED_EXCEPTION;
+            throw new DbException(DB_INITIALIZATION_ERROR_TEXT);
         }
     }
 
@@ -202,7 +202,7 @@ public class BasicDb implements DataSource {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
         }
         String dbUrl = dbProperties.dbUrl;
-        if (dbUrl == null) {
+        if (StringUtils.isBlank(dbUrl)) {
             //TODO: dbDir must be in constructor params
             String dbFileName = dbProperties.dbFileName;
             dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.dbType, dbProperties.dbDir + "/" + dbFileName, dbProperties.dbParams);

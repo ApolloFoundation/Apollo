@@ -1,8 +1,8 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet.apl.core.db;
 
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
@@ -15,8 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import org.junit.jupiter.api.Test;
 
 public abstract class AbstractTwoFactorAuthRepositoryTest {

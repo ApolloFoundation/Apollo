@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
@@ -11,6 +11,7 @@ public interface ConfigDirProvider {
      */
 
     String getInstallationConfigDirectory();
+
     /**
      * Path to system config directory, depends on OS
      * @return Path to system config directory

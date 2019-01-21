@@ -1,8 +1,8 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet.apl.core.db;
 
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
 import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1_2FA_SECRET_BASE32;
@@ -25,8 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -43,7 +41,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
             NtpTime.class
     ).build();
 
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(db);
+    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(getDb());
     private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
 
     @Test

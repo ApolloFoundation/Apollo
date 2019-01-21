@@ -1,8 +1,8 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db.migrator;
+package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import java.nio.file.Path;
 

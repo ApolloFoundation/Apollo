@@ -26,12 +26,19 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SS
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -46,13 +53,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -162,9 +162,6 @@ public final class AplCore {
                 CDI.current().select(NtpTime.class).get().start();
 
 
-//                blockchainConfig.init();
-//                blockchainConfig.updateToLatestConstants();
-
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");
@@ -173,8 +170,8 @@ public final class AplCore {
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
                 Db.init();
-                DbMigratorTask dbMigratorTask = CDI.current().select(DbMigratorTask.class).get();
-                dbMigratorTask.migrateDb();
+                ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
+                migrationManager.executeDataMigration();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
