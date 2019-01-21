@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.exec;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.exec.webui.WebUiExtractor;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -131,7 +132,12 @@ public class Apollo {
 //init logging
         logDir = dirProvider.getLogFileDir().getAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
-        
+//check webUI
+        System.out.println("=== Bin directory is: "+dirProvider.getBinDirectory().getAbsolutePath());
+        WebUiExtractor we = new WebUiExtractor(dirProvider);
+        if(!we.checkInstalled()){
+            we.install();
+        }
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
         if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
