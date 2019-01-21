@@ -4,10 +4,13 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Callable;
 
 /**
@@ -24,11 +27,14 @@ public class WebUiExtractor implements Callable<Boolean>{
         this.dirProvider = dirProvider;
     }
     
-    private File findWebUiZip(){
+    private File findWebUiZip() throws FileNotFoundException{
       File res = null;
       File dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+File.separator+"lib");
       if(!dir.exists()){//we are in dev. env or tests
           dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+"/apl-exec/target/lib");
+      }
+      if(!dir.exists()){
+          throw new FileNotFoundException(dir.getAbsolutePath());
       }
       File[] filesList = dir.listFiles(new FileFilter(){
           @Override
@@ -52,7 +58,7 @@ public class WebUiExtractor implements Callable<Boolean>{
         return res;
     }
     
-    public boolean checkInstalled() {
+    public boolean checkInstalled() throws FileNotFoundException {
         boolean res;
         File zip = findWebUiZip();
         File dest = findDest();
@@ -76,14 +82,22 @@ public class WebUiExtractor implements Callable<Boolean>{
         }
     }
     
-    public boolean install() {
+    public boolean install() throws FileNotFoundException, IOException {
         boolean res=true;
         if(!checkInstalled()){
             File dest = findDest();
             if(dest.exists()){
               removeDir(dest.getAbsolutePath());
             }
-            res=Zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());            
+            res=Zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());
+            //TODO: tell UI developer to remove hardcoded paths
+            String ssrc = dest.getAbsolutePath()+File.separator+"build";
+            String sdst = dest.getAbsolutePath()+File.separator+"html"+File.separator+"www";
+            Path src = Paths.get(ssrc);
+            Path dst = Paths.get(sdst);
+            File fdst = new File(sdst);
+            fdst.mkdirs();
+            Files.move(src , dst, StandardCopyOption.REPLACE_EXISTING);
         }
         return res;
     }
