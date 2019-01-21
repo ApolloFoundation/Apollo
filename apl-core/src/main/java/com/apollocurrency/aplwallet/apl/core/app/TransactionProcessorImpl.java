@@ -833,8 +833,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 // Check each transaction returned by the archive peer
                 //
                 for (Object transactionJSON : transactions) {
-                    TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject)transactionJSON);
-                    TransactionImpl myTransaction = transactionDb.findTransactionByFullHash(transaction.getFullHash());
+                    Transaction transaction = TransactionImpl.parseTransaction((JSONObject)transactionJSON);
+                    Transaction myTransaction = transactionDb.findTransactionByFullHash(transaction.getFullHash());
                     if (myTransaction != null) {
                         boolean foundAllData = true;
                         //

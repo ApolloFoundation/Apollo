@@ -100,10 +100,10 @@ public final class DigitalGoodsStore {
     }
 
     static void init() {
+        initListener();
         Tag.init();
         Goods.init();
         Purchase.init();
-        initListener();
     }
 
     public static final class Tag {

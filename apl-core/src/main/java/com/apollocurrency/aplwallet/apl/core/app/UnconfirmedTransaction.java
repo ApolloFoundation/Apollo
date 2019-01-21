@@ -51,6 +51,7 @@ public class UnconfirmedTransaction implements Transaction {
     private final TransactionImpl transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp) {
         this.transaction = transaction;
@@ -77,7 +78,6 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     void save(Connection con) throws SQLException {
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
                 + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {

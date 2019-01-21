@@ -363,14 +363,14 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    public static List<? extends Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
+    public static List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                      "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
             pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);
-            List<TransactionImpl> transactions = new ArrayList<>();
+            List<Transaction> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     transactions.add(transactionDb.findTransaction(rs.getLong("transaction_id")));

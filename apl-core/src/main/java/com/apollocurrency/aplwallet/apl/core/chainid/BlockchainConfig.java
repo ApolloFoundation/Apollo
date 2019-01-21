@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDb;
-import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -48,6 +47,7 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private static BlockchainProcessor blockchainProcessor;
+    private static BlockDb blockDb;
 
     private volatile HeightConfig currentConfig;
     private Chain chain;
@@ -103,9 +103,16 @@ public class BlockchainConfig {
         }
         return blockchainProcessor;
     }
+
+    private BlockDb lookupBlockDb() {
+        if (blockDb == null) {
+            blockDb = CDI.current().select(BlockDb.class).get();
+        }
+        return blockDb;
+    }
+
     public void updateToBlock() {
-//        move BlockDb to constructor later
-        BlockImpl lastBlock = CDI.current().select(BlockDb.class).get().findLastBlock();
+        Block lastBlock = lookupBlockDb().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");
             return;

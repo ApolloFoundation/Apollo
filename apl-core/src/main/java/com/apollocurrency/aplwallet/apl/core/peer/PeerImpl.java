@@ -110,6 +110,8 @@ final class PeerImpl implements Peer {
     private AtomicReference<UUID> chainId = new AtomicReference<>();
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
 
     PeerImpl(String host, String announcedAddress) {
         this.host = host;
@@ -351,7 +353,6 @@ final class PeerImpl implements Peer {
         if (hallmark == null) {
             return 0;
         }
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < blockchain.getHeight() - 60) {
             long accountId = hallmark.getAccountId();
             Account account = Account.getAccount(accountId);

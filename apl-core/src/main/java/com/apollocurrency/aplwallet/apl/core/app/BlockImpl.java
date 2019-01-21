@@ -220,7 +220,7 @@ public final class BlockImpl implements Block {
         return nextBlockId;
     }
 
-    void setNextBlockId(long nextBlockId) {
+    public void setNextBlockId(long nextBlockId) {
         this.nextBlockId = nextBlockId;
     }
 
@@ -518,5 +518,25 @@ public final class BlockImpl implements Block {
         } else {
             return (this.timestamp - lastBlockForTimeAverage.timestamp) / 3;
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("BlockImpl{");
+        sb.append("version=").append(version);
+        sb.append(", timestamp=").append(timestamp);
+        sb.append(", previousBlockId=").append(previousBlockId);
+        sb.append(", totalAmountATM=").append(totalAmountATM);
+        sb.append(", totalFeeATM=").append(totalFeeATM);
+        sb.append(", timeout=").append(timeout);
+        sb.append(", blockTransactions=[").append(blockTransactions != null ? blockTransactions.size() : -1);
+        sb.append("], baseTarget=").append(baseTarget);
+        sb.append(", nextBlockId=").append(nextBlockId);
+        sb.append(", height=").append(height);
+        sb.append(", stringId='").append(stringId).append('\'');
+        sb.append(", generatorId=").append(generatorId);
+        sb.append(", hasValidSignature=").append(hasValidSignature);
+        sb.append('}');
+        return sb.toString();
     }
 }

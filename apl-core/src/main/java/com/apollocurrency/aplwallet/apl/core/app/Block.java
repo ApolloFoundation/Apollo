@@ -51,6 +51,8 @@ public interface Block {
 
     long getNextBlockId();
 
+    void setNextBlockId(long nextBlockId);
+
     long getTotalAmountATM();
 
     long getTotalFeeATM();

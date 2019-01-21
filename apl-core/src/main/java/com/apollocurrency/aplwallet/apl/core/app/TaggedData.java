@@ -538,7 +538,7 @@ public class TaggedData {
         if (AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = transactionDb.findTransaction(taggedDataId);
+                Transaction uploadTransaction = transactionDb.findTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());
                 Tag.add(taggedData);
