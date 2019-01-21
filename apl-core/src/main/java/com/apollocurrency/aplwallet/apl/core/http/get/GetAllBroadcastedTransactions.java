@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -50,7 +49,7 @@ public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandl
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("transactions", jsonArray);
-        Transaction[] transactions = AplCore.getTransactionProcessor().getAllBroadcastedTransactions();
+        Transaction[] transactions = lookupTransactionProcessor().getAllBroadcastedTransactions();
         for (Transaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }

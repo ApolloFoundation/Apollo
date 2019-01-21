@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -56,19 +56,20 @@ public final class GetBlock extends AbstractAPIRequestHandler {
         String blockValue = Convert.emptyToNull(req.getParameter("block"));
         String heightValue = Convert.emptyToNull(req.getParameter("height"));
         String timestampValue = Convert.emptyToNull(req.getParameter("timestamp"));
+        Blockchain blockchain = lookupBlockchain();
         if (blockValue != null) {
             try {
-                blockData = AplCore.getBlockchain().getBlock(Convert.parseUnsignedLong(blockValue));
+                blockData = blockchain.getBlock(Convert.parseUnsignedLong(blockValue));
             } catch (RuntimeException e) {
                 return INCORRECT_BLOCK;
             }
         } else if (heightValue != null) {
             try {
                 int height = Integer.parseInt(heightValue);
-                if (height < 0 || height > AplCore.getBlockchain().getHeight()) {
+                if (height < 0 || height > blockchain.getHeight()) {
                     return INCORRECT_HEIGHT;
                 }
-                blockData = AplCore.getBlockchain().getBlockAtHeight(height);
+                blockData = blockchain.getBlockAtHeight(height);
             } catch (RuntimeException e) {
                 return INCORRECT_HEIGHT;
             }
@@ -78,12 +79,12 @@ public final class GetBlock extends AbstractAPIRequestHandler {
                 if (timestamp < 0) {
                     return INCORRECT_TIMESTAMP;
                 }
-                blockData = AplCore.getBlockchain().getLastBlock(timestamp);
+                blockData = blockchain.getLastBlock(timestamp);
             } catch (RuntimeException e) {
                 return INCORRECT_TIMESTAMP;
             }
         } else {
-            blockData = AplCore.getBlockchain().getLastBlock();
+            blockData = blockchain.getLastBlock();
         }
 
         if (blockData == null) {

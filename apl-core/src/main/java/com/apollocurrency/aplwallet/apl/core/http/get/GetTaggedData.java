@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -56,7 +55,7 @@ public final class GetTaggedData extends AbstractAPIRequestHandler {
 
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null && retrieve) {
-            if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
             taggedData = TaggedData.getData(transactionId);

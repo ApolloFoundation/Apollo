@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -77,7 +76,7 @@ public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 
-        List<? extends Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
         if (sortByRate) {
             Collections.sort(transactions, rateComparator);
         }

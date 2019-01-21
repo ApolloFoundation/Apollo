@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -69,7 +68,7 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 
-        List<Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
 
         JSONObject response = new JSONObject();
         JSONArray transfersData = new JSONArray();

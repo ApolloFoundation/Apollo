@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
@@ -24,6 +24,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,13 +34,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import org.slf4j.Logger;
 
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(VersionedEntityDbTable.class);
-
 
     protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
@@ -64,12 +65,13 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         DbKey dbKey = dbKeyFactory.newKey(t);
         try (Connection con = db.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table
                      + dbKeyFactory.getPKClause() + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
-            pstmtCount.setInt(i, AplCore.getBlockchain().getHeight());
+            pstmtCount.setInt(i, blockchain.getHeight());
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table

@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -62,7 +61,7 @@ public final class GetBlockId extends AbstractAPIRequestHandler {
 
         try {
             JSONObject response = new JSONObject();
-            response.put("block", Long.toUnsignedString(AplCore.getBlockchain().getBlockIdAtHeight(height)));
+            response.put("block", Long.toUnsignedString(lookupBlockchain().getBlockIdAtHeight(height)));
             return response;
         } catch (RuntimeException e) {
             return INCORRECT_HEIGHT;

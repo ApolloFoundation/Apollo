@@ -15,13 +15,16 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,10 +36,12 @@ public abstract class DerivedDbTable {
     protected static final TransactionalDb db = Db.getDb();
 
     protected final String table;
+    private static BlockchainProcessor blockchainProcessor;
 
     protected DerivedDbTable(String table) {
         this.table = table;
-        AplCore.getBlockchainProcessor().registerDerivedTable(this);
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        blockchainProcessor.registerDerivedTable(this);
     }
 
     public void rollback(int height) {
@@ -82,6 +87,7 @@ public abstract class DerivedDbTable {
     }
 
     protected void trimTables() {
-        AplCore.getBlockchainProcessor().trimDerivedTables();
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        blockchainProcessor.trimDerivedTables();
     }
 }

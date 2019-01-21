@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -60,24 +60,25 @@ public final class PopOff extends AbstractAPIRequestHandler {
         } catch (NumberFormatException ignored) {}
         boolean keepTransactions = "true".equalsIgnoreCase(req.getParameter("keepTransactions"));
         List<? extends Block> blocks;
+        BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
         try {
-            AplCore.getBlockchainProcessor().setGetMoreBlocks(false);
+            blockchainProcessor.setGetMoreBlocks(false);
             if (numBlocks > 0) {
-                blocks = AplCore.getBlockchainProcessor().popOffTo(AplCore.getBlockchain().getHeight() - numBlocks);
+                blocks = blockchainProcessor.popOffTo(lookupBlockchain().getHeight() - numBlocks);
             } else if (height > 0) {
-                blocks = AplCore.getBlockchainProcessor().popOffTo(height);
+                blocks = blockchainProcessor.popOffTo(height);
             } else {
                 return JSONResponses.missing("numBlocks", "height");
             }
         } finally {
-            AplCore.getBlockchainProcessor().setGetMoreBlocks(true);
+            blockchainProcessor.setGetMoreBlocks(true);
         }
         JSONArray blocksJSON = new JSONArray();
         blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
         JSONObject response = new JSONObject();
         response.put("blocks", blocksJSON);
         if (keepTransactions) {
-            blocks.forEach(block -> AplCore.getTransactionProcessor().processLater(block.getTransactions()));
+            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getTransactions()));
         }
         return response;
     }

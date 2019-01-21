@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -60,11 +60,12 @@ public final class GetTransaction extends AbstractAPIRequestHandler {
         long transactionId = 0;
         Transaction transaction;
         try {
+            Blockchain blockchain = lookupBlockchain();
             if (transactionIdString != null) {
                 transactionId = Convert.parseUnsignedLong(transactionIdString);
-                transaction = AplCore.getBlockchain().getTransaction(transactionId);
+                transaction = blockchain.getTransaction(transactionId);
             } else {
-                transaction = AplCore.getBlockchain().getTransactionByFullHash(transactionFullHash);
+                transaction = blockchain.getTransactionByFullHash(transactionFullHash);
                 if (transaction == null) {
                     return UNKNOWN_TRANSACTION;
                 }
@@ -73,7 +74,7 @@ public final class GetTransaction extends AbstractAPIRequestHandler {
             return INCORRECT_TRANSACTION;
         }
         if (transaction == null) {
-            transaction = AplCore.getTransactionProcessor().getUnconfirmedTransaction(transactionId);
+            transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
             if (transaction == null || transaction.getType() == TransactionType.Payment.PRIVATE) {
                 return UNKNOWN_TRANSACTION;
             }

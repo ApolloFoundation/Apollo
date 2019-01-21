@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -41,7 +42,11 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
         REJECT_PHASED_TRANSACTION
     }
 
-    DbIterator<? extends Transaction> getAllUnconfirmedTransactions();
+    void init();
+
+    DbKey.LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory();
+
+    DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions();
 
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions(int from, int to);
 
@@ -53,6 +58,8 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     Transaction[] getAllWaitingTransactions();
 
+    Collection<UnconfirmedTransaction> getWaitingTransactions();
+
     Transaction[] getAllBroadcastedTransactions();
 
     void clearUnconfirmedTransactions();
@@ -61,11 +68,15 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void rebroadcastAllUnconfirmedTransactions();
 
+    void removeUnconfirmedTransaction(Transaction transaction);
+
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 
     void processPeerTransactions(JSONObject request) throws AplException.ValidationException;
 
-    void processLater(Collection<? extends Transaction> transactions);
+    void processLater(Collection<Transaction> transactions);
+
+    void processWaitingTransactions();
 
     SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude);
 
@@ -76,4 +87,6 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     @Override
     boolean removeListener(Listener<List<? extends Transaction>> listener, Event eventType);
+
+    void notifyListeners(List<? extends Transaction> transactions, Event eventType);
 }

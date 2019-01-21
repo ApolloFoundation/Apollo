@@ -99,7 +99,7 @@ public final class CreatePoll extends CreateTransaction {
             return INCORRECT_ZEROOPTIONS;
         }
 
-        int currentHeight = AplCore.getBlockchain().getHeight();
+        int currentHeight = lookupBlockchain().getHeight();
         int finishHeight = ParameterParser.getInt(req, "finishHeight",
                 currentHeight + 2,
                 currentHeight + Constants.MAX_POLL_DURATION + 1, true);

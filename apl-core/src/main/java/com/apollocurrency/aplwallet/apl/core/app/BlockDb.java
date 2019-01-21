@@ -74,6 +74,7 @@ public class BlockDb {
         this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), connectionProvider);
     }
 
+/*
     public void attachCacheListener() {
         AplCore.getBlockchainProcessor().addListener((block) -> {
 
@@ -95,7 +96,8 @@ public class BlockDb {
             }
         }, BlockchainProcessor.Event.BLOCK_PUSHED);
     }
-    
+*/
+
 
      private void clearBlockCache() {
         synchronized (blockCache) {
@@ -498,7 +500,8 @@ public class BlockDb {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-                BlockchainProcessorImpl.getInstance().getDerivedTables().forEach(table -> {
+                BlockchainProcessorImpl blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                blockchainProcessor.getDerivedTables().forEach(table -> {
                     try {
                         stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
                     } catch (SQLException ignore) {}

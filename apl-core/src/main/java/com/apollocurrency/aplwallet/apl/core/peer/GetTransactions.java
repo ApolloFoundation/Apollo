@@ -15,14 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -51,7 +50,7 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();
         JSONArray transactionIds = (JSONArray)request.get("transactionIds");
-        Blockchain blockchain = AplCore.getBlockchain();
+        Blockchain blockchain = lookupBlockchain();
         //
         // Return the transactions to the caller
         //

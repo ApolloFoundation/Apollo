@@ -34,6 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -51,6 +53,8 @@ public class APIProxy {
     }
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
     }
@@ -193,7 +197,7 @@ public class APIProxy {
     }
 
     public static boolean isActivated() {
-        return Constants.isLightClient || (enableAPIProxy && AplCore.getBlockchainProcessor().isDownloading());
+        return Constants.isLightClient || (enableAPIProxy && blockchainProcessor.isDownloading());
     }
 
     public boolean blacklistHost(String host) {

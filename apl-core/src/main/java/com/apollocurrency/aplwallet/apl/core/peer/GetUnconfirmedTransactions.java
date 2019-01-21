@@ -15,12 +15,11 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
@@ -51,7 +50,7 @@ final class GetUnconfirmedTransactions extends PeerServlet.PeerRequestHandler {
             return JSON.emptyJSON;
         }
 
-        SortedSet<? extends Transaction> transactionSet = AplCore.getTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
+        SortedSet<? extends Transaction> transactionSet = lookupTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {
             if (transactionsData.size() >= 100) {

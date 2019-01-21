@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,8 +34,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -60,6 +66,24 @@ public final class PeerServlet extends WebSocketServlet {
 
         protected boolean isChainIdProtected() {
             return true;
+        }
+        private Blockchain blockchain;
+        private BlockchainProcessor blockchainProcessor;
+        private TransactionProcessor transactionProcessor;
+
+        protected Blockchain lookupBlockchain() {
+            if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+            return blockchain;
+        }
+
+        protected BlockchainProcessor lookupBlockchainProcessor() {
+            if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+            return blockchainProcessor;
+        }
+
+        protected TransactionProcessor lookupTransactionProcessor() {
+            if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+            return transactionProcessor;
         }
     }
 
@@ -142,7 +166,12 @@ public final class PeerServlet extends WebSocketServlet {
         LIGHT_CLIENT = JSON.prepare(response);
     }
 
-    private static final BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
+    private static BlockchainProcessor blockchainProcessor;
+    protected BlockchainProcessor lookupBlockchainProcessor() {
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        return blockchainProcessor;
+    }
+
 
     static JSONStreamAware error(Exception e) {
         JSONObject response = new JSONObject();

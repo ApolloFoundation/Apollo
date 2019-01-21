@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -37,6 +39,8 @@ import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
 
 
 public final class PrunableMessage {
+
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final DbKey.LongKeyFactory<PrunableMessage> prunableMessageKeyFactory = new DbKey.LongKeyFactory<PrunableMessage>("id") {
 
@@ -277,7 +281,7 @@ public final class PrunableMessage {
     }
 
     public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {
-        add(transaction, appendix, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
+        add(transaction, appendix, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
     }
 
     public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
@@ -296,7 +300,7 @@ public final class PrunableMessage {
     }
 
     public static void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix) {
-        add(transaction, appendix, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
+        add(transaction, appendix, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
     }
 
     public static void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {

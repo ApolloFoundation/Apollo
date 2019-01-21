@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -164,8 +164,10 @@ public final class Exchange {
         return exchangeTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    static Exchange addExchange(Transaction transaction, long currencyId, CurrencyExchangeOffer offer, long sellerId, long buyerId, long units) {
-        Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units);
+    static Exchange addExchange(Transaction transaction, long currencyId, CurrencyExchangeOffer offer,
+                                long sellerId, long buyerId, long units,
+                                Block lastBlock) {
+        Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units, lastBlock);
         exchangeTable.insert(exchange);
         listeners.notify(exchange, Event.EXCHANGE);
         return exchange;
@@ -186,8 +188,8 @@ public final class Exchange {
     private final long units;
     private final long rate;
 
-    private Exchange(long transactionId, long currencyId, CurrencyExchangeOffer offer, long sellerId, long buyerId, long units) {
-        Block block = AplCore.getBlockchain().getLastBlock();
+    private Exchange(long transactionId, long currencyId, CurrencyExchangeOffer offer,
+                     long sellerId, long buyerId, long units, Block block) {
         this.transactionId = transactionId;
         this.blockId = block.getId();
         this.height = block.getHeight();

@@ -59,11 +59,11 @@ public class TransactionDb {
     }
 
 
-    public TransactionImpl findTransaction(long transactionId) {
+    public Transaction findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    TransactionImpl findTransaction(long transactionId, int height) {
+    Transaction findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (blockDb.getBlockCache()) {
             TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
@@ -88,11 +88,11 @@ public class TransactionDb {
         }
     }
 
-    TransactionImpl findTransactionByFullHash(byte[] fullHash) {
+    Transaction findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
-    public TransactionImpl findTransactionByFullHash(byte[] fullHash, int height) {
+    public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(blockDb.getBlockCache()) {
@@ -127,7 +127,7 @@ public class TransactionDb {
     boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
             }
@@ -152,7 +152,7 @@ public class TransactionDb {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         synchronized(blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.getFullHash(), fullHash));
@@ -173,7 +173,7 @@ public class TransactionDb {
     byte[] getFullHash(long transactionId) {
         // Check the block cache
         synchronized(blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getFullHash();
             }
@@ -271,7 +271,7 @@ public class TransactionDb {
     List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+            Block block = blockDb.getBlockCache().get(blockId);
             if (block != null) {
                 return block.getTransactions();
             }

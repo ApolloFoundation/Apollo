@@ -25,7 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -89,7 +88,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", false);
                     return response;
                 }
-                transaction = AplCore.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
+                transaction = Transaction.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
             } else {
                 response = new JSONObject();
                 transaction = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
@@ -107,21 +106,21 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();
             Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
-            AplCore.getBlockchain().updateLock();
+            lookupBlockchain().updateLock();
             try {
                 transaction.validate();
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
                 if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
                     LOG.debug("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
-                    AplCore.getTransactionProcessor().broadcast(transaction);
+                    lookupTransactionProcessor().broadcast(transaction);
                     response.put("broadcasted", true);
                     return response;
                 }
-                try (DbIterator<? extends Transaction> unconfirmedTransactions = AplCore.getTransactionProcessor().getAllUnconfirmedTransactions()) {
+                try (DbIterator<? extends Transaction> unconfirmedTransactions = lookupTransactionProcessor().getAllUnconfirmedTransactions()) {
                     while (unconfirmedTransactions.hasNext()) {
                         if (filter.test(unconfirmedTransactions.next())) {
                             LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
-                            AplCore.getTransactionProcessor().broadcast(transaction);
+                            lookupTransactionProcessor().broadcast(transaction);
                             response.put("broadcasted", true);
                             return response;
                         }
@@ -136,7 +135,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                             "(To schedule a buy order even in the absence of a sell offer, on a node protected by admin password, please first specify the admin password in the account settings.)");
                 }
             } finally {
-                AplCore.getBlockchain().updateUnlock();
+                lookupBlockchain().updateUnlock();
             }
             return response;
 

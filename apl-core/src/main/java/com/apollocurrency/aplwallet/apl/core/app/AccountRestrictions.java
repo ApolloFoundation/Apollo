@@ -51,6 +51,7 @@ public final class AccountRestrictions {
 
     public static final class PhasingOnly {
         private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
         public static PhasingOnly get(long accountId) {
             return phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).
@@ -169,7 +170,7 @@ public final class AccountRestrictions {
                 throw new AccountControlException("Phasing parameters mismatch phasing account control. Expected: " +
                         phasingParams.toString() + " . Actual: " + phasingAppendix.getParams().toString());
             }
-            int duration = phasingAppendix.getFinishHeight() - AplCore.getBlockchain().getHeight();
+            int duration = phasingAppendix.getFinishHeight() - blockchain.getHeight();
             if ((maxDuration > 0 && duration > maxDuration) || (minDuration > 0 && duration < minDuration)) {
                 throw new AccountControlException("Invalid phasing duration " + duration);
             }
@@ -191,7 +192,7 @@ public final class AccountRestrictions {
                 pstmt.setLong(++i, this.maxFees);
                 pstmt.setShort(++i, this.minDuration);
                 pstmt.setShort(++i, this.maxDuration);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }

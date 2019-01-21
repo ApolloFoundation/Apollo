@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -54,7 +53,7 @@ public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandl
         Filter<Transaction> filter = transaction -> transaction.getType() == TransactionType.ColoredCoins.ASK_ORDER_CANCELLATION
                 || transaction.getType() == TransactionType.ColoredCoins.BID_ORDER_CANCELLATION;
 
-        List<? extends Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();
         transactions.forEach(transaction -> cancellations.add(JSONData.expectedOrderCancellation(transaction)));
         JSONObject response = new JSONObject();

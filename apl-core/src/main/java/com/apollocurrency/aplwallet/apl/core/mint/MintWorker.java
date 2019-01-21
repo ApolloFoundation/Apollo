@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.mint;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -201,7 +200,7 @@ public class MintWorker {
     private JSONObject currencyMint(byte[] keySeed, long currencyId, long nonce, long units, long counter) {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new Attachment.MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
-        Transaction.Builder builder = AplCore.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
+        Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
                 (short) 120, attachment)
                 .timestamp(((Long) ecBlock.get("timestamp")).intValue())
                 .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())

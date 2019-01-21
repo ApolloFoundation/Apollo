@@ -8,7 +8,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -65,8 +65,9 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
             subtype = -1;
         }
         JSONArray transactions = new JSONArray();
+        Blockchain blockchain = lookupBlockchain();
         if (height != -1) {
-            Block block = AplCore.getBlockchain().getBlockAtHeight(height);
+            Block block = blockchain.getBlockAtHeight(height);
             block.getTransactions().forEach(transaction -> {
                 if (transaction.getType() == TransactionType.Payment.PRIVATE) {
 
@@ -83,7 +84,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
                 }
             });
         } else {
-            try (DbIterator<? extends Transaction> iterator = AplCore.getBlockchain().getTransactions(
+            try (DbIterator<? extends Transaction> iterator = blockchain.getTransactions(
                     data.getAccountId(), 0, type, subtype, 0, false, false,
                     false, firstIndex, lastIndex, false, false, true)) {
                 while (iterator.hasNext()) {

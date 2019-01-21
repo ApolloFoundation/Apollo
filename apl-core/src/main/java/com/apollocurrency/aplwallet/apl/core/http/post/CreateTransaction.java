@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
@@ -104,9 +104,10 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     }
 
     private PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
+        Blockchain blockchain = lookupBlockchain();
         int finishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
-                AplCore.getBlockchain().getHeight() + 1,
-                AplCore.getBlockchain().getHeight() + Constants.MAX_PHASING_DURATION + 1,
+                blockchain.getHeight() + 1,
+                blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
                 true);
         
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
@@ -207,11 +208,12 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         long feeATM = ParameterParser.getFeeATM(req);
         int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
         long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
-        if (ecBlockId != 0 && ecBlockId != AplCore.getBlockchain().getBlockIdAtHeight(ecBlockHeight)) {
+        Blockchain blockchain = lookupBlockchain();
+        if (ecBlockId != 0 && ecBlockId != blockchain.getBlockIdAtHeight(ecBlockHeight)) {
             return INCORRECT_EC_BLOCK;
         }
         if (ecBlockId == 0 && ecBlockHeight > 0) {
-            ecBlockId = AplCore.getBlockchain().getBlockIdAtHeight(ecBlockHeight);
+            ecBlockId = blockchain.getBlockIdAtHeight(ecBlockHeight);
         }
 
         JSONObject response = new JSONObject();
@@ -219,7 +221,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
         try {
-            Transaction.Builder builder = AplCore.newTransactionBuilder(publicKey, amountATM, feeATM,
+            Transaction.Builder builder = Transaction.newTransactionBuilder(publicKey, amountATM, feeATM,
                     deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
@@ -256,7 +258,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 response.put("signatureHash", transactionJSON.get("signatureHash"));
             }
             if (broadcast) {
-                AplCore.getTransactionProcessor().broadcast(transaction);
+                lookupTransactionProcessor().broadcast(transaction);
                 response.put("broadcasted", true);
             } else {
                 transaction.validate();

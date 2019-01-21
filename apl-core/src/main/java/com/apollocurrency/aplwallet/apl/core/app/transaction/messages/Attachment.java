@@ -29,9 +29,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.HoldingType;
@@ -62,6 +63,7 @@ public interface Attachment extends Appendix {
     TransactionType getTransactionType();
 
     abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
+        private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
         private AbstractAttachment(ByteBuffer buffer) {
             super(buffer);
@@ -118,7 +120,7 @@ public interface Attachment extends Appendix {
         }
 
         public int getFinishValidationHeight(Transaction transaction) {
-            return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : AplCore.getBlockchain().getHeight();
+            return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : blockchain.getHeight();
         }
 
     }
