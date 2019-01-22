@@ -186,7 +186,7 @@ public class BlockDb {
         return heightMap;
     }
 
-    BlockImpl findBlockAtHeight(int height) {
+    Block findBlockAtHeight(int height) {
         // Check the cache
         synchronized(blockCache) {
             BlockImpl block = heightMap.get(height);

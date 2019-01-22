@@ -153,13 +153,11 @@ public final class Generator implements Comparable<Generator> {
 
     };
 
-    static {
+    static void init() {
         if (!Constants.isLightClient) {
             ThreadPool.scheduleThread("GenerateBlocks", generateBlocksThread, 500, TimeUnit.MILLISECONDS);
         }
     }
-
-    static void init() {}
 
     public static boolean addListener(Listener<Generator> listener, Event eventType) {
         return listeners.addListener(listener, eventType);

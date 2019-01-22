@@ -66,7 +66,7 @@ public class TransactionDb {
     Transaction findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getHeight() <= height ? transaction : null;
             }
@@ -96,7 +96,7 @@ public class TransactionDb {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         synchronized(blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
@@ -190,7 +190,7 @@ public class TransactionDb {
         }
     }
 
-    TransactionImpl loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+    Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         try {
 
             byte type = rs.getByte("type");

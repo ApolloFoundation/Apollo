@@ -508,15 +508,18 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        BlockImpl lastBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 2);
+        Block lastBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            BlockImpl intermediateBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 1);
+            Block intermediateBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 1);
             int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
-            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateBlockForTimeAverage.timestamp;
-            int secondAvgBlockTime = intermediateBlockForTimeAverage.timestamp - intermediateBlockForTimeAverage.timeout - lastBlockForTimeAverage.timestamp;
+            // --->>>> DO NOT CHANGE (BlockImpl) type conversion HERE !!!
+            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - ((BlockImpl)intermediateBlockForTimeAverage).timestamp;
+            int secondAvgBlockTime = ((BlockImpl)intermediateBlockForTimeAverage).timestamp
+                    - ((BlockImpl)intermediateBlockForTimeAverage).timeout - ((BlockImpl)lastBlockForTimeAverage).timestamp;
             return  (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
         } else {
-            return (this.timestamp - lastBlockForTimeAverage.timestamp) / 3;
+            // --->>>> DO NOT CHANGE (BlockImpl) type conversion HERE !!!
+            return (this.timestamp - ((BlockImpl)lastBlockForTimeAverage).timestamp) / 3;
         }
     }
 
