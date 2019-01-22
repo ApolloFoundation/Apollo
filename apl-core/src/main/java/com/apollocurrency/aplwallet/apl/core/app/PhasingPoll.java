@@ -47,7 +47,7 @@ public final class PhasingPoll extends AbstractPoll {
 
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static HashFunction getHashFunction(byte code) {

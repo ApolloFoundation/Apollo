@@ -24,13 +24,13 @@ import org.slf4j.Logger;
 public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
 
-    private TransactionDb transactionDb;
+    private TransactionDao transactionDb;
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
 
     @Inject
-    public UpdaterMediatorImpl(TransactionDb transactionDb, Blockchain blockchain) {
+    public UpdaterMediatorImpl(TransactionDao transactionDb, Blockchain blockchain) {
         this.transactionDb = transactionDb;
         this.blockchain = blockchain;
     }

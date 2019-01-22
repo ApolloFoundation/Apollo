@@ -56,7 +56,7 @@ public class BlockDaoImpl implements BlockDao {
     private final SortedMap<Integer, Block> heightMap;
     private final Map<Long, Transaction> transactionCache;
     private final ConnectionProvider connectionProvider;
-    private TransactionDb transactionDb;
+    private TransactionDao transactionDb;
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
                         Map<Long, Transaction> transactionCache, ConnectionProvider connectionProvider) {
@@ -363,7 +363,7 @@ public class BlockDaoImpl implements BlockDao {
             return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                     generatorId, generationSignature, blockSignature, previousBlockHash,
                     cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, loadTransactions ?
-                    getTransactionDb().findBlockTransactions(con,
+                    lookupTransactionDao().findBlockTransactions(con,
                     id) :
                     null);
         } catch (SQLException e) {
@@ -371,8 +371,8 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
-    private TransactionDb getTransactionDb() {
-        if (transactionDb == null) this.transactionDb = CDI.current().select(TransactionDb.class).get();
+    private TransactionDao lookupTransactionDao() {
+        if (transactionDb == null) this.transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
         return transactionDb;
     }
 
@@ -402,7 +402,7 @@ public class BlockDaoImpl implements BlockDao {
                 pstmt.setLong(++i, block.getGeneratorId());
                 pstmt.setInt(++i, block.getTimeout());
                 pstmt.executeUpdate();
-                CDI.current().select(TransactionDb.class).get().saveTransactions(con, block.getTransactions());
+                lookupTransactionDao().saveTransactions(con, block.getTransactions());
             }
             if (block.getPreviousBlockId() != 0) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")) {

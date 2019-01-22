@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
@@ -101,7 +102,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private static Blockchain blockchain;
     private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
-    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private final TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private static TransactionProcessor transactionProcessor;
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
@@ -1214,7 +1215,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             int now = AplCore.getEpochTime();
             int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
             int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
-            List<TransactionDb.PrunableTransaction> transactionList =
+            List<PrunableTransaction> transactionList =
                     transactionDb.findPrunableTransactions(con, minTimestamp, maxTimestamp);
             transactionList.forEach(prunableTransaction -> {
                 long id = prunableTransaction.getId();
@@ -1537,7 +1538,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             block.getTransactions().forEach(transaction -> {
                 PhasingPoll.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
-                        possiblyApprovedTransactions.add((TransactionImpl)phasedTransaction);
+                        possiblyApprovedTransactions.add(phasedTransaction);
                     }
                 });
                 if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {

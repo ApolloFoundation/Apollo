@@ -141,7 +141,7 @@ public final class Shuffling {
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private final TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");

@@ -72,7 +72,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private static Blockchain blockchain;

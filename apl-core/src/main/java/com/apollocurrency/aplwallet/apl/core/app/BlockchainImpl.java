@@ -46,7 +46,7 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 public class BlockchainImpl implements Blockchain {
 
     private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
-    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private final TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
 /*

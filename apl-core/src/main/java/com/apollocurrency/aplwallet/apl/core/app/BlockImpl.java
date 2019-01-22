@@ -46,7 +46,7 @@ public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();

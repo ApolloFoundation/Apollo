@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
@@ -48,22 +49,23 @@ import java.util.List;
 import java.util.Objects;
 
 @ApplicationScoped
-public class TransactionDb {
+public class TransactionDaoImpl implements TransactionDao {
 
     private final BlockDao blockDao;
 
     @Inject
-    public TransactionDb(BlockDao blockDao) {
+    public TransactionDaoImpl(BlockDao blockDao) {
         Objects.requireNonNull(blockDao);
         this.blockDao = blockDao;
     }
 
-
+    @Override
     public Transaction findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    Transaction findTransaction(long transactionId, int height) {
+    @Override
+    public Transaction findTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized (blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
@@ -88,10 +90,12 @@ public class TransactionDb {
         }
     }
 
-    Transaction findTransactionByFullHash(byte[] fullHash) {
+    @Override
+    public Transaction findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
+    @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
@@ -120,11 +124,13 @@ public class TransactionDb {
         }
     }
 
-    boolean hasTransaction(long transactionId) {
+    @Override
+    public boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    boolean hasTransaction(long transactionId, int height) {
+    @Override
+    public boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
         synchronized(blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
@@ -144,11 +150,13 @@ public class TransactionDb {
         }
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash) {
+    @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         synchronized(blockDao.getBlockCache()) {
@@ -170,7 +178,8 @@ public class TransactionDb {
         }
     }
 
-    byte[] getFullHash(long transactionId) {
+    @Override
+    public byte[] getFullHash(long transactionId) {
         // Check the block cache
         synchronized(blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
@@ -190,7 +199,8 @@ public class TransactionDb {
         }
     }
 
-    Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+    @Override
+    public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         try {
 
             byte type = rs.getByte("type");
@@ -268,7 +278,8 @@ public class TransactionDb {
         }
     }
 
-    List<Transaction> findBlockTransactions(long blockId) {
+    @Override
+    public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized(blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
@@ -284,7 +295,8 @@ public class TransactionDb {
         }
     }
 
-    List<Transaction> findBlockTransactions(Connection con, long blockId) {
+    @Override
+    public List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
@@ -303,7 +315,8 @@ public class TransactionDb {
         }
     }
 
-    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    @Override
+    public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
@@ -331,7 +344,8 @@ public class TransactionDb {
         return result;
     }
 
-    void saveTransactions(Connection con, List<Transaction> transactions) {
+    @Override
+    public void saveTransactions(Connection con, List<Transaction> transactions) {
         try {
             short index = 0;
             for (Transaction transaction : transactions) {
@@ -397,51 +411,6 @@ public class TransactionDb {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    static class PrunableTransaction {
-        private final long id;
-        private final TransactionType transactionType;
-        private final boolean prunableAttachment;
-        private final boolean prunablePlainMessage;
-        private final boolean prunableEncryptedMessage;
-
-        public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment,
-                                   boolean prunablePlainMessage, boolean prunableEncryptedMessage) {
-            this.id = id;
-            this.transactionType = transactionType;
-            this.prunableAttachment = prunableAttachment;
-            this.prunablePlainMessage = prunablePlainMessage;
-            this.prunableEncryptedMessage = prunableEncryptedMessage;
-        }
-
-        public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment, boolean prunablePlainMessage) {
-            this.id = id;
-            this.transactionType = transactionType;
-            this.prunableAttachment = prunableAttachment;
-            this.prunablePlainMessage = prunablePlainMessage;
-            this.prunableEncryptedMessage = false;
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public TransactionType getTransactionType() {
-            return transactionType;
-        }
-
-        public boolean hasPrunableAttachment() {
-            return prunableAttachment;
-        }
-
-        public boolean hasPrunablePlainMessage() {
-            return prunablePlainMessage;
-        }
-
-        public boolean hasPrunableEncryptedMessage() {
-            return prunableEncryptedMessage;
         }
     }
 

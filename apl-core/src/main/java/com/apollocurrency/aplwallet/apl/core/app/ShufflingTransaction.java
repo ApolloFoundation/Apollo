@@ -66,7 +66,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * Constants.ONE_APL);
     private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
-    protected final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    protected final TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
 
     private ShufflingTransaction() {}
 
