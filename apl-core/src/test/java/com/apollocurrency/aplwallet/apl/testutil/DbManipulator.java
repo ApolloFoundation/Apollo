@@ -4,12 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+import java.nio.file.Paths;
 
 public class DbManipulator {
     protected final Path tempDbFile;
@@ -67,7 +68,7 @@ public class DbManipulator {
 
     public void shutdown() throws Exception {
         db.shutdown();
-        Files.delete(tempDbFile);
+        Files.delete(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
     }
 
     public void populate() {

@@ -4,31 +4,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+
 import java.io.IOException;
 import java.nio.file.Path;
-
-import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
 
 public class DbIntegrationTest {
     private static DbManipulator manipulator;
     public DbIntegrationTest(Path path, String password, String user) throws IOException {
         manipulator = new DbManipulator(path, user, password);
-            manipulator.init();
+
     }
     public DbIntegrationTest() {
         manipulator = new DbManipulator();
-        manipulator.init();
-    }
-    @AfterAll
-    public static void shutdown() throws Exception {
-        manipulator.shutdown();
     }
 
     @BeforeEach
     public void setUp() throws Exception {
+        manipulator.init();
         manipulator.populate();
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        manipulator.shutdown();
     }
 
     public BasicDb getDb() {

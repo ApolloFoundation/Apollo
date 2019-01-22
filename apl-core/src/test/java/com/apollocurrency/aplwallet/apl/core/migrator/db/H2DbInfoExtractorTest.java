@@ -5,17 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIntegrationTest;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIntegrationTest;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 public class H2DbInfoExtractorTest extends DbIntegrationTest {
     private static Path path;
+    private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("user", "pass");
 
     static {
         try {
@@ -32,9 +33,14 @@ public class H2DbInfoExtractorTest extends DbIntegrationTest {
 
     @Test
     public void testGetHeight() {
-        H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("user", "pass");
         int height = h2DbInfoExtractor.getHeight(path.toString());
         Assertions.assertEquals(2, height);
-        Assertions.assertEquals(Paths.get(path.toAbsolutePath().toString() + ".h2.db"), h2DbInfoExtractor.getPath(path.toAbsolutePath().toString()));
+
+    }
+
+    @Test
+    public void testGetPath() {
+        String path = H2DbInfoExtractorTest.path.toAbsolutePath().toString();
+        Assertions.assertEquals(Paths.get(path + ".h2.db"), h2DbInfoExtractor.getPath(path));
     }
 }
