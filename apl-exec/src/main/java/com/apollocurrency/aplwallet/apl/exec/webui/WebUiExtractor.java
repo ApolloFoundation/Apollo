@@ -6,11 +6,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Callable;
 
 /**
@@ -65,6 +63,7 @@ public class WebUiExtractor implements Callable<Boolean>{
         if(!dest.exists()){
             res=false;
         }else{
+            //TODO: check version of UI
             long lmd = dest.lastModified();
             long lmz =zip.lastModified();
             res=lmd<lmz;
@@ -90,14 +89,6 @@ public class WebUiExtractor implements Callable<Boolean>{
               removeDir(dest.getAbsolutePath());
             }
             res=Zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());
-            //TODO: tell UI developer to remove hardcoded paths
-            String ssrc = dest.getAbsolutePath()+File.separator+"build";
-            String sdst = dest.getAbsolutePath()+File.separator+"html"+File.separator+"www";
-            Path src = Paths.get(ssrc);
-            Path dst = Paths.get(sdst);
-            File fdst = new File(sdst);
-            fdst.mkdirs();
-            Files.move(src , dst, StandardCopyOption.REPLACE_EXISTING);
         }
         return res;
     }

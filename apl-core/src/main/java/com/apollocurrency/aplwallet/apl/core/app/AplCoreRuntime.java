@@ -138,7 +138,7 @@ public class AplCoreRuntime {
     
     public String findWebUiDir(){
         String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
-        dir=dir+File.separator+"html"+File.separator+"www";
+        dir=dir+File.separator+"build";
         File res = new File(dir);
         return res.getAbsolutePath();
     }
