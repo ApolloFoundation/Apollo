@@ -15,19 +15,10 @@
             <fileMode>0755</fileMode>          
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/../conf</directory>
-            <outputDirectory>conf</outputDirectory>
-            <fileMode>0755</fileMode>          
-        </fileSet>
-        <fileSet>
             <directory>${project.basedir}/../release-notes/</directory>
             <outputDirectory>doc</outputDirectory>
             <fileMode>0644</fileMode>          
-        </fileSet>     
-        <fileSet>
-            <directory>${project.basedir}/../html/</directory>
-            <outputDirectory>html</outputDirectory>
-        </fileSet>     
+        </fileSet>         
         <fileSet>
             <directory>${project.basedir}/../</directory>
             <outputDirectory>/</outputDirectory>
