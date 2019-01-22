@@ -72,6 +72,7 @@ import org.slf4j.Logger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 public final class Account {
+    private static final Logger LOG = getLogger(Account.class);
     private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
     private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator);
 
@@ -79,10 +80,12 @@ public final class Account {
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final Logger LOG = getLogger(Account.class);
     private static final KeyStore keystore = CDI.current().select(KeyStore.class).get();
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
             Genesis.loadGenesisAccounts();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+
 
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
 
@@ -123,8 +126,8 @@ public final class Account {
                 super.checkAvailable(height);
                 return;
             }
-            if (height > AplCore.getBlockchain().getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + AplCore.getBlockchain().getHeight());
+            if (height > blockchain.getHeight()) {
+                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
             }
         }
 
@@ -216,11 +219,11 @@ public final class Account {
 
         @Override
         public void checkAvailable(int height) {
-            if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < AplCore.getBlockchainProcessor().getMinRollbackHeight()) {
+            if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
                 throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
             }
-            if (height > AplCore.getBlockchain().getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + AplCore.getBlockchain().getHeight());
+            if (height > blockchain.getHeight()) {
+                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
             }
         }
 
@@ -317,7 +320,7 @@ public final class Account {
 
     static {
 
-        AplCore.getBlockchainProcessor().addListener(block -> {
+        blockchainProcessor.addListener(block -> {
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
             try (DbIterator<AccountLease> leases = getLeaseChangingAccounts(height)) {
@@ -358,7 +361,7 @@ public final class Account {
 
         if (publicKeyCache != null) {
 
-            AplCore.getBlockchainProcessor().addListener(block -> {
+            blockchainProcessor.addListener(block -> {
                 publicKeyCache.remove(accountDbKeyFactory.newKey(block.getGeneratorId()));
                 block.getTransactions().forEach(transaction -> {
                     publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getSenderId()));
@@ -374,7 +377,7 @@ public final class Account {
                 });
             }, BlockchainProcessor.Event.BLOCK_POPPED);
 
-            AplCore.getBlockchainProcessor().addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
+            blockchainProcessor.addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
 
         }
 
@@ -985,7 +988,7 @@ public final class Account {
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
-            publicKey.height = AplCore.getBlockchain().getHeight();
+            publicKey.height = blockchain.getHeight();
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
@@ -1018,7 +1021,7 @@ public final class Account {
             pstmt.setLong(++i, this.forgedBalanceATM);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.activeLesseeId);
             pstmt.setBoolean(++i, controls.contains(ControlType.PHASING_ONLY));
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -1085,7 +1088,7 @@ public final class Account {
     }
 
     public long getEffectiveBalanceAPL() {
-        return getEffectiveBalanceAPL(AplCore.getBlockchain().getHeight());
+        return getEffectiveBalanceAPL(blockchain.getHeight());
     }
 
     public long getEffectiveBalanceAPL(int height) {
@@ -1099,7 +1102,7 @@ public final class Account {
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        AplCore.getBlockchain().readLock();
+        blockchain.readLock();
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
@@ -1108,7 +1111,7 @@ public final class Account {
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
         finally {
-            AplCore.getBlockchain().readUnlock();
+            blockchain.readUnlock();
         }
     }
 
@@ -1125,7 +1128,7 @@ public final class Account {
             lessorIds[i] = lessors.get(i).getId();
             balances[i] = lessors.get(i).getBalanceATM();
         }
-        int blockchainHeight = AplCore.getBlockchain().getHeight();
+        int blockchainHeight = blockchain.getHeight();
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
@@ -1168,15 +1171,15 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM() {
-        return getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), AplCore.getBlockchain().getHeight());
+        return getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), blockchain.getHeight());
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
-        AplCore.getBlockchain().readLock();
+        blockchain.readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < AplCore.getBlockchainProcessor().getMinRollbackHeight()
-                    || height > AplCore.getBlockchain().getHeight()) {
+            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockchainProcessor.getMinRollbackHeight()
+                    || height > blockchain.getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
             try (Connection con = Db.getDb().getConnection();
@@ -1197,7 +1200,7 @@ public final class Account {
             }
         }
         finally {
-            AplCore.getBlockchain().readUnlock();
+            blockchain.readUnlock();
         }
     }
 
@@ -1278,7 +1281,7 @@ public final class Account {
     }
 
     void leaseEffectiveBalance(long lesseeId, int period) {
-        int height = AplCore.getBlockchain().getHeight();
+        int height = blockchain.getHeight();
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
@@ -1366,7 +1369,7 @@ public final class Account {
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
-        } else if (publicKey.height >= AplCore.getBlockchain().getHeight() - 1) {
+        } else if (publicKey.height >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);
@@ -1633,7 +1636,7 @@ public final class Account {
         if (amountATM <= 0) {
             return;
         }
-        int blockchainHeight = AplCore.getBlockchain().getHeight();
+        int blockchainHeight = blockchain.getHeight();
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
                      + "WHERE account_id = ? and height = ?");
@@ -1727,7 +1730,7 @@ public final class Account {
                 pstmt.setLong(++i, this.assetId);
                 pstmt.setLong(++i, this.quantityATU);
                 pstmt.setLong(++i, this.unconfirmedQuantityATU);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -1799,7 +1802,7 @@ public final class Account {
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.units);
                 pstmt.setLong(++i, this.unconfirmedUnits);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -1881,7 +1884,7 @@ public final class Account {
                 DbUtils.setIntZeroToNull(pstmt, ++i, this.nextLeasingHeightFrom);
                 DbUtils.setIntZeroToNull(pstmt, ++i, this.nextLeasingHeightTo);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.nextLesseeId);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -1945,7 +1948,7 @@ public final class Account {
                 pstmt.setLong(++i, this.accountId);
                 DbUtils.setString(pstmt, ++i, this.name);
                 DbUtils.setString(pstmt, ++i, this.description);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -2010,7 +2013,7 @@ public final class Account {
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.setterId != this.recipientId ? this.setterId : 0);
                 DbUtils.setString(pstmt, ++i, this.property);
                 DbUtils.setString(pstmt, ++i, this.value);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -2048,7 +2051,7 @@ public final class Account {
             this.accountId = accountId;
             this.dbKey = publicKeyDbKeyFactory.newKey(accountId);
             this.publicKey = publicKey;
-            this.height = AplCore.getBlockchain().getHeight();
+            this.height = blockchain.getHeight();
         }
 
         private PublicKey(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -2097,7 +2100,7 @@ public final class Account {
 
         @Override
         protected void save(Connection con, PublicKey publicKey) throws SQLException {
-            publicKey.height = AplCore.getBlockchain().getHeight();
+            publicKey.height = blockchain.getHeight();
             try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table +" (account_id, public_key, height, latest) "
                     + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
                 int i = 0;

@@ -15,12 +15,15 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -46,7 +49,8 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
             throw new IllegalStateException("Not in transaction");
         }
         DbKey dbKey = dbKeyFactory.newKey(t);
-        int height = AplCore.getBlockchain().getHeight();
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        int height = blockchain.getHeight();
         try (Connection con = db.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
                      + " AND height < ? LIMIT 1")) {

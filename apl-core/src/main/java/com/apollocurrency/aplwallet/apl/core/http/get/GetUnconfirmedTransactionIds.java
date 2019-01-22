@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
@@ -59,7 +58,7 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
 
         JSONArray transactionIds = new JSONArray();
         if (accountIds.isEmpty()) {
-            try (DbIterator<? extends Transaction> transactionsIterator = AplCore.getTransactionProcessor().getAllUnconfirmedTransactions(firstIndex, lastIndex)) {
+            try (DbIterator<? extends Transaction> transactionsIterator = lookupTransactionProcessor().getAllUnconfirmedTransactions(firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();
                     transactionIds.add(transaction.getStringId());
@@ -67,7 +66,7 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
             }
         } else {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
-                    AplCore.getTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
+                    lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
                     transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
                     firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {

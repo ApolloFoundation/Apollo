@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -69,7 +68,7 @@ public final class GetExpectedAssetDeletes extends AbstractAPIRequestHandler {
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 
-        List<Transaction> transactions = AplCore.getBlockchain().getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
 
         JSONObject response = new JSONObject();
         JSONArray deletesData = new JSONArray();

@@ -47,7 +47,7 @@ public final class ClearUnconfirmedTransactions extends AbstractAPIRequestHandle
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            AplCore.getTransactionProcessor().clearUnconfirmedTransactions();
+            lookupTransactionProcessor().clearUnconfirmedTransactions();
             response.put("done", true);
         } catch (RuntimeException e) {
             JSONData.putException(response, e);

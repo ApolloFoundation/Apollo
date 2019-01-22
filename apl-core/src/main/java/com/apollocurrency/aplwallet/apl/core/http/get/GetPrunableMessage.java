@@ -24,7 +24,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TR
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -61,7 +60,7 @@ public final class GetPrunableMessage extends AbstractAPIRequestHandler {
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
         if (prunableMessage == null && retrieve) {
-            if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = PrunableMessage.getPrunableMessage(transactionId);

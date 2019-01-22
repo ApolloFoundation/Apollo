@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -51,11 +50,11 @@ public class RetrievePrunedTransaction extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        Transaction transaction = AplCore.getBlockchain().getTransaction(transactionId);
+        Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        transaction = AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId);
+        transaction = lookupBlockchainProcessor().restorePrunedTransaction(transactionId);
         if (transaction == null) {
             return PRUNED_TRANSACTION;
         }

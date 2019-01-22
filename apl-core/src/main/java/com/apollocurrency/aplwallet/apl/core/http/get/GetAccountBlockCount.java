@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -49,7 +48,7 @@ public final class GetAccountBlockCount extends AbstractAPIRequestHandler {
 
         long accountId = ParameterParser.getAccountId(req, true);
         JSONObject response = new JSONObject();
-        response.put("numberOfBlocks", AplCore.getBlockchain().getBlockCount(accountId));
+        response.put("numberOfBlocks", lookupBlockchain().getBlockCount(accountId));
 
         return response;
     }

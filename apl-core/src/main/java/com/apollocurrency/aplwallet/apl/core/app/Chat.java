@@ -1,9 +1,10 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -12,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 
 public class Chat {
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
     public static DbIterator<ChatInfo> getChatAccounts(long accountId, int from, int to) {
         Connection con = null;
         try {
@@ -64,7 +67,7 @@ public class Chat {
             stmt.setLong(++i, account2);
             stmt.setLong(++i, account1);
             DbUtils.setLimits(++i, stmt, from, to);
-            return BlockchainImpl.getInstance().getTransactions(con, stmt);
+            return blockchain.getTransactions(con, stmt);
         }
         catch (SQLException e) {
             DbUtils.close(con);

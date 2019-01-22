@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -74,10 +74,10 @@ public class AccountLedger {
     public static final int trimKeep = propertiesLoader.getIntProperty("apl.ledgerTrimKeep", 30000);
 
     /** Blockchain */
-    private static final Blockchain blockchain = AplCore.getBlockchain();
+    private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     /** Blockchain processor */
-    private static final BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
     /** Pending ledger entries */
     private static final List<LedgerEntry> pendingEntries = new ArrayList<>();

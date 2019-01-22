@@ -15,12 +15,15 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import org.slf4j.Logger;
 
@@ -31,6 +34,8 @@ import java.sql.SQLException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 public abstract class EntityDbTable<T> extends DerivedDbTable {
         private static final Logger LOG = getLogger(EntityDbTable.class);
 
@@ -38,6 +43,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     protected final DbKey.Factory<T> dbKeyFactory;
     private final String defaultSort;
     private final String fullTextSearchColumns;
+    private static Blockchain blockchain;
+    private static BlockchainProcessor blockchainProcessor;
 
     protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -77,15 +84,17 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
 
     public void checkAvailable(int height) {
         if (multiversion) {
-            int minRollBackHeight = isPersistent() && AplCore.getBlockchainProcessor().isScanning() ?
-                    Math.max(AplCore.getBlockchainProcessor().getInitialScanHeight() - Constants.MAX_ROLLBACK, 0)
-                    : AplCore.getBlockchainProcessor().getMinRollbackHeight();
+            if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+            int minRollBackHeight = isPersistent() && blockchainProcessor.isScanning() ?
+                    Math.max(blockchainProcessor.getInitialScanHeight() - Constants.MAX_ROLLBACK, 0)
+                    : blockchainProcessor.getMinRollbackHeight();
             if (height < minRollBackHeight) {
                 throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
             }
         }
-        if (height > AplCore.getBlockchain().getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + AplCore.getBlockchain().getHeight());
+        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        if (height > blockchain.getHeight()) {
+            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
         }
     }
 
@@ -476,7 +485,9 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     private boolean doesNotExceed(int height) {
-        return AplCore.getBlockchain().getHeight() <= height && ! (isPersistent() && AplCore.getBlockchainProcessor().isScanning());
+        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        return blockchain.getHeight() <= height && ! (isPersistent() && blockchainProcessor.isScanning());
     }
 
 }

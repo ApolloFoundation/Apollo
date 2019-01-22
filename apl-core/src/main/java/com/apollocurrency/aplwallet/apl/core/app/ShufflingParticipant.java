@@ -44,6 +44,8 @@ import javax.enterprise.inject.spi.CDI;
 
 public final class ShufflingParticipant {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
     private static final Logger LOG = getLogger(ShufflingParticipant.class);
 
     public enum State {
@@ -260,7 +262,7 @@ public final class ShufflingParticipant {
             DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData);
             DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds);
             DbUtils.setBytes(pstmt, ++i, this.dataTransactionFullHash);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -313,7 +315,7 @@ public final class ShufflingParticipant {
 
     void setData(byte[][] data, int timestamp) {
         if (data != null && AplCore.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
-            shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, AplCore.getBlockchain().getHeight()));
+            shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, blockchain.getHeight()));
         }
     }
 

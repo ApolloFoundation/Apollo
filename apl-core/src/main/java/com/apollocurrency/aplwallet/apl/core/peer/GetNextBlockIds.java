@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -52,7 +51,7 @@ final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
         if (limit > 1440) {
             return GetNextBlocks.TOO_MANY_BLOCKS_REQUESTED;
         }
-        List<Long> ids = AplCore.getBlockchain().getBlockIdsAfter(blockId, limit > 0 ? limit : 1440);
+        List<Long> ids = lookupBlockchain().getBlockIdsAfter(blockId, limit > 0 ? limit : 1440);
         ids.forEach(id -> nextBlockIds.add(Long.toUnsignedString(id)));
         response.put("nextBlockIds", nextBlockIds);
 

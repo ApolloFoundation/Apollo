@@ -34,12 +34,13 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
 import com.apollocurrency.aplwallet.apl.core.app.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
@@ -86,6 +87,7 @@ import org.json.simple.JSONObject;
 
 public final class JSONData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private JSONData() {} // never
 
     public static JSONObject alias(Alias alias) {
@@ -110,7 +112,7 @@ public final class JSONData {
     }
 
     public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
-        return accountBalance(account, includeEffectiveBalance, AplCore.getBlockchain().getHeight());
+        return accountBalance(account, includeEffectiveBalance, blockchain.getHeight());
     }
 
     public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
@@ -520,7 +522,7 @@ public final class JSONData {
                 for (PhasingPoll.PhasingPollResult phasingPollResult : phasingPollResults) {
                     long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
-                        phasedTransactions.add(transaction(false, AplCore.getBlockchain().getTransaction(phasedTransactionId)));
+                        phasedTransactions.add(transaction(false, blockchain.getTransaction(phasedTransactionId)));
                     } else {
                         phasedTransactions.add(Long.toUnsignedString(phasedTransactionId));
                     }
@@ -671,7 +673,7 @@ public final class JSONData {
             if (currency != null) {
                 json.put("decimals", currency.getDecimals());
             } else {
-                Transaction currencyIssuance = AplCore.getBlockchain().getTransaction(voteWeighting.getHoldingId());
+                Transaction currencyIssuance = blockchain.getTransaction(voteWeighting.getHoldingId());
                 Attachment.MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
                 json.put("decimals", currencyIssuanceAttachment.getDecimals());
             }
@@ -1102,7 +1104,7 @@ public final class JSONData {
     public static JSONObject transaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {
         JSONObject json = unconfirmedTransaction(transaction, filter, isPrivate);
         json.put("block", Long.toUnsignedString(transaction.getBlockId()));
-        json.put("confirmations", AplCore.getBlockchain().getHeight() - transaction.getHeight());
+        json.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         json.put("blockTimestamp", transaction.getBlockTimestamp());
         json.put("transactionIndex", transaction.getIndex());
         return json;
@@ -1286,11 +1288,11 @@ public final class JSONData {
     }
 
     private static void putExpectedTransaction(JSONObject json, Transaction transaction) {
-        json.put("height", AplCore.getBlockchain().getHeight() + 1);
+        json.put("height", blockchain.getHeight() + 1);
         json.put("phased", transaction.getPhasing() != null);
         if (transaction.getBlockId() != 0) { // those values may be wrong for unconfirmed transactions
             json.put("transactionHeight", transaction.getHeight());
-            json.put("confirmations", AplCore.getBlockchain().getHeight() - transaction.getHeight());
+            json.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         }
     }
 
@@ -1328,7 +1330,7 @@ public final class JSONData {
             }
         }
         if (includeTransactions && entry.getEvent().isTransaction()) {
-            Transaction transaction = AplCore.getBlockchain().getTransaction(entry.getEventId());
+            Transaction transaction = blockchain.getTransaction(entry.getEventId());
             json.put("transaction", JSONData.transaction(false, transaction));
         }
     }

@@ -15,10 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
+import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -114,13 +116,14 @@ public class PhasingVote {
     }
 
     private void save(Connection con) throws SQLException {
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_vote (vote_id, transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.voteId);
             pstmt.setLong(++i, this.phasedTransactionId);
             pstmt.setLong(++i, this.voterId);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

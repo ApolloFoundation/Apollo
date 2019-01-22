@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -54,7 +53,7 @@ public class RetrievePrunedData extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            int count = AplCore.getBlockchainProcessor().restorePrunedData();
+            int count = lookupBlockchainProcessor().restorePrunedData();
             response.put("done", true);
             response.put("numberOfPrunedData", count);
         } catch (RuntimeException e) {

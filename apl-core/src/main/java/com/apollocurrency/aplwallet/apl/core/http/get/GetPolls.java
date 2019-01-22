@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -64,7 +63,7 @@ public class GetPolls extends AbstractAPIRequestHandler {
         try {
             if (accountId == 0) {
                 if (finishedOnly) {
-                    polls = Poll.getPollsFinishingAtOrBefore(AplCore.getBlockchain().getHeight(), firstIndex, lastIndex);
+                    polls = Poll.getPollsFinishingAtOrBefore(lookupBlockchain().getHeight(), firstIndex, lastIndex);
                 } else if (includeFinished) {
                     polls = Poll.getAllPolls(firstIndex, lastIndex);
                 } else {
