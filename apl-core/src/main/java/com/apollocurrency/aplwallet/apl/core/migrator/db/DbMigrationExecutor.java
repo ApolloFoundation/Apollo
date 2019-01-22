@@ -54,9 +54,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
 
     @Override
     protected Migrator getMigrator() {
-        String dbUser = holder.getStringProperty(oldDbPrefix + "Username");
-        String dbPassword = holder.getStringProperty(oldDbPrefix + "Password");
-        DbInfoExtractor dbInfoExtractor = new H2DbInfoExtractor(dbUser, dbPassword);
+        DbInfoExtractor dbInfoExtractor = CDI.current().select(DbInfoExtractor.class).get();
         return new DbMigrator(dbInfoExtractor);
     }
 }

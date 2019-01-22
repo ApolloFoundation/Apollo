@@ -153,15 +153,17 @@
         }
       },
       {
-        "height": 1024000,
+        "height": 1250000,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus": {
+        "consensus":
+        {
           "type": "POS",
-          "adaptiveForgingSettings": {
+          "adaptiveForgingSettings":
+          {
             "enabled": "true",
             "adaptiveBlockTime": 10
           }

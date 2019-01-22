@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import org.slf4j.Logger;
@@ -28,11 +29,10 @@ public class DbMigrator implements Migrator {
         if (oldDbInfo != null) {
             LOG.info("Found old db for migration at path {}", oldDbInfo.dbPath);
             int height = oldDbInfo.height;
-            if (height > 0) {
-                Path targetDbFullPath = dbInfoExtractor.getPath(toPath.toAbsolutePath().toString());
-                LOG.info("Db {} has blocks - {}. Do migration to {}", oldDbInfo.dbPath, height, targetDbFullPath);
-                Files.copy(oldDbInfo.dbPath, targetDbFullPath, StandardCopyOption.REPLACE_EXISTING);
-            }
+            Path targetDbFullPath = dbInfoExtractor.getPath(toPath.toAbsolutePath().toString());
+            LOG.info("Db {} has blocks - {}. Do migration to {}", oldDbInfo.dbPath, height, targetDbFullPath);
+
+            Files.copy(oldDbInfo.dbPath, targetDbFullPath, StandardCopyOption.REPLACE_EXISTING);
             int actualDbHeight = dbInfoExtractor.getHeight(toPath.toAbsolutePath().toString());
             if (actualDbHeight != height) {
                 throw new RuntimeException(String.format("Db was migrated with errors. Expected height - %d, actual - %d. Application restart is " +
@@ -56,6 +56,7 @@ public class DbMigrator implements Migrator {
     }
 
     public DbMigrator(DbInfoExtractor dbInfoExtractor) {
+        Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
         this.dbInfoExtractor = dbInfoExtractor;
     }
 
@@ -63,30 +64,11 @@ public class DbMigrator implements Migrator {
     public DbInfo getOldDbInfo(List<Path> paths) {
         for (Path dbPath : paths) {
             int height = dbInfoExtractor.getHeight(dbPath.toAbsolutePath().toString());
-            if (height != 0) {
+            if (height > 0) {
                 return new DbInfo(dbInfoExtractor.getPath(dbPath.toAbsolutePath().toString()), dbPath.getParent(), height);
             }
         }
         return null;
     }
-
-//    private Path getRootDbDir(Path dbPath, Path currentDbPath) {
-//        Path rootDbRoot = dbPath;
-//        while (!currentDbPath.startsWith(rootDbRoot.getParent())) {
-//            rootDbRoot = rootDbRoot.getParent();
-//        }
-//        return rootDbRoot;
-//    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This implementation check two database locations specified by <b>chainIdDbDir</b> and <b>legacyDbDir</b>.
-     * Database at <b>chainIdDbDir</b> is preferred.
-     * Migration will be performed only when at least one database exists at specified locations and has blocks. In such case old path of the
-     * migrated database will be returned, otherwise null will be returned
-     * </p>
-     */
-
 }
 

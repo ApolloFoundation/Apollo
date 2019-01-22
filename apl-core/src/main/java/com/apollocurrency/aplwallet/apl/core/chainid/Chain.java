@@ -69,6 +69,61 @@ public class Chain {
                                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
     }
 
+    public Chain() {
+    }
+
+    public void setChainId(UUID chainId) {
+        this.chainId = chainId;
+    }
+
+    public void setTestnet(boolean testnet) {
+        isTestnet = testnet;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setDefaultPeers(List<String> defaultPeers) {
+        this.defaultPeers = defaultPeers;
+    }
+
+    public void setWellKnownPeers(List<String> wellKnownPeers) {
+        this.wellKnownPeers = wellKnownPeers;
+    }
+
+    public void setBlacklistedPeers(List<String> blacklistedPeers) {
+        this.blacklistedPeers = blacklistedPeers;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
+    public void setGenesisLocation(String genesisLocation) {
+        this.genesisLocation = genesisLocation;
+    }
+
+    public void setBlockchainProperties(Map<Integer, BlockchainProperties> blockchainProperties) {
+        this.blockchainProperties = blockchainProperties;
+    }
+
     public UUID getChainId() {
         return chainId;
     }

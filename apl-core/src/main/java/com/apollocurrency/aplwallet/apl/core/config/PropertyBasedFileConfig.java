@@ -11,6 +11,7 @@ import javax.inject.Named;
 import java.nio.file.Path;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +20,12 @@ import org.slf4j.LoggerFactory;
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
-
+    private final String oldDbPrefix;
 
     @Inject
-    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder) {
+    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder, BlockchainConfig config) {
         this.propertiesHolder = propertiesHolder;
+        this.oldDbPrefix = config.isTestnet() ? "apl.testDb" : "apl.db";
     }
 
     @Produces
@@ -35,6 +37,18 @@ public class PropertyBasedFileConfig {
     @Named("keystoreDirPath")
     public Path getKeystoreDirFilePath() {
         return AplCoreRuntime.getInstance().getVaultKeystoreDir().toAbsolutePath();
+    }
+
+    @Produces
+    @Named("dbUser")
+    public String getDbUser() {
+
+        return propertiesHolder.getStringProperty(oldDbPrefix + "Username");
+    }
+    @Produces
+    @Named("dbPassword")
+    public String getDbPassword() {
+        return propertiesHolder.getStringProperty(oldDbPrefix + "Password");
     }
 
     private String getOrDefault(String property, String defaultValue) {

@@ -23,7 +23,7 @@ public abstract class MigrationExecutor {
 
     private static final String MIGRATION_REQUIRED_TEMPLATE = "%sMigrationRequired-%d";
     private static final String DELETE_AFTER_MIGRATION_TEMPLATE = "apl.migrator.%s.deleteAfterMigration";
-    private static final int attempt = 0;
+    private static final int ATTEMPT = 0;
 
     protected PropertiesHolder holder;
     protected BlockchainConfig config;
@@ -40,7 +40,7 @@ public abstract class MigrationExecutor {
         }
         this.holder = holder;
         this.config = config;
-        this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, attempt);
+        this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
         this.optionDAO = new OptionDAO(Db.getDb());
         this.migrationItemName = migrationItemName;

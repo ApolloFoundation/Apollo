@@ -32,15 +32,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 public final class Db {
     private static final Logger LOG = getLogger(Db.class);
-
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     private static TransactionalDb db;
 
@@ -57,23 +52,7 @@ public final class Db {
     }
 
     public static void init() {
-        init("");
-    }
-    public static void init(String dbUrl) {
-        BasicDb.DbProperties dbProperties = new BasicDb.DbProperties()
-                .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
-                .dbUrl(StringUtils.isBlank(dbUrl) ? propertiesHolder.getStringProperty("apl.dbUrl") : dbUrl)
-                .dbType(propertiesHolder.getStringProperty("apl.dbType"))
-                .dbDir(AplCoreRuntime.getInstance().getDbDir().toAbsolutePath().toString())
-                .dbFileName(Constants.APPLICATION_DIR_NAME)
-                .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
-                .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))
-                .dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
-                .maxConnections(propertiesHolder.getIntProperty("apl.maxDbConnections"))
-                .loginTimeout(propertiesHolder.getIntProperty("apl.dbLoginTimeout"))
-                .defaultLockTimeout(propertiesHolder.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
-                .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows")
-                );
+        BasicDb.DbProperties dbProperties = CDI.current().select(BasicDb.DbProperties.class).get();
         init(dbProperties);
     }
 

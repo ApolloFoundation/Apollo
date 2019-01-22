@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +23,8 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
     private final String user;
     private final String password;
 
-    public H2DbInfoExtractor(String user, String password) {
+    @Inject
+    public H2DbInfoExtractor(@Named("dbUsername") String user, @Named("dbPassword") String password) {
         this.user = user;
         this.password = password;
     }

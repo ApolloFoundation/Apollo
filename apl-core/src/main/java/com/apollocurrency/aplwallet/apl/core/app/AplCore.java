@@ -74,35 +74,6 @@ public final class AplCore {
         return shutdown;
     }
  
-/*
-    public static Blockchain getBlockchain() {
-        return blockchain;
-    }
-
-    public static BlockchainProcessor getBlockchainProcessor() {
-        return blockchainProcessor;
-    }
-
-    public static TransactionProcessor getTransactionProcessor() {
-        return TransactionProcessorImpl.getInstance();
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment)attachment);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-    }
-*/
 
     public static int getEpochTime() {
         return time.getTime();
