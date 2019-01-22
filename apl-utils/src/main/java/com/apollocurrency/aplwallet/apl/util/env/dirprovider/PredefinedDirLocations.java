@@ -17,6 +17,10 @@ public class PredefinedDirLocations {
     private Path pidFilePath;
     private Path twoFactorAuthDir;
 
+    public PredefinedDirLocations() {
+        this(null, null, null, null, null);
+    }
+
     public PredefinedDirLocations(String dbDir, String logsDir, String vaultKeystoreDir, String pidFilePath, String twoFactorAuthDir) {
         this.dbDir = getPath(dbDir);
         this.logsDir = getPath(logsDir);
