@@ -16,12 +16,17 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -44,13 +49,17 @@ import java.util.List;
 
 public final class DigitalGoodsStore {
 
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
     public enum Event {
         GOODS_LISTED, GOODS_DELISTED, GOODS_PRICE_CHANGE, GOODS_QUANTITY_CHANGE,
         PURCHASE, DELIVERY, REFUND, FEEDBACK
     }
 
-    static {
-        AplCore.getBlockchainProcessor().addListener(block -> {
+//    static {
+    private static void initListener() {
+        blockchainProcessor.addListener(block -> {
             if (block.getHeight() == 0) {
                 return;
             }
@@ -91,6 +100,7 @@ public final class DigitalGoodsStore {
     }
 
     static void init() {
+        initListener();
         Tag.init();
         Goods.init();
         Purchase.init();
@@ -204,7 +214,7 @@ public final class DigitalGoodsStore {
                 pstmt.setString(++i, this.tag);
                 pstmt.setInt(++i, this.inStockCount);
                 pstmt.setInt(++i, this.totalCount);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -321,7 +331,7 @@ public final class DigitalGoodsStore {
             this.quantity = attachment.getQuantity();
             this.priceATM = attachment.getPriceATM();
             this.delisted = false;
-            this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+            this.timestamp = blockchain.getLastBlockTimestamp();
             this.hasImage = transaction.getPrunablePlainMessage() != null;
         }
 
@@ -356,7 +366,7 @@ public final class DigitalGoodsStore {
                 pstmt.setLong(++i, this.priceATM);
                 pstmt.setBoolean(++i, this.delisted);
                 pstmt.setBoolean(++i, this.hasImage);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -491,7 +501,7 @@ public final class DigitalGoodsStore {
                     int i = 0;
                     pstmt.setLong(++i, purchase.getId());
                     i = setEncryptedData(pstmt, encryptedData, ++i);
-                    pstmt.setInt(i, AplCore.getBlockchain().getHeight());
+                    pstmt.setInt(i, blockchain.getHeight());
                     pstmt.executeUpdate();
                 }
             }
@@ -521,7 +531,7 @@ public final class DigitalGoodsStore {
                     int i = 0;
                     pstmt.setLong(++i, purchase.getId());
                     pstmt.setString(++i, publicFeedback);
-                    pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                    pstmt.setInt(++i, blockchain.getHeight());
                     pstmt.executeUpdate();
                 }
             }
@@ -656,7 +666,7 @@ public final class DigitalGoodsStore {
 
         private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
             final int timestamp = block.getTimestamp();
-            Blockchain bc = AplCore.getBlockchain();
+            Blockchain bc = blockchain;
             long privBlockId = block.getPreviousBlockId();
             Block privBlock = bc.getBlock(privBlockId);
             
@@ -702,7 +712,7 @@ public final class DigitalGoodsStore {
             this.priceATM = attachment.getPriceATM();
             this.deadline = attachment.getDeliveryDeadlineTimestamp();
             this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
-            this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+            this.timestamp = blockchain.getLastBlockTimestamp();
             this.isPending = true;
         }
 
@@ -750,7 +760,7 @@ public final class DigitalGoodsStore {
                 pstmt.setBoolean(++i, this.hasPublicFeedbacks);
                 pstmt.setLong(++i, this.discountATM);
                 pstmt.setLong(++i, this.refundATM);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -978,7 +988,7 @@ public final class DigitalGoodsStore {
     }
 
     static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
-                       Appendix.EncryptedMessage encryptedMessage) {
+                       EncryptedMessageAppendix encryptedMessage) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
         seller.addToBalanceATM(event, eventId, -refundATM);
@@ -991,7 +1001,7 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.REFUND);
     }
 
-    static void feedback(long purchaseId, Appendix.EncryptedMessage encryptedMessage, Appendix.Message message) {
+    static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         if (encryptedMessage != null) {
             purchase.addFeedbackNote(encryptedMessage.getEncryptedData());

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -55,7 +56,9 @@ public class TaggedData {
 
     };
 
+    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final VersionedPrunableDbTable<TaggedData> taggedDataTable = new VersionedPrunableDbTable<TaggedData>(
             "tagged_data", taggedDataKeyFactory, "name,description,tags") {
@@ -127,7 +130,7 @@ public class TaggedData {
                 int i = 0;
                 pstmt.setLong(++i, this.id);
                 pstmt.setInt(++i, this.timestamp);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -159,7 +162,6 @@ public class TaggedData {
 
     };
 
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     public static final class Tag {
 
         private static final DbKey.StringKeyFactory<Tag> tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
@@ -207,7 +209,7 @@ public class TaggedData {
             for (String tagValue : taggedData.getParsedTags()) {
                 Tag tag = tagTable.get(tagDbKeyFactory.newKey(tagValue));
                 if (tag == null) {
-                    tag = new Tag(tagValue, AplCore.getBlockchain().getHeight());
+                    tag = new Tag(tagValue, blockchain.getHeight());
                 }
                 tag.count += 1;
                 tagTable.insert(tag);
@@ -313,7 +315,7 @@ public class TaggedData {
                 int i = 0;
                 pstmt.setLong(++i, taggedDataId);
                 pstmt.setLong(++i, extendId);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -380,11 +382,7 @@ public class TaggedData {
     private int blockTimestamp;
     private int height;
 
-    public TaggedData(Transaction transaction, Attachment.TaggedDataAttachment attachment) {
-        this(transaction, attachment, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
-    }
-
-    private TaggedData(Transaction transaction, Attachment.TaggedDataAttachment attachment, int blockTimestamp, int height) {
+    public TaggedData(Transaction transaction, Attachment.TaggedDataAttachment attachment, int blockTimestamp, int height) {
         this.id = transaction.getId();
         this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
@@ -514,7 +512,8 @@ public class TaggedData {
         if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
-                taggedData = new TaggedData(transaction, attachment);
+                taggedData = new TaggedData(transaction, attachment,
+                        blockchain.getLastBlockTimestamp(), blockchain.getHeight());
                 taggedDataTable.insert(taggedData);
                 Tag.add(taggedData);
             }
@@ -539,20 +538,21 @@ public class TaggedData {
         if (AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                TransactionImpl uploadTransaction = transactionDb.findTransaction(taggedDataId);
-                taggedData = new TaggedData(uploadTransaction, attachment);
+                Transaction uploadTransaction = transactionDb.findTransaction(taggedDataId);
+                taggedData = new TaggedData(uploadTransaction, attachment,
+                        blockchain.getLastBlockTimestamp(), blockchain.getHeight());
                 Tag.add(taggedData);
             }
             if (taggedData != null) {
                 taggedData.transactionTimestamp = timestamp.timestamp;
-                taggedData.blockTimestamp = AplCore.getBlockchain().getLastBlockTimestamp();
-                taggedData.height = AplCore.getBlockchain().getHeight();
+                taggedData.blockTimestamp = blockchain.getLastBlockTimestamp();
+                taggedData.height = blockchain.getHeight();
                 taggedDataTable.insert(taggedData);
             }
         }
     }
 
-    static void restore(Transaction transaction, Attachment.TaggedDataUpload attachment, int blockTimestamp, int height) {
+    public static void restore(Transaction transaction, Attachment.TaggedDataUpload attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
         Tag.add(taggedData, height);

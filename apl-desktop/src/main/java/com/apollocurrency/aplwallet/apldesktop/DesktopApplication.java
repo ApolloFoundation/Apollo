@@ -52,12 +52,14 @@ import java.util.stream.Collectors;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -341,6 +343,8 @@ public class DesktopApplication extends Application {
         private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
         private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
+        private TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        private BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
         private MainApplication() {
         }
@@ -414,12 +418,11 @@ public class DesktopApplication extends Application {
                         mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
 
                         updateClientState("Desktop Wallet started");
-                        BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
                         blockchainProcessor.addListener((block) ->
                                 updateClientState(BlockchainProcessor.Event.BLOCK_PUSHED, block), BlockchainProcessor.Event.BLOCK_PUSHED);
                         blockchainProcessor.addListener((block) ->
                                 updateClientState(BlockchainProcessor.Event.AFTER_BLOCK_APPLY, block), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-                        AplCore.getTransactionProcessor().addListener(transaction ->
+                        transactionProcessor.addListener(transaction ->
                                 updateClientState(TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS, transaction), TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
 /*
                         if (ENABLE_JAVASCRIPT_DEBUGGER) {
@@ -522,7 +525,6 @@ public class DesktopApplication extends Application {
         }
 
         private void updateClientState(BlockchainProcessor.Event blockEvent, Block block) {
-            BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
             if (blockEvent == BlockchainProcessor.Event.BLOCK_PUSHED && blockchainProcessor.isDownloading()) {
                 if (!(block.getHeight() % 100 == 0)) {
                     return;
@@ -608,7 +610,7 @@ public class DesktopApplication extends Application {
             if (requestType.equals("downloadTaggedData")) {
                 if (taggedData == null && retrieve) {
                     try {
-                        if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+                        if (blockchainProcessor.restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
                         }
@@ -633,7 +635,7 @@ public class DesktopApplication extends Application {
                 PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 if (prunableMessage == null && retrieve) {
                     try {
-                        if (AplCore.getBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+                        if (blockchainProcessor.restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned message not currently available from any peer");
                             return;
                         }

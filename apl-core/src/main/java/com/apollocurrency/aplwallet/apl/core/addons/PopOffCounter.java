@@ -15,20 +15,21 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -38,17 +39,18 @@ public final class PopOffCounter implements AddOn {
     private static final Logger LOG = getLogger(PopOffCounter.class);
 
     private volatile int numberOfPopOffs = 0;
+    private BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
 
     @Override
     public void init() {
-        AplCore.getBlockchainProcessor().addListener(block -> numberOfPopOffs += 1, BlockchainProcessor.Event.BLOCK_POPPED);
+        blockchainProcessor.addListener(block -> numberOfPopOffs += 1, BlockchainProcessor.Event.BLOCK_POPPED);
     }
 
     @Override
-    public APIServlet.APIRequestHandler getAPIRequestHandler() {
-        return new APIServlet.APIRequestHandler(new APITag[]{APITag.ADDONS, APITag.BLOCKS}) {
+    public AbstractAPIRequestHandler getAPIRequestHandler() {
+        return new AbstractAPIRequestHandler(new APITag[]{APITag.ADDONS, APITag.BLOCKS}) {
             @Override
-            protected JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
+            public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
                 JSONObject response = new JSONObject();
                 response.put("numberOfPopOffs", numberOfPopOffs);
                 return response;

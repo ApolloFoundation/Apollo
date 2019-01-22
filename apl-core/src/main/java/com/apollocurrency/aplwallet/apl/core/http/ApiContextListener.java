@@ -1,8 +1,10 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
+
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletContextEvent;
@@ -11,8 +13,6 @@ import javax.servlet.annotation.WebListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 @WebListener
 public class ApiContextListener implements ServletContextListener {

@@ -15,14 +15,13 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -47,7 +46,7 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
     @Override
     JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
         String previousBlockId = (String)request.get("previousBlock");
-        Block lastBlock = AplCore.getBlockchain().getLastBlock();
+        Block lastBlock = lookupBlockchain().getLastBlock();
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
         Object timeoutJsonValue = request.get("timeout");
         int peerBlockTimeout =  timeoutJsonValue == null ? 0 : ((Long)timeoutJsonValue).intValue();
@@ -58,7 +57,7 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
             Peers.peersService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");
-                    AplCore.getBlockchainProcessor().processPeerBlock(request);
+                    lookupBlockchainProcessor().processPeerBlock(request);
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {
                         peer.blacklist(e);

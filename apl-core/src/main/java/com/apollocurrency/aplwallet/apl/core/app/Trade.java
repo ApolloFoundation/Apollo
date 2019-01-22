@@ -15,10 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
+import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -186,7 +188,8 @@ public final class Trade {
     private final boolean isBuy;
 
     private Trade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
-        Block block = AplCore.getBlockchain().getLastBlock();
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        Block block = blockchain.getLastBlock();
         this.blockId = block.getId();
         this.height = block.getHeight();
         this.assetId = assetId;

@@ -15,11 +15,15 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,6 +39,8 @@ import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
 
 
 public final class PrunableMessage {
+
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final DbKey.LongKeyFactory<PrunableMessage> prunableMessageKeyFactory = new DbKey.LongKeyFactory<PrunableMessage>("id") {
 
@@ -141,12 +147,12 @@ public final class PrunableMessage {
         this.transactionTimestamp = transaction.getTimestamp();
     }
 
-    private void setPlain(Appendix.PrunablePlainMessage appendix) {
+    private void setPlain(PrunablePlainMessageAppendix appendix) {
         this.message = appendix.getMessage();
         this.messageIsText = appendix.isText();
     }
 
-    private void setEncrypted(Appendix.PrunableEncryptedMessage appendix) {
+    private void setEncrypted(PrunableEncryptedMessageAppendix appendix) {
         this.encryptedData = appendix.getEncryptedData();
         this.encryptedMessageIsText = appendix.isText();
         this.isCompressed = appendix.isCompressed();
@@ -274,11 +280,11 @@ public final class PrunableMessage {
         return Account.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }
 
-    static void add(TransactionImpl transaction, Appendix.PrunablePlainMessage appendix) {
-        add(transaction, appendix, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
+    public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {
+        add(transaction, appendix, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
     }
 
-    static void add(TransactionImpl transaction, Appendix.PrunablePlainMessage appendix, int blockTimestamp, int height) {
+    public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getMessage() != null) {
             PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {
@@ -293,11 +299,11 @@ public final class PrunableMessage {
         }
     }
 
-    static void add(TransactionImpl transaction, Appendix.PrunableEncryptedMessage appendix) {
-        add(transaction, appendix, AplCore.getBlockchain().getLastBlockTimestamp(), AplCore.getBlockchain().getHeight());
+    public static void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix) {
+        add(transaction, appendix, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
     }
 
-    static void add(TransactionImpl transaction, Appendix.PrunableEncryptedMessage appendix, int blockTimestamp, int height) {
+    public static void add(TransactionImpl transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
                 PrunableMessage prunableMessage = prunableMessageTable.get(transaction.getDbKey());
             if (prunableMessage == null) {

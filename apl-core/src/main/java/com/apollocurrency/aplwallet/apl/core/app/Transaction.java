@@ -15,19 +15,46 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 public interface Transaction {
+
+    static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
+        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment)attachment);
+    }
+
+    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
+        return TransactionImpl.newTransactionBuilder(transactionBytes);
+    }
+
+    static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
+        return TransactionImpl.newTransactionBuilder(transactionJSON);
+    }
+
+    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
+        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
+    }
 
     interface Builder {
 
@@ -37,19 +64,19 @@ public interface Transaction {
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
-        Builder appendix(Appendix.Message message);
+        Builder appendix(MessageAppendix message);
 
-        Builder appendix(Appendix.EncryptedMessage encryptedMessage);
+        Builder appendix(EncryptedMessageAppendix encryptedMessage);
 
-        Builder appendix(Appendix.EncryptToSelfMessage encryptToSelfMessage);
+        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
 
-        Builder appendix(Appendix.PublicKeyAnnouncement publicKeyAnnouncement);
+        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
 
-        Builder appendix(Appendix.PrunablePlainMessage prunablePlainMessage);
+        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
 
-        Builder appendix(Appendix.PrunableEncryptedMessage prunableEncryptedMessage);
+        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
 
-        Builder appendix(Appendix.Phasing phasing);
+        Builder appendix(PhasingAppendix phasing);
 
         Builder timestamp(int timestamp);
 
@@ -75,11 +102,19 @@ public interface Transaction {
 
     int getHeight();
 
+    void setHeight(int height);
+
     long getBlockId();
 
     Block getBlock();
 
+    void setBlock(Block block);
+
+    void unsetBlock();
+
     short getIndex();
+
+    void setIndex(int index);
 
     int getTimestamp();
 
@@ -95,9 +130,13 @@ public interface Transaction {
 
     String getReferencedTransactionFullHash();
 
+    byte[] referencedTransactionFullHash();
+
     byte[] getSignature();
 
-    String getFullHash();
+    String getFullHashString();
+
+    byte[] getFullHash();
 
     TransactionType getType();
 
@@ -119,25 +158,37 @@ public interface Transaction {
 
     int getFullSize();
 
-    Appendix.Message getMessage();
+    MessageAppendix getMessage();
 
-    Appendix.EncryptedMessage getEncryptedMessage();
+    EncryptedMessageAppendix getEncryptedMessage();
 
-    Appendix.EncryptToSelfMessage getEncryptToSelfMessage();
+    EncryptToSelfMessageAppendix getEncryptToSelfMessage();
 
-    Appendix.Phasing getPhasing();
+    PhasingAppendix getPhasing();
 
-    Appendix.PrunablePlainMessage getPrunablePlainMessage();
+    boolean attachmentIsPhased();
 
-    Appendix.PrunableEncryptedMessage getPrunableEncryptedMessage();
+    PublicKeyAnnouncementAppendix getPublicKeyAnnouncement();
 
-    List<? extends Appendix> getAppendages();
+    PrunablePlainMessageAppendix getPrunablePlainMessage();
 
-    List<? extends Appendix> getAppendages(boolean includeExpiredPrunable);
+    boolean hasPrunablePlainMessage();
 
-    List<? extends Appendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
+    PrunableEncryptedMessageAppendix getPrunableEncryptedMessage();
+
+    boolean hasPrunableEncryptedMessage();
+
+    List<AbstractAppendix> getAppendages();
+
+    List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable);
+
+    List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
 
     int getECBlockHeight();
 
     long getECBlockId();
+
+    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+        return false;
+    }
 }

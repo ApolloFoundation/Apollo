@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.tools;
@@ -29,7 +29,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -107,7 +106,7 @@ public final class SignTransactionJSON {
     }
 
     private static String signTransaction(JSONObject transactionJson, byte[] keySeed) throws AplException.NotValidException {
-        Transaction.Builder builder = AplCore.newTransactionBuilder(transactionJson);
+        Transaction.Builder builder = Transaction.newTransactionBuilder(transactionJson);
         Transaction transaction = builder.build(keySeed);
         return transaction.getJSONObject().toJSONString();
     }

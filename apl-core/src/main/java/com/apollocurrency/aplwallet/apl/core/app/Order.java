@@ -15,12 +15,15 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -32,6 +35,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public abstract class Order {
+
+    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private final long id;
     private final long accountId;
@@ -47,7 +52,7 @@ public abstract class Order {
         this.assetId = attachment.getAssetId();
         this.quantityATU = attachment.getQuantityATU();
         this.priceATM = attachment.getPriceATM();
-        this.creationHeight = AplCore.getBlockchain().getHeight();
+        this.creationHeight = blockchain.getHeight();
         this.transactionIndex = transaction.getIndex();
         this.transactionHeight = transaction.getHeight();
     }
@@ -141,7 +146,7 @@ public abstract class Order {
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setShort(++i, this.transactionIndex);
             pstmt.setInt(++i, this.transactionHeight);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

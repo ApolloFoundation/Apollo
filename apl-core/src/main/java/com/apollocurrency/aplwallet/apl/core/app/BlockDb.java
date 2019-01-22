@@ -15,16 +15,16 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,7 +44,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 
 import org.slf4j.Logger;
-@Singleton
+
+@ApplicationScoped
 public class BlockDb {
     private static final Logger LOG = getLogger(BlockDb.class);
 
@@ -73,6 +74,7 @@ public class BlockDb {
         this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), connectionProvider);
     }
 
+/*
     public void attachCacheListener() {
         AplCore.getBlockchainProcessor().addListener((block) -> {
 
@@ -94,7 +96,8 @@ public class BlockDb {
             }
         }, BlockchainProcessor.Event.BLOCK_PUSHED);
     }
-    
+*/
+
 
      private void clearBlockCache() {
         synchronized (blockCache) {
@@ -351,7 +354,7 @@ public class BlockDb {
     }
 
 
-    void saveBlock(Connection con, BlockImpl block) {
+    void saveBlock(Connection con, Block block) {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
@@ -497,7 +500,8 @@ public class BlockDb {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-                BlockchainProcessorImpl.getInstance().getDerivedTables().forEach(table -> {
+                BlockchainProcessorImpl blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                blockchainProcessor.getDerivedTables().forEach(table -> {
                     try {
                         stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
                     } catch (SQLException ignore) {}

@@ -15,11 +15,14 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -32,6 +35,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class Alias {
+
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static class Offer {
 
@@ -61,7 +66,7 @@ public final class Alias {
                 pstmt.setLong(++i, this.aliasId);
                 pstmt.setLong(++i, this.priceATM);
                 DbUtils.setLongZeroToNull(pstmt, ++i, this.buyerId);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -185,7 +190,7 @@ public final class Alias {
         } else {
             alias.accountId = transaction.getSenderId();
             alias.aliasURI = attachment.getAliasURI();
-            alias.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+            alias.timestamp = blockchain.getLastBlockTimestamp();
         }
         aliasTable.insert(alias);
     }
@@ -213,7 +218,7 @@ public final class Alias {
     static void changeOwner(long newOwnerId, String aliasName) {
         Alias alias = getAlias(aliasName);
         alias.accountId = newOwnerId;
-        alias.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+        alias.timestamp = blockchain.getLastBlockTimestamp();
         aliasTable.insert(alias);
         Offer offer = getOffer(alias);
         if (offer != null) {
@@ -238,7 +243,7 @@ public final class Alias {
         this.accountId = transaction.getSenderId();
         this.aliasName = attachment.getAliasName();
         this.aliasURI = attachment.getAliasURI();
-        this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+        this.timestamp = blockchain.getLastBlockTimestamp();
     }
 
     private Alias(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -260,7 +265,7 @@ public final class Alias {
             pstmt.setString(++i, this.aliasName);
             pstmt.setString(++i, this.aliasURI);
             pstmt.setInt(++i, this.timestamp);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

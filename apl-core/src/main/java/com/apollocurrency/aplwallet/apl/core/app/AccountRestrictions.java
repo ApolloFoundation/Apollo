@@ -15,11 +15,14 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import static com.apollocurrency.aplwallet.apl.core.app.TransactionType.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -39,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.AplException.AccountControlException;
 import org.slf4j.Logger;
 
@@ -49,6 +51,7 @@ public final class AccountRestrictions {
 
     public static final class PhasingOnly {
         private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
         public static PhasingOnly get(long accountId) {
             return phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).
@@ -159,7 +162,7 @@ public final class AccountRestrictions {
                 LOG.debug("Account control no longer valid: " + e.getMessage());
                 return;
             }
-            Appendix.Phasing phasingAppendix = transaction.getPhasing();
+            PhasingAppendix phasingAppendix = transaction.getPhasing();
             if (phasingAppendix == null) {
                 throw new AccountControlException("Non-phased transaction when phasing account control is enabled");
             }
@@ -167,7 +170,7 @@ public final class AccountRestrictions {
                 throw new AccountControlException("Phasing parameters mismatch phasing account control. Expected: " +
                         phasingParams.toString() + " . Actual: " + phasingAppendix.getParams().toString());
             }
-            int duration = phasingAppendix.getFinishHeight() - AplCore.getBlockchain().getHeight();
+            int duration = phasingAppendix.getFinishHeight() - blockchain.getHeight();
             if ((maxDuration > 0 && duration > maxDuration) || (minDuration > 0 && duration < minDuration)) {
                 throw new AccountControlException("Invalid phasing duration " + duration);
             }
@@ -189,7 +192,7 @@ public final class AccountRestrictions {
                 pstmt.setLong(++i, this.maxFees);
                 pstmt.setShort(++i, this.minDuration);
                 pstmt.setShort(++i, this.maxDuration);
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -230,7 +233,7 @@ public final class AccountRestrictions {
         }
     }
 
-    static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         return
                 senderAccount.getControls().contains(ControlType.PHASING_ONLY)

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -46,11 +46,14 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -71,7 +74,7 @@ import org.slf4j.Logger;
  *
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
  */
-class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
+public class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
     private static final Logger LOG = getLogger(EventListener.class);
     private static NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
@@ -81,16 +84,16 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     static final int maxEventUsers = propertiesLoader.getIntProperty("apl.apiMaxEventUsers");
 
     /** Event registration timeout (seconds) */
-    static final int eventTimeout = Math.max(propertiesLoader.getIntProperty("apl.apiEventTimeout"), 15);
+    public static final int eventTimeout = Math.max(propertiesLoader.getIntProperty("apl.apiEventTimeout"), 15);
 
     /** Blockchain processor */
-    static final BlockchainProcessor blockchainProcessor = AplCore.getBlockchainProcessor();
+    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
 
     /** Transaction processor */
-    static final TransactionProcessor transactionProcessor = AplCore.getTransactionProcessor();
+    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
     /** Active event users */
-    static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();
+    public static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();
 
     /** Thread to clean up inactive event registrations */
     private static final Timer eventTimer = new Timer();
@@ -112,7 +115,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     /** Peer events - update API comments for EventRegister and EventWait if changed */
-    static final List<Peers.Event> peerEvents = new ArrayList<>();
+    public static final List<Peers.Event> peerEvents = new ArrayList<>();
     static {
         peerEvents.add(Peers.Event.ADD_INBOUND);
         peerEvents.add(Peers.Event.ADDED_ACTIVE_PEER);
@@ -126,7 +129,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     }
 
     /** Block events - update API comments for EventRegister and EventWait if changed */
-    static final List<BlockchainProcessor.Event> blockEvents = new ArrayList<>();
+    public static final List<BlockchainProcessor.Event> blockEvents = new ArrayList<>();
     static {
         blockEvents.add(BlockchainProcessor.Event.BLOCK_GENERATED);
         blockEvents.add(BlockchainProcessor.Event.BLOCK_POPPED);
@@ -134,7 +137,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     }
 
     /** Transaction events - update API comments for EventRegister and EventWait if changed */
-    static final List<TransactionProcessor.Event> txEvents = new ArrayList<>();
+    public static final List<TransactionProcessor.Event> txEvents = new ArrayList<>();
     static {
         txEvents.add(TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
         txEvents.add(TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
@@ -144,7 +147,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     }
 
     /** Account ledger events - update API comments for EventRegister and EventWait if changed */
-    static final List<AccountLedger.Event> ledgerEvents = new ArrayList<>();
+    public static final List<AccountLedger.Event> ledgerEvents = new ArrayList<>();
     static {
         ledgerEvents.add(AccountLedger.Event.ADD_ENTRY);
     }
@@ -184,7 +187,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      *
      * @param   address             Application IP address
      */
-    EventListener(String address) {
+    public EventListener(String address) {
         this.address = address;
     }
 
@@ -196,7 +199,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      * @param   eventRegistrations      List of AplCore event registrations
      * @throws  EventListenerException  Unable to activate event listeners
      */
-    void activateListener(List<EventRegistration> eventRegistrations) throws EventListenerException {
+    public void activateListener(List<EventRegistration> eventRegistrations) throws EventListenerException {
         if (deactivated)
             throw new EventListenerException("Event listener deactivated");
         if (eventListeners.size() >= maxEventUsers && eventListeners.get(address) == null)
@@ -220,7 +223,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      * @param   eventRegistrations      AplCore event registrations
      * @throws  EventListenerException  Invalid AplCore event
      */
-    void addEvents(List<EventRegistration> eventRegistrations) throws EventListenerException {
+    public void addEvents(List<EventRegistration> eventRegistrations) throws EventListenerException {
         lock.lock();
         try {
             if (deactivated)
@@ -262,7 +265,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      *
      * @param   eventRegistrations      AplCore event registrations
      */
-    void removeEvents(List<EventRegistration> eventRegistrations) {
+    public void removeEvents(List<EventRegistration> eventRegistrations) {
         lock.lock();
         try {
             if (deactivated)
@@ -296,7 +299,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     /**
      * Deactivate the event listener
      */
-    void deactivateListener() {
+    public void deactivateListener() {
         lock.lock();
         try {
             if (deactivated)
@@ -331,7 +334,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      * @return                          List of pending events or null if wait incomplete
      * @throws  EventListenerException  Unable to wait for an event
      */
-    List<PendingEvent> eventWait(HttpServletRequest req, long timeout) throws EventListenerException {
+    public List<PendingEvent> eventWait(HttpServletRequest req, long timeout) throws EventListenerException {
         List<PendingEvent> events = null;
         lock.lock();
         try {
@@ -416,7 +419,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
      *
      * @return                      Activity timestamp (milliseconds)
      */
-    long getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
@@ -534,7 +537,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     /**
      * Pending event
      */
-    static class PendingEvent {
+    public static class PendingEvent {
 
         /** Event name */
         private final String name;
@@ -1002,7 +1005,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     /**
      * Event registration
      */
-    static class EventRegistration {
+    public static class EventRegistration {
 
         /** AplCore listener event */
         private final Enum<? extends Enum> event;
@@ -1016,7 +1019,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
          * @param   event           AplCore listener event
          * @param   accountId       Account identifier
          */
-        EventRegistration(Enum<? extends Enum> event, long accountId) {
+        public EventRegistration(Enum<? extends Enum> event, long accountId) {
             this.event = event;
             this.accountId = accountId;
         }
@@ -1043,7 +1046,7 @@ class EventListener implements Runnable, AsyncListener, TransactionalDb.Transact
     /**
      * Event exception
      */
-    static class EventListenerException extends Exception {
+    public static class EventListenerException extends Exception {
 
         /**
          * Create an event exception with a message

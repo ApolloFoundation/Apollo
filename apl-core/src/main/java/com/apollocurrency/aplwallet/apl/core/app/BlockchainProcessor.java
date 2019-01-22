@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -27,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.util.Observable;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 
 public interface BlockchainProcessor extends Observable<Block,BlockchainProcessor.Event> {
 
@@ -36,6 +38,8 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
         BEFORE_BLOCK_ACCEPT, AFTER_BLOCK_ACCEPT,
         BEFORE_BLOCK_APPLY, AFTER_BLOCK_APPLY
     }
+
+    List<DerivedDbTable> getDerivedTables();
 
     Peer getLastBlockchainFeeder();
 
@@ -55,13 +59,22 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     void fullReset();
 
+    SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp);
+
+    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException;
+
+    SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
+            Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp);
+
     void scan(int height, boolean validate);
 
     void fullScanWithShutdown();
 
     void setGetMoreBlocks(boolean getMoreBlocks);
 
-    List<? extends Block> popOffTo(int height);
+    List<Block> popOffTo(int height);
+
+    List<Block> popOffTo(Block commonBlock);
 
     void registerDerivedTable(DerivedDbTable table);
 
@@ -75,14 +88,14 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     class BlockNotAcceptedException extends AplException {
 
-        private final BlockImpl block;
+        private final Block block;
 
-        BlockNotAcceptedException(String message, BlockImpl block) {
+        BlockNotAcceptedException(String message, Block block) {
             super(message);
             this.block = block;
         }
 
-        BlockNotAcceptedException(Throwable cause, BlockImpl block) {
+        BlockNotAcceptedException(Throwable cause, Block block) {
             super(cause);
             this.block = block;
         }
@@ -96,19 +109,19 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     class TransactionNotAcceptedException extends BlockNotAcceptedException {
 
-        private final TransactionImpl transaction;
+        private final Transaction transaction;
 
-        TransactionNotAcceptedException(String message, TransactionImpl transaction) {
+        TransactionNotAcceptedException(String message, Transaction transaction) {
             super(message, transaction.getBlock());
             this.transaction = transaction;
         }
 
-        TransactionNotAcceptedException(Throwable cause, TransactionImpl transaction) {
+        TransactionNotAcceptedException(Throwable cause, Transaction transaction) {
             super(cause, transaction.getBlock());
             this.transaction = transaction;
         }
 
-        public TransactionImpl getTransaction() {
+        public Transaction getTransaction() {
             return transaction;
         }
 
@@ -120,7 +133,7 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
     class BlockOutOfOrderException extends BlockNotAcceptedException {
 
-        BlockOutOfOrderException(String message, BlockImpl block) {
+        BlockOutOfOrderException(String message, Block block) {
             super(message, block);
         }
 
@@ -141,4 +154,9 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
         }
     }
 
+    void suspendBlockchainDownloading();
+
+    void resumeBlockchainDownloading();
+
+    void shutdown();
 }

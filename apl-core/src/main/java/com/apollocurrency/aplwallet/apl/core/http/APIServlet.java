@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -36,22 +36,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
@@ -61,102 +60,17 @@ import org.slf4j.Logger;
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
 
-    public abstract static class APIRequestHandler {
-
-        private final List<String> parameters;
-        private final String fileParameter;
-        private final Set<APITag> apiTags;
-
-        protected APIRequestHandler(APITag[] apiTags, String... parameters) {
-            this(null, apiTags, parameters);
-        }
-
-        protected APIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
-            List<String> parameters = new ArrayList<>();
-            Collections.addAll(parameters, origParameters);
-            if ((requirePassword() || parameters.contains("lastIndex")) && ! API.disableAdminPassword) {
-                parameters.add("adminPassword");
-            }
-            if (allowRequiredBlockParameters()) {
-                parameters.add("requireBlock");
-                parameters.add("requireLastBlock");
-            }
-            String vaultAccountParameterName = vaultAccountName();
-            if (vaultAccountParameterName != null && !vaultAccountParameterName.isEmpty()) {
-                parameters.add(vaultAccountParameterName);
-                parameters.add("passphrase");
-            }
-            if (is2FAProtected()) {
-                parameters.add("code2FA");
-            }
-            this.parameters = Collections.unmodifiableList(parameters);
-            this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
-            this.fileParameter = fileParameter;
-        }
-
-        public final List<String> getParameters() {
-            return parameters;
-        }
-
-        public final Set<APITag> getAPITags() {
-            return apiTags;
-        }
-
-        public final String getFileParameter() {
-            return fileParameter;
-        }
-
-        protected abstract JSONStreamAware processRequest(HttpServletRequest request) throws AplException;
-
-        protected JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws AplException {
-            return processRequest(request);
-        }
-
-        protected boolean requirePost() {
-            return false;
-        }
-
-        protected boolean startDbTransaction() {
-            return false;
-        }
-
-        protected boolean requirePassword() {
-            return false;
-        }
-
-        protected boolean allowRequiredBlockParameters() {
-            return true;
-        }
-
-        protected boolean requireBlockchain() {
-            return true;
-        }
-
-        protected boolean requireFullClient() {
-            return false;
-        }
-
-        protected boolean logRequestTime() { return false; }
-
-        protected boolean is2FAProtected() {
-            return false;
-        }
-
-        protected String vaultAccountName() {
-            return null;
-        }
-    }
-
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
     private static final boolean enforcePost = propertiesLoader.getBooleanProperty("apl.apiServerEnforcePOST");
-    static final Map<String,APIRequestHandler> apiRequestHandlers;
-    static final Map<String,APIRequestHandler> disabledRequestHandlers;
+    public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
+    public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     static {
 
-        Map<String,APIRequestHandler> map = new HashMap<>();
-        Map<String,APIRequestHandler> disabledMap = new HashMap<>();
+        Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
+        Map<String, AbstractAPIRequestHandler> disabledMap = new HashMap<>();
 
         for (APIEnum api : APIEnum.values()) {
             if (!api.getName().isEmpty() && api.getHandler() != null) {
@@ -167,16 +81,16 @@ public final class APIServlet extends HttpServlet {
         AddOns.registerAPIRequestHandlers(map);
 
         API.disabledAPIs.forEach(api -> {
-            APIRequestHandler handler = map.remove(api);
+            AbstractAPIRequestHandler handler = map.remove(api);
             if (handler == null) {
                 throw new RuntimeException("Invalid API in apl.disabledAPIs: " + api);
             }
             disabledMap.put(api, handler);
         });
         API.disabledAPITags.forEach(apiTag -> {
-            Iterator<Map.Entry<String, APIRequestHandler>> iterator = map.entrySet().iterator();
+            Iterator<Map.Entry<String, AbstractAPIRequestHandler>> iterator = map.entrySet().iterator();
             while (iterator.hasNext()) {
-                Map.Entry<String, APIRequestHandler> entry = iterator.next();
+                Map.Entry<String, AbstractAPIRequestHandler> entry = iterator.next();
                 if (entry.getValue().getAPITags().contains(apiTag)) {
                     disabledMap.put(entry.getKey(), entry.getValue());
                     iterator.remove();
@@ -194,7 +108,7 @@ public final class APIServlet extends HttpServlet {
         disabledRequestHandlers = disabledMap.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(disabledMap);
     }
 
-    public static APIRequestHandler getAPIRequestHandler(String requestType) {
+    public static AbstractAPIRequestHandler getAPIRequestHandler(String requestType) {
         return apiRequestHandlers.get(requestType);
     }
 
@@ -233,7 +147,7 @@ public final class APIServlet extends HttpServlet {
                 return;
             }
 
-            APIRequestHandler apiRequestHandler = apiRequestHandlers.get(requestType);
+            AbstractAPIRequestHandler apiRequestHandler = apiRequestHandlers.get(requestType);
             if (apiRequestHandler == null) {
                 if (disabledRequestHandlers.containsKey(requestType)) {
                     response = ERROR_DISABLED;
@@ -265,25 +179,25 @@ public final class APIServlet extends HttpServlet {
             final long requireLastBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                     ParameterParser.getUnsignedLong(req, "requireLastBlock", false) : 0;
             if (requireBlockId != 0 || requireLastBlockId != 0) {
-                AplCore.getBlockchain().readLock();
+                blockchain.readLock();
             }
             try {
                 try {
                     if (apiRequestHandler.startDbTransaction()) {
                         Db.getDb().beginTransaction();
                     }
-                    if (requireBlockId != 0 && !AplCore.getBlockchain().hasBlock(requireBlockId)) {
+                    if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
                         return;
                     }
-                    if (requireLastBlockId != 0 && requireLastBlockId != AplCore.getBlockchain().getLastBlock().getId()) {
+                    if (requireLastBlockId != 0 && requireLastBlockId != blockchain.getLastBlock().getId()) {
                         response = REQUIRED_LAST_BLOCK_NOT_FOUND;
                         return;
                     }
                     response = apiRequestHandler.processRequest(req, resp);
                     logRequestTime = apiRequestHandler.logRequestTime();
                     if (requireLastBlockId == 0 && requireBlockId != 0 && response instanceof JSONObject) {
-                        ((JSONObject) response).put("lastBlock", AplCore.getBlockchain().getLastBlock().getStringId());
+                        ((JSONObject) response).put("lastBlock", blockchain.getLastBlock().getStringId());
                     }
                 } finally {
                     if (apiRequestHandler.startDbTransaction()) {
@@ -292,7 +206,7 @@ public final class APIServlet extends HttpServlet {
                 }
             } finally {
                 if (requireBlockId != 0 || requireLastBlockId != 0) {
-                    AplCore.getBlockchain().readUnlock();
+                    blockchain.readUnlock();
                 }
             }
         } catch (ParameterException e) {

@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -47,16 +48,27 @@ public final class Shuffler {
     private static final int MAX_SHUFFLERS = propertiesLoader.getIntProperty("apl.maxNumberOfShufflers");
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
+    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static BlockchainProcessor blockchainProcessor;
+
+    private static BlockchainProcessor lookupBlockchainProcessor() {
+        if (blockchainProcessor == null) {
+            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        }
+        return blockchainProcessor;
+    }
 
     public static Shuffler addOrGetShuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
         String hash = Convert.toHexString(shufflingFullHash);
         long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-        BlockchainImpl.getInstance().writeLock();
+        blockchain.writeLock();
         try {
             Map<Long, Shuffler> map = shufflingsMap.get(hash);
             if (map == null) {
                 map = new HashMap<>();
                 shufflingsMap.put(hash, map);
+                init();
             }
             Shuffler shuffler = map.get(accountId);
             if (recipientPublicKey == null) {
@@ -97,38 +109,38 @@ public final class Shuffler {
             }
             return shuffler;
         } finally {
-            BlockchainImpl.getInstance().writeUnlock();
+            blockchain.writeUnlock();
         }
     }
 
     public static List<Shuffler> getAllShufflers() {
         List<Shuffler> shufflers = new ArrayList<>();
-        BlockchainImpl.getInstance().readLock();
+        blockchain.readLock();
         try {
             shufflingsMap.values().forEach(shufflerMap -> shufflers.addAll(shufflerMap.values()));
         } finally {
-            BlockchainImpl.getInstance().readUnlock();
+            blockchain.readUnlock();
         }
         return shufflers;
     }
 
     public static List<Shuffler> getShufflingShufflers(byte[] shufflingFullHash) {
         List<Shuffler> shufflers = new ArrayList<>();
-        BlockchainImpl.getInstance().readLock();
+        blockchain.readLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 shufflers.addAll(shufflerMap.values());
             }
         } finally {
-            BlockchainImpl.getInstance().readUnlock();
+            blockchain.readUnlock();
         }
         return shufflers;
     }
 
     public static List<Shuffler> getAccountShufflers(long accountId) {
         List<Shuffler> shufflers = new ArrayList<>();
-        BlockchainImpl.getInstance().readLock();
+        blockchain.readLock();
         try {
             shufflingsMap.values().forEach(shufflerMap -> {
                 Shuffler shuffler = shufflerMap.get(accountId);
@@ -137,48 +149,48 @@ public final class Shuffler {
                 }
             });
         } finally {
-            BlockchainImpl.getInstance().readUnlock();
+            blockchain.readUnlock();
         }
         return shufflers;
     }
 
     public static Shuffler getShuffler(long accountId, byte[] shufflingFullHash) {
-        BlockchainImpl.getInstance().readLock();
+        blockchain.readLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 return shufflerMap.get(accountId);
             }
         } finally {
-            BlockchainImpl.getInstance().readUnlock();
+            blockchain.readUnlock();
         }
         return null;
     }
 
     public static Shuffler stopShuffler(long accountId, byte[] shufflingFullHash) {
-        BlockchainImpl.getInstance().writeLock();
+        blockchain.writeLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 return shufflerMap.remove(accountId);
             }
         } finally {
-            BlockchainImpl.getInstance().writeUnlock();
+            blockchain.writeUnlock();
         }
         return null;
     }
 
     public static void stopAllShufflers() {
-        BlockchainImpl.getInstance().writeLock();
+        blockchain.writeLock();
         try {
             shufflingsMap.clear();
         } finally {
-            BlockchainImpl.getInstance().writeUnlock();
+            blockchain.writeUnlock();
         }
     }
 
     private static Shuffler getRecipientShuffler(long recipientId) {
-        BlockchainImpl.getInstance().readLock();
+        blockchain.readLock();
         try {
             for (Map<Long,Shuffler> shufflerMap : shufflingsMap.values()) {
                 for (Shuffler shuffler : shufflerMap.values()) {
@@ -189,11 +201,11 @@ public final class Shuffler {
             }
             return null;
         } finally {
-            BlockchainImpl.getInstance().readUnlock();
+            blockchain.readUnlock();
         }
     }
 
-    static {
+    public static void init() {
 
         Shuffling.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
@@ -258,7 +270,7 @@ public final class Shuffler {
 
         Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_CANCELLED);
 
-        BlockchainProcessorImpl.getInstance().addListener(block -> {
+        lookupBlockchainProcessor().addListener(block -> {
             Set<String> expired = expirations.get(block.getHeight());
             if (expired != null) {
                 expired.forEach(shufflingsMap::remove);
@@ -266,10 +278,10 @@ public final class Shuffler {
             }
         }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
 
-        BlockchainProcessorImpl.getInstance().addListener(block -> shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
+        lookupBlockchainProcessor().addListener(block -> shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
             if (shuffler.failedTransaction != null) {
                 try {
-                    TransactionProcessorImpl.getInstance().broadcast(shuffler.failedTransaction);
+                    transactionProcessor.broadcast(shuffler.failedTransaction);
                     shuffler.failedTransaction = null;
                     shuffler.failureCause = null;
                 } catch (AplException.ValidationException ignore) {
@@ -277,7 +289,7 @@ public final class Shuffler {
             }
         })), BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
 
-        BlockchainProcessorImpl.getInstance().addListener(block -> stopAllShufflers(), BlockchainProcessor.Event.RESCAN_BEGIN);
+        lookupBlockchainProcessor().addListener(block -> stopAllShufflers(), BlockchainProcessor.Event.RESCAN_BEGIN);
 
     }
 
@@ -286,7 +298,7 @@ public final class Shuffler {
     }
 
     private static void scheduleExpiration(Shuffling shuffling) {
-        int expirationHeight = AplCore.getBlockchain().getHeight() + 720;
+        int expirationHeight = blockchain.getHeight() + 720;
         Set<String> shufflingIds = expirations.get(expirationHeight);
         if (shufflingIds == null) {
             shufflingIds = new HashSet<>();
@@ -452,13 +464,13 @@ public final class Shuffler {
     }
 
     private void submitTransaction(Attachment.ShufflingAttachment attachment) {
-        if (BlockchainProcessorImpl.getInstance().isProcessingBlock()) {
-            if (hasUnconfirmedTransaction(attachment, TransactionProcessorImpl.getInstance().getWaitingTransactions())) {
+        if (lookupBlockchainProcessor().isProcessingBlock()) {
+            if (hasUnconfirmedTransaction(attachment, transactionProcessor.getWaitingTransactions())) {
                 LOG.debug("Transaction already submitted");
                 return;
             }
         } else {
-            try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = TransactionProcessorImpl.getInstance().getAllUnconfirmedTransactions()) {
+            try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = transactionProcessor.getAllUnconfirmedTransactions()) {
                 if (hasUnconfirmedTransaction(attachment, unconfirmedTransactions)) {
                     LOG.debug("Transaction already submitted");
                     return;
@@ -466,9 +478,9 @@ public final class Shuffler {
             }
         }
         try {
-            Transaction.Builder builder = AplCore.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
+            Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
                     (short) 1440, attachment);
-            builder.timestamp(AplCore.getBlockchain().getLastBlockTimestamp());
+            builder.timestamp(blockchain.getLastBlockTimestamp());
             Transaction transaction = builder.build(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;
@@ -479,7 +491,7 @@ public final class Shuffler {
                 LOG.debug("Error submitting shuffler transaction", failureCause);
             }
             try {
-                TransactionProcessorImpl.getInstance().broadcast(transaction);
+                transactionProcessor.broadcast(transaction);
             } catch (AplException.NotCurrentlyValidException e) {
                 failedTransaction = transaction;
                 failureCause = e;

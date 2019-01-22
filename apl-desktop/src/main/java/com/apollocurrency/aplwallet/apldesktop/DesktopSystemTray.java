@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apldesktop;
@@ -35,6 +35,8 @@ import java.util.Locale;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
@@ -52,6 +54,7 @@ public class DesktopSystemTray {
 
     public static final int DELAY = 1000;
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private SystemTray tray;
     private final JFrame wrapper = new JFrame();
     private JDialog statusDialog;
@@ -165,7 +168,7 @@ public class DesktopSystemTray {
     }
 
     private void displayStatus() {
-        Block lastBlock = AplCore.getBlockchain().getLastBlock();
+        Block lastBlock = blockchain.getLastBlock();
         Collection<Generator> allGenerators = Generator.getAllGenerators();
 
         StringBuilder generators = new StringBuilder();

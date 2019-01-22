@@ -1,8 +1,14 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -18,9 +24,10 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class BlockEventSourceProcessor implements Runnable {
-    private BlockEventSource eventSource;
     private static final Logger LOG = LoggerFactory.getLogger(BlockEventSourceProcessor.class);
+    private BlockEventSource eventSource;
     private long accountId;
+    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -29,7 +36,6 @@ public class BlockEventSourceProcessor implements Runnable {
 
     @Override
     public void run() {
-        Blockchain blockchain = AplCore.getBlockchain();
         Block block = blockchain.getLastBlock();
         Block currentBlock;
         try {
@@ -103,9 +109,8 @@ public class BlockEventSourceProcessor implements Runnable {
     }
 
     public String getMessage() {
-        Blockchain blockchain = AplCore.getBlockchain();
         JSONObject jsonObject = getBlockchainData(blockchain);
-        jsonObject.put("block", JSONData.block(AplCore.getBlockchain().getLastBlock(), false, false));
+        jsonObject.put("block", JSONData.block(blockchain.getLastBlock(), false, false));
         return jsonObject.toJSONString();
     }
 

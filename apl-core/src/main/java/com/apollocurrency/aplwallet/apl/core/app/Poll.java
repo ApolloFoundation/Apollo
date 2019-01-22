@@ -15,11 +15,12 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -47,6 +48,8 @@ public final class Poll extends AbstractPoll {
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static final boolean isPollsProcessing = propertiesLoader.getBooleanProperty("apl.processPolls");
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static final class OptionResult {
 
@@ -121,7 +124,7 @@ public final class Poll extends AbstractPoll {
                     pstmt.setNull(++i, Types.BIGINT);
                     pstmt.setLong(++i, 0);
                 }
-                pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+                pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -140,15 +143,15 @@ public final class Poll extends AbstractPoll {
     }
 
     public static DbIterator<Poll> getActivePolls(int from, int to) {
-        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.GT, AplCore.getBlockchain().getHeight()), from, to);
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.GT, blockchain.getHeight()), from, to);
     }
 
     public static DbIterator<Poll> getPollsByAccount(long accountId, boolean includeFinished, boolean finishedOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
         if (finishedOnly) {
-            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.LTE, AplCore.getBlockchain().getHeight()));
+            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.LTE, blockchain.getHeight()));
         } else if (!includeFinished) {
-            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.GT, AplCore.getBlockchain().getHeight()));
+            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.GT, blockchain.getHeight()));
         }
         return pollTable.getManyBy(dbClause, from, to);
     }
@@ -181,7 +184,8 @@ public final class Poll extends AbstractPoll {
     }
 
     public static DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to) {
-        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause("finish_height", DbClause.Op.GT, AplCore.getBlockchain().getHeight());
+        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause("finish_height",
+                DbClause.Op.GT, blockchain.getHeight());
         return pollTable.search(query, dbClause, from, to, " ORDER BY ft.score DESC, poll.height DESC, poll.db_id DESC ");
     }
 
@@ -194,11 +198,9 @@ public final class Poll extends AbstractPoll {
         pollTable.insert(poll);
     }
 
-    static void init() {}
-
-    static {
+    static void init() {
         if (Poll.isPollsProcessing) {
-            AplCore.getBlockchainProcessor().addListener(block -> {
+            blockchainProcessor.addListener(block -> {
                 int height = block.getHeight();
                 Poll.checkPolls(height);
             }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
@@ -239,7 +241,7 @@ public final class Poll extends AbstractPoll {
         this.maxNumberOfOptions = attachment.getMaxNumberOfOptions();
         this.minRangeValue = attachment.getMinRangeValue();
         this.maxRangeValue = attachment.getMaxRangeValue();
-        this.timestamp = AplCore.getBlockchain().getLastBlockTimestamp();
+        this.timestamp = blockchain.getLastBlockTimestamp();
     }
 
     private Poll(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -289,7 +291,7 @@ public final class Poll extends AbstractPoll {
             pstmt.setByte(++i, minRangeValue);
             pstmt.setByte(++i, maxRangeValue);
             pstmt.setInt(++i, timestamp);
-            pstmt.setInt(++i, AplCore.getBlockchain().getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -349,12 +351,12 @@ public final class Poll extends AbstractPoll {
     }
 
     public boolean isFinished() {
-        return finishHeight <= AplCore.getBlockchain().getHeight();
+        return finishHeight <= blockchain.getHeight();
     }
 
     private List<OptionResult> countResults(VoteWeighting voteWeighting) {
-        int countHeight = Math.min(finishHeight, AplCore.getBlockchain().getHeight());
-        if (countHeight < AplCore.getBlockchainProcessor().getMinRollbackHeight()) {
+        int countHeight = Math.min(finishHeight, blockchain.getHeight());
+        if (countHeight < blockchainProcessor.getMinRollbackHeight()) {
             return null;
         }
         return countResults(voteWeighting, countHeight);
