@@ -11,7 +11,7 @@
     <groupId>com.apollocurrency</groupId>
     <artifactId>apl-html</artifactId>
     <name>apl-html</name>
-    <packaging>pom</packaging>
+
     <properties>
         <zipname>apl-html</zipname>
     </properties>

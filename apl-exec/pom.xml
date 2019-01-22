@@ -37,6 +37,12 @@
             <version>${project.version}</version>
         </dependency>                  
         <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-html</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>       
+        </dependency>         
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>  
@@ -44,13 +50,13 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>  
-<!-- command line arguments processing -->        
+        <!-- command line arguments processing -->        
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.72</version>
         </dependency>                  
-<!-- unit tests -->
+        <!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
