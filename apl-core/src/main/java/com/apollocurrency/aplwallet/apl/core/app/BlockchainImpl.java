@@ -45,7 +45,7 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 @ApplicationScoped
 public class BlockchainImpl implements Blockchain {
 
-    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
+    private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
     private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
@@ -119,7 +119,7 @@ public class BlockchainImpl implements Blockchain {
         if (timestamp >= block.getTimestamp()) {
             return block;
         }
-        return blockDb.findLastBlock(timestamp);
+        return blockDao.findLastBlock(timestamp);
     }
     //load transactions
     @Override
@@ -128,12 +128,12 @@ public class BlockchainImpl implements Blockchain {
         if (block.getId() == blockId) {
             return block;
         }
-        return blockDb.findBlock(blockId);
+        return blockDao.findBlock(blockId);
     }
 
     @Override
     public boolean hasBlock(long blockId) {
-        return lastBlock.get().getId() == blockId || blockDb.hasBlock(blockId);
+        return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId);
     }
     //load transactions
     @Override
@@ -207,18 +207,18 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, blockDb::loadBlock);
+        return new DbIterator<>(con, pstmt, blockDao::loadBlock);
     }
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
         // Check the block cache
-        List<Long> result = new ArrayList<>(blockDb.getBlockCacheSize());
-        synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+        List<Long> result = new ArrayList<>(blockDao.getBlockCacheSize());
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
-                for (BlockImpl cacheBlock : cacheMap) {
+                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+                for (Block cacheBlock : cacheMap) {
                     if (result.size() >= limit) {
                         break;
                     }
@@ -251,12 +251,12 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<Block> result = new ArrayList<>(blockDb.getBlockCacheSize());
-        synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+        List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
-                for (BlockImpl cacheBlock : cacheMap) {
+                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+                for (Block cacheBlock : cacheMap) {
                     if (result.size() >= limit) {
                         break;
                     }
@@ -274,7 +274,7 @@ public class BlockchainImpl implements Blockchain {
             pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(blockDb.loadBlock(con, rs, true));
+                    result.add(blockDao.loadBlock(con, rs, true));
                 }
             }
         } catch (SQLException e) {
@@ -289,13 +289,13 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<Block> result = new ArrayList<>(blockDb.getBlockCacheSize());
-        synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+        List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
+                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
                 int index = 0;
-                for (BlockImpl cacheBlock : cacheMap) {
+                for (Block cacheBlock : cacheMap) {
                     if (result.size() >= blockList.size() || cacheBlock.getId() != blockList.get(index++)) {
                         break;
                     }
@@ -314,7 +314,7 @@ public class BlockchainImpl implements Blockchain {
             try (ResultSet rs = pstmt.executeQuery()) {
                 int index = 0;
                 while (rs.next()) {
-                    BlockImpl block = blockDb.loadBlock(con, rs, true);
+                    Block block = blockDao.loadBlock(con, rs, true);
                     if (block.getId() != blockList.get(index++)) {
                         break;
                     }
@@ -336,7 +336,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        return blockDb.findBlockIdAtHeight(height);
+        return blockDao.findBlockIdAtHeight(height);
     }
 
     @Override
@@ -348,7 +348,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block;
         }
-        return blockDb.findBlockAtHeight(height);
+        return blockDao.findBlockAtHeight(height);
     }
 
     @Override
@@ -357,7 +357,7 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return getBlockAtHeight(0);
         }
-        return blockDb.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
+        return blockDao.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
     }
 
     @Override
@@ -663,7 +663,7 @@ public class BlockchainImpl implements Blockchain {
 
             blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
-                        TransactionImpl transaction = unconfirmedTransaction.getTransaction();
+                        Transaction transaction = unconfirmedTransaction.getTransaction();
                         if (transaction.getPhasing() == null && filter.test(transaction)) {
                             result.add(transaction);
                         }

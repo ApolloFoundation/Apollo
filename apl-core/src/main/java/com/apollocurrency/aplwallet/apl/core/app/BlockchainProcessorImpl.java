@@ -92,7 +92,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
 /*
     private static final BlockchainProcessorImpl instance =
-            new BlockchainProcessorImpl(new DefaultBlockValidator(CDI.current().select(BlockDb.class).get(),
+            new BlockchainProcessorImpl(new DefaultBlockValidator(CDI.current().select(BlockDaoImpl.class).get(),
                     CDI.current().select(BlockchainConfig.class).get()));
     public static BlockchainProcessorImpl getInstance() {
         return instance;
@@ -100,7 +100,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 */
 
     private static Blockchain blockchain;
-    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
+    private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
     private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private static TransactionProcessor transactionProcessor;
 
@@ -372,7 +372,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 for (Object milestoneBlockId : milestoneBlockIds) {
                     long blockId = Convert.parseUnsignedLong((String) milestoneBlockId);
-                    if (blockDb.hasBlock(blockId)) {
+                    if (blockDao.hasBlock(blockId)) {
                         if (lastMilestoneBlockId == null && milestoneBlockIds.size() > 1) {
                             peerHasMore = false;
                         }
@@ -414,7 +414,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 for (Object nextBlockId : nextBlockIds) {
                     long blockId = Convert.parseUnsignedLong((String)nextBlockId);
                     if (matching) {
-                        if (blockDb.hasBlock(blockId)) {
+                        if (blockDao.hasBlock(blockId)) {
                             matchId = blockId;
                             matched = true;
                         } else {
@@ -1192,7 +1192,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             try {
                 setGetMoreBlocks(false);
                 //AplGlobalObjects.getBlockDb().deleteBlock(Genesis.GENESIS_BLOCK_ID); // fails with stack overflow in H2
-                blockDb.deleteAll();
+                blockDao.deleteAll();
                 addGenesisBlock();
             } finally {
                 setGetMoreBlocks(true);
@@ -1308,7 +1308,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void addBlock(Block block) {
         try (Connection con = Db.getDb().getConnection()) {
-            blockDb.saveBlock(con, block);
+            blockDao.saveBlock(con, block);
             lookupBlockhain().setLastBlock(block);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -1316,13 +1316,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void addGenesisBlock() {
-        Block lastBlock = blockDb.findLastBlock();
+        Block lastBlock = blockDao.findLastBlock();
         if (lastBlock != null) {
             LOG.info("Genesis block already in database");
             lookupBlockhain().setLastBlock(lastBlock);
-            blockDb.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
+            blockDao.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            genesisBlockId = blockDb.findBlockIdAtHeight(0);
+            genesisBlockId = blockDao.findBlockIdAtHeight(0);
             LOG.info("Last block height: " + lastBlock.getHeight());
             return;
         }
@@ -1335,7 +1335,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             for (DerivedDbTable table : derivedTables) {
                 table.createSearchIndex(con);
             }
-            blockDb.commit(genesisBlock);
+            blockDao.commit(genesisBlock);
             Db.getDb().commitTransaction();
         } catch (SQLException e) {
             Db.getDb().rollbackTransaction();
@@ -1380,7 +1380,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
                 addBlock(block);
                 accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                blockDb.commit(block);
+                blockDao.commit(block);
                 Db.getDb().commitTransaction();
             } catch (Exception e) {
                 Db.getDb().rollbackTransaction();
@@ -1632,7 +1632,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (RuntimeException e) {
                 LOG.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
                 Db.getDb().rollbackTransaction();
-                Block lastBlock = blockDb.findLastBlock();
+                Block lastBlock = blockDao.findLastBlock();
                 lookupBlockhain().setLastBlock(lastBlock);
                 popOffTo(lastBlock);
                 throw e;
@@ -1648,7 +1648,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getHeight() == 0) {
             throw new RuntimeException("Cannot pop off genesis block");
         }
-        Block previousBlock = blockDb.deleteBlocksFrom(block.getId());
+        Block previousBlock = blockDao.deleteBlocksFrom(block.getId());
         ((BlockImpl)previousBlock).loadTransactions();
         lookupBlockhain().setLastBlock(previousBlock);
         blockListeners.notify(block, Event.BLOCK_POPPED);
@@ -1660,7 +1660,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             try {
                 scheduleScan(0, false);
-                Block lastBLock = blockDb.deleteBlocksFrom(blockDb.findBlockIdAtHeight(height));
+                Block lastBLock = blockDao.deleteBlocksFrom(blockDao.findBlockIdAtHeight(height));
                 lookupBlockhain().setLastBlock(lastBLock);
                 blockchainConfig.rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
@@ -1921,14 +1921,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 Db.getDb().clearCache();
                 Db.getDb().commitTransaction();
                 LOG.debug("Rolled back derived tables");
-                Block currentBlock = blockDb.findBlockAtHeight(height);
+                Block currentBlock = blockDao.findBlockAtHeight(height);
                 blockListeners.notify(currentBlock, Event.RESCAN_BEGIN);
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     Genesis.apply();
                 } else {
-                    blockchain.setLastBlock(blockDb.findBlockAtHeight(height - 1));
+                    blockchain.setLastBlock(blockDao.findBlockAtHeight(height - 1));
                 }
                 if (shutdown) {
                     LOG.info("Scan will be performed at next start");
@@ -1949,7 +1949,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         while (rs.next()) {
                             try {
                                 dbId = rs.getLong("db_id");
-                                currentBlock = blockDb.loadBlock(con, rs, true);
+                                currentBlock = blockDao.loadBlock(con, rs, true);
                                 if (currentBlock.getHeight() > 0) {
                                     ((BlockImpl)currentBlock).loadTransactions();
                                     if (currentBlock.getId() != currentBlockId || currentBlock.getHeight() > blockchain.getHeight() + 1) {
@@ -1995,7 +1995,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                 LOG.debug(e.toString(), e);
                                 LOG.debug("Applying block " + Long.toUnsignedString(currentBlockId) + " at height "
                                         + (currentBlock == null ? 0 : currentBlock.getHeight()) + " failed, deleting from database");
-                                Block lastBlock = blockDb.deleteBlocksFrom(currentBlockId);
+                                Block lastBlock = blockDao.deleteBlocksFrom(currentBlockId);
                                 blockchain.setLastBlock(lastBlock);
                                 popOffTo(lastBlock);
                                 break outer;

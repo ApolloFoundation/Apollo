@@ -623,7 +623,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         blockchain.writeLock();
         try {
             for (Transaction transaction : transactions) {
-                CDI.current().select(BlockDb.class).get().getTransactionCache().remove(transaction.getId());
+                CDI.current().select(BlockDaoImpl.class).get().getTransactionCache().remove(transaction.getId());
                 if (transactionDb.hasTransaction(transaction.getId())) {
                     continue;
                 }

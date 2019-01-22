@@ -130,7 +130,7 @@ public final class DebugTrace {
     private final Set<Long> accountIds;
     private final String logName;
     private PrintWriter log;
-    private BlockDb blockDb = CDI.current().select(BlockDb.class).get();
+    private BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
 
     private DebugTrace(Set<Long> accountIds, String logName) {
         this.accountIds = accountIds;
@@ -283,7 +283,7 @@ public final class DebugTrace {
             long fee = blockchainConfig.getShufflingDepositAtm()/ 4;
             int height = blockchain.getHeight();
             for (int i = 0; i < 3; i++) {
-                long generatorId = blockDb.findBlockAtHeight(height - i - 1).getGeneratorId();
+                long generatorId = blockDao.findBlockAtHeight(height - i - 1).getGeneratorId();
                 if (include(generatorId)) {
                     Map<String, String> generatorMap = getValues(generatorId, false);
                     generatorMap.put("generation fee", String.valueOf(fee));
@@ -513,7 +513,7 @@ public final class DebugTrace {
                     break;
                 }
                 totalBackFees += backFees[i];
-                long previousGeneratorId = blockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
+                long previousGeneratorId = blockDao.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId();
                 if (include(previousGeneratorId)) {
                     Map<String,String> map = getValues(previousGeneratorId, false);
                     map.put("effective balance", String.valueOf(Account.getAccount(previousGeneratorId).getEffectiveBalanceAPL()));
