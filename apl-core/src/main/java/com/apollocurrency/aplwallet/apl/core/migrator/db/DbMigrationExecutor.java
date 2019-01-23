@@ -16,17 +16,20 @@ import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * <p>Provide database specific components for migration, also add special {@link DbMigrationExecutor#afterMigration} and
+ * {@link DbMigrationExecutor#beforeMigration} handlers
+ * to interact with db</p>
+ * @see MigrationExecutor
+ * @see LegacyDbLocationsProvider
+ * @see DbMigrator
+ */
 public class DbMigrationExecutor extends MigrationExecutor {
-    private static Logger LOG = LoggerFactory.getLogger(DbMigrationExecutor.class);
-    private String oldDbPrefix;
 
     @Inject
     public DbMigrationExecutor(BlockchainConfig config, PropertiesHolder propertiesHolder) {
         super(propertiesHolder, config, "db");
-        this.oldDbPrefix = config.isTestnet() ? "apl.testDb" : "apl.db";
     }
 
     @Override
@@ -47,7 +50,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
     }
 
     @Override
-    protected List<Path> createSrcPaths() {
+    protected List<Path> getSrcPaths() {
         LegacyDbLocationsProvider legacyDbLocationsProvider = CDI.current().select(LegacyDbLocationsProvider.class).get();
         return legacyDbLocationsProvider.getDbLocations();
     }

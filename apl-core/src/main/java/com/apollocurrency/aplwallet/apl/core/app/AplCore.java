@@ -146,7 +146,7 @@ public final class AplCore {
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
                 blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
-                blockchainConfig.updateToBlock();
+                blockchainConfig.updateToLatestConfig();
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");

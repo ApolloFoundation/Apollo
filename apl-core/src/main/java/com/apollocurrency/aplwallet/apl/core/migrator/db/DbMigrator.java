@@ -17,23 +17,34 @@ import java.util.Objects;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import org.slf4j.Logger;
 
+/**
+ * Implement db migration specific algorithm
+ */
 public class DbMigrator implements Migrator {
     private final DbInfoExtractor dbInfoExtractor;
 
     private static final Logger LOG = getLogger(DbMigrator.class);
 
+    /**
+     * Migrate db (copy db file) from one of the srcPaths file to destPath. Migration will be performed only
+     * when srcPath will be blockchain db and height of blocks
+     * @param srcPaths list of paths where data for migration stored sorted by importance descending
+     * @param destPath path to the target data location, where migration should be performed
+     * @return
+     * @throws IOException
+     */
     @Override
-    public List<Path> migrate(List<Path> fromPaths, Path toPath) throws IOException {
+    public List<Path> migrate(List<Path> srcPaths, Path destPath) throws IOException {
         List<Path> migratedDbsPaths = new ArrayList<>();
-        DbInfo oldDbInfo = getOldDbInfo(fromPaths);
+        DbInfo oldDbInfo = getOldDbInfo(srcPaths);
         if (oldDbInfo != null) {
             LOG.info("Found old db for migration at path {}", oldDbInfo.dbPath);
             int height = oldDbInfo.height;
-            Path targetDbFullPath = dbInfoExtractor.getPath(toPath.toAbsolutePath().toString());
+            Path targetDbFullPath = dbInfoExtractor.getPath(destPath.toAbsolutePath().toString());
             LOG.info("Db {} has blocks - {}. Do migration to {}", oldDbInfo.dbPath, height, targetDbFullPath);
 
             Files.copy(oldDbInfo.dbPath, targetDbFullPath, StandardCopyOption.REPLACE_EXISTING);
-            int actualDbHeight = dbInfoExtractor.getHeight(toPath.toAbsolutePath().toString());
+            int actualDbHeight = dbInfoExtractor.getHeight(destPath.toAbsolutePath().toString());
             if (actualDbHeight != height) {
                 throw new RuntimeException(String.format("Db was migrated with errors. Expected height - %d, actual - %d. Application restart is " +
                         "needed.", height, actualDbHeight));

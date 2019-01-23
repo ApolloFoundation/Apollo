@@ -5,14 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIntegrationTest;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbIntegrationTest;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class H2DbInfoExtractorTest extends DbIntegrationTest {
     private static Path path;
@@ -34,7 +34,7 @@ public class H2DbInfoExtractorTest extends DbIntegrationTest {
     @Test
     public void testGetHeight() {
         int height = h2DbInfoExtractor.getHeight(path.toString());
-        Assertions.assertEquals(2, height);
+        Assertions.assertEquals(104671, height);
 
     }
 

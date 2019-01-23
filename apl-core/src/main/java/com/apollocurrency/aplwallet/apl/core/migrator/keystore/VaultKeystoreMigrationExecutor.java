@@ -16,6 +16,11 @@ import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+/**
+ * Provide vaultKeystore specific components for migration
+ * @see MigrationExecutor
+ * @see DefaultDirectoryMigrator
+ */
 public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
     @Inject
     public VaultKeystoreMigrationExecutor(PropertiesHolder holder, BlockchainConfig config) {
@@ -23,7 +28,7 @@ public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
     }
 
     @Override
-    protected List<Path> createSrcPaths() {
+    protected List<Path> getSrcPaths() {
         boolean testnet = config.isTestnet();
         String keystorePrefix = testnet ? "apl.keystoreTestnet" : "apl.keystore";
         String keystoreDir = holder.getStringProperty(keystorePrefix + "Dir");

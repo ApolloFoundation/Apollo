@@ -28,29 +28,37 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+/**
+ * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
+ * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
+ * on current height, change part of config represented by {@link HeightConfig}</p>
+ *
+ * <p>Note that this class is thread-safe and can be used without additional synchronization after {@link BlockchainConfig#init} method call</p>
+ * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
+ * blockTime, adaptiveBlockTime, maxBalance and so on</p>
+ */
 @ApplicationScoped
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
 
-    private boolean testnet;
-    private String projectName;
-    private String accountPrefix;
-    private String coinSymbol;
-    private int leasingDelay;
-    private int minPrunableLifetime;
-    private boolean enablePruning;
-    private int maxPrunableLifetime;
-    private short shufflingProcessingDeadline;
-    // lastKnownBlock must also be set in html/www/js/ars.constants.js
-    private long lastKnownBlock;
-    private long unconfirmedPoolDepositAtm;
-    private long shufflingDepositAtm;
-    private int guaranteedBalanceConfirmations;
+    private final boolean testnet;
+    private final String projectName;
+    private final String accountPrefix;
+    private final String coinSymbol;
+    private final int leasingDelay;
+    private final int minPrunableLifetime;
+    private final boolean enablePruning;
+    private final int maxPrunableLifetime;
+    private final short shufflingProcessingDeadline;
+    private final long lastKnownBlock;
+    private final long unconfirmedPoolDepositAtm;
+    private final long shufflingDepositAtm;
+    private final int guaranteedBalanceConfirmations;
     private static BlockchainProcessor blockchainProcessor;
     private static BlockDb blockDb;
 
     private volatile HeightConfig currentConfig;
-    private Chain chain;
+    private final Chain chain;
 
     @Inject
     public BlockchainConfig(PropertiesHolder holder, ChainIdService chainIdService) {
@@ -111,7 +119,7 @@ public class BlockchainConfig {
         return blockDb;
     }
 
-    public void updateToBlock() {
+    public void updateToLatestConfig() {
         Block lastBlock = lookupBlockDb().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");
@@ -119,6 +127,7 @@ public class BlockchainConfig {
         }
         updateToHeight(lastBlock.getHeight(), true);
     }
+
     private void updateToHeight(int height, boolean inclusive) {
         Objects.requireNonNull(chain);
 

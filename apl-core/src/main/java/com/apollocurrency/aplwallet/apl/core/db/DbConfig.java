@@ -21,9 +21,9 @@ public class DbConfig {
     }
 
     @Produces
-    public BasicDb.DbProperties getDbConfig() {
+    public DbProperties getDbConfig() {
         PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        BasicDb.DbProperties dbProperties = new BasicDb.DbProperties()
+        DbProperties dbProperties = new DbProperties()
                 .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
                 .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
                 .dbType(propertiesHolder.getStringProperty("apl.dbType"))

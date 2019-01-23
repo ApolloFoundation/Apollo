@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -16,6 +16,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Extract  chains from config file and provide current active chain
+ * @see Chain
+ * @see BlockchainConfig
+ */
 @ApplicationScoped
 public class ChainIdServiceImpl implements ChainIdService {
     private static final String DEFAULT_CONFIG_LOCATION = "conf/chains.json";
@@ -29,6 +34,10 @@ public class ChainIdServiceImpl implements ChainIdService {
         this(DEFAULT_CONFIG_LOCATION);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public List<Chain> getAll() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -39,6 +48,12 @@ public class ChainIdServiceImpl implements ChainIdService {
         return mapper.readValue(is, new TypeReference<List<Chain>>() {});
     }
 
+    /**
+     * {@inheritDoc}
+     * @throws RuntimeException when no active chain available
+     * @throws RuntimeException when multiple active chains available
+     */
+    @Override
     public Chain getActiveChain() throws IOException {
         List<Chain> chains = getAll();
         List<Chain> activeChains = chains.stream().filter(Chain::isActive).collect(Collectors.toList());

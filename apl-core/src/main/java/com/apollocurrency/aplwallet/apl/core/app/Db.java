@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import org.slf4j.Logger;
 
@@ -46,13 +46,13 @@ public final class Db {
         return db;
     }
 
-    public static void init(BasicDb.DbProperties dbProperties) {
+    public static void init(DbProperties dbProperties) {
         db = new TransactionalDb(dbProperties);
         db.init(new AplDbVersion());
     }
 
     public static void init() {
-        BasicDb.DbProperties dbProperties = CDI.current().select(BasicDb.DbProperties.class).get();
+        DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
         init(dbProperties);
     }
 

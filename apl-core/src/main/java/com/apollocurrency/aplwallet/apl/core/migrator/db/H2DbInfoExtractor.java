@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,16 +14,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import org.h2.jdbcx.JdbcConnectionPool;
 
+/**
+ * Extract height and path from h2 db
+ */
 public class H2DbInfoExtractor implements DbInfoExtractor {
     private static final String DB_TYPE = "h2";
     private static final String DB_SUFFIX = ".h2.db";
-    private final String user;
-    private final String password;
+    private String user;
+    private String password;
 
     @Inject
-    public H2DbInfoExtractor(@Named("dbUsername") String user, @Named("dbPassword") String password) {
+    public H2DbInfoExtractor(@Property(name = "apl.dbUsername", testnetName = "apl.testDbUsername") String user,
+                             @Property(name = "apl.dbPassword", testnetName = "apl.testDbPassword") String password) {
         this.user = user;
         this.password = password;
     }
@@ -78,7 +82,7 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
         int height = 0;
         try(Connection connection = dataSource.getConnection();
             Statement stmt = connection.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM block")) {
+            try (ResultSet rs = stmt.executeQuery("SELECT height FROM block order by timestamp desc")) {
                 if (rs.next()) {
                     height = rs.getInt(1);
                 }

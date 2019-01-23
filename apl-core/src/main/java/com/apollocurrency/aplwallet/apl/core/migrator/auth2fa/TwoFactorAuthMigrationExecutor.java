@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.migrator.auth2fa;
@@ -15,7 +15,11 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
+/**
+ * Provide 2fa specific components for migration
+ * @see MigrationExecutor
+ * @see DefaultDirectoryMigrator
+ */
 public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
 
     @Inject
@@ -24,7 +28,7 @@ public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
     }
 
     @Override
-    protected List<Path> createSrcPaths() {
+    protected List<Path> getSrcPaths() {
         boolean testnet = config.isTestnet();
         String twoFactorAuthDirPropertyName = testnet ? "apl.testnetDir2FA" : "apl.dir2FA";
         String twoFactorAuthDir = holder.getStringProperty(twoFactorAuthDirPropertyName);

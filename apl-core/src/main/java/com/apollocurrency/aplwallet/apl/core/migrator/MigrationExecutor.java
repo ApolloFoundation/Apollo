@@ -18,6 +18,29 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>Provides main algorithm of data migration. </p>
+ * <p>Should be extended to provide data specific migration components,
+ * such as list of paths for migration represented by  {@link MigrationExecutor#getSrcPaths()}
+ * and special {@link Migrator} implementation. Also while migration, some logs and db manipulation also
+ * require special {@link MigrationExecutor#migrationItemName} to name migration component.</p>
+ * <p>Typical use case</p>
+ * <pre>
+ *     class MyDataMigrationExecutor extends MigrationExecutor {
+ *         public MyDataMigrationExecutor(PropertiesHolder holder, BlockchainConfig config) {
+ *             super(holder, config, "myData");
+ *         }
+ *
+ *         protected List<Path> getSrcPaths() {
+ *             return Arrays.asList(Paths.get("mydatta"));
+ *         }
+ *         protected Migrator getMigrator() {
+ *             return new MyDataMigrator();
+ *         }
+ *      }
+ * </pre>
+ *
+ */
 public abstract class MigrationExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(MigrationExecutor.class);
 
@@ -46,13 +69,13 @@ public abstract class MigrationExecutor {
         this.migrationItemName = migrationItemName;
     }
 
-    protected abstract List<Path> createSrcPaths();
+    protected abstract List<Path> getSrcPaths();
 
     public void performMigration(Path toPath) throws IOException {
         if (isMigrationRequired()) {
             optionDAO.set(migrationRequiredPropertyName, "true");
             LOG.info("Migration of the {} required", migrationItemName);
-            List<Path> listFromPaths = createSrcPaths();
+            List<Path> listFromPaths = getSrcPaths();
             LOG.debug("Found {} possible migration candidates", listFromPaths.size());
             beforeMigration();
             List<Path> migratedPaths = getMigrator().migrate(listFromPaths, toPath);

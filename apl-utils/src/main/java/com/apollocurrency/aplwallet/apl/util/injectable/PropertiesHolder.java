@@ -79,9 +79,12 @@ public class PropertiesHolder {
     }
 
     public List<String> getStringListProperty(String name) {
+        return getStringListProperty(name, Collections.emptyList());
+    }
+    public List<String> getStringListProperty(String name, List<String> defaultValue) {
         String value = getStringProperty(name);
         if (value == null || value.length() == 0) {
-            return Collections.emptyList();
+            return defaultValue;
         }
         List<String> result = new ArrayList<>();
         for (String s : value.split(";")) {
@@ -90,7 +93,7 @@ public class PropertiesHolder {
                 result.add(s);
             }
         }
-        return result;
+        return result.isEmpty() ? defaultValue : result;
     }
 
     public boolean getBooleanProperty(String name) {

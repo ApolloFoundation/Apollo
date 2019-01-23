@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
@@ -15,6 +15,9 @@ import com.apollocurrency.aplwallet.apl.core.migrator.keystore.VaultKeystoreMigr
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Perform all application data migration
+ */
 public class ApplicationDataMigrationManager {
     private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
 

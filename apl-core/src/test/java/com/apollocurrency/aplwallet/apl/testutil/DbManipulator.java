@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 public class DbManipulator {
@@ -21,7 +22,7 @@ public class DbManipulator {
     public DbManipulator(Path dbFile, String user, String password) throws IOException {
         tempDbFile = dbFile;
         db =
-                new BasicDb(new BasicDb.DbProperties()
+                new BasicDb(new DbProperties()
                         .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
                         .dbPassword(password)
                         .dbUsername(user)
@@ -35,7 +36,7 @@ public class DbManipulator {
 
     public DbManipulator()  {
         tempDbFile = createTempFile();
-        db = new BasicDb(new BasicDb.DbProperties()
+        db = new BasicDb(new DbProperties()
                         .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
                         .dbPassword("sa")
                         .dbUsername("sa")

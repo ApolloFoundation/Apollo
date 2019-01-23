@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
@@ -8,20 +8,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Properties;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.Chain;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
-import com.apollocurrency.aplwallet.apl.util.env.UserMode;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
@@ -37,50 +35,51 @@ import org.mockito.Mockito;
 @EnableWeld
 public class DbMigrationExecutorTest {
 
-    ChainIdService chainIdService = Mockito.mock(ChainIdService.class);
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-    LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
+    private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
 
-//    H2DbInfoExtractor dbInfoExtractor = Mockito.mock(H2DbInfoExtractor.class);
-
-    PropertiesHolder propertiesHolder = Mockito.mock(PropertiesHolder.class);
+    private BlockchainConfig blockchainConfig = mockBlockchainConfig();
+    private PropertiesHolder propertiesHolder = mockPropertiesHolder();
 
     private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
-    BasicDb.DbProperties targetDbProperties = createDbProperties(targetDbPath);
+    private DbProperties targetDbProperties = createDbProperties(targetDbPath);
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class)
+    public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(legacyDbLocationsProvider, LegacyDbLocationsProvider.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
-            .addBeans(MockBean.of(Mockito.mock(BlockchainConfig.class), BlockchainConfig.class))
-//            .addBeans(MockBean.of(dbInfoExtractor, DbInfoExtractor.class))
-            .addBeans(MockBean.of(targetDbProperties, BasicDb.DbProperties.class))
-            .bindResource("dbPassword", "sa")
-            .bindResource("dbUsername", "sa")
+            .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .build();
-
 
     private Path pathToDbForMigration;
     private DbManipulator manipulator;
 
     @BeforeEach
     void setUp() throws IOException {
-
         this.pathToDbForMigration = Files.createTempFile(Files.createTempDirectory("migrationDbDir"), "migrationDb-1", ".h2");
         manipulator = new DbManipulator(pathToDbForMigration, "sa", "sa");
         manipulator.init();
-        Chain chain = new Chain();
-        chain.setTestnet(true);
-        Mockito.doReturn(chain).when(chainIdService).getActiveChain();
-        Mockito.doReturn(true).when(propertiesHolder).getBooleanProperty("apl.migrator.db.deleteAfterMigration");
-        Mockito.doReturn(100).when(propertiesHolder).getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
-
+        manipulator.populate();
         Db.init(targetDbProperties);
     }
 
-    private BasicDb.DbProperties createDbProperties(Path p) {
-        BasicDb.DbProperties dbProperties = new BasicDb.DbProperties()
+    PropertiesHolder mockPropertiesHolder() {
+        Properties properties = new Properties();
+        properties.put("apl.migrator.db.deleteAfterMigration", true);
+        properties.put("apl.batchCommitSize", 100);
+        properties.put("apl.testDbPassword", "sa");
+        properties.put("apl.testDbUsername", "sa");
+        return new PropertiesHolder(properties);
+    }
+
+    BlockchainConfig mockBlockchainConfig() {
+        BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+        Mockito.doReturn(true).when(blockchainConfig).isTestnet();
+        return blockchainConfig;
+    }
+    private DbProperties createDbProperties(Path p) {
+        DbProperties dbProperties = new DbProperties()
                 .dbDir(p.getParent().toAbsolutePath().toString())
                 .dbFileName(p.getFileName().toString())
                 .dbPassword("sa")
@@ -98,6 +97,7 @@ public class DbMigrationExecutorTest {
 
     @AfterEach
     void tearDown() throws Exception {
+//        Db.shutdown();
         Files.deleteIfExists(pathToDbForMigration);
         manipulator.shutdown();
         FileUtils.deleteDirectory(targetDbDir.toFile());
@@ -105,24 +105,32 @@ public class DbMigrationExecutorTest {
 
 
     @Test
-    public void testDbMigration() throws IOException {
-        DirProvider dirProvider = Mockito.mock(DirProvider.class);
+    public void testDbMigrationWhenNoDbsFound() throws IOException {
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder);
+        Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
+        migrationExecutor.performMigration(targetDbPath);
+        OptionDAO optionDAO = new OptionDAO();
+        String dbMigrated = optionDAO.get("dbMigrationRequired-0");
+        Assertions.assertNotNull(dbMigrated);
+        Assertions.assertEquals("false", dbMigrated);
+        Assertions.assertTrue(Files.exists(pathToDbForMigration));
+        int migratedHeight = new H2DbInfoExtractor("sa", "sa")
+                .getHeight(targetDbPath.toAbsolutePath().toString());
+        Assertions.assertEquals(0, migratedHeight);
+    }
 
-        AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
-        Mockito.doReturn(targetDbDir).when(dirProvider).getDbDir();
+    @Test
+    public void testDbMigration() throws IOException {
         DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
-//        Mockito.doReturn(pathToDbForMigration).when(dbInfoExtractor).getPath(pathToDbForMigration.toAbsolutePath().toString());
-//        Mockito.doReturn(Paths.get(targetDbPath.toAbsolutePath().toString() + ".h2.db")).when(dbInfoExtractor).getPath(targetDbPath.toAbsolutePath().toString());
-//        Mockito.doReturn(10).when(dbInfoExtractor).getHeight(pathToDbForMigration.toAbsolutePath().toString());
-//        Mockito.doReturn(10).when(dbInfoExtractor).getHeight(targetDbPath.toAbsolutePath().toString());
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();
         String dbMigrated = optionDAO.get("dbMigrationRequired-0");
         Assertions.assertNotNull(dbMigrated);
         Assertions.assertEquals("false", dbMigrated);
         Assertions.assertFalse(Files.exists(pathToDbForMigration));
-//        Assertions.assertEquals(new H2DbInfoExtractor());
+        int migratedHeight = new H2DbInfoExtractor("sa", "sa").getHeight(targetDbPath.toAbsolutePath().toString());
+        Assertions.assertEquals(104671, migratedHeight);
     }
 
     private Path createTempDir() {
