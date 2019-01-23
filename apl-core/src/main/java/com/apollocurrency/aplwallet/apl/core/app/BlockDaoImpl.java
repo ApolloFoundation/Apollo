@@ -33,12 +33,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 
@@ -56,7 +58,7 @@ public class BlockDaoImpl implements BlockDao {
     private final SortedMap<Integer, Block> heightMap;
     private final Map<Long, Transaction> transactionCache;
     private final ConnectionProvider connectionProvider;
-    private TransactionDao transactionDb;
+    private TransactionDao transactionDao;
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
                         Map<Long, Transaction> transactionCache, ConnectionProvider connectionProvider) {
@@ -147,7 +149,8 @@ public class BlockDaoImpl implements BlockDao {
         }
         // Search the database
         try (Connection con = connectionProvider.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
+             PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && rs.getInt("height") <= height;
@@ -231,7 +234,8 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public Block findLastBlock() {
         try (Connection con = connectionProvider.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
+             PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             Block block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -242,6 +246,140 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    @Override
+    public DbIterator<Block> getAllBlocks() {
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
+            return getBlocks(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+
+    @Override
+    public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
+        return new DbIterator<>(con, pstmt, this::loadBlock);
+    }
+
+    @Override
+    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
+                    + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
+                    + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setLong(++i, accountId);
+            if (timestamp > 0) {
+                pstmt.setInt(++i, timestamp);
+            }
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getBlocks(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public DbIterator<Block> getBlocks(int from, int to) {
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
+            pstmt.setInt(1, from);
+            pstmt.setInt(2, to);
+            return getBlocks(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public int getBlockCount(long accountId) {
+        try (Connection con = connectionProvider.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
+            pstmt.setLong(1, accountId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public List<Long> getBlockIdsAfter(long blockId, int limit, List<Long> result) {
+        // Search the database
+        try (Connection con = connectionProvider.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block "
+                     + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
+                     + "ORDER BY db_id ASC LIMIT ?")) {
+            pstmt.setLong(1, blockId);
+            pstmt.setInt(2, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(rs.getLong("id"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(long blockId, int limit, List<Block> result) {
+        // Search the database
+        try (Connection con = connectionProvider.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
+                     + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
+                     + "ORDER BY db_id ASC LIMIT ?")) {
+            pstmt.setLong(1, blockId);
+            pstmt.setInt(2, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(this.loadBlock(con, rs, true));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result) {
+        // Search the database
+        try (Connection con = connectionProvider.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
+                     + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
+                     + "ORDER BY db_id ASC LIMIT ?")) {
+            pstmt.setLong(1, blockId);
+            pstmt.setInt(2, blockList.size());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                int index = 0;
+                while (rs.next()) {
+                    Block block = this.loadBlock(con, rs, true);
+                    if (block.getId() != blockList.get(index++)) {
+                        break;
+                    }
+                    result.add(block);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return result;
     }
 
     @Override
@@ -372,8 +510,8 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     private TransactionDao lookupTransactionDao() {
-        if (transactionDb == null) this.transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
-        return transactionDb;
+        if (transactionDao == null) this.transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
+        return transactionDao;
     }
 
     @Override

@@ -1,10 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
 public interface TransactionDao {
@@ -36,4 +38,23 @@ public interface TransactionDao {
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
 
     void saveTransactions(Connection con, List<Transaction> transactions);
+
+    int getTransactionCount();
+
+    DbIterator<Transaction> getAllTransactions();
+
+    DbIterator<Transaction> getTransactions(
+            long accountId, int numberOfConfirmations, byte type, byte subtype,
+            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
+            int height, int prunableExpiration);
+
+    DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+
+    int getTransactionCount(long accountId, byte type, byte subtype);
+
+    DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+
+    DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to);
+
 }

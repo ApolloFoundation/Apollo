@@ -5,10 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 public interface BlockDao {
 
@@ -31,6 +35,22 @@ public interface BlockDao {
     Map<Long, Transaction> getTransactionCache();
 
     Block findLastBlock();
+
+    DbIterator<Block> getAllBlocks();
+
+    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
+
+    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
+
+    DbIterator<Block> getBlocks(int from, int to);
+
+    int getBlockCount(long accountId);
+
+    List<Long> getBlockIdsAfter(long blockId, int limit, List<Long> result);
+
+    List<Block> getBlocksAfter(long blockId, int limit, List<Block> result);
+
+    List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result);
 
     Block findBlockWithVersion(int skipCount, int version);
 

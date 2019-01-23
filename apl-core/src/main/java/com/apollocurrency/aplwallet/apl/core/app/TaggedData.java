@@ -56,7 +56,6 @@ public class TaggedData {
 
     };
 
-    private static TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
@@ -538,7 +537,7 @@ public class TaggedData {
         if (AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
-                Transaction uploadTransaction = transactionDb.findTransaction(taggedDataId);
+                Transaction uploadTransaction = blockchain.getTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());
                 Tag.add(taggedData);
@@ -558,7 +557,7 @@ public class TaggedData {
         Tag.add(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : TaggedData.getExtendTransactionIds(transaction.getId())) {
-            Transaction extendTransaction = transactionDb.findTransaction(extendTransactionId);
+            Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);
             if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {

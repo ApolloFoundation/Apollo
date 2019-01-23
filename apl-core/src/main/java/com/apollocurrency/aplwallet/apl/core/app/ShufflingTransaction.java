@@ -66,7 +66,6 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * Constants.ONE_APL);
     private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
-    protected final TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
 
     private ShufflingTransaction() {}
 
@@ -427,7 +426,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         boolean isPruned(long transactionId) {
-            Transaction transaction = transactionDb.findTransaction(transactionId);
+            Transaction transaction = blockchain.getTransaction(transactionId);
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -691,7 +690,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = transactionDb.findTransactionByFullHash(participant.getDataTransactionFullHash(),
+            Transaction dataProcessingTransaction = blockchain.findTransactionByFullHash(participant.getDataTransactionFullHash(),
                     blockchain.getHeight());
             if (dataProcessingTransaction == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");

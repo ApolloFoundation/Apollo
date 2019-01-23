@@ -31,7 +31,6 @@ import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -3469,6 +3468,7 @@ public interface Attachment extends Appendix {
     }
 
     final class TaggedDataExtend extends TaggedDataAttachment {
+        private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
         public static TaggedDataExtend parse(JSONObject attachmentData) {
             if (!Appendix.hasAppendix(TransactionType.Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
@@ -3531,7 +3531,7 @@ public interface Attachment extends Appendix {
                 hash = super.getHash();
             }
             if (hash == null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload) CDI.current().select(TransactionDaoImpl.class).get().findTransaction(taggedDataId).getAttachment();
+                TaggedDataUpload taggedDataUpload = (TaggedDataUpload) blockchain.getTransaction(taggedDataId).getAttachment();
                 hash = taggedDataUpload.getHash();
             }
             return hash;

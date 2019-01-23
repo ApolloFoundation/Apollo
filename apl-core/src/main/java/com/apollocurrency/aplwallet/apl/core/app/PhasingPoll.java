@@ -47,7 +47,6 @@ public final class PhasingPoll extends AbstractPoll {
 
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
-    private static TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static HashFunction getHashFunction(byte code) {
@@ -373,7 +372,7 @@ public final class PhasingPoll extends AbstractPoll {
             List<Transaction> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add(transactionDb.findTransaction(rs.getLong("transaction_id")));
+                    transactions.add(blockchain.getTransaction(rs.getLong("transaction_id")));
                 }
             }
             return transactions;
@@ -466,7 +465,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public byte[] getFullHash() {
-        return transactionDb.getFullHash(this.id);
+        return blockchain.getFullHash(this.id);
     }
 
     public List<byte[]> getLinkedFullHashes() {
@@ -494,7 +493,7 @@ public final class PhasingPoll extends AbstractPoll {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
             for (byte[] hash : getLinkedFullHashes()) {
-                if (transactionDb.hasTransactionByFullHash(hash, height)) {
+                if (blockchain.hasTransactionByFullHash(hash, height)) {
                     count += 1;
                 }
             }
