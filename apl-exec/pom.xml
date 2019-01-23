@@ -12,9 +12,6 @@
     <artifactId>apl-exec</artifactId>
     <name>apl-exec</name>
     <packaging>jar</packaging>
-    <properties>
-        <zipname>apollo-wallet</zipname>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>com.apollocurrency</groupId>
@@ -41,7 +38,13 @@
             <artifactId>apl-html</artifactId>
             <version>${project.version}</version>
             <type>zip</type>       
-        </dependency>         
+        </dependency>
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>web-wallet</artifactId>
+            <version>${web-wallet.version}</version>
+            <type>zip</type>       
+        </dependency>                   
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -107,10 +110,41 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <useBaseVersion>false</useBaseVersion>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+<!--                            <useBaseVersion>false</useBaseVersion> -->
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>                            
                         </configuration>
                     </execution>
+<!-- Unpack 2 webUI components -->                    
+                    <execution>
+                        <id>unpack</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.apollocurrency</groupId>
+                                    <artifactId>apl-html</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/webui</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.apollocurrency</groupId>
+                                    <artifactId>web-wallet</artifactId>
+                                    <version>${web-wallet.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/webui</outputDirectory>
+                                </artifactItem>                                
+                            </artifactItems>
+<!--                            <outputDirectory>${project.build.directory}/wars</outputDirectory> -->
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>                    
                 </executions>
             </plugin>
             <plugin>
@@ -132,28 +166,6 @@
                     </execution>
                 </executions>
             </plugin>                                    
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>wagon-maven-plugin</artifactId>
-                <version>2.0.0</version>
-                <configuration>
-                    <serverId>central</serverId>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>http-download-single</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>download-single</goal>
-                        </goals>
-                        <configuration>
-                            <url>https://al.cn.ua/attachments/download/4</url>
-                            <fromFile>web-wallet.zip</fromFile>
-                            <toDir>${project.build.directory}/lib</toDir>
-                        </configuration>                        
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 </project>

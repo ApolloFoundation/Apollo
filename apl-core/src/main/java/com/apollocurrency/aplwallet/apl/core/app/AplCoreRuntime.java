@@ -137,9 +137,15 @@ public class AplCoreRuntime {
     } 
     
     public String findWebUiDir(){
-        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
+// if we decide to unzip in runtime        
+//        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
+        String dir = dirProvider.getBinDirectory()+File.separator+WEB_UI_DIR;
         dir=dir+File.separator+"build";
         File res = new File(dir);
+        if(!res.exists()){ //we are in develop IDE or tests
+            dir=dirProvider.getBinDirectory()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
+            res=new File(dir);
+        }
         return res.getAbsolutePath();
     }
 }
