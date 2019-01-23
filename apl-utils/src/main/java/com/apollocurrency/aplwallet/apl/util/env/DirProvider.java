@@ -84,20 +84,19 @@ public class DirProvider {
     */
     public File getBinDirectory() {
         String res="./";
-        try { //get location of this class
-            String path = DirProvider.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        try { 
+            //get location of main app class
+            String path = RuntimeEnvironment.getInstance().getMain().getProtectionDomain().getCodeSource().getLocation().getPath();
             res = URLDecoder.decode(path, "UTF-8");
         } catch (UnsupportedEncodingException ex) {          
         }
         // remove jar name or "classes". Should be location jar directory
         res = new File(res).getParentFile().getAbsolutePath();
         File ret;
-        if(res.endsWith("target"+File.separator+"lib")){ //we are in dev env or IDE
-            ret = new File(res).getParentFile().getParentFile().getParentFile();
-        }else if (res.endsWith("target")){
-            ret = new File(res).getParentFile().getParentFile(); //we are in dev env or IDE
+        if(res.endsWith("target")){ //we are in dev env or IDE
+            ret = new File(res).getParentFile().getParentFile();
         }else{ //we are installed
-            ret = new File(res).getParentFile();
+            ret = new File(res);
         }
         return ret;
     }

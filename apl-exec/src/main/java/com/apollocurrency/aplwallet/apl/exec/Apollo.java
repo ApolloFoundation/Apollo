@@ -124,10 +124,10 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
+        RuntimeEnvironment.getInstance().setMain(Apollo.class);
+        dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
 
-        dirProvider = RuntimeEnvironment.getDirProvider();
-
-        if(RuntimeEnvironment.isAdmin()){
+        if(RuntimeEnvironment.getInstance().isAdmin()){
             System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
         }
 //load configuration files        
@@ -144,10 +144,10 @@ public class Apollo {
         unzipRes = execService.submit(we);
 */
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
-        if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
+        if (RuntimeEnvironment.getInstance().isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
         } else {
-            runtimeMode = RuntimeEnvironment.getRuntimeMode();
+            runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         }
         runtimeMode.init();
         //inti CDI container

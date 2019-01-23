@@ -316,7 +316,7 @@ public final class Account {
                                     propertiesLoader.getStringProperty("apl.dir2FA", "2fa")
                     )) :
                     new TwoFactorAuthRepositoryImpl(Db.getDb()),
-            propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.isDesktopApplicationEnabled() ? "desktop" : "web"));
+            propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
 
     static {
 
