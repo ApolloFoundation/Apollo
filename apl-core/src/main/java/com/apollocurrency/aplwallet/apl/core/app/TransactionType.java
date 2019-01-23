@@ -3107,8 +3107,7 @@ public abstract class TransactionType {
                 if ((attachment.jsonIsPruned() || attachment.getData() == null) && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
-                Transaction uploadTransaction = CDI.current().select(TransactionDb.class).get().findTransaction(attachment.getTaggedDataId(),
-                        blockchain.getHeight());
+                Transaction uploadTransaction = blockchain.findTransaction(attachment.getTaggedDataId(), blockchain.getHeight());
                 if (uploadTransaction == null) {
                     throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
                 }

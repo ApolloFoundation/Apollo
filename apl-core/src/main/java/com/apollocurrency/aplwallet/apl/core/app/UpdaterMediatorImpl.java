@@ -24,14 +24,12 @@ import org.slf4j.Logger;
 public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
 
-    private TransactionDb transactionDb;
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
 
     @Inject
-    public UpdaterMediatorImpl(TransactionDb transactionDb, Blockchain blockchain) {
-        this.transactionDb = transactionDb;
+    public UpdaterMediatorImpl(Blockchain blockchain) {
         this.blockchain = blockchain;
     }
 
@@ -108,6 +106,6 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-        return transactionDb.loadTransaction(connection, rs);
+        return blockchain.loadTransaction(connection, rs);
     }
 }
