@@ -59,6 +59,11 @@ public class BlockDb {
     private final ConnectionProvider connectionProvider;
     private TransactionDb transactionDb;
 
+    public BlockDb() {
+        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(),null);
+        LOG.error("No-parameters constructor called!");
+    }
+
     public BlockDb(int blockCacheSize, Map<Long, BlockImpl> blockCache, SortedMap<Integer, BlockImpl> heightMap,
                    Map<Long, TransactionImpl> transactionCache, ConnectionProvider connectionProvider) {
         Objects.requireNonNull(connectionProvider, "Connection provider is null");

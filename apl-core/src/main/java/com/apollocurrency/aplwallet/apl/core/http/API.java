@@ -341,6 +341,7 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
+            
             // --------- ADD REST support servlet (RESTEasy)
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
@@ -359,7 +360,7 @@ public final class API {
             apiHandler.addServlet(restEasyServletHolder, "/rest/*");
             // init Weld here
             apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener()); 
-            //need this listener too support scopes properly
+            //need this listener to support scopes properly
             apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
             //--------- ADD swagger generated docs and API test page
             // Set the path to our static (Swagger UI) resources

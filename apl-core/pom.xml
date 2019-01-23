@@ -83,6 +83,11 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-validator-provider-11</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-cdi</artifactId>
+        </dependency>
+       
         <!-- Swagger runtime dependencies -->
         <!-- Swagger annotation for API auto-documenting --> 
         <dependency>

@@ -229,8 +229,8 @@ public final class AplCore {
                 Generator.init();
                 AddOns.init();
                 AppStatus.getInstance().update("API initialization...");
-                API.init();
                 DebugTrace.init();
+                API.init();
                 int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
                         ".timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);
