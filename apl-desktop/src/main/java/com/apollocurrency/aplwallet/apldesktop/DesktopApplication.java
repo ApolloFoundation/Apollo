@@ -49,23 +49,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.db.model.Option;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -339,12 +328,8 @@ public class DesktopApplication extends Application {
         private static MainApplication instance = new MainApplication();
         private JSObject ars;
         private volatile long updateTime;
-        private volatile List<Transaction> unconfirmedTransactionUpdates = new ArrayList<>();
         private JavaScriptBridge javaScriptBridge;
-        private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
-        private TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-        private BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-
+      
         private MainApplication() {
         }
 
@@ -417,13 +402,7 @@ public class DesktopApplication extends Application {
                         mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
 
                         updateClientState("Desktop Wallet started");
-                        blockchainProcessor.addListener((block) ->
-                                updateClientState(BlockchainProcessor.Event.BLOCK_PUSHED, block), BlockchainProcessor.Event.BLOCK_PUSHED);
-                        blockchainProcessor.addListener((block) ->
-                                updateClientState(BlockchainProcessor.Event.AFTER_BLOCK_APPLY, block), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-                        transactionProcessor.addListener(transaction ->
-                                updateClientState(TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS, transaction), TransactionProcessor.Event.ADDED_UNCONFIRMED_TRANSACTIONS);
-/*
+/*                       
                         if (ENABLE_JAVASCRIPT_DEBUGGER) {
                             try {
                                 // Add the javafx_webview_debugger lib to the classpath
@@ -521,42 +500,6 @@ public class DesktopApplication extends Application {
             if (clickedButton == ButtonType.YES) {
                 System.exit(0);
             }
-        }
-
-        private void updateClientState(BlockchainProcessor.Event blockEvent, Block block) {
-            if (blockEvent == BlockchainProcessor.Event.BLOCK_PUSHED && blockchainProcessor.isDownloading()) {
-                if (!(block.getHeight() % 100 == 0)) {
-                    return;
-                }
-            }
-            if (blockEvent == BlockchainProcessor.Event.AFTER_BLOCK_APPLY) {
-                if (blockchainProcessor.isScanning()) {
-                    if (!(block.getHeight() % 100 == 0)) {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            }
-            String msg = blockEvent.toString() + " id " + block.getStringId() + " height " + block.getHeight();
-            updateClientState(msg);
-        }
-
-        private void updateClientState(TransactionProcessor.Event transactionEvent, List<? extends Transaction> transactions) {
-            if (transactions.size() == 0) {
-                return;
-            }
-            unconfirmedTransactionUpdates.addAll(transactions);
-            if (ntpTime.getTime() - updateTime > 3000L) {
-                String msg = transactionEvent.toString() + " ids " + unconfirmedTransactionUpdates.stream().map(Transaction::getStringId).collect(Collectors.joining(","));
-                updateTime = ntpTime.getTime();
-                unconfirmedTransactionUpdates = new ArrayList<>();
-                updateClientState(msg);
-            }
-        }
-
-        private void updateClientState(String msg) {
-           // Platform.runLater(() -> webEngine.executeScript("NRS.getState(null, '" + msg + "')"));
         }
 
         @SuppressWarnings("WeakerAccess")
