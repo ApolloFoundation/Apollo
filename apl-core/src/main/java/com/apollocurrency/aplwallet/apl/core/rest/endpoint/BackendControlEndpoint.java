@@ -24,12 +24,12 @@ import javax.ws.rs.core.Response;
  * @author alukin@gmail.com
  */
 @Path("/control")
-public class BackendControlEndpint {
+public class BackendControlEndpoint {
 
     private BackendControlService bcService;
 
     @Inject
-    public BackendControlEndpint(BackendControlService bcService) {
+    public BackendControlEndpoint(BackendControlService bcService) {
         this.bcService = bcService;
     }
 

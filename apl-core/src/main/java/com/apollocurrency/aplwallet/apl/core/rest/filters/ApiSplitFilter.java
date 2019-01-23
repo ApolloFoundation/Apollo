@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
  * if new is not yet implemented. 
  * @author alukin@gmail.com
  */
-public class ApliSplitFilter implements Filter{
+public class ApiSplitFilter implements Filter{
      
-    static final Logger logger = LoggerFactory.getLogger(ApliSplitFilter.class);
+    static final Logger logger = LoggerFactory.getLogger(ApiSplitFilter.class);
     
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -43,10 +43,10 @@ public class ApliSplitFilter implements Filter{
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
         //to fix CORS
-        resp.setHeader("Access-Control-Allow-Origin", "*");
-        resp.setHeader("Access-Control-Allow-Credentials", "true");
-        resp.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+//        resp.setHeader("Access-Control-Allow-Origin", "*");
+//        resp.setHeader("Access-Control-Allow-Credentials", "true");
+//        resp.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+//        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
         String rqType = request.getParameter("requestType");
            logger.trace("========= RequestType IS EMPTY!==========");
