@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Inject
-    public DefaultBlockValidator(BlockDb blockDb, BlockchainConfig blockchainConfig) {
-        super(blockDb, blockchainConfig);
+    public DefaultBlockValidator(BlockDao blockDao, BlockchainConfig blockchainConfig) {
+        super(blockDao, blockchainConfig);
     }
 
     @Override
