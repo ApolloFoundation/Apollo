@@ -6,29 +6,29 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+ import javax.enterprise.context.ApplicationScoped;
+ import javax.enterprise.inject.spi.CDI;
+ import javax.inject.Inject;
+ import javax.inject.Named;
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.time.Instant;
+ import java.time.OffsetDateTime;
+ import java.time.ZoneOffset;
+ import java.time.format.DateTimeFormatter;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import org.slf4j.Logger;
+ import com.apollocurrency.aplwallet.apl.crypto.Convert;
+ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+ import com.apollocurrency.aplwallet.apl.util.JSON;
+ import com.apollocurrency.aplwallet.apl.util.NtpTime;
+ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.ObjectWriter;
+ import org.slf4j.Logger;
 
 @ApplicationScoped
  public class SimpleKeyStoreImpl implements KeyStore {
@@ -41,7 +41,8 @@ import org.slf4j.Logger;
      private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
     @Inject
-    public SimpleKeyStoreImpl(@Named("keystoreDirPath") Path keystoreDir) {
+    @Named("keystoreDirPath")
+    public SimpleKeyStoreImpl(Path keystoreDir) {
         this(keystoreDir, DEFAULT_VERSION);
     }
 

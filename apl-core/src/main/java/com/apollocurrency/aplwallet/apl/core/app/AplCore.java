@@ -27,7 +27,6 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_P
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -65,7 +64,6 @@ public final class AplCore {
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
 
-    @Inject
     public AplCore(BlockchainConfig config) {
         this.blockchainConfig = config;
     }

@@ -29,12 +29,14 @@ public class DefaultDirectoryMigrator implements Migrator {
         List<Path> listOfMigratedSrcPaths = new ArrayList<>();
         if (Files.isDirectory(destDirectoryPath)) {
             for (Path p : srcDirectoriesPaths) {
-                if (Files.isDirectory(p)) {
-                    if (Files.list(p).count() > 0) {
-                        listOfMigratedSrcPaths.add(p);
-                        FileUtils.copyDirectory(p.toFile(), destDirectoryPath.toFile());
-                    }
-                } else throw new IllegalArgumentException("List of src directories should contain only directories");
+                if (Files.exists(p)) {
+                    if (Files.isDirectory(p)) {
+                        if (Files.list(p).count() > 0) {
+                            listOfMigratedSrcPaths.add(p);
+                            FileUtils.copyDirectory(p.toFile(), destDirectoryPath.toFile());
+                        }
+                    } else throw new IllegalArgumentException("List of src directories should contain only directories");
+                }
             }
         } else throw new IllegalArgumentException("Destionation path is not a directory");
         return listOfMigratedSrcPaths;
