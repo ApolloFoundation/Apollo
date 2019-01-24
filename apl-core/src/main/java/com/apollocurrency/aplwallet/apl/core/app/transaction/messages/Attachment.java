@@ -42,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDb;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
@@ -3469,6 +3468,7 @@ public interface Attachment extends Appendix {
     }
 
     final class TaggedDataExtend extends TaggedDataAttachment {
+        private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
         public static TaggedDataExtend parse(JSONObject attachmentData) {
             if (!Appendix.hasAppendix(TransactionType.Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
@@ -3531,7 +3531,7 @@ public interface Attachment extends Appendix {
                 hash = super.getHash();
             }
             if (hash == null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload) CDI.current().select(TransactionDb.class).get().findTransaction(taggedDataId).getAttachment();
+                TaggedDataUpload taggedDataUpload = (TaggedDataUpload) blockchain.getTransaction(taggedDataId).getAttachment();
                 hash = taggedDataUpload.getHash();
             }
             return hash;

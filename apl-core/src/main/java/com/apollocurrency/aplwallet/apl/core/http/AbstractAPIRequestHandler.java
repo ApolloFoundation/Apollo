@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -31,6 +32,7 @@ public abstract class AbstractAPIRequestHandler {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private TransactionProcessor transactionProcessor;
+    protected static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();

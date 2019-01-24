@@ -62,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -113,6 +114,7 @@ public final class Peers {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     static final int connectTimeout;
     static final int readTimeout;
@@ -380,7 +382,7 @@ public final class Peers {
                 @Override
                 public void run() {
                     LOG.trace("'Peer loader': thread starting...");
-                    final int now = AplCore.getEpochTime();
+                    final int now = timeService.getEpochTime();
                     wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
                     if (usePeersDb) {
                         LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
@@ -515,7 +517,7 @@ public final class Peers {
         try {
             try {
 
-                int curTime = AplCore.getEpochTime();
+                int curTime = timeService.getEpochTime();
                 for (PeerImpl peer : peers.values()) {
                     peer.updateBlacklistedStatus(curTime);
                 }
@@ -540,7 +542,7 @@ public final class Peers {
             try {
                 try {
 
-                    final int now = AplCore.getEpochTime();
+                    final int now = timeService.getEpochTime();
                     if (!hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
                         List<Future<?>> futures = new ArrayList<>();
                         List<Peer> hallmarkedPeers = getPeers(peer -> !peer.isBlacklisted()
@@ -677,7 +679,7 @@ public final class Peers {
                     if (peers != null) {
                         JSONArray services = (JSONArray)response.get("services");
                         boolean setServices = (services != null && services.size() == peers.size());
-                        int now = AplCore.getEpochTime();
+                        int now = timeService.getEpochTime();
                         for (int i=0; i<peers.size(); i++) {
                             String announcedAddress = (String)peers.get(i);
                             PeerImpl newPeer = findOrCreatePeer(announcedAddress, true);
@@ -732,7 +734,7 @@ public final class Peers {
         }
 
         private void updateSavedPeers() {
-            int now = AplCore.getEpochTime();
+            int now = timeService.getEpochTime();
             //
             // Load the current database entries and map announced address to database entry
             //
@@ -1284,7 +1286,7 @@ public final class Peers {
     private static void checkBlockchainState() {
         Peer.BlockchainState state = Constants.isLightClient
                 ? Peer.BlockchainState.LIGHT_CLIENT
-                : (blockchainProcessor.isDownloading() || blockchain.getLastBlockTimestamp() < AplCore.getEpochTime() - 600)
+                : (blockchainProcessor.isDownloading() || blockchain.getLastBlockTimestamp() < timeService.getEpochTime() - 600)
                 ? Peer.BlockchainState.DOWNLOADING :
                         (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10 && !blockchainConfig.isTestnet()) ?
                                 Peer.BlockchainState.FORK :

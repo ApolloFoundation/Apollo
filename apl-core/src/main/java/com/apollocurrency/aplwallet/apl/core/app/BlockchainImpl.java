@@ -25,18 +25,18 @@ import javax.enterprise.context.ApplicationScoped;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -45,19 +45,10 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 @ApplicationScoped
 public class BlockchainImpl implements Blockchain {
 
-    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
-    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
+    private final TransactionDao transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
-/*
-    static BlockchainImpl getInstance() {
-        if (instance == null) {
-            instance = CDI.current().select(BlockchainImpl.class).get();
-        }
-        return instance;
-    }
-    private static BlockchainImpl instance;
-*/
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     public BlockchainImpl() {}
 
@@ -119,50 +110,34 @@ public class BlockchainImpl implements Blockchain {
         if (timestamp >= block.getTimestamp()) {
             return block;
         }
-        return blockDb.findLastBlock(timestamp);
+        return blockDao.findLastBlock(timestamp);
     }
-    //load transactions
+
     @Override
     public Block getBlock(long blockId) {
         Block block = lastBlock.get();
         if (block.getId() == blockId) {
             return block;
         }
-        return blockDb.findBlock(blockId);
+        return blockDao.findBlock(blockId);
     }
 
     @Override
     public boolean hasBlock(long blockId) {
-        return lastBlock.get().getId() == blockId || blockDb.hasBlock(blockId);
+        return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId);
     }
-    //load transactions
+
     @Override
     public DbIterator<Block> getAllBlocks() {
-        Connection con = null;
-        try {
-            con = Db.getDb().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
-            return getBlocks(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        return blockDao.getAllBlocks();
     }
 
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
-        Connection con = null;
-        try {
-            con = Db.getDb().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
-            int blockchainHeight = getHeight();
-            pstmt.setInt(1, blockchainHeight - from);
-            pstmt.setInt(2, blockchainHeight - to);
-            return getBlocks(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        int blockchainHeight = getHeight();
+        int calculatedFrom = blockchainHeight - from;
+        int calculatedTo = blockchainHeight - to;
+        return blockDao.getBlocks(calculatedFrom, calculatedTo);
     }
 
     @Override
@@ -172,53 +147,48 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
-        Connection con = null;
-        try {
-            con = Db.getDb().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
-                    + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
-                    + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setLong(++i, accountId);
-            if (timestamp > 0) {
-                pstmt.setInt(++i, timestamp);
-            }
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getBlocks(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        return blockDao.getBlocks(accountId, timestamp, from, to);
+    }
+
+    @Override
+    public Block findLastBlock() {
+        return blockDao.findLastBlock();
+    }
+
+    @Override
+    public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
+        return blockDao.loadBlock(con, rs, loadTransactions);
+    }
+
+    @Override
+    public void saveBlock(Connection con, Block block) {
+        blockDao.saveBlock(con, block);
+    }
+
+    @Override
+    public void commit(Block block) {
+        blockDao.commit(block);
     }
 
     @Override
     public int getBlockCount(long accountId) {
-        try (Connection con = Db.getDb().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
-            pstmt.setLong(1, accountId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return blockDao.getBlockCount(accountId);
     }
 
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, blockDb::loadBlock);
+        return blockDao.getBlocks(con, pstmt);
     }
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
         // Check the block cache
-        List<Long> result = new ArrayList<>(blockDb.getBlockCacheSize());
-        synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+        List<Long> result = new ArrayList<>(blockDao.getBlockCacheSize());
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
-                for (BlockImpl cacheBlock : cacheMap) {
+                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+                for (Block cacheBlock : cacheMap) {
                     if (result.size() >= limit) {
                         break;
                     }
@@ -227,22 +197,7 @@ public class BlockchainImpl implements Blockchain {
                 return result;
             }
         }
-        // Search the database
-        try (Connection con = Db.getDb().getConnection();
-                PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block "
-                            + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
-                            + "ORDER BY db_id ASC LIMIT ?")) {
-            pstmt.setLong(1, blockId);
-            pstmt.setInt(2, limit);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    result.add(rs.getLong("id"));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return result;
+        return blockDao.getBlockIdsAfter(blockId, limit, result);
     }
 
     @Override
@@ -251,12 +206,12 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<Block> result = new ArrayList<>(blockDb.getBlockCacheSize());
-        synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+        List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
-                for (BlockImpl cacheBlock : cacheMap) {
+                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+                for (Block cacheBlock : cacheMap) {
                     if (result.size() >= limit) {
                         break;
                     }
@@ -265,22 +220,7 @@ public class BlockchainImpl implements Blockchain {
                 return result;
             }
         }
-        // Search the database
-        try (Connection con = Db.getDb().getConnection();
-                PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
-                        + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
-                        + "ORDER BY db_id ASC LIMIT ?")) {
-            pstmt.setLong(1, blockId);
-            pstmt.setInt(2, limit);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    result.add(blockDb.loadBlock(con, rs, true));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return result;
+        return blockDao.getBlocksAfter(blockId, limit, result);
     }
 
     @Override
@@ -289,13 +229,13 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
-        List<Block> result = new ArrayList<>(blockDb.getBlockCacheSize());
-        synchronized(blockDb.getBlockCache()) {
-            BlockImpl block = blockDb.getBlockCache().get(blockId);
+        List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
-                Collection<BlockImpl> cacheMap = blockDb.getHeightMap().tailMap(block.getHeight() + 1).values();
+                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
                 int index = 0;
-                for (BlockImpl cacheBlock : cacheMap) {
+                for (Block cacheBlock : cacheMap) {
                     if (result.size() >= blockList.size() || cacheBlock.getId() != blockList.get(index++)) {
                         break;
                     }
@@ -304,27 +244,7 @@ public class BlockchainImpl implements Blockchain {
                 return result;
             }
         }
-        // Search the database
-        try (Connection con = Db.getDb().getConnection();
-                PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
-                        + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
-                        + "ORDER BY db_id ASC LIMIT ?")) {
-            pstmt.setLong(1, blockId);
-            pstmt.setInt(2, blockList.size());
-            try (ResultSet rs = pstmt.executeQuery()) {
-                int index = 0;
-                while (rs.next()) {
-                    BlockImpl block = blockDb.loadBlock(con, rs, true);
-                    if (block.getId() != blockList.get(index++)) {
-                        break;
-                    }
-                    result.add(block);
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return result;
+        return blockDao.getBlocksAfter(blockId, blockList, result);
     }
 
     @Override
@@ -336,7 +256,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        return blockDb.findBlockIdAtHeight(height);
+        return blockDao.findBlockIdAtHeight(height);
     }
 
     @Override
@@ -348,7 +268,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block;
         }
-        return blockDb.findBlockAtHeight(height);
+        return blockDao.findBlockAtHeight(height);
     }
 
     @Override
@@ -357,290 +277,139 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return getBlockAtHeight(0);
         }
-        return blockDb.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
+        return blockDao.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
+    }
+
+    @Override
+    public void deleteBlocksFromHeight(int height) {
+        blockDao.deleteBlocksFromHeight(height);
+    }
+
+    @Override
+    public Block deleteBlocksFrom(long blockId) {
+        return blockDao.deleteBlocksFrom(blockId);
+    }
+
+    @Override
+    public void deleteAll() {
+        blockDao.deleteAll();
+    }
+
+    @Override
+    public Map<Long, Transaction> getTransactionCache() {
+        return blockDao.getTransactionCache();
     }
 
     @Override
     public Transaction getTransaction(long transactionId) {
-        return transactionDb.findTransaction(transactionId);
+        return transactionDao.findTransaction(transactionId);
+    }
+
+    @Override
+    public Transaction findTransaction(long transactionId, int height) {
+        return transactionDao.findTransaction(transactionId, height);
     }
 
     @Override
     public Transaction getTransactionByFullHash(String fullHash) {
-        return transactionDb.findTransactionByFullHash(Convert.parseHexString(fullHash));
+        return transactionDao.findTransactionByFullHash(Convert.parseHexString(fullHash));
+    }
+
+    @Override
+    public Transaction findTransactionByFullHash(byte[] fullHash) {
+        return transactionDao.findTransactionByFullHash(fullHash);
+    }
+
+    @Override
+    public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
+        return transactionDao.findTransactionByFullHash(fullHash, height);
     }
 
     @Override
     public boolean hasTransaction(long transactionId) {
-        return transactionDb.hasTransaction(transactionId);
+        return transactionDao.hasTransaction(transactionId);
+    }
+
+    @Override
+    public boolean hasTransaction(long transactionId, int height) {
+        return transactionDao.hasTransaction(transactionId, height);
     }
 
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
-        return transactionDb.hasTransactionByFullHash(Convert.parseHexString(fullHash));
+        return transactionDao.hasTransactionByFullHash(Convert.parseHexString(fullHash));
+    }
+
+    @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+        return transactionDao.hasTransactionByFullHash(fullHash, height);
+    }
+
+    @Override
+    public byte[] getFullHash(long transactionId) {
+        return transactionDao.getFullHash(transactionId);
+    }
+
+    @Override
+    public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+        return transactionDao.loadTransaction(con, rs);
     }
 
     @Override
     public int getTransactionCount() {
-        try (Connection con = Db.getDb().getConnection(); PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
-             ResultSet rs = pstmt.executeQuery()) {
-            rs.next();
-            return rs.getInt(1);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return transactionDao.getTransactionCount();
     }
 
     @Override
     public DbIterator<Transaction> getAllTransactions() {
-        Connection con = null;
-        try {
-            con = Db.getDb().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        return transactionDao.getAllTransactions();
     }
 
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
-        return getTransactions(accountId, 0, type, subtype, blockTimestamp, false, false, false, 0, -1, includeExpiredPrunable, false, true);
+        return getTransactions(
+                accountId, 0, type, subtype,
+                blockTimestamp, false, false, false,
+                0, -1, includeExpiredPrunable, false, true);
     }
 
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                        int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
-        if (phasedOnly && nonPhasedOnly) {
-            throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
-        }
-        int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
-        if (height < 0) {
-            throw new IllegalArgumentException("Number of confirmations required " + numberOfConfirmations
-                    + " exceeds current blockchain height " + getHeight());
-        }
-        Connection con = null;
-        try {
-            StringBuilder buf = new StringBuilder();
-            buf.append("SELECT transaction.* FROM transaction ");
-            if (executedOnly && !nonPhasedOnly) {
-                buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
-            }
-            buf.append("WHERE recipient_id = ? AND sender_id <> ? ");
-            if (blockTimestamp > 0) {
-                buf.append("AND block_timestamp >= ? ");
-            }
-            if (!includePrivate && TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
-                    throw new RuntimeException("None of private transactions should be retrieved!");
-            }
-            if (type >= 0) {
-                buf.append("AND type = ? ");
-                if (subtype >= 0) {
-                    buf.append("AND subtype = ? ");
-                }
-            }
-            if (!includePrivate) {
-                    buf.append("AND (type <> ? ");
-                    buf.append("OR subtype <> ? ) ");
-            }
-            if (height < Integer.MAX_VALUE) {
-                buf.append("AND transaction.height <= ? ");
-            }
-            if (withMessage) {
-                buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE ");
-                buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
-            }
-            if (phasedOnly) {
-                buf.append("AND phased = TRUE ");
-            } else if (nonPhasedOnly) {
-                buf.append("AND phased = FALSE ");
-            }
-            if (executedOnly && !nonPhasedOnly) {
-                buf.append("AND (phased = FALSE OR approved = TRUE) ");
-            }
-            buf.append("UNION ALL SELECT transaction.* FROM transaction ");
-            if (executedOnly && !nonPhasedOnly) {
-                buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
-            }
-            buf.append("WHERE sender_id = ? ");
-            if (blockTimestamp > 0) {
-                buf.append("AND block_timestamp >= ? ");
-            }
-            if (type >= 0) {
-                buf.append("AND type = ? ");
-                if (subtype >= 0) {
-                    buf.append("AND subtype = ? ");
-                }
-            }
-            if (!includePrivate) {
-                buf.append("AND (type <> ? ");
-                buf.append("OR subtype <> ? ) ");
-            }
-            if (height < Integer.MAX_VALUE) {
-                buf.append("AND transaction.height <= ? ");
-            }
-            if (withMessage) {
-                buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE OR has_encrypttoself_message = TRUE ");
-                buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
-            }
-            if (phasedOnly) {
-                buf.append("AND phased = TRUE ");
-            } else if (nonPhasedOnly) {
-                buf.append("AND phased = FALSE ");
-            }
-            if (executedOnly && !nonPhasedOnly) {
-                buf.append("AND (phased = FALSE OR approved = TRUE) ");
-            }
 
-            buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
-            buf.append(DbUtils.limitsClause(from, to));
-            con = Db.getDb().getConnection();
-            PreparedStatement pstmt;
-            int i = 0;
-            pstmt = con.prepareStatement(buf.toString());
-            pstmt.setLong(++i, accountId);
-            pstmt.setLong(++i, accountId);
-            if (blockTimestamp > 0) {
-                pstmt.setInt(++i, blockTimestamp);
-            }
-            if (type >= 0) {
-                pstmt.setByte(++i, type);
-                if (subtype >= 0) {
-                    pstmt.setByte(++i, subtype);
-                }
-            }
-            if (!includePrivate) {
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
-            }
-            if (height < Integer.MAX_VALUE) {
-                pstmt.setInt(++i, height);
-            }
-            int prunableExpiration = Math.max(0, Constants.INCLUDE_EXPIRED_PRUNABLE && includeExpiredPrunable ?
-                                        AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
-                                        AplCore.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
-            if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
-            }
-            pstmt.setLong(++i, accountId);
-            if (blockTimestamp > 0) {
-                pstmt.setInt(++i, blockTimestamp);
-            }
-            if (type >= 0) {
-                pstmt.setByte(++i, type);
-                if (subtype >= 0) {
-                    pstmt.setByte(++i, subtype);
-                }
-            }
-            if (!includePrivate) {
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
-            }
-            if (height < Integer.MAX_VALUE) {
-                pstmt.setInt(++i, height);
-            }
-            if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
-            }
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
+        int prunableExpiration = Math.max(0, Constants.INCLUDE_EXPIRED_PRUNABLE && includeExpiredPrunable ?
+                timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
+                timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
+
+        return transactionDao.getTransactions(
+                accountId, numberOfConfirmations, type, subtype,
+                blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
     }
-    @Override
-    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
-        Connection con = null;
-        try {
-            con = Db.getDb().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
-                    + "WHERE referenced_transaction.referenced_transaction_id = ? "
-                    + "AND referenced_transaction.transaction_id = transaction.id "
-                    + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
-                    + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setLong(++i, transactionId);
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
+
     @Override
     public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
-        StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
-        if (type >= 0) {
-            sqlQuery.append("AND type = ? ");
-            if (subtype >= 0) {
-                sqlQuery.append("AND subtype = ? ");
-            }
-        }
-        sqlQuery.append("ORDER BY block_timestamp DESC, transaction_index DESC ");
-        sqlQuery.append(DbUtils.limitsClause(from, to));
-        Connection con = null;
-        try {
-            con = Db.getDb().getConnection();
-            PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
-            int i = 0;
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
-            if (type >= 0) {
-                statement.setByte(++i, type);
-                if (subtype >= 0) {
-                    statement.setByte(++i, subtype);
-                }
-            }
-            DbUtils.setLimits(++i, statement, from, to);
-            return getTransactions(con, statement);
-        }
-        catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        return transactionDao.getTransactions(type, subtype, from, to);
     }
+
     @Override
     public int getTransactionCount(long accountId, byte type, byte subtype) {
-        StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction WHERE (type <> ? OR subtype <> ?) AND (sender_id = ? OR recipient_id = ?) ");
-        if (type >= 0) {
-            sqlQuery.append("AND type = ? ");
-            if (subtype >= 0) {
-                sqlQuery.append("AND subtype = ? ");
-            }
-        }
-        try (
-            Connection con = Db.getDb().getConnection();
-            PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
-            int i = 0;
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
-            statement.setLong(++i, accountId);
-            statement.setLong(++i, accountId);
-            if (type >= 0) {
-                statement.setByte(++i, type);
-                if (subtype >= 0) {
-                    statement.setByte(++i, subtype);
-                }
-            }
-            try(ResultSet rs = statement.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
-            }
-
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return transactionDao.getTransactionCount(accountId, type, subtype);
     }
 
     @Override
     public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, transactionDb::loadTransaction);
+        return transactionDao.getTransactions(con, pstmt);
     }
+
+    @Override
+    public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+        return transactionDao.findPrunableTransactions(con, minTimestamp, maxTimestamp);
+    }
+
     //phased transactions
     @Override
     public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
@@ -663,7 +432,7 @@ public class BlockchainImpl implements Blockchain {
 
             blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
                     unconfirmedTransaction -> {
-                        TransactionImpl transaction = unconfirmedTransaction.getTransaction();
+                        Transaction transaction = unconfirmedTransaction.getTransaction();
                         if (transaction.getPhasing() == null && filter.test(transaction)) {
                             result.add(transaction);
                         }
@@ -674,4 +443,15 @@ public class BlockchainImpl implements Blockchain {
         }
         return result;
     }
+
+    @Override
+    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
+        return transactionDao.getReferencingTransactions(transactionId, from, to);
+    }
+
+    @Override
+    public Set<Long> getBlockGenerators(int startHeight) {
+        return blockDao.getBlockGenerators(startHeight);
+    }
+
 }

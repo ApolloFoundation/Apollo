@@ -24,7 +24,6 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -57,7 +56,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         response.put("application", Constants.APPLICATION);
         response.put("version", Constants.VERSION.toString());
-        response.put("time", AplCore.getEpochTime());
+        response.put("time", timeService.getEpochTime());
         Block lastBlock = lookupBlockchain().getLastBlock();
         response.put("lastBlock", lastBlock.getStringId());
         response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
