@@ -1,4 +1,6 @@
 # Apollo Blockchain Platform 
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FApolloFoundation%2FApollo.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FApolloFoundation%2FApollo?ref=badge_shield)
+
 Apollo is being developed by the Apollo Foundation and supporting members of the community.
 
 ## Requirements
@@ -93,3 +95,7 @@ your software versions using instructions from __"Preparation steps" section__
 
 
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FApolloFoundation%2FApollo.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FApolloFoundation%2FApollo?ref=badge_large)
