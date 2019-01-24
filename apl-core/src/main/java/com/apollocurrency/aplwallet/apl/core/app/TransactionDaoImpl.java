@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
@@ -29,9 +30,11 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePl
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -48,31 +51,34 @@ import java.util.List;
 import java.util.Objects;
 
 @ApplicationScoped
-public class TransactionDb {
+public class TransactionDaoImpl implements TransactionDao {
 
-    private final BlockDb blockDb;
+    private final ConnectionProvider connectionProvider;
+    private final BlockDao blockDao;
 
     @Inject
-    public TransactionDb(BlockDb blockDb) {
-        Objects.requireNonNull(blockDb);
-        this.blockDb = blockDb;
+    public TransactionDaoImpl(BlockDao blockDao, ConnectionProvider connectionProvider) {
+        Objects.requireNonNull(blockDao);
+        this.blockDao = blockDao;
+        this.connectionProvider = connectionProvider;
     }
 
-
+    @Override
     public Transaction findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    Transaction findTransaction(long transactionId, int height) {
+    @Override
+    public Transaction findTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+        synchronized (blockDao.getBlockCache()) {
+            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getHeight() <= height ? transaction : null;
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -88,22 +94,24 @@ public class TransactionDb {
         }
     }
 
-    Transaction findTransactionByFullHash(byte[] fullHash) {
+    @Override
+    public Transaction findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
+    @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized(blockDb.getBlockCache()) {
-            TransactionImpl transaction = blockDb.getTransactionCache().get(transactionId);
+        synchronized(blockDao.getBlockCache()) {
+            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -120,20 +128,22 @@ public class TransactionDb {
         }
     }
 
-    boolean hasTransaction(long transactionId) {
+    @Override
+    public boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
-    boolean hasTransaction(long transactionId, int height) {
+    @Override
+    public boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized(blockDb.getBlockCache()) {
-            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
+        synchronized(blockDao.getBlockCache()) {
+            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -144,22 +154,24 @@ public class TransactionDb {
         }
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash) {
+    @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
 
-    boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized(blockDb.getBlockCache()) {
-            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
+        synchronized(blockDao.getBlockCache()) {
+            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
                         Arrays.equals(transaction.getFullHash(), fullHash));
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -170,16 +182,17 @@ public class TransactionDb {
         }
     }
 
-    byte[] getFullHash(long transactionId) {
+    @Override
+    public byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized(blockDb.getBlockCache()) {
-            Transaction transaction = blockDb.getTransactionCache().get(transactionId);
+        synchronized(blockDao.getBlockCache()) {
+            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getFullHash();
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = connectionProvider.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -190,7 +203,8 @@ public class TransactionDb {
         }
     }
 
-    TransactionImpl loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+    @Override
+    public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         try {
 
             byte type = rs.getByte("type");
@@ -268,23 +282,25 @@ public class TransactionDb {
         }
     }
 
-    List<Transaction> findBlockTransactions(long blockId) {
+    @Override
+    public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized(blockDb.getBlockCache()) {
-            Block block = blockDb.getBlockCache().get(blockId);
+        synchronized(blockDao.getBlockCache()) {
+            Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
                 return block.getTransactions();
             }
         }
         // Search the database
-        try (Connection con = Db.getDb().getConnection()) {
+        try (Connection con = connectionProvider.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    List<Transaction> findBlockTransactions(Connection con, long blockId) {
+    @Override
+    public List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
@@ -303,7 +319,8 @@ public class TransactionDb {
         }
     }
 
-    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    @Override
+    public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
@@ -331,7 +348,8 @@ public class TransactionDb {
         return result;
     }
 
-    void saveTransactions(Connection con, List<Transaction> transactions) {
+    @Override
+    public void saveTransactions(Connection con, List<Transaction> transactions) {
         try {
             short index = 0;
             for (Transaction transaction : transactions) {
@@ -400,48 +418,255 @@ public class TransactionDb {
         }
     }
 
-    static class PrunableTransaction {
-        private final long id;
-        private final TransactionType transactionType;
-        private final boolean prunableAttachment;
-        private final boolean prunablePlainMessage;
-        private final boolean prunableEncryptedMessage;
+    @Override
+    public int getTransactionCount() {
+        try (Connection con = connectionProvider.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
+             ResultSet rs = pstmt.executeQuery()) {
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
-        public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment,
-                                   boolean prunablePlainMessage, boolean prunableEncryptedMessage) {
-            this.id = id;
-            this.transactionType = transactionType;
-            this.prunableAttachment = prunableAttachment;
-            this.prunablePlainMessage = prunablePlainMessage;
-            this.prunableEncryptedMessage = prunableEncryptedMessage;
+    @Override
+    public DbIterator<Transaction> getAllTransactions() {
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
+            return getTransactions(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public DbIterator<Transaction> getTransactions(
+            long accountId, int numberOfConfirmations, byte type, byte subtype,
+            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
+            int height, int prunableExpiration) {
+        if (phasedOnly && nonPhasedOnly) {
+            throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
         }
 
-        public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment, boolean prunablePlainMessage) {
-            this.id = id;
-            this.transactionType = transactionType;
-            this.prunableAttachment = prunableAttachment;
-            this.prunablePlainMessage = prunablePlainMessage;
-            this.prunableEncryptedMessage = false;
+        StringBuilder buf = new StringBuilder();
+        buf.append("SELECT transaction.* FROM transaction ");
+        if (executedOnly && !nonPhasedOnly) {
+            buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+        }
+        buf.append("WHERE recipient_id = ? AND sender_id <> ? ");
+        if (blockTimestamp > 0) {
+            buf.append("AND block_timestamp >= ? ");
+        }
+        if (!includePrivate && TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
+            throw new RuntimeException("None of private transactions should be retrieved!");
+        }
+        if (type >= 0) {
+            buf.append("AND type = ? ");
+            if (subtype >= 0) {
+                buf.append("AND subtype = ? ");
+            }
+        }
+        if (!includePrivate) {
+            buf.append("AND (type <> ? ");
+            buf.append("OR subtype <> ? ) ");
+        }
+        if (height < Integer.MAX_VALUE) {
+            buf.append("AND transaction.height <= ? ");
+        }
+        if (withMessage) {
+            buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE ");
+            buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
+        }
+        if (phasedOnly) {
+            buf.append("AND phased = TRUE ");
+        } else if (nonPhasedOnly) {
+            buf.append("AND phased = FALSE ");
+        }
+        if (executedOnly && !nonPhasedOnly) {
+            buf.append("AND (phased = FALSE OR approved = TRUE) ");
+        }
+        buf.append("UNION ALL SELECT transaction.* FROM transaction ");
+        if (executedOnly && !nonPhasedOnly) {
+            buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
+        }
+        buf.append("WHERE sender_id = ? ");
+        if (blockTimestamp > 0) {
+            buf.append("AND block_timestamp >= ? ");
+        }
+        if (type >= 0) {
+            buf.append("AND type = ? ");
+            if (subtype >= 0) {
+                buf.append("AND subtype = ? ");
+            }
+        }
+        if (!includePrivate) {
+            buf.append("AND (type <> ? ");
+            buf.append("OR subtype <> ? ) ");
+        }
+        if (height < Integer.MAX_VALUE) {
+            buf.append("AND transaction.height <= ? ");
+        }
+        if (withMessage) {
+            buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE OR has_encrypttoself_message = TRUE ");
+            buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
+        }
+        if (phasedOnly) {
+            buf.append("AND phased = TRUE ");
+        } else if (nonPhasedOnly) {
+            buf.append("AND phased = FALSE ");
+        }
+        if (executedOnly && !nonPhasedOnly) {
+            buf.append("AND (phased = FALSE OR approved = TRUE) ");
         }
 
-        public long getId() {
-            return id;
+        buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
+        buf.append(DbUtils.limitsClause(from, to));
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement pstmt = con.prepareStatement(buf.toString());
+            int i = 0;
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, accountId);
+            if (blockTimestamp > 0) {
+                pstmt.setInt(++i, blockTimestamp);
+            }
+            if (type >= 0) {
+                pstmt.setByte(++i, type);
+                if (subtype >= 0) {
+                    pstmt.setByte(++i, subtype);
+                }
+            }
+            if (!includePrivate) {
+                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
+                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            }
+            if (height < Integer.MAX_VALUE) {
+                pstmt.setInt(++i, height);
+            }
+            if (withMessage) {
+                pstmt.setInt(++i, prunableExpiration);
+            }
+            pstmt.setLong(++i, accountId);
+            if (blockTimestamp > 0) {
+                pstmt.setInt(++i, blockTimestamp);
+            }
+            if (type >= 0) {
+                pstmt.setByte(++i, type);
+                if (subtype >= 0) {
+                    pstmt.setByte(++i, subtype);
+                }
+            }
+            if (!includePrivate) {
+                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
+                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            }
+            if (height < Integer.MAX_VALUE) {
+                pstmt.setInt(++i, height);
+            }
+            if (withMessage) {
+                pstmt.setInt(++i, prunableExpiration);
+            }
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getTransactions(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
         }
+    }
 
-        public TransactionType getTransactionType() {
-            return transactionType;
+    @Override
+    public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
+        if (type >= 0) {
+            sqlQuery.append("AND type = ? ");
+            if (subtype >= 0) {
+                sqlQuery.append("AND subtype = ? ");
+            }
         }
-
-        public boolean hasPrunableAttachment() {
-            return prunableAttachment;
+        sqlQuery.append("ORDER BY block_timestamp DESC, transaction_index DESC ");
+        sqlQuery.append(DbUtils.limitsClause(from, to));
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
+            int i = 0;
+            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
+            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            if (type >= 0) {
+                statement.setByte(++i, type);
+                if (subtype >= 0) {
+                    statement.setByte(++i, subtype);
+                }
+            }
+            DbUtils.setLimits(++i, statement, from, to);
+            return getTransactions(con, statement);
         }
-
-        public boolean hasPrunablePlainMessage() {
-            return prunablePlainMessage;
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
         }
+    }
 
-        public boolean hasPrunableEncryptedMessage() {
-            return prunableEncryptedMessage;
+    @Override
+    public int getTransactionCount(long accountId, byte type, byte subtype) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction WHERE (type <> ? OR subtype <> ?) AND (sender_id = ? OR recipient_id = ?) ");
+        if (type >= 0) {
+            sqlQuery.append("AND type = ? ");
+            if (subtype >= 0) {
+                sqlQuery.append("AND subtype = ? ");
+            }
+        }
+        try (Connection con = connectionProvider.getConnection();
+                PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
+            int i = 0;
+            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
+            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            statement.setLong(++i, accountId);
+            statement.setLong(++i, accountId);
+            if (type >= 0) {
+                statement.setByte(++i, type);
+                if (subtype >= 0) {
+                    statement.setByte(++i, subtype);
+                }
+            }
+            try(ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+        return new DbIterator<>(con, pstmt, this::loadTransaction);
+    }
+
+    @Override
+    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
+        Connection con = null;
+        try {
+            con = Db.getDb().getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
+                    + "WHERE referenced_transaction.referenced_transaction_id = ? "
+                    + "AND referenced_transaction.transaction_id = transaction.id "
+                    + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
+                    + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setLong(++i, transactionId);
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getTransactions(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
         }
     }
 

@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -111,6 +112,7 @@ final class PeerImpl implements Peer {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
 
     PeerImpl(String host, String announcedAddress) {
@@ -391,7 +393,7 @@ final class PeerImpl implements Peer {
 
     @Override
     public void blacklist(String cause) {
-        blacklistingTime = AplCore.getEpochTime();
+        blacklistingTime = timeService.getEpochTime();
         blacklistingCause = cause;
         setState(State.NON_CONNECTED);
         lastInboundRequest = 0;
@@ -669,7 +671,7 @@ final class PeerImpl implements Peer {
 
 
     void connect(UUID targetChainId) {
-        lastConnectAttempt = AplCore.getEpochTime();
+        lastConnectAttempt = timeService.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && announcedAddress != null) {
                 try {

@@ -46,7 +46,7 @@ public final class GetTime extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
         JSONObject response = new JSONObject();
-        response.put("time", AplCore.getEpochTime());
+        response.put("time", timeService.getEpochTime());
 
         return response;
     }
