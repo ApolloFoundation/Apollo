@@ -20,12 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface Blockchain {
 
@@ -65,6 +70,14 @@ public interface Blockchain {
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
+    Block findLastBlock();
+
+    Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
+
+    void saveBlock(Connection con, Block block);
+
+    void commit(Block block);
+
     int getBlockCount(long accountId);
 
     DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
@@ -79,13 +92,35 @@ public interface Blockchain {
 
     Block getECBlock(int timestamp);
 
+    void deleteBlocksFromHeight(int height);
+
+    Block deleteBlocksFrom(long blockId);
+
+    void deleteAll();
+
+    Map<Long, Transaction> getTransactionCache();
+
     Transaction getTransaction(long transactionId);
+
+    Transaction findTransaction(long transactionId, int height);
 
     Transaction getTransactionByFullHash(String fullHash);
 
+    Transaction findTransactionByFullHash(byte[] fullHash);
+
+    Transaction findTransactionByFullHash(byte[] fullHash, int height);
+
     boolean hasTransaction(long transactionId);
 
+    boolean hasTransaction(long transactionId, int height);
+
     boolean hasTransactionByFullHash(String fullHash);
+
+    boolean hasTransactionByFullHash(byte[] fullHash, int height);
+
+    byte[] getFullHash(long transactionId);
+
+    Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException;
 
     int getTransactionCount();
 
@@ -102,10 +137,14 @@ public interface Blockchain {
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
+    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
+
     List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
+
+    DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
     DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to);
 
-    DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+    Set<Long> getBlockGenerators(int startHeight);
 
 }

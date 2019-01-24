@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
@@ -57,7 +58,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     }
 
     @Inject
-    public UpdaterCoreImpl(UpdaterMediator updaterMediator) {
+    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator) {
         this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator);
     }
 

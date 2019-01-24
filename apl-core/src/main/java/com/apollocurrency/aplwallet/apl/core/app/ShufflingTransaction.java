@@ -37,6 +37,7 @@ import org.json.simple.JSONObject;
 public abstract class ShufflingTransaction extends TransactionType {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final byte SUBTYPE_SHUFFLING_CREATION = 0;
     private static final byte SUBTYPE_SHUFFLING_REGISTRATION = 1;
@@ -66,7 +67,6 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * Constants.ONE_APL);
     private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
-    protected final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
 
     private ShufflingTransaction() {}
 
@@ -377,7 +377,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
             byte[][] data = attachment.getData();
-            if (data == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             if (data != null) {
@@ -427,7 +427,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         boolean isPruned(long transactionId) {
-            Transaction transaction = transactionDb.findTransaction(transactionId);
+            Transaction transaction = blockchain.getTransaction(transactionId);
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -691,7 +691,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = transactionDb.findTransactionByFullHash(participant.getDataTransactionFullHash(),
+            Transaction dataProcessingTransaction = blockchain.findTransactionByFullHash(participant.getDataTransactionFullHash(),
                     blockchain.getHeight());
             if (dataProcessingTransaction == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");

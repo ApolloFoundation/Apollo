@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.context.ApplicationScoped;
+
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+@ApplicationScoped
 public class ConnectionProviderImpl implements ConnectionProvider {
     @Override
     public Connection getConnection() throws SQLException {
