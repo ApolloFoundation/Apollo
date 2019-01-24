@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.migrator.auth2fa.TwoFactorAuthMigrationExecutor;
@@ -14,6 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.migrator.db.DbMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.keystore.VaultKeystoreMigrationExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
 
 /**
  * Perform all application data migration
@@ -27,8 +27,18 @@ public class ApplicationDataMigrationManager {
         TwoFactorAuthMigrationExecutor twoFactorAuthMigrationExecutor = CDI.current().select(TwoFactorAuthMigrationExecutor.class).get();
         try {
             dbMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getDbDir().resolve(Constants.APPLICATION_DIR_NAME));
-            vaultKeystoreMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getVaultKeystoreDir());
             twoFactorAuthMigrationExecutor.performMigration(AplCoreRuntime.getInstance().get2FADir());
+            vaultKeystoreMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getVaultKeystoreDir());
+
+            if (!dbMigrationExecutor.isAutoCleanup()) {
+                dbMigrationExecutor.performAfterMigrationCleanup();
+            }
+            if (!vaultKeystoreMigrationExecutor.isAutoCleanup()) {
+                vaultKeystoreMigrationExecutor.performAfterMigrationCleanup();
+            }
+            if (!twoFactorAuthMigrationExecutor.isAutoCleanup()) {
+                twoFactorAuthMigrationExecutor.performAfterMigrationCleanup();
+            }
         }
         catch (IOException e) {
             LOG.error("Fatal error. Cannot proceed data migration", e);

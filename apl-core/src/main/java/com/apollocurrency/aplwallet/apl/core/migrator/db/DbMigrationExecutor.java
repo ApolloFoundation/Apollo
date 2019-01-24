@@ -3,19 +3,19 @@
  */
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  * <p>Provide database specific components for migration, also add special {@link DbMigrationExecutor#afterMigration} and
@@ -29,7 +29,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
 
     @Inject
     public DbMigrationExecutor(BlockchainConfig config, PropertiesHolder propertiesHolder) {
-        super(propertiesHolder, config, "db");
+        super(propertiesHolder, config, "db", true);
     }
 
     @Override

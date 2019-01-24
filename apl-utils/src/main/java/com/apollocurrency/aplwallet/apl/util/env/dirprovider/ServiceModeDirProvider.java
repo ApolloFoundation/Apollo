@@ -4,10 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 public class ServiceModeDirProvider extends AbstractDirProvider {
-    private static final String INSTALLATION_DIR =  ServiceModeDirProvider.class.getClassLoader().getResource("").getPath();
+    private static final String INSTALLATION_DIR = getInstallationDir();
+
+    private static String getInstallationDir() {
+        try {
+            return Paths.get(ServiceModeDirProvider.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toAbsolutePath().toString();
+        }
+        catch (URISyntaxException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
     public ServiceModeDirProvider(String applicationName, UUID chainId) {
         super(INSTALLATION_DIR, applicationName, chainId);

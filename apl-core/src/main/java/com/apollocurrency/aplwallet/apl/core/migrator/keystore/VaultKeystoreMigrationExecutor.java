@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.keystore;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.KeyStore;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.migrator.DefaultDirectoryMigrator;
@@ -17,6 +11,12 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provide vaultKeystore specific components for migration
@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
     @Inject
     public VaultKeystoreMigrationExecutor(PropertiesHolder holder, BlockchainConfig config) {
-        super(holder, config, "vaultkeystore");
+        super(holder, config, "vaultkeystore", false);
     }
 
     @Override
