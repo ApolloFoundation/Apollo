@@ -48,6 +48,7 @@ public class BlockchainImpl implements Blockchain {
     private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
     private final TransactionDao transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     public BlockchainImpl() {}
 
@@ -380,8 +381,8 @@ public class BlockchainImpl implements Blockchain {
 
         int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, Constants.INCLUDE_EXPIRED_PRUNABLE && includeExpiredPrunable ?
-                AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
-                AplCore.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
+                timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
+                timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
 
         return transactionDao.getTransactions(
                 accountId, numberOfConfirmations, type, subtype,

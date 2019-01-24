@@ -58,6 +58,7 @@ public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     @Inject
     private static BlockchainImpl blockchain;
@@ -111,7 +112,7 @@ public class TransactionImpl implements Transaction {
         @Override
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (timestamp == Integer.MAX_VALUE) {
-                timestamp = AplCore.getEpochTime();
+                timestamp = timeService.getEpochTime();
             }
             if (!ecBlockSet) {
                 lookupAndInjectBlockchain();
