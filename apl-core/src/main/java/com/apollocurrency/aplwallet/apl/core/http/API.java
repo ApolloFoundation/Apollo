@@ -347,7 +347,7 @@ public final class API {
             
             // --------- ADD REST support servlet (RESTEasy)
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
-            restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
+           restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
 //TODO: implement this later
 //            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
@@ -365,6 +365,7 @@ public final class API {
             apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener()); 
             //need this listener to support scopes properly
             apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
+
             //--------- ADD swagger generated docs and API test page
             // Set the path to our static (Swagger UI) resources
 

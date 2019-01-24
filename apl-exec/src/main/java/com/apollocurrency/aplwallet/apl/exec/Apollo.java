@@ -3,6 +3,8 @@ package com.apollocurrency.aplwallet.apl.exec;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
+import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -144,6 +146,8 @@ public class Apollo {
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
                 .recursiveScanPackages(Updater.class)
+                .recursiveScanPackages(ServerInfoEndpoint.class)
+                .recursiveScanPackages(ServerInfoService.class)
                 .annotatedDiscoveryMode().build();
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
