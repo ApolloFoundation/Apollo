@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -41,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -55,6 +55,8 @@ public class DesktopSystemTray {
     public static final int DELAY = 1000;
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+
     private SystemTray tray;
     private final JFrame wrapper = new JFrame();
     private JDialog statusDialog;
@@ -206,7 +208,7 @@ public class DesktopSystemTray {
             addDataRow(statusPanel, "Height", String.valueOf(lastBlock.getHeight()));
             addDataRow(statusPanel, "Timestamp", String.valueOf(lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Time", String.valueOf(new Date(Convert2.fromEpochTime(lastBlock.getTimestamp()))));
-            addDataRow(statusPanel, "Seconds passed", String.valueOf(AplCore.getEpochTime() - lastBlock.getTimestamp()));
+            addDataRow(statusPanel, "Seconds passed", String.valueOf(timeService.getEpochTime() - lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Forging", String.valueOf(allGenerators.size() > 0));
             if (allGenerators.size() > 0) {
                 addDataRow(statusPanel, "Forging accounts", generators.toString());

@@ -60,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -99,6 +100,8 @@ public final class API {
    // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
@@ -425,7 +428,7 @@ public final class API {
     }
 
     private static void checkOrLockPassword(HttpServletRequest req) throws ParameterException {
-        int now = AplCore.getEpochTime();
+        int now = timeService.getEpochTime();
         String remoteHost = null;
         if (forwardedForHeader != null) {
             remoteHost = req.getHeader(forwardedForHeader);

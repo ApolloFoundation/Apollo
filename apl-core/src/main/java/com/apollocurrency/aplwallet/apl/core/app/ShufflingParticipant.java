@@ -43,10 +43,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.enterprise.inject.spi.CDI;
 
 public final class ShufflingParticipant {
+    private static final Logger LOG = getLogger(ShufflingParticipant.class);
+
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
-    private static final Logger LOG = getLogger(ShufflingParticipant.class);
 
     public enum State {
         REGISTERED((byte)0, new byte[]{1}),
@@ -314,7 +316,7 @@ public final class ShufflingParticipant {
     }
 
     void setData(byte[][] data, int timestamp) {
-        if (data != null && AplCore.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
+        if (data != null && timeService.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, blockchain.getHeight()));
         }
     }

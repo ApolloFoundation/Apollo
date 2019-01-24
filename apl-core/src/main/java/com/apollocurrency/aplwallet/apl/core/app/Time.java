@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -32,7 +33,8 @@ public interface Time {
 
     int getTime();
 
-    final class EpochTime implements Time {
+    @ApplicationScoped
+    class EpochTime implements Time {
         private NtpTime ntpTime;
 
         @Inject
@@ -45,6 +47,9 @@ public interface Time {
             //return Convert.toEpochTime(System.currentTimeMillis());
         }
 
+        public int getEpochTime() {
+            return Convert2.toEpochTime(ntpTime.getTime());
+        }
     }
 
     final class ConstantTime implements Time {

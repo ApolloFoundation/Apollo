@@ -26,7 +26,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_A
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -58,7 +57,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long id = ParameterParser.getAccountId(req, "account", false);
         byte[] publicKey = ParameterParser.getPublicKey(req, null, id, false);
-        int elapsedTime = AplCore.getEpochTime() - lookupBlockchain().getLastBlock().getTimestamp();
+        int elapsedTime = timeService.getEpochTime() - lookupBlockchain().getLastBlock().getTimestamp();
         if (publicKey != null) {
             Account account = Account.getAccount(publicKey);
             if (account == null) {

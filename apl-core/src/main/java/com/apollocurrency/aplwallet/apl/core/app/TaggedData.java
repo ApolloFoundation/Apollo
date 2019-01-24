@@ -58,6 +58,7 @@ public class TaggedData {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final VersionedPrunableDbTable<TaggedData> taggedDataTable = new VersionedPrunableDbTable<TaggedData>(
             "tagged_data", taggedDataKeyFactory, "name,description,tags") {
@@ -83,7 +84,7 @@ public class TaggedData {
                 try (Connection con = db.getConnection();
                      PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                              + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                    int expiration = AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
+                    int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
                     pstmtSelect.setInt(1, expiration);
                     Map<String,Integer> expiredTags = new HashMap<>();
                     try (ResultSet rs = pstmtSelect.executeQuery()) {
@@ -508,7 +509,7 @@ public class TaggedData {
     }
 
     static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
-        if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
+        if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment,
@@ -534,7 +535,7 @@ public class TaggedData {
         List<Long> extendTransactionIds = extendTable.get(dbKey);
         extendTransactionIds.add(transaction.getId());
         extendTable.insert(taggedDataId, extendTransactionIds);
-        if (AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
+        if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
                 Transaction uploadTransaction = blockchain.getTransaction(taggedDataId);

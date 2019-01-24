@@ -20,7 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 final class GetInfo extends PeerServlet.PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
 
     private static class GetInfoHolder {
@@ -59,7 +62,7 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
-        peerImpl.setLastUpdated(AplCore.getEpochTime());
+        peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
         String servicesString = (String)request.get("services");
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);

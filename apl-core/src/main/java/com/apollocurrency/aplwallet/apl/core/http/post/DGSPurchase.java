@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -79,7 +78,7 @@ public final class DGSPurchase extends CreateTransaction {
         int deliveryDeadline;
         try {
             deliveryDeadline = Integer.parseInt(deliveryDeadlineString);
-            if (deliveryDeadline <= AplCore.getEpochTime()) {
+            if (deliveryDeadline <= timeService.getEpochTime()) {
                 return INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
             }
         } catch (NumberFormatException e) {

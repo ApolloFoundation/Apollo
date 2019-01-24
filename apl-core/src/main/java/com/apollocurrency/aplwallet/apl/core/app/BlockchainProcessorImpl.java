@@ -91,17 +91,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             :
             null;
 
-/*
-    private static final BlockchainProcessorImpl instance =
-            new BlockchainProcessorImpl(new DefaultBlockValidator(CDI.current().select(BlockDaoImpl.class).get(),
-                    CDI.current().select(BlockchainConfig.class).get()));
-    public static BlockchainProcessorImpl getInstance() {
-        return instance;
-    }
-*/
-
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
@@ -178,7 +170,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 // Restore prunable data
                 //
-                int now = AplCore.getEpochTime();
+                int now = timeService.getEpochTime();
                 if (!isRestoring && !prunableTransactions.isEmpty() && now - lastRestoreTime > 60 * 60) {
                     isRestoring = true;
                     lastRestoreTime = now;
@@ -1209,7 +1201,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public int restorePrunedData() {
         Db.getDb().beginTransaction();
         try (Connection con = Db.getDb().getConnection()) {
-            int now = AplCore.getEpochTime();
+            int now = timeService.getEpochTime();
             int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
             int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
             List<PrunableTransaction> transactionList =
@@ -1346,7 +1338,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
 
-        int curTime = AplCore.getEpochTime();
+        int curTime = timeService.getEpochTime();
 
         lookupBlockhain().writeLock();
         try {
@@ -1510,7 +1502,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             ((BlockImpl)block).apply();
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotes(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
-            int fromTimestamp = AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
+            int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
             for (Transaction transaction : block.getTransactions()) {
                 try {
                     ((TransactionImpl)transaction).apply();
@@ -1958,7 +1950,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     List<Transaction> invalidPhasedTransactions = new ArrayList<>();
                                     validatePhasedTransactions(blockchain.getHeight(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                     if (validate && currentBlock.getHeight() > 0) {
-                                        int curTime = AplCore.getEpochTime();
+                                        int curTime = timeService.getEpochTime();
                                         validator.validate(currentBlock, blockchain.getLastBlock(), curTime);
                                         byte[] blockBytes = ((BlockImpl)currentBlock).bytes();
                                         JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
