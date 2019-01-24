@@ -32,6 +32,8 @@ public class DefaultDirectoryMigratorTest {
     private Path thirdDir;
     private Path thirdNestedDir;
     private Path emptyDir;
+    private Path noneExistentDir1;
+    private Path noneExistentDir2;
     private Path targetFile;
     private Path targetDir;
     private byte[] firstFilePayload = "TestPayload-1".getBytes();
@@ -58,6 +60,8 @@ public class DefaultDirectoryMigratorTest {
         Files.write(targetFile, targetFilePayload);
         firstDirFile2 = Files.createFile(firstDir.resolve(targetFile.getFileName()));
         Files.write(firstDirFile2, firstFilePayload);
+        noneExistentDir1 = emptyDir.resolve("nonexistentDir1");
+        noneExistentDir2 = targetDir.resolve("nonexistentDir2");
     }
 
     @AfterEach
@@ -154,6 +158,62 @@ public class DefaultDirectoryMigratorTest {
         Set<Path> actualFilePaths = Files.walk(targetDir).filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
         Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
         Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
+    }
+    @Test
+    public void testMigrateDirectoryToDirectoryWhichNotExist() throws IOException {
+        List<Path> dirsToMigrate = Arrays.asList(firstDir);
+        DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
+
+        Path firstDirFile1TargetPath = noneExistentDir1.resolve(firstDirFile1.getFileName());
+        Path firstDirFile2TargetPath = noneExistentDir1.resolve(firstDirFile2.getFileName());
+        Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
+                firstDirFile1TargetPath, firstDirFile2TargetPath));
+
+        Assertions.assertFalse(Files.exists(noneExistentDir1));
+        Assertions.assertFalse(Files.isDirectory(noneExistentDir1));
+
+        List<Path> actualMigratedPaths = defaultDirectoryMigrator.migrate(dirsToMigrate, noneExistentDir1);
+
+
+        Assertions.assertEquals(dirsToMigrate, actualMigratedPaths);
+        Set<Path> actualFilePaths = Files.walk(noneExistentDir1).filter(f -> !f.equals(noneExistentDir1)).collect(Collectors.toSet());
+        Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
+        Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
+        Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
+
+        Assertions.assertTrue(Files.exists(noneExistentDir1));
+        Assertions.assertTrue(Files.isDirectory(noneExistentDir1));
+
+    }
+    @Test
+    public void testMigrateNonexistentDirectoryDirectory() throws IOException {
+        List<Path> dirsToMigrate = Arrays.asList(noneExistentDir1);
+        DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
+
+        List<Path> actualMigratedPaths = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
+
+        Assertions.assertEquals(Collections.emptyList(), actualMigratedPaths);
+        Set<Path> actualFilePaths = Files.walk(targetDir).filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
+        Assertions.assertEquals(new HashSet<>(Arrays.asList(targetFile)), actualFilePaths);
+        Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
+    }
+    @Test
+    public void testMigrateNonexistentDirectoryToNonexistentDirectory() throws IOException {
+        List<Path> dirsToMigrate = Arrays.asList(noneExistentDir1);
+        DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
+
+        Assertions.assertFalse(Files.exists(noneExistentDir2));
+        Assertions.assertFalse(Files.isDirectory(noneExistentDir2));
+
+        List<Path> actualMigratedPaths = defaultDirectoryMigrator.migrate(dirsToMigrate, noneExistentDir2);
+
+        Assertions.assertEquals(Collections.emptyList(), actualMigratedPaths);
+
+        Assertions.assertFalse(Files.exists(noneExistentDir2));
+        Assertions.assertFalse(Files.isDirectory(noneExistentDir2));
+
+        Assertions.assertFalse(Files.exists(noneExistentDir1));
+        Assertions.assertFalse(Files.isDirectory(noneExistentDir1));
     }
     
 }

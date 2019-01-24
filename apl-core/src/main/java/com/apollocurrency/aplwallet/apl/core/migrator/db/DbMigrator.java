@@ -26,12 +26,9 @@ public class DbMigrator implements Migrator {
     private static final Logger LOG = getLogger(DbMigrator.class);
 
     /**
-     * Migrate db (copy db file) from one of the srcPaths file to destPath. Migration will be performed only
-     * when srcPath will be blockchain db and height of blocks
-     * @param srcPaths list of paths where data for migration stored sorted by importance descending
-     * @param destPath path to the target data location, where migration should be performed
-     * @return
-     * @throws IOException
+     * {@inheritDoc}
+     * <p><br>This implementation migrate db (copy db file) from one of the srcPaths file to destPath. Migration will be performed only when any path
+     * from srcPaths will represent blockchain db and has height of blocks > 0</p>
      */
     @Override
     public List<Path> migrate(List<Path> srcPaths, Path destPath) throws IOException {

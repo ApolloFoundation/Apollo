@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -13,22 +18,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
-
 /**
  * <p>Provides main algorithm of data migration. </p>
  * <p>Should be extended to provide data specific migration components,
  * such as list of paths for migration represented by  {@link MigrationExecutor#getSrcPaths()}
  * and special {@link Migrator} implementation. Also while migration, some logs and db manipulation also
  * require special {@link MigrationExecutor#migrationItemName} to name migration component.</p>
+ * <p>For default auto cleanup you can also specify {@link MigrationExecutor#autoCleanup}</p>
  * <p>Typical use case</p>
  * <pre>
  *     class MyDataMigrationExecutor extends MigrationExecutor {
  *         public MyDataMigrationExecutor(PropertiesHolder holder, BlockchainConfig config) {
- *             super(holder, config, "myData");
+ *             super(holder, config, "myData", true);
  *         }
  *
  *         protected List<Path> getSrcPaths() {
