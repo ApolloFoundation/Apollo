@@ -8,7 +8,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
@@ -28,9 +27,13 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
 
-    @Inject
+//    @Inject
+/*
     public UpdaterMediatorImpl(Blockchain blockchain) {
         this.blockchain = blockchain;
+    }
+*/
+    public UpdaterMediatorImpl() {
     }
 
     @Override
@@ -69,6 +72,13 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
         return blockchainProcessor;
     }
 
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(BlockchainImpl.class).get();
+        }
+        return blockchain;
+    }
+
     @Override
     public void addUpdateListener(Listener<List<? extends Transaction>> listener) {
         lookupTransactionProcessor().addListener(listener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
@@ -101,11 +111,11 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public int getBlockchainHeight() {
-        return blockchain.getHeight();
+        return lookupBlockchain().getHeight();
     }
 
     @Override
     public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-        return blockchain.loadTransaction(connection, rs);
+        return lookupBlockchain().loadTransaction(connection, rs);
     }
 }

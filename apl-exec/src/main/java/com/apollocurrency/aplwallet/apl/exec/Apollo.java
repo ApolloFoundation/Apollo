@@ -57,7 +57,8 @@ public class Apollo {
                                 "apl.enablePeerUPnP"));
         
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
-        core = CDI.current().select(AplCore.class).get();
+//        core = CDI.current().select(AplCore.class).get();
+        core = new AplCore();
         AplCoreRuntime.getInstance().addCore(core);
         core.init();
     }
@@ -142,7 +143,7 @@ public class Apollo {
             runtimeMode = RuntimeEnvironment.getRuntimeMode();
         }
         runtimeMode.init();
-        //inti CDI container
+        //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
@@ -151,6 +152,7 @@ public class Apollo {
                 .recursiveScanPackages(ServerInfoService.class)
                 .annotatedDiscoveryMode().build();
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        app.propertiesHolder.init(propertiesLoader.getProperties());
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));

@@ -91,6 +91,7 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
@@ -100,9 +101,8 @@ public final class API {
     private static final Logger LOG = getLogger(API.class);
 
     // TODO: YL remove static instance later
-   // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
@@ -156,6 +156,7 @@ public final class API {
     }
 
     public static void init() {
+//    static {
         serverKeysGenerator.setDaemon(true);
         List<String> disabled = new ArrayList<>(propertiesLoader.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
@@ -189,6 +190,7 @@ public final class API {
         }
 
         boolean enableAPIServer = propertiesLoader.getBooleanProperty("apl.enableAPIServer");
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (enableAPIServer) {
             final int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
             final int sslPort = blockchainConfig.isTestnet() ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
@@ -206,7 +208,6 @@ public final class API {
             //
             // Create the HTTP connector
             //
-
             if (!enableSSL || port != sslPort) {
                 HttpConfiguration configuration = new HttpConfiguration();
                 configuration.setSendDateHeader(false);
@@ -282,7 +283,7 @@ public final class API {
                 apiHandler.addServlet(defaultServletHolder, "/*");
                 apiHandler.setWelcomeFiles(new String[]{propertiesLoader.getStringProperty("apl.apiWelcomeFile")});
             }
-            
+
 //TODO: we do not have outdated Javadoc. We have to serve it by Maven
 //            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
 //            if (javadocResourceBase != null) {
@@ -329,7 +330,7 @@ public final class API {
               filterHolder.setAsyncSupported(true);
               filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
               filterHolder.setAsyncSupported(true);            
-            }            
+            }
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
                 filterHolder.setInitParameter("allowedHeaders", "*");
@@ -359,7 +360,7 @@ public final class API {
             restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
             apiHandler.addServlet(restEasyServletHolder, "/rest/*");
             // init Weld here
-            apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener()); 
+            apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
             //need this listener to support scopes properly
             apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
 
@@ -387,6 +388,7 @@ public final class API {
             apiServer.setHandler(apiHandlers);
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
+            Log.getRootLogger().setDebugEnabled(true);
 
             ThreadPool.runBeforeStart("UPnP ports init", () -> {
                 try {
@@ -424,6 +426,8 @@ public final class API {
         }
 
     }
+
+//    public static void init() {}
 
     public static void shutdown() {
         if (apiServer != null) {

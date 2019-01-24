@@ -26,10 +26,10 @@ public class PropertiesHolder {
         LOG.error("Empty constructor called, which is must not be called!");
     }
 
-    public PropertiesHolder(Properties properties) {
+    public void init(Properties properties){
         this.properties = properties;
     }
-
+    
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }

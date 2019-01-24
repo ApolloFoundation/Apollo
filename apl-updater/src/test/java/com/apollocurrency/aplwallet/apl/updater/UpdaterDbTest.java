@@ -85,7 +85,7 @@ public class UpdaterDbTest {
     }
     private class MockUpdaterMediator extends UpdaterMediatorImpl {
         public MockUpdaterMediator() {
-            super(null);
+            super();
         }
 
         @Override

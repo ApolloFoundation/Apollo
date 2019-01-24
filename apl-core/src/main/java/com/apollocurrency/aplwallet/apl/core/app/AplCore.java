@@ -61,13 +61,11 @@ public final class AplCore {
 
     private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final BlockchainConfig blockchainConfig;
+    private BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
 
-    @Inject
-    public AplCore(BlockchainConfig config) {
-        this.blockchainConfig = config;
+    public AplCore() {
     }
     
     public static boolean isShutdown() {
@@ -160,9 +158,9 @@ public final class AplCore {
                 chainIdService = CDI.current().select(ChainIdService.class).get();
                 CDI.current().select(NtpTime.class).get().start();
 
-
-//                blockchainConfig.init();
-//                blockchainConfig.updateToLatestConstants();
+                this.blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+                blockchainConfig.init();
+//                blockchainConfig.updateToBlock();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -179,8 +177,8 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
-                blockchainConfig.updateToBlock();
+//                blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
+//                blockchainConfig.updateToBlock();
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");

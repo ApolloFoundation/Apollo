@@ -61,7 +61,7 @@ public class CompactDatabase {
      */
     public static void main(String[] args) {
 //TODO: Check
-        AplCore core = new AplCore(blockchainConfig);
+        AplCore core = new AplCore();
         core.init();
         //
         // Compact the database
