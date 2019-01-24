@@ -76,6 +76,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final boolean enableTransactionRebroadcasting = propertiesLoader.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static final boolean testUnconfirmedTransactions = propertiesLoader.getBooleanProperty("apl.testUnconfirmedTransactions");
@@ -213,7 +214,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
                 try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                        new DbClause.IntClause("expiration", DbClause.Op.LT, AplCore.getEpochTime()), 0, -1, "")) {
+                        new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
                     while (iterator.hasNext()) {
                         expiredTransactions.add(iterator.next());
                     }
@@ -257,7 +258,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     return;
                 }
                 List<Transaction> transactionList = new ArrayList<>();
-                int curTime = AplCore.getEpochTime();
+                int curTime = timeService.getEpochTime();
                 for (TransactionImpl transaction : broadcastedTransactions) {
                     if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
                         broadcastedTransactions.remove(transaction);
@@ -638,7 +639,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         blockchain.writeLock();
         try {
             if (waitingTransactions.size() > 0) {
-                int currentTime = AplCore.getEpochTime();
+                int currentTime = timeService.getEpochTime();
                 List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
                 Iterator<UnconfirmedTransaction> iterator = waitingTransactions.iterator();
                 while (iterator.hasNext()) {
@@ -718,7 +719,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException {
         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
-        int curTime = AplCore.getEpochTime();
+        int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
             throw new AplException.NotCurrentlyValidException("Invalid transaction timestamp");
         }

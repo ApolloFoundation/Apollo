@@ -33,10 +33,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
@@ -54,6 +54,7 @@ public class APIProxy {
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
@@ -88,7 +89,7 @@ public class APIProxy {
     }
 
     private static final Runnable peersUpdateThread = () -> {
-        int curTime = AplCore.getEpochTime();
+        int curTime = timeService.getEpochTime();
         getInstance().blacklistedPeers.entrySet().removeIf((entry) -> {
             if (entry.getValue() < curTime) {
                 LOG.debug("Unblacklisting API peer " + entry.getKey());
@@ -205,7 +206,7 @@ public class APIProxy {
             LOG.info("Too many blacklisted peers");
             return false;
         }
-        blacklistedPeers.put(host, AplCore.getEpochTime() + blacklistingPeriod);
+        blacklistedPeers.put(host, timeService.getEpochTime() + blacklistingPeriod);
         if (peersHosts.contains(host)) {
             peersHosts = Collections.emptyList();
             getServingPeer(null);

@@ -106,6 +106,7 @@ public abstract class TransactionType {
 
     private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -3033,7 +3034,7 @@ public abstract class TransactionType {
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
-                if (attachment.getData() == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+                if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 if (attachment.getData() != null) {
@@ -3104,7 +3105,7 @@ public abstract class TransactionType {
             @Override
             public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
                 Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
-                if ((attachment.jsonIsPruned() || attachment.getData() == null) && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+                if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
                 }
                 Transaction uploadTransaction = blockchain.findTransaction(attachment.getTaggedDataId(), blockchain.getHeight());
@@ -3123,7 +3124,7 @@ public abstract class TransactionType {
                     }
                 }
                 TaggedData taggedData = TaggedData.getData(attachment.getTaggedDataId());
-                if (taggedData != null && taggedData.getTransactionTimestamp() > AplCore.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
+                if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
                     throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
                 }
             }
