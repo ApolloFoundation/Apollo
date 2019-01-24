@@ -1,7 +1,15 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import java.nio.file.Path;
 
+/**
+ * Provides paths to application data, such as database, keystore, etc.
+ * Returned paths are OS-dependent
+ */
 public interface DirProvider {
     /**
      * @return path to the directory where current database stored
@@ -32,4 +40,11 @@ public interface DirProvider {
      * @return base data directory of the application
      */
     Path getAppBaseDir();
+
+    /**
+     * @return return path to the directory, which store application executables
+     */
+    default Path getBinDir() {
+        return DirProviderUtil.getBinDir();
+    }
 }

@@ -1,11 +1,14 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import java.nio.file.Paths;
 
+/**
+ * Config dir provider which provide default config files locations
+ */
 public class DefaultConfigDirProvider implements ConfigDirProvider {
     protected String applicationName;
     protected boolean isService;
@@ -20,7 +23,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getInstallationConfigDirectory() {
-        return this.getClass().getClassLoader().getResource("").getPath() + "conf";
+        return DirProviderUtil.getBinDir().resolve("conf").toAbsolutePath().toString();
     }
 
     @Override

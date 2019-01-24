@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
@@ -108,6 +108,7 @@ public class DirProviderTest {
         assertEquals(SERVICE_MODE_DB_DIR, dirProvider.getDbDir());
         assertEquals(SERVICE_MODE_KEYSTORE_DIR, dirProvider.getVaultKeystoreDir());
         assertEquals(SERVICE_MODE_2FA_DIR, dirProvider.get2FADir());
+        assertEquals(customLogPath, dirProvider.getLogsDir());
         assertEquals(customLogPath, dirProvider.getLogsDir());
     }
 }

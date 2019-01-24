@@ -1,12 +1,11 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,9 +13,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
     private static final Logger LOG = getLogger(AbstractPlatformDependentUpdater.class);
@@ -83,7 +83,9 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }
         try {
             LOG.debug("Starting platform dependent script");
-            runCommand(updateDir, Paths.get("").toAbsolutePath(), Paths.get("").toAbsolutePath(), RuntimeEnvironment.isDesktopApplicationEnabled());
+            //TODO change here working and updateDirectory
+            runCommand(updateDir, Paths.get("").toAbsolutePath(), Paths.get("").toAbsolutePath(),
+                    RuntimeEnvironment.getInstance().isDesktopApplicationEnabled());
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {

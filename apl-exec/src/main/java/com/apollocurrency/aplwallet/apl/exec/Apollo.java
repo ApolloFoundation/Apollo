@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderUtil;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
@@ -110,7 +111,6 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
-        
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
@@ -130,7 +130,7 @@ public class Apollo {
         }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
 
-        if(RuntimeEnvironment.isAdmin()){
+        if(RuntimeEnvironment.getInstance().isAdmin()){
             System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
         }
 //load configuration files        
@@ -145,10 +145,10 @@ public class Apollo {
         log = LoggerFactory.getLogger(Apollo.class);
         
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
-        if (RuntimeEnvironment.isDesktopApplicationEnabled()) {
+        if (RuntimeEnvironment.getInstance().isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
         } else {
-            runtimeMode = RuntimeEnvironment.getRuntimeMode();
+            runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         }
         runtimeMode.init();
         //inti CDI container

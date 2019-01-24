@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+/**
+ * Provides paths to application config directories
+ */
 public interface ConfigDirProvider {
     /**
      * Path to directory where main executable jar file is placed

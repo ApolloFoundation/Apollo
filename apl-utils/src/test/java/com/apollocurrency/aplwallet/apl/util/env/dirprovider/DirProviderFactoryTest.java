@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,9 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.UUID;
 
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class DirProviderFactoryTest {
+    @BeforeEach
+    public void setUp() {
+        RuntimeEnvironment.getInstance().setMain(this.getClass());
+    }
 
     @Test
     void getInstance() {

@@ -312,7 +312,7 @@ public final class Account {
             propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem")
                     ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
                     : new TwoFactorAuthRepositoryImpl(Db.getDb()),
-            propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.isDesktopApplicationEnabled() ? "desktop" : "web"));
+            propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
 
     static {
 
