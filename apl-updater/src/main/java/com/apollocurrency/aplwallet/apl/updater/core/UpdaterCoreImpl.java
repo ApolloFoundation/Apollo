@@ -29,9 +29,10 @@ import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+@Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
     private UpdaterService updaterService;

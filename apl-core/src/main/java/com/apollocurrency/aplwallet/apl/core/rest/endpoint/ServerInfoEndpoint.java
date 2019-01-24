@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.ApolloX509Info;
 import com.apollocurrency.aplwallet.api.response.ApolloX509Response;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import io.swagger.annotations.Api;
@@ -37,6 +36,7 @@ public class ServerInfoEndpoint {
     public ServerInfoEndpoint() {
       log.debug("Empty ServerInfoEndpoint created");
     }
+    
     @Path("/")
     @GET
     @Produces(MediaType.APPLICATION_JSON)

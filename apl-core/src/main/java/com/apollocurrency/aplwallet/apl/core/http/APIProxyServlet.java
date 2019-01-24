@@ -54,8 +54,6 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     private static final String REMOTE_SERVER_IDLE_TIMEOUT = APIProxyServlet.class.getName() + ".remoteServerIdleTimeout";
     static final int PROXY_IDLE_TIMEOUT_DELTA = 5000;
 
-    static void initClass() {}
-
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);

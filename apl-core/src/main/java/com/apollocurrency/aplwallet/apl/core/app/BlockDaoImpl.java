@@ -43,10 +43,11 @@ import java.util.TreeMap;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
+import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 
-@ApplicationScoped
+@Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
 

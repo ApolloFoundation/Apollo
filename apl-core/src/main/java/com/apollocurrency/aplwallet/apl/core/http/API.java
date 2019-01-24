@@ -345,7 +345,7 @@ public final class API {
             
             // --------- ADD REST support servlet (RESTEasy)
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
-           restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
+            restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
 //TODO: implement this later
 //            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
@@ -390,7 +390,7 @@ public final class API {
             apiServer.setStopAtShutdown(true);
             Log.getRootLogger().setDebugEnabled(true);
 
-            ThreadPool.runBeforeStart("UPnP ports init", () -> {
+            ThreadPool.runBeforeStart("UPnP init and web serving start", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {
@@ -400,9 +400,7 @@ public final class API {
                                 upnp.addPort(((ServerConnector)apiConnector).getPort());
                         }
                     }
-                    APIServlet.initClass();
-                    APIProxyServlet.initClass();
-                    APITestServlet.initClass();
+
                     apiServer.start();
                     if (sslContextFactory != null) {
                         LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));

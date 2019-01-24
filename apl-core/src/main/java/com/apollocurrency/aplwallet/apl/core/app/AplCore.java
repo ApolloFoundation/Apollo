@@ -27,7 +27,6 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_P
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -54,9 +53,11 @@ import org.slf4j.Logger;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
-
-    private static ChainIdService chainIdService;
-
+    
+//those vars needed to just pull CDI to crerate it befor we gonna use it in threads
+    private  ChainIdService chainIdService;
+    private AbstractBlockValidator bcValidator;
+    
     private static volatile boolean shutdown = false;
 
     private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
@@ -156,6 +157,7 @@ public final class AplCore {
             try {
                 long startTime = System.currentTimeMillis();
                 chainIdService = CDI.current().select(ChainIdService.class).get();
+                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
 
                 this.blockchainConfig = CDI.current().select(BlockchainConfig.class).get();

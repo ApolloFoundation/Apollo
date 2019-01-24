@@ -109,8 +109,6 @@ public final class APIServlet extends HttpServlet {
         return apiRequestHandlers.get(requestType);
     }
 
-    static void initClass() {}
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         process(req, resp);

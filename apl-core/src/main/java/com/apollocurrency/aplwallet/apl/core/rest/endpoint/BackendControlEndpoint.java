@@ -16,6 +16,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This endpoint gives info about backend status and allows some control. Should
@@ -25,8 +27,16 @@ import javax.ws.rs.core.Response;
  */
 @Path("/control")
 public class BackendControlEndpoint {
-
+    private static final Logger log = LoggerFactory.getLogger(BackendControlEndpoint.class);
     private BackendControlService bcService;
+    /**
+     * Empty constructor re quired by REstEasy
+     */
+
+
+    public BackendControlEndpoint() {
+       log.debug("Empty BackendControlEndpoint created"); 
+    }
 
     @Inject
     public BackendControlEndpoint(BackendControlService bcService) {
