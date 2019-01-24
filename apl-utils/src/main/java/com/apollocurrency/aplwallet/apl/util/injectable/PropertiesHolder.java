@@ -23,16 +23,13 @@ public class PropertiesHolder {
     private Properties properties;
 
     public PropertiesHolder() {
+        LOG.error("Empty constructor called, which is must not be called!");
     }
-
 
     public PropertiesHolder(Properties properties) {
         this.properties = properties;
     }
 
-//    public void init(Properties p){
-//        properties = p;
-//    }
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }
