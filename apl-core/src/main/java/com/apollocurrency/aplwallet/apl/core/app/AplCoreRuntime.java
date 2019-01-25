@@ -21,6 +21,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,8 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 public class AplCoreRuntime {
+    //probably it is temprary solution, we should move WebUI serving out of core 
+    public final static String WEB_UI_DIR="webui";
     private static Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private List<AplCore> cores = new ArrayList<>();
  
@@ -133,4 +136,16 @@ public class AplCoreRuntime {
         LOG.debug("processId = {}", RuntimeParams.getProcessId());
     } 
     
+    public String findWebUiDir(){
+// if we decide to unzip in runtime        
+//        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
+        String dir = dirProvider.getBinDirectory()+File.separator+WEB_UI_DIR;
+        dir=dir+File.separator+"build";
+        File res = new File(dir);
+        if(!res.exists()){ //we are in develop IDE or tests
+            dir=dirProvider.getBinDirectory()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
+            res=new File(dir);
+        }
+        return res.getAbsolutePath();
+    }
 }

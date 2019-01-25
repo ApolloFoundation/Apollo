@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.util.env;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -74,13 +76,29 @@ public class DirProvider {
     public String getUserHomeDir() {
        return System.getProperty("user.home"); 
     }
+    
    /**
-    * Path to directory where main executable jar file is placed
+    * Path to directory where aproject is installed or top project dir if we're in IDE or tests
+    * TODO: maybe find some better solution
     * @return File denoting path to directory with main executable jar
     */
     public File getBinDirectory() {
-        String res = this.getClass().getClassLoader().getResource("").getPath();
-        return new File(res);
+        String res="./";
+        try { 
+            //get location of main app class
+            String path = RuntimeEnvironment.getInstance().getMain().getProtectionDomain().getCodeSource().getLocation().getPath();
+            res = URLDecoder.decode(path, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {          
+        }
+        // remove jar name or "classes". Should be location jar directory
+        res = new File(res).getParentFile().getAbsolutePath();
+        File ret;
+        if(res.endsWith("target")){ //we are in dev env or IDE
+            ret = new File(res).getParentFile().getParentFile();
+        }else{ //we are installed
+            ret = new File(res);
+        }
+        return ret;
     }
     /**
      * Path to system config directory, depends on OS

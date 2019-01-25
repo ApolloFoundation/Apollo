@@ -391,7 +391,7 @@ public class DesktopApplication extends Application {
             webEngine = browser.getEngine();
 //            webEngine.documentProperty().addListener((ChangeListener<Document>) (prop, oldDoc, newDoc) -> enableFirebug(webEngine));
 
-            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getDirProvider().getUserConfigDirectory()));
+            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getInstance().getDirProvider().getUserConfigDirectory()));
 
 //            WebConsoleListener.setDefaultListener(new WebConsoleListener(){
 //                @Override
