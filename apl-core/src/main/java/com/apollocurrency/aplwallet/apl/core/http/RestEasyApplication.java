@@ -7,17 +7,11 @@ import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BackendControlEndpoint;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 
-import io.swagger.v3.oas.integration.SwaggerConfiguration;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
 
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
@@ -32,9 +26,10 @@ public class RestEasyApplication extends Application  {
     public Set<Class<?>> getClasses() {
 
         HashSet<Class<?>> set = new HashSet<Class<?>>();
-        
+        set.add(Metadata.class);
         set.add( ServerInfoEndpoint.class);        
-        set.add(BackendControlEndpoint.class);               
+        set.add(BackendControlEndpoint.class); 
+        
         //TODO: add all endpoints below
         //swagger openapi endpoint
         set.add(OpenApiResource.class);

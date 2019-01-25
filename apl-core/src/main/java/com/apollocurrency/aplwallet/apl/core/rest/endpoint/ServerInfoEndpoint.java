@@ -12,11 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.info.Contact;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,15 +23,7 @@ import org.slf4j.LoggerFactory;
  * Apollo server info endpoint
  * @author alukin@gmail.com
  */
-@OpenAPIDefinition(info =
-    @Info(
-            title = "Server info endpoint: Endpoint for node info",
-            version = "0.0",
-            description = "My API",
-            license = @License(name = "JELURIDA PUBLIC LICENSE", url = "https://apollocurrency.com/"),
-            contact = @Contact(url = "https://github.com/ApolloFoundation/Apollo", name = "Steve", email = "info@gigagantics-server.com")
-    )
-)
+
 @Path("/serverinfo")
 public class ServerInfoEndpoint {
     private static final Logger log = LoggerFactory.getLogger(ServerInfoEndpoint.class);
