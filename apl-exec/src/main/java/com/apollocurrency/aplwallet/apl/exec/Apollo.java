@@ -1,10 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -29,6 +24,11 @@ import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -169,7 +169,7 @@ public class Apollo {
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
+            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
             app.initAppStatusMsg();
             app.initCore();
             app.launchDesktopApplication();

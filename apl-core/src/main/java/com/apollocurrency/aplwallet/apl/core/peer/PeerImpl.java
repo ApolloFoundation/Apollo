@@ -22,10 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -75,6 +72,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
+import javax.enterprise.inject.spi.CDI;
 
 final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
@@ -716,7 +714,7 @@ final class PeerImpl implements Peer {
                 analyzeHallmark((String) response.get("hallmark"));
                 Object chainIdObject = response.get("chainId");
                 if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(targetChainId)) {
-                    Peers.removePeer(this);
+                    remove();
                     return;
                 }
                 chainId.set(UUID.fromString(chainIdObject.toString()));

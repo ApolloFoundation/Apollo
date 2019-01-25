@@ -22,39 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.DispatcherType;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -90,6 +58,37 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.DispatcherType;
 
 public final class Peers {
     private static final Logger LOG = getLogger(Peers.class);
@@ -170,8 +169,8 @@ public final class Peers {
 
     static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
-    static final ExecutorService peersService = new QueuedThreadPool(2, 15, "Peers service");
-    private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("Peers sending service"));
+    static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
+    private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
     
     //TODO: remove static context
     private static final UPnP upnp = UPnP.getInstance();
@@ -375,7 +374,7 @@ public final class Peers {
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
 
         if (!Constants.isOffline) {
-            ThreadPool.runBeforeStart("Peer loader", new Runnable() {
+            ThreadPool.runBeforeStart("PeerLoader", new Runnable() {
 
                 private final Set<PeerDb.Entry> entries = new HashSet<>();
 
@@ -422,7 +421,7 @@ public final class Peers {
             }, false);
         }
 
-        ThreadPool.runAfterStart("Unresolved peers analyzer",() -> {
+        ThreadPool.runAfterStart("UnresolvedPeersAnalyzer",() -> {
             for (Future<String> unresolvedPeer : unresolvedPeers) {
                 try {
                     String badAddress = unresolvedPeer.get(5, TimeUnit.SECONDS);
@@ -484,7 +483,7 @@ public final class Peers {
 
                 peerServer.setHandler(ctxHandler);
                 peerServer.setStopAtShutdown(true);
-                ThreadPool.runBeforeStart("Peers UPnP ports init", () -> {
+                ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
                     try {
                         if (enablePeerUPnP) {
                             Connector[] peerConnectors = peerServer.getConnectors();

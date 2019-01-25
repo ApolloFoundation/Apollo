@@ -77,6 +77,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -985,7 +986,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         blockListeners.addListener(block -> Db.getDb().analyzeTables(), Event.RESCAN_END);
 
-        ThreadPool.runBeforeStart("Blockchain init", () -> {
+        ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
             addGenesisBlock();
             if (propertiesLoader.getBooleanProperty("apl.forceScan")) {
@@ -1011,7 +1012,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }, false);
 
         if (!Constants.isLightClient && !Constants.isOffline) {
-            ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 1);
+            ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 250, TimeUnit.MILLISECONDS);
         }
 
     }
@@ -1117,7 +1118,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void processPeerBlock(JSONObject request) throws AplException {
-        lookupBlockhain().writeLock();
+        lookupBlockhain().updateLock();
         try {
             Block lastBlock = lookupBlockhain().getLastBlock();
             long peerBlockPreviousBlockId = Convert.parseUnsignedLong((String) request.get("previousBlock"));
@@ -1163,7 +1164,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }// else ignore the block
         }
         finally {
-            lookupBlockhain().writeUnlock();
+            lookupBlockhain().updateUnlock();
         }
     }
 
@@ -1293,7 +1294,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public void shutdown() {
-        ThreadPool.shutdownExecutor("networkService", networkService, 5);
+        ThreadPool.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
         getMoreBlocks = false;
     }
 

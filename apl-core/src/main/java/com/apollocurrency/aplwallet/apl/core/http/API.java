@@ -28,36 +28,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_A
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
@@ -67,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.env.ResourcePaths;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -92,6 +61,35 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
@@ -132,9 +130,11 @@ public final class API {
 
         while (!Thread.currentThread().isInterrupted()) {
             synchronized (API.class) {
-                byte[] seed = Crypto.getSecureRandom().generateSeed(32);
-                privateKey = Crypto.getPrivateKey(seed);
-                publicKey = Crypto.getPublicKey(seed);
+                byte[] keyBytes = new byte[32];
+                Crypto.getSecureRandom().nextBytes(keyBytes);
+                byte[] keySeed = Crypto.getKeySeed(keyBytes);
+                privateKey = Crypto.getPrivateKey(keySeed);
+                publicKey = Crypto.getPublicKey(keySeed);
             }
             try {
                 TimeUnit.MINUTES.sleep(10);
@@ -196,7 +196,7 @@ public final class API {
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
-            threadPool.setName("API thread pool");
+            threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
             ServerConnector connector;
             boolean enableSSL = propertiesLoader.getBooleanProperty("apl.apiSSL");
@@ -337,7 +337,7 @@ public final class API {
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
 
-            ThreadPool.runBeforeStart("UPnP ports init", () -> {
+            ThreadPool.runBeforeStart("APIInitThread", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {

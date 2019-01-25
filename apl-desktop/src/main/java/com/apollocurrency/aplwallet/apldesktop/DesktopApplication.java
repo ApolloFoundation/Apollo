@@ -23,31 +23,6 @@ package com.apollocurrency.aplwallet.apldesktop;
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.net.ssl.HttpsURLConnection;
-import java.awt.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -93,6 +68,31 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
+
+import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.CDI;
+import javax.net.ssl.HttpsURLConnection;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -244,6 +244,7 @@ public class DesktopApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        Thread.currentThread().setName("JavaFXApplicationThread");
         mainStage = primaryStage;
         screenStage = new Stage();
         showSplashScreen();
@@ -318,7 +319,7 @@ public class DesktopApplication extends Application {
                 Platform.runLater(() -> screenStage.hide());
                 shutdown.set(false);
             };
-            Thread updateSplashScreenThread = new Thread(statusUpdater, "Update splash screen status thread");
+            Thread updateSplashScreenThread = new Thread(statusUpdater, "SplashScreenStatusUpdaterThread");
             updateSplashScreenThread.setDaemon(true);
             updateSplashScreenThread.start();
         }

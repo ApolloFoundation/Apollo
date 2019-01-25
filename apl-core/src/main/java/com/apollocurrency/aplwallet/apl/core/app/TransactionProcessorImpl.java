@@ -24,27 +24,6 @@ import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
@@ -65,6 +44,27 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.CDI;
 
 @ApplicationScoped
 public class TransactionProcessorImpl implements TransactionProcessor {
@@ -350,7 +350,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (!Constants.isLightClient) {
             if (!Constants.isOffline) {
                 ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 5);
-                ThreadPool.runAfterStart("Rebroadcast all unconfirmed txs",this::rebroadcastAllUnconfirmedTransactions);
+                ThreadPool.runAfterStart("InitialUnconfirmedTxsRebroadcasting",this::rebroadcastAllUnconfirmedTransactions);
                 ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
             }
             ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
