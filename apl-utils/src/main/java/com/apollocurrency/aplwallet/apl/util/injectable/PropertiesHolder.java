@@ -30,9 +30,9 @@ public class PropertiesHolder {
         this.properties = properties;
     }
 
-//    public void init(Properties p){
-//        properties = p;
-//    }
+    public void init(Properties p){
+        properties = p;
+    }
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }

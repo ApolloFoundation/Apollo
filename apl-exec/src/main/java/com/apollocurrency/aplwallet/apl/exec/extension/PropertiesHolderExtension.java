@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.exec.extension;
@@ -10,13 +10,17 @@ import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
-import java.lang.reflect.Field;
+import java.util.Objects;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.exec.Apollo;
+import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PropertiesHolderExtension implements Extension {
+    private static final Logger log = LoggerFactory.getLogger(PropertiesHolderExtension.class);
 
     void processInjectionTarget(@Observes ProcessInjectionTarget<PropertiesHolder> pit) {
 
@@ -28,17 +32,15 @@ public class PropertiesHolderExtension implements Extension {
             @Override
             public void inject(PropertiesHolder instance, CreationalContext<PropertiesHolder> ctx) {
                 it.inject(instance, ctx);
-                try {
-                    Field properties = PropertiesHolder.class.getDeclaredField("properties");
-                    properties.setAccessible(true);
-                    properties.set(instance, Apollo.getPropertiesLoader().getProperties());
+
+                PropertiesLoader propertiesLoader = Apollo.getPropertiesLoader();
+
+                Objects.requireNonNull(propertiesLoader, "Properties loader not initialized yet");
+                Objects.requireNonNull(propertiesLoader.getProperties(), "Injectable properties should not be null");
+                if (propertiesLoader.getProperties().isEmpty()) {
+                    log.warn("Injectable properties are empty! ");
                 }
-                catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-                catch (NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
+                instance.init(propertiesLoader.getProperties());
             }
 
             @Override

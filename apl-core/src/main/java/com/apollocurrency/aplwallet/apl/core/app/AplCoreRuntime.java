@@ -5,6 +5,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
@@ -13,12 +20,6 @@ import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.spi.CDI;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -117,11 +118,11 @@ public class AplCoreRuntime {
     public String findWebUiDir(){
 // if we decide to unzip in runtime
 //        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
-        String dir = dirProvider.getBinDirectory()+File.separator+WEB_UI_DIR;
+        String dir = dirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
         dir=dir+File.separator+"build";
         File res = new File(dir);
         if(!res.exists()){ //we are in develop IDE or tests
-            dir=dirProvider.getBinDirectory()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
+            dir=dirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
             res=new File(dir);
         }
         return res.getAbsolutePath();

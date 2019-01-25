@@ -23,14 +23,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
 
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+
 public class RuntimeEnvironment {
 
     public static final String RUNTIME_MODE_ARG = "apl.runtime.mode";
     public static final String DIRPROVIDER_ARG = "apl.runtime.dirProvider";
 
     private static final String osname = System.getProperty("os.name").toLowerCase();
-    private static final boolean isHeadless;
-    protected static final boolean hasJavaFX;
+    private  boolean isHeadless;
+    protected boolean hasJavaFX;
     private static boolean isServiceMode = false;
     private static RuntimeEnvironment instance = null;
     private Class mainClass=null;

@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
@@ -14,7 +13,6 @@ import java.util.List;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-@ApplicationScoped
 public class PropertyProducer {
     private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;

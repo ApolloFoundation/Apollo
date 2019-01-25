@@ -1,9 +1,13 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.exec.webui.WebUiExtractor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -19,19 +23,12 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderUtil;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.spi.CDI;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Main Apollo startup class
@@ -149,7 +146,7 @@ public class Apollo {
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
         log = LoggerFactory.getLogger(Apollo.class);
 //check webUI
-        System.out.println("=== Bin directory is: "+dirProvider.getBinDirectory().getAbsolutePath());
+        System.out.println("=== Bin directory is: "+dirProvider.getBinDir().toAbsolutePath());
 /* at the moment we do it in build time
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);
