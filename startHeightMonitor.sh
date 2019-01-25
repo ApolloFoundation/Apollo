@@ -1,1 +1,0 @@
-nohup java -cp lib/*:target/classes com.apollocurrency.aplwallet.apl.tools.HeightMonitor &
