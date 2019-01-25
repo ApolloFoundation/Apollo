@@ -99,12 +99,14 @@ public class BlockchainConfig {
         currentConfig = new HeightConfig(chain.getBlockchainProperties().get(0), testnet);
         ConfigChangeListener configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties());
         lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_PUSHED);
+                BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
         lookupBlockchainProcessor().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_POPPED);
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_SCANNED);
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+    }
+
+    public void reset() {
+        updateToHeight(0, true);
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -181,9 +183,9 @@ public class BlockchainConfig {
         public void notify(Block block) {
             int currentHeight = block.getHeight();
             if (targetHeights.contains(currentHeight)) {
-                LOG.info("Updating constants at height {}", currentHeight);
+                LOG.info("Updating chain config at height {}", currentHeight);
                 currentConfig = new HeightConfig(propertiesMap.get(currentHeight), testnet);
-                LOG.info("New constants applied: {}", currentConfig);
+                LOG.info("New config applied: {}", currentConfig);
             }
         }
     }

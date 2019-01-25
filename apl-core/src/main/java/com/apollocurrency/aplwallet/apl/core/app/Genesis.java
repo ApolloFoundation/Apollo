@@ -94,6 +94,7 @@ public final class Genesis {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
+        CDI.current().select(BlockchainConfig.class).get().reset();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         String loadingPublicKeysString = "Loading public keys";

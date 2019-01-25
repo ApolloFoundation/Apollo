@@ -325,7 +325,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         /**
          * Get first mutual block which peer has in blockchain and we have in blockchain
-         * @param peer - blockchain node with which we will retrieve first mutual block
+         * @param peer node which will supply us with possible mutual blocks
          * @return id of the first mutual block
          */
         private long getCommonMilestoneBlockId(Peer peer) {
