@@ -271,7 +271,7 @@ public final class API {
             HandlerList apiHandlers = new HandlerList();
 
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = ResourcePaths.find(propertiesLoader.getStringProperty("apl.apiResourceBase"));
+            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
             if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
                 ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
                 defaultServletHolder.setInitParameter("dirAllowed", "false");
@@ -281,7 +281,8 @@ public final class API {
                 defaultServletHolder.setInitParameter("gzip", "true");
                 defaultServletHolder.setInitParameter("etags", "true");
                 apiHandler.addServlet(defaultServletHolder, "/*");
-                apiHandler.setWelcomeFiles(new String[]{propertiesLoader.getStringProperty("apl.apiWelcomeFile")});
+                String[] wellcome = {propertiesLoader.getStringProperty("apl.apiWelcomeFile")};
+                apiHandler.setWelcomeFiles(wellcome);
             }
 
 //TODO: we do not have outdated Javadoc. We have to serve it by Maven

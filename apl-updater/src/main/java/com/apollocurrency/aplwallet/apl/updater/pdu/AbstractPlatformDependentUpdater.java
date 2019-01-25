@@ -83,7 +83,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }
         try {
             LOG.debug("Starting platform dependent script");
-            runCommand(updateDir, Paths.get("").toAbsolutePath(), Paths.get("").toAbsolutePath(), RuntimeEnvironment.isDesktopApplicationEnabled());
+            runCommand(updateDir, Paths.get("").toAbsolutePath(), Paths.get("").toAbsolutePath(), RuntimeEnvironment.getInstance().isDesktopApplicationEnabled());
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {
