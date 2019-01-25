@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStore;
+import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,7 +36,7 @@ public class ImportKey extends AbstractAPIRequestHandler {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, false));
         byte[] secretBytes = ParameterParser.getBytes(request, "secretBytes", true);
 
-        Pair<KeyStore.Status, String> statusPassphrasePair = Account.importSecretBytes(passphrase, secretBytes);
+        Pair<VaultKeyStore.Status, String> statusPassphrasePair = Account.importSecretBytes(passphrase, secretBytes);
         JSONObject response = new JSONObject();
         response.put("status", statusPassphrasePair.getLeft());
         response.put("passphrase", statusPassphrasePair.getRight());

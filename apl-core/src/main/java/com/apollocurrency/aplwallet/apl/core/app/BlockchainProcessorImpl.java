@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -79,7 +80,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@ApplicationScoped
+@Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
 

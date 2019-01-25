@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -15,11 +14,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ApplicationScoped
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
-
 
     @Inject
     public PropertyBasedFileConfig(PropertiesHolder propertiesHolder) {
@@ -29,13 +26,16 @@ public class PropertyBasedFileConfig {
     @Produces
     @Named("chainsConfigFilePath")
     public String getChainsConfigFileLocation() {
-        return getOrDefault("apl.chainsConfigFilePath", "conf/chains.json");
+        return "conf/chains.json";
     }
+
     @Produces
     @Named("keystoreDirPath")
     public Path getKeystoreDirFilePath() {
-        return AplCoreRuntime.getInstance().getKeystoreDir(getOrDefault("apl.keystoreDir", "conf/chains.json"));
+        return AplCoreRuntime.getInstance().getVaultKeystoreDir().toAbsolutePath();
     }
+
+
 
     private String getOrDefault(String property, String defaultValue) {
         String value = propertiesHolder.getStringProperty(property, defaultValue);

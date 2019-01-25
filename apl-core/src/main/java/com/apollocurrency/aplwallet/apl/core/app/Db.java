@@ -27,24 +27,16 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    public static String PREFIX;
-    private static BasicDb.DbProperties dbProperties;
     private static TransactionalDb db;
 
     public static TransactionalDb getDb() {
@@ -54,61 +46,14 @@ public final class Db {
         return db;
     }
 
-    public static void init(int cacheKb, String dbUrl, String dbType, String dbDir, String dbFileName, String params, String username,
-                            String password,
-                            int maxConnections, int loginTimeout, int defaultLockTimeout, int maxMemoryRows) {
-        dbProperties =  new BasicDb.DbProperties()
-                .maxCacheSize(cacheKb)
-                .dbUrl(dbUrl)
-                .dbType(dbType)
-                .dbDir(dbDir)
-                .dbParams(params)
-                .dbFileName(dbFileName)
-                .dbUsername(username)
-                .dbPassword(password)
-                .maxConnections(maxConnections)
-                .loginTimeout(loginTimeout)
-                .defaultLockTimeout(defaultLockTimeout)
-                .maxMemoryRows(maxMemoryRows);
+    public static void init(DbProperties dbProperties) {
         db = new TransactionalDb(dbProperties);
         db.init(new AplDbVersion());
     }
 
     public static void init() {
-
-        PREFIX = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
-        init(
-                 propertiesLoader.getIntProperty("apl.dbCacheKB")
-                , propertiesLoader.getStringProperty(PREFIX + "Url")
-                , propertiesLoader.getStringProperty(PREFIX + "Type")
-                , propertiesLoader.getStringProperty(PREFIX + "Dir")
-                , propertiesLoader.getStringProperty(PREFIX + "Name")
-                , propertiesLoader.getStringProperty(PREFIX + "Params")
-                , propertiesLoader.getStringProperty(PREFIX + "Username")
-                , propertiesLoader.getStringProperty(PREFIX + "Password", null, true)
-                , propertiesLoader.getIntProperty("apl.maxDbConnections")
-                , propertiesLoader.getIntProperty("apl.dbLoginTimeout")
-                , propertiesLoader.getIntProperty("apl.dbDefaultLockTimeout") * 1000
-                , propertiesLoader.getIntProperty("apl.dbMaxMemoryRows")
-        );
-    }
-    public static void init(String dbUrl) {
-
-        PREFIX = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
-        init(
-                propertiesLoader.getIntProperty("apl.dbCacheKB")
-                , dbUrl
-                , propertiesLoader.getStringProperty(PREFIX + "Type")
-                , null
-                , null
-                , propertiesLoader.getStringProperty(PREFIX + "Params")
-                , propertiesLoader.getStringProperty(PREFIX + "Username")
-                , propertiesLoader.getStringProperty(PREFIX + "Password", null, true)
-                , propertiesLoader.getIntProperty("apl.maxDbConnections")
-                , propertiesLoader.getIntProperty("apl.dbLoginTimeout")
-                , propertiesLoader.getIntProperty("apl.dbDefaultLockTimeout") * 1000
-                , propertiesLoader.getIntProperty("apl.dbMaxMemoryRows")
-        );
+        DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
+        init(dbProperties);
     }
 
     public static void shutdown() {
@@ -120,7 +65,7 @@ public final class Db {
     public static void tryToDeleteDb() throws IOException {
             db.shutdown();
             LOG.info("Removing db...");
-            Path dbPath = Paths.get(AplCoreRuntime.getInstance().getDbDir(propertiesLoader.getStringProperty(PREFIX + "Dir"))).getParent();
+            Path dbPath = AplCoreRuntime.getInstance().getDbDir();
             removeDb(dbPath);
             LOG.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }

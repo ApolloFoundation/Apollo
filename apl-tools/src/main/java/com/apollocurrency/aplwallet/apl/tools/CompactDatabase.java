@@ -61,7 +61,7 @@ public class CompactDatabase {
      */
     public static void main(String[] args) {
 //TODO: Check
-        AplCore core = new AplCore();
+        AplCore core = new AplCore(blockchainConfig);
         core.init();
         //
         // Compact the database
@@ -88,7 +88,7 @@ public class CompactDatabase {
         String dbUrl = propertiesHolder.getStringProperty(dbPrefix + "Url");
         if (dbUrl == null) {
             //TODO: check that runtime is inited
-            String dbPath = AplCoreRuntime.getInstance().getDbDir(propertiesHolder.getStringProperty(dbPrefix + "Dir"));
+            String dbPath = AplCoreRuntime.getInstance().getDbDir().toAbsolutePath().toString();
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
         String dbParams = propertiesHolder.getStringProperty(dbPrefix + "Params");
