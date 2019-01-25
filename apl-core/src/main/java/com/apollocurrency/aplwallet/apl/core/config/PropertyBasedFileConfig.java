@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -15,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ApplicationScoped
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;

@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
-public interface KeyStore {
+public interface VaultKeyStore {
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
      * @param passphrase - string, which consist of random words for keySeed decryption

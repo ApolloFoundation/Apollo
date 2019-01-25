@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @see Chain
  * @see BlockchainConfig
  */
-@ApplicationScoped
+@Singleton
 public class ChainIdServiceImpl implements ChainIdService {
     private static final String DEFAULT_CONFIG_LOCATION = "conf/chains.json";
     private final String chainsConfigFileLocations;

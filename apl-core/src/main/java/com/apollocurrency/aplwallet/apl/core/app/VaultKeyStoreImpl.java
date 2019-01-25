@@ -6,33 +6,32 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
- import javax.enterprise.context.ApplicationScoped;
- import javax.enterprise.inject.spi.CDI;
- import javax.inject.Inject;
- import javax.inject.Named;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Named;
+ import javax.inject.Singleton;
  import java.io.IOException;
- import java.nio.file.Files;
- import java.nio.file.Path;
- import java.time.Instant;
- import java.time.OffsetDateTime;
- import java.time.ZoneOffset;
- import java.time.format.DateTimeFormatter;
- import java.util.List;
- import java.util.Objects;
- import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
- import com.apollocurrency.aplwallet.apl.crypto.Convert;
- import com.apollocurrency.aplwallet.apl.crypto.Crypto;
- import com.apollocurrency.aplwallet.apl.util.JSON;
- import com.apollocurrency.aplwallet.apl.util.NtpTime;
- import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
- import com.fasterxml.jackson.databind.ObjectMapper;
- import com.fasterxml.jackson.databind.ObjectWriter;
- import org.slf4j.Logger;
-
-@ApplicationScoped
- public class SimpleKeyStoreImpl implements KeyStore {
-     private static final Logger LOG = getLogger(SimpleKeyStoreImpl.class);
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import org.slf4j.Logger;
+@Singleton
+ public class VaultKeyStoreImpl implements VaultKeyStore {
+     private static final Logger LOG = getLogger(VaultKeyStoreImpl.class);
      private static final byte DEFAULT_VERSION = 0;
      private Path keystoreDirPath;
      private byte version;
@@ -42,15 +41,15 @@
 
     @Inject
     @Named("keystoreDirPath")
-    public SimpleKeyStoreImpl(Path keystoreDir) {
+    public VaultKeyStoreImpl(Path keystoreDir) {
         this(keystoreDir, DEFAULT_VERSION);
     }
 
-     public SimpleKeyStoreImpl(Path keystoreDir, byte version) {
+     public VaultKeyStoreImpl(Path keystoreDir, byte version) {
          if (version < 0) {
-             throw new IllegalArgumentException("version should be positive");
+             throw new IllegalArgumentException("version should not be negative");
          }
-         this.version = DEFAULT_VERSION;
+         this.version = version;
          this.keystoreDirPath = keystoreDir;
          if (!Files.exists(keystoreDirPath)) {
              try {
@@ -116,11 +115,11 @@
                          if (beginIndex == -1) {
                              return false;
                          }
-                         return stringPath.substring(beginIndex + 3).equalsIgnoreCase(String.valueOf(Convert.defaultRsAccount(accountId)));
+                         return stringPath.substring(beginIndex + 3).equalsIgnoreCase(Convert.defaultRsAccount(accountId));
                      }).collect(Collectors.toList());
          }
          catch (IOException e) {
-             LOG.debug("KeyStore exception: {}", e.getMessage());
+             LOG.debug("VaultKeyStore IO error while searching path to secret key of account " + accountId, e.getMessage());
              return null;
          }
      }
@@ -162,7 +161,7 @@
              deleteFile(path);
          }
          catch (IOException e) {
-             LOG.debug("Unable to delete file", e.toString());
+             LOG.debug("Unable to delete file " + path, e);
              return Status.DELETE_ERROR;
          }
          return Status.OK;
@@ -210,7 +209,7 @@
              return true;
          }
          catch (IOException e) {
-             LOG.debug("Unable to save secretBytes: {}", e.getMessage());
+             LOG.debug("Unable to save secretBytes to " + keyPath, e);
              return false;
          }
      }
