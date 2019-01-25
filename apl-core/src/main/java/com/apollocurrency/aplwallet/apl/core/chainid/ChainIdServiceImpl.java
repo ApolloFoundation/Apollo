@@ -12,8 +12,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ChainIdServiceImpl implements ChainIdService {
     private static final String DEFAULT_CONFIG_LOCATION = "conf/chains.json";
     private final String chainsConfigFileLocations;
+    private static final ObjectMapper MAPPER = JSON.getMapper();
 
     public ChainIdServiceImpl(String chainsConfigFileLocation) {
         this.chainsConfigFileLocations = chainsConfigFileLocation;
@@ -39,13 +40,11 @@ public class ChainIdServiceImpl implements ChainIdService {
      */
     @Override
     public List<Chain> getAll() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InputStream is = getClass().getClassLoader().getResourceAsStream(chainsConfigFileLocations);
         if (is == null) {
             is = Files.newInputStream(Paths.get(chainsConfigFileLocations));
         }
-        return mapper.readValue(is, new TypeReference<List<Chain>>() {});
+        return MAPPER.readValue(is, new TypeReference<List<Chain>>() {});
     }
 
     /**
