@@ -1,13 +1,9 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.exec.webui.WebUiExtractor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -30,6 +26,12 @@ import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Main Apollo startup class
@@ -129,6 +131,8 @@ public class Apollo {
             System.exit(PosixExitCodes.OK.exitCode());
         }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
+        RuntimeEnvironment.getInstance().setMain(Apollo.class);
+
 
         if(RuntimeEnvironment.getInstance().isAdmin()){
             System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
@@ -138,12 +142,20 @@ public class Apollo {
         propertiesLoader = new PropertiesLoader(configDirProvider,
                 args.isResourceIgnored(),
                 args.configDir);
-//init logging
+// init application data dir provider
         EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
+        //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
         log = LoggerFactory.getLogger(Apollo.class);
-        
+//check webUI
+        System.out.println("=== Bin directory is: "+dirProvider.getBinDirectory().getAbsolutePath());
+/* at the moment we do it in build time
+        Future<Boolean> unzipRes;
+        WebUiExtractor we = new WebUiExtractor(dirProvider);
+        ExecutorService execService = Executors.newFixedThreadPool(1);
+        unzipRes = execService.submit(we);
+*/
 //TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
         if (RuntimeEnvironment.getInstance().isDesktopApplicationEnabled()) {
             runtimeMode = new DesktopMode();
@@ -165,7 +177,10 @@ public class Apollo {
             app.initCore();
             app.launchDesktopApplication();
             app.initUpdater();
-
+/*            if(unzipRes.get()!=true){
+                System.err.println("Error! WebUI is not installed!");
+            }
+*/
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();

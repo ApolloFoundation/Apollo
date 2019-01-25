@@ -87,7 +87,7 @@ public class DesktopSystemTray {
         }
         MenuItem showDesktopApplication = new MenuItem("Show Desktop Application");
         MenuItem refreshDesktopApplication = new MenuItem("Refresh Wallet");
-        if (!RuntimeEnvironment.isDesktopApplicationEnabled()) {
+        if (!RuntimeEnvironment.getInstance().isDesktopApplicationEnabled()) {
             showDesktopApplication.setEnabled(false);
             refreshDesktopApplication.setEnabled(false);
         }

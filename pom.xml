@@ -20,6 +20,8 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
+<!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->        
+        <module>apl-html</module>
 <!--
      Tt is a whole mess at the moment. commented out. Please!!! Integration test
      SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
@@ -38,9 +40,10 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-
+        <!-- cross-platform zip distribution -->
+        <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-
+        <web-wallet.version>2.4.0</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 

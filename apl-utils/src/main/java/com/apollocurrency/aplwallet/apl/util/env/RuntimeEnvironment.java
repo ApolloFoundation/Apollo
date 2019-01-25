@@ -29,8 +29,8 @@ public class RuntimeEnvironment {
     public static final String DIRPROVIDER_ARG = "apl.runtime.dirProvider";
 
     private static final String osname = System.getProperty("os.name").toLowerCase();
-    private static boolean isHeadless;
-    protected static boolean hasJavaFX;
+    private static final boolean isHeadless;
+    protected static final boolean hasJavaFX;
     private static boolean isServiceMode = false;
     private static RuntimeEnvironment instance = null;
     private Class mainClass=null;
@@ -66,7 +66,7 @@ public class RuntimeEnvironment {
     }
 
     private RuntimeEnvironment(){
-        setup();
+         setup();
     }
 
     public boolean isWindowsRuntime() {
@@ -88,11 +88,11 @@ public class RuntimeEnvironment {
     public boolean isHeadless() {
         return isHeadless;
     }
-
-    /**
-     * Not very good but working method to get info about user super privileges
-     * @return true if current user has admin/root provilieges
-     */
+    
+/**
+ * Not very good but working method to get info about user super privileges
+ * @return true if current user has admin/root provilieges
+ */
     public boolean isAdmin() {
         Preferences prefs = Preferences.systemRoot();
         PrintStream systemErr = System.err;
@@ -125,6 +125,10 @@ public class RuntimeEnvironment {
 
     public boolean isDesktopApplicationEnabled() {
         return isDesktopEnabled() && hasJavaFX;
+    }
+
+    public static DirProvider getDirProvider() {
+        return null;
     }
 
     public void setMain(Class aClass) {
