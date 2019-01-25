@@ -13,8 +13,8 @@ echo "Apollo wallet was compiled successfully"
 
 rm -f "Apollo.jar"
 rm -f -r "lib"
-cp -f "target/Apollo.jar" "Apollo.jar"
-cp -r "target/lib/" "lib/"
+cp -f "apl-exec/target/Apollo.jar" "Apollo.jar"
+cp -r "apl-exec/target/lib/" "lib/"
 
 find addons/src/ -name "*.java" > addons.tmp
 if [ -s addons.tmp ]; then
