@@ -6,22 +6,18 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import java.io.File;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +27,13 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 public class AplCoreRuntime {
-    //probably it is temprary solution, we should move WebUI serving out of core 
+    //probably it is temprary solution, we should move WebUI serving out of core
     public final static String WEB_UI_DIR="webui";
     private static Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private List<AplCore> cores = new ArrayList<>();
  
     private  RuntimeMode runtimeMode;
-    private  DirProvider dirProvider;
+    private DirProvider dirProvider;
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     private static class AplCoreRuntimeHolder {
@@ -61,10 +57,8 @@ public class AplCoreRuntime {
     }
 
     void setServerStatus(ServerStatus status, URI wallet) {
-        runtimeMode.setServerStatus(status, wallet, dirProvider.getLogFileDir());
+        runtimeMode.setServerStatus(status, wallet, dirProvider.getLogsDir().toFile());
     }
-    
-
     
     public void shutdown(){
         for(AplCore c: cores){
@@ -73,34 +67,20 @@ public class AplCoreRuntime {
         runtimeMode.shutdown();
     }
 
-
-
-    public String getDbDir(String dbDir, UUID chainId, boolean chainIdFirst) {
-        return dirProvider.getDbDir(dbDir, chainId, chainIdFirst);
+    public Path getDbDir() {
+        return dirProvider.getDbDir();
     }
 
-    public  String getDbDir(String dbDir, boolean chainIdFirst) {
-        return dirProvider.getDbDir(dbDir, blockchainConfig.getChain().getChainId(), chainIdFirst);
+    public Path getVaultKeystoreDir() {
+        return dirProvider.getVaultKeystoreDir();
     }
 
-    public  String getDbDir(String dbDir) {
-        return dirProvider.getDbDir(dbDir, blockchainConfig.getChain().getChainId(), false);
-    }
-
-    public  Path getKeystoreDir(String keystoreDir) {
-        return dirProvider.getKeystoreDir(keystoreDir).toPath();
-    }
-
-    public  Path get2FADir(String dir2FA) {
-        return Paths.get(dirProvider.getAppHomeDir(), dir2FA);
-    }
-
-    public void updateLogFileHandler(Properties loggingProperties) {
-        dirProvider.updateLogFileHandler(loggingProperties);
+    public Path get2FADir() {
+        return dirProvider.get2FADir();
     }
 
     public String getUserHomeDir() {
-        return dirProvider.getAppHomeDir();
+        return dirProvider.getAppBaseDir().toString();
     }
 
     public RuntimeMode getRuntimeMode(){
@@ -126,7 +106,6 @@ public class AplCoreRuntime {
                 "java.security.policy",
                 "java.security.manager",
                 RuntimeEnvironment.RUNTIME_MODE_ARG,
-                RuntimeEnvironment.DIRPROVIDER_ARG
         };
         for (String property : loggedProperties) {
             LOG.debug("{} = {}", property, System.getProperty(property));
@@ -137,13 +116,13 @@ public class AplCoreRuntime {
     } 
     
     public String findWebUiDir(){
-// if we decide to unzip in runtime        
+// if we decide to unzip in runtime
 //        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
-        String dir = dirProvider.getBinDirectory()+File.separator+WEB_UI_DIR;
+        String dir = dirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
         dir=dir+File.separator+"build";
         File res = new File(dir);
         if(!res.exists()){ //we are in develop IDE or tests
-            dir=dirProvider.getBinDirectory()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
+            dir=dirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
             res=new File(dir);
         }
         return res.getAbsolutePath();

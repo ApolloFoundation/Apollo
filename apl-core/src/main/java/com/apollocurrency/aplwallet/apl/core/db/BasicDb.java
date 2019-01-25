@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
@@ -29,16 +29,19 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import org.apache.commons.lang3.StringUtils;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
+/**
+ * Represent basic implementation of DataSource
+ * Note, that while creating instance of {@link BasicDb} {@link FullTextTrigger} will
+ * be also enabled, so use it carefully
+ */
 public class BasicDb implements DataSource {
     private static final Logger LOG = getLogger(BasicDb.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
-    private static final DbException DB_NOT_INITIALIZED_EXCEPTION = new DbException(DB_INITIALIZATION_ERROR_TEXT);
 
     @Override
     public Connection getConnection(String username, String password) {
@@ -53,7 +56,7 @@ public class BasicDb implements DataSource {
 
     private void requireInitialization() {
         if (!initialized) {
-            throw DB_NOT_INITIALIZED_EXCEPTION;
+            throw new DbException(DB_INITIALIZATION_ERROR_TEXT);
         }
     }
 
@@ -93,99 +96,6 @@ public class BasicDb implements DataSource {
         return this.cp.getParentLogger();
     }
 
-    public static final class DbProperties {
-
-        private long maxCacheSize;
-        private String dbUrl;
-        private String dbType;
-        private String dbDir;
-        private String dbFileName;
-        private String dbParams;
-        private String dbUsername;
-        private String dbPassword;
-        private int maxConnections;
-        private int loginTimeout;
-        private int defaultLockTimeout;
-        private int maxMemoryRows;
-
-        public DbProperties maxCacheSize(int maxCacheSize) {
-            this.maxCacheSize = maxCacheSize;
-            return this;
-        }
-
-        public DbProperties dbUrl(String dbUrl) {
-            this.dbUrl = dbUrl;
-            return this;
-        }
-
-        public DbProperties dbFileName(String dbFileName) {
-            this.dbFileName = dbFileName;
-            return this;
-        }
-
-        public DbProperties dbType(String dbType) {
-            this.dbType = dbType;
-            return this;
-        }
-
-        public DbProperties dbDir(String dbDir) {
-            this.dbDir = dbDir;
-            return this;
-        }
-
-        public DbProperties dbParams(String dbParams) {
-            this.dbParams = dbParams;
-            return this;
-        }
-
-        public DbProperties dbUsername(String dbUsername) {
-            this.dbUsername = dbUsername;
-            return this;
-        }
-
-        public DbProperties dbPassword(String dbPassword) {
-            this.dbPassword = dbPassword;
-            return this;
-        }
-
-        public DbProperties maxConnections(int maxConnections) {
-            this.maxConnections = maxConnections;
-            return this;
-        }
-
-        public DbProperties loginTimeout(int loginTimeout) {
-            this.loginTimeout = loginTimeout;
-            return this;
-        }
-
-        public DbProperties defaultLockTimeout(int defaultLockTimeout) {
-            this.defaultLockTimeout = defaultLockTimeout;
-            return this;
-        }
-
-        public DbProperties maxMemoryRows(int maxMemoryRows) {
-            this.maxMemoryRows = maxMemoryRows;
-            return this;
-        }
-
-        @Override
-        public String toString() {
-            return "DbProperties{" +
-                    "maxCacheSize=" + maxCacheSize +
-                    ", dbUrl='" + dbUrl + '\'' +
-                    ", dbType='" + dbType + '\'' +
-                    ", dbDir='" + dbDir + '\'' +
-                    ", dbParams='" + dbParams + '\'' +
-                    ", dbUsername='" + dbUsername + '\'' +
-                    ", dbPassword='" + dbPassword + '\'' +
-                    ", maxConnections=" + maxConnections +
-                    ", loginTimeout=" + loginTimeout +
-                    ", defaultLockTimeout=" + defaultLockTimeout +
-                    ", maxMemoryRows=" + maxMemoryRows +
-                    '}';
-        }
-    }
-
     private JdbcConnectionPool cp;
     private volatile int maxActiveConnections;
     private final String dbUrl;
@@ -199,16 +109,14 @@ public class BasicDb implements DataSource {
     private volatile boolean shutdown = false;
 
     public BasicDb(DbProperties dbProperties) {
-        long maxCacheSize = dbProperties.maxCacheSize;
+        long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
         }
-        String dbUrl = dbProperties.dbUrl;
-        if (dbUrl == null) {
-            //TODO: dbDir must be in constructor params
-            String dbDir = AplCoreRuntime.getInstance().getDbDir(dbProperties.dbDir);
-            String dbFileName = dbProperties.dbFileName;
-            dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.dbType, dbDir + "/" + dbFileName, dbProperties.dbParams);
+        String dbUrl = dbProperties.getDbUrl();
+        if (StringUtils.isBlank(dbUrl)) {
+            String dbFileName = dbProperties.getDbFileName();
+            dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
         }
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
@@ -217,12 +125,12 @@ public class BasicDb implements DataSource {
             dbUrl += ";CACHE_SIZE=" + maxCacheSize;
         }
         this.dbUrl = dbUrl;
-        this.dbUsername = dbProperties.dbUsername;
-        this.dbPassword = dbProperties.dbPassword;
-        this.maxConnections = dbProperties.maxConnections;
-        this.loginTimeout = dbProperties.loginTimeout;
-        this.defaultLockTimeout = dbProperties.defaultLockTimeout;
-        this.maxMemoryRows = dbProperties.maxMemoryRows;
+        this.dbUsername = dbProperties.getDbUsername();
+        this.dbPassword = dbProperties.getDbPassword();
+        this.maxConnections = dbProperties.getMaxConnections();
+        this.loginTimeout = dbProperties.getLoginTimeout();
+        this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
+        this.maxMemoryRows = dbProperties.getMaxMemoryRows();
     }
 
     public void init(DbVersion dbVersion) {
@@ -249,6 +157,7 @@ public class BasicDb implements DataSource {
         }
         try {
             FullTextTrigger.setActive(false);
+            FullTextTrigger.shutdown();
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");

@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 
-@ApplicationScoped
+@Singleton
 public class BlockchainImpl implements Blockchain {
 
     private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();

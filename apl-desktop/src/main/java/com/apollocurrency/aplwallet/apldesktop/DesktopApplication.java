@@ -26,7 +26,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.enterprise.inject.spi.CDI;
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
@@ -49,7 +48,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -61,15 +59,13 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.db.model.Option;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -97,7 +93,6 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
-import javax.enterprise.inject.spi.CDI;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -109,6 +104,7 @@ public class DesktopApplication extends Application {
     private static volatile boolean isLaunched;
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
+    private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -161,10 +157,10 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!Constants.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
-            Option.set("Previous launch APP Version", Constants.VERSION.toString());
+            optionDAO.set("Previous launch APP Version", Constants.VERSION.toString());
             
         }
     }
@@ -391,7 +387,9 @@ public class DesktopApplication extends Application {
             webEngine = browser.getEngine();
 //            webEngine.documentProperty().addListener((ChangeListener<Document>) (prop, oldDoc, newDoc) -> enableFirebug(webEngine));
 
-            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getInstance().getDirProvider().getUserConfigDirectory()));
+// webEngine will use default user data directory
+//            TODO figure out why do we require user config dir here for localstorage
+//            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getInstance().getDirProvider().getUserConfigDirectory()));
 
 //            WebConsoleListener.setDefaultListener(new WebConsoleListener(){
 //                @Override

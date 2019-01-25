@@ -71,6 +71,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
+/**
+ * Used as global access point to all interactions with account and public keys
+ * TODO Required massive refactoring
+ */
 public final class Account {
     private static final Logger LOG = getLogger(Account.class);
     private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
@@ -80,7 +84,7 @@ public final class Account {
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final KeyStore keystore = CDI.current().select(KeyStore.class).get();
+    private static final VaultKeyStore KEYSTORE = CDI.current().select(VaultKeyStore.class).get();
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
             Genesis.loadGenesisAccounts();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -309,13 +313,9 @@ public final class Account {
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
-            propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem") ?
-                    new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir(
-                            blockchainConfig.isTestnet() ?
-                                    propertiesLoader.getStringProperty("apl.testnetDir2FA", "testnet_2fa") :
-                                    propertiesLoader.getStringProperty("apl.dir2FA", "2fa")
-                    )) :
-                    new TwoFactorAuthRepositoryImpl(Db.getDb()),
+            propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem")
+                    ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
+                    : new TwoFactorAuthRepositoryImpl(Db.getDb()),
             propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
 
     static {
@@ -880,7 +880,7 @@ public final class Account {
     }
 
     public static SecretBytesDetails findSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
-        SecretBytesDetails secretBytes = keystore.getSecretBytes(passphrase, accountId);
+        SecretBytesDetails secretBytes = KEYSTORE.getSecretBytes(passphrase, accountId);
 
         if (isMandatory) {
             validateKeyStoreStatus(accountId, secretBytes.getExtractStatus(), "found");
@@ -889,12 +889,12 @@ public final class Account {
         return secretBytes;
     }
 
-    public static KeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
+    public static VaultKeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
         if (isEnabled2FA(accountId)) {
             Status2FA status2FA = disable2FA(accountId, passphrase, code);
             validate2FAStatus(status2FA, accountId);
         }
-        KeyStore.Status status = keystore.deleteSecretBytes(passphrase, accountId);
+        VaultKeyStore.Status status = KEYSTORE.deleteSecretBytes(passphrase, accountId);
         validateKeyStoreStatus(accountId, status, "deleted");
         return status;
     }
@@ -2115,13 +2115,13 @@ public final class Account {
 
     public static GeneratedAccount generateAccount(String passphrase) throws ParameterException {
         GeneratedAccount account = accountGenerator.generate(passphrase);
-        KeyStore.Status status = keystore.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
+        VaultKeyStore.Status status = KEYSTORE.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
         validateKeyStoreStatus(account.getId(), status, "generated");
         return account;
     }
 
-    private static void validateKeyStoreStatus(long accountId, KeyStore.Status status, String notPerformedAction) throws ParameterException {
-        if (status != KeyStore.Status.OK) {
+    private static void validateKeyStoreStatus(long accountId, VaultKeyStore.Status status, String notPerformedAction) throws ParameterException {
+        if (status != VaultKeyStore.Status.OK) {
             LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert2.rsAccount(accountId), status);
             throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
                     status.message));
@@ -2131,11 +2131,11 @@ public final class Account {
     public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {
         return findSecretBytes(accountId, passphrase, true).getSecretBytes();
     }
-    public static Pair<KeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
+    public static Pair<VaultKeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
         if (passphrase == null) {
             passphrase = passphraseGenerator.generate();
         }
-        KeyStore.Status status = keystore.saveSecretBytes(passphrase, secretBytes);
+        VaultKeyStore.Status status = KEYSTORE.saveSecretBytes(passphrase, secretBytes);
         long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
         validateKeyStoreStatus(accountId, status, "imported");
         return new ImmutablePair<>(status, passphrase);

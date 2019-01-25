@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exec.webui;
 
-import com.apollocurrency.aplwallet.apl.util.Zip;
-import com.apollocurrency.aplwallet.apl.util.env.DirProvider;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -10,6 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
+
+import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
 /**
  * Class for handling zip of WebUI
@@ -28,9 +29,9 @@ public class WebUiExtractor implements Callable<Boolean>{
     
     private File findWebUiZip() throws FileNotFoundException{
       File res = null;
-      File dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+File.separator+"lib");
+      File dir = new File(dirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
       if(!dir.exists()){//we are in dev. env or tests
-          dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+"/apl-exec/target/lib");
+          dir = new File(dirProvider.getBinDir().toAbsolutePath()+"/apl-exec/target/lib");
       }
       if(!dir.exists()){
           throw new FileNotFoundException(dir.getAbsolutePath());
@@ -54,9 +55,9 @@ public class WebUiExtractor implements Callable<Boolean>{
     
     private File findTestUiZip() throws FileNotFoundException{
       File res = null;
-      File dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+File.separator+"lib");
+      File dir = new File(dirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
       if(!dir.exists()){//we are in dev. env or tests
-          dir = new File(dirProvider.getBinDirectory().getAbsolutePath()+"/apl-exec/target/lib");
+          dir = new File(dirProvider.getBinDir().toAbsolutePath()+"/apl-exec/target/lib");
       }
       if(!dir.exists()){
           throw new FileNotFoundException(dir.getAbsolutePath());
@@ -79,8 +80,8 @@ public class WebUiExtractor implements Callable<Boolean>{
     }
     
     private File findDest(){
-        File res = new File(dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR);
-        return res;
+        Path res = dirProvider.getAppBaseDir().resolve(WEB_UI_DIR);
+        return res.toFile();
     }
     
     public boolean checkInstalled() throws FileNotFoundException {

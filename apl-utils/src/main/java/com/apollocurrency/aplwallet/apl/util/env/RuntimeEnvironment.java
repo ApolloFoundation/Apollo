@@ -23,18 +23,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
 
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+
 public class RuntimeEnvironment {
 
     public static final String RUNTIME_MODE_ARG = "apl.runtime.mode";
     public static final String DIRPROVIDER_ARG = "apl.runtime.dirProvider";
 
     private static final String osname = System.getProperty("os.name").toLowerCase();
-    private static boolean isHeadless;
-    protected static boolean hasJavaFX;
+    private  boolean isHeadless;
+    protected boolean hasJavaFX;
     private static boolean isServiceMode = false;
     private static RuntimeEnvironment instance = null;
     private Class mainClass=null;
-    
+
     void setup() {
         boolean b;
         try {
@@ -55,20 +57,20 @@ public class RuntimeEnvironment {
         }
         hasJavaFX = b;
         isServiceMode = isServiceMode();
-       
+
     }
-    
+
     public static RuntimeEnvironment getInstance(){
         if(instance==null){
             instance = new RuntimeEnvironment();
         }
         return instance;
     }
-    
+
     private RuntimeEnvironment(){
          setup();
     }
-    
+
     public boolean isWindowsRuntime() {
         return osname.startsWith("windows");
     }
@@ -127,17 +129,8 @@ public class RuntimeEnvironment {
         return isDesktopEnabled() && hasJavaFX;
     }
 
-    public DirProvider getDirProvider() {
-        if (isWindowsRuntime()) {
-            return new WindowsUserDirProvider(isServiceMode);
-        }
-        if (isUnixRuntime()) {
-            return new UnixUserDirProvider(isServiceMode);
-        }
-        if (isMacRuntime()) {
-            return new MacUserDirProvider(isServiceMode);
-        }
-        return new DirProvider(isServiceMode);
+    public static DirProvider getDirProvider() {
+        return null;
     }
 
     public void setMain(Class aClass) {

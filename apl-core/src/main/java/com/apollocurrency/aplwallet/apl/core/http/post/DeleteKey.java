@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStore;
+import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -33,7 +33,7 @@ public class DeleteKey extends AbstractAPIRequestHandler {
         long accountId = ParameterParser.getAccountId(request, true);
         String passphrase = ParameterParser.getPassphrase(request, true);
         int code = ParameterParser.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
-        KeyStore.Status status = Account.deleteAccount(accountId, passphrase, code);
+        VaultKeyStore.Status status = Account.deleteAccount(accountId, passphrase, code);
         JSONObject response = new JSONObject();
         response.put("status", status);
         JSONData.putAccount(response, "account", accountId);
