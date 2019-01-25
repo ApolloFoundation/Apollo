@@ -33,10 +33,15 @@
         
 <!-- Swagger annotation for API auto-documenting --> 
         <dependency>
-            <groupId>io.swagger</groupId>
+            <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-models</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+
 <!-- unit tests  -->
         <dependency>
             <groupId>org.junit.platform</groupId>

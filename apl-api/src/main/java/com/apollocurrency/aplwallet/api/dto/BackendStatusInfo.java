@@ -3,15 +3,14 @@
  */
 package com.apollocurrency.aplwallet.api.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  *
  * @author alukin@gmail.com
  */
-@ApiModel
+@Schema(name="BackStatusInfo", description="Information about backend state")
 public class BackendStatusInfo {
-    @ApiModelProperty(value = "Some parameter of backend", allowEmptyValue = true)       
+    @Schema(name="Some param", description="Description for param")
     public String whatever;
 }

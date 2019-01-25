@@ -5,9 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.BackendStatusResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.BackendControlService;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -46,15 +47,16 @@ public class BackendControlEndpoint {
     @Path("/status")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns backend status",
-            notes = "Returns backend status for each running core"
+    @Operation(summary = "Returns backend status",
+            description = "Returns backend status for each running core"
             + " Status is updated by core on event base",
-            response = BackendStatusResponse.class)
-    @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "Successful execution", response = BackendStatusResponse.class)
-    })
-
+            tags = {"blockchain"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = BackendStatusResponse.class)))
+            }
+    )
     public Response getBackendStatus(@QueryParam("detailed") @DefaultValue("false") Boolean detailed) {
         BackendStatusResponse statusResponse = new BackendStatusResponse();
         statusResponse.message = "Seems that server is OK :) TODO: fill with resl data";

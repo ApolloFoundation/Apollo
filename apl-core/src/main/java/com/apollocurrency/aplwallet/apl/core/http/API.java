@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -62,6 +63,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -94,6 +98,7 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
 
 public final class API {
@@ -348,13 +353,13 @@ public final class API {
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
 //TODO: implement this later
-//            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-//                    new StringJoiner(",")
-//                            .add(ConstraintViolationExceptionMapper.class.getName())
-//                            .add(ParameterExceptionMapper.class.getName())
-//                            .add(RestParameterExceptionMapper.class.getName())
-//                            .toString()
-//            );
+            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
+                    new StringJoiner(",")
+                            .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ParameterExceptionMapper.class.getName())
+                            .add(RestParameterExceptionMapper.class.getName())
+                            .toString()
+            );
 
             String restEasyAppClassName = RestEasyApplication.class.getName();
             restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);

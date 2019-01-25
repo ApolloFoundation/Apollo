@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.BackendStatusInfo;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  *
@@ -16,11 +16,10 @@ public class BackendStatusResponse extends ResponseBase{
     /**
      * Message from server side to be displayed
      */
-   @ApiModelProperty(value = "Message from server side to be displayed", allowEmptyValue = true)    
-   public String message;
+    @Schema(name="DifferentModel", description="Sample model for the documentation")
+    public String message;
     /**
      * Actual backend info
      */  
-   @ApiModelProperty(value = "Actual backend info", allowEmptyValue = true)
-   public BackendStatusInfo backendInfo;
+    public BackendStatusInfo backendInfo;
 }
