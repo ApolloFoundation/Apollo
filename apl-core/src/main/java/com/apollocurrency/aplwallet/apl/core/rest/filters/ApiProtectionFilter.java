@@ -41,7 +41,7 @@ public class ApiProtectionFilter implements Filter{
     private boolean isProtected(String path){
         boolean res=false;
         for(String p: protectedPaths){
-            if(path.endsWith(p)){
+            if(path!=null && path.endsWith(p)){
                 res = true;
                 break;
             }
@@ -51,10 +51,11 @@ public class ApiProtectionFilter implements Filter{
     
     private boolean isLocal(String host, String ipAddr){
         boolean res = false;
-        if(host.equalsIgnoreCase("localhost")
+        if(host!=null && ipAddr!=null && (host.equalsIgnoreCase("localhost")
            || ipAddr.equalsIgnoreCase("127.0.0.1")
+           || ipAddr.endsWith("0:1")
            || ipAddr.endsWith("::1")
-        )
+        ))
         {
             res=true;
         }

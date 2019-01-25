@@ -68,7 +68,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.env.ResourcePaths;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.URL;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -285,7 +284,7 @@ public final class API {
                 apiHandler.setWelcomeFiles(wellcome);
             }
 
-//TODO: we do not have outdated Javadoc. We have to serve it by Maven
+//TODO: we removed outdated Javadoc. We have to serve it by Maven
 //            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
 //            if (javadocResourceBase != null) {
 //                ContextHandler contextHandler = new ContextHandler("/doc");
