@@ -139,9 +139,11 @@ public final class API {
 
         while (!Thread.currentThread().isInterrupted()) {
             synchronized (API.class) {
-                byte[] seed = Crypto.getSecureRandom().generateSeed(32);
-                privateKey = Crypto.getPrivateKey(seed);
-                publicKey = Crypto.getPublicKey(seed);
+                byte[] keyBytes = new byte[32];
+                Crypto.getSecureRandom().nextBytes(keyBytes);
+                byte[] keySeed = Crypto.getKeySeed(keyBytes);
+                privateKey = Crypto.getPrivateKey(keySeed);
+                publicKey = Crypto.getPublicKey(keySeed);
             }
             try {
                 TimeUnit.MINUTES.sleep(10);
@@ -205,7 +207,7 @@ public final class API {
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
-            threadPool.setName("API thread pool");
+            threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
             ServerConnector connector;
             boolean enableSSL = propertiesLoader.getBooleanProperty("apl.apiSSL");
@@ -334,7 +336,7 @@ public final class API {
               FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
               filterHolder.setAsyncSupported(true);
               filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
-              filterHolder.setAsyncSupported(true);            
+              filterHolder.setAsyncSupported(true);
             }
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
@@ -347,7 +349,7 @@ public final class API {
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
-            
+
             // --------- ADD REST support servlet (RESTEasy)
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
@@ -395,7 +397,7 @@ public final class API {
             apiServer.setStopAtShutdown(true);
             Log.getRootLogger().setDebugEnabled(true);
 
-            ThreadPool.runBeforeStart("UPnP init and web serving start", () -> {
+            ThreadPool.runBeforeStart("APIInitThread", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {

@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
-import java.io.IOException;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -31,6 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.spi.CDI;
 import java.util.Arrays;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -130,10 +132,10 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
-        
+
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
         dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
-        
+
 // We do not need it yet. this call creates unwanted error messages
 //        if(RuntimeEnvironment.getInstance().isAdmin()){
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
@@ -180,7 +182,7 @@ public class Apollo {
         app.propertiesHolder.init(propertiesLoader.getProperties());
 
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown));
+            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
             app.initAppStatusMsg();
             app.initCore();
             app.launchDesktopApplication();

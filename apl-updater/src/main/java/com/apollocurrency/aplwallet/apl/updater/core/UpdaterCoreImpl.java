@@ -31,6 +31,11 @@ import javax.inject.Singleton;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 @Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
@@ -133,7 +138,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     public void startUpdate(UpdateData updateData) {
         new Thread(() ->
                 performUpdate(updateData),
-                "Updater thread").start();
+                "UpdateExecutor").start();
     }
 
     @Override

@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 public final class AfterStart implements AddOn {
     private static final Logger LOG = getLogger(AfterStart.class);
@@ -38,7 +38,7 @@ public final class AfterStart implements AddOn {
     public void init() {
         String afterStartScript = propertiesHolder.getStringProperty("apl.afterStartScript");
         if (afterStartScript != null) {
-            ThreadPool.runAfterStart("After start script", () -> {
+            ThreadPool.runAfterStart("AfterStartScriptRunner", () -> {
                 try {
                     Runtime.getRuntime().exec(afterStartScript);
                 } catch (Exception e) {
