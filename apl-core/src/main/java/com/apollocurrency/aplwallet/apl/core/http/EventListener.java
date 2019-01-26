@@ -43,7 +43,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;

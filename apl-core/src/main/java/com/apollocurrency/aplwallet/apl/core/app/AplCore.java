@@ -53,16 +53,19 @@ import org.slf4j.Logger;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
-
-    private static ChainIdService chainIdService;
-
+    
+//those vars needed to just pull CDI to crerate it befor we gonna use it in threads
+    private  ChainIdService chainIdService;
+    private AbstractBlockValidator bcValidator;
+    
     private static volatile boolean shutdown = false;
 
     private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final BlockchainConfig blockchainConfig;
+    private BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+
 
     public AplCore(BlockchainConfig config) {
         this.blockchainConfig = config;
@@ -127,8 +130,11 @@ public final class AplCore {
             try {
                 long startTime = System.currentTimeMillis();
                 chainIdService = CDI.current().select(ChainIdService.class).get();
+                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
 
+//TODO: check, may be we still need this 
+//                this.blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -145,6 +151,7 @@ public final class AplCore {
 
                 blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToLatestConfig();
+
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
@@ -193,8 +200,8 @@ public final class AplCore {
                 Generator.init();
                 AddOns.init();
                 AppStatus.getInstance().update("API initialization...");
-                API.init();
                 DebugTrace.init();
+                API.init();
                 int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
                         ".timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);

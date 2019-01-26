@@ -89,8 +89,8 @@
         <weld.version>3.0.5.Final</weld.version>
         <weld-junit5.version>1.3.1.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>3.6.1.Final</resteasy.version>
-        <swagger.version>1.5.21</swagger.version>
+        <resteasy.version>3.6.2.Final</resteasy.version>
+        <swagger.version>2.0.6</swagger.version>
         <junit-5-bom.version>5.3.1</junit-5-bom.version>
         <hikari.version>3.2.0</hikari.version>
         <jcommander.version>1.72</jcommander.version>
@@ -175,6 +175,12 @@
                 <groupId>io.firstbridge</groupId>
                 <artifactId>cryptolib</artifactId>
                 <version>${fbcrypto.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -343,13 +349,18 @@
 
             <!-- Swagger runtime dependencies -->
             <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-jaxrs</artifactId>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-jaxrs2</artifactId>
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.swagger</groupId>
+                <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-annotations</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-models</artifactId>
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
@@ -372,6 +383,10 @@
                     <exclusion>
                         <groupId>org.apache.cxf</groupId>
                         <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>jcl-over-slf4j</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

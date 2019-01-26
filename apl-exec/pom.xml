@@ -44,7 +44,7 @@
             <artifactId>web-wallet</artifactId>
             <version>${web-wallet.version}</version>
             <type>zip</type>       
-        </dependency>                   
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -138,7 +138,7 @@
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}/webui</outputDirectory>
-                                </artifactItem>                                
+                                </artifactItem>
                             </artifactItems>
 <!--                            <outputDirectory>${project.build.directory}/wars</outputDirectory> -->
                             <overWriteReleases>true</overWriteReleases>

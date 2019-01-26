@@ -10,13 +10,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
     private BlockDao blockDao;
     protected BlockchainConfig blockchainConfig;
-
+    
+    @Inject
     public AbstractBlockValidator(BlockDao blockDao, BlockchainConfig blockchainConfig) {
         Objects.requireNonNull(blockDao, "BlockDao is null");
         Objects.requireNonNull(blockchainConfig, "Blockchain config is null");

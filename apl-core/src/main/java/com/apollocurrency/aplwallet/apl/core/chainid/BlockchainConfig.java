@@ -8,7 +8,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 
 /**
@@ -38,6 +38,7 @@ import org.slf4j.Logger;
  * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
  * blockTime, adaptiveBlockTime, maxBalance and so on</p>
  */
+
 @Singleton
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
