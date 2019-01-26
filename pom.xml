@@ -126,6 +126,9 @@
             <build>
                 <resources>
                     <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                    <resource>
                         <directory>src/main/resources-dev</directory>
                     </resource>
                 </resources>
@@ -142,6 +145,9 @@
             </properties>
             <build>
                 <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
                     <resource>
                         <directory>src/main/resources-dev</directory>
                     </resource>
@@ -161,6 +167,9 @@
             </properties>
             <build>
                 <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
                     <resource>
                         <directory>src/main/resources-prod</directory>
                     </resource>
