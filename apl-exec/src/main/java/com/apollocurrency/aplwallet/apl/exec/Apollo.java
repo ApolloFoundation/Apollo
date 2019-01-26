@@ -5,6 +5,8 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
+import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -24,6 +26,8 @@ import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.enterprise.inject.spi.CDI;
+import java.util.Arrays;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -64,6 +68,7 @@ public class Apollo {
         
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
         core = new AplCore(CDI.current().select(BlockchainConfig.class).get());
+
         AplCoreRuntime.getInstance().addCore(core);
         core.init();
     }
@@ -127,14 +132,18 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
-        System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
+
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
+        dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
 
+// We do not need it yet. this call creates unwanted error messages
+//        if(RuntimeEnvironment.getInstance().isAdmin()){
+//            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
+//        }
+        System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
 
-        if(RuntimeEnvironment.getInstance().isAdmin()){
-            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
-        }
 //load configuration files        
+
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME);
         propertiesLoader = new PropertiesLoader(configDirProvider,
                 args.isResourceIgnored(),
@@ -144,6 +153,7 @@ public class Apollo {
         dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
+
         log = LoggerFactory.getLogger(Apollo.class);
 //check webUI
         System.out.println("=== Bin directory is: "+dirProvider.getBinDir().toAbsolutePath());
@@ -160,13 +170,16 @@ public class Apollo {
             runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         }
         runtimeMode.init();
-        //inti CDI container
+        //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
                 .recursiveScanPackages(Updater.class)
+                .recursiveScanPackages(ServerInfoEndpoint.class)
+                .recursiveScanPackages(ServerInfoService.class)
                 .annotatedDiscoveryMode().build();
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        app.propertiesHolder.init(propertiesLoader.getProperties());
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));

@@ -28,16 +28,52 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_A
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.net.URL;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -58,69 +94,42 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
 
     // TODO: YL remove static instance later
-   // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
-    public static final int openAPIPort;
-    public static final int openAPISSLPort;
-    public static final boolean isOpenAPI;
-    public static final List<String> disabledAPIs;
-    public static final List<APITag> disabledAPITags;
+    public static int openAPIPort;
+    public static int openAPISSLPort;
+    public static boolean isOpenAPI;
+    public static List<String> disabledAPIs;
+    public static List<APITag> disabledAPITags;
 
-    private static final Set<String> allowedBotHosts;
-    private static final List<NetworkAddress> allowedBotNets;
+    private static Set<String> allowedBotHosts;
+    private static List<NetworkAddress> allowedBotNets;
     private static final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     public static final String adminPassword = propertiesLoader.getStringProperty("apl.adminPassword", "", true);
-    public static final boolean disableAdminPassword;
+    public static boolean disableAdminPassword;
     public static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
     static final boolean enableAPIUPnP = propertiesLoader.getBooleanProperty("apl.enableAPIUPnP");
     public static final int apiServerIdleTimeout = propertiesLoader.getIntProperty("apl.apiServerIdleTimeout");
     public static final boolean apiServerCORS = propertiesLoader.getBooleanProperty("apl.apiServerCORS");
     private static final String forwardedForHeader = propertiesLoader.getStringProperty("apl.forwardedForHeader");
 
-    private static final Server apiServer;
+    private static Server apiServer;
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
@@ -152,7 +161,8 @@ public final class API {
         return privateKey;
     }
 
-    static {
+    public static void init() {
+//    static {
         serverKeysGenerator.setDaemon(true);
         List<String> disabled = new ArrayList<>(propertiesLoader.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
@@ -186,6 +196,7 @@ public final class API {
         }
 
         boolean enableAPIServer = propertiesLoader.getBooleanProperty("apl.enableAPIServer");
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (enableAPIServer) {
             final int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
             final int sslPort = blockchainConfig.isTestnet() ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
@@ -203,7 +214,6 @@ public final class API {
             //
             // Create the HTTP connector
             //
-
             if (!enableSSL || port != sslPort) {
                 HttpConfiguration configuration = new HttpConfiguration();
                 configuration.setSendDateHeader(false);
@@ -281,16 +291,17 @@ public final class API {
                 apiHandler.setWelcomeFiles(wellcome);
             }
 
-            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
-            if (javadocResourceBase != null) {
-                ContextHandler contextHandler = new ContextHandler("/doc");
-                ResourceHandler docFileHandler = new ResourceHandler();
-                docFileHandler.setDirectoriesListed(false);
-                docFileHandler.setWelcomeFiles(new String[]{"index.html"});
-                docFileHandler.setResourceBase(javadocResourceBase);
-                contextHandler.setHandler(docFileHandler);
-                apiHandlers.addHandler(contextHandler);
-            }
+//TODO: we removed outdated Javadoc. We have to serve it by Maven
+//            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
+//            if (javadocResourceBase != null) {
+//                ContextHandler contextHandler = new ContextHandler("/doc");
+//                ResourceHandler docFileHandler = new ResourceHandler();
+//                docFileHandler.setDirectoriesListed(false);
+//                docFileHandler.setWelcomeFiles(new String[]{"index.html"});
+//                docFileHandler.setResourceBase(javadocResourceBase);
+//                contextHandler.setHandler(docFileHandler);
+//                apiHandlers.addHandler(contextHandler);
+//            }
 
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
@@ -316,8 +327,17 @@ public final class API {
 
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
+//TODO: do we need it at all?
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
+
             apiHandler.addEventListener(new ApiContextListener());
+            // Filter to forward requests to new API
+            {
+              FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
+              filterHolder.setAsyncSupported(true);
+              filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
+              filterHolder.setAsyncSupported(true);
+            }
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
                 filterHolder.setInitParameter("allowedHeaders", "*");
@@ -330,12 +350,52 @@ public final class API {
             }
             disableHttpMethods(apiHandler);
 
+            // --------- ADD REST support servlet (RESTEasy)
+            ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
+            restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
+            restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+//TODO: implement this later
+            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
+                    new StringJoiner(",")
+                            .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ParameterExceptionMapper.class.getName())
+                            .add(RestParameterExceptionMapper.class.getName())
+                            .toString()
+            );
+
+            String restEasyAppClassName = RestEasyApplication.class.getName();
+            restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
+            apiHandler.addServlet(restEasyServletHolder, "/rest/*");
+            // init Weld here
+            apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
+            //need this listener to support scopes properly
+            apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
+
+            //--------- ADD swagger generated docs and API test page
+            // Set the path to our static (Swagger UI) resources
+
+            URL su =  API.class.getResource("/swaggerui");
+            if(su!=null){
+                String resourceBasePath = su.toExternalForm();
+                ContextHandler contextHandler = new ContextHandler("/swagger");
+                ResourceHandler swFileHandler = new ResourceHandler();
+                swFileHandler.setDirectoriesListed(false);
+                swFileHandler.setWelcomeFiles(new String[]{"index.html"});
+                swFileHandler.setResourceBase(resourceBasePath);
+                contextHandler.setHandler(swFileHandler);
+                apiHandlers.addHandler(contextHandler);
+            }else{
+                LOG.warn("Swagger html/js resources not found, swagger UI is off.");
+            }
+
+
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
 
             apiServer.setHandler(apiHandlers);
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
+            Log.getRootLogger().setDebugEnabled(true);
 
             ThreadPool.runBeforeStart("APIInitThread", () -> {
                 try {
@@ -347,9 +407,7 @@ public final class API {
                                 upnp.addPort(((ServerConnector)apiConnector).getPort());
                         }
                     }
-                    APIServlet.initClass();
-                    APIProxyServlet.initClass();
-                    APITestServlet.initClass();
+
                     apiServer.start();
                     if (sslContextFactory != null) {
                         LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
@@ -374,7 +432,7 @@ public final class API {
 
     }
 
-    public static void init() {}
+//    public static void init() {}
 
     public static void shutdown() {
         if (apiServer != null) {

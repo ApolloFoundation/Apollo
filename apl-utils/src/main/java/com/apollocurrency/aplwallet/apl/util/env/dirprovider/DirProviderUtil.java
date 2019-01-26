@@ -5,12 +5,12 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
 /**
  * Util class for dir providers
@@ -22,13 +22,12 @@ public class DirProviderUtil {
      * @return File path denoting path to directory with main executable jar
      */
     public static Path getBinDir() {
-        String res = "";
+        URI res = Paths.get("").toUri();
         try {
             //get location of main app class
-            String path = RuntimeEnvironment.getInstance().getMain().getProtectionDomain().getCodeSource().getLocation().getPath();
-            res = URLDecoder.decode(path, "UTF-8");
+            res = RuntimeEnvironment.getInstance().getMain().getProtectionDomain().getCodeSource().getLocation().toURI();
         }
-        catch (UnsupportedEncodingException ignored) {
+        catch (URISyntaxException ignored) {
         }
         // remove jar name or "classes". Should be location jar directory
         Path createdBinPath = Paths.get(res).getParent().toAbsolutePath();

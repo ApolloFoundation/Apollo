@@ -70,7 +70,9 @@ public class DbMigrationExecutorTest {
         properties.put("apl.batchCommitSize", 100);
         properties.put("apl.testDbPassword", "sa");
         properties.put("apl.testDbUsername", "sa");
-        return new PropertiesHolder(properties);
+        PropertiesHolder ph = new PropertiesHolder();
+        ph.init(properties);
+        return ph;
     }
 
     BlockchainConfig mockBlockchainConfig() {

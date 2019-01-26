@@ -34,6 +34,7 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -562,6 +563,7 @@ public final class FundingMonitor {
     /**
      * Process pending account event
      */
+    @Vetoed
     private static class ProcessEvents extends Thread {
 
         /**
