@@ -6,11 +6,6 @@ package com.apollocurrency.aplwallet.apl.updater.core;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
@@ -31,6 +26,11 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
@@ -134,7 +134,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     public void startUpdate(UpdateData updateData) {
         new Thread(() ->
                 performUpdate(updateData),
-                "Updater thread").start();
+                "UpdateExecutor").start();
     }
 
     @Override
