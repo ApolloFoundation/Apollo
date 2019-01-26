@@ -20,15 +20,16 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	Dim oShell
 	Set oShell = WScript.CreateObject ("WScript.Shell")
 	oShell.Run "taskkill /f /im ""java.exe""", , True
-rem        oShell.CurrentDirectory = WScript.Arguments(0)
-rem	WScript.Echo WScript.Arguments(1)
-rem    	objShell.Run "make_transport_shortcut.vbs" & " " & chr(34) & WScript.Arguments(0) & chr(34) & "\.."
-	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
-	oShell.Run "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
+	WScript.Echo "Waiting 3 sec"
+	WScript.Sleep 3000
+	oShell.Run "taskkill /f /im ""java.exe""", , True
+rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
+	oShell.CurrentDirectory = WScript.Arguments(1)
+rem	oShell.Run "install_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34), 1, True
 
 	WScript.Echo "Copy update files"
 
-    Set fso = CreateObject("Scripting.FileSystemObject")
+	Set fso = CreateObject("Scripting.FileSystemObject")
 	Set objFolder = fso.GetFolder(WScript.Arguments(1))
 
 	Wscript.Echo objFolder.Path
