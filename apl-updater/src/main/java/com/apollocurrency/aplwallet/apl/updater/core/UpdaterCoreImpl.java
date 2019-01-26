@@ -24,8 +24,12 @@ import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import javax.inject.Singleton;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -157,6 +161,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
         setUpdateInfo(updater.getUpdateInfo());
+        getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }
