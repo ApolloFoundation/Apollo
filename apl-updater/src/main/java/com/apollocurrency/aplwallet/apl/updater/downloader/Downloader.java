@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.updater.downloader;
 
-import java.nio.file.Path;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 
-import com.apollocurrency.aplwallet.apl.updater.DownloadInfo;
+import java.nio.file.Path;
 
 public interface Downloader {
     Path tryDownload(String uri, byte[] hash);
