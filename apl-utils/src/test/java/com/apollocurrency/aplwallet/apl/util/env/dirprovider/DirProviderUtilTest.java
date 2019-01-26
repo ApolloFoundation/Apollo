@@ -8,13 +8,14 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class DirProviderUtilTest {
     @BeforeEach
@@ -22,10 +23,10 @@ public class DirProviderUtilTest {
         RuntimeEnvironment.getInstance().setMain(this.getClass());
     }
     @Test
-    public void testGetBinDirectory() {
+    public void testGetBinDirectory() throws URISyntaxException {
         Path binDir = DirProviderUtil.getBinDir();
         String userDir =
-                Paths.get(this.getClass().getClassLoader().getResource("").getPath()).getParent().getParent().getParent().toAbsolutePath().toString();
+                Paths.get(this.getClass().getClassLoader().getResource("").toURI()).getParent().getParent().getParent().toAbsolutePath().toString();
         Assertions.assertEquals(userDir, binDir.toAbsolutePath().toString());
     }
 }
