@@ -4,7 +4,7 @@
 # this can reveal the fact that you are running Apl, however blocks and
 # transactions will be sent over tor only. Requires a tor proxy running
 # at localhost:9050. Set apl.shareMyAddress=false when using tor.
-
+# Run secure transport on Linux/MacOs. Required for Linux/MacOs installer.
 if [ -x jre/bin/java ]; then
     JAVA=./jre/bin/java
 else

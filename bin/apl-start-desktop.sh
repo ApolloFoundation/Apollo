@@ -1,11 +1,13 @@
 #!/bin/sh
-APPLICATION="apl-clone"
+# This script required for running application with desktop GUI on Linux/MacOs
+# Required for Linux/MacOs installer
+APPLICATION="apl-blockchain"
 if [ -e ~/.${APPLICATION}/apl.pid ]; then
     PID=`cat ~/.${APPLICATION}/apl.pid`
     ps -p $PID > /dev/null
     STATUS=$?
     if [ $STATUS -eq 0 ]; then
-        echo "Apl server already running"
+        echo "apl-blockchain server already running"
         exit 1
     fi
 fi

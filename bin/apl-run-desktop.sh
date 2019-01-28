@@ -1,4 +1,7 @@
 #!/bin/sh
+# This script is used for starting application with desktop UI on clients machines.
+# Required for Linux/MacOS installer
+# Possible duplicate of apl-desktop.sh
 if [ -x jre/bin/java ]; then
     JAVA=./jre/bin/java
 else

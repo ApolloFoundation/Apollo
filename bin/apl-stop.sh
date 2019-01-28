@@ -1,6 +1,6 @@
 #!/bin/sh
 # (C) 2019 Apollo Foundation 
-# Starts Apollo blockchain in foreground
+# Stop apl-blockchain application, which was run by apl-start.sh script
 
 SCRIPT=`realpath -s $0`
 DIR=`dirname $SCRIPT`

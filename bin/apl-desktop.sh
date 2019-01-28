@@ -1,6 +1,7 @@
 #!/bin/sh
 # (C) 2019 Apollo Foundation 
-# 
+# This script is used for starting application with desktop UI on clients machines.
+# Required for Linux/MacOS installer
 SCRIPT=`realpath -s $0`
 SCRIPT_DIR=`dirname $SCRIPT`
 TOP_DIR=`dirname $SCRIPT_DIR`

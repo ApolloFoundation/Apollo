@@ -1,6 +1,7 @@
 #!/bin/sh
 # (C) 2019 Apollo Foundation 
 # Starts Apollo blockchain in background
+# Required for Linux/MacOs installer.
 
 SCRIPT=`realpath -s $0`
 DIR=`dirname $SCRIPT`
