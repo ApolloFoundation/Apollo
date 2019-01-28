@@ -1,4 +1,6 @@
 #!/bin/sh
+# (C) 2019 Apollo Foundation 
+# 
 SCRIPT=`realpath -s $0`
 SCRIPT_DIR=`dirname $SCRIPT`
 TOP_DIR=`dirname $SCRIPT_DIR`
