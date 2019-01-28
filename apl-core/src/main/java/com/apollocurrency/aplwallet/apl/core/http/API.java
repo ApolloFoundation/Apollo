@@ -134,9 +134,10 @@ public final class API {
     private static URI welcomePageUri;
     private static URI serverRootUri;
     //TODO: remove static context
-    private static final UPnP upnp = UPnP.getInstance();    
-    private static Thread serverKeysGenerator = new Thread(() -> {
+    private static final UPnP upnp = UPnP.getInstance(); 
 
+//TODO: remove this as soon as Al Gamal is ready!    
+    private static Thread serverKeysGenerator = new Thread(() -> {
         while (!Thread.currentThread().isInterrupted()) {
             synchronized (API.class) {
                 byte[] keyBytes = new byte[32];
@@ -291,18 +292,6 @@ public final class API {
                 apiHandler.setWelcomeFiles(wellcome);
             }
 
-//TODO: we removed outdated Javadoc. We have to serve it by Maven
-//            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
-//            if (javadocResourceBase != null) {
-//                ContextHandler contextHandler = new ContextHandler("/doc");
-//                ResourceHandler docFileHandler = new ResourceHandler();
-//                docFileHandler.setDirectoriesListed(false);
-//                docFileHandler.setWelcomeFiles(new String[]{"index.html"});
-//                docFileHandler.setResourceBase(javadocResourceBase);
-//                contextHandler.setHandler(docFileHandler);
-//                apiHandlers.addHandler(contextHandler);
-//            }
-
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
                     null, Math.max(propertiesLoader.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
@@ -354,7 +343,7 @@ public final class API {
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
-//TODO: implement this later
+
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
@@ -395,9 +384,9 @@ public final class API {
             apiServer.setHandler(apiHandlers);
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
-            Log.getRootLogger().setDebugEnabled(true);
+//            Log.getRootLogger().setDebugEnabled(true);
 
-            ThreadPool.runBeforeStart("APIInitThread", () -> {
+//            ThreadPool.runBeforeStart("APIInitThread", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {
@@ -419,7 +408,7 @@ public final class API {
                     throw new RuntimeException(e.toString(), e);
                 }
 
-            }, true);
+          //  }, true);
 
         } else {
             apiServer = null;
