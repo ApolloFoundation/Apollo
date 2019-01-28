@@ -15,6 +15,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,12 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 public class ApiSplitFilter implements Filter{
-     
+    /**
+     * this is just a "fuse" to disable API calls while core is starting.
+     * Should be removed as soon as all API will be on RestEasy
+     */
+    public static boolean isCoreReady = false;
+    
     static final Logger logger = LoggerFactory.getLogger(ApiSplitFilter.class);
     
     @Override
@@ -54,7 +60,11 @@ public class ApiSplitFilter implements Filter{
         String forwardUri = NewApiRegistry.getRestPath(rqType);
         if(forwardUri != null && !forwardUri.isEmpty()){
            logger.trace("Request "+rqType+" forwarded to: "+forwardUri);
-           rq.getRequestDispatcher(forwardUri).forward(request, response);
+           if(isCoreReady){
+            rq.getRequestDispatcher(forwardUri).forward(request, response);
+           }else{ // Core is not signaled that is its ready to serve requests
+               resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
+           }
            return;
         }
 
