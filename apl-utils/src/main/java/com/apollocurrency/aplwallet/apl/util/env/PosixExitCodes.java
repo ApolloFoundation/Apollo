@@ -1,5 +1,5 @@
 
-package com.apollocurrency.aplwallet.apl.exec;
+package com.apollocurrency.aplwallet.apl.util.env;
 
 /**
  *

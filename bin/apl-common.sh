@@ -15,17 +15,25 @@ APL_LIB_DIR=`realpath -s ${APL_TOP_DIR}/lib`
 if [ -x ${APL_LIB_DIR} ]; then
     echo -n
 else
-    APL_LIB_DIR=${APL_TOP_DIR}/apl-exec/target/lib/
+    APL_LIB_DIR=${APL_TOP_DIR}/apl-exec/target/lib
 fi
 echo "${ECHO_PREFIX} Apollo wallet libraries installed in directory: ${APL_LIB_DIR}"
 
+#determine version
+vers=`ls ${APL_LIB_DIR}/apl-utils*`
+vers=`basename $vers`
+vers=${vers##apl-utils-}
+APL_VERSION=${vers%%.jar}
+echo "${ECHO_PREFIX} Apollo verions is: ${APL_VERSION}"
+
+
 MAIN_JAR=${APL_TOP_DIR}/Apollo.jar
-MAIN_GUI_JAR=${APL_TOP_DIR}/ApolloGUI.jar
+MAIN_GUI_JAR=${APL_LIB_DIR}/apl-desktop-${APL_VERSION}.jar
 if [ -r ${MAIN_JAR} ]; then
     echo -n
 else
     MAIN_JAR=${APL_TOP_DIR}/apl-exec/target/Apollo.jar
-    MAIN_JAR=${APL_TOP_DIR}/apl-desktop/target/ApolloGUI.jar
+    MAIN_GUI_JAR=${APL_TOP_DIR}/apl-desktop/target/apl-desktop-${APL_VERSION}.jar
 fi
 echo "${ECHO_PREFIX} Apollo main jar path: ${MAIN_JAR}"
 
