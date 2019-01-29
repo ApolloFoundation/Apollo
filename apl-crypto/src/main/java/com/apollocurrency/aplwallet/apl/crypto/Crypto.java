@@ -20,6 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import io.firstbridge.cryptolib;
+import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
+import io.firstbridge.cryptolib.FBCryptoParams;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.bouncycastle.crypto.CipherParameters;
@@ -36,6 +42,7 @@ import org.slf4j.Logger;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -325,6 +332,22 @@ public final class Crypto {
 
     public static boolean isCanonicalSignature(byte[] signature) {
         return Curve25519.isCanonicalSignature(signature);
+    }
+    
+    public static PublicKey getElGamalSharedKey(){
+        FBCryptoParams params = FBCryptoParams.createDefault();
+        try
+        {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DiffieHellman");
+            KeyPair kpAlice = keyGen.genKeyPair();
+            AsymJCEElGamalImpl instance1 = new AsymJCEElGamalImpl(params);
+            return kpAlice.getPublic();
+        }
+        catch (NoSuchAlgorithmException e){
+            e.printStackTrace();
+        }
+                
+        return null;
     }
 
 }
