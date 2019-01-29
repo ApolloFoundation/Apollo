@@ -42,6 +42,6 @@ do
 	gzip -9c "$f" > "$f".gz
 done
 echo zip
-zip -q -X -r ${PACKAGE} ${APPLICATION} -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml ${APPLICATION}/conf/apl.properties ${APPLICATION}/conf/logging.properties ${APPLICATION}/conf/localstorage/\*
+zip -q -X -r ${PACKAGE} ${APPLICATION} -x \*/.idea/\* \*/.gitignore \*/.git/\* \*/\*.log \*.iml ${APPLICATION}/conf/apl-blockchain.properties ${APPLICATION}/conf/logging.properties ${APPLICATION}/conf/localstorage/\*
 rm -rf ${APPLICATION}
 echo done

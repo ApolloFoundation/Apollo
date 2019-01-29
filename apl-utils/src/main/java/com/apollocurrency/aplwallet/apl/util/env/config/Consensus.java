@@ -2,11 +2,11 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.chainid;
-
-import java.util.Objects;
+package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 @JsonPropertyOrder({"type", "adaptiveForgingSettings"})
 public class Consensus {

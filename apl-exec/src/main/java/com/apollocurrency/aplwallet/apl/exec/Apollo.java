@@ -4,7 +4,6 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -13,9 +12,11 @@ import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
+import com.apollocurrency.aplwallet.apl.util.env.config.ConfigLoader;
+import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -24,10 +25,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocati
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.enterprise.inject.spi.CDI;
-import java.util.Arrays;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,12 +52,9 @@ public class Apollo {
     
     private static AplCore core;
 
-    private static PropertiesLoader propertiesLoader;
+    private static PropertiesConfigLoader propertiesLoader;
+    private static ChainsConfigLoader chainsConfigLoader;
     private PropertiesHolder propertiesHolder;
-
-    public static PropertiesLoader getPropertiesLoader() {
-        return propertiesLoader;
-    }
 
     private void initCore() {
                 propertiesLoader.loadSystemProperties(
@@ -134,7 +131,6 @@ public class Apollo {
         }
 
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
-        dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
 
 // We do not need it yet. this call creates unwanted error messages
 //        if(RuntimeEnvironment.getInstance().isAdmin()){
@@ -142,15 +138,20 @@ public class Apollo {
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
 
-//load configuration files        
+//load configuration files
+        EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
 
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME);
-        propertiesLoader = new PropertiesLoader(configDirProvider,
+        propertiesLoader = new PropertiesConfigLoader(configDirProvider,
                 args.isResourceIgnored(),
-                args.configDir);
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                Constants.APPLICATION_DIR_NAME + ".properties");
+        chainsConfigLoader = new ChainsConfigLoader(configDirProvider,
+                args.isResourceIgnored(),
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                "chains.json");
 // init application data dir provider
-        EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
+        dirProvider = createDirProvider(envVars.merge(args), args.serviceMode);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 

@@ -13,6 +13,7 @@ public class EnvironmentVariables {
     String vaultKeystoreDir = "";
     String twoFactorAuthDir = "";
     String pidFile = "";
+    String configDir = "";
     private String applicationName;
 
     public EnvironmentVariables(String applicationName) {
@@ -29,6 +30,7 @@ public class EnvironmentVariables {
         vaultKeystoreDir = System.getenv(applicationName + "_VAULT_KEY_DIR");
         pidFile = System.getenv(applicationName + "_PID_FILE");
         twoFactorAuthDir = System.getenv(applicationName + "_2FA_DIR");
+        configDir = System.getenv(applicationName + "_CONFIG_DIR");
     }
 
     public PredefinedDirLocations merge(CmdLineArgs args) {

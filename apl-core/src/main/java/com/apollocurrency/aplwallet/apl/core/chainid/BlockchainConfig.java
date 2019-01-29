@@ -6,8 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -17,17 +27,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.slf4j.Logger;
 
 /**
  * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
@@ -43,36 +45,38 @@ import org.slf4j.Logger;
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
 
-    private final boolean testnet;
-    private final String projectName;
-    private final String accountPrefix;
-    private final String coinSymbol;
-    private final int leasingDelay;
-    private final int minPrunableLifetime;
-    private final boolean enablePruning;
-    private final int maxPrunableLifetime;
+    private boolean testnet;
+    private String projectName;
+    private String accountPrefix;
+    private String coinSymbol;
+    private int leasingDelay;
+    private int minPrunableLifetime;
+    private boolean enablePruning;
+    private int maxPrunableLifetime;
     // lastKnownBlock must also be set in html/www/js/ars.constants.js
-    private final short shufflingProcessingDeadline;
-    private final long lastKnownBlock;
-    private final long unconfirmedPoolDepositAtm;
-    private final long shufflingDepositAtm;
-    private final int guaranteedBalanceConfirmations;
+    private short shufflingProcessingDeadline;
+    private long lastKnownBlock;
+    private long unconfirmedPoolDepositAtm;
+    private long shufflingDepositAtm;
+    private int guaranteedBalanceConfirmations;
     private static BlockchainProcessor blockchainProcessor;
     private static BlockDao blockDao;
 
     private volatile HeightConfig currentConfig;
-    private final Chain chain;
+    private Chain chain;
 
-    @Inject
-    public BlockchainConfig(PropertiesHolder holder, ChainIdService chainIdService) {
-        this(chainIdService,
-             holder.getIntProperty("apl.testnetLeasingDelay", -1),
-             holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
-             holder.getIntProperty("apl.maxPrunableLifetime")
-                );
+    public BlockchainConfig() { //for weld
+//        this(chainIdService,
+//             holder.getIntProperty("apl.testnetLeasingDelay", -1),
+//             holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
+//             holder.getIntProperty("apl.maxPrunableLifetime")
+//                );
     }
-    public BlockchainConfig(ChainIdService chainIdService, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations,
-                            int maxPrunableLifetime) {
+    public void update(PropertiesHolder holder, Chain chain) {
+                holder.getIntProperty("apl.maxPrunableLifetime");
+
+    }
+    public BlockchainConfig(int maxPrunableLifetime) {
 
         try {
             this.chain = chainIdService.getActiveChain();
@@ -84,13 +88,13 @@ public class BlockchainConfig {
         this.projectName                    = chain.getProject();
         this.accountPrefix                  = chain.getPrefix();
         this.coinSymbol                     = chain.getSymbol();
-        this.leasingDelay                   = testnet ? testnetLeasingDelay == -1 ? 1440 : testnetLeasingDelay : 1440;
-        this.minPrunableLifetime            = testnet ? 1440 * 60 : 14 * 1440 * 60;
-        this.shufflingProcessingDeadline    = (short)(testnet ? 10 : 100);
-        this.lastKnownBlock                 = testnet ? 0 : 0;
-        this.unconfirmedPoolDepositAtm      = (testnet ? 50 : 100) * Constants.ONE_APL;
-        this.shufflingDepositAtm            = (testnet ? 7 : 1000) * Constants.ONE_APL;
-        this.guaranteedBalanceConfirmations = testnet ? testnetGuaranteedBalanceConfirmations == -1 ? 1440 : testnetGuaranteedBalanceConfirmations : 1440;
+        this.leasingDelay                   = 1440;
+        this.minPrunableLifetime            = 14 * 1440 * 60;
+        this.shufflingProcessingDeadline    = 100;
+        this.lastKnownBlock                 = 0;
+        this.unconfirmedPoolDepositAtm      = 100 * Constants.ONE_APL;
+        this.shufflingDepositAtm            = 1000 * Constants.ONE_APL;
+        this.guaranteedBalanceConfirmations = 1440;
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
     }

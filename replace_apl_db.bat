@@ -1,8 +1,8 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-set "INTEXTFILE=conf\apl.properties"
-set "OUTTEXTFILE=conf\apl.properties_"
-set "OUTTEXTFILE2=conf\apl.properties__"
+set "INTEXTFILE=conf\apl-blockchain.properties"
+set "OUTTEXTFILE=conf\apl-blockchain.properties_"
+set "OUTTEXTFILE2=conf\apl-blockchain.properties__"
 set "SEARCHTEXT=./apl_db/apl"
 set "REPLACETEXT=./apl_db"
 set "SEARCHTEXT2=./apl_test_db/apl"

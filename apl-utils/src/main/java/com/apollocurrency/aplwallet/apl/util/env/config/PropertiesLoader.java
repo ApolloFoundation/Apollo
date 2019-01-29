@@ -1,7 +1,9 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.util.env;
+package com.apollocurrency.aplwallet.apl.util.env.config;
+
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-
 /**
  * Loads properties from different places. Please do not use logger here, it is
  * not ready yet.
@@ -22,14 +22,14 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
  */
 public class PropertiesLoader {
 
-    public static final String DEFAULT_APL_PROPERTIES_FILE_NAME = "apl.properties";
+    public static final String DEFAULT_PROPERTIES_FILE_NAME = "apl-blockchain.properties";
     public static final String DEFAULT_CONFIG_DIR = "conf";
 
     private String[] propFileNames = {
-            DEFAULT_APL_PROPERTIES_FILE_NAME
+            DEFAULT_PROPERTIES_FILE_NAME
     };
     private String configDir = "";
-    private boolean ignoreResources = false;
+    private boolean ignoreResources;
 
     private final ConfigDirProvider dirProvider;
     private final Properties properties = new Properties();

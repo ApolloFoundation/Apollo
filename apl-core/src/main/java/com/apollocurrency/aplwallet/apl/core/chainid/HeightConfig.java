@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import java.math.BigInteger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.config.AdaptiveForgingSettings;
+import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.util.env.config.Consensus;
+
+import java.math.BigInteger;
 
 public class HeightConfig {
     private final int maxNumberOfTransactions;
