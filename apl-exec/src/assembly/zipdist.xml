@@ -15,6 +15,16 @@
             <fileMode>0755</fileMode>          
         </fileSet>
         <fileSet>
+            <directory>${project.basedir}/../sbin</directory>
+            <outputDirectory>sbin</outputDirectory>
+            <fileMode>0755</fileMode>          
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../updater</directory>
+            <outputDirectory>updater</outputDirectory>
+            <fileMode>0755</fileMode>          
+        </fileSet>
+        <fileSet>
             <directory>${project.basedir}/../release-notes/</directory>
             <outputDirectory>doc</outputDirectory>
             <fileMode>0644</fileMode>          
@@ -26,6 +36,10 @@
                 <include>README*</include>
                 <include>LICENSE*</include>
                 <include>CHANGELOG*</include>
+                <include>VERSION</include>
+                <include>Wallet.url</include>
+                <include>favicon.ico</include>
+                <include>3RD-PARTY-LICENSES.txt</include>
             </includes>
         </fileSet>        
         <fileSet>

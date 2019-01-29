@@ -1,3 +1,5 @@
+' This script is used by Updater for Windows to update application directory
+' Update will not started, when user did not grant admin privileges to this script
 Set fso = CreateObject("Scripting.FileSystemObject")
 const ReadOnly = 1
 If Wscript.Arguments.Count > 1 Then

@@ -1,12 +1,10 @@
 #!/bin/sh
-SCRIPT=`realpath -s $0`
-SCRIPT_DIR=`dirname $SCRIPT`
-TOP_DIR=`dirname $SCRIPT_DIR`
-LIB_DIR=`realpath -s ${TOP_DIR}/lib`
+# (C) 2019 Apollo Foundation 
+# Starts Apollo blockchain in foreground
 
-if [ -x ${TOP_DIR}/jre/bin/java ]; then
-    JAVA=${TOP_DIR}/jre/bin/java
-else
-    JAVA=java
-fi
-${JAVA} -jar ${TOP_DIR}/Apollo.jar
+SCRIPT=`realpath -s $0`
+DIR=`dirname $SCRIPT`
+
+ . ${DIR}/apl-common.sh 
+
+${JAVA_CMD} -jar ${MAIN_JAR}
