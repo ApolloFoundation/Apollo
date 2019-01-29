@@ -16,7 +16,7 @@ DIR=`dirname $SCRIPT`
 TOR_DIR=${APL_TOP_DIR}/${TOR_DIST_DIR}
 
 if [ -x ${TOR_DIR} ];  then
-    TOR_CMD="${TOR_DIR}/Browser/start-tor-browser --detach"
+    TOR_CMD="${TOR_DIR}/tor/tor"
 else
   if [[ -n $(type -p tor) ]]
   then

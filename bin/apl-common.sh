@@ -20,10 +20,12 @@ fi
 echo "${ECHO_PREFIX} Apollo wallet libraries installed in directory: ${APL_LIB_DIR}"
 
 MAIN_JAR=${APL_TOP_DIR}/Apollo.jar
+MAIN_GUI_JAR=${APL_TOP_DIR}/ApolloGUI.jar
 if [ -r ${MAIN_JAR} ]; then
     echo -n
 else
     MAIN_JAR=${APL_TOP_DIR}/apl-exec/target/Apollo.jar
+    MAIN_JAR=${APL_TOP_DIR}/apl-desktop/target/ApolloGUI.jar
 fi
 echo "${ECHO_PREFIX} Apollo main jar path: ${MAIN_JAR}"
 
