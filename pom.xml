@@ -49,7 +49,7 @@
 
         <!--Crypto-->
         <fbcrypto.version>1.2.3</fbcrypto.version>
-        <bcprov.version>1.54</bcprov.version>
+        <bcprov.version>1.60</bcprov.version>
 
         <!--QR-code-->
         <zxing.version>3.3.0</zxing.version>
