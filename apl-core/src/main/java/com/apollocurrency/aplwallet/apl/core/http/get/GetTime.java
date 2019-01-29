@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import org.json.simple.JSONObject;
@@ -46,7 +45,7 @@ public final class GetTime extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
         JSONObject response = new JSONObject();
-        response.put("time", AplCore.getEpochTime());
+        response.put("time", timeService.getEpochTime());
 
         return response;
     }

@@ -6,15 +6,11 @@ package com.apollocurrency.aplwallet.apl.updater.core;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -30,7 +26,17 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
     private UpdaterService updaterService;
@@ -57,7 +63,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     }
 
     @Inject
-    public UpdaterCoreImpl(UpdaterMediator updaterMediator) {
+    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator) {
         this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator);
     }
 
@@ -132,7 +138,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     public void startUpdate(UpdateData updateData) {
         new Thread(() ->
                 performUpdate(updateData),
-                "Updater thread").start();
+                "UpdateExecutor").start();
     }
 
     @Override
@@ -155,6 +161,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
         setUpdateInfo(updater.getUpdateInfo());
+        getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }

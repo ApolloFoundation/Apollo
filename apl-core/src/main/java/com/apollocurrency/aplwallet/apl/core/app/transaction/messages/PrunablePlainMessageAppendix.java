@@ -11,10 +11,10 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -27,6 +27,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     private static final String appendixName = "PrunablePlainMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
@@ -134,14 +135,14 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
             throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
         }
-        if (msg == null && AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+        if (msg == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
         }
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (AplCore.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
+        if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
             PrunableMessage.add((TransactionImpl)transaction, this);
         }
     }

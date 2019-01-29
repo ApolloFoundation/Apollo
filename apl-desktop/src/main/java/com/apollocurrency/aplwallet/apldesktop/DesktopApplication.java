@@ -20,45 +20,24 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.net.ssl.HttpsURLConnection;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.db.model.Option;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -86,7 +65,31 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
+
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.enterprise.inject.spi.CDI;
+import javax.net.ssl.HttpsURLConnection;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -98,13 +101,16 @@ public class DesktopApplication extends Application {
     private static volatile boolean isLaunched;
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
+    private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        
     public static void refreshMainApplication() {
         MainApplication.refresh();
     }
-
+    
     private static String getUrl() {
         String url = API.getWelcomePageUri().toString();
         if (url.startsWith("https")) {
@@ -150,10 +156,10 @@ public class DesktopApplication extends Application {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!Constants.VERSION.toString().equals(Option.get("Previous launch APP Version")))
+        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
-            Option.set("Previous launch APP Version", Constants.VERSION.toString());
+            optionDAO.set("Previous launch APP Version", Constants.VERSION.toString());
             
         }
     }
@@ -237,6 +243,7 @@ public class DesktopApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        Thread.currentThread().setName("JavaFXApplicationThread");
         mainStage = primaryStage;
         screenStage = new Stage();
         showSplashScreen();
@@ -311,7 +318,7 @@ public class DesktopApplication extends Application {
                 Platform.runLater(() -> screenStage.hide());
                 shutdown.set(false);
             };
-            Thread updateSplashScreenThread = new Thread(statusUpdater, "Update splash screen status thread");
+            Thread updateSplashScreenThread = new Thread(statusUpdater, "SplashScreenStatusUpdaterThread");
             updateSplashScreenThread.setDaemon(true);
             updateSplashScreenThread.start();
         }
@@ -376,7 +383,9 @@ public class DesktopApplication extends Application {
             webEngine = browser.getEngine();
 //            webEngine.documentProperty().addListener((ChangeListener<Document>) (prop, oldDoc, newDoc) -> enableFirebug(webEngine));
 
-            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getDirProvider().getUserConfigDirectory()));
+// webEngine will use default user data directory
+//            TODO figure out why do we require user config dir here for localstorage
+//            webEngine.setUserDataDirectory(new File(RuntimeEnvironment.getInstance().getDirProvider().getUserConfigDirectory()));
 
 //            WebConsoleListener.setDefaultListener(new WebConsoleListener(){
 //                @Override
@@ -401,7 +410,7 @@ public class DesktopApplication extends Application {
 
                         mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
 
-                        updateClientState("Desktop Wallet started");
+                       // updateClientState("Desktop Wallet started");
 /*                       
                         if (ENABLE_JAVASCRIPT_DEBUGGER) {
                             try {

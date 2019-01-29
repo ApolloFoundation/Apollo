@@ -74,6 +74,9 @@ public class DownloaderImpl implements Downloader {
         return null;
     }
 
+    public DownloadInfo getDownloadInfo() {
+        return info;
+    }
     /**
      * Download file from url and return Path to downloaded file
      * Uses default DownloadExecutor

@@ -141,11 +141,11 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
 
 	class InvalidTransactionException extends BlockNotAcceptedException {
 
-        InvalidTransactionException(String message, BlockImpl block) {
+        InvalidTransactionException(String message, Block block) {
             super(message, block);
         }
 
-        InvalidTransactionException(Throwable cause, BlockImpl block) {
+        InvalidTransactionException(Throwable cause, Block block) {
             super(cause, block);
         }
 

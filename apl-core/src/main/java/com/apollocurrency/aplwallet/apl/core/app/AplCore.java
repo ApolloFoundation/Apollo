@@ -27,7 +27,6 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_P
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -36,9 +35,9 @@ import java.util.Set;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -54,18 +53,20 @@ import org.slf4j.Logger;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
-
-    private static ChainIdService chainIdService;
-
+    
+//those vars needed to just pull CDI to crerate it befor we gonna use it in threads
+    private  ChainIdService chainIdService;
+    private AbstractBlockValidator bcValidator;
+    
     private static volatile boolean shutdown = false;
 
     private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final BlockchainConfig blockchainConfig;
+    private BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
 
-    @Inject
+
     public AplCore(BlockchainConfig config) {
         this.blockchainConfig = config;
     }
@@ -74,41 +75,12 @@ public final class AplCore {
         return shutdown;
     }
  
-/*
-    public static Blockchain getBlockchain() {
-        return blockchain;
-    }
 
-    public static BlockchainProcessor getBlockchainProcessor() {
-        return blockchainProcessor;
-    }
-
-    public static TransactionProcessor getTransactionProcessor() {
-        return TransactionProcessorImpl.getInstance();
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment)attachment);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-    }
-*/
-
-    public static int getEpochTime() {
+    public static int getEpochTime() { // left for awhile
         return time.getTime();
     }
 
-    static void setTime(Time time) {
+    static void setTime(Time time) { // left for awhile
         AplCore.time = time;
     }
 
@@ -118,7 +90,7 @@ public final class AplCore {
         System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
         // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
-        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppHomeDir());
+        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppBaseDir());
 //TODO: Do we really need this check?        
 //        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
@@ -158,11 +130,11 @@ public final class AplCore {
             try {
                 long startTime = System.currentTimeMillis();
                 chainIdService = CDI.current().select(ChainIdService.class).get();
+                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
 
-
-//                blockchainConfig.init();
-//                blockchainConfig.updateToLatestConstants();
+//TODO: check, may be we still need this 
+//                this.blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
@@ -172,15 +144,14 @@ public final class AplCore {
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
                 Db.init();
-//TODO: check: no such file
-  //              ChainIdDbMigration.migrate();
-
-                DbMigratorTask.getInstance().migrateDb();
+                ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
+                migrationManager.executeDataMigration();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
                 blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
-                blockchainConfig.updateToBlock();
+                blockchainConfig.updateToLatestConfig();
+
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
@@ -229,8 +200,8 @@ public final class AplCore {
                 Generator.init();
                 AddOns.init();
                 AppStatus.getInstance().update("API initialization...");
-                API.init();
                 DebugTrace.init();
+                API.init();
                 int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
                         ".timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);

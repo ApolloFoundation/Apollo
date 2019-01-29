@@ -26,9 +26,10 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 //TODO: Make this class true constants holder, move all properties-dependent vars out
 public final class Constants {
-    public static final Version VERSION = new Version("1.26.1");
+    public static final Version VERSION = new Version("1.27.0");
 
     public static final String APPLICATION = "Apollo";
+    public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     // TODO: YL remove static instance later
     private static PropertiesHolder pl = CDI.current().select(PropertiesHolder.class).get();
 

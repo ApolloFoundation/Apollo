@@ -24,27 +24,6 @@ import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
@@ -66,17 +45,38 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.CDI;
+
 @ApplicationScoped
 public class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final boolean enableTransactionRebroadcasting = propertiesLoader.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static final boolean testUnconfirmedTransactions = propertiesLoader.getBooleanProperty("apl.testUnconfirmedTransactions");
@@ -214,7 +214,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
                 try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                        new DbClause.IntClause("expiration", DbClause.Op.LT, AplCore.getEpochTime()), 0, -1, "")) {
+                        new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
                     while (iterator.hasNext()) {
                         expiredTransactions.add(iterator.next());
                     }
@@ -258,9 +258,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     return;
                 }
                 List<Transaction> transactionList = new ArrayList<>();
-                int curTime = AplCore.getEpochTime();
+                int curTime = timeService.getEpochTime();
                 for (TransactionImpl transaction : broadcastedTransactions) {
-                    if (transaction.getExpiration() < curTime || transactionDb.hasTransaction(transaction.getId())) {
+                    if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
                         broadcastedTransactions.remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
                         transactionList.add(transaction);
@@ -350,7 +350,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (!Constants.isLightClient) {
             if (!Constants.isOffline) {
                 ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 5);
-                ThreadPool.runAfterStart("Rebroadcast all unconfirmed txs",this::rebroadcastAllUnconfirmedTransactions);
+                ThreadPool.runAfterStart("InitialUnconfirmedTxsRebroadcasting",this::rebroadcastAllUnconfirmedTransactions);
                 ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
             }
             ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
@@ -459,7 +459,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     public void broadcast(Transaction transaction) throws AplException.ValidationException {
         blockchain.writeLock();
         try {
-            if (transactionDb.hasTransaction(transaction.getId())) {
+            if (blockchain.hasTransaction(transaction.getId())) {
                 LOG.info("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
                 return;
             }
@@ -623,8 +623,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         blockchain.writeLock();
         try {
             for (Transaction transaction : transactions) {
-                CDI.current().select(BlockDb.class).get().getTransactionCache().remove(transaction.getId());
-                if (transactionDb.hasTransaction(transaction.getId())) {
+                blockchain.getTransactionCache().remove(transaction.getId());
+                if (blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
                 ((TransactionImpl)transaction).unsetBlock();
@@ -639,7 +639,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         blockchain.writeLock();
         try {
             if (waitingTransactions.size() > 0) {
-                int currentTime = AplCore.getEpochTime();
+                int currentTime = timeService.getEpochTime();
                 List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
                 Iterator<UnconfirmedTransaction> iterator = waitingTransactions.iterator();
                 while (iterator.hasNext()) {
@@ -685,7 +685,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             try {
                 TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
                 receivedTransactions.add(transaction);
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transactionDb.hasTransaction(transaction.getId())) {
+                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
                 transaction.validate();
@@ -719,7 +719,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException {
         TransactionImpl transaction = unconfirmedTransaction.getTransaction();
-        int curTime = AplCore.getEpochTime();
+        int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
             throw new AplException.NotCurrentlyValidException("Invalid transaction timestamp");
         }
@@ -738,7 +738,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
 
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || transactionDb.hasTransaction(transaction.getId())) {
+                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || blockchain.hasTransaction(transaction.getId())) {
                     throw new AplException.ExistingTransactionException("Transaction already processed");
                 }
 
@@ -834,7 +834,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 //
                 for (Object transactionJSON : transactions) {
                     Transaction transaction = TransactionImpl.parseTransaction((JSONObject)transactionJSON);
-                    Transaction myTransaction = transactionDb.findTransactionByFullHash(transaction.getFullHash());
+                    Transaction myTransaction = blockchain.findTransactionByFullHash(transaction.getFullHash());
                     if (myTransaction != null) {
                         boolean foundAllData = true;
                         //

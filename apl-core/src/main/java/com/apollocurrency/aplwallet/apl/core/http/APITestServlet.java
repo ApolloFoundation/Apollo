@@ -355,6 +355,5 @@ public class APITestServlet extends HttpServlet {
         }
     }
 
-    static void initClass() {}
 
 }

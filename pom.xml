@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.26.1</version>
+    <version>1.27.0</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -20,6 +20,8 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
+<!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->        
+        <module>apl-html</module>
 <!--
      Tt is a whole mess at the moment. commented out. Please!!! Integration test
      SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
@@ -38,13 +40,15 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-
+        <!-- cross-platform zip distribution -->
+        <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-
+        <web-wallet.version>2.4.0</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 
         <!--Crypto-->
+        <fbcrypto.version>1.2.3</fbcrypto.version>
         <bcprov.version>1.54</bcprov.version>
 
         <!--QR-code-->
@@ -57,10 +61,9 @@
         <apache-commons-net.version>3.6</apache-commons-net.version>
 
         <openjfx.version>12-ea+3</openjfx.version>
-        <tika.version>1.13</tika.version>
+        <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
         <jackson.version>2.9.6</jackson.version>
-        <tika.version>1.19.1</tika.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -82,13 +85,12 @@
         <okhttp.version>2.7.5</okhttp.version>
         <!-- TODO: cleanup -->
         <jetty.version>9.4.12.v20180830</jetty.version>
-        <apache-tika.version>1.17</apache-tika.version>
         <bitlet.version>0.1.4</bitlet.version>
         <weld.version>3.0.5.Final</weld.version>
         <weld-junit5.version>1.3.1.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>3.6.1.Final</resteasy.version>
-        <swagger.version>1.5.21</swagger.version>
+        <resteasy.version>3.6.2.Final</resteasy.version>
+        <swagger.version>2.0.6</swagger.version>
         <junit-5-bom.version>5.3.1</junit-5-bom.version>
         <hikari.version>3.2.0</hikari.version>
         <jcommander.version>1.72</jcommander.version>
@@ -124,6 +126,9 @@
             <build>
                 <resources>
                     <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                    <resource>
                         <directory>src/main/resources-dev</directory>
                     </resource>
                 </resources>
@@ -140,6 +145,9 @@
             </properties>
             <build>
                 <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
                     <resource>
                         <directory>src/main/resources-dev</directory>
                     </resource>
@@ -160,6 +168,9 @@
             <build>
                 <resources>
                     <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                    <resource>
                         <directory>src/main/resources-prod</directory>
                     </resource>
                 </resources>
@@ -170,11 +181,22 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.firstbridge</groupId>
+                <artifactId>cryptolib</artifactId>
+                <version>${fbcrypto.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!--Logging-->
+            <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
             </dependency>
-            <!--Logging-->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -336,13 +358,18 @@
 
             <!-- Swagger runtime dependencies -->
             <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-jaxrs</artifactId>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-jaxrs2</artifactId>
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.swagger</groupId>
+                <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-annotations</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-models</artifactId>
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
@@ -365,6 +392,10 @@
                     <exclusion>
                         <groupId>org.apache.cxf</groupId>
                         <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>jcl-over-slf4j</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

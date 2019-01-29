@@ -58,10 +58,10 @@ public final class Generator implements Comparable<Generator> {
 
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
     private static final int MAX_FORGERS = propertiesLoader.getIntProperty("apl.maxNumberOfForgers");
     private static final byte[] fakeForgingPublicKey = propertiesLoader.getBooleanProperty("apl.enableFakeForging") ?
@@ -92,10 +92,10 @@ public final class Generator implements Comparable<Generator> {
                         if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
                             return;
                         }
-                        final int generationLimit = AplCore.getEpochTime() - delayTime;
+                        final int generationLimit = timeService.getEpochTime() - delayTime;
                         if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                             lastBlockId = lastBlock.getId();
-                            if (lastBlock.getTimestamp() > AplCore.getEpochTime() - 600) {
+                            if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
                                 Block previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
                                 for (Generator generator : generators.values()) {
                                     generator.setLastBlock(previousBlock);
@@ -153,13 +153,11 @@ public final class Generator implements Comparable<Generator> {
 
     };
 
-    static {
+    static void init() {
         if (!Constants.isLightClient) {
             ThreadPool.scheduleThread("GenerateBlocks", generateBlocksThread, 500, TimeUnit.MILLISECONDS);
         }
     }
-
-    static void init() {}
 
     public static boolean addListener(Listener<Generator> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -379,7 +377,7 @@ public final class Generator implements Comparable<Generator> {
                     "timestamp " + lastBlock.getTimestamp());
             return false;
         }
-        int start = AplCore.getEpochTime();
+        int start = timeService.getEpochTime();
         while (true) {
             try {
                 blockchainProcessor.generateBlock(keySeed, timestamp  + timeout, timeout, timeoutAndVersion[1]);
@@ -388,7 +386,7 @@ public final class Generator implements Comparable<Generator> {
             }
             catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                 // the bad transaction has been expunged, try again
-                if (AplCore.getEpochTime() - start > 10) { // give up after trying for 10 s
+                if (timeService.getEpochTime() - start > 10) { // give up after trying for 10 s
                     throw e;
                 }
             }
@@ -473,7 +471,7 @@ public final class Generator implements Comparable<Generator> {
         List<ActiveGenerator> generatorList;
         synchronized(activeGenerators) {
             if (!generatorsInitialized) {
-                activeGeneratorIds.addAll(blockDb.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
+                activeGeneratorIds.addAll(blockchain.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
                 activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
                 LOG.debug(activeGeneratorIds.size() + " block generators found");
                 blockchainProcessor.addListener(block -> {

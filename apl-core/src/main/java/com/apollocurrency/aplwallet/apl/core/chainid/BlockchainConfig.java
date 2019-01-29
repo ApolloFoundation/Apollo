@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -20,37 +19,49 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockDb;
+import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+/**
+ * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
+ * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
+ * on current height, change part of config represented by {@link HeightConfig}</p>
+ *
+ * <p>Note that this class is thread-safe and can be used without additional synchronization after {@link BlockchainConfig#init} method call</p>
+ * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
+ * blockTime, adaptiveBlockTime, maxBalance and so on</p>
+ */
+
+@Singleton
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
 
-    private boolean testnet;
-    private String projectName;
-    private String accountPrefix;
-    private String coinSymbol;
-    private int leasingDelay;
-    private int minPrunableLifetime;
-    private boolean enablePruning;
-    private int maxPrunableLifetime;
-    private short shufflingProcessingDeadline;
+    private final boolean testnet;
+    private final String projectName;
+    private final String accountPrefix;
+    private final String coinSymbol;
+    private final int leasingDelay;
+    private final int minPrunableLifetime;
+    private final boolean enablePruning;
+    private final int maxPrunableLifetime;
     // lastKnownBlock must also be set in html/www/js/ars.constants.js
-    private long lastKnownBlock;
-    private long unconfirmedPoolDepositAtm;
-    private long shufflingDepositAtm;
-    private int guaranteedBalanceConfirmations;
+    private final short shufflingProcessingDeadline;
+    private final long lastKnownBlock;
+    private final long unconfirmedPoolDepositAtm;
+    private final long shufflingDepositAtm;
+    private final int guaranteedBalanceConfirmations;
     private static BlockchainProcessor blockchainProcessor;
-    private static BlockDb blockDb;
+    private static BlockDao blockDao;
 
     private volatile HeightConfig currentConfig;
-    private Chain chain;
+    private final Chain chain;
 
     @Inject
     public BlockchainConfig(PropertiesHolder holder, ChainIdService chainIdService) {
@@ -89,12 +100,14 @@ public class BlockchainConfig {
         currentConfig = new HeightConfig(chain.getBlockchainProperties().get(0), testnet);
         ConfigChangeListener configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties());
         lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_PUSHED);
+                BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
         lookupBlockchainProcessor().addListener(configChangeListener,
                 BlockchainProcessor.Event.BLOCK_POPPED);
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_SCANNED);
         LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+    }
+
+    public void reset() {
+        updateToHeight(0, true);
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -104,21 +117,22 @@ public class BlockchainConfig {
         return blockchainProcessor;
     }
 
-    private BlockDb lookupBlockDb() {
-        if (blockDb == null) {
-            blockDb = CDI.current().select(BlockDb.class).get();
+    private BlockDao lookupBlockDao() {
+        if (blockDao == null) {
+            blockDao = CDI.current().select(BlockDaoImpl.class).get();
         }
-        return blockDb;
+        return blockDao;
     }
 
-    public void updateToBlock() {
-        Block lastBlock = lookupBlockDb().findLastBlock();
+    public void updateToLatestConfig() {
+        Block lastBlock = lookupBlockDao().findLastBlock();
         if (lastBlock == null) {
             LOG.debug("Nothing to update. No blocks");
             return;
         }
         updateToHeight(lastBlock.getHeight(), true);
     }
+
     private void updateToHeight(int height, boolean inclusive) {
         Objects.requireNonNull(chain);
 
@@ -170,9 +184,9 @@ public class BlockchainConfig {
         public void notify(Block block) {
             int currentHeight = block.getHeight();
             if (targetHeights.contains(currentHeight)) {
-                LOG.info("Updating constants at height {}", currentHeight);
+                LOG.info("Updating chain config at height {}", currentHeight);
                 currentConfig = new HeightConfig(propertiesMap.get(currentHeight), testnet);
-                LOG.info("New constants applied: {}", currentConfig);
+                LOG.info("New config applied: {}", currentConfig);
             }
         }
     }

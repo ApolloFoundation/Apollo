@@ -6,16 +6,16 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 
-@ApplicationScoped
+@Singleton
 public class PropertiesHolder {
     
     private static final Logger LOG = getLogger(PropertiesHolder.class);
@@ -23,16 +23,13 @@ public class PropertiesHolder {
     private Properties properties;
 
     public PropertiesHolder() {
+        LOG.error("Empty constructor called, which is must not be called!");
     }
 
-
-    public PropertiesHolder(Properties properties) {
+    public void init(Properties properties){
         this.properties = properties;
     }
 
-//    public void init(Properties p){
-//        properties = p;
-//    }
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }
@@ -79,9 +76,12 @@ public class PropertiesHolder {
     }
 
     public List<String> getStringListProperty(String name) {
+        return getStringListProperty(name, Collections.emptyList());
+    }
+    public List<String> getStringListProperty(String name, List<String> defaultValue) {
         String value = getStringProperty(name);
         if (value == null || value.length() == 0) {
-            return Collections.emptyList();
+            return defaultValue;
         }
         List<String> result = new ArrayList<>();
         for (String s : value.split(";")) {
@@ -90,7 +90,7 @@ public class PropertiesHolder {
                 result.add(s);
             }
         }
-        return result;
+        return result.isEmpty() ? defaultValue : result;
     }
 
     public boolean getBooleanProperty(String name) {

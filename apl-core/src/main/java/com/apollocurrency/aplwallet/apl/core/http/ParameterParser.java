@@ -62,6 +62,7 @@ import javax.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -160,11 +161,12 @@ public final class ParameterParser {
             return 0;
         }
         try {
-            long value = Long.parseLong(paramValue);
-            if (value < min || value > max) {
-                throw new ParameterException(incorrect(name, String.format("value %d not in range [%d-%d]", value, min, max)));
+//            using bigInteger to handle all possible numbers
+            BigInteger bigIntegerValue = new BigInteger(paramValue);
+            if (bigIntegerValue.compareTo(BigInteger.valueOf(min)) < 0 || bigIntegerValue.compareTo(BigInteger.valueOf(max)) > 0) {
+                throw new ParameterException(incorrect(name, String.format("value %s not in range [%d-%d]", bigIntegerValue, min, max)));
             }
-            return value;
+            return bigIntegerValue.longValue();
         } catch (RuntimeException e) {
             throw new ParameterException(incorrect(name, String.format("value %s is not numeric", paramValue)));
         }

@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -49,7 +48,7 @@ public final class GetECBlock extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         int timestamp = ParameterParser.getTimestamp(req);
         if (timestamp == 0) {
-            timestamp = AplCore.getEpochTime();
+            timestamp = timeService.getEpochTime();
         }
         Block ecBlock = lookupBlockchain().getECBlock(timestamp);
         JSONObject response = new JSONObject();

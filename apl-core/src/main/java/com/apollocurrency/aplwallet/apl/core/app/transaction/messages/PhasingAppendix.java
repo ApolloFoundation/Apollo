@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDb;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
@@ -37,7 +36,6 @@ public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
 
     private static final String appendixName = "Phasing";
 
@@ -181,7 +179,7 @@ public class PhasingAppendix extends AbstractAppendix {
                 if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                     throw new AplException.NotValidException("Duplicate linked transaction ids");
                 }
-                Transaction linkedTransaction = transactionDb.findTransactionByFullHash(hash, currentHeight);
+                Transaction linkedTransaction = blockchain.findTransactionByFullHash(hash, currentHeight);
                 if (linkedTransaction != null) {
                     if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
                         throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");

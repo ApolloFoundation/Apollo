@@ -20,15 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
@@ -84,6 +75,15 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public final class JSONData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -614,7 +614,7 @@ public final class JSONData {
         json.put("downloadedVolume", peer.getDownloadedVolume());
         json.put("uploadedVolume", peer.getUploadedVolume());
         json.put("application", peer.getApplication());
-        json.put("version", peer.getVersion().toString());
+        json.put("version", peer.getVersion());
         json.put("platform", peer.getPlatform());
         if (peer.getApiPort() != 0) {
             json.put("apiPort", peer.getApiPort());

@@ -141,8 +141,6 @@ public final class Shuffling {
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private final TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
-    private final BlockDb blockDb = CDI.current().select(BlockDb.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
@@ -456,7 +454,7 @@ public final class Shuffling {
     }
 
     public byte[] getFullHash() {
-        return transactionDb.getFullHash(id);
+        return blockchain.getFullHash(id);
     }
 
     public Attachment.ShufflingAttachment process(final long accountId, final byte[] secretBytes, final byte[] recipientPublicKey) {
@@ -744,7 +742,7 @@ public final class Shuffling {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
             long fee = blockchainConfig.getShufflingDepositAtm() / 4;
             for (int i = 0; i < 3; i++) {
-                Account previousGeneratorAccount = Account.getAccount(blockDb.findBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
+                Account previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(AccountLedger.LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
                 LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),

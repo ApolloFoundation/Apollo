@@ -33,12 +33,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
@@ -70,6 +70,7 @@ public final class PeerServlet extends WebSocketServlet {
         private Blockchain blockchain;
         private BlockchainProcessor blockchainProcessor;
         private TransactionProcessor transactionProcessor;
+        private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
         protected Blockchain lookupBlockchain() {
             if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -167,6 +168,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static BlockchainProcessor blockchainProcessor;
+    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
     protected BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         return blockchainProcessor;
@@ -347,7 +349,7 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
-            peer.setLastInboundRequest(AplCore.getEpochTime());
+            peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
                     return DOWNLOADING;

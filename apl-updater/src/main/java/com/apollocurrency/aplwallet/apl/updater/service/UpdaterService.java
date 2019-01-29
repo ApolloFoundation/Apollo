@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ import java.util.regex.Pattern;
 
 public interface UpdaterService {
     String extractUrl(byte[] encryptedUrlBytes, Pattern urlPattern);
-
+    DownloadInfo getDownloadInfo();
     Path unpack(Path file) throws IOException;
 
     boolean verifyCertificates(String certificateDirectory);

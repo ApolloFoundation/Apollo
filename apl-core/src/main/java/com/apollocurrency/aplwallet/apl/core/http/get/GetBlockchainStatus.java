@@ -20,11 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -37,6 +33,9 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
 
@@ -57,7 +56,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         response.put("application", Constants.APPLICATION);
         response.put("version", Constants.VERSION.toString());
-        response.put("time", AplCore.getEpochTime());
+        response.put("time", timeService.getEpochTime());
         Block lastBlock = lookupBlockchain().getLastBlock();
         response.put("lastBlock", lastBlock.getStringId());
         response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
@@ -81,7 +80,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("chainDescription", blockchainConfig.getChain().getDescription());
         response.put("blockTime", blockchainConfig.getCurrentConfig().getBlockTime());
         response.put("adaptiveForging", blockchainConfig.getCurrentConfig().isAdaptiveForgingEnabled());
-        response.put("emptyBlockTime", blockchainConfig.getCurrentConfig().getAdaptiveBlockTime());
+        response.put("adaptiveBlockTime", blockchainConfig.getCurrentConfig().getAdaptiveBlockTime());
         response.put("consensus", blockchainConfig.getCurrentConfig().getConsensusType());
         response.put("maxBlockPayloadLength", blockchainConfig.getCurrentConfig().getMaxPayloadLength());
         response.put("initialBaseTarget", Long.toUnsignedString(blockchainConfig.getCurrentConfig().getInitialBaseTarget()));

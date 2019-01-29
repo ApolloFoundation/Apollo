@@ -5,16 +5,13 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.26.1</version>
+        <version>1.27.0</version>
     </parent>
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apl-exec</artifactId>
     <name>apl-exec</name>
     <packaging>jar</packaging>
-    <properties>
-        <zipname>apollo-wallet</zipname>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>com.apollocurrency</groupId>
@@ -37,6 +34,18 @@
             <version>${project.version}</version>
         </dependency>                  
         <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-html</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>       
+        </dependency>
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>web-wallet</artifactId>
+            <version>${web-wallet.version}</version>
+            <type>zip</type>       
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>  
@@ -44,13 +53,13 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>  
-<!-- command line arguments processing -->        
+        <!-- command line arguments processing -->        
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.72</version>
         </dependency>                  
-<!-- unit tests -->
+        <!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
@@ -101,10 +110,41 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <useBaseVersion>false</useBaseVersion>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <excludeTypes>zip</excludeTypes>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>                            
                         </configuration>
                     </execution>
+<!-- Unpack 2 webUI components -->                    
+                    <execution>
+                        <id>unpack</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.apollocurrency</groupId>
+                                    <artifactId>apl-html</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/webui</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.apollocurrency</groupId>
+                                    <artifactId>web-wallet</artifactId>
+                                    <version>${web-wallet.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/webui</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+<!--                            <outputDirectory>${project.build.directory}/wars</outputDirectory> -->
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>                    
                 </executions>
             </plugin>
             <plugin>
@@ -126,7 +166,6 @@
                     </execution>
                 </executions>
             </plugin>                                    
-
         </plugins>
     </build>
 </project>

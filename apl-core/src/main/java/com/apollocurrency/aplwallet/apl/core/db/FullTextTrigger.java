@@ -952,6 +952,14 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     }
 
     /**
+     * This method call required for FullTextTrigger class reusing by multiple dbs
+     * Note, that is not a full-functional method, so that you can extend it
+     */
+    public static void shutdown() {
+        indexPath = null;
+    }
+
+    /**
      * Table update
      */
     private static class TableUpdate {

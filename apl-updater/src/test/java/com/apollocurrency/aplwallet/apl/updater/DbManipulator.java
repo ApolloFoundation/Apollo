@@ -7,11 +7,12 @@ package com.apollocurrency.aplwallet.apl.updater;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 public class DbManipulator {
     protected final BasicDb db =
-            new BasicDb(new BasicDb.DbProperties().dbUrl("jdbc:h2:mem:test").dbPassword("").dbUsername("sa").maxConnections(10).loginTimeout(10).maxMemoryRows(100000).defaultLockTimeout(10 * 1000));
+            new BasicDb(new DbProperties().dbUrl("jdbc:h2:mem:test").dbPassword("").dbUsername("sa").maxConnections(10).loginTimeout(10).maxMemoryRows(100000).defaultLockTimeout(10 * 1000));
 
     private DbPopulator populator = new DbPopulator(db, "db/schema.sql", "db/data.sql");
 
