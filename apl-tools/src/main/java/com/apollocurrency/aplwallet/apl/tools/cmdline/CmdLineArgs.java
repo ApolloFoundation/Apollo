@@ -14,7 +14,7 @@ import com.beust.jcommander.Parameter;
 public class CmdLineArgs {
     
     //Main parameter
-    @Parameter(description = "Command to run. gencsr, savecert, genself")    
+    @Parameter(description = "[command arguments]")    
     public String command;
     
     @Parameter(names = {"--debug", "-d"}, description = "Debug mode")
@@ -23,6 +23,5 @@ public class CmdLineArgs {
     public Integer verbose = 1;
     @Parameter(names = "--help", help = true, description = "Print help message")
     public boolean help;   
-
 
 }

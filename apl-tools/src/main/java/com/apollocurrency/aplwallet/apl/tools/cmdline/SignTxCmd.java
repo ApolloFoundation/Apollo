@@ -9,7 +9,7 @@ import com.beust.jcommander.Parameters;
  *
  * @author alukin@gmail.com
  */
-@Parameters(commandDescription = "Compact database")
-public class CompactDbCmd {
-   public static final String COMPACT_DB_CMD="compactdb"; 
+@Parameters(commandDescription = "Sign transaction")
+public class SignTxCmd {
+    public static final String SIGN_TX_CMD="signtx"; 
 }
