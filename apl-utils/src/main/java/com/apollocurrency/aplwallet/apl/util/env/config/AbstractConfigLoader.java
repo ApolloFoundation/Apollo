@@ -28,14 +28,14 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         }
         this.ignoreResources = ignoreResources;
         this.resourceName = resourceName;
-        init();
     }
 
-    private void init() {
+    public T load() {
         if (!ignoreResources) {
             loadFromResources();
         }
         loadFromUserDefinedDirectory();
+        return config;
     }
 
     protected abstract T read(InputStream is) throws IOException;
@@ -74,8 +74,4 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
 
     protected abstract T merge(T oldValue, T newValue);
 
-    @Override
-    public T getConfig() {
-        return config;
-    }
 }

@@ -34,8 +34,12 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
     @Override
     protected Map<UUID, Chain> merge(Map<UUID, Chain> oldChains, Map<UUID, Chain> newChains) {
         Map<UUID, Chain> resultChains = new HashMap<>();
-        resultChains.putAll(oldChains);
-        resultChains.putAll(newChains);
+        if (oldChains != null) {
+            resultChains.putAll(oldChains);
+        }
+        if (newChains != null) {
+            resultChains.putAll(newChains);
+        }
         return resultChains;
     }
 
