@@ -225,7 +225,7 @@ public final class AplCore {
                 AppStatus.getInstance().update(message);
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
                 LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
-                LOG.info("Copyright © 2017-2018 Apollo Foundation.");
+                LOG.info("Copyright © 2017-2019 Apollo Foundation.");
                 LOG.info("See LICENSE.txt for more information");
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());

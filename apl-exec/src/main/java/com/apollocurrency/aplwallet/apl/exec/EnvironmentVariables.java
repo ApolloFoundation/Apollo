@@ -14,13 +14,13 @@ public class EnvironmentVariables {
     String vaultKeystoreDir = "";
     String twoFactorAuthDir = "";
     String pidFile = "";
-    String configDir = "";
+    String configDir ="";
     private String applicationName;
 
     public EnvironmentVariables(String applicationName) {
         StringValidator.requireNonBlank(applicationName, "Application name cannot be null or blank");
 
-        this.applicationName = applicationName.toUpperCase();
+        this.applicationName = applicationName.toUpperCase().replaceAll("-", "_");
         retrieve();
     }
 

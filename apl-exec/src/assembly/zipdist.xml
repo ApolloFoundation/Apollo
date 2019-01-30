@@ -37,7 +37,16 @@
             <directory>${project.build.directory}/webui/</directory>
             <outputDirectory>webui</outputDirectory>
             <fileMode>0644</fileMode>          
-        </fileSet>         
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/conf/</directory>
+            <outputDirectory>doc</outputDirectory>
+            <includes>
+                <include>apl-blockchain.properties</include>
+                <include>chains.json</include>
+            </includes>
+        </fileSet>
+
     </fileSets> 
      <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
         <file>
