@@ -17,6 +17,7 @@ public class UpdaterConstants {
 
     static {
         updaterProperties = new Properties();
+        //TODO: check it, there's no "conf" directory anymore
         try (InputStream is = UpdaterConstants.class.getClassLoader().getResourceAsStream("conf/updater.properties")) {
             updaterProperties.load(is);
         }
@@ -25,10 +26,10 @@ public class UpdaterConstants {
         }
     }
     // Platform dependent updater constants
-    //update scripts
-   public static final String WINDOWS_UPDATE_SCRIPT_PATH = "update.vbs";
-   public static final String LINUX_UPDATE_SCRIPT_PATH = "update.sh";
-   public static final String MAC_OS_UPDATE_SCRIPT_PATH = "update.sh";
+    //TODO: check update scripts executions
+   public static final String WINDOWS_UPDATE_SCRIPT_PATH = "updater\\update.vbs";
+   public static final String LINUX_UPDATE_SCRIPT_PATH = "updater/update.sh";
+   public static final String MAC_OS_UPDATE_SCRIPT_PATH = "updater/update.sh";
    // run tools for update scripts
    public static final String WINDOWS_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.windowsRunToolPath", "cscript.exe");
    public static final String LINUX_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.linuxRunToolPath", "/bin/bash");

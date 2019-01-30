@@ -1,4 +1,5 @@
 rem	@echo off
+REM Run application with tor. Required for Windows installer
 	if exist jre ( 
 		set "javaDir=jre"
 		goto startJava

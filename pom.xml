@@ -49,7 +49,7 @@
 
         <!--Crypto-->
         <fbcrypto.version>1.2.3</fbcrypto.version>
-        <bcprov.version>1.54</bcprov.version>
+        <bcprov.version>1.60</bcprov.version>
 
         <!--QR-code-->
         <zxing.version>3.3.0</zxing.version>
@@ -80,7 +80,6 @@
         <json-unit.version>1.20.0</json-unit.version>
         <junit.version>4.12</junit.version>
         <mockito.version>2.22.0</mockito.version>
-        <spring.version>5.0.7.RELEASE</spring.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
         <!-- TODO: cleanup -->
@@ -321,6 +320,12 @@
                 <groupId>org.jboss.resteasy</groupId>
                 <artifactId>resteasy-validator-provider-11</artifactId>
                 <version>${resteasy.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-validator</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.jboss.resteasy</groupId>
@@ -331,6 +336,12 @@
                 <groupId>org.jboss.resteasy</groupId>
                 <artifactId>resteasy-jaxrs</artifactId>
                 <version>${resteasy.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.jboss.spec.javax.annotation</groupId>
+                        <artifactId>jboss-annotations-api_1.2_spec</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -424,6 +435,12 @@
                 <groupId>org.jboss.weld.se</groupId>
                 <artifactId>weld-se-core</artifactId>
                 <version>${weld.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.jboss.spec.javax.interceptor</groupId>
+                        <artifactId>jboss-interceptors-api_1.2_spec</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld.servlet</groupId>

@@ -1,1 +1,0 @@
-mvn clean test -P dev

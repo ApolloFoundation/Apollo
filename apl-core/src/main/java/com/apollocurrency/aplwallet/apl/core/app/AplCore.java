@@ -87,7 +87,6 @@ public final class AplCore {
     public void init() {
 
         System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
-        // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
         LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppBaseDir());
 //TODO: Do we really need this check?        

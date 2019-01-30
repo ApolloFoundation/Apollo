@@ -1,1 +1,0 @@
-mvn clean verify -P test-all
