@@ -150,7 +150,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                blockchainConfig.registerConfigChangeListener(); // create inside Apollo and passed into AplCore constructor
+                 // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToLatestConfig();
 
                

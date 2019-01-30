@@ -34,8 +34,9 @@ import javax.inject.Singleton;
  * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
  * on current height, change part of config represented by {@link HeightConfig}</p>
  *
- * <p>Note that this class is thread-safe and can be used without additional synchronization after
- * {@link BlockchainConfig#registerConfigChangeListener} method call</p>
+ * <p>Note that this class is not thread-safe and cannot be used without additional synchronization. Its important especially, when dynamic
+ * chain switch will be implemented and {@link BlockchainConfig#updateChain} method will be called not only at startup but from different parts of
+ * application in concurrent environment</p>
  * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
  * blockTime, adaptiveBlockTime, maxBalance and so on</p>
  */
