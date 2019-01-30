@@ -43,10 +43,6 @@ public class PredefinedDirLocations {
         return dbDir;
     }
 
-    public static void main(String[] args) {
-        new PredefinedDirLocations(null, null, null, null, null);
-    }
-
     public Path getLogsDir() {
         return logsDir;
     }

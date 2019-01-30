@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Main Apollo startup class
@@ -108,6 +110,15 @@ public class Apollo {
         AplCoreRuntime.getInstance().shutdown();
     }
 
+    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
+        return new PredefinedDirLocations(
+                StringUtils.isBlank(args.dbDir)            ? vars.dbDir            : args.dbDir,
+                StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
+                StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile
+        );
+    }
     /**
      * @param argv the command line arguments
      */
@@ -149,7 +160,7 @@ public class Apollo {
                 args.configDir);
 // init application data dir provider
         EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
+        dirProvider = createDirProvider(merge(args,environmentVariables), args.serviceMode);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 
