@@ -1,7 +1,8 @@
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,15 +20,15 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
     private String resourceName;
 
     public AbstractConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String configDir, String resourceName) {
+        StringValidator.requireNonBlank(resourceName, "Resource name is blank or empty");
+
         this.dirProvider = dirProvider;
         if (!StringUtils.isBlank(configDir)) {
             this.configDir = configDir;
         }
         this.ignoreResources = ignoreResources;
-        if (StringUtils.isBlank(resourceName)) {
-            throw new IllegalArgumentException("Resource name is blank or empty");
-        }
         this.resourceName = resourceName;
+        init();
     }
 
     private void init() {

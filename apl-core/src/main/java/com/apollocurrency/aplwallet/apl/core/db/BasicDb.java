@@ -22,17 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.sql.DataSource;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import org.h2.jdbcx.JdbcConnectionPool;
+import org.slf4j.Logger;
+
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-
-import com.apollocurrency.aplwallet.apl.util.exception.DbException;
-import org.apache.commons.lang3.StringUtils;
-import org.h2.jdbcx.JdbcConnectionPool;
-import org.slf4j.Logger;
+import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
