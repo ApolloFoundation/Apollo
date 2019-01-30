@@ -26,12 +26,6 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SS
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
@@ -51,6 +45,12 @@ import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
+
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+import javax.enterprise.inject.spi.CDI;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -154,7 +154,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
+                blockchainConfig.registerConfigChangeListener(); // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToLatestConfig();
 
                
