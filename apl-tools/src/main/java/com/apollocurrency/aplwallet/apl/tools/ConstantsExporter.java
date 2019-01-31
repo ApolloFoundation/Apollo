@@ -28,16 +28,14 @@ import java.nio.file.StandardOpenOption;
 
 import com.apollocurrency.aplwallet.apl.core.http.get.GetConstants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 
 public class ConstantsExporter {
-    public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: ConstantsExporter <destination constants.js file>");
-            System.exit(1);
-        }
-
+    public static int export(String path) {
+        int res = PosixExitCodes.OK.exitCode();
+        //TODO: stdout output for piped execution
         try {
-            Path filePath = Paths.get(args[0]);
+            Path filePath = Paths.get(path);
             Files.write(filePath, (String.format("if (!ARS) {%1$s" +
                     "    var ARS = {};%1$s" +
                     "    ARS.constants = {};%1$s" +
@@ -48,8 +46,10 @@ public class ConstantsExporter {
                     "if (isNode) {%1$s" +
                     "    module.exports = ARS.constants.SERVER;%1$s" +
                     "}%1$s", System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
-        } catch (IOException e) {
+        } catch (IOException e) {            
             e.printStackTrace();
+            res = PosixExitCodes.EX_IOERR.exitCode();
         }
+        return res;
     }
 }

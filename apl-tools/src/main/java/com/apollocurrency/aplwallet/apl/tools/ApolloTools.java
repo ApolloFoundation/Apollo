@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
+import com.apollocurrency.aplwallet.apl.tools.cmdline.ConstantsCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.MintCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.PubKeyCmd;
@@ -59,7 +60,7 @@ public class ApolloTools {
     private static final PubKeyCmd pubkey = new PubKeyCmd();
     private static final SignTxCmd signtx = new SignTxCmd();
     private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
-
+    private static final ConstantsCmd constcmd = new ConstantsCmd();
     private ApolloTools toolsApp;
     private static AplContainer container;
 
@@ -193,6 +194,7 @@ public class ApolloTools {
                 .addCommand(PubKeyCmd.CMD, pubkey)
                 .addCommand(SignTxCmd.CMD, signtx)
                 .addCommand(UpdaterUrlCmd.CMD, urlcmd)
+                .addCommand(ConstantsCmd.CMD, constcmd)
                 .build();
         jc.setProgramName("apl-tools");
         try {
@@ -224,6 +226,8 @@ public class ApolloTools {
             System.exit(toolsApp.signtx());
         } else if (jc.getParsedCommand().equalsIgnoreCase(UpdaterUrlCmd.CMD)) {
             System.exit(toolsApp.updaterUrlOp());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(ConstantsCmd.CMD)) {
+            System.exit(ConstantsExporter.export(constcmd.outfile));
         }
 
     }
