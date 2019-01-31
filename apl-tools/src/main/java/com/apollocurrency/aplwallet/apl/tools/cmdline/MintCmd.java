@@ -11,5 +11,5 @@ import com.beust.jcommander.Parameters;
  */
 @Parameters(commandDescription = "Run currency minting or in other words mining")
 public class MintCmd {
-    public static final String MINT_CMD="mint"; 
+    public static final String CMD="mint"; 
 }

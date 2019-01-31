@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.MintCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.PubKeyCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
+import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
@@ -28,17 +29,23 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocati
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.enterprise.inject.spi.CDI;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main entry point to all Apollo tools
+ * Main entry point to all Apollo tools. This is Swiss Army Knife for all Apollo
+ * utilites with comprehensive command lline interface
  *
  * @author alukin@gmail.com
  */
@@ -51,6 +58,8 @@ public class ApolloTools {
     private static final HeightMonitorCmd heightMonitor = new HeightMonitorCmd();
     private static final PubKeyCmd pubkey = new PubKeyCmd();
     private static final SignTxCmd signtx = new SignTxCmd();
+    private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
+
     private ApolloTools toolsApp;
     private static AplContainer container;
 
@@ -60,22 +69,22 @@ public class ApolloTools {
             "socksProxyHost",
             "socksProxyPort",
             "apl.enablePeerUPnP");
-       
+
     private static DirProvider createDirProvider(Map<UUID, Chain> chains, PredefinedDirLocations dirLocations, boolean isService) {
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
     }
-    
+
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
         return new PredefinedDirLocations(
-                StringUtils.isBlank(args.dbDir)            ? vars.dbDir            : args.dbDir,
-                StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
+                StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir,
+                StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
                 StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
                 "",
                 ""
         );
     }
-    
+
     private void initCDI() {
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
@@ -93,9 +102,8 @@ public class ApolloTools {
                 com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 "chains.json");
         Map<UUID, Chain> chains = chainsConfigLoader.load();
-        dirProvider = createDirProvider(chains, merge(args,envVars), false);       
-       
-        
+        dirProvider = createDirProvider(chains, merge(args, envVars), false);
+
         container = AplContainer.builder().containerId("APL-TOOLS-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
@@ -105,9 +113,20 @@ public class ApolloTools {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
-        blockchainConfig.updateChain(chainsConfigHolder.getActiveChain());        
+        blockchainConfig.updateChain(chainsConfigHolder.getActiveChain());
     }
 
+    public static String join(Collection collection, String delimiter) {
+        String res = collection.stream()
+                               .map(Object::toString)
+                               .collect(Collectors.joining(delimiter)).toString();
+        return res;
+    }
+    
+    public static String readFile(String path) throws IOException{
+       String res = new String(Files.readAllBytes(Paths.get(path)));
+       return res;
+    }
     private int compactDB() {
         CompactDatabase cdb = new CompactDatabase();
         cdb.init();
@@ -117,7 +136,7 @@ public class ApolloTools {
     private int mint() {
         MintWorker mintWorker = new MintWorker();
         //TODO: exit code
-        mintWorker.mint();        
+        mintWorker.mint();
         return 0;
     }
 
@@ -130,22 +149,50 @@ public class ApolloTools {
     }
 
     private int pubkey() {
+        GeneratePublicKey.doInteractive();
         return 0;
     }
 
     private int signtx() {
-        return 0;
+        int res;
+        if (signtx.useJson) {
+            res = SignTransactions.signJson(signtx.infile, signtx.outfile);
+        } else {
+            res = SignTransactions.sign(signtx.infile, signtx.outfile);
+        }
+        return res;
+    }
+
+    private int updaterUrlOp() {
+        int res;
+        String input = "";
+        if (urlcmd.infile.isEmpty()) {
+            input = join(urlcmd.parameters," ");
+        }else{
+            try {
+                input = readFile(urlcmd.infile);
+            } catch (IOException ex) {
+               return PosixExitCodes.EX_OSFILE.exitCode();
+            }
+        }
+        if (urlcmd.encrypt) {
+            res = UpdaterUrlUtils.encrypt(urlcmd.keyfile, input, urlcmd.useHex);
+        } else {
+            res = UpdaterUrlUtils.decrypt(urlcmd.keyfile, input, !urlcmd.useHex);
+        }
+        return res;
     }
 
     public static void main(String[] argv) {
         ApolloTools toolsApp = new ApolloTools();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
-                .addCommand(CompactDbCmd.COMPACT_DB_CMD, compactDb)
-                .addCommand(MintCmd.MINT_CMD, mint)
-                .addCommand(HeightMonitorCmd.HEIGHT_MONITOR_CMD, heightMonitor)
-                .addCommand(PubKeyCmd.PUB_KEY_CMD, pubkey)
-                .addCommand(SignTxCmd.SIGN_TX_CMD, signtx)
+                .addCommand(CompactDbCmd.CMD, compactDb)
+                .addCommand(MintCmd.CMD, mint)
+                .addCommand(HeightMonitorCmd.CMD, heightMonitor)
+                .addCommand(PubKeyCmd.CMD, pubkey)
+                .addCommand(SignTxCmd.CMD, signtx)
+                .addCommand(UpdaterUrlCmd.CMD, urlcmd)
                 .build();
         jc.setProgramName("apl-tools");
         try {
@@ -163,21 +210,20 @@ public class ApolloTools {
         if (jc.getParsedCommand() == null) {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.COMPACT_DB_CMD)) {
+        } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.CMD)) {
             toolsApp.initCDI();
             System.exit(toolsApp.compactDB());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(MintCmd.MINT_CMD)) {
+        } else if (jc.getParsedCommand().equalsIgnoreCase(MintCmd.CMD)) {
             toolsApp.initCDI();
             System.exit(toolsApp.mint());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.HEIGHT_MONITOR_CMD)) {
-            toolsApp.initCDI();
+        } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
             System.exit(toolsApp.heightMonitor());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(PubKeyCmd.PUB_KEY_CMD)) {
-            toolsApp.initCDI();
+        } else if (jc.getParsedCommand().equalsIgnoreCase(PubKeyCmd.CMD)) {
             System.exit(toolsApp.pubkey());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(SignTxCmd.SIGN_TX_CMD)) {
-            toolsApp.initCDI();
+        } else if (jc.getParsedCommand().equalsIgnoreCase(SignTxCmd.CMD)) {
             System.exit(toolsApp.signtx());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(UpdaterUrlCmd.CMD)) {
+            System.exit(toolsApp.updaterUrlOp());
         }
 
     }

@@ -11,5 +11,5 @@ import com.beust.jcommander.Parameters;
  */
 @Parameters(commandDescription = "Compact database")
 public class CompactDbCmd {
-   public static final String COMPACT_DB_CMD="compactdb"; 
+   public static final String CMD="compactdb"; 
 }

@@ -35,7 +35,7 @@ public class CmdLineArgs {
     public String dbDir = "";
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
-    
+     
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
     }    

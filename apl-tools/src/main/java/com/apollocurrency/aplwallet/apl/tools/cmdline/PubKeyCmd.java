@@ -11,5 +11,5 @@ import com.beust.jcommander.Parameters;
  */
 @Parameters(commandDescription = "Generate public key")
 public class PubKeyCmd {
-    public static final String PUB_KEY_CMD="pubkey"; 
+    public static final String CMD="pubkey"; 
 }

@@ -11,5 +11,5 @@ import com.beust.jcommander.Parameters;
  */
 @Parameters(commandDescription = "Run blockchain height monitor")
 public class HeightMonitorCmd {
-    public static final String HEIGHT_MONITOR_CMD="heightmon"; 
+    public static final String CMD="heightmon"; 
 }

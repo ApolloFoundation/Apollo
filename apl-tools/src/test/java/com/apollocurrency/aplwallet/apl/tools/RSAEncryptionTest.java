@@ -27,7 +27,7 @@ public class RSAEncryptionTest {
                     "certs/1_2.key"
             };
 
-            RSAEncryption.main(params);
+            UpdaterUrlUtils.encrypt(params[2], params[1], false);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             String encryptedMessage = consoleOutput.substring(consoleOutput.length() - 1024);
@@ -56,7 +56,7 @@ public class RSAEncryptionTest {
                     "certs/2_2.key"
             };
 
-            RSAEncryption.main(params);
+            UpdaterUrlUtils.encrypt(params[2], params[1], true);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             String[] encryptedMessageParts = consoleOutput.substring(consoleOutput.length() - 2048 - System.lineSeparator().length()).split(System.lineSeparator());
