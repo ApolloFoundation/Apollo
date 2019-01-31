@@ -6,15 +6,12 @@ package com.apollocurrency.aplwallet.apl.tools;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
-import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.MintCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.PubKeyCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
-import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
@@ -90,14 +87,23 @@ public class ApolloTools {
     }
 
     private int compactDB() {
-        return 0;
+        CompactDatabase cdb = new CompactDatabase();
+        cdb.init();
+        return cdb.compactDatabase();
     }
 
     private int mint() {
+        MintWorker mintWorker = new MintWorker();
+        //TODO: exit code
+        mintWorker.mint();        
         return 0;
     }
 
     private int heightMonitor() {
+//TODO: command line parameters        
+        HeightMonitor hm = HeightMonitor.create(null, null, null);
+        hm.start();
+        //TODO: exit code        
         return 0;
     }
 

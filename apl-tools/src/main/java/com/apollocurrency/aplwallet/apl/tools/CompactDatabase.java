@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
@@ -56,14 +57,15 @@ public class CompactDatabase {
     private static final Logger LOG = getLogger(CompactDatabase.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
+    public CompactDatabase() {        
+    }
+    
     /**
-     * Compact the ARS database
-     *
-     * @param   args                Command line arguments
      */
-    public static void main(String[] args) {
+    public void init() {
 //TODO: Check and test this class
         DirProvider dirProvider = new DirProviderFactory()
                 .getInstance(
@@ -75,19 +77,14 @@ public class CompactDatabase {
         AplCoreRuntime.getInstance().setup(RuntimeEnvironment.getInstance().getRuntimeMode(), dirProvider);
         AplCore core = new AplCore(blockchainConfig);
         core.init();
-        //
-        // Compact the database
-        //
-        int exitCode = compactDatabase();
 
-        System.exit(exitCode);
     }
 
     /**
      * Compact the database
      */
-    private static int compactDatabase() {
-        int exitCode = 0;
+    public  int compactDatabase() {
+        int exitCode = PosixExitCodes.OK.exitCode();
         //
         // Get the database URL
         //
@@ -204,7 +201,7 @@ public class CompactDatabase {
             LOG.info("Database successfully compacted");
         } catch (Throwable exc) {
             LOG.error("Unable to compact the database", exc);
-            exitCode = 1;
+            exitCode = PosixExitCodes.EX_OSFILE.exitCode();
         } finally {
             switch (phase) {
                 case 0:
@@ -255,7 +252,7 @@ public class CompactDatabase {
         return exitCode;
     }
 
-    public static Connection getConnection(String url, String user, String password) {
+    public Connection getConnection(String url, String user, String password) {
         try {
             return DriverManager.getConnection(url, user, password);
         }

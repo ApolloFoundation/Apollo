@@ -72,15 +72,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MintWorker {
     private static final Logger LOG = getLogger(MintWorker.class);
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    
-    public static void main(String[] args) {
-        MintWorker mintWorker = new MintWorker();
-        mintWorker.mint();
-    }
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
-    private void mint() {
+
+    public void mint() {
         String currencyCode = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.mint.currencyCode"));
         if (currencyCode == null) {
             throw new IllegalArgumentException("apl.mint.currencyCode not specified");
