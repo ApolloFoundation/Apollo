@@ -13,7 +13,8 @@ public class EnvironmentVariables {
     public String twoFactorAuthDir = "";
     public String pidFile = "";
     private String applicationName;
-
+    public String configDir ="";
+    
     public EnvironmentVariables(String applicationName) {
         if (StringUtils.isBlank(applicationName)) {
             throw new IllegalArgumentException("Application name cannot be null or blank");
@@ -28,6 +29,7 @@ public class EnvironmentVariables {
         vaultKeystoreDir = System.getenv(applicationName + "_VAULT_KEY_DIR");
         pidFile = System.getenv(applicationName + "_PID_FILE");
         twoFactorAuthDir = System.getenv(applicationName + "_2FA_DIR");
+        configDir = System.getenv(applicationName + "_CONFIG_DIR");
     }
 
 }

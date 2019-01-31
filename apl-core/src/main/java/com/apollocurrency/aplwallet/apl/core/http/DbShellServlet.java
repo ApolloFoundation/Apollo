@@ -89,7 +89,7 @@ public final class DbShellServlet extends HttpServlet {
                     "</form>";
 
     private static final String ERROR_NO_PASSWORD_IS_CONFIGURED =
-            "This page is password-protected, but no password is configured in apl.properties. " +
+            "This page is password-protected, but no password is configured in apl-blockchain.properties. " +
                     "Please set apl.adminPassword or disable the password protection with apl.disableAdminPassword";
 
     private static final String PASSWORD_FORM_TEMPLATE =

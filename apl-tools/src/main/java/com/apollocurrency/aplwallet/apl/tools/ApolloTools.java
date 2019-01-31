@@ -5,7 +5,9 @@ package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
@@ -15,7 +17,9 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
+import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -24,6 +28,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocati
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
 import org.apache.commons.lang3.StringUtils;
@@ -46,18 +53,17 @@ public class ApolloTools {
     private static final SignTxCmd signtx = new SignTxCmd();
     private ApolloTools toolsApp;
     private static AplContainer container;
-    private static PropertiesLoader propertiesLoader;
+
     private PropertiesHolder propertiesHolder;
     public static DirProvider dirProvider;
-    
-    private static DirProvider createDirProvider(PredefinedDirLocations dirLocations, boolean isService) {
-        try {
-            ChainIdServiceImpl chainIdService = new ChainIdServiceImpl();
-            UUID chainId = chainIdService.getActiveChain().getChainId();
-            return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create dirProvider, cannot load chains config", e);
-        }
+    private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
+            "socksProxyHost",
+            "socksProxyPort",
+            "apl.enablePeerUPnP");
+       
+    private static DirProvider createDirProvider(Map<UUID, Chain> chains, PredefinedDirLocations dirLocations, boolean isService) {
+        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
+        return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
     }
     
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
@@ -71,19 +77,35 @@ public class ApolloTools {
     }
     
     private void initCDI() {
+        EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-        EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        dirProvider = createDirProvider(merge(args,environmentVariables), false);        
-       
-        propertiesLoader = new PropertiesLoader(configDirProvider,
+
+        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
+                configDirProvider,
                 args.isResourceIgnored(),
-                args.configDir);        
+                com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                Constants.APPLICATION_DIR_NAME + ".properties",
+                SYSTEM_PROPERTY_NAMES);
+
+        ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
+                configDirProvider,
+                args.isResourceIgnored(),
+                com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                "chains.json");
+        Map<UUID, Chain> chains = chainsConfigLoader.load();
+        dirProvider = createDirProvider(chains, merge(args,envVars), false);       
+       
+        
         container = AplContainer.builder().containerId("APL-TOOLS-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
                 .annotatedDiscoveryMode().build();
         toolsApp.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        toolsApp.propertiesHolder.init(propertiesLoader.getProperties());
+        toolsApp.propertiesHolder.init(propertiesLoader.load());
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
+        chainsConfigHolder.setChains(chains);
+        blockchainConfig.updateChain(chainsConfigHolder.getActiveChain());        
     }
 
     private int compactDB() {

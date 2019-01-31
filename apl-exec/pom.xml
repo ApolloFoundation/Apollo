@@ -157,7 +157,7 @@
                 <executions>
                     <execution>
                         <id>distro-assembly</id>
-                        <phase>${zipExecutionPahse}</phase>
+                        <phase>${zipExecutionPhase}</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

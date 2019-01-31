@@ -12,7 +12,7 @@
         <fileSet>
             <directory>${project.basedir}/../bin</directory>
             <outputDirectory>bin</outputDirectory>
-            <fileMode>0755</fileMode>          
+            <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/../sbin</directory>
@@ -27,8 +27,13 @@
         <fileSet>
             <directory>${project.basedir}/../release-notes/</directory>
             <outputDirectory>doc</outputDirectory>
-            <fileMode>0644</fileMode>          
-        </fileSet>         
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../doc/</directory>
+            <outputDirectory>doc</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
         <fileSet>
             <directory>${project.basedir}/../</directory>
             <outputDirectory>/</outputDirectory>
@@ -41,12 +46,21 @@
                 <include>favicon.ico</include>
                 <include>3RD-PARTY-LICENSES.txt</include>
             </includes>
-        </fileSet>        
+        </fileSet>
         <fileSet>
             <directory>${project.build.directory}/webui/</directory>
             <outputDirectory>webui</outputDirectory>
             <fileMode>0644</fileMode>          
-        </fileSet>         
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/conf/</directory>
+            <outputDirectory>doc</outputDirectory>
+            <includes>
+                <include>apl-blockchain.properties</include>
+                <include>chains.json</include>
+            </includes>
+        </fileSet>
+
     </fileSets> 
      <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
         <file>
