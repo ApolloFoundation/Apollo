@@ -28,7 +28,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
@@ -56,7 +55,6 @@ public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
     
 //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
-    private  ChainIdService chainIdService;
     private AbstractBlockValidator bcValidator;
     
     private static volatile boolean shutdown = false;
@@ -133,7 +131,6 @@ public final class AplCore {
                 //try to start API as early as possible
                 API.init();
                 
-                chainIdService = CDI.current().select(ChainIdService.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
                                 
@@ -153,7 +150,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
+                 // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToLatestConfig();
 
                
@@ -227,7 +224,7 @@ public final class AplCore {
                 AppStatus.getInstance().update(message);
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
                 LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
-                LOG.info("Copyright © 2017-2018 Apollo Foundation.");
+                LOG.info("Copyright © 2017-2019 Apollo Foundation.");
                 LOG.info("See LICENSE.txt for more information");
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());

@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.commons.lang3.StringUtils;
 
 public class PredefinedDirLocations {
     private Path dbDir;
@@ -41,10 +42,6 @@ public class PredefinedDirLocations {
 
     public Path getDbDir() {
         return dbDir;
-    }
-
-    public static void main(String[] args) {
-        new PredefinedDirLocations(null, null, null, null, null);
     }
 
     public Path getLogsDir() {

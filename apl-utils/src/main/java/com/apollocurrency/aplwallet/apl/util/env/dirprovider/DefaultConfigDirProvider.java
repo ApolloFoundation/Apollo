@@ -35,6 +35,6 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     public String getUserConfigDirectory() {
         return isService
                 ? getInstallationConfigDirectory()
-                : Paths.get(System.getProperty("user.home"), applicationName, "conf").toAbsolutePath().toString();
+                : Paths.get(System.getProperty("user.home"), "." + applicationName, "conf").toAbsolutePath().toString();
     }
 }

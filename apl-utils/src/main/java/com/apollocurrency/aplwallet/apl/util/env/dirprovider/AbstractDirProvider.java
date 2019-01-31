@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.UUID;
-
-import org.apache.commons.lang3.StringUtils;
 
 public abstract class AbstractDirProvider implements DirProvider {
     static final String PID_FORMAT = "%s-%s.pid";
@@ -29,15 +29,11 @@ public abstract class AbstractDirProvider implements DirProvider {
         this(baseDir, applicationName, chainId, null);
     }
 
-    private void validateString(String s, String name) {
-        if (StringUtils.isBlank(s)) {
-            throw new IllegalArgumentException(name + " cannot be null or blank!");
-        }
-    }
+
     public AbstractDirProvider(String baseDir, String applicationName, UUID chainId, PredefinedDirLocations dirLocations) {
         Objects.requireNonNull(chainId, "ChainId cannot be null");
-        validateString(baseDir, "Base dir");
-        validateString(applicationName, "Application name");
+        StringValidator.requireNonBlank(baseDir, "Base dir");
+        StringValidator.requireNonBlank(applicationName, "Application name");
 
         this.applicationName = applicationName;
         this.baseDir = baseDir;
