@@ -20,21 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -60,7 +64,15 @@ public class CompactDatabase {
      * @param   args                Command line arguments
      */
     public static void main(String[] args) {
-//TODO: Check
+//TODO: Check and test this class
+        DirProvider dirProvider = new DirProviderFactory()
+                .getInstance(
+                        RuntimeEnvironment.getInstance().isServiceMode(),
+                        blockchainConfig.getChain().getChainId(),
+                        Constants.APPLICATION_DIR_NAME,
+                        null
+                );
+        AplCoreRuntime.getInstance().setup(RuntimeEnvironment.getInstance().getRuntimeMode(), dirProvider);
         AplCore core = new AplCore(blockchainConfig);
         core.init();
         //
@@ -148,11 +160,11 @@ public class CompactDatabase {
         //
         int phase = 0;
         File sqlFile = new File(dbDir, "backup.sql.gz");
-        File dbFile = new File(dbDir, "apl.h2.db");
+        File dbFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + "h2.db");
         if (!dbFile.exists()) {
-            dbFile = new File(dbDir, "apl.mv.db");
+            dbFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".mv.db");
             if (!dbFile.exists()) {
-                LOG.error("ARS database not found");
+                LOG.error("{} database not found", Constants.APPLICATION_DIR_NAME);
                 return 1;
             }
         }
@@ -209,13 +221,13 @@ public class CompactDatabase {
                     //
                     // We failed while creating the new database
                     //
-                    File newFile = new File(dbDir, "apl.h2.db");
+                    File newFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".h2.db");
                     if (newFile.exists()) {
                         if (!newFile.delete()) {
                             LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
                         }
                     } else {
-                        newFile = new File(dbDir, "apl.mv.db");
+                        newFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".mv.db");
                         if (newFile.exists()) {
                             if (!newFile.delete()) {
                                 LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));

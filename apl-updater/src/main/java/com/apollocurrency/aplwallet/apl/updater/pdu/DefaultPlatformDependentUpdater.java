@@ -24,7 +24,7 @@ public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUp
     Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException {
         String[] cmdArray = new String[] {
                 runTool,
-                updateDirectory.resolve(updateScriptPath).toAbsolutePath().toString(),
+                updateDirectory.resolve("updater").resolve(updateScriptPath).toAbsolutePath().toString(),
                 appDirectory.toAbsolutePath().toString(),
                 updateDirectory.toAbsolutePath().toString(),
                 String.valueOf(isDesktop)

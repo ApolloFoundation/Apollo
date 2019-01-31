@@ -20,6 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
@@ -28,14 +35,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 public final class SignTransactionJSON {
     public static void main(String[] args) {
@@ -63,8 +62,6 @@ public final class SignTransactionJSON {
             }
             try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))){
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
-                byte[] publicKeyHash = Crypto.sha256().digest(Convert.parseHexString((String) json.get("senderPublicKey")));
-                String senderRS = Convert2.rsAccount(Convert.fullHashToId(publicKeyHash));
                 byte[] keySeed = readKeySeed();
                 Files.write(signed.toPath(), signTransaction(json, keySeed).getBytes(), StandardOpenOption.CREATE);
                 System.out.println("Signed transaction JSON saved as: " + signed.getAbsolutePath());

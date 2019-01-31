@@ -1,3 +1,5 @@
+REM This file required for starting service-mode application on Windows.
+REM Also required for windows installer
 	@echo off
 	if exist jre ( 
 		set "javaDir=jre"

@@ -26,12 +26,6 @@ import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SS
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
@@ -39,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
@@ -50,6 +45,12 @@ import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
+
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+import javax.enterprise.inject.spi.CDI;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -88,7 +89,6 @@ public final class AplCore {
     public void init() {
 
         System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
-        // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
         LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppBaseDir());
 //TODO: Do we really need this check?        
@@ -118,7 +118,7 @@ public final class AplCore {
 
     private static volatile boolean initialized = false;
 
-//    private static class Init {
+
     private void startUp() {
 
         if (initialized) {
@@ -126,13 +126,17 @@ public final class AplCore {
         }
         initialized = true;
 
-//        static {
+
             try {
                 long startTime = System.currentTimeMillis();
+                checkPorts();  
+                //try to start API as early as possible
+                API.init();
+                
                 chainIdService = CDI.current().select(ChainIdService.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
-
+                                
 //TODO: check, may be we still need this 
 //                this.blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
@@ -140,7 +144,7 @@ public final class AplCore {
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");
 
-                checkPorts();
+
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
                 Db.init();
@@ -152,6 +156,7 @@ public final class AplCore {
                 blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToLatestConfig();
 
+               
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
@@ -201,7 +206,8 @@ public final class AplCore {
                 AddOns.init();
                 AppStatus.getInstance().update("API initialization...");
                 DebugTrace.init();
-                API.init();
+//signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
+                ApiSplitFilter.isCoreReady = true;
                 int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
                         ".timeMultiplier"), 1) : 1;
                 ThreadPool.start(timeMultiplier);

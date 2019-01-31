@@ -1,3 +1,5 @@
+REM This file required to run application with desktop UI on windows
+REM Also required for Windows installer
 	@echo off
 	if exist jre ( 
 		set "javaDir=jre"
