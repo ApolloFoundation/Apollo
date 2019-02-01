@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,10 +33,11 @@ import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import org.slf4j.Logger;
 
-public final class BaseTargetTest {
-        private static final Logger LOG = getLogger(BaseTargetTest.class);
+public  class BaseTarget {
+        private static final Logger LOG = getLogger(BaseTarget.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final long MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
     private static final long MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * (blockchainConfig.isTestnet() ? blockchainConfig.getCurrentConfig().getMaxBalanceAPL() : 50);
@@ -47,7 +48,6 @@ public final class BaseTargetTest {
     private static final int GAMMA = 64;
 
     private static final int START_HEIGHT = 20;
-    private static final int MAX_HEIGHT = 1_000;
 
     private static final boolean USE_EWMA = false;
     private static final int EWMA_N = 8;
@@ -74,7 +74,7 @@ public final class BaseTargetTest {
         return baseTarget;
     }
 
-    public static void main(String[] args) {
+    public static int doCalcualte(int height) {
 
         try {
 
@@ -93,11 +93,6 @@ public final class BaseTargetTest {
             BigInteger previousTestCumulativeDifficulty = null;
             long previousTestBaseTarget = 0;
             int previousTestTimestamp = 0;
-
-            int height = START_HEIGHT;
-            if (args.length == 1) {
-                height = Integer.parseInt(args[0]);
-            }
 
             long totalBlocktime = 0;
             long totalTestBlocktime = 0;
@@ -222,7 +217,9 @@ public final class BaseTargetTest {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return PosixExitCodes.EX_GENERAL.exitCode();
         }
+        return PosixExitCodes.OK.exitCode();
     }
 
     public static boolean checkHeight(int currentHeight) {

@@ -3,11 +3,20 @@
  */
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
+import com.apollocurrency.aplwallet.apl.tools.impl.MintWorker;
+import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
+import com.apollocurrency.aplwallet.apl.tools.impl.HeightMonitor;
+import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
+import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
+import com.apollocurrency.aplwallet.apl.tools.impl.BaseTarget;
+import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.tools.cmdline.BaseTargetCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.ConstantsCmd;
@@ -37,7 +46,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.spi.CDI;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +69,7 @@ public class ApolloTools {
     private static final SignTxCmd signtx = new SignTxCmd();
     private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
     private static final ConstantsCmd constcmd = new ConstantsCmd();
+    private static final BaseTargetCmd basetarget = new BaseTargetCmd();
     private ApolloTools toolsApp;
     private static AplContainer container;
 
@@ -183,7 +192,20 @@ public class ApolloTools {
         }
         return res;
     }
-
+    
+    private int baseTarget(){
+       int height = 1000;
+       if(!basetarget.parameters.isEmpty()){
+           try{
+              height = Integer.parseInt(basetarget.parameters.get(0));
+           }catch(NumberFormatException e){
+              System.err.println("Invalid height: "+basetarget.parameters.get(0));
+              return PosixExitCodes.EX_USAGE.exitCode();
+           }
+       }
+       return BaseTarget.doCalcualte(0);
+    }
+    
     public static void main(String[] argv) {
         ApolloTools toolsApp = new ApolloTools();
         JCommander jc = JCommander.newBuilder()
@@ -195,6 +217,7 @@ public class ApolloTools {
                 .addCommand(SignTxCmd.CMD, signtx)
                 .addCommand(UpdaterUrlCmd.CMD, urlcmd)
                 .addCommand(ConstantsCmd.CMD, constcmd)
+                .addCommand(BaseTargetCmd.CMD, basetarget)
                 .build();
         jc.setProgramName("apl-tools");
         try {
@@ -228,6 +251,8 @@ public class ApolloTools {
             System.exit(toolsApp.updaterUrlOp());
         } else if (jc.getParsedCommand().equalsIgnoreCase(ConstantsCmd.CMD)) {
             System.exit(ConstantsExporter.export(constcmd.outfile));
+        } else if (jc.getParsedCommand().equalsIgnoreCase(BaseTargetCmd.CMD)) {
+            System.exit(toolsApp.baseTarget());
         }
 
     }

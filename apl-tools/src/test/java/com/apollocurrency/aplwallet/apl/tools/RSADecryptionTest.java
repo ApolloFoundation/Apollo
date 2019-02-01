@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.Assert;
 import org.junit.Test;
