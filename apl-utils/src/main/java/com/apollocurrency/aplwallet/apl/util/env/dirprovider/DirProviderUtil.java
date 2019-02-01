@@ -23,6 +23,9 @@ public class DirProviderUtil {
      */
     public static Path getBinDir() {
         URI res = Paths.get("").toUri();
+        if(RuntimeEnvironment.getInstance().getMain()==null){
+            RuntimeEnvironment.getInstance().setMain(DirProviderUtil.class);
+        }
         try {
             //get location of main app class
             res = RuntimeEnvironment.getInstance().getMain().getProtectionDomain().getCodeSource().getLocation().toURI();

@@ -26,6 +26,7 @@ vers=${vers##apl-utils-}
 APL_VERSION=${vers%%.jar}
 echo "${ECHO_PREFIX} Apollo verions is: ${APL_VERSION}"
 
+APL_TOOLS_JAR=${APL_LIB_DIR}/apl-tools-${APL_VERSION}.jar
 
 MAIN_JAR=${APL_TOP_DIR}/Apollo.jar
 MAIN_GUI_JAR=${APL_LIB_DIR}/apl-desktop-${APL_VERSION}.jar

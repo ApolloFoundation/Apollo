@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.CDI;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -96,6 +98,7 @@ public class ApolloTools {
     }
 
     private void initCDI() {
+     //   RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
 
@@ -118,8 +121,10 @@ public class ApolloTools {
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
                 .annotatedDiscoveryMode().build();
+
         toolsApp.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         toolsApp.propertiesHolder.init(propertiesLoader.load());
+        
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
