@@ -72,8 +72,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MintWorker {
     private static final Logger LOG = getLogger(MintWorker.class);
     // TODO: YL remove static instance later
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private PropertiesHolder propertiesHolder;
+    private BlockchainConfig blockchainConfig;
+
+    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig) {
+        this.blockchainConfig=blockchainConfig;
+        this.propertiesHolder=propertiesHolder;
+    }
 
 
     public void mint() {

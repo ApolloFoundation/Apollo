@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -48,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.CDI;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -73,10 +71,11 @@ public class ApolloTools {
     private static final ConstantsCmd constcmd = new ConstantsCmd();
     private static final BaseTargetCmd basetarget = new BaseTargetCmd();
     private ApolloTools toolsApp;
-    private static AplContainer container;
 
-    private PropertiesHolder propertiesHolder;
-    public static DirProvider dirProvider;
+    private static PropertiesHolder propertiesHolder;
+    private static BlockchainConfig blockchainConfig;
+    private static DirProvider dirProvider;
+    
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
             "socksProxyHost",
             "socksProxyPort",
@@ -117,18 +116,9 @@ public class ApolloTools {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         dirProvider = createDirProvider(chains, merge(args, envVars), false);
 
-        container = AplContainer.builder().containerId("APL-TOOLS-CDI")
-                .recursiveScanPackages(AplCore.class)
-                .recursiveScanPackages(PropertiesHolder.class)
-                .annotatedDiscoveryMode().build();
-
-        toolsApp.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        toolsApp.propertiesHolder = new PropertiesHolder();
         toolsApp.propertiesHolder.init(propertiesLoader.load());
-        
-        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
-        chainsConfigHolder.setChains(chains);
-        blockchainConfig.updateChain(chainsConfigHolder.getActiveChain());
+        blockchainConfig = new BlockchainConfig();
     }
 
     public static String join(Collection collection, String delimiter) {
@@ -143,13 +133,12 @@ public class ApolloTools {
        return res;
     }
     private int compactDB() {
-        CompactDatabase cdb = new CompactDatabase();
-        cdb.init();
+        CompactDatabase cdb = new CompactDatabase(propertiesHolder, blockchainConfig);
         return cdb.compactDatabase();
     }
 
     private int mint() {
-        MintWorker mintWorker = new MintWorker();
+        MintWorker mintWorker = new MintWorker(propertiesHolder, blockchainConfig);
         //TODO: exit code
         mintWorker.mint();
         return 0;

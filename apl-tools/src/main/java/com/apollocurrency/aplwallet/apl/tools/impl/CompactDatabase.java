@@ -22,8 +22,6 @@ package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
@@ -39,7 +37,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -57,31 +54,26 @@ public class CompactDatabase {
     private static final Logger LOG = getLogger(CompactDatabase.class);
 
     // TODO: YL remove static instance later
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
-    public CompactDatabase() {        
-    }
+    private final PropertiesHolder propertiesHolder;
+    private final BlockchainConfig blockchainConfig;
+    private final DirProvider dirProvider;
     
-    /**
-     */
-    public void init() {
 //TODO: Check and test this class
-        DirProvider dirProvider = new DirProviderFactory()
+    public CompactDatabase(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig) {        
+        this.propertiesHolder = propertiesHolder;
+        this.blockchainConfig = blockchainConfig;
+        dirProvider = new DirProviderFactory()
                 .getInstance(
                         RuntimeEnvironment.getInstance().isServiceMode(),
                         blockchainConfig.getChain().getChainId(),
                         Constants.APPLICATION_DIR_NAME,
                         null
-                );
-        AplCoreRuntime.getInstance().setup(RuntimeEnvironment.getInstance().getRuntimeMode(), dirProvider);
-        AplCore core = new AplCore(blockchainConfig);
-        core.init();
-
+                );        
     }
-
+  
     /**
      * Compact the database
+     * @return exit code indication error or success
      */
     public  int compactDatabase() {
         int exitCode = PosixExitCodes.OK.exitCode();
@@ -97,7 +89,7 @@ public class CompactDatabase {
         String dbUrl = propertiesHolder.getStringProperty(dbPrefix + "Url");
         if (dbUrl == null) {
             //TODO: check that runtime is inited
-            String dbPath = AplCoreRuntime.getInstance().getDbDir().toAbsolutePath().toString();
+            String dbPath = dirProvider.getDbDir().toAbsolutePath().toString();
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
         String dbParams = propertiesHolder.getStringProperty(dbPrefix + "Params");

@@ -71,7 +71,10 @@ public class BlockchainConfig {
 //             holder.getIntProperty("apl.maxPrunableLifetime")
 //                );
     }
-
+    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
+        updateChain(chain, holder);
+    }
+    
     public void updateChain(Chain chain, int maxPrunableLifetime, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations) {
         Objects.requireNonNull(chain, "Chain cannot be null");
         setFields(chain, maxPrunableLifetime, testnetLeasingDelay, testnetGuaranteedBalanceConfirmations);
@@ -102,12 +105,8 @@ public class BlockchainConfig {
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
     }
 
-    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
-        updateChain(chain, holder);
-    }
-
-    public void updateChain(Chain chain, PropertiesHolder holder) {
-        int maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
+    public final void updateChain(Chain chain, PropertiesHolder holder) {
+        maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
         int testnetLeasingDelay = holder.getIntProperty("apl.testnetLeasingDelay", -1);
         int testnetGuaranteedBalanceConfirmations = holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1);
         updateChain(chain, maxPrunableLifetime, testnetLeasingDelay, testnetGuaranteedBalanceConfirmations);
