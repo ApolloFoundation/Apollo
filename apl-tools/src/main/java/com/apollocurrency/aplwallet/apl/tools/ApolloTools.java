@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
 import com.apollocurrency.aplwallet.apl.tools.impl.BaseTarget;
 import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
@@ -97,7 +97,7 @@ public class ApolloTools {
         );
     }
 
-    private void initCDI() {
+    private void readConfigs() {
      //   RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
@@ -241,10 +241,8 @@ public class ApolloTools {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.CMD)) {
-            toolsApp.initCDI();
             System.exit(toolsApp.compactDB());
         } else if (jc.getParsedCommand().equalsIgnoreCase(MintCmd.CMD)) {
-            toolsApp.initCDI();
             System.exit(toolsApp.mint());
         } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
             System.exit(toolsApp.heightMonitor());

@@ -210,7 +210,7 @@ public class HeightMonitor {
     }
     
     public static HeightMonitor create(String peersFile, List<Integer> periods, Integer delay){    
-        List<String> peers = readPeers(!peersFile.isBlank() ? peersFile : DEFAULT_PEERS_FILE);
+        List<String> peers = readPeers(!peersFile.isEmpty()? peersFile : DEFAULT_PEERS_FILE);
         if(periods==null||periods.isEmpty()){
             periods=DEFAULT_PERIODS;
         }

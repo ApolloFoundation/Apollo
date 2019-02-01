@@ -5,15 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import java.sql.*;
+import javax.enterprise.inject.spi.CDI;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class PublicKeyMigration {
     private static final Logger LOG = getLogger(PublicKeyMigration.class);
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    
     public static void init() {
         Connection con;
         boolean isInTransaction = false;
@@ -88,11 +91,11 @@ public class PublicKeyMigration {
                 stmt.executeUpdate("CREATE UNIQUE INDEX IF NOT EXISTS genesis_public_key_account_id_height_idx on genesis_public_key(account_id, height)");
                 stmt.executeUpdate("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
                 do {
-                    deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + Constants.BATCH_COMMIT_SIZE);
+                    deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE());
                     totalDeleted += deleted;
                     LOG.debug("Migration performed for {}/{} public keys", totalDeleted, totalNumberOfGenesisKeys);
                     Db.getDb().commitTransaction();
-                } while (deleted == Constants.BATCH_COMMIT_SIZE);
+                } while (deleted == propertiesHolder.BATCH_COMMIT_SIZE());
                 //add indices
             }
             Db.getDb().commitTransaction();

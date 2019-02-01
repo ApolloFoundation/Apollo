@@ -9,7 +9,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 public class DbConfig {

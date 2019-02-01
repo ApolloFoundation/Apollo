@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -65,7 +65,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_PORT;
+import static com.apollocurrency.aplwallet.apl.util.Constants.TESTNET_API_PORT;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import static org.slf4j.LoggerFactory.getLogger;
 

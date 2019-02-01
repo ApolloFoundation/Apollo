@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.Time;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;

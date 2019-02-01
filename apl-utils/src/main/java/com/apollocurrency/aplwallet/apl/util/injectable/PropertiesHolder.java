@@ -109,4 +109,37 @@ public class PropertiesHolder {
         LOG.info(name + " not defined, using default " + defaultValue);
         return defaultValue;
     }
+    
+    public boolean isOffline(){
+        return getBooleanProperty("apl.isOffline");
+    }
+    
+    public boolean isLightClient(){
+        return getBooleanProperty("apl.isLightClient");
+    }
+    public String customLoginWarning(){
+        return getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
+    }    
+    public  int MAX_ROLLBACK(){
+        return Math.max(getIntProperty("apl.maxRollback"), 720);    
+    }
+    public int FORGING_DELAY(){
+        return getIntProperty("apl.forgingDelay");
+    }
+    public int FORGING_SPEEDUP(){
+         return getIntProperty("apl.forgingSpeedup");
+    }
+    public int BATCH_COMMIT_SIZE(){
+         return getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
+    }    
+    public int TRIM_TRANSACTION_TIME_THRESHHOLD(){
+        return getIntProperty("apl.trimOperationsLogThreshold", 1000);
+    }    
+    public boolean INCLUDE_EXPIRED_PRUNABLE(){
+         return getBooleanProperty("apl.includeExpiredPrunable");
+    }    
+    public boolean correctInvalidFees(){
+        return getBooleanProperty("apl.correctInvalidFees");
+    }
+
 }

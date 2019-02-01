@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;

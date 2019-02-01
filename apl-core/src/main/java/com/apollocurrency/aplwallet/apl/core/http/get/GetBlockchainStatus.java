@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -38,7 +39,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static class GetBlockchainStatusHolder {
         private static final GetBlockchainStatus INSTANCE = new GetBlockchainStatus();
     }
@@ -67,13 +68,13 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("lastBlockchainFeederHeight", blockchainProcessor.getLastBlockchainFeederHeight());
         response.put("isScanning", blockchainProcessor.isScanning());
         response.put("isDownloading", blockchainProcessor.isDownloading());
-        response.put("maxRollback", Constants.MAX_ROLLBACK);
+        response.put("maxRollback", propertiesHolder.MAX_ROLLBACK());
         response.put("currentMinRollbackHeight", blockchainProcessor.getMinRollbackHeight());
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         response.put("isTestnet", blockchainConfig.isTestnet());
         response.put("maxPrunableLifetime", blockchainConfig.getMaxPrunableLifetime());
-        response.put("includeExpiredPrunable", Constants.INCLUDE_EXPIRED_PRUNABLE);
-        response.put("correctInvalidFees", Constants.correctInvalidFees);
+        response.put("includeExpiredPrunable", propertiesHolder.INCLUDE_EXPIRED_PRUNABLE());
+        response.put("correctInvalidFees", propertiesHolder.correctInvalidFees());
         response.put("ledgerTrimKeep", AccountLedger.trimKeep);
         response.put("chainId", blockchainConfig.getChain().getChainId());
         response.put("chainName", blockchainConfig.getChain().getName());
@@ -97,7 +98,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         } else {
             response.put("apiProxy", false);
         }
-        response.put("isLightClient", Constants.isLightClient);
+        response.put("isLightClient", propertiesHolder.isLightClient());
         response.put("maxAPIRecords", API.maxRecords);
         response.put("blockchainState", Peers.getMyBlockchainState());
         return response;

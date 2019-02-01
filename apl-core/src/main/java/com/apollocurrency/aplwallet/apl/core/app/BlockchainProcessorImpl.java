@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -47,7 +48,6 @@ import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -86,7 +86,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger LOG = getLogger(BlockchainProcessorImpl.class);
 
     // TODO: YL remove static instance later
-   private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+   private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final byte[] CHECKSUM_1 = blockchainConfig.isTestnet() ?
             null
@@ -99,10 +99,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
-    private final boolean trimDerivedTables = propertiesLoader.getBooleanProperty("apl.trimDerivedTables");
-    private final int defaultNumberOfForkConfirmations = propertiesLoader.getIntProperty(blockchainConfig.isTestnet()
+    private final boolean trimDerivedTables = propertiesHolder.getBooleanProperty("apl.trimDerivedTables");
+    private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty(blockchainConfig.isTestnet()
             ? "apl.testnetNumberOfForkConfirmations" : "apl.numberOfForkConfirmations");
-    private final boolean simulateEndlessDownload = propertiesLoader.getBooleanProperty("apl.simulateEndlessDownload");
+    private final boolean simulateEndlessDownload = propertiesHolder.getBooleanProperty("apl.simulateEndlessDownload");
 
     private int initialScanHeight;
     private volatile int lastTrimHeight;
@@ -955,7 +955,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     private BlockchainProcessorImpl(BlockValidator validator) {
-        final int trimFrequency = propertiesLoader.getIntProperty("apl.trimFrequency");
+        final int trimFrequency = propertiesHolder.getIntProperty("apl.trimFrequency");
         this.validator = validator;
         blockListeners.addListener(block -> {
             if (block.getHeight() % 5000 == 0) {
@@ -989,8 +989,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
             addGenesisBlock();
-            if (propertiesLoader.getBooleanProperty("apl.forceScan")) {
-                scan(0, propertiesLoader.getBooleanProperty("apl.forceValidate"));
+            if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
+                scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
             } else {
                 boolean rescan;
                 boolean validate;
@@ -1011,7 +1011,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }, false);
 
-        if (!Constants.isLightClient && !Constants.isOffline) {
+        if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
             ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 250, TimeUnit.MILLISECONDS);
         }
 
@@ -1054,7 +1054,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void doTrimDerivedTables() {
-        lastTrimHeight = Math.max(lookupBlockhain().getHeight() - Constants.MAX_ROLLBACK, 0);
+        lastTrimHeight = Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
         long onlyTrimTime = 0;
         if (lastTrimHeight > 0) {
             for (DerivedDbTable table : derivedTables) {
@@ -1108,7 +1108,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public int getMinRollbackHeight() {
-        return trimDerivedTables ? (lastTrimHeight > 0 ? lastTrimHeight : Math.max(lookupBlockhain().getHeight() - Constants.MAX_ROLLBACK, 0)) : 0;
+        return trimDerivedTables ? (lastTrimHeight > 0 ? lastTrimHeight : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0)) : 0;
     }
 
     @Override
@@ -1357,7 +1357,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
                             + " current time " + curTime;
                     LOG.debug(msg);
-                    Generator.setDelay(-Constants.FORGING_SPEEDUP);
+                    Generator.setDelay(-propertiesHolder.FORGING_SPEEDUP());
                     throw new BlockOutOfOrderException(msg, block);
                 }
 

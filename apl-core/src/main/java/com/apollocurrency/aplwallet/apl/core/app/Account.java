@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -82,7 +83,7 @@ public final class Account {
 
     // TODO: YL remove static instance later
 
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final VaultKeyStore KEYSTORE = CDI.current().select(VaultKeyStore.class).get();
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
@@ -269,13 +270,13 @@ public final class Account {
         public void trim(int height) {
             try (Connection con = Db.getDb().getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
-                         + "WHERE height < ? AND height >= 0 LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
+                         + "WHERE height < ? AND height >= 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
                     Db.getDb().commitTransaction();
-                } while (count >= Constants.BATCH_COMMIT_SIZE);
+                } while (count >= propertiesHolder.BATCH_COMMIT_SIZE());
             }
             catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
@@ -304,7 +305,7 @@ public final class Account {
         }
 
     };
-    private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = propertiesLoader.getBooleanProperty("apl.enablePublicKeyCache") ?
+    private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache") ?
             new ConcurrentHashMap<>() : null;
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
@@ -313,10 +314,10 @@ public final class Account {
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
     private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
-            propertiesLoader.getBooleanProperty("apl.store2FAInFileSystem")
+            propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem")
                     ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
                     : new TwoFactorAuthRepositoryImpl(Db.getDb()),
-            propertiesLoader.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
+            propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
 
     static {
 

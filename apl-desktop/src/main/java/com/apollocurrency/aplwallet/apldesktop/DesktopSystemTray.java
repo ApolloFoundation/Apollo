@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import org.slf4j.Logger;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.spi.CDI;
 
 public class DesktopSystemTray {
@@ -56,6 +57,7 @@ public class DesktopSystemTray {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
 
     private SystemTray tray;
     private final JFrame wrapper = new JFrame();
@@ -195,7 +197,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Application", Constants.APPLICATION);
         addDataRow(statusPanel, "Version", Constants.VERSION.toString());
         addDataRow(statusPanel, "Network", (blockchainConfig.isTestnet()) ? "TestNet" : "MainNet");
-        addDataRow(statusPanel, "Working offline", "" + Constants.isOffline);
+        addDataRow(statusPanel, "Working offline", "" + propertiesHolder.isOffline());
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
