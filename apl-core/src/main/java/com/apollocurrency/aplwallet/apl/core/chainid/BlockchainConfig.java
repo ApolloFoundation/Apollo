@@ -79,7 +79,7 @@ public class BlockchainConfig {
         Objects.requireNonNull(chain, "Chain cannot be null");
         setFields(chain, maxPrunableLifetime, testnetLeasingDelay, testnetGuaranteedBalanceConfirmations);
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        if (blockchainProperties.size() == 0 || blockchainProperties.get(0) == null) {
+        if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
         currentConfig = new HeightConfig(blockchainProperties.get(0), testnet);
