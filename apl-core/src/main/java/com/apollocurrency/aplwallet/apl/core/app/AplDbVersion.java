@@ -687,6 +687,14 @@ public class AplDbVersion extends DbVersion {
             case 248:
                 apply("ALTER TABLE currency_supply ALTER COLUMN current_reserve_per_unit_nqt RENAME TO current_reserve_per_unit_atm");
             case 249:
+                // create SHARDING meta-info inside main database
+                apply("CREATE TABLE IF NOT EXISTS shard (key VARCHAR(100) not null)");
+            case 250:
+                apply("CREATE UNIQUE INDEX shard_key_idx ON shard(key)");
+            case 251:
+                // it's an example of previously created shard for checking purpose
+                apply("INSERT INTO shard(key) VALUES('000000001')");
+            case 252:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

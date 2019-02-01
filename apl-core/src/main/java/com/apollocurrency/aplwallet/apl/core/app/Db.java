@@ -29,7 +29,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import org.slf4j.Logger;
@@ -38,6 +47,7 @@ public final class Db {
     private static final Logger LOG = getLogger(Db.class);
 
     private static TransactionalDb db;
+    private static Map<String, BasicDb> shards = new ConcurrentHashMap<>(3);
 
     public static TransactionalDb getDb() {
         if (db == null || db.isShutdown()) {
@@ -48,7 +58,32 @@ public final class Db {
 
     public static void init(DbProperties dbProperties) {
         db = new TransactionalDb(dbProperties);
-        db.init(new AplDbVersion());
+        db.init(new AplDbVersion(), true);
+        List<String> shardList = trySelectShard(db);
+        LOG.debug("Found [{}] shards...", shardList.size());
+        for (String shardName : shardList) {
+            DbProperties shardDbProperties = dbProperties.dbFileName(shardName);
+            TransactionalDb shardDb = new TransactionalDb(shardDbProperties);
+            shardDb.init(new AplDbVersion(), false);
+            shards.put(shardName, shardDb);
+            LOG.debug("Prepared '{}' shard...", shardName);
+        }
+    }
+
+    private static List<String> trySelectShard(TransactionalDb db) {
+        String shardSelect = "SELECT key from shard";
+        List<String> result = new ArrayList<>(3);
+        try (Connection con = db.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(shardSelect)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(rs.getString("key"));
+                }
+            }
+        } catch (SQLException e) {
+            LOG.error("Error retrieve shards...", e);
+        }
+        return result;
     }
 
     public static void init() {
@@ -57,6 +92,9 @@ public final class Db {
     }
 
     public static void shutdown() {
+        if (shards.size() > 0) {
+            shards.values().stream().forEach(shard -> shard.shutdown());
+        }
         db.shutdown();
     }
 

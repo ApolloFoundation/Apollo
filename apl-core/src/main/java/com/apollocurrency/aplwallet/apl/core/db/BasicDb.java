@@ -133,9 +133,23 @@ public class BasicDb implements DataSource {
         this.maxMemoryRows = dbProperties.getMaxMemoryRows();
     }
 
+    /**
+     * Constructor creates internal DataSource with 'Full Text Search' indexes created by default.
+     * @param dbVersion database version related information
+     */
     public void init(DbVersion dbVersion) {
         LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        FullTextTrigger.setActive(true);
+        init(dbVersion, true);
+    }
+
+    /**
+     * Constructor creates internal DataSource with 'Full Text Search' indexes created by specified value.
+     * @param dbVersion database version related information
+     * @param initFullTextSearch true - Full text search indexes are created, false otherwise
+     */
+    public void init(DbVersion dbVersion, boolean initFullTextSearch) {
+        LOG.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
+        FullTextTrigger.setActive(initFullTextSearch);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
         cp.setLoginTimeout(loginTimeout);
