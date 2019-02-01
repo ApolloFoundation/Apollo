@@ -74,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.URL;
+import java.security.KeyPair;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -112,6 +113,7 @@ public final class API {
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
+    private static KeyPair elGamalKeyPair;    
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -145,9 +147,10 @@ public final class API {
                 byte[] keySeed = Crypto.getKeySeed(keyBytes);
                 privateKey = Crypto.getPrivateKey(keySeed);
                 publicKey = Crypto.getPublicKey(keySeed);
+                elGamalKeyPair = Crypto.getElGamalKeyPair();
             }
             try {
-                TimeUnit.MINUTES.sleep(10);
+                TimeUnit.MINUTES.sleep(15);
             }
             catch (InterruptedException e) {
                 return;
@@ -162,6 +165,10 @@ public final class API {
         return privateKey;
     }
 
+    public static synchronized byte[] getServerElGamalPublicKey() {
+        return elGamalKeyPair.getPublic().getEncoded();
+    }
+    
     public static void init() {
 //    static {
         serverKeysGenerator.setDaemon(true);

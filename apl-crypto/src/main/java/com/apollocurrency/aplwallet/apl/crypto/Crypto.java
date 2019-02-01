@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import io.firstbridge.cryptolib;
+//import io.firstbridge.cryptolib;
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import java.security.KeyPair;
@@ -334,17 +334,16 @@ public final class Crypto {
         return Curve25519.isCanonicalSignature(signature);
     }
     
-    public static PublicKey getElGamalSharedKey(){
+    public static KeyPair getElGamalKeyPair(){
         FBCryptoParams params = FBCryptoParams.createDefault();
         try
         {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DiffieHellman");
             KeyPair kpAlice = keyGen.genKeyPair();
-            AsymJCEElGamalImpl instance1 = new AsymJCEElGamalImpl(params);
-            return kpAlice.getPublic();
+            return kpAlice;
         }
         catch (NoSuchAlgorithmException e){
-            e.printStackTrace();
+            LOG.debug(e.getMessage());
         }
                 
         return null;

@@ -227,7 +227,17 @@ public final class ParameterParser {
         return getByte(req, name, Byte.MIN_VALUE, Byte.MAX_VALUE, isMandatory, (byte) -1);
     }
 
-
+    public static boolean getBoolean(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
+        String paramValue = Convert.emptyToNull(req.getParameter(name));
+        if (paramValue == null) {
+            if (isMandatory) {
+                throw new ParameterException(missing(name));
+            }
+            return false;
+        }
+        return Boolean.parseBoolean(paramValue);
+    }
+    
     public static long getAccountId(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getAccountId(req, "account", isMandatory);
     }
@@ -338,7 +348,10 @@ public final class ParameterParser {
         }
         return currency;
     }
-
+    public static boolean getIsElGamalEncrypted(HttpServletRequest req, boolean isMandatory) throws ParameterException{
+        return getBoolean(req, "elgamal", isMandatory);
+    }
+    
     public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
         CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
@@ -484,9 +497,12 @@ public final class ParameterParser {
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
+        
         return secretPhrase;
     }
 
+    
+    
     public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
         return getPublicKey(req, null);
     }
@@ -1003,7 +1019,7 @@ public final class ParameterParser {
         public boolean isEncrypt() {
             return encrypt;
         }
-
+      
         public void setEncrypt(boolean encrypt) {
             this.encrypt = encrypt;
         }
