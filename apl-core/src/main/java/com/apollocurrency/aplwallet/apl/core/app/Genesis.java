@@ -35,7 +35,6 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Genesis {
     private static final Logger LOG = getLogger(Genesis.class);
@@ -53,9 +53,6 @@ public final class Genesis {
     private static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
     public static final long EPOCH_BEGINNING;
-    private static final String GENESIS_ACCOUNTS_JSON_PATH = "data/genesisAccounts";
-    private static final String GENESIS_ACCOUNTS_JSON_PATH_TESTNET_SUFFIX = "-testnet.json";
-    private static final String GENESIS_ACCOUNTS_JSON_PATH_MAINNET_SUFFIX = ".json";
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
@@ -81,7 +78,8 @@ public final class Genesis {
         } catch (ParseException|IOException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
-        digest.update((byte)(blockchainConfig.isTestnet() ? 1 : 0));
+        // we should leave here '0' to create correct genesis block for already launched mainnet
+        digest.update((byte)(0));
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         return digest.digest();
     }
@@ -146,7 +144,7 @@ public final class Genesis {
                 return map.entrySet()
                         .stream()
                         .sorted((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()))
-                        .skip(1)
+                        .skip(1) //skip first account to collect only genesis accounts
                         .collect(Collectors.toList());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to load genesis accounts", e);

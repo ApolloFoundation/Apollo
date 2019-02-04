@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -29,11 +31,9 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -43,8 +43,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -262,18 +261,11 @@ public final class Generator implements Comparable<Generator> {
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         return hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
-                || (blockchainConfig.isTestnet() ? elapsedTime > 300 : elapsedTime > 3600)
+                || elapsedTime > 3600
                 || Constants.isOffline);
     }
 
-    static boolean allowsFakeForging(byte[] publicKey) {
-        return blockchainConfig.isTestnet() && publicKey != null && Arrays.equals(publicKey, fakeForgingPublicKey);
-    }
-
     static BigInteger getHit(byte[] publicKey, Block block) {
-        if (allowsFakeForging(publicKey)) {
-            return BigInteger.ZERO;
-        }
         MessageDigest digest = Crypto.sha256();
         digest.update(block.getGenerationSignature());
         byte[] generationSignatureHash = digest.digest(publicKey);

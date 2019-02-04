@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-//import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.slf4j.Logger;
@@ -84,7 +82,7 @@ public final class ThreadPool {
 */
     }
 
-    public static synchronized void start(int timeMultiplier) {
+    public static synchronized void start() {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started");
         }
@@ -100,7 +98,7 @@ public final class ThreadPool {
         LOG.debug("Starting " + backgroundJobs.size() + " background jobs");
         scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("scheduled background pool"));
         for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
-            scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, Math.max(entry.getValue() / timeMultiplier, 1), TimeUnit.MILLISECONDS);
+            scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, entry.getValue(), TimeUnit.MILLISECONDS);
         }
         backgroundJobs = null;
 

@@ -22,8 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
@@ -205,13 +203,8 @@ public final class AplCore {
                 DebugTrace.init();
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
-                int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
-                        ".timeMultiplier"), 1) : 1;
-                ThreadPool.start(timeMultiplier);
-                if (timeMultiplier > 1) {
-                    setTime(new Time.FasterTime(Math.max(getEpochTime(), blockchain.getLastBlock().getTimestamp()), timeMultiplier));
-                    LOG.info("TIME WILL FLOW " + timeMultiplier + " TIMES FASTER!");
-                }
+
+                ThreadPool.start();
                 try {
                     secureRandomInitThread.join(10000);
                 }
@@ -231,9 +224,6 @@ public final class AplCore {
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
 
-                if (blockchainConfig.isTestnet()) {
-                    LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
-                }
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
@@ -268,9 +258,8 @@ public final class AplCore {
         }
 
         private Set<Integer> collectWorkingPorts() {
-            boolean testnet = blockchainConfig.isTestnet();
-            final int port = testnet ?  Constants.TESTNET_API_PORT: propertiesHolder.getIntProperty("apl.apiServerPort");
-            final int sslPort = testnet ? TESTNET_API_SSLPORT : propertiesHolder.getIntProperty("apl.apiServerSSLPort");
+            final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
+            final int sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
             boolean enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
@@ -287,7 +276,7 @@ public final class AplCore {
                 }
             }
             if (peerPort == -1) {
-                peerPort = testnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+                peerPort = DEFAULT_PEER_PORT;
             }
             int peerServerPort = propertiesHolder.getIntProperty("apl.peerServerPort");
 
@@ -297,7 +286,7 @@ public final class AplCore {
                 ports.add(sslPort);
             }
             ports.add(peerPort);
-            ports.add(testnet ? TESTNET_PEER_PORT : peerServerPort);
+            ports.add(peerServerPort);
             return ports;
         }
 
