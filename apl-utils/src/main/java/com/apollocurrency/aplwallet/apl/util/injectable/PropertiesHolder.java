@@ -103,7 +103,7 @@ public class PropertiesHolder {
             // LOG.debug(name + " = \"true\"");
             return true;
         } else if (Boolean.FALSE.toString().equals(value)) {
-            LOG.info(name + " = \"false\"");
+          //  LOG.debug(name + " = \"false\"");
             return false;
         }
         LOG.info(name + " not defined, using default " + defaultValue);
