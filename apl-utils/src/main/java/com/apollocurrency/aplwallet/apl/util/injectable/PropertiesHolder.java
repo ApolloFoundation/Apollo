@@ -60,7 +60,7 @@ public class PropertiesHolder {
     public String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
         String value = properties.getProperty(name);
         if (value != null && ! "".equals(value)) {
-            LOG.info(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
+           // LOG.debug(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
         } else {
             LOG.info(name + " not defined");
             value = defaultValue;
@@ -100,7 +100,7 @@ public class PropertiesHolder {
     public boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = properties.getProperty(name);
         if (Boolean.TRUE.toString().equals(value)) {
-            LOG.info(name + " = \"true\"");
+            // LOG.debug(name + " = \"true\"");
             return true;
         } else if (Boolean.FALSE.toString().equals(value)) {
             LOG.info(name + " = \"false\"");
