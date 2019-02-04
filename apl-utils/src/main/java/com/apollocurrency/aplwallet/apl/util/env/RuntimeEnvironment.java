@@ -36,7 +36,8 @@ public class RuntimeEnvironment {
     private static boolean isServiceMode = false;
     private static RuntimeEnvironment instance = null;
     private Class mainClass=null;
-
+    private DirProvider dirProvider;
+    
     void setup() {
         boolean b;
         try {
@@ -129,8 +130,12 @@ public class RuntimeEnvironment {
         return isDesktopEnabled() && hasJavaFX;
     }
 
-    public static DirProvider getDirProvider() {
-        return null;
+    public DirProvider getDirProvider() {
+        return dirProvider;
+    }
+
+    public void setDirProvider(DirProvider dirProvider) {
+        this.dirProvider = dirProvider;
     }
 
     public void setMain(Class aClass) {

@@ -20,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,11 +134,11 @@ public class AplCoreRuntime {
     public String findWebUiDir(){
 // if we decide to unzip in runtime
 //        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
-        String dir = dirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
+        String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
         dir=dir+File.separator+"build";
         File res = new File(dir);
         if(!res.exists()){ //we are in develop IDE or tests
-            dir=dirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
+            dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
             res=new File(dir);
         }
         return res.getAbsolutePath();

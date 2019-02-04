@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import javax.enterprise.inject.Vetoed;
+
+@Vetoed
 public final class DbProperties {
 
     private long maxCacheSize;

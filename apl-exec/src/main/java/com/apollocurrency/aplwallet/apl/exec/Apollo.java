@@ -173,13 +173,13 @@ public class Apollo {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();        
         dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars));
-
+        RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 
         log = LoggerFactory.getLogger(Apollo.class);
 //check webUI
-        System.out.println("=== Bin directory is: " + dirProvider.getBinDir().toAbsolutePath());
+        System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
 /* at the moment we do it in build time
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);

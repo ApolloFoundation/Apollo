@@ -10,25 +10,25 @@ import javax.inject.Inject;
 
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
 public class DbConfig {
     private PropertiesHolder propertiesHolder;
-    private DirProvider dirProvider;
     
     @Inject
-    public DbConfig(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
+    public DbConfig(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
-        this.dirProvider = dirProvider;
     }
 
     @Produces
     public DbProperties getDbConfig() {
+        DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         DbProperties dbProperties = new DbProperties()
                 .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
                 .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
                 .dbType(propertiesHolder.getStringProperty("apl.dbType"))
-                .dbDir(dirProvider.getDbDir().toAbsolutePath().toString())
+                .dbDir(dp.getDbDir().toAbsolutePath().toString())
                 .dbFileName(Constants.APPLICATION_DIR_NAME)
                 .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
                 .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))

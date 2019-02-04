@@ -23,7 +23,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getInstallationConfigDirectory() {
-        return DirProviderUtil.getBinDir().resolve("conf").toAbsolutePath().toString();
+        return DirProvider.getBinDir().resolve("conf").toAbsolutePath().toString();
     }
 
     @Override
