@@ -35,6 +35,8 @@ class DbTest {
 
     private DbProperties baseDbProperties;
     private Path pathToDb;
+    private Path pathToDbFolder;
+
     @Inject
     private Db db;
     @Inject
@@ -48,17 +50,20 @@ class DbTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-x---");
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
         FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
         String workingDir = System.getProperty("user.dir");
         // path to temporary db inside project
         Path currentPath = FileSystems.getDefault().getPath(workingDir + File.separator  + BASE_SUB_DIR);
         // check or create database folder
         if (!Files.exists(currentPath)) {
-            Files.createDirectory(currentPath, attr);
+            this.pathToDbFolder = Files.createDirectory(currentPath, attr);
+        } else {
+            this.pathToDbFolder = currentPath;
         }
         String dbFileName = DB_FILE_NAME + ".h2";
         Path dbFile = currentPath.toAbsolutePath().resolve(dbFileName);
+        // check and create H2 DB file
         if (!Files.exists(dbFile)) {
             this.pathToDb = Files.createFile(dbFile);
         } else {
@@ -85,6 +90,12 @@ class DbTest {
 
     }
 
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteQuietly(pathToDb.toFile());
+        FileUtils.deleteQuietly(pathToDbFolder.toFile());
+    }
+
     @Test
     void init() throws Exception {
         Db.init(baseDbProperties);
@@ -98,11 +109,6 @@ class DbTest {
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
         newShardDb.shutdown();
-        Db.shutdown();
     }
 
-    @AfterEach
-    void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("./", BASE_SUB_DIR));
-    }
 }
