@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.chainid;
+package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 
@@ -9,12 +9,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ChainUtils {
-    private ChainUtils() {} //never
 
     public static Chain getActiveChain(Map<UUID, Chain> chains) {
         Objects.requireNonNull(chains, "Chains cannot be null");
         List<Chain> activeChains = chains.values().stream().filter(Chain::isActive).collect(Collectors.toList());
-        if (activeChains.size() == 0) {
+        if (activeChains.isEmpty()) {
             throw new RuntimeException("No active chain found");
         }
         if (activeChains.size() > 1) {

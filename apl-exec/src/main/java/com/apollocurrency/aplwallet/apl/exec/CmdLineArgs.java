@@ -34,7 +34,9 @@ public class CmdLineArgs {
     public String twoFactorAuthDir = "";
     @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile = "";
-
+    @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
+    public boolean startMint;
+    
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
     }

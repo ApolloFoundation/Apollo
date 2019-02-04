@@ -1507,7 +1507,7 @@ public final class Account {
         }
     }
 
-    void addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent event, long eventId, long currencyId, long units) {
+    public void addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent event, long eventId, long currencyId, long units) {
         if (units == 0) {
             return;
         }

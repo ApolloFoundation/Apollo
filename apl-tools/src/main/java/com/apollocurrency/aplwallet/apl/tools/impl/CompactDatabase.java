@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.tools.impl;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -37,6 +36,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.UUID;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -55,32 +55,24 @@ public class CompactDatabase {
 
     // TODO: YL remove static instance later
     private final PropertiesHolder propertiesHolder;
-    private final BlockchainConfig blockchainConfig;
     private final DirProvider dirProvider;
     
 //TODO: Check and test this class
-    public CompactDatabase(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig) {        
+    public CompactDatabase(PropertiesHolder propertiesHolder, DirProvider dirProvider) {        
         this.propertiesHolder = propertiesHolder;
-        this.blockchainConfig = blockchainConfig;
-        dirProvider = new DirProviderFactory()
-                .getInstance(
-                        RuntimeEnvironment.getInstance().isServiceMode(),
-                        blockchainConfig.getChain().getChainId(),
-                        Constants.APPLICATION_DIR_NAME,
-                        null
-                );        
+        this.dirProvider = dirProvider;
     }
   
     /**
      * Compact the database
      * @return exit code indication error or success
      */
-    public  int compactDatabase() {
+    public  int compactDatabase(boolean isTestNet) {
         int exitCode = PosixExitCodes.OK.exitCode();
         //
         // Get the database URL
         //
-        String dbPrefix = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
+        String dbPrefix = isTestNet ? "apl.testDb" : "apl.db";
         String dbType = propertiesHolder.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");

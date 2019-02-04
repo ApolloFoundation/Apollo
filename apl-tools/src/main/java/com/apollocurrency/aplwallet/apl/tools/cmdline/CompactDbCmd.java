@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.tools.cmdline;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 /**
@@ -11,5 +12,7 @@ import com.beust.jcommander.Parameters;
  */
 @Parameters(commandDescription = "Compact database")
 public class CompactDbCmd {
-   public static final String CMD="compactdb"; 
+   public static final String CMD="compactdb";
+   @Parameter(names = {"--chainId", "-c"}, description = "Chain ID")
+   public String chainID=""; 
 }

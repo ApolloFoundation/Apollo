@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
-import com.apollocurrency.aplwallet.apl.tools.impl.MintWorker;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
 import com.apollocurrency.aplwallet.apl.tools.impl.HeightMonitor;
 import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
@@ -12,14 +12,11 @@ import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
 import com.apollocurrency.aplwallet.apl.tools.impl.BaseTarget;
 import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.BaseTargetCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.ConstantsCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
-import com.apollocurrency.aplwallet.apl.tools.cmdline.MintCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.PubKeyCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
@@ -59,7 +56,6 @@ public class ApolloTools {
     private static final Logger log = LoggerFactory.getLogger(ApolloTools.class);
     private static final CmdLineArgs args = new CmdLineArgs();
     private static final CompactDbCmd compactDb = new CompactDbCmd();
-    private static final MintCmd mint = new MintCmd();
     private static final HeightMonitorCmd heightMonitor = new HeightMonitorCmd();
     private static final PubKeyCmd pubkey = new PubKeyCmd();
     private static final SignTxCmd signtx = new SignTxCmd();
@@ -67,20 +63,16 @@ public class ApolloTools {
     private static final ConstantsCmd constcmd = new ConstantsCmd();
     private static final BaseTargetCmd basetarget = new BaseTargetCmd();
     private ApolloTools toolsApp;
+    private UUID activeChainId;
+    private PredefinedDirLocations dirLocations;
 
     private static PropertiesHolder propertiesHolder;
-    private static BlockchainConfig blockchainConfig;
     private static DirProvider dirProvider;
-    
+
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
             "socksProxyHost",
             "socksProxyPort",
             "apl.enablePeerUPnP");
-
-    private static DirProvider createDirProvider(Map<UUID, Chain> chains, PredefinedDirLocations dirLocations, boolean isService) {
-        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-        return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
-    }
 
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
         return new PredefinedDirLocations(
@@ -93,7 +85,7 @@ public class ApolloTools {
     }
 
     private void readConfigs() {
-     //   RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
+        //   RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
 
@@ -110,34 +102,39 @@ public class ApolloTools {
                 com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 "chains.json");
         Map<UUID, Chain> chains = chainsConfigLoader.load();
-        dirProvider = createDirProvider(chains, merge(args, envVars), false);
-
+        activeChainId = ChainUtils.getActiveChain(chains).getChainId();
+        // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);
+        dirLocations = merge(args, envVars);
+        dirProvider = DirProviderFactory.getProvider(false, activeChainId, Constants.APPLICATION_DIR_NAME, dirLocations);
         toolsApp.propertiesHolder = new PropertiesHolder();
         toolsApp.propertiesHolder.init(propertiesLoader.load());
-        blockchainConfig = new BlockchainConfig();
     }
 
     public static String join(Collection collection, String delimiter) {
         String res = collection.stream()
-                               .map(Object::toString)
-                               .collect(Collectors.joining(delimiter)).toString();
+                .map(Object::toString)
+                .collect(Collectors.joining(delimiter)).toString();
         return res;
     }
-    
-    public static String readFile(String path) throws IOException{
-       String res = new String(Files.readAllBytes(Paths.get(path)));
-       return res;
-    }
-    private int compactDB() {
-        CompactDatabase cdb = new CompactDatabase(propertiesHolder, blockchainConfig);
-        return cdb.compactDatabase();
+
+    public static String readFile(String path) throws IOException {
+        String res = new String(Files.readAllBytes(Paths.get(path)));
+        return res;
     }
 
-    private int mint() {
-        MintWorker mintWorker = new MintWorker(propertiesHolder, blockchainConfig);
-        //TODO: exit code
-        mintWorker.mint();
-        return 0;
+    private int compactDB() {
+        if (!compactDb.chainID.isEmpty()) {
+            try {
+                UUID blockchainId = UUID.fromString(compactDb.chainID);
+                dirProvider = DirProviderFactory.getProvider(false, blockchainId, Constants.APPLICATION_DIR_NAME, dirLocations);
+            } catch (IllegalArgumentException ex) {
+                System.err.println("Can not convert chain ID " + compactDb.chainID + " to UUID");
+                return PosixExitCodes.EX_CONFIG.exitCode();
+            }
+        }
+        CompactDatabase cdb = new CompactDatabase(propertiesHolder, dirProvider);
+        return cdb.compactDatabase(false);
+
     }
 
     private int heightMonitor() {
@@ -167,12 +164,12 @@ public class ApolloTools {
         int res;
         String input = "";
         if (urlcmd.infile.isEmpty()) {
-            input = join(urlcmd.parameters," ");
-        }else{
+            input = join(urlcmd.parameters, " ");
+        } else {
             try {
                 input = readFile(urlcmd.infile);
             } catch (IOException ex) {
-               return PosixExitCodes.EX_OSFILE.exitCode();
+                return PosixExitCodes.EX_OSFILE.exitCode();
             }
         }
         if (urlcmd.encrypt) {
@@ -182,26 +179,25 @@ public class ApolloTools {
         }
         return res;
     }
-    
-    private int baseTarget(){
-       int height = 1000;
-       if(!basetarget.parameters.isEmpty()){
-           try{
-              height = Integer.parseInt(basetarget.parameters.get(0));
-           }catch(NumberFormatException e){
-              System.err.println("Invalid height: "+basetarget.parameters.get(0));
-              return PosixExitCodes.EX_USAGE.exitCode();
-           }
-       }
-       return BaseTarget.doCalcualte(0);
+
+    private int baseTarget() {
+        int height = 1000;
+        if (!basetarget.parameters.isEmpty()) {
+            try {
+                height = Integer.parseInt(basetarget.parameters.get(0));
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid height: " + basetarget.parameters.get(0));
+                return PosixExitCodes.EX_USAGE.exitCode();
+            }
+        }
+        return BaseTarget.doCalcualte(height);
     }
-    
+
     public static void main(String[] argv) {
         ApolloTools toolsApp = new ApolloTools();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
                 .addCommand(CompactDbCmd.CMD, compactDb)
-                .addCommand(MintCmd.CMD, mint)
                 .addCommand(HeightMonitorCmd.CMD, heightMonitor)
                 .addCommand(PubKeyCmd.CMD, pubkey)
                 .addCommand(SignTxCmd.CMD, signtx)
@@ -226,9 +222,8 @@ public class ApolloTools {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.CMD)) {
+            toolsApp.readConfigs();
             System.exit(toolsApp.compactDB());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(MintCmd.CMD)) {
-            System.exit(toolsApp.mint());
         } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
             System.exit(toolsApp.heightMonitor());
         } else if (jc.getParsedCommand().equalsIgnoreCase(PubKeyCmd.CMD)) {

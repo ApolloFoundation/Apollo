@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
@@ -171,7 +171,8 @@ public class Apollo {
 // init application data dir provider
 
         Map<UUID, Chain> chains = chainsConfigLoader.load();
-        dirProvider = createDirProvider(chains, merge(args,envVars), args.serviceMode);
+        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();        
+        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars));
 
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
@@ -219,15 +220,14 @@ public class Apollo {
 /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
-*/
+*/  
+            if(args.startMint){
+                AplCoreRuntime.getInstance().startMinter(); 
+            }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
     }
 
-    private static DirProvider createDirProvider(Map<UUID, Chain> chains, PredefinedDirLocations dirLocations, boolean isService) {
-        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-        return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
-    }
 }

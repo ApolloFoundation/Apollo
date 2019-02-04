@@ -23,14 +23,14 @@ class DirProviderFactoryTest {
     @Test
     void getInstance() {
         assertThrows(NullPointerException.class, () -> {
-            DirProvider df = new DirProviderFactory().getInstance(true, null, null, null);
+            DirProvider df = DirProviderFactory.getProvider(true, null, null, null);
         });
 
         assertThrows(NullPointerException.class, () -> {
-            DirProvider df = new DirProviderFactory().getInstance(true, UUID.randomUUID(), null, null);
+            DirProvider df = DirProviderFactory.getProvider(true, UUID.randomUUID(), null, null);
         });
 
-        DirProvider df = new DirProviderFactory().getInstance(true, UUID.randomUUID(), "Default", null);
+        DirProvider df = DirProviderFactory.getProvider(true, UUID.randomUUID(), "Default", null);
         assertNotNull(df.getAppBaseDir());
         assertNotNull(df.getLogsDir());
         assertNotNull(df.getPIDFile());
@@ -41,7 +41,7 @@ class DirProviderFactoryTest {
     @Test
     void getInstance2() {
         PredefinedDirLocations dirLocations = new PredefinedDirLocations();
-        DirProvider df = new DirProviderFactory().getInstance(true, UUID.randomUUID(), "Default", dirLocations);
+        DirProvider df = DirProviderFactory.getProvider(true, UUID.randomUUID(), "Default", dirLocations);
         assertNotNull(df.getAppBaseDir());
         assertNotNull(df.getLogsDir());
         assertNotNull(df.getPIDFile());
@@ -49,7 +49,7 @@ class DirProviderFactoryTest {
         assertNotNull(df.getVaultKeystoreDir());
 
         dirLocations = new PredefinedDirLocations("dbDir", "logDir", "vaultDir", "pidDir", "twoFADir");
-        df = new DirProviderFactory().getInstance(true, UUID.randomUUID(), "Default", dirLocations);
+        df =  DirProviderFactory.getProvider(true, UUID.randomUUID(), "Default", dirLocations);
         assertNotNull(df.getAppBaseDir());
         assertNotNull(df.getLogsDir());
         assertEquals("logDir", df.getLogsDir().toFile().getName());

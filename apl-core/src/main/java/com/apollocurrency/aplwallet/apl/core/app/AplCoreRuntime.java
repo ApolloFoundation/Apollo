@@ -5,6 +5,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.net.URI;
@@ -18,6 +19,8 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +37,15 @@ public class AplCoreRuntime {
  
     private  RuntimeMode runtimeMode;
     private DirProvider dirProvider;
+    //TODO: may be it is better to take below variables from here instead of getting it from CDI
+    // in every class?
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    
+     //TODO:  check and debug minting    
+    private MintWorker mintworker;
+    private Thread mintworkerThread;
+    
     private static class AplCoreRuntimeHolder {
         private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
     } 
@@ -63,6 +73,13 @@ public class AplCoreRuntime {
     public void shutdown(){
         for(AplCore c: cores){
             c.shutdown();
+        }
+        if(mintworker!=null){
+            mintworker.stop();
+            try {
+                mintworkerThread.join(200);
+            } catch (InterruptedException ex) {              
+            }
         }
         runtimeMode.shutdown();
     }
@@ -126,5 +143,18 @@ public class AplCoreRuntime {
             res=new File(dir);
         }
         return res.getAbsolutePath();
+    }
+    
+    public void startMinter() {
+        mintworker = new MintWorker(propertiesHolder, blockchainConfig);
+        mintworkerThread = new Thread(mintworker);
+        mintworkerThread.setDaemon(true);
+        mintworkerThread.start();        
+    }
+    
+    public void stopMinter() {
+        if(mintworker!=null){
+            mintworker.stop();
+        }
     }
 }
