@@ -2,7 +2,19 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import javax.inject.Inject;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -13,17 +25,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Properties;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import javax.inject.Inject;
 
 @EnableWeld
 class DbTest {
@@ -87,7 +89,6 @@ class DbTest {
     void init() throws Exception {
         Db.init(baseDbProperties);
         Db.shutdown();
-        Files.deleteIfExists(pathToDb);
     }
 
     @Test
@@ -98,6 +99,10 @@ class DbTest {
         assertNotNull(newShardDb.getConnection());
         newShardDb.shutdown();
         Db.shutdown();
-        Files.deleteIfExists(pathToDb);
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteDirectory(new File("./", BASE_SUB_DIR));
     }
 }
