@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.tools;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -54,6 +55,7 @@ public final class PassphraseRecovery {
     final static Solution NO_SOLUTION = new Solution();
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+
     public static void main(String[] args) {
         new PassphraseRecovery().recover();
     }
@@ -117,7 +119,8 @@ public final class PassphraseRecovery {
     }
 
     static Map<Long, byte[]> getPublicKeys() {
-        Db.init();
+        DbProperties dbProperties = CDI.current().select(DbProperties.class).get(); // it should be present and initialized
+        Db.init(dbProperties);
         Map<Long, byte[]> publicKeys = new HashMap<>();
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM public_key WHERE latest=TRUE");

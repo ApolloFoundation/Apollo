@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
@@ -26,15 +27,17 @@ import java.util.List;
  * @see DbMigrator
  */
 public class DbMigrationExecutor extends MigrationExecutor {
+    private DbProperties dbProperties;// it should be present and initialized
 
     @Inject
-    public DbMigrationExecutor(BlockchainConfig config, PropertiesHolder propertiesHolder) {
+    public DbMigrationExecutor(BlockchainConfig config, PropertiesHolder propertiesHolder, DbProperties dbProperties) {
         super(propertiesHolder, config, "db", true);
+        this.dbProperties = dbProperties;
     }
 
     @Override
     protected void afterMigration() {
-        Db.init();
+        Db.init(dbProperties);
         FullTextTrigger.init();
         try (Connection connection = Db.getDb().getConnection()) {
             FullTextTrigger.reindex(connection);

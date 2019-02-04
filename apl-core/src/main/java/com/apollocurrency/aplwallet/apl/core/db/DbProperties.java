@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import javax.enterprise.inject.Vetoed;
+import javax.inject.Singleton;
 
-@Vetoed
-public final class DbProperties {
+@Singleton
+public final class DbProperties implements Cloneable {
 
     private long maxCacheSize;
     private String dbUrl;
@@ -128,6 +128,37 @@ public final class DbProperties {
     public DbProperties maxMemoryRows(int maxMemoryRows) {
         this.maxMemoryRows = maxMemoryRows;
         return this;
+    }
+
+    public DbProperties deepCopy() throws CloneNotSupportedException {
+        DbProperties clonedObj = (DbProperties) super.clone();
+        clonedObj.maxCacheSize = this.maxCacheSize;
+        if (this.dbUrl != null) {
+            clonedObj.dbUrl = new String(this.dbUrl);
+        }
+        if (this.dbType != null) {
+            clonedObj.dbType = new String(this.dbType);
+        }
+        if (this.dbDir != null) {
+            clonedObj.dbDir = new String(this.dbDir);
+        }
+        if (this.dbFileName != null) {
+            clonedObj.dbFileName = new String(this.dbFileName);
+        }
+        if (this.dbParams != null) {
+            clonedObj.dbParams = new String(this.dbParams);
+        }
+        if (this.dbUsername != null) {
+            clonedObj.dbUsername = new String(this.dbUsername);
+        }
+        if (this.dbPassword != null) {
+            clonedObj.dbPassword = new String(this.dbPassword);
+        }
+        clonedObj.maxConnections = this.maxConnections;
+        clonedObj.loginTimeout = this.loginTimeout;
+        clonedObj.defaultLockTimeout = this.defaultLockTimeout;
+        clonedObj.maxMemoryRows = this.maxMemoryRows;
+        return clonedObj;
     }
 
     @Override

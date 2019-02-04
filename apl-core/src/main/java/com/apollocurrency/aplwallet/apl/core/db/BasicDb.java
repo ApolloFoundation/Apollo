@@ -40,7 +40,7 @@ import javax.sql.DataSource;
  * be also enabled, so use it carefully
  */
 public class BasicDb implements DataSource {
-    private static final Logger LOG = getLogger(BasicDb.class);
+    private static final Logger log = getLogger(BasicDb.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
 
     @Override
@@ -138,7 +138,7 @@ public class BasicDb implements DataSource {
      * @param dbVersion database version related information
      */
     public void init(DbVersion dbVersion) {
-        LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
+        log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         init(dbVersion, true);
     }
 
@@ -148,7 +148,7 @@ public class BasicDb implements DataSource {
      * @param initFullTextSearch true - Full text search indexes are created, false otherwise
      */
     public void init(DbVersion dbVersion, boolean initFullTextSearch) {
-        LOG.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
+        log.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
         FullTextTrigger.setActive(initFullTextSearch);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
@@ -160,7 +160,7 @@ public class BasicDb implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        dbVersion.init(this);
+        dbVersion.init(this, initFullTextSearch);
         initialized = true;
         shutdown = false;
     }
@@ -175,11 +175,11 @@ public class BasicDb implements DataSource {
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
-            LOG.info("Database shutdown completed");
+            log.info("Database shutdown completed");
             shutdown = true;
             initialized = false;
         } catch (SQLException e) {
-            LOG.info(e.toString(), e);
+            log.info(e.toString(), e);
         }
     }
 
@@ -207,7 +207,7 @@ public class BasicDb implements DataSource {
         int activeConnections = cp.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            LOG.debug("Database connection pool current size: " + activeConnections);
+            log.debug("Database connection pool current size: " + activeConnections);
         }
         return con;
     }

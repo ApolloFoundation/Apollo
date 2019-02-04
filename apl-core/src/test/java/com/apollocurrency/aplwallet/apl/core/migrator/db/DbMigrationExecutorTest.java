@@ -108,7 +108,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder, targetDbProperties);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();
@@ -123,7 +123,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigration() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder, targetDbProperties);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();

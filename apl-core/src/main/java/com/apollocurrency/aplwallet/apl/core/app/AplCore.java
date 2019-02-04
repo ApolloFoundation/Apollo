@@ -28,6 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
@@ -144,7 +145,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
-                Db.init();
+                Db.init(CDI.current().select(DbProperties.class).get());
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
 

@@ -104,12 +104,12 @@ public class Apollo {
     }
 
     public static void shutdown() {
+        AplCoreRuntime.getInstance().shutdown();
         try {
             container.shutdown();
         } catch (IllegalStateException e) {
             log.error("Weld is stopped");
         }
-        AplCoreRuntime.getInstance().shutdown();
     }
 
     /**
