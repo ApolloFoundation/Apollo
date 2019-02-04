@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import org.slf4j.Logger;
 

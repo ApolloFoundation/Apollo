@@ -24,9 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -36,7 +34,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.UUID;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -67,23 +64,24 @@ public class CompactDatabase {
      * Compact the database
      * @return exit code indication error or success
      */
-    public  int compactDatabase(boolean isTestNet) {
+    public  int compactDatabase() {
         int exitCode = PosixExitCodes.OK.exitCode();
         //
         // Get the database URL
         //
-        String dbPrefix = isTestNet ? "apl.testDb" : "apl.db";
-        String dbType = propertiesHolder.getStringProperty(dbPrefix + "Type");
+        String dbPrefix="";
+        String dbType = propertiesHolder.getStringProperty("apl.dbType");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");
             return 1;
         }
-        String dbUrl = propertiesHolder.getStringProperty(dbPrefix + "Url");
+//
+        String dbUrl = propertiesHolder.getStringProperty("apl.dbUrl");
         if (dbUrl == null) {
-            //TODO: check that runtime is inited
             String dbPath = dirProvider.getDbDir().toAbsolutePath().toString();
             dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
         }
+        
         String dbParams = propertiesHolder.getStringProperty(dbPrefix + "Params");
         dbUrl += ";" + dbParams;
         if (!dbUrl.contains("MV_STORE=")) {

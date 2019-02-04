@@ -63,7 +63,8 @@ public class ApolloTools {
     private static final ConstantsCmd constcmd = new ConstantsCmd();
     private static final BaseTargetCmd basetarget = new BaseTargetCmd();
     private ApolloTools toolsApp;
-    private UUID activeChainId;
+    private Chain activeChain;
+    Map<UUID, Chain> chains;
     private PredefinedDirLocations dirLocations;
 
     private static PropertiesHolder propertiesHolder;
@@ -102,12 +103,13 @@ public class ApolloTools {
                 com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 "chains.json");
         Map<UUID, Chain> chains = chainsConfigLoader.load();
-        activeChainId = ChainUtils.getActiveChain(chains).getChainId();
+        activeChain = ChainUtils.getActiveChain(chains);
         // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);
         dirLocations = merge(args, envVars);
-        dirProvider = DirProviderFactory.getProvider(false, activeChainId, Constants.APPLICATION_DIR_NAME, dirLocations);
+        dirProvider = DirProviderFactory.getProvider(false, activeChain.getChainId(), Constants.APPLICATION_DIR_NAME, dirLocations);
         toolsApp.propertiesHolder = new PropertiesHolder();
         toolsApp.propertiesHolder.init(propertiesLoader.load());
+        
     }
 
     public static String join(Collection collection, String delimiter) {
@@ -126,6 +128,11 @@ public class ApolloTools {
         if (!compactDb.chainID.isEmpty()) {
             try {
                 UUID blockchainId = UUID.fromString(compactDb.chainID);
+                Chain c = chains.get(blockchainId);
+                if(c==null){
+                    System.out.println("Chain not coonfigured: "+compactDb.chainID);
+                    return PosixExitCodes.EX_CONFIG.exitCode();
+                }
                 dirProvider = DirProviderFactory.getProvider(false, blockchainId, Constants.APPLICATION_DIR_NAME, dirLocations);
             } catch (IllegalArgumentException ex) {
                 System.err.println("Can not convert chain ID " + compactDb.chainID + " to UUID");
@@ -133,7 +140,8 @@ public class ApolloTools {
             }
         }
         CompactDatabase cdb = new CompactDatabase(propertiesHolder, dirProvider);
-        return cdb.compactDatabase(false);
+        
+        return cdb.compactDatabase();
 
     }
 
