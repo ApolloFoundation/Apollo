@@ -12,7 +12,7 @@ import java.sql.*;
 import javax.enterprise.inject.spi.CDI;
 
 import static org.slf4j.LoggerFactory.getLogger;
-
+// TODO refactor, use OptionDb or one transaction for storing checkpoints
 public class PublicKeyMigration {
     private static final Logger LOG = getLogger(PublicKeyMigration.class);
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
@@ -28,10 +28,7 @@ public class PublicKeyMigration {
                 con = Db.getDb().beginTransaction();
             }
 
-            try (Statement stmt = con.createStatement();
-                 PreparedStatement selectGenesisKeysStatement = con.prepareStatement((
-                         "SELECT * FROM public_key where DB_ID between ? AND ?"));
-            ) {
+            try (Statement stmt = con.createStatement()) {
                 int totalNumberOfGenesisKeys = 0;
                 try (ResultSet rs = stmt.executeQuery("SELECT count(*) from public_key where height = 0")) {
                     rs.next();
@@ -52,9 +49,6 @@ public class PublicKeyMigration {
              //   Apl.getRuntimeMode().updateAppStatus(message);
                 //create copy of public_key table
                 if (!isMigrationInterrupted) {
-
-                    stmt.executeUpdate("DROP TABLE IF EXISTS genesis_public_key");
-                    stmt.executeUpdate("CREATE TABLE genesis_public_key (db_id IDENTITY, account_id BIGINT NOT NULL, public_key BINARY(32), height INT NOT NULL, FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
                     //copy genesis keys if exists
                     long minDbId;
                     long maxDbId;
@@ -64,32 +58,34 @@ public class PublicKeyMigration {
                         maxDbId = rs.getLong("max_db_id");
                     }
                     LOG.info("Copy genesis public keys");
-                    selectGenesisKeysStatement.setLong(1, minDbId);
-                    selectGenesisKeysStatement.setLong(2, maxDbId);
-                    try (ResultSet rs = selectGenesisKeysStatement.executeQuery(); PreparedStatement pstm = con.prepareStatement("INSERT INTO genesis_public_key " +
-                            "VALUES (?, ?, ?, ?, ?)")) {
-                        int counter = 0;
-                        while (rs.next()) {
-                            pstm.setLong(1, rs.getLong(1));
-                            pstm.setLong(2, rs.getLong(2));
-                            pstm.setBytes(3, rs.getBytes(3));
-                            pstm.setInt(4, rs.getInt(4));
-                            pstm.setBoolean(5, rs.getBoolean(5));
-                            pstm.addBatch();
-                            if (++counter % 500 == 0) {
-                                pstm.executeBatch();
-                                Db.getDb().commitTransaction();
-                                LOG.debug("Copied {} / {}", counter, totalNumberOfGenesisKeys);
+                    try (PreparedStatement selectGenesisKeysStatement = con.prepareStatement(
+                            "SELECT * FROM public_key where DB_ID between ? AND ?")) {
+                        selectGenesisKeysStatement.setLong(1, minDbId);
+                        selectGenesisKeysStatement.setLong(2, maxDbId);
+                        try (ResultSet rs = selectGenesisKeysStatement.executeQuery(); PreparedStatement pstm = con.prepareStatement("INSERT INTO genesis_public_key " +
+                                "VALUES (?, ?, ?, ?, ?)")) {
+                            int counter = 0;
+                            while (rs.next()) {
+                                pstm.setLong(1, rs.getLong(1));
+                                pstm.setLong(2, rs.getLong(2));
+                                pstm.setBytes(3, rs.getBytes(3));
+                                pstm.setInt(4, rs.getInt(4));
+                                pstm.setBoolean(5, rs.getBoolean(5));
+                                pstm.addBatch();
+                                if (++counter % 500 == 0) {
+                                    pstm.executeBatch();
+                                    Db.getDb().commitTransaction();
+                                    LOG.debug("Copied {} / {}", counter, totalNumberOfGenesisKeys);
+                                }
                             }
+                            pstm.executeBatch();
                         }
-                        pstm.executeBatch();
                     }
                 }
                 //delete genesis keys
                 int deleted;
                 int totalDeleted = 0;
-                stmt.executeUpdate("CREATE UNIQUE INDEX IF NOT EXISTS genesis_public_key_account_id_height_idx on genesis_public_key(account_id, height)");
-                stmt.executeUpdate("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
+
                 do {
                     deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE());
                     totalDeleted += deleted;
