@@ -37,7 +37,7 @@ public class PropertiesHolder {
     public int getIntProperty(String name, int defaultValue) {
         try {
             int result = Integer.parseInt(properties.getProperty(name));
-            LOG.info(name + " = \"" + result + "\"");
+  //          LOG.debug(name + " = \"" + result + "\"");
             return result;
         } catch (NumberFormatException e) {
             LOG.info(name + " not defined or not numeric, using default value " + defaultValue);
