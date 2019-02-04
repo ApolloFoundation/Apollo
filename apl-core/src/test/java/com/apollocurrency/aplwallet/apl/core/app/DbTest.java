@@ -108,7 +108,8 @@ class DbTest {
         TransactionalDb newShardDb = db.createAndAddShard("apl-shard-000001");
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb.shutdown();
+//        newShardDb.shutdown(); // not needed
+        db.shutdown();
     }
 
 }
