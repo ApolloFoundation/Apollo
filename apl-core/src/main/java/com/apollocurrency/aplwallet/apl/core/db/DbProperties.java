@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
 
-@Singleton
+@Vetoed
 public final class DbProperties implements Cloneable {
 
     private long maxCacheSize;
