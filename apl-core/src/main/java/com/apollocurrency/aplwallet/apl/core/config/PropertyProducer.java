@@ -4,23 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
+import java.util.Arrays;
+import java.util.List;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 public class PropertyProducer {
     private PropertiesHolder propertiesHolder;
-    private BlockchainConfig blockchainConfig;
 
     @Inject
-    public PropertyProducer(PropertiesHolder propertiesHolder, BlockchainConfig config) {
+    public PropertyProducer(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
-        this.blockchainConfig = config;
     }
 
     public void setPropertiesHolder(PropertiesHolder propertiesHolder) {
@@ -53,20 +50,9 @@ public class PropertyProducer {
     }
 
     private String getKey(final InjectionPoint ip) {
-        if (blockchainConfig.isTestnet()) {
-            return getTestnetKey(ip);
-        } else return getMainnetKey(ip);
-    }
-    private String getMainnetKey(final InjectionPoint ip) {
         return (ip.getAnnotated().isAnnotationPresent(Property.class)
                 && !ip.getAnnotated().getAnnotation(Property.class).name().isEmpty())
                 ? ip.getAnnotated().getAnnotation(Property.class).name()
-                : ip.getMember().getName();
-    }
-    private String getTestnetKey(final InjectionPoint ip) {
-        return (ip.getAnnotated().isAnnotationPresent(Property.class)
-                && !ip.getAnnotated().getAnnotation(Property.class).testnetName().isEmpty())
-                ? ip.getAnnotated().getAnnotation(Property.class).testnetName()
                 : ip.getMember().getName();
     }
 }

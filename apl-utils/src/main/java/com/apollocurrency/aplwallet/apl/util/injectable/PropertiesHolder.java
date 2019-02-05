@@ -6,14 +6,14 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.slf4j.Logger;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import javax.inject.Singleton;
-
-import org.slf4j.Logger;
 
 @Singleton
 public class PropertiesHolder {
@@ -22,9 +22,7 @@ public class PropertiesHolder {
 
     private Properties properties;
 
-    public PropertiesHolder() {
-        LOG.error("Empty constructor called, which is must not be called!");
-    }
+    public PropertiesHolder() {}
 
     public void init(Properties properties){
         this.properties = properties;

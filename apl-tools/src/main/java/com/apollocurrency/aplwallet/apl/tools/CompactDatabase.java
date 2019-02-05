@@ -91,7 +91,7 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-        String dbPrefix = blockchainConfig.isTestnet() ? "apl.testDb" : "apl.db";
+        String dbPrefix = "apl.db";
         String dbType = propertiesHolder.getStringProperty(dbPrefix + "Type");
         if (!"h2".equals(dbType)) {
             LOG.error("Database type must be 'h2'");

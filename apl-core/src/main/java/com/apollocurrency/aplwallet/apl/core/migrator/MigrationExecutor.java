@@ -60,14 +60,12 @@ public abstract class MigrationExecutor {
 //    set up by perfomMigration method to perform cleanup in future
     private List<Path> migratedPaths;
 
-    public MigrationExecutor(PropertiesHolder holder, BlockchainConfig config, String migrationItemName, boolean autoCleanup) {
+    public MigrationExecutor(PropertiesHolder holder, String migrationItemName, boolean autoCleanup) {
         Objects.requireNonNull(holder, "Properties holder cannot be null");
-        Objects.requireNonNull(config, "Blockchain config cannot be null");
         StringValidator.requireNonBlank(migrationItemName, "Option prefix cannot be null or blank");
 
         this.autoCleanup = autoCleanup;
         this.holder = holder;
-        this.config = config;
         this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
         this.optionDAO = new OptionDAO(Db.getDb());
