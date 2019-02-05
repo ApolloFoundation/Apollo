@@ -82,6 +82,8 @@ public class CompactDatabase {
         // Create our files
         //
         int phase = 0;
+        //TODO: this SQL script is lost. Dvelop new one and place in resources,
+        // read it from resources
         File sqlFile = new File(dbProperties.getDbDir(), "backup.sql.gz");
         File dbFile = new File(dbProperties.getDbDir(), dbProperties.getDbFileName()+".h2.db");
         if (!dbFile.exists()) {
