@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -18,13 +18,13 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl.core.app.mint;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -37,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -65,21 +67,27 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.enterprise.inject.spi.CDI;
-import javax.net.ssl.HttpsURLConnection;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import static org.slf4j.LoggerFactory.getLogger;
 
-public class MintWorker {
+public class MintWorker implements Runnable{
+    private boolean done = false;
+    
     private static final Logger LOG = getLogger(MintWorker.class);
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private PropertiesHolder propertiesHolder;
+    private BlockchainConfig blockchainConfig;
+
+    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig) {
+        this.blockchainConfig=blockchainConfig;
+        this.propertiesHolder=propertiesHolder;
+    }
     
-    public static void main(String[] args) {
-        MintWorker mintWorker = new MintWorker();
-        mintWorker.mint();
+    public void stop(){
+        done = true;
     }
 
-    private void mint() {
+    public void run() {
         String currencyCode = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.mint.currencyCode"));
         if (currencyCode == null) {
             throw new IllegalArgumentException("apl.mint.currencyCode not specified");
@@ -134,7 +142,7 @@ public class MintWorker {
         }
         ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
         LOG.info("Mint worker started");
-        while (true) {
+        while (done) {
             counter++;
             try {
                 JSONObject response = mintImpl(keySeed, accountId, units, currencyId, algorithm, counter, target,

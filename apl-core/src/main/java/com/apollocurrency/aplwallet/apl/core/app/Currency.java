@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -441,7 +442,7 @@ public final class Currency {
         recipientAccount.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currencyId, units);
     }
 
-    void increaseSupply(long units) {
+    public void increaseSupply(long units) {
         getSupplyData();
         currencySupply.currentSupply += units;
         if (currencySupply.currentSupply > maxSupply || currencySupply.currentSupply < 0) {

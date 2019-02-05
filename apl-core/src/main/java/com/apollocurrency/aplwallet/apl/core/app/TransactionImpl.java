@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
@@ -38,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +61,8 @@ public class TransactionImpl implements Transaction {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    
     @Inject
     private static BlockchainImpl blockchain;
 
@@ -350,7 +353,7 @@ public class TransactionImpl implements Transaction {
             appendagesSize += appendage.getSize();
         }
         this.appendagesSize = appendagesSize;
-        if (builder.feeATM <= 0 || (Constants.correctInvalidFees && builder.signature == null)) {
+        if (builder.feeATM <= 0 || (propertiesHolder.correctInvalidFees() && builder.signature == null)) {
             int effectiveHeight = (height < Integer.MAX_VALUE ? height : lookupAndInjectBlockchain().getHeight());
             long minFee = getMinimumFeeATM(effectiveHeight);
             feeATM = Math.max(minFee, builder.feeATM);

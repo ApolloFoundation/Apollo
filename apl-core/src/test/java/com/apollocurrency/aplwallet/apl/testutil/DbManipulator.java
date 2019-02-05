@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 public class DbManipulator {

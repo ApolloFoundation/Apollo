@@ -29,9 +29,9 @@ public class WebUiExtractor implements Callable<Boolean>{
     
     private File findWebUiZip() throws FileNotFoundException{
       File res = null;
-      File dir = new File(dirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
+      File dir = new File(DirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
       if(!dir.exists()){//we are in dev. env or tests
-          dir = new File(dirProvider.getBinDir().toAbsolutePath()+"/apl-exec/target/lib");
+          dir = new File(DirProvider.getBinDir().toAbsolutePath()+"/apl-exec/target/lib");
       }
       if(!dir.exists()){
           throw new FileNotFoundException(dir.getAbsolutePath());
@@ -55,9 +55,9 @@ public class WebUiExtractor implements Callable<Boolean>{
     
     private File findTestUiZip() throws FileNotFoundException{
       File res = null;
-      File dir = new File(dirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
+      File dir = new File(DirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
       if(!dir.exists()){//we are in dev. env or tests
-          dir = new File(dirProvider.getBinDir().toAbsolutePath()+"/apl-exec/target/lib");
+          dir = new File(DirProvider.getBinDir().toAbsolutePath()+"/apl-exec/target/lib");
       }
       if(!dir.exists()){
           throw new FileNotFoundException(dir.getAbsolutePath());

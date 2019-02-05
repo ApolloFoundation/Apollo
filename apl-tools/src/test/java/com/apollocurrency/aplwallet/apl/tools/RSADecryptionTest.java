@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,11 +22,12 @@ public class RSADecryptionTest {
             PrintStream printStream = new PrintStream(out);
             System.setOut(printStream);
             String[] params = new String[] {
- "c4e77135292a1d973dfcbb9baa533c5d2377fd1fd8943fbf37a53ac499d672a5adb24956a2605897ffd59f93faed1c3d71b6601db82d942b039bda3c99b974fd947b49cda197768a5eed5a31378b3257d8416a4f25bda9aa7ce5a6f1d4f0541cf40d760e913f4f981f6345f0126db9248636f5bee66ca530be41f7767eeb6605539abb984fedde76ff0f29cdf71677b6406870b937b9165697cf4fbb17294400830671b40b374fcbc0f44ba79d3dd44174e9fcb89daea845c12dff7dfa99bf919cab61a2c690c227d9bc3f98c84e495c07f794b3b49e5def106dfbba5bc1e15f015246ba0fc73fa6a4e17c531f827af8663af238c28964f5fe847c1e2848013d97dc0eb31159c0e542b1d5530f64e2ba4c588e28c85f44aeffe51d21f30c2462fed37d6b86052e171e64431dce6e04aa5a05a938f9e3330f40dec90c0ab091d0549714bd3c72b9c801e07d91c355129518506a5cbd0b432691a409316c6e8419371d4e1f942f958b6f89269e5c49cfeb23ffd7b1df3725efce69436ebdc0fa503fc9053f874f9379e579dca1fa89b59549b9a9f5dc4b07947457c3933d8d3cc8bc48a9be600dcd35d41f4edb072d5643dd2d323cbf5f65395bf0d4fe5bcdd26aaa0b935d40454482ca90610f94c8a807008b4cc93acf8b3f61fa2cd0363c2ae2f5af3d4abe3935a9deb70657bf449181d2b6eca77dbd9255c7041816e401f9f4"                   ,"certs/1_2.crt"
+ "c4e77135292a1d973dfcbb9baa533c5d2377fd1fd8943fbf37a53ac499d672a5adb24956a2605897ffd59f93faed1c3d71b6601db82d942b039bda3c99b974fd947b49cda197768a5eed5a31378b3257d8416a4f25bda9aa7ce5a6f1d4f0541cf40d760e913f4f981f6345f0126db9248636f5bee66ca530be41f7767eeb6605539abb984fedde76ff0f29cdf71677b6406870b937b9165697cf4fbb17294400830671b40b374fcbc0f44ba79d3dd44174e9fcb89daea845c12dff7dfa99bf919cab61a2c690c227d9bc3f98c84e495c07f794b3b49e5def106dfbba5bc1e15f015246ba0fc73fa6a4e17c531f827af8663af238c28964f5fe847c1e2848013d97dc0eb31159c0e542b1d5530f64e2ba4c588e28c85f44aeffe51d21f30c2462fed37d6b86052e171e64431dce6e04aa5a05a938f9e3330f40dec90c0ab091d0549714bd3c72b9c801e07d91c355129518506a5cbd0b432691a409316c6e8419371d4e1f942f958b6f89269e5c49cfeb23ffd7b1df3725efce69436ebdc0fa503fc9053f874f9379e579dca1fa89b59549b9a9f5dc4b07947457c3933d8d3cc8bc48a9be600dcd35d41f4edb072d5643dd2d323cbf5f65395bf0d4fe5bcdd26aaa0b935d40454482ca90610f94c8a807008b4cc93acf8b3f61fa2cd0363c2ae2f5af3d4abe3935a9deb70657bf449181d2b6eca77dbd9255c7041816e401f9f4"                   
+                    ,"certs/1_2.crt"
                     ,"false"
             };
 
-            RSADecryption.main(params);
+            UpdaterUrlUtils.decrypt(params[1], params[0], false);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             Assert.assertTrue(consoleOutput.substring(consoleOutput.lastIndexOf("format:")).contains(Convert.toHexString("Secret message here!"
@@ -54,7 +56,7 @@ public class RSADecryptionTest {
                     , "false"
             };
 
-            RSADecryption.main(params);
+            UpdaterUrlUtils.decrypt(params[1], params[0], false);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             Assert.assertTrue(consoleOutput.substring(consoleOutput.lastIndexOf("format:")).contains("c4e77135292a1d973dfcbb9baa533c5d2377fd1fd8943fbf37a53ac499d672a5adb24956a2605897ffd59f93faed1c3d71b6601db82d942b039bda3c99b974fd947b49cda197768a5eed5a31378b3257d8416a4f25bda9aa7ce5a6f1d4f0541cf40d760e913f4f981f6345f0126db9248636f5bee66ca530be41f7767eeb6605539abb984fedde76ff0f29cdf71677b6406870b937b9165697cf4fbb17294400830671b40b374fcbc0f44ba79d3dd44174e9fcb89daea845c12dff7dfa99bf919cab61a2c690c227d9bc3f98c84e495c07f794b3b49e5def106dfbba5bc1e15f015246ba0fc73fa6a4e17c531f827af8663af238c28964f5fe847c1e2848013d97dc0eb31159c0e542b1d5530f64e2ba4c588e28c85f44aeffe51d21f30c2462fed37d6b86052e171e64431dce6e04aa5a05a938f9e3330f40dec90c0ab091d0549714bd3c72b9c801e07d91c355129518506a5cbd0b432691a409316c6e8419371d4e1f942f958b6f89269e5c49cfeb23ffd7b1df3725efce69436ebdc0fa503fc9053f874f9379e579dca1fa89b59549b9a9f5dc4b07947457c3933d8d3cc8bc48a9be600dcd35d41f4edb072d5643dd2d323cbf5f65395bf0d4fe5bcdd26aaa0b935d40454482ca90610f94c8a807008b4cc93acf8b3f61fa2cd0363c2ae2f5af3d4abe3935a9deb70657bf449181d2b6eca77dbd9255c7041816e401f9f4"));
@@ -81,7 +83,7 @@ public class RSADecryptionTest {
                     , "false"
             };
 
-            RSADecryption.main(params);
+            UpdaterUrlUtils.decrypt(params[1], params[0], false);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             Assert.assertTrue(consoleOutput.substring(consoleOutput.lastIndexOf("format:")).contains(Convert.toHexString("Secret message here!"

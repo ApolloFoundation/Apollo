@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;

@@ -1,10 +1,11 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
@@ -15,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -108,6 +110,15 @@ public class Apollo {
         AplCoreRuntime.getInstance().shutdown();
     }
 
+    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
+        return new PredefinedDirLocations(
+                StringUtils.isBlank(args.dbDir)            ? vars.dbDir            : args.dbDir,
+                StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
+                StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile
+        );
+    }
     /**
      * @param argv the command line arguments
      */
@@ -158,14 +169,17 @@ public class Apollo {
                 StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 "chains.json");
 // init application data dir provider
+
         Map<UUID, Chain> chains = chainsConfigLoader.load();
-        dirProvider = createDirProvider(chains, envVars.merge(args), args.serviceMode);
+        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();        
+        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars));
+        RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 
         log = LoggerFactory.getLogger(Apollo.class);
 //check webUI
-        System.out.println("=== Bin directory is: " + dirProvider.getBinDir().toAbsolutePath());
+        System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
 /* at the moment we do it in build time
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);
@@ -206,15 +220,14 @@ public class Apollo {
 /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
-*/
+*/  
+            if(args.startMint){
+                AplCoreRuntime.getInstance().startMinter(); 
+            }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
     }
 
-    private static DirProvider createDirProvider(Map<UUID, Chain> chains, PredefinedDirLocations dirLocations, boolean isService) {
-        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-        return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
-    }
 }

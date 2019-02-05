@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
+import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -27,7 +28,7 @@ public class RSAEncryptionTest {
                     "certs/1_2.key"
             };
 
-            RSAEncryption.main(params);
+            UpdaterUrlUtils.encrypt(params[2], params[1], false);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             String encryptedMessage = consoleOutput.substring(consoleOutput.length() - 1024);
@@ -56,7 +57,7 @@ public class RSAEncryptionTest {
                     "certs/2_2.key"
             };
 
-            RSAEncryption.main(params);
+            UpdaterUrlUtils.encrypt(params[2], params[1], true);
             printStream.close();
             String consoleOutput = new String(out.toByteArray());
             String[] encryptedMessageParts = consoleOutput.substring(consoleOutput.length() - 2048 - System.lineSeparator().length()).split(System.lineSeparator());

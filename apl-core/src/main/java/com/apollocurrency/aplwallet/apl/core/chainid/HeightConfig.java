@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.AdaptiveForgingSettings;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Consensus;
@@ -26,6 +26,7 @@ public class HeightConfig {
     private final int adaptiveBlockTime;
     private final Consensus.Type consensusType;
     private final int numberOfTransactionsInAdaptiveBlock;
+    
     public HeightConfig(BlockchainProperties bp) {
         this.maxNumberOfTransactions = bp.getMaxNumberOfTransactions();
         this.maxBalanceApl = bp.getMaxBalance();

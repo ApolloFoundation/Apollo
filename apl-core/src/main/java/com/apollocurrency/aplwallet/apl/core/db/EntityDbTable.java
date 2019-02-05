@@ -24,7 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -37,7 +38,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class EntityDbTable<T> extends DerivedDbTable {
-        private static final Logger LOG = getLogger(EntityDbTable.class);
+    
+    private static final Logger LOG = getLogger(EntityDbTable.class);
+    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
 
     private final boolean multiversion;
     protected final DbKey.Factory<T> dbKeyFactory;
@@ -86,7 +89,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         if (multiversion) {
             if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
             int minRollBackHeight = isPersistent() && blockchainProcessor.isScanning() ?
-                    Math.max(blockchainProcessor.getInitialScanHeight() - Constants.MAX_ROLLBACK, 0)
+                    Math.max(blockchainProcessor.getInitialScanHeight() - propertiesHolder.MAX_ROLLBACK(), 0)
                     : blockchainProcessor.getMinRollbackHeight();
             if (height < minRollBackHeight) {
                 throw new IllegalArgumentException("Historical data as of height " + height + " not available.");

@@ -18,17 +18,15 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -38,7 +36,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -56,115 +53,44 @@ public class CompactDatabase {
     private static final Logger LOG = getLogger(CompactDatabase.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    /**
-     * Compact the ARS database
-     *
-     * @param   args                Command line arguments
-     */
-    public static void main(String[] args) {
+    private final PropertiesHolder propertiesHolder;
+    private final DirProvider dirProvider;
+    
 //TODO: Check and test this class
-        DirProvider dirProvider = new DirProviderFactory()
-                .getInstance(
-                        RuntimeEnvironment.getInstance().isServiceMode(),
-                        blockchainConfig.getChain().getChainId(),
-                        Constants.APPLICATION_DIR_NAME,
-                        null
-                );
-        AplCoreRuntime.getInstance().setup(RuntimeEnvironment.getInstance().getRuntimeMode(), dirProvider);
-        AplCore core = new AplCore(blockchainConfig);
-        core.init();
-        //
-        // Compact the database
-        //
-        int exitCode = compactDatabase();
-
-        System.exit(exitCode);
+    public CompactDatabase(PropertiesHolder propertiesHolder, DirProvider dirProvider) {        
+        this.propertiesHolder = propertiesHolder;
+        this.dirProvider = dirProvider;
     }
-
+  
     /**
      * Compact the database
+     * @return exit code indication error or success
      */
-    private static int compactDatabase() {
-        int exitCode = 0;
+    public  int compactDatabase() {
+        int exitCode = PosixExitCodes.OK.exitCode();
         //
         // Get the database URL
         //
-        String dbPrefix = "apl.db";
-        String dbType = propertiesHolder.getStringProperty(dbPrefix + "Type");
-        if (!"h2".equals(dbType)) {
+
+        DbProperties dbProperties  = new DbConfig(propertiesHolder).getDbConfig();
+        
+        if (!"h2".equals(dbProperties.getDbType())) {
             LOG.error("Database type must be 'h2'");
             return 1;
         }
-        String dbUrl = propertiesHolder.getStringProperty(dbPrefix + "Url");
-        if (dbUrl == null) {
-            //TODO: check that runtime is inited
-            String dbPath = AplCoreRuntime.getInstance().getDbDir().toAbsolutePath().toString();
-            dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
-        }
-        String dbParams = propertiesHolder.getStringProperty(dbPrefix + "Params");
-        dbUrl += ";" + dbParams;
-        if (!dbUrl.contains("MV_STORE=")) {
-            dbUrl += ";MV_STORE=FALSE";
-        }
-        String dbUsername = propertiesHolder.getStringProperty(dbPrefix + "Username", "sa");
-        String dbPassword = propertiesHolder.getStringProperty(dbPrefix + "Password", "sa", true);
-        //
-        // Get the database path.  This is the third colon-separated operand and is
-        // terminated by a semi-colon or by the end of the string.
-        //
-        int pos = dbUrl.indexOf(':');
-        if (pos >= 0) {
-            pos = dbUrl.indexOf(':', pos+1);
-        }
-        if (pos < 0) {
-            LOG.error("Malformed database URL: " + dbUrl);
-            return 1;
-        }
-        String dbDir;
-        int startPos = pos + 1;
-        int endPos = dbUrl.indexOf(';', startPos);
-        if (endPos < 0) {
-            dbDir = dbUrl.substring(startPos);
-        } else {
-            dbDir = dbUrl.substring(startPos, endPos);
-        }
-        //
-        // Remove the optional 'file' operand
-        //
-        if (dbDir.startsWith("file:"))
-            dbDir = dbDir.substring(5);
-        //
-        // Remove the database prefix from the end of the database path.  The path
-        // separator can be either '/' or '\' (Windows will accept either separator
-        // so we can't rely on the system property).
-        //
-        endPos = dbDir.lastIndexOf('\\');
-        pos = dbDir.lastIndexOf('/');
-        if (endPos >= 0) {
-            if (pos >= 0) {
-                endPos = Math.max(endPos, pos);
-            }
-        } else {
-            endPos = pos;
-        }
-        if (endPos < 0) {
-            LOG.error("Malformed database URL: " + dbUrl);
-            return 1;
-        }
-        dbDir = dbDir.substring(0, endPos);
-        LOG.info("Database directory is '" + dbDir + '"');
+
         //
         // Create our files
         //
         int phase = 0;
-        File sqlFile = new File(dbDir, "backup.sql.gz");
-        File dbFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + "h2.db");
+        //TODO: this SQL script is lost. Dvelop new one and place in resources,
+        // read it from resources
+        File sqlFile = new File(dbProperties.getDbDir(), "backup.sql.gz");
+        File dbFile = new File(dbProperties.getDbDir(), dbProperties.getDbFileName()+".h2.db");
         if (!dbFile.exists()) {
-            dbFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".mv.db");
+            dbFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".mv.db");
             if (!dbFile.exists()) {
-                LOG.error("{} database not found", Constants.APPLICATION_DIR_NAME);
+                LOG.error("{} database not found", dbProperties.getDbDir());
                 return 1;
             }
         }
@@ -179,8 +105,8 @@ public class CompactDatabase {
                     throw new IOException(String.format("Unable to delete '%s'", sqlFile.getPath()));
                 }
             }
-            try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement s = conn.createStatement()) {
+            try (Connection conn = getConnection(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
+                Statement s = conn.createStatement()) {
                 s.execute("SCRIPT TO '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
             }
             //
@@ -192,8 +118,8 @@ public class CompactDatabase {
                                                     dbFile.getPath(), oldFile.getPath()));
             }
             phase = 1;
-            try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement s = conn.createStatement()) {
+            try (Connection conn = getConnection(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
+                Statement s = conn.createStatement()) {
                 s.execute("RUNSCRIPT FROM '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
                 s.execute("ANALYZE");
             }
@@ -204,7 +130,7 @@ public class CompactDatabase {
             LOG.info("Database successfully compacted");
         } catch (Throwable exc) {
             LOG.error("Unable to compact the database", exc);
-            exitCode = 1;
+            exitCode = PosixExitCodes.EX_OSFILE.exitCode();
         } finally {
             switch (phase) {
                 case 0:
@@ -221,13 +147,13 @@ public class CompactDatabase {
                     //
                     // We failed while creating the new database
                     //
-                    File newFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".h2.db");
+                    File newFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".h2.db");
                     if (newFile.exists()) {
                         if (!newFile.delete()) {
                             LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
                         }
                     } else {
-                        newFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".mv.db");
+                        newFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".mv.db");
                         if (newFile.exists()) {
                             if (!newFile.delete()) {
                                 LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
@@ -255,7 +181,7 @@ public class CompactDatabase {
         return exitCode;
     }
 
-    public static Connection getConnection(String url, String user, String password) {
+    public Connection getConnection(String url, String user, String password) {
         try {
             return DriverManager.getConnection(url, user, password);
         }

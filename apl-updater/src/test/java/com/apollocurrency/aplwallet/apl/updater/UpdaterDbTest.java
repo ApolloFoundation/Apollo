@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;

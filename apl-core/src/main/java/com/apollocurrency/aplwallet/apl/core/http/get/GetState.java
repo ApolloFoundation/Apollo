@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
 import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
@@ -45,14 +45,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
+import javax.enterprise.inject.spi.CDI;
 
 public final class GetState extends AbstractAPIRequestHandler {
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static class GetStateHolder {
         private static final GetState INSTANCE = new GetState();
     }
@@ -109,9 +111,9 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
         response.put("peerPort", Peers.getDefaultPeerPort());
-        response.put("isOffline", Constants.isOffline);
+        response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !API.disableAdminPassword);
-        response.put("customLoginWarning", Constants.customLoginWarning);
+        response.put("customLoginWarning", propertiesHolder.customLoginWarning());
         InetAddress externalAddress = UPnP.getInstance().getExternalAddress();
         if (externalAddress != null) {
             response.put("upnpExternalAddress", externalAddress.getHostAddress());

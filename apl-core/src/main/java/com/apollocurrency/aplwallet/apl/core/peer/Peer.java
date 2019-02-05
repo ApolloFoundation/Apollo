@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import java.util.Set;
 import java.util.UUID;
 

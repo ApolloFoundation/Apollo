@@ -18,47 +18,80 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl.tools.impl;
 
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import java.io.BufferedReader;
 import java.io.Console;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
-public final class SignTransactionJSON {
-    public static void main(String[] args) {
+public final class SignTransactions {
+
+    public static int sign(String unsignedFN, String signedFN) {
         try {
-            if (args.length == 0 || args.length > 2) {
-                System.out.println("Usage: SignTransactionJSON <unsigned transaction json file> <signed transaction json file>");
-                System.exit(1);
-            }
-            File unsigned = new File(args[0]);
+            File unsigned = new File(unsignedFN);
             if (!unsigned.exists()) {
                 System.out.println("File not found: " + unsigned.getAbsolutePath());
-                System.exit(1);
+                return PosixExitCodes.EX_IOERR.exitCode();
             }
-            File signed;
-            if (args.length == 2) {
-                signed = new File(args[1]);
-            } else if (unsigned.getName().startsWith("unsigned.")) {
-                signed = new File(unsigned.getParentFile(), unsigned.getName().substring(2));
-            } else {
-                signed = new File(unsigned.getParentFile(), "signed." + unsigned.getName());
-            }
+            File signed = new File(signedFN);
             if (signed.exists()) {
                 System.out.println("File already exists: " + signed.getAbsolutePath());
-                System.exit(1);
+                return PosixExitCodes.EX_IOERR.exitCode();
+            }
+
+            byte[] keySeed = readKeySeed();
+            int n = 0;
+            if (Files.exists(signed.toPath())) {
+                Files.delete(signed.toPath());
+            }
+                Files.createFile(signed.toPath());
+                List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
+
+                for (String unsignedTransaction : unsignedTransactions) {
+                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, keySeed).getBytes(), StandardOpenOption.APPEND);
+                    Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
+                    n += 1;
+                }
+                System.out.println("Signed " + n + " transactions");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return PosixExitCodes.EX_IOERR.exitCode();
+        }
+        return PosixExitCodes.OK.exitCode();
+    }
+    
+    private static String signTransaction(String transactionBytesHexString, byte[] keySeed) throws AplException.NotValidException {
+        byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
+        Transaction.Builder builder = Transaction.newTransactionBuilder(transactionBytes);
+        Transaction transaction = builder.build(keySeed);
+        return Convert.toHexString(transaction.getBytes());
+    }
+    
+    public static int signJson(String unsignedFN, String signedFN) {
+        try {
+            File unsigned = new File(unsignedFN);
+            if (!unsigned.exists()) {
+                System.out.println("File not found: " + unsigned.getAbsolutePath());
+                return PosixExitCodes.EX_IOERR.exitCode();
+            }
+            File signed = new File(signedFN);
+            if (signed.exists()) {
+                System.out.println("File already exists: " + signed.getAbsolutePath());
+               return PosixExitCodes.EX_IOERR.exitCode();
             }
             try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))){
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
@@ -68,7 +101,9 @@ public final class SignTransactionJSON {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return PosixExitCodes.EX_IOERR.exitCode();
         }
+        return PosixExitCodes.OK.exitCode();
     }
 
     public static byte[] readKeySeed() {
@@ -107,5 +142,7 @@ public final class SignTransactionJSON {
         Transaction transaction = builder.build(keySeed);
         return transaction.getJSONObject().toJSONString();
     }
+
+
 
 }

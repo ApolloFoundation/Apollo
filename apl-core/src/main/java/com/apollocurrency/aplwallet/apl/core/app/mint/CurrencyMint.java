@@ -18,9 +18,13 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.app.mint;
 
+import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -116,7 +120,7 @@ public final class CurrencyMint {
     }
 
 
-    static void init() {}
+    public static void init() {}
 
     private final DbKey dbKey;
     private final long currencyId;
@@ -162,7 +166,7 @@ public final class CurrencyMint {
         return counter;
     }
 
-    static void mintCurrency(LedgerEvent event, long eventId, final Account account,
+    public static void mintCurrency(LedgerEvent event, long eventId, final Account account,
                              final Attachment.MonetarySystemCurrencyMinting attachment) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
         if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {
@@ -194,7 +198,7 @@ public final class CurrencyMint {
         }
     }
 
-    static void deleteCurrency(Currency currency) {
+    public static void deleteCurrency(Currency currency) {
         List<CurrencyMint> currencyMints = new ArrayList<>();
         try (DbIterator<CurrencyMint> mints = currencyMintTable.getManyBy(new DbClause.LongClause("currency_id", currency.getId()), 0, -1)) {
             while (mints.hasNext()) {

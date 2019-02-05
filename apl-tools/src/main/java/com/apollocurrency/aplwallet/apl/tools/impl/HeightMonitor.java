@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -180,21 +180,7 @@ public class HeightMonitor {
         }
     }
 
-    public static void main(String[] args) {
-        List<String> peers = readPeers(args.length > 0 ? args[0] : DEFAULT_PEERS_FILE);
 
-        List<Integer> periods = args.length > 1
-                ? args[1] != null && !args[1].trim().isEmpty()
-                ? Arrays.stream(args[1].split(" ")).map(Integer::parseInt).collect(Collectors.toList())
-                : DEFAULT_PERIODS
-                : DEFAULT_PERIODS;
-
-        int delay = args.length > 2 ? args[2] != null && !args[2].trim().isEmpty() ? Integer.parseInt(args[2]) : DEFAULT_DELAY : DEFAULT_DELAY;
-
-        HeightMonitor heightMonitor = new HeightMonitor(peers, periods, delay);
-        Runtime.getRuntime().addShutdownHook(new Thread(heightMonitor::stop));
-        heightMonitor.start();
-    }
 
     private static List<String> readPeers(String arg) {
         URL resource = HeightMonitor.class.getClassLoader().getResource(arg);
@@ -222,7 +208,20 @@ public class HeightMonitor {
         }
         return null;
     }
-
+    
+    public static HeightMonitor create(String peersFile, List<Integer> periods, Integer delay){    
+        List<String> peers = readPeers(!peersFile.isEmpty()? peersFile : DEFAULT_PEERS_FILE);
+        if(periods==null||periods.isEmpty()){
+            periods=DEFAULT_PERIODS;
+        }
+        if(delay==null){
+            delay= DEFAULT_DELAY;
+        }
+        HeightMonitor heightMonitor = new HeightMonitor(peers, periods, delay);
+        Runtime.getRuntime().addShutdownHook(new Thread(heightMonitor::stop));
+        return heightMonitor;
+    }
+    
     private static class Block {
         private long id;
         private int height;

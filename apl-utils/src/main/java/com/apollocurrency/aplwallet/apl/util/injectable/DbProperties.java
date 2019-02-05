@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import javax.enterprise.inject.Vetoed;
 

@@ -18,13 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -33,21 +29,27 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 
-public final class BaseTargetTest {
-        private static final Logger LOG = getLogger(BaseTargetTest.class);
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final long MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
-    private static final long MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() *  50;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
+import org.slf4j.Logger;
 
-    private static final int MIN_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() - 7;
-    private static final int MAX_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() + 7;
+//TODO: this is not a real test, just moved from apl-tools because
+// it really it belongs here. May be we'll make test from it later
+
+public  class BaseTargetTest {
+    private static final Logger LOG = getLogger(BaseTargetTest.class);
+    private static BlockchainConfig blockchainConfig;
+    private static long MIN_BASE_TARGET;
+    private static long MAX_BASE_TARGET;
+
+    private static int MIN_BLOCKTIME_LIMIT;
+    private static int MAX_BLOCKTIME_LIMIT;
 
     private static final int GAMMA = 64;
 
     private static final int START_HEIGHT = 20;
-    private static final int MAX_HEIGHT = 1_000;
 
     private static final boolean USE_EWMA = false;
     private static final int EWMA_N = 8;
@@ -55,8 +57,16 @@ public final class BaseTargetTest {
     private static final int FREQUENCY = 2;
     private static final int HEIGHT = 47;
 
+    public BaseTargetTest(BlockchainConfig blockchainConfig) {
+        this.blockchainConfig = blockchainConfig;
+        MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
+        MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() *  50;
+        MIN_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() - 7;
+        MAX_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() + 7;
+    }
 
-    private static long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
+
+    private long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
         int blockTime = blockchainConfig.getCurrentConfig().getBlockTime();
         if (blocktimeEMA > blockTime) {
@@ -74,7 +84,7 @@ public final class BaseTargetTest {
         return baseTarget;
     }
 
-    public static void main(String[] args) {
+    public int doCalcualte(int height) {
 
         try {
 
@@ -93,11 +103,6 @@ public final class BaseTargetTest {
             BigInteger previousTestCumulativeDifficulty = null;
             long previousTestBaseTarget = 0;
             int previousTestTimestamp = 0;
-
-            int height = START_HEIGHT;
-            if (args.length == 1) {
-                height = Integer.parseInt(args[0]);
-            }
 
             long totalBlocktime = 0;
             long totalTestBlocktime = 0;
@@ -222,7 +227,9 @@ public final class BaseTargetTest {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return PosixExitCodes.EX_GENERAL.exitCode();
         }
+        return PosixExitCodes.OK.exitCode();
     }
 
     public static boolean checkHeight(int currentHeight) {

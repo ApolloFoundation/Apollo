@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }
         try {
             LOG.debug("Starting platform dependent script");
-            runCommand(updateDir, Paths.get("").toAbsolutePath(), AplCoreRuntime.getInstance().getDirProvider().getBinDir(),
+            runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
                     RuntimeEnvironment.getInstance().isDesktopApplicationEnabled());
             LOG.debug("Platform dependent script was started");
         }

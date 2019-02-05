@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools;
+package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -35,11 +35,8 @@ public class GeneratePublicKey {
     private static final Logger LOG = getLogger(GeneratePublicKey.class);
 
 
-    public static void main(String[] args) {
-        if (args.length > 0) {
-            System.out.println("Usage: java com.apollocurrency.aplwallet.apl.tools.GeneratePublicKey");
-            System.exit(1);
-        }
+    public static void doInteractive(){
+
         String secretPhrase;
         Console console = System.console();
         if (console == null) {

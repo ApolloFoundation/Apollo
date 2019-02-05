@@ -18,37 +18,23 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
-import javax.enterprise.inject.spi.CDI;
-
-//TODO: Make this class true constants holder, move all properties-dependent vars out
 public final class Constants {
     public static final Version VERSION = new Version("1.27.0");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
-    // TODO: YL remove static instance later
-    private static PropertiesHolder pl = CDI.current().select(PropertiesHolder.class).get();
 
-    public static final boolean isOffline = pl.getBooleanProperty("apl.isOffline");
-    public static final boolean isLightClient = pl.getBooleanProperty("apl.isLightClient");
-    public static final String customLoginWarning = pl.getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
 
     public static final long ONE_APL = 100000000;
 
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
-    public static final int MAX_ROLLBACK = Math.max(pl.getIntProperty("apl.maxRollback"), 720);
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
-    public static final int FORGING_DELAY = pl.getIntProperty("apl.forgingDelay");
-    public static final int FORGING_SPEEDUP = pl.getIntProperty("apl.forgingSpeedup");
-    public static final int BATCH_COMMIT_SIZE = pl.getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
-    public static final int TRIM_TRANSACTION_TIME_THRESHHOLD = pl.getIntProperty("apl.trimOperationsLogThreshold", 1000);
+
 
     public static final byte MAX_PHASING_VOTE_TRANSACTIONS = 10;
     public static final byte MAX_PHASING_WHITELIST_SIZE = 10;
@@ -65,7 +51,6 @@ public final class Constants {
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
 
-    public static final boolean INCLUDE_EXPIRED_PRUNABLE = pl.getBooleanProperty("apl.includeExpiredPrunable");
 
     public static final int MAX_ACCOUNT_NAME_LENGTH = 100;
     public static final int MAX_ACCOUNT_DESCRIPTION_LENGTH = 1000;
@@ -133,8 +118,6 @@ public final class Constants {
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
     public static final int DEFAULT_PEER_PORT = 47874;
-
-    public static final boolean correctInvalidFees = pl.getBooleanProperty("apl.correctInvalidFees");
 
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -55,16 +56,16 @@ public final class Generator implements Comparable<Generator> {
 
     // TODO: YL remove static instance later
 
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
-    private static final int MAX_FORGERS = propertiesLoader.getIntProperty("apl.maxNumberOfForgers");
-    private static final byte[] fakeForgingPublicKey = propertiesLoader.getBooleanProperty("apl.enableFakeForging") ?
-            Account.getPublicKey(Convert.parseAccountId(propertiesLoader.getStringProperty("apl.fakeForgingAccount"))) : null;
+    private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
+    private static final byte[] fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
+            Account.getPublicKey(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
     private static volatile boolean suspendForging = false;
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
@@ -72,7 +73,7 @@ public final class Generator implements Comparable<Generator> {
     private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;
-    private static int delayTime = Constants.FORGING_DELAY;
+    private static int delayTime = propertiesHolder.FORGING_DELAY();
 
     private static final Runnable generateBlocksThread = new Runnable() {
 
@@ -153,9 +154,9 @@ public final class Generator implements Comparable<Generator> {
     };
 
     static void init() {
-        if (!Constants.isLightClient) {
+        if (!propertiesHolder.isLightClient()) {
             ThreadPool.scheduleThread("GenerateBlocks", generateBlocksThread, 500, TimeUnit.MILLISECONDS);
-        }
+        }        
     }
 
     public static boolean addListener(Listener<Generator> listener, Event eventType) {
@@ -236,7 +237,7 @@ public final class Generator implements Comparable<Generator> {
         try {
             if (lastBlockId == Generator.lastBlockId && sortedForgers != null) {
                 for (Generator generator : sortedForgers) {
-                    if (generator.getHitTime() >= curTime - Constants.FORGING_DELAY) {
+                    if (generator.getHitTime() >= curTime - propertiesHolder.FORGING_DELAY()) {
                         return generator.getHitTime();
                     }
                 }
@@ -262,7 +263,7 @@ public final class Generator implements Comparable<Generator> {
         return hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
                 || elapsedTime > 3600
-                || Constants.isOffline);
+                || propertiesHolder.isOffline());
     }
 
     static BigInteger getHit(byte[] publicKey, Block block) {
@@ -373,7 +374,7 @@ public final class Generator implements Comparable<Generator> {
         while (true) {
             try {
                 blockchainProcessor.generateBlock(keySeed, timestamp  + timeout, timeout, timeoutAndVersion[1]);
-                setDelay(Constants.FORGING_DELAY);
+                setDelay(propertiesHolder.FORGING_DELAY());
                 return true;
             }
             catch (BlockchainProcessor.TransactionNotAcceptedException e) {

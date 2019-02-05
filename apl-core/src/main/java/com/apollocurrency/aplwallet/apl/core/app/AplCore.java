@@ -21,7 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
@@ -204,7 +207,9 @@ public final class AplCore {
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
+
                 ThreadPool.start();
+
                 try {
                     secureRandomInitThread.join(10000);
                 }
