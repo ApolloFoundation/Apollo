@@ -20,43 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.util.Constants.TESTNET_API_PORT;
-import static com.apollocurrency.aplwallet.apl.util.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -72,7 +40,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.net.URL;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -98,6 +65,37 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
@@ -197,8 +195,9 @@ public final class API {
         boolean enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (enableAPIServer) {
-            final int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesHolder.getIntProperty("apl.apiServerPort");
-            final int sslPort = blockchainConfig.isTestnet() ? TESTNET_API_SSLPORT : propertiesHolder.getIntProperty("apl.apiServerSSLPort");
+
+            final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
+            final int sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
             final String host = propertiesHolder.getStringProperty("apl.apiServerHost");
             disableAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
             int maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");

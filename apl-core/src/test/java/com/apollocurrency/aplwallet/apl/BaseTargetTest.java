@@ -18,11 +18,10 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.tools.impl;
+package com.apollocurrency.aplwallet.apl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,14 +35,17 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import org.slf4j.Logger;
 
-public  class BaseTarget {
-        private static final Logger LOG = getLogger(BaseTarget.class);
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final long MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
-    private static final long MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * (blockchainConfig.isTestnet() ? blockchainConfig.getCurrentConfig().getMaxBalanceAPL() : 50);
+//TODO: this is not a real test, just moved from apl-tools because
+// it really it belongs here. May be we'll make test from it later
 
-    private static final int MIN_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() - 7;
-    private static final int MAX_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() + 7;
+public  class BaseTargetTest {
+    private static final Logger LOG = getLogger(BaseTargetTest.class);
+    private static BlockchainConfig blockchainConfig;
+    private static long MIN_BASE_TARGET;
+    private static long MAX_BASE_TARGET;
+
+    private static int MIN_BLOCKTIME_LIMIT;
+    private static int MAX_BLOCKTIME_LIMIT;
 
     private static final int GAMMA = 64;
 
@@ -55,8 +57,16 @@ public  class BaseTarget {
     private static final int FREQUENCY = 2;
     private static final int HEIGHT = 47;
 
+    public BaseTargetTest(BlockchainConfig blockchainConfig) {
+        this.blockchainConfig = blockchainConfig;
+        MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
+        MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() *  50;
+        MIN_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() - 7;
+        MAX_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() + 7;
+    }
 
-    private static long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
+
+    private long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
         int blockTime = blockchainConfig.getCurrentConfig().getBlockTime();
         if (blocktimeEMA > blockTime) {
@@ -74,7 +84,7 @@ public  class BaseTarget {
         return baseTarget;
     }
 
-    public static int doCalcualte(int height) {
+    public int doCalcualte(int height) {
 
         try {
 
@@ -110,7 +120,7 @@ public  class BaseTarget {
 
             int count = 0;
 
-            String dbLocation = blockchainConfig.isTestnet() ? "apl_test_db" : "apl_db";
+            String dbLocation = "apl_db";
 
             try (Connection con = DriverManager.getConnection("jdbc:h2:./" + dbLocation + "/apl;DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE", "sa", "sa");
                  PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM block WHERE height > " + height + " ORDER BY db_id ASC");

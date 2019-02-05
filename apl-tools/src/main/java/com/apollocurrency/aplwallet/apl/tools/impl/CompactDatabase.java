@@ -71,6 +71,7 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
+
         DbProperties dbProperties  = new DbConfig(propertiesHolder).getDbConfig();
         
         if (!"h2".equals(dbProperties.getDbType())) {

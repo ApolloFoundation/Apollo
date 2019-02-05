@@ -10,10 +10,10 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import javax.enterprise.util.Nonbinding;
-import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import javax.enterprise.util.Nonbinding;
+import javax.inject.Qualifier;
 
 /**
  * Represents a property key to be injected
@@ -23,9 +23,5 @@ import java.lang.annotation.Target;
 @Target({TYPE, METHOD, FIELD, PARAMETER})
 public @interface Property {
     @Nonbinding String name() default "";
-/** <p>Use this parameter for testnet property name.</p>
-    <p>Note, that is a temporary solution while project refactoring is in-progress</p>
- */
-    @Nonbinding String testnetName() default "";
     @Nonbinding String defaultValue() default "";
 }

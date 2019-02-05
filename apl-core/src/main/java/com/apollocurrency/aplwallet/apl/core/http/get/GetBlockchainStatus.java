@@ -71,7 +71,6 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("maxRollback", propertiesHolder.MAX_ROLLBACK());
         response.put("currentMinRollbackHeight", blockchainProcessor.getMinRollbackHeight());
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        response.put("isTestnet", blockchainConfig.isTestnet());
         response.put("maxPrunableLifetime", blockchainConfig.getMaxPrunableLifetime());
         response.put("includeExpiredPrunable", propertiesHolder.INCLUDE_EXPIRED_PRUNABLE());
         response.put("correctInvalidFees", propertiesHolder.correctInvalidFees());

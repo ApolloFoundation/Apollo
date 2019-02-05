@@ -46,10 +46,6 @@ public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
     private static BlockchainProcessor blockchainProcessor;
     private static BlockDao blockDao;
-    private boolean testnet;
-    private String projectName;
-    private String accountPrefix;
-    private String coinSymbol;
     private int leasingDelay;
     private int minPrunableLifetime;
     private boolean enablePruning;
@@ -64,56 +60,49 @@ public class BlockchainConfig {
     private ConfigChangeListener configChangeListener;
     private Chain chain;
 
-    public BlockchainConfig() { //for weld
-//        this(chainIdService,
-//             holder.getIntProperty("apl.testnetLeasingDelay", -1),
-//             holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
-//             holder.getIntProperty("apl.maxPrunableLifetime")
-//                );
-    }
-    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
-        updateChain(chain, holder);
-    }
-    
-    public void updateChain(Chain chain, int maxPrunableLifetime, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations) {
+    public BlockchainConfig() {}
+
+    public void updateChain(Chain chain, int maxPrunableLifetime) {
+
         Objects.requireNonNull(chain, "Chain cannot be null");
-        setFields(chain, maxPrunableLifetime, testnetLeasingDelay, testnetGuaranteedBalanceConfirmations);
+        setFields(chain, maxPrunableLifetime);
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
         if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
-        currentConfig = new HeightConfig(blockchainProperties.get(0), testnet);
+        currentConfig = new HeightConfig(blockchainProperties.get(0));
         deregisterConfigChangeListener();
         registerConfigChangeListener();
         LOG.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    private void setFields(Chain chain, int maxPrunableLifetime, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations) {
+    private void setFields(Chain chain, int maxPrunableLifetime) {
         this.chain = chain;
-        this.testnet = chain.isTestnet();
-        this.projectName = chain.getProject();
-        this.accountPrefix = chain.getPrefix();
-        this.coinSymbol = chain.getSymbol();
-        this.leasingDelay = testnet ? testnetLeasingDelay == -1 ? 1440 : testnetLeasingDelay : 1440;
-        this.minPrunableLifetime = testnet ? 1440 * 60 : 14 * 1440 * 60;
-        this.shufflingProcessingDeadline = (short) (testnet ? 10 : 100);
-        this.lastKnownBlock = testnet ? 0 : 0;
-        this.unconfirmedPoolDepositAtm = (testnet ? 50 : 100) * Constants.ONE_APL;
-        this.shufflingDepositAtm = (testnet ? 7 : 1000) * Constants.ONE_APL;
-        this.guaranteedBalanceConfirmations = testnet ? testnetGuaranteedBalanceConfirmations == -1 ? 1440 : testnetGuaranteedBalanceConfirmations : 1440;
+        // These fields could be static constants but some fields should be scaled by blockTime
+        // Block time scaling should be implemented in future
+        this.leasingDelay = 1440;
+        this.minPrunableLifetime = 14 * 1440 * 60; // two weeks in seconds
+        this.shufflingProcessingDeadline = (short) 100;
+        this.lastKnownBlock = 0;
+        this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
+        this.shufflingDepositAtm = 1000 * Constants.ONE_APL;
+        this.guaranteedBalanceConfirmations = 1440;
+
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
     }
 
-    public final void updateChain(Chain chain, PropertiesHolder holder) {
-        maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
-        int testnetLeasingDelay = holder.getIntProperty("apl.testnetLeasingDelay", -1);
-        int testnetGuaranteedBalanceConfirmations = holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1);
-        updateChain(chain, maxPrunableLifetime, testnetLeasingDelay, testnetGuaranteedBalanceConfirmations);
+    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
+        updateChain(chain, holder);
+    }
+
+    public void updateChain(Chain chain, PropertiesHolder holder) {
+        int maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
+        updateChain(chain, maxPrunableLifetime);
     }
 
     public void updateChain(Chain chain) {
-        updateChain(chain, 0, -1, -1);
+        updateChain(chain, 0);
     }
 
     public void registerConfigChangeListener() {
@@ -176,7 +165,7 @@ public class BlockchainConfig {
     private HeightConfig getConfigAtHeight(int targetHeight, boolean inclusive) {
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
         if (targetHeight == 0) {
-            return new HeightConfig(blockchainProperties.get(0), testnet);
+            return new HeightConfig(blockchainProperties.get(0));
         }
         Optional<Integer> maxHeight =
                 blockchainProperties
@@ -185,24 +174,20 @@ public class BlockchainConfig {
                         .filter(height -> inclusive ? targetHeight >= height : targetHeight > height)
                         .max(Comparator.naturalOrder());
         return maxHeight
-                .map(height -> new HeightConfig(blockchainProperties.get(height), testnet))
+                .map(height -> new HeightConfig(blockchainProperties.get(height)))
                 .orElse(null);
     }
 
-    public boolean isTestnet() {
-        return testnet;
-    }
-
     public String getProjectName() {
-        return projectName;
+        return chain.getProject();
     }
 
     public String getAccountPrefix() {
-        return accountPrefix;
+        return chain.getPrefix();
     }
 
     public String getCoinSymbol() {
-        return coinSymbol;
+        return chain.getSymbol();
     }
 
     public int getLeasingDelay() {
@@ -268,7 +253,7 @@ public class BlockchainConfig {
             int currentHeight = block.getHeight();
             if (targetHeights.contains(currentHeight)) {
                 LOG.info("Updating chain config at height {}", currentHeight);
-                currentConfig = new HeightConfig(propertiesMap.get(currentHeight), testnet);
+                currentConfig = new HeightConfig(propertiesMap.get(currentHeight));
                 LOG.info("New config applied: {}", currentConfig);
             }
         }

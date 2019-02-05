@@ -9,10 +9,8 @@ import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
 import com.apollocurrency.aplwallet.apl.tools.impl.HeightMonitor;
 import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
 import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
-import com.apollocurrency.aplwallet.apl.tools.impl.BaseTarget;
 import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.tools.cmdline.BaseTargetCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.ConstantsCmd;
@@ -62,7 +60,6 @@ public class ApolloTools {
     private static final SignTxCmd signtx = new SignTxCmd();
     private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
     private static final ConstantsCmd constcmd = new ConstantsCmd();
-    private static final BaseTargetCmd basetarget = new BaseTargetCmd();
     
     private static ApolloTools toolsApp;
     private Chain activeChain;
@@ -190,18 +187,6 @@ public class ApolloTools {
         return res;
     }
 
-    private int baseTarget() {
-        int height = 1000;
-        if (!basetarget.parameters.isEmpty()) {
-            try {
-                height = Integer.parseInt(basetarget.parameters.get(0));
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid height: " + basetarget.parameters.get(0));
-                return PosixExitCodes.EX_USAGE.exitCode();
-            }
-        }
-        return BaseTarget.doCalcualte(height);
-    }
 
     public static void main(String[] argv) {
         toolsApp = new ApolloTools();
@@ -213,7 +198,6 @@ public class ApolloTools {
                 .addCommand(SignTxCmd.CMD, signtx)
                 .addCommand(UpdaterUrlCmd.CMD, urlcmd)
                 .addCommand(ConstantsCmd.CMD, constcmd)
-                .addCommand(BaseTargetCmd.CMD, basetarget)
                 .build();
         jc.setProgramName("apl-tools");
         try {
@@ -244,8 +228,6 @@ public class ApolloTools {
             System.exit(toolsApp.updaterUrlOp());
         } else if (jc.getParsedCommand().equalsIgnoreCase(ConstantsCmd.CMD)) {
             System.exit(ConstantsExporter.export(constcmd.outfile));
-        } else if (jc.getParsedCommand().equalsIgnoreCase(BaseTargetCmd.CMD)) {
-            System.exit(toolsApp.baseTarget());
         }
 
     }

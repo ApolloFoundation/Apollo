@@ -88,10 +88,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     // TODO: YL remove static instance later
    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final byte[] CHECKSUM_1 = blockchainConfig.isTestnet() ?
-            null
-            :
-            null;
+    private static final byte[] CHECKSUM_1 = null;
 
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
@@ -99,9 +96,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
+
     private final boolean trimDerivedTables = propertiesHolder.getBooleanProperty("apl.trimDerivedTables");
-    private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty(blockchainConfig.isTestnet()
-            ? "apl.testnetNumberOfForkConfirmations" : "apl.numberOfForkConfirmations");
+    private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
     private final boolean simulateEndlessDownload = propertiesHolder.getBooleanProperty("apl.simulateEndlessDownload");
 
     private int initialScanHeight;

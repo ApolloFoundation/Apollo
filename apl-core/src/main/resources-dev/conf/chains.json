@@ -1,7 +1,6 @@
 [
   {
     "chainId": "b5d7b697-f359-4ce5-a619-fa34b6fb01a5",
-    "isTestnet": false,
     "active": false,
     "defaultPeers": [
       "18.217.154.227",
@@ -190,7 +189,6 @@
   },
   {
     "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1",
-    "isTestnet": true,
     "active": false,
     "defaultPeers": [],
     "wellKnownPeers": [
@@ -253,7 +251,6 @@
   },
   {
     "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6",
-    "isTestnet": true,
     "active": false,
     "defaultPeers": [],
     "wellKnownPeers": [
@@ -286,7 +283,6 @@
   },
   {
     "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
-    "isTestnet": true,
     "active": true,
     "defaultPeers": [],
     "wellKnownPeers": [

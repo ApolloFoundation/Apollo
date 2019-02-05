@@ -128,8 +128,6 @@ public final class Peers {
     static final boolean useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
     static final boolean isGzipEnabled;
 
-    private static final int DEFAULT_PEER_PORT = 47874;
-    private static final int TESTNET_PEER_PORT = 46874;
     private static final String myPlatform;
     private static final String myAddress;
     private static final int myPeerServerPort;
@@ -183,9 +181,6 @@ public final class Peers {
         }
         myPlatform = platform;
         myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());
-        if (myAddress != null && myAddress.endsWith(":" + TESTNET_PEER_PORT) && !blockchainConfig.isTestnet()) {
-            throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
-        }
         String myHost = null;
         int myPort = -1;
         if (myAddress != null) {
@@ -230,9 +225,6 @@ public final class Peers {
             }
         }
         myPeerServerPort = propertiesHolder.getIntProperty("apl.peerServerPort");
-        if (myPeerServerPort == TESTNET_PEER_PORT && !blockchainConfig.isTestnet()) {
-            throw new RuntimeException("Port " + TESTNET_PEER_PORT + " should only be used for testnet!!!");
-        }
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();
         enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
@@ -263,15 +255,12 @@ public final class Peers {
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
-                if (!blockchainConfig.isTestnet()) {
-                    if (port >= 0)
-                        announcedAddress = myAddress;
-                    else
-                        announcedAddress = host + (myPeerServerPort != DEFAULT_PEER_PORT ? ":" + myPeerServerPort : "");
+                if (port >= 0) {
+                    announcedAddress = myAddress;
                 } else {
-                    announcedAddress = host;
+                    announcedAddress = host + (myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + myPeerServerPort : "");
                 }
-                if (announcedAddress == null || announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
+                if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                     throw new RuntimeException("Invalid announced address length: " + announcedAddress);
                 }
                 json.put("announcedAddress", announcedAddress);
@@ -449,7 +438,7 @@ public final class Peers {
             if (Peers.shareMyAddress) {
                 peerServer = new Server();
                 ServerConnector connector = new ServerConnector(peerServer);
-                final int port = blockchainConfig.isTestnet() ? TESTNET_PEER_PORT : Peers.myPeerServerPort;
+                final int port = Peers.myPeerServerPort;
                 connector.setPort(port);
                 final String host = propertiesHolder.getStringProperty("apl.peerServerHost");
                 connector.setHost(host);
@@ -886,7 +875,7 @@ public final class Peers {
     }
 
     public static int getDefaultPeerPort() {
-        return blockchainConfig.isTestnet() ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+        return Constants.DEFAULT_PEER_PORT;
     }
 
     public static Collection<? extends Peer> getAllPeers() {
@@ -1013,15 +1002,6 @@ public final class Peers {
             return null;
         }
         peer = new PeerImpl(host, announcedAddress);
-        boolean testnet = blockchainConfig.isTestnet();
-        if (testnet && peer.getPort() != TESTNET_PEER_PORT) {
-            LOG.debug("Peer " + host + " on testnet is not using port " + TESTNET_PEER_PORT + ", ignoring");
-            return null;
-        }
-        if (!testnet && peer.getPort() == TESTNET_PEER_PORT) {
-            LOG.debug("Peer " + host + " is using testnet port " + peer.getPort() + ", ignoring");
-            return null;
-        }
         return peer;
     }
 
@@ -1287,7 +1267,7 @@ public final class Peers {
                 ? Peer.BlockchainState.LIGHT_CLIENT
                 : (blockchainProcessor.isDownloading() || blockchain.getLastBlockTimestamp() < timeService.getEpochTime() - 600)
                 ? Peer.BlockchainState.DOWNLOADING :
-                        (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10 && !blockchainConfig.isTestnet()) ?
+                        (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10) ?
                                 Peer.BlockchainState.FORK :
                         Peer.BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {

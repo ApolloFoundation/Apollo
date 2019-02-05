@@ -22,16 +22,6 @@ package com.apollocurrency.aplwallet.apldesktop;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Locale;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -48,7 +38,18 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import org.slf4j.Logger;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
+import java.awt.*;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Locale;
+
 import javax.enterprise.inject.spi.CDI;
+import javax.swing.*;
 
 public class DesktopSystemTray {
     private static final Logger LOG = getLogger(DesktopSystemTray.class);
@@ -196,8 +197,9 @@ public class DesktopSystemTray {
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Constants.APPLICATION);
         addDataRow(statusPanel, "Version", Constants.VERSION.toString());
-        addDataRow(statusPanel, "Network", (blockchainConfig.isTestnet()) ? "TestNet" : "MainNet");
+        addDataRow(statusPanel, "Network", blockchainConfig.getChain().getName());
         addDataRow(statusPanel, "Working offline", "" + propertiesHolder.isOffline());
+
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));

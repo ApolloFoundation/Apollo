@@ -4,18 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Properties;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -32,12 +24,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Properties;
+import javax.inject.Inject;
+
 @EnableWeld
 public class DbMigrationExecutorTest {
 
     private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
 
-    private BlockchainConfig blockchainConfig = mockBlockchainConfig();
+
     private PropertiesHolder propertiesHolder = mockPropertiesHolder();
 
     private Path targetDbDir = createTempDir();
@@ -46,11 +46,11 @@ public class DbMigrationExecutorTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(legacyDbLocationsProvider, LegacyDbLocationsProvider.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .build();
+    @Inject
+    private H2DbInfoExtractor h2DbInfoExtractor;
 
     private Path pathToDbForMigration;
     private DbManipulator manipulator;
@@ -68,18 +68,13 @@ public class DbMigrationExecutorTest {
         Properties properties = new Properties();
         properties.put("apl.migrator.db.deleteAfterMigration", true);
         properties.put("apl.batchCommitSize", 100);
-        properties.put("apl.testDbPassword", "sa");
-        properties.put("apl.testDbUsername", "sa");
+        properties.put("apl.dbPassword", "sa");
+        properties.put("apl.dbUsername", "sa");
         PropertiesHolder ph = new PropertiesHolder();
         ph.init(properties);
         return ph;
     }
 
-    BlockchainConfig mockBlockchainConfig() {
-        BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-        Mockito.doReturn(true).when(blockchainConfig).isTestnet();
-        return blockchainConfig;
-    }
     private DbProperties createDbProperties(Path p) {
         DbProperties dbProperties = new DbProperties()
                 .dbDir(p.getParent().toAbsolutePath().toString())
@@ -108,7 +103,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();
@@ -123,7 +118,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigration() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(blockchainConfig, propertiesHolder);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();

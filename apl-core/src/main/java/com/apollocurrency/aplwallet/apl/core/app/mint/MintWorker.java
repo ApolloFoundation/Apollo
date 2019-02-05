@@ -22,19 +22,24 @@ package com.apollocurrency.aplwallet.apl.core.app.mint;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -62,8 +67,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static com.apollocurrency.aplwallet.apl.util.Constants.TESTNET_API_PORT;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -264,7 +267,7 @@ public class MintWorker implements Runnable{
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
-        int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesHolder.getIntProperty("apl.apiServerPort");
+        int port = propertiesHolder.getIntProperty("apl.apiServerPort");
         String urlParams = getUrlParams(params);
         URL url;
         try {
