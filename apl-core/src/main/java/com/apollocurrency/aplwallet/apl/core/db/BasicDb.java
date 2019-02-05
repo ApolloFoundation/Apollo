@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -37,7 +38,7 @@ import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
- * Note, that while creating instance of {@link BasicDb} {@link FullTextTrigger} will
+ * Note, that while creating instance of {@link BasicDb} {@link FullText} will
  * be also enabled, so use it carefully
  */
 public class BasicDb implements DataSource {
@@ -136,7 +137,7 @@ public class BasicDb implements DataSource {
 
     public void init(DbVersion dbVersion) {
         LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        FullTextTrigger.setActive(true);
+        FullText.setActive(true);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
         cp.setLoginTimeout(loginTimeout);
@@ -157,8 +158,8 @@ public class BasicDb implements DataSource {
             return;
         }
         try {
-            FullTextTrigger.setActive(false);
-            FullTextTrigger.shutdown();
+            FullText.setActive(false);
+            FullText.shutdown();
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");

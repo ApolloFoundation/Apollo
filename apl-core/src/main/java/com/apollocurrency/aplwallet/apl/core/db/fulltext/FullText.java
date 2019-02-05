@@ -1,24 +1,8 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 
-/*
- * Copyright © 2018 Apollo Foundation
- */
-
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -41,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import org.apache.lucene.analysis.Analyzer;
@@ -68,8 +53,7 @@ import org.h2.tools.SimpleResultSet;
 import org.slf4j.Logger;
 
 /**
- * todo make backward compatibility for triggers in old database and new database
- * FullTextTrigger provides Lucene search support.  Each searchable database has
+ * FullText provides Lucene search support.  Each searchable database has
  * a database trigger defined.  The Lucene index is updated whenever a row is
  * inserted, updated or deleted.  The DB_ID column is used to identify each row
  * and will be returned as the COLUMNS and KEYS values in the search results.
@@ -79,11 +63,11 @@ import org.slf4j.Logger;
  * the default schema (PUBLIC).
  *
  * The database aliases are defined as follows:
- *   CREATE ALIAS FTL_CREATE_INDEX FOR "com.apollocurrency.aplwallet.apl.db.FullTextTrigger.createIndex"
+ *   CREATE ALIAS FTL_CREATE_INDEX FOR "com.apollocurrency.aplwallet.apl.db.FullText.createIndex"
  *       CALL FTL_CREATE(schema, table, columnList)
- *   CREATE ALIAS FTL_DROP_INDEX FOR "com.apollocurrency.aplwallet.apl.db.FullTextTrigger.dropIndex"
+ *   CREATE ALIAS FTL_DROP_INDEX FOR "com.apollocurrency.aplwallet.apl.db.FullText.dropIndex"
  *       CALL FTL_DROP(schema, table)
- *   CREATE ALIAS FTL_SEARCH FOR "com.apollocurrency.aplwallet.apl.db.FullTextTrigger.search"
+ *   CREATE ALIAS FTL_SEARCH FOR "com.apollocurrency.aplwallet.apl.db.FullText.search"
  *       CALL FTL_SEARCH(schema, table, query, limit, offset)
  *
  * FTL_CREATE_INDEX is called to create a fulltext index for a table.  It is
@@ -103,17 +87,17 @@ import org.slf4j.Logger;
  *   SCORE   - the search hit score (Float)
  *
  * The table index trigger is defined as follows:
- *   CREATE TRIGGER trigger_name AFTER INSERT,UPDATE,DELETE ON table_name FOR EACH ROW CALL "com.apollocurrency.aplwallet.apl.db.FullTextTrigger"
+ *   CREATE TRIGGER trigger_name AFTER INSERT,UPDATE,DELETE ON table_name FOR EACH ROW CALL "com.apollocurrency.aplwallet.apl.db.FullText"
  */
-public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
-    private static final Logger LOG = getLogger(FullTextTrigger.class);
+public class FullText implements Trigger, TransactionalDb.TransactionCallback {
+    private static final Logger LOG = getLogger(FullText.class);
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
     /** ARS is active */
     private static volatile boolean isActive = false;
 
     /** Index triggers */
-    private static final ConcurrentHashMap<String, FullTextTrigger> indexTriggers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, FullText> indexTriggers = new ConcurrentHashMap<>();
 
     /** Default filesystem */
     private static final FileSystem fileSystem = FileSystems.getDefault();
@@ -186,7 +170,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * that enables ARS fulltext search support
      */
     public static void init() {
-        String ourClassName = FullTextTrigger.class.getName();
+        String ourClassName = FullText.class.getName();
         try (Connection conn = Db.getDb().getConnection();
                 Statement stmt = conn.createStatement();
                 Statement qstmt = conn.createStatement()) {
@@ -280,7 +264,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
             //
             // Reindex each table
             //
-            for (FullTextTrigger trigger : indexTriggers.values()) {
+            for (FullText trigger : indexTriggers.values()) {
                 trigger.reindexTable(conn);
             }
         } catch (SQLException exc) {
@@ -318,12 +302,12 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
                     upperSchema, upperTable, columnList.toUpperCase()));
             stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
                     + "FOR EACH ROW CALL \"%s\"",
-                    upperTable, tableName, FullTextTrigger.class.getName()));
+                    upperTable, tableName, FullText.class.getName()));
         }
         //
         // Index the table
         //
-        FullTextTrigger trigger = indexTriggers.get(tableName);
+        FullText trigger = indexTriggers.get(tableName);
         if (trigger == null) {
             LOG.error("ARS fulltext trigger for table " + tableName + " was not initialized");
         } else {
@@ -952,7 +936,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     }
 
     /**
-     * This method call required for FullTextTrigger class reusing by multiple dbs
+     * This method call required for FullText class reusing by multiple dbs
      * Note, that is not a full-functional method, so that you can extend it
      */
     public static void shutdown() {

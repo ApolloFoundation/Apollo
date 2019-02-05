@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -38,9 +38,9 @@ public class DbMigrationExecutor extends MigrationExecutor {
     @Override
     protected void afterMigration() {
         Db.init();
-        FullTextTrigger.init();
+        FullText.init();
         try (Connection connection = Db.getDb().getConnection()) {
-            FullTextTrigger.reindex(connection);
+            FullText.reindex(connection);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

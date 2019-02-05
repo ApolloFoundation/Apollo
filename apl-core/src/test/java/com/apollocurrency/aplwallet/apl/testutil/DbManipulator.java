@@ -61,7 +61,7 @@ public class DbManipulator {
         db.init(new DbVersion() {
             @Override
             protected void update(int nextUpdate) {
-                // do nothing to prevent version db creation (FullTextTrigger exception), instead store db structure in db/schema.sql
+                // do nothing to prevent version db creation (FullText exception), instead store db structure in db/schema.sql
             }
         });
         populator.initDb();

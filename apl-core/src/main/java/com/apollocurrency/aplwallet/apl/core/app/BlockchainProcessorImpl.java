@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -1898,7 +1898,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (height == 0) {
                     LOG.debug("Dropping all full text search indexes");
-                    FullTextTrigger.dropAll(con);
+                    FullText.dropAll(con);
                 }
                 for (DerivedDbTable table : derivedTables) {
                     if (height == 0) {

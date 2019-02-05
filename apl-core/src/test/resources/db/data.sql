@@ -30,4 +30,4 @@ INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
 (100, X'a3f312570b65671a7101', true),
  (200, X'f3e0475e0db85a822037', false);
 -- set here last value from AplDbVersion
-INSERT into PUBLIC.VERSION values(249);
+INSERT into PUBLIC.VERSION values(251);
