@@ -12,14 +12,23 @@ import java.sql.*;
 import javax.enterprise.inject.spi.CDI;
 
 import static org.slf4j.LoggerFactory.getLogger;
-// TODO refactor, use OptionDb or one transaction for storing checkpoints
+
+import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 public class PublicKeyMigration {
     private static final Logger LOG = getLogger(PublicKeyMigration.class);
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    
-    public static void init() {
+
+    public void init() {
         Connection con;
         boolean isInTransaction = false;
+        // start transaction or use already started
         try {
             if (Db.getDb().isInTransaction()) {
                 isInTransaction = true;
@@ -29,27 +38,8 @@ public class PublicKeyMigration {
             }
 
             try (Statement stmt = con.createStatement()) {
-                int totalNumberOfGenesisKeys = 0;
-                try (ResultSet rs = stmt.executeQuery("SELECT count(*) from public_key where height = 0")) {
-                    rs.next();
-                    totalNumberOfGenesisKeys = rs.getInt(1);
-                }
-                String message = "Performing public keys migration";
-                LOG.info(message);
-                boolean isMigrationInterrupted = false;
-                try {
-                    stmt.executeUpdate("DROP INDEX genesis_public_key_account_id_height_idx");
-                    isMigrationInterrupted = true;
-                    LOG.debug("Migration was interrupted");
-                }
-                catch (SQLException e) {
-                    //ignore
-                }
-                AppStatus.getInstance().update(message);
-             //   Apl.getRuntimeMode().updateAppStatus(message);
-                //create copy of public_key table
-                if (!isMigrationInterrupted) {
-                    //copy genesis keys if exists
+                LOG.info("Performing public keys migration");
+                // find db_id range of genesis public keys
                     long minDbId;
                     long maxDbId;
                     try (ResultSet rs = stmt.executeQuery("SELECT MIN(db_id) as min_db_id, MAX(db_id) as max_db_id from PUBLIC_KEY where HEIGHT = 0")) {
@@ -58,41 +48,26 @@ public class PublicKeyMigration {
                         maxDbId = rs.getLong("max_db_id");
                     }
                     LOG.info("Copy genesis public keys");
-                    try (PreparedStatement selectGenesisKeysStatement = con.prepareStatement(
-                            "SELECT * FROM public_key where DB_ID between ? AND ?")) {
-                        selectGenesisKeysStatement.setLong(1, minDbId);
-                        selectGenesisKeysStatement.setLong(2, maxDbId);
-                        try (ResultSet rs = selectGenesisKeysStatement.executeQuery(); PreparedStatement pstm = con.prepareStatement("INSERT INTO genesis_public_key " +
-                                "VALUES (?, ?, ?, ?, ?)")) {
-                            int counter = 0;
-                            while (rs.next()) {
-                                pstm.setLong(1, rs.getLong(1));
-                                pstm.setLong(2, rs.getLong(2));
-                                pstm.setBytes(3, rs.getBytes(3));
-                                pstm.setInt(4, rs.getInt(4));
-                                pstm.setBoolean(5, rs.getBoolean(5));
-                                pstm.addBatch();
-                                if (++counter % 500 == 0) {
-                                    pstm.executeBatch();
-                                    Db.getDb().commitTransaction();
-                                    LOG.debug("Copied {} / {}", counter, totalNumberOfGenesisKeys);
-                                }
-                            }
-                            pstm.executeBatch();
-                        }
+                // copy genesis public keys into the new table
+                    try (PreparedStatement pstmt = con.prepareStatement(
+                            "SELECT * INTO genesis_public_key FROM public_key where DB_ID between ? AND ?")) {
+                        pstmt.setLong(1, minDbId);
+                        pstmt.setLong(2, maxDbId);
+                        pstmt.executeUpdate();
                     }
-                }
                 //delete genesis keys
                 int deleted;
                 int totalDeleted = 0;
-
+                int totalNumberOfGenesisKeys;
+                try (ResultSet rs = stmt.executeQuery("SELECT count(*) from public_key where height = 0")) {
+                    rs.next();
+                    totalNumberOfGenesisKeys = rs.getInt(1);
+                }
                 do {
                     deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE());
                     totalDeleted += deleted;
                     LOG.debug("Migration performed for {}/{} public keys", totalDeleted, totalNumberOfGenesisKeys);
-                    Db.getDb().commitTransaction();
                 } while (deleted == propertiesHolder.BATCH_COMMIT_SIZE());
-                //add indices
             }
             Db.getDb().commitTransaction();
         }

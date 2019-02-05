@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -28,19 +30,21 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
@@ -157,22 +161,37 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(dbClause, from, to);
     }
 
-    public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) {
+    public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) throws AplException.NotValidException {
         Connection connection = null;
         try {
             connection = Db.getDb().getConnection();
-            PreparedStatement pollStatement = connection.prepareStatement(
-                    "SELECT * FROM poll WHERE id IN" +
-                            " (SELECT bytes_to_long(attachment_bytes, 1) FROM transaction WHERE " +
-                            "sender_id = ? AND type = ? AND subtype = ? " +
-                            "ORDER BY block_timestamp DESC, transaction_index DESC"
-                            + DbUtils.limitsClause(from, to) + ")");
-            int i = 0;
-            pollStatement.setLong(++i, accountId);
-            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
-            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
-            DbUtils.setLimits(++i, pollStatement, from, to);
-            return pollTable.getManyBy(connection, pollStatement, false);
+//            extract voted poll ids from attachment
+            try (PreparedStatement pstmt = connection.prepareStatement(
+                    "(SELECT attachment_bytes FROM transaction " +
+                    "WHERE sender_id = ? AND type = ? AND subtype = ? " +
+                    "ORDER BY block_timestamp DESC, transaction_index DESC"
+                    + DbUtils.limitsClause(from, to))) {
+                int i = 0;
+                pstmt.setLong(++i, accountId);
+                pstmt.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
+                pstmt.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
+                DbUtils.setLimits(++i, pstmt, from, to);
+                List<Long> ids = new ArrayList<>();
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        byte[] bytes = rs.getBytes("attachment_bytes");
+                        ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+                        buffer.order(ByteOrder.LITTLE_ENDIAN);
+                        buffer.put(bytes);
+                        long pollId = new Attachment.MessagingVoteCasting(buffer).getPollId();
+                        ids.add(pollId);
+                    }
+                }
+                PreparedStatement pollStatement = connection.prepareStatement(
+                        "SELECT * FROM poll WHERE id IN (SELECT * FROM table(x bigint = ? ))");
+                pollStatement.setObject(1, ids.toArray());
+                return pollTable.getManyBy(connection, pollStatement, false);
+            }
         }
         catch (SQLException e) {
             DbUtils.close(connection);

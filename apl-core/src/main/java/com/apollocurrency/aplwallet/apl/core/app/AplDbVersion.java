@@ -660,17 +660,6 @@ public class AplDbVersion extends DbVersion {
                         + ")"
                 );
             case 240:
-                apply("CREATE ALIAS bytes_to_long AS $$" +
-                        "import java.nio.ByteBuffer;" +
-                        "import java.nio.ByteOrder;" +
-                        "@CODE" +
-                        "long getLong(byte[] bytes, int startPosition) {" +
-                        "        ByteBuffer buffer = ByteBuffer.wrap(bytes);" +
-                        "        buffer.order(ByteOrder.LITTLE_ENDIAN);" +
-                        "        buffer.position(startPosition);" +
-                        "        return buffer.getLong();" +
-                        "    }" +
-                        "$$;");
             case 241:
                 apply("CREATE TABLE IF NOT EXIST genesis_public_key " +
                         "(db_id IDENTITY," +

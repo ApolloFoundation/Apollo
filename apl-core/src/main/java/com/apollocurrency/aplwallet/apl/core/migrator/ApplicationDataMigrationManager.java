@@ -45,7 +45,7 @@ public class ApplicationDataMigrationManager {
             if (!twoFactorAuthMigrationExecutor.isAutoCleanup()) {
                 twoFactorAuthMigrationExecutor.performAfterMigrationCleanup();
             }
-            PublicKeyMigration.init();
+            new PublicKeyMigration().init();
         }
         catch (IOException e) {
             LOG.error("Fatal error. Cannot proceed data migration", e);
