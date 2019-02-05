@@ -276,7 +276,7 @@ public final class AplCore {
                 }
             }
             if (peerPort == -1) {
-                peerPort = DEFAULT_PEER_PORT;
+                peerPort = propertiesHolder.getIntProperty("apl.networkPeerServerPort", DEFAULT_PEER_PORT);
             }
             int peerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
 
