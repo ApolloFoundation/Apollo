@@ -224,7 +224,7 @@ public final class Peers {
                 LOG.warn("Your announced address is not valid: " + e.toString());
             }
         }
-        myPeerServerPort = propertiesHolder.getIntProperty("apl.peerServerPort");
+        myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! Constants.isOffline;
         enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
@@ -875,7 +875,7 @@ public final class Peers {
     }
 
     public static int getDefaultPeerPort() {
-        return Constants.DEFAULT_PEER_PORT;
+        return propertiesHolder.getIntProperty("apl.networkPeerServerPort", Constants.DEFAULT_PEER_PORT);
     }
 
     public static Collection<? extends Peer> getAllPeers() {
