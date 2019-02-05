@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import org.slf4j.Logger;
@@ -51,7 +50,7 @@ public class Db {
 
     private static DbProperties baseDbProperties;
     private static TransactionalDb currentDb;
-    private static Map<String, BasicDb> shards = new ConcurrentHashMap<>(3);
+    private static Map<String, TransactionalDb> shards = new ConcurrentHashMap<>(3);
 
     public static TransactionalDb getDb() {
         if (currentDb == null || currentDb.isShutdown()) {
