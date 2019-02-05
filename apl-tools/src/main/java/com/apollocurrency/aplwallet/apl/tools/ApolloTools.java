@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -62,13 +63,14 @@ public class ApolloTools {
     private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
     private static final ConstantsCmd constcmd = new ConstantsCmd();
     private static final BaseTargetCmd basetarget = new BaseTargetCmd();
-    private ApolloTools toolsApp;
+    
+    private static ApolloTools toolsApp;
     private Chain activeChain;
-    Map<UUID, Chain> chains;
+    private Map<UUID, Chain> chains;
     private PredefinedDirLocations dirLocations;
 
-    private static PropertiesHolder propertiesHolder;
-    private static DirProvider dirProvider;
+    private PropertiesHolder propertiesHolder;
+    private DirProvider dirProvider;
 
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
             "socksProxyHost",
@@ -86,7 +88,7 @@ public class ApolloTools {
     }
 
     private void readConfigs() {
-        //   RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
+        RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
 
@@ -102,14 +104,14 @@ public class ApolloTools {
                 args.isResourceIgnored(),
                 com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 "chains.json");
-        Map<UUID, Chain> chains = chainsConfigLoader.load();
+        chains = chainsConfigLoader.load();
         activeChain = ChainUtils.getActiveChain(chains);
         // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);
         dirLocations = merge(args, envVars);
         dirProvider = DirProviderFactory.getProvider(false, activeChain.getChainId(), Constants.APPLICATION_DIR_NAME, dirLocations);
         toolsApp.propertiesHolder = new PropertiesHolder();
         toolsApp.propertiesHolder.init(propertiesLoader.load());
-        
+        RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
     }
 
     public static String join(Collection collection, String delimiter) {
@@ -202,7 +204,7 @@ public class ApolloTools {
     }
 
     public static void main(String[] argv) {
-        ApolloTools toolsApp = new ApolloTools();
+        toolsApp = new ApolloTools();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
                 .addCommand(CompactDbCmd.CMD, compactDb)

@@ -25,6 +25,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -69,81 +71,23 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-        String dbPrefix="";
-        String dbType = propertiesHolder.getStringProperty("apl.dbType");
-        if (!"h2".equals(dbType)) {
+        DbProperties dbProperties  = new DbConfig(propertiesHolder).getDbConfig();
+        
+        if (!"h2".equals(dbProperties.getDbType())) {
             LOG.error("Database type must be 'h2'");
             return 1;
         }
-//
-        String dbUrl = propertiesHolder.getStringProperty("apl.dbUrl");
-        if (dbUrl == null) {
-            String dbPath = dirProvider.getDbDir().toAbsolutePath().toString();
-            dbUrl = String.format("jdbc:%s:%s", dbType, dbPath);
-        }
-        
-        String dbParams = propertiesHolder.getStringProperty(dbPrefix + "Params");
-        dbUrl += ";" + dbParams;
-        if (!dbUrl.contains("MV_STORE=")) {
-            dbUrl += ";MV_STORE=FALSE";
-        }
-        String dbUsername = propertiesHolder.getStringProperty(dbPrefix + "Username", "sa");
-        String dbPassword = propertiesHolder.getStringProperty(dbPrefix + "Password", "sa", true);
-        //
-        // Get the database path.  This is the third colon-separated operand and is
-        // terminated by a semi-colon or by the end of the string.
-        //
-        int pos = dbUrl.indexOf(':');
-        if (pos >= 0) {
-            pos = dbUrl.indexOf(':', pos+1);
-        }
-        if (pos < 0) {
-            LOG.error("Malformed database URL: " + dbUrl);
-            return 1;
-        }
-        String dbDir;
-        int startPos = pos + 1;
-        int endPos = dbUrl.indexOf(';', startPos);
-        if (endPos < 0) {
-            dbDir = dbUrl.substring(startPos);
-        } else {
-            dbDir = dbUrl.substring(startPos, endPos);
-        }
-        //
-        // Remove the optional 'file' operand
-        //
-        if (dbDir.startsWith("file:"))
-            dbDir = dbDir.substring(5);
-        //
-        // Remove the database prefix from the end of the database path.  The path
-        // separator can be either '/' or '\' (Windows will accept either separator
-        // so we can't rely on the system property).
-        //
-        endPos = dbDir.lastIndexOf('\\');
-        pos = dbDir.lastIndexOf('/');
-        if (endPos >= 0) {
-            if (pos >= 0) {
-                endPos = Math.max(endPos, pos);
-            }
-        } else {
-            endPos = pos;
-        }
-        if (endPos < 0) {
-            LOG.error("Malformed database URL: " + dbUrl);
-            return 1;
-        }
-        dbDir = dbDir.substring(0, endPos);
-        LOG.info("Database directory is '" + dbDir + '"');
+
         //
         // Create our files
         //
         int phase = 0;
-        File sqlFile = new File(dbDir, "backup.sql.gz");
-        File dbFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + "h2.db");
+        File sqlFile = new File(dbProperties.getDbDir(), "backup.sql.gz");
+        File dbFile = new File(dbProperties.getDbDir(), dbProperties.getDbFileName()+".h2.db");
         if (!dbFile.exists()) {
-            dbFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".mv.db");
+            dbFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".mv.db");
             if (!dbFile.exists()) {
-                LOG.error("{} database not found", Constants.APPLICATION_DIR_NAME);
+                LOG.error("{} database not found", dbProperties.getDbDir());
                 return 1;
             }
         }
@@ -158,8 +102,8 @@ public class CompactDatabase {
                     throw new IOException(String.format("Unable to delete '%s'", sqlFile.getPath()));
                 }
             }
-            try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement s = conn.createStatement()) {
+            try (Connection conn = getConnection(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
+                Statement s = conn.createStatement()) {
                 s.execute("SCRIPT TO '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
             }
             //
@@ -171,8 +115,8 @@ public class CompactDatabase {
                                                     dbFile.getPath(), oldFile.getPath()));
             }
             phase = 1;
-            try (Connection conn = getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement s = conn.createStatement()) {
+            try (Connection conn = getConnection(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
+                Statement s = conn.createStatement()) {
                 s.execute("RUNSCRIPT FROM '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
                 s.execute("ANALYZE");
             }
@@ -200,13 +144,13 @@ public class CompactDatabase {
                     //
                     // We failed while creating the new database
                     //
-                    File newFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".h2.db");
+                    File newFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".h2.db");
                     if (newFile.exists()) {
                         if (!newFile.delete()) {
                             LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
                         }
                     } else {
-                        newFile = new File(dbDir, Constants.APPLICATION_DIR_NAME + ".mv.db");
+                        newFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".mv.db");
                         if (newFile.exists()) {
                             if (!newFile.delete()) {
                                 LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));
