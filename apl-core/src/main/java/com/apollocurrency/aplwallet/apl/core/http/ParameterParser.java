@@ -494,8 +494,7 @@ public final class ParameterParser {
 
     public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
-        System.out.print(secretPhrase);
-        LOG.debug(secretPhrase);
+        LOG.debug("SecretPhrase here:" + secretPhrase);
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
