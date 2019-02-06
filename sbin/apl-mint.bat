@@ -6,6 +6,6 @@
 @echo ***********************************************************************
 @echo off
 set DIRP=%~dp0
-call %DIRP%\apl-common.bat
+call %DIRP%\..\bin\apl-common.bat
 @REM start Apollo
 %JAVA_CMD% -jar %APL_MAIN% --mint
