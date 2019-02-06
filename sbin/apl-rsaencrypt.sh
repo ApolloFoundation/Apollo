@@ -12,4 +12,9 @@ echo "*    on option isHexadecimal                                          *"
 echo "* c) private key path (absolute). Encrypted keys are not supported    *"
 echo "* TODO fix app  launch                                                *"
 echo "***********************************************************************"
-java -cp "target/classes:target/lib/*" com.apollocurrency.aplwallet.apl.tools.RSAEncryption
+SCRIPT=`realpath -s $0`
+DIR=`dirname $SCRIPT`
+ . ${DIR}/../bin/apl-common.sh
+
+${JAVA_CMD}  -jar ${APL_TOOLS_JAR} updaterurl --encrypt --in $1 --out $2
+exit $?

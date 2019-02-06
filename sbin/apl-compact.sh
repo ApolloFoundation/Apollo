@@ -1,10 +1,6 @@
 #!/bin/sh
 # (C) 2019 Apollo Foundation 
 
-SCRIPT=`realpath -s $0`
-DIR=`dirname $SCRIPT`
- . ${DIR}/../bin/apl-common.sh
-
 #"***********************************************************************"
 #"* This shell script will compact and reorganize the apl-blockchain db *"
 #"* This process can take a long time.  Do not interrupt the script     *"
@@ -14,6 +10,10 @@ DIR=`dirname $SCRIPT`
 #"* under ~/.apl-blockchain/apl-blockchain-db/chainId , invoke this     *"
 #"* script as: ./apl-compact.sh -Dapl.runtime.mode=user                 *"
 #echo "*******************************************************************"
+
+SCRIPT=`realpath -s $0`
+DIR=`dirname $SCRIPT`
+ . ${DIR}/../bin/apl-common.sh
 
 ${JAVA_CMD}  -jar ${APL_TOOLS_JAR} compactdb
 # $@ 

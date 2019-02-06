@@ -7,4 +7,4 @@
 set DIRP=%~dp0
 call %DIRP%\..\bin\apl-common.bat
 @REM start Apollo tools
-%JAVA_CMD% -jar ${APL_TOOLS} signtx --usejson
+%JAVA_CMD% -jar %APL_TOOLS% signtx --json
