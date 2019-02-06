@@ -120,7 +120,7 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPahse>package</zipExecutionPahse>
+                <zipExecutionPhase>package</zipExecutionPhase>
             </properties>
             <build>
                 <resources>
@@ -140,7 +140,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <zipExecutionPahse>none</zipExecutionPahse>
+                <zipExecutionPhase>none</zipExecutionPhase>
             </properties>
             <build>
                 <resources>
@@ -162,7 +162,7 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPahse>package</zipExecutionPahse>
+                <zipExecutionPhase>package</zipExecutionPhase>
             </properties>
             <build>
                 <resources>

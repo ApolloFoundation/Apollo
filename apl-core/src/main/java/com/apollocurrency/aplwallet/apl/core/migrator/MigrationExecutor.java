@@ -4,19 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
+import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * <p>Provides main algorithm of data migration. </p>
@@ -63,9 +63,8 @@ public abstract class MigrationExecutor {
     public MigrationExecutor(PropertiesHolder holder, BlockchainConfig config, String migrationItemName, boolean autoCleanup) {
         Objects.requireNonNull(holder, "Properties holder cannot be null");
         Objects.requireNonNull(config, "Blockchain config cannot be null");
-        if (StringUtils.isBlank(migrationItemName)) {
-            throw new IllegalArgumentException("Option prefix cannot be null or blank");
-        }
+        StringValidator.requireNonBlank(migrationItemName, "Option prefix cannot be null or blank");
+
         this.autoCleanup = autoCleanup;
         this.holder = holder;
         this.config = config;

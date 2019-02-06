@@ -25,7 +25,7 @@ class DirProviderFactoryTest {
         assertThrows(NullPointerException.class, () -> {
             DirProvider df = new DirProviderFactory().getInstance(true, null, null, null);
         });
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(NullPointerException.class, () -> {
             DirProvider df = new DirProviderFactory().getInstance(true, UUID.randomUUID(), null, null);
         });
 

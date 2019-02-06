@@ -4,7 +4,8 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainUtils;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -12,10 +13,13 @@ import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.util.env.PropertiesLoader;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
+import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -26,11 +30,10 @@ import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.enterprise.inject.spi.CDI;
-import java.util.Arrays;
 
-import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
 
@@ -40,32 +43,28 @@ import javax.enterprise.inject.spi.CDI;
  * @author alukin@gmail.com
  */
 public class Apollo {
+//    System properties to load by PropertiesConfigLoader
+    private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
+            "socksProxyHost",
+            "socksProxyPort",
+            "apl.enablePeerUPnP");
+
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
-    public static String logDir=".";
+    public static String logDir = ".";
     //We have dir provider configured in logback.xml so should init log later
     private static Logger log;
 
     public static RuntimeMode runtimeMode;
     public static DirProvider dirProvider;
-    
+
     private static AplContainer container;
-    
+
     private static AplCore core;
 
-    private static PropertiesLoader propertiesLoader;
     private PropertiesHolder propertiesHolder;
 
-    public static PropertiesLoader getPropertiesLoader() {
-        return propertiesLoader;
-    }
-
     private void initCore() {
-                propertiesLoader.loadSystemProperties(
-                        Arrays.asList(
-                                "socksProxyHost",
-                                "socksProxyPort",
-                                "apl.enablePeerUPnP"));
-        
+
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
         core = new AplCore(CDI.current().select(BlockchainConfig.class).get());
 
@@ -105,7 +104,7 @@ public class Apollo {
     }
 
     public static void shutdown() {
-        container.shutdown(); 
+        container.shutdown();
         AplCoreRuntime.getInstance().shutdown();
     }
 
@@ -122,7 +121,8 @@ public class Apollo {
         jc.setProgramName(Constants.APPLICATION);
         try {
             jc.parse(argv);
-        } catch (RuntimeException ex) {
+        }
+        catch (RuntimeException ex) {
             System.err.println("Error parsing command line arguments.");
             System.err.println(ex.getMessage());
             jc.usage();
@@ -134,7 +134,6 @@ public class Apollo {
         }
 
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
-        dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
 
 // We do not need it yet. this call creates unwanted error messages
 //        if(RuntimeEnvironment.getInstance().isAdmin()){
@@ -142,24 +141,34 @@ public class Apollo {
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
 
-//load configuration files        
-
+//load configuration files
+        EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME);
-        propertiesLoader = new PropertiesLoader(configDirProvider,
+
+        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
+                configDirProvider,
                 args.isResourceIgnored(),
-                args.configDir);
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                Constants.APPLICATION_DIR_NAME + ".properties",
+                SYSTEM_PROPERTY_NAMES);
+
+        ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
+                configDirProvider,
+                args.isResourceIgnored(),
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                "chains.json");
 // init application data dir provider
-        EnvironmentVariables environmentVariables = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        dirProvider = createDirProvider(environmentVariables.merge(args), args.serviceMode);
+        Map<UUID, Chain> chains = chainsConfigLoader.load();
+        dirProvider = createDirProvider(chains, envVars.merge(args), args.serviceMode);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 
         log = LoggerFactory.getLogger(Apollo.class);
         
 //check webUI
-        System.out.println("=== Bin directory is: "+dirProvider.getBinDir().toAbsolutePath());
+        System.out.println("=== Bin directory is: " + dirProvider.getBinDir().toAbsolutePath());
+/* at the moment we do it in build time
 
-        /* at the moment we do it in build time
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);
         ExecutorService execService = Executors.newFixedThreadPool(1);
@@ -180,8 +189,15 @@ public class Apollo {
                 .recursiveScanPackages(ServerInfoEndpoint.class)
                 .recursiveScanPackages(ServerInfoService.class)
                 .annotatedDiscoveryMode().build();
+
+        // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        app.propertiesHolder.init(propertiesLoader.getProperties());
+        app.propertiesHolder.init(propertiesLoader.load());
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
+        chainsConfigHolder.setChains(chains);
+        blockchainConfig.updateChain(chainsConfigHolder.getActiveChain());
+
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
@@ -199,14 +215,8 @@ public class Apollo {
         }
     }
 
-    private static DirProvider createDirProvider(PredefinedDirLocations dirLocations, boolean isService) {
-        try {
-            ChainIdServiceImpl chainIdService = new ChainIdServiceImpl();
-            UUID chainId = chainIdService.getActiveChain().getChainId();
-            return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Unable to create dirProvider, cannot load chains config", e);
-        }
+    private static DirProvider createDirProvider(Map<UUID, Chain> chains, PredefinedDirLocations dirLocations, boolean isService) {
+        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
+        return new DirProviderFactory().getInstance(isService, chainId, Constants.APPLICATION_DIR_NAME, dirLocations);
     }
 }

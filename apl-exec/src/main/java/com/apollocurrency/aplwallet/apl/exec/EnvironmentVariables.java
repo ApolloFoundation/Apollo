@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.exec;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
-import org.apache.commons.lang3.StringUtils;
 
 public class EnvironmentVariables {
     String logDir = "";
@@ -13,13 +14,13 @@ public class EnvironmentVariables {
     String vaultKeystoreDir = "";
     String twoFactorAuthDir = "";
     String pidFile = "";
+    String configDir ="";
     private String applicationName;
 
     public EnvironmentVariables(String applicationName) {
-        if (StringUtils.isBlank(applicationName)) {
-            throw new IllegalArgumentException("Application name cannot be null or blank");
-        }
-        this.applicationName = applicationName.toUpperCase();
+        StringValidator.requireNonBlank(applicationName, "Application name cannot be null or blank");
+
+        this.applicationName = applicationName.toUpperCase().replaceAll("-", "_");
         retrieve();
     }
 
@@ -29,6 +30,7 @@ public class EnvironmentVariables {
         vaultKeystoreDir = System.getenv(applicationName + "_VAULT_KEY_DIR");
         pidFile = System.getenv(applicationName + "_PID_FILE");
         twoFactorAuthDir = System.getenv(applicationName + "_2FA_DIR");
+        configDir = System.getenv(applicationName + "_CONFIG_DIR");
     }
 
     public PredefinedDirLocations merge(CmdLineArgs args) {
