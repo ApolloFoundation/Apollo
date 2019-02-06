@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-//import io.firstbridge.cryptolib;
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import java.security.KeyPair;
@@ -339,6 +338,7 @@ public final class Crypto {
         try
         {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DiffieHellman");
+            keyGen.initialize(512);
             KeyPair kpAlice = keyGen.genKeyPair();
             return kpAlice;
         }

@@ -499,7 +499,10 @@ public final class ParameterParser {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
         if (!getIsElGamalEncrypted(req, isMandatory)) return secretPhrase;
-        else return "0";
+        else {
+            
+            return "0";
+        }
         
     }
 
@@ -524,7 +527,7 @@ public final class ParameterParser {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
-        String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParam));
+        String secretPhrase = getSecretPhrase(req, false);
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
