@@ -20,23 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class EntityDbTable<T> extends DerivedDbTable {
