@@ -27,16 +27,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
-
+    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    
     protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
     }
@@ -62,7 +64,7 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     protected void prune() {
         if (blockchainConfig.isEnablePruning()) {
             try (Connection con = db.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmt.setInt(1, timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
                 int deleted;
                 do {
@@ -71,7 +73,7 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
                         LOG.debug("Deleted " + deleted + " expired prunable data from " + table);
                     }
                     db.commitTransaction();
-                } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+                } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }

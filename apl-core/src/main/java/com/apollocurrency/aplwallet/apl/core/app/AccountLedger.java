@@ -67,11 +67,11 @@ public class AccountLedger {
 
     // TODO: YL remove static instance later
 
-   private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+   private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     /** Number of blocks to keep when trimming */
-    public static final int trimKeep = propertiesLoader.getIntProperty("apl.ledgerTrimKeep", 30000);
+    public static final int trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
 
     /** Blockchain */
     private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -91,7 +91,7 @@ public class AccountLedger {
      * Process apl.ledgerAccounts
      */
     static {
-        List<String> ledgerAccounts = propertiesLoader.getStringListProperty("apl.ledgerAccounts");
+        List<String> ledgerAccounts = propertiesHolder.getStringListProperty("apl.ledgerAccounts");
         ledgerEnabled = !ledgerAccounts.isEmpty();
         trackAllAccounts = ledgerAccounts.contains("*");
         if (ledgerEnabled) {
@@ -110,7 +110,7 @@ public class AccountLedger {
         } else {
             LOG.info("Account ledger is not enabled");
         }
-        int temp = propertiesLoader.getIntProperty("apl.ledgerLogUnconfirmed", 1);
+        int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
         logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
     }
 
@@ -149,13 +149,13 @@ public class AccountLedger {
             if (trimKeep <= 0)
                 return;
             try (Connection con = db.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
                 int trimmed;
                 do {
                     trimmed = pstmt.executeUpdate();
                     Db.getDb().commitTransaction();
-                } while (trimmed >= Constants.BATCH_COMMIT_SIZE);
+                } while (trimmed >= propertiesHolder.BATCH_COMMIT_SIZE());
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }

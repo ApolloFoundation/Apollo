@@ -36,11 +36,12 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.spi.CDI;
 
 public class APITestServlet extends HttpServlet {
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static final String HEADER1 =
             "<!DOCTYPE html>\n" +
             "<html>\n" +
@@ -190,7 +191,7 @@ public class APITestServlet extends HttpServlet {
             AbstractAPIRequestHandler requestHandler = APIServlet.apiRequestHandlers.get(requestType);
             StringBuilder bufJSCalls = new StringBuilder();
             String nodeType = "Full Node";
-            if (Constants.isLightClient) {
+            if (propertiesHolder.isLightClient()) {
                 nodeType = "Light Client";
             } else if (APIProxy.enableAPIProxy) {
                 nodeType = "Roaming Client";

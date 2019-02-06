@@ -24,7 +24,7 @@ public class DirProviderUtilTest {
     }
     @Test
     public void testGetBinDirectory() throws URISyntaxException {
-        Path binDir = DirProviderUtil.getBinDir();
+        Path binDir = DirProvider.getBinDir();
         String userDir =
                 Paths.get(this.getClass().getClassLoader().getResource("").toURI()).getParent().getParent().getParent().toAbsolutePath().toString();
         Assertions.assertEquals(userDir, binDir.toAbsolutePath().toString());

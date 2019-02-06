@@ -4,17 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.keystore;
 
-import javax.inject.Inject;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.migrator.DefaultDirectoryMigrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import javax.inject.Inject;
 
 /**
  * Provide vaultKeystore specific components for migration
@@ -22,17 +21,18 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
  * @see DefaultDirectoryMigrator
  */
 public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
+
+    public static final String KEYSTORE_PROPERTY_PREFIX = "apl.keystore";
+
     @Inject
-    public VaultKeystoreMigrationExecutor(PropertiesHolder holder, BlockchainConfig config) {
-        super(holder, config, "vaultkeystore", false);
+    public VaultKeystoreMigrationExecutor(PropertiesHolder holder) {
+        super(holder, "vaultkeystore", false);
     }
 
 
     @Override
     protected List<Path> getSrcPaths() {
-        boolean testnet = config.isTestnet();
-        String keystorePrefix = testnet ? "apl.keystoreTestnet" : "apl.keystore";
-        String keystoreDir = holder.getStringProperty(keystorePrefix + "Dir");
+        String keystoreDir = holder.getStringProperty(KEYSTORE_PROPERTY_PREFIX + "Dir");
         List<Path> paths = new ArrayList<>();
         if (keystoreDir != null) {
             Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();

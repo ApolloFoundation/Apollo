@@ -32,7 +32,12 @@
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-desktop</artifactId>
             <version>${project.version}</version>
-        </dependency>                  
+        </dependency>
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-tools</artifactId>
+            <version>${project.version}</version>
+        </dependency>                          
         <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-html</artifactId>
@@ -57,7 +62,6 @@
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.72</version>
         </dependency>                  
         <!-- unit tests -->
         <dependency>
@@ -82,7 +86,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-            <plugin>
+             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.1.0</version>
@@ -140,19 +144,20 @@
                                     <outputDirectory>${project.build.directory}/webui</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
-<!--                            <outputDirectory>${project.build.directory}/wars</outputDirectory> -->
+
                             <overWriteReleases>true</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
                     </execution>                    
                 </executions>
             </plugin>
+<!-- create cross-platform zip distribution -->            
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>distro-assembly</id>
-                        <phase>${zipExecutionPahse}</phase>
+                        <phase>${zipExecutionPhase}</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

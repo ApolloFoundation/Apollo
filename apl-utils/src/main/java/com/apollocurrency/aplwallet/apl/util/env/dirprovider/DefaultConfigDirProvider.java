@@ -23,7 +23,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getInstallationConfigDirectory() {
-        return DirProviderUtil.getBinDir().resolve("conf").toAbsolutePath().toString();
+        return DirProvider.getBinDir().resolve("conf").toAbsolutePath().toString();
     }
 
     @Override
@@ -33,8 +33,10 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getUserConfigDirectory() {
-        return isService
+        String res =
+            isService
                 ? getInstallationConfigDirectory()
-                : Paths.get(System.getProperty("user.home"), applicationName, "conf").toAbsolutePath().toString();
+                : Paths.get(System.getProperty("user.home"), "." + applicationName, "conf").toAbsolutePath().toString();
+        return res;
     }
 }

@@ -24,17 +24,17 @@
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-utils</artifactId>
             <version>${project.version}</version>
-        </dependency> 
-        <dependency>
-            <groupId>com.apollocurrency</groupId>
-            <artifactId>apl-core</artifactId>
-            <version>${project.version}</version>
         </dependency>   
         <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-updater</artifactId>
             <version>${project.version}</version>
-        </dependency>            
+        </dependency>   
+        <!-- command line arguments processing -->        
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+        </dependency>                  
         <!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
@@ -64,8 +64,22 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>./</classpathPrefix>
+<!--                            <classpathPrefix>lib/</classpathPrefix>-->
+                            <mainClass>com.apollocurrency.aplwallet.apl.tools.ApolloTools</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+<!--            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
@@ -89,7 +103,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>           -->
         </plugins>
     </build>
 </project>

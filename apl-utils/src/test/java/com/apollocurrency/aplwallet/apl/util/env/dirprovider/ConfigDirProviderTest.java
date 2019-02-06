@@ -17,7 +17,10 @@ import java.nio.file.Paths;
 public class ConfigDirProviderTest {
 
     public static final String APPLICATION_NAME = "test";
-    public static final String USER_HOME_CONFIG_DIRECTORY = System.getProperty("user.home") + File.separator + APPLICATION_NAME + File.separator + "conf";
+
+    public static final String USER_HOME_CONFIG_DIRECTORY =
+            System.getProperty("user.home") + File.separator + "." +APPLICATION_NAME + File.separator + "conf";
+
     public static final String INSTALLATION_CONFIG_DIR = getInstallationConfigDir();
 
     private static String getInstallationConfigDir() {

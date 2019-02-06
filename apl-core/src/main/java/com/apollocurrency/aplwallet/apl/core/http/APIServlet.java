@@ -45,7 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -58,8 +58,8 @@ public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
-    private static final boolean enforcePost = propertiesLoader.getBooleanProperty("apl.apiServerEnforcePOST");
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private static final boolean enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -152,7 +152,7 @@ public final class APIServlet extends HttpServlet {
                 return;
             }
 
-            if (Constants.isLightClient && apiRequestHandler.requireFullClient()) {
+            if (propertiesHolder.isLightClient() && apiRequestHandler.requireFullClient()) {
                 response = LIGHT_CLIENT_DISABLED_API;
                 return;
             }
