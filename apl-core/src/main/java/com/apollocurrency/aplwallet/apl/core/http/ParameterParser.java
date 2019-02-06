@@ -83,7 +83,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Unencrypte
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencySellOffer;

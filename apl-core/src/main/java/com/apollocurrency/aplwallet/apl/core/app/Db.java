@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import org.slf4j.Logger;
 

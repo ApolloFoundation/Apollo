@@ -3,9 +3,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;

@@ -562,7 +562,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 

@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
  * Simple factory for DirProvider creation
  */
 public class DirProviderFactory {
-    public DirProvider getInstance(boolean isService, UUID chainId, String applicationName, PredefinedDirLocations dirLocations) {
+    public static DirProvider getProvider(boolean isService, UUID chainId, String applicationName, PredefinedDirLocations dirLocations) {
         if (!isService) {
             return new UserModeDirProvider(applicationName, chainId, dirLocations);
         } else if (RuntimeEnvironment.getInstance().isUnixRuntime()) {

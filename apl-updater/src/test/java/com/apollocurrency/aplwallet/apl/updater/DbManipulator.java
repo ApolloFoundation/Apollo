@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
-import com.apollocurrency.aplwallet.apl.core.db.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 public class DbManipulator {
