@@ -179,6 +179,7 @@ public class BasicDb implements DataSource {
             log.info("Database shutdown completed");
             shutdown = true;
             initialized = false;
+            cp.dispose();
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }

@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -38,9 +37,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class EntityDbTable<T> extends DerivedDbTable {
-    
-    private static final Logger LOG = getLogger(EntityDbTable.class);
-    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private static final Logger log = getLogger(EntityDbTable.class);
+
+    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     private final boolean multiversion;
     protected final DbKey.Factory<T> dbKeyFactory;
@@ -443,7 +442,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         if (cachedT == null) {
             db.getCache(table).put(dbKey, t);
         } else if (t != cachedT) { // not a bug
-            LOG.debug("In cache : " + cachedT.toString() + ", inserting " + t.toString());
+            log.debug("In cache : " + cachedT.toString() + ", inserting " + t.toString());
             throw new IllegalStateException("Different instance found in Db cache, perhaps trying to save an object "
                     + "that was read outside the current transaction");
         }
@@ -482,7 +481,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
-            LOG.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
+            log.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
             FullTextTrigger.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }

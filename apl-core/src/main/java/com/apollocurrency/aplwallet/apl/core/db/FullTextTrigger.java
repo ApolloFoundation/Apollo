@@ -105,7 +105,7 @@ import org.slf4j.Logger;
  * The table index trigger is defined as follows:
  *   CREATE TRIGGER trigger_name AFTER INSERT,UPDATE,DELETE ON table_name FOR EACH ROW CALL "com.apollocurrency.aplwallet.apl.db.FullTextTrigger"
  */
-public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
+public class FullTextTrigger implements Trigger, TransactionCallback {
     private static final Logger LOG = getLogger(FullTextTrigger.class);
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 

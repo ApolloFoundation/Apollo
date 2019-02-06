@@ -40,33 +40,34 @@ import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class TransactionalDb extends BasicDb {
+public class TransactionalDb extends BasicDb implements TableCache {
     private static final Logger LOG = getLogger(TransactionalDb.class);
 
     // TODO: YL remove static instance later
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static final DbFactory factory = new DbFactory();
-    private static final long stmtThreshold;
-    private static final long txThreshold;
-    private static final long txInterval;
-    private static final boolean enableSqlLogs;
-    static {
-        stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
-        txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
-        txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
-        enableSqlLogs = propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
-    }
+    private static DbFactory factory;// = new DbFactory();
+
+    private static long stmtThreshold;
+    private static long txThreshold;
+    private static long txInterval;
+    private static boolean enableSqlLogs;
 
     private final ThreadLocal<DbConnection> localConnection = new ThreadLocal<>();
     private final ThreadLocal<Map<String,Map<DbKey,Object>>> transactionCaches = new ThreadLocal<>();
     private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
+
     private volatile long txTimes = 0;
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
 
     public TransactionalDb(DbProperties dbProperties) {
         super(dbProperties);
+        stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
+        txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
+        txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
+        enableSqlLogs = propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
+        factory = new DbFactory(stmtThreshold);
     }
 
     @Override
@@ -75,16 +76,19 @@ public class TransactionalDb extends BasicDb {
         if (con != null) {
             return enableSqlLogs ? new ConnectionSpy(con) : con;
         }
-        DbConnection realConnection = new DbConnection(super.getConnection());
+        DbConnection realConnection = new DbConnection(super.getConnection(), factory,
+                localConnection, transactionCaches, transactionCallback);
         return enableSqlLogs ? new ConnectionSpy(realConnection) : realConnection;
     }
 
+/*
     public Connection getConnection(boolean doSqlLog) throws SQLException {
         if (!enableSqlLogs && doSqlLog) {
             return new ConnectionSpy(getConnection());
         }
         return getConnection();
     }
+*/
 
     public boolean isInTransaction() {
         return localConnection.get() != null;
@@ -97,7 +101,7 @@ public class TransactionalDb extends BasicDb {
         try {
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
-            con = new DbConnection(con);
+            con = new DbConnection(con, factory, localConnection, transactionCaches, transactionCallback);
             ((DbConnection)con).txStart = System.currentTimeMillis();
             localConnection.set((DbConnection)con);
             transactionCaches.set(new HashMap<>());
@@ -106,12 +110,15 @@ public class TransactionalDb extends BasicDb {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
+/*
     public Connection beginTransaction(boolean doSqlLog) {
         if (!enableSqlLogs && doSqlLog) {
             return new ConnectionSpy(beginTransaction());
         }
         return beginTransaction();
     }
+*/
 
     public void commitTransaction() {
         DbConnection con = localConnection.get();
@@ -190,7 +197,8 @@ public class TransactionalDb extends BasicDb {
         callbacks.add(callback);
     }
 
-    Map<DbKey,Object> getCache(String tableName) {
+    @Override
+    public Map<DbKey,Object> getCache(String tableName) {
         if (!isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
@@ -202,13 +210,15 @@ public class TransactionalDb extends BasicDb {
         return cacheMap;
     }
 
-    void clearCache(String tableName) {
+    @Override
+    public void clearCache(String tableName) {
         Map<DbKey,Object> cacheMap = transactionCaches.get().get(tableName);
         if (cacheMap != null) {
             cacheMap.clear();
         }
     }
 
+    @Override
     public void clearCache() {
         transactionCaches.get().values().forEach(Map::clear);
     }
@@ -229,167 +239,6 @@ public class TransactionalDb extends BasicDb {
             sb.append("  ").append(line);
         }
         LOG.debug(sb.toString());
-    }
-
-    private final class DbConnection extends FilteredConnection {
-
-        long txStart = 0;
-
-        private DbConnection(Connection con) {
-            super(con, factory);
-        }
-
-        @Override
-        public void setAutoCommit(boolean autoCommit) throws SQLException {
-            throw new UnsupportedOperationException("Use Db.beginTransaction() to start a new transaction");
-        }
-
-        @Override
-        public void commit() throws SQLException {
-            if (localConnection.get() == null) {
-                super.commit();
-            } else if (this != localConnection.get()) {
-                throw new IllegalStateException("Previous connection not committed");
-            } else {
-                commitTransaction();
-            }
-        }
-
-        private void doCommit() throws SQLException {
-            super.commit();
-        }
-
-        @Override
-        public void rollback() throws SQLException {
-            if (localConnection.get() == null) {
-                super.rollback();
-            } else if (this != localConnection.get()) {
-                throw new IllegalStateException("Previous connection not committed");
-            } else {
-                rollbackTransaction();
-            }
-        }
-
-        private void doRollback() throws SQLException {
-            super.rollback();
-        }
-
-        @Override
-        public void close() throws SQLException {
-            if (localConnection.get() == null) {
-                super.close();
-            } else if (this != localConnection.get()) {
-                throw new IllegalStateException("Previous connection not committed");
-            }
-        }
-    }
-
-    private static final class DbStatement extends FilteredStatement {
-
-        private DbStatement(Statement stmt) {
-            super(stmt);
-        }
-
-        @Override
-        public boolean execute(String sql) throws SQLException {
-            long start = System.currentTimeMillis();
-            boolean b = super.execute(sql);
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > stmtThreshold)
-                logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, blockchain.getHeight(), sql));
-            return b;
-        }
-
-        @Override
-        public ResultSet executeQuery(String sql) throws SQLException {
-            long start = System.currentTimeMillis();
-            ResultSet r = super.executeQuery(sql);
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > stmtThreshold)
-                logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, blockchain.getHeight(), sql));
-            return r;
-        }
-
-        @Override
-        public int executeUpdate(String sql) throws SQLException {
-            long start = System.currentTimeMillis();
-            int c = super.executeUpdate(sql);
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > stmtThreshold)
-                logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, blockchain.getHeight(), sql));
-            return c;
-        }
-    }
-
-    private static final class DbPreparedStatement extends FilteredPreparedStatement {
-        private DbPreparedStatement(PreparedStatement stmt, String sql) {
-            super(stmt, sql);
-        }
-
-        @Override
-        public boolean execute() throws SQLException {
-            long start = System.currentTimeMillis();
-            boolean b = super.execute();
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > stmtThreshold)
-                logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
-            return b;
-        }
-
-        @Override
-        public ResultSet executeQuery() throws SQLException {
-            long start = System.currentTimeMillis();
-            ResultSet r = super.executeQuery();
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > stmtThreshold)
-                logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
-            return r;
-        }
-
-        @Override
-        public int executeUpdate() throws SQLException {
-            long start = System.currentTimeMillis();
-            int c = super.executeUpdate();
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > stmtThreshold)
-                logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                                           (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
-            return c;
-        }
-    }
-
-    private static final class DbFactory implements FilteredFactory {
-
-        @Override
-        public Statement createStatement(Statement stmt) {
-            return new DbStatement(stmt);
-        }
-
-        @Override
-        public PreparedStatement createPreparedStatement(PreparedStatement stmt, String sql) {
-            return new DbPreparedStatement(stmt, sql);
-        }
-    }
-
-    /**
-     * Transaction callback interface
-     */
-    public interface TransactionCallback {
-
-        /**
-         * Transaction has been committed
-         */
-        void commit();
-
-        /**
-         * Transaction has been rolled back
-         */
-        void rollback();
     }
 
     private static long getPropertyOrDefault(String propertyName, long defaultValue) {

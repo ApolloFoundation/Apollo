@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -73,7 +73,7 @@ import org.slf4j.Logger;
  *
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
  */
-public class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
+public class EventListener implements Runnable, AsyncListener, TransactionCallback {
     private static final Logger LOG = getLogger(EventListener.class);
     private static NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
