@@ -53,7 +53,6 @@ public abstract class MigrationExecutor {
     protected BlockchainConfig config;
     private String migrationRequiredPropertyName;
     private String deleteAfterMigrationPropertyName;
-    protected OptionDAO optionDAO;
     private String migrationItemName;
     private boolean autoCleanup;
 
@@ -68,7 +67,6 @@ public abstract class MigrationExecutor {
         this.holder = holder;
         this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
-        this.optionDAO = new OptionDAO(Db.getDb());
         this.migrationItemName = migrationItemName;
     }
 
@@ -76,14 +74,14 @@ public abstract class MigrationExecutor {
 
     public void performMigration(Path toPath) throws IOException {
         if (isMigrationRequired()) {
-            optionDAO.set(migrationRequiredPropertyName, "true");
+            new OptionDAO(Db.getDb()).set(migrationRequiredPropertyName, "true");
             LOG.info("Migration of the {} required", migrationItemName);
             List<Path> listFromPaths = getSrcPaths();
             LOG.debug("Found {} possible migration candidates", listFromPaths.size());
             beforeMigration();
             this.migratedPaths = getMigrator().migrate(listFromPaths, toPath);
             afterMigration();
-            optionDAO.set(migrationRequiredPropertyName, "false");
+            new OptionDAO(Db.getDb()).set(migrationRequiredPropertyName, "false");
             if (migratedPaths != null && !migratedPaths.isEmpty()) {
                 if (autoCleanup) {
                     performAfterMigrationCleanup();
@@ -122,7 +120,7 @@ public abstract class MigrationExecutor {
     }
 
     private boolean parseBooleanProperty(String property, boolean defaultValue) {
-        String propertyString = optionDAO.get(property);
+        String propertyString = new OptionDAO(Db.getDb()).get(property);
         if (propertyString == null) {
             return defaultValue;
         }

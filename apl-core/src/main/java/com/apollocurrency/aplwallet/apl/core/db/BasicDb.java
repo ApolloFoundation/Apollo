@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
@@ -177,6 +177,7 @@ public class BasicDb implements DataSource {
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
             log.info("Database shutdown completed");
+            cp.dispose();
             shutdown = true;
             initialized = false;
         } catch (SQLException e) {
