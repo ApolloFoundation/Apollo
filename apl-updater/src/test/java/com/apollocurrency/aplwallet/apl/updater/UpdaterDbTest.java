@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import javax.sql.DataSource;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
@@ -28,7 +28,7 @@ import org.junit.Test;
 
 public class UpdaterDbTest {
        private static final DbManipulator manipulator = new DbManipulator();
-    protected static final BasicDb db = manipulator.getDb(); 
+    protected static final DataSource dataSource = manipulator.getDataSource();
     private UpdaterRepository repository = new UpdaterDbRepository(new MockUpdaterMediator());
 
     @Test
@@ -116,13 +116,13 @@ public class UpdaterDbTest {
             return new ConnectionProvider() {
                 @Override
                 public Connection getConnection() throws SQLException {
-                    return db.getConnection();                
+                    return dataSource.getConnection();
                 }
 
                 @Override
                 public Connection beginTransaction() {
                     try {
-                        Connection connection = db.getConnection();
+                        Connection connection = dataSource.getConnection();
                         connection.setAutoCommit(false);
                         return connection;
                     }

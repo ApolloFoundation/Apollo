@@ -41,7 +41,7 @@ public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
             NtpTime.class
     ).build();
 
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(getDb());
+    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(getDataSource());
     private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
 
     @Test

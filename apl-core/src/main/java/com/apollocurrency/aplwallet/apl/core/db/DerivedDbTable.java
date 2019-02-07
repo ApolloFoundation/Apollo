@@ -33,7 +33,7 @@ import java.sql.Statement;
 
 public abstract class DerivedDbTable {
 
-    protected static final TransactionalDb db = Db.getDb();
+    protected static final TransactionalDataSource transactionalDataSource = Db.getDb();
 
     protected final String table;
     private static BlockchainProcessor blockchainProcessor;
@@ -45,10 +45,10 @@ public abstract class DerivedDbTable {
     }
 
     public void rollback(int height) {
-        if (!db.isInTransaction()) {
+        if (!transactionalDataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
+        try (Connection con = transactionalDataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
             pstmtDelete.executeUpdate();
@@ -58,10 +58,10 @@ public abstract class DerivedDbTable {
     }
 
     public void truncate() {
-        if (!db.isInTransaction()) {
+        if (!transactionalDataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
+        try (Connection con = transactionalDataSource.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.executeUpdate("TRUNCATE TABLE " + table);
         } catch (SQLException e) {

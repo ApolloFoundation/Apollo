@@ -27,7 +27,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -63,7 +62,7 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
 
     protected void prune() {
         if (blockchainConfig.isEnablePruning()) {
-            try (Connection con = db.getConnection();
+            try (Connection con = transactionalDataSource.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmt.setInt(1, timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
                 int deleted;
@@ -72,7 +71,7 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
                     if (deleted > 0) {
                         LOG.debug("Deleted " + deleted + " expired prunable data from " + table);
                     }
-                    db.commitTransaction();
+                    transactionalDataSource.commitTransaction();
                 } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);

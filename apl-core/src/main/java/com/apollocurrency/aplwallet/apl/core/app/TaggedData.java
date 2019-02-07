@@ -81,7 +81,7 @@ public class TaggedData {
         @Override
         protected void prune() {
             if (blockchainConfig.isEnablePruning()) {
-                try (Connection con = db.getConnection();
+                try (Connection con = transactionalDataSource.getConnection();
                      PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                              + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
                     int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();

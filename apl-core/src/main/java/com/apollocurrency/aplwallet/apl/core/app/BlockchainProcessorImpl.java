@@ -1198,8 +1198,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public int restorePrunedData() {
-        Db.getDb().beginTransaction();
-        try (Connection con = Db.getDb().getConnection()) {
+
+        try (Connection con = Db.getDb().beginTransaction()) {
             int now = timeService.getEpochTime();
             int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
             int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;

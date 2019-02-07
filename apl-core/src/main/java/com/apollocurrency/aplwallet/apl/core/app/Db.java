@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -40,8 +39,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
 import org.slf4j.Logger;
 
 @Singleton
@@ -49,32 +48,32 @@ public class Db {
     private static final Logger log = getLogger(Db.class);
 
     private static DbProperties baseDbProperties;
-    private static TransactionalDb currentDb;
-    private static Map<String, TransactionalDb> shards = new ConcurrentHashMap<>(3);
+    private static TransactionalDataSource currentTransactionalDataSource;
+    private static Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3);
 
-    public static TransactionalDb getDb() {
-        if (currentDb == null || currentDb.isShutdown()) {
+    public static TransactionalDataSource getDb() {
+        if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             throw new RuntimeException("Db is null or was already shutdown. Call Db.init for starting current Db");
         }
-        return currentDb;
+        return currentTransactionalDataSource;
     }
 
     public static void init(DbProperties dbProperties) {
         baseDbProperties = dbProperties;
-        currentDb = new TransactionalDb(dbProperties);
-        currentDb.init(new AplDbVersion(), true);
-        List<String> shardList = trySelectShard(currentDb);
+        currentTransactionalDataSource = new TransactionalDataSource(dbProperties);
+        currentTransactionalDataSource.init(new AplDbVersion(), true);
+        List<String> shardList = trySelectShard(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
         for (String shardName : shardList) {
             DbProperties shardDbProperties = dbProperties.dbFileName(shardName);
-            TransactionalDb shardDb = new TransactionalDb(shardDbProperties);
+            TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties);
             shardDb.init(new AplDbVersion(), false);
-            shards.put(shardName, shardDb);
+            connectedShardDataSourceMap.put(shardName, shardDb);
             log.debug("Prepared '{}' shard...", shardName);
         }
     }
 
-    private static List<String> trySelectShard(TransactionalDb db) {
+    private static List<String> trySelectShard(TransactionalDataSource db) {
         String shardSelect = "SELECT key from shard";
         List<String> result = new ArrayList<>(3);
         try (Connection con = db.getConnection();
@@ -95,7 +94,7 @@ public class Db {
      * @param shardName shard name to be added
      * @return shard database connection pool
      */
-    public TransactionalDb createAndAddShard(String shardName) {
+    public TransactionalDataSource createAndAddShard(String shardName) {
         Objects.requireNonNull(shardName, "shardName is NULL");
         log.debug("Create new SHARD '{}'", shardName);
         DbProperties shardDbProperties = null;
@@ -104,9 +103,9 @@ public class Db {
         } catch (CloneNotSupportedException e) {
             log.error("DbProperties cloning error", e);
         }
-        TransactionalDb shardDb = new TransactionalDb(shardDbProperties);
+        TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties);
         shardDb.init(new AplDbVersion(), false);
-        shards.put(shardName, shardDb);
+        connectedShardDataSourceMap.put(shardName, shardDb);
         log.debug("new SHARD '{}' is CREATED", shardName);
         return shardDb;
     }
@@ -119,16 +118,16 @@ public class Db {
 */
 
     public static void shutdown() {
-        if (shards.size() > 0) {
-            shards.values().stream().forEach(shard -> shard.shutdown());
+        if (connectedShardDataSourceMap.size() > 0) {
+            connectedShardDataSourceMap.values().stream().forEach(shard -> shard.shutdown());
         }
-        currentDb.shutdown();
+        currentTransactionalDataSource.shutdown();
     }
 
     public Db() {} // never use it directly
 
     public static void tryToDeleteDb() throws IOException {
-            currentDb.shutdown();
+            currentTransactionalDataSource.shutdown();
             log.info("Removing current Db...");
             Path dbPath = AplCoreRuntime.getInstance().getDbDir();
             removeDb(dbPath);

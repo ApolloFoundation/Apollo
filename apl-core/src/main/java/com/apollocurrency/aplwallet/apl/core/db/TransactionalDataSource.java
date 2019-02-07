@@ -29,10 +29,7 @@ import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,8 +37,8 @@ import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class TransactionalDb extends BasicDb implements TableCache {
-    private static final Logger LOG = getLogger(TransactionalDb.class);
+public class TransactionalDataSource extends BasicDataSource implements TableCache/*, UserTransaction*/ {
+    private static final Logger LOG = getLogger(TransactionalDataSource.class);
 
     // TODO: YL remove static instance later
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -61,7 +58,7 @@ public class TransactionalDb extends BasicDb implements TableCache {
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
 
-    public TransactionalDb(DbProperties dbProperties) {
+    public TransactionalDataSource(DbProperties dbProperties) {
         super(dbProperties);
         stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
         txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);

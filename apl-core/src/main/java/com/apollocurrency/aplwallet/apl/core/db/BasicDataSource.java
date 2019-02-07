@@ -37,11 +37,11 @@ import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
- * Note, that while creating instance of {@link BasicDb} {@link FullTextTrigger} will
+ * Note, that while creating instance of {@link BasicDataSource} {@link FullTextTrigger} will
  * be also enabled, so use it carefully
  */
-public class BasicDb implements DataSource {
-    private static final Logger log = getLogger(BasicDb.class);
+public class BasicDataSource implements DataSource {
+    private static final Logger log = getLogger(BasicDataSource.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
 
     @Override
@@ -109,7 +109,7 @@ public class BasicDb implements DataSource {
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
-    public BasicDb(DbProperties dbProperties) {
+    public BasicDataSource(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
@@ -150,7 +150,6 @@ public class BasicDb implements DataSource {
      */
     public void init(DbVersion dbVersion, boolean initFullTextSearch) {
         log.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
-        FullTextTrigger.setActive(initFullTextSearch);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
         cp.setLoginTimeout(loginTimeout);
@@ -161,6 +160,7 @@ public class BasicDb implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        FullTextTrigger.setActive(initFullTextSearch);
         dbVersion.init(this, initFullTextSearch);
         initialized = true;
         shutdown = false;

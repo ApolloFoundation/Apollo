@@ -359,6 +359,18 @@
                 <artifactId>jboss-logging-processor</artifactId>
                 <version>2.1.0.Final</version>
             </dependency>
+            <dependency>
+                <groupId>javax.transaction</groupId>
+                <artifactId>jta</artifactId>
+                <version>1.1</version>
+            </dependency>
+<!--
+            <dependency>
+                <groupId>com.atomikos</groupId>
+                <artifactId>transactions-jta</artifactId>
+                <version>4.0.6</version>
+            </dependency>
+-->
 
             <!--2fa api-->
             <dependency>

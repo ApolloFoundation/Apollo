@@ -132,7 +132,7 @@ public class AccountLedger {
          * @param   ledgerEntry             Ledger entry
          */
         public void insert(LedgerEntry ledgerEntry) {
-            try (Connection con = db.getConnection()) {
+            try (Connection con = transactionalDataSource.getConnection()) {
                 ledgerEntry.save(con);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
@@ -148,7 +148,7 @@ public class AccountLedger {
         public void trim(int height) {
             if (trimKeep <= 0)
                 return;
-            try (Connection con = db.getConnection();
+            try (Connection con = transactionalDataSource.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
                 int trimmed;

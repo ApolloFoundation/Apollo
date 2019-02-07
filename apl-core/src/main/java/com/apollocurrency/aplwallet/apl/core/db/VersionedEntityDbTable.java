@@ -35,8 +35,6 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
@@ -62,12 +60,12 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         if (t == null) {
             return false;
         }
-        if (!db.isInTransaction()) {
+        if (!transactionalDataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         DbKey dbKey = dbKeyFactory.newKey(t);
-        try (Connection con = db.getConnection();
+        try (Connection con = transactionalDataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table
                      + dbKeyFactory.getPKClause() + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
@@ -95,12 +93,12 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         }
         finally {
             if (!keepInCache) {
-                db.getCache(table).remove(dbKey);
+                transactionalDataSource.getCache(table).remove(dbKey);
             }
         }
     }
 
-    static void rollback(final TransactionalDb db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void rollback(final TransactionalDataSource db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
@@ -146,7 +144,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
-    static void trim(final TransactionalDb db,  final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void trim(final TransactionalDataSource db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
@@ -242,12 +240,12 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                     pstmtDeletedById.setLong(1, candidatesRs.getLong(1));
                     pstmtDeletedById.executeUpdate();
                     if (++deleted % 100 == 0) {
-                        db.commitTransaction();
+                        transactionalDataSource.commitTransaction();
                     }
                 }
             }
         }
-        db.commitTransaction();
+        transactionalDataSource.commitTransaction();
         return deleted;
     }
 
@@ -259,7 +257,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         do {
             deleted = pstm.executeUpdate();
             totalDeleted += deleted;
-            db.commitTransaction();
+            transactionalDataSource.commitTransaction();
         } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
         return totalDeleted;
     }
