@@ -13,5 +13,10 @@ echo "*    periods separated by whitespace *"
 echo "* c) delay of height monitor checks, by default is 30 sec           *"
 echo "* TODO fix app launch                                               *"
 echo "*********************************************************************"
-mvn install
-java -cp apl-exec/target/lib/*:apl-tools/target/apl-tools-1.27.0.jar com.apollocurrency.aplwallet.apl.tools.HeightMonitor
+SCRIPT=`realpath -s $0`
+DIR=`dirname $SCRIPT`
+ . ${DIR}/../bin/apl-common.sh
+
+${JAVA_CMD}  -jar ${APL_TOOLS_JAR} heightmon
+exit $?
+

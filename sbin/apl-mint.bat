@@ -1,10 +1,11 @@
 @REM Start mint worker
 @echo ***********************************************************************
-@echo * This batch file will start minting worker for mintable currencies   *
+@echo * This batch file will start Apoolo with minting worker for           *
+@echo * mintable currencies   						    *
 @echo * Take a look at "Mint" section in apl.properties for detailed config *
 @echo ***********************************************************************
-if exist jre ( 
-    set javaDir=jre\bin\
-)
-
-%javaDir%java.exe -cp target\classes;target\lib\*;conf com.apollocurrency.aplwallet.apl.mint.MintWorker
+@echo off
+set DIRP=%~dp0
+call %DIRP%\..\bin\apl-common.bat
+@REM start Apollo
+%JAVA_CMD% -jar %APL_MAIN% --mint
