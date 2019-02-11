@@ -4,38 +4,38 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import javax.inject.Inject;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Inject;
 
 public class LegacyDbLocationsProvider {
+
+    private static final String oldDbPrefix = "apl.db";
+
     private PropertiesHolder propertiesHolder;
-    private boolean isTestnet;
-    private String oldDbPrefix;
     private BlockchainConfig blockchainConfig;
+
     @Inject
     public LegacyDbLocationsProvider(BlockchainConfig config, PropertiesHolder propertiesHolder) {
         Objects.requireNonNull(propertiesHolder, "Properties holder cannot be null");
         Objects.requireNonNull(config, "Blockchain config cannot be null");
-        this.propertiesHolder = propertiesHolder;
-        this.isTestnet = config.isTestnet();
-        this.oldDbPrefix = isTestnet ? "apl.testDb" : "apl.db";
+
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = config;
     }
 
     public List<Path> getDbLocations() {
         List<Path> dbsPath = new ArrayList<>();
-        String dbName = propertiesHolder.getStringProperty(oldDbPrefix + "Name");
-        String dbDir = propertiesHolder.getStringProperty(oldDbPrefix + "Dir");
+        String dbName = propertiesHolder.getStringProperty(oldDbPrefix + "Name", "");
+        String dbDir = propertiesHolder.getStringProperty(oldDbPrefix + "Dir", "");
         UUID chainId = blockchainConfig.getChain().getChainId();
 
         String initialDbPath = dbDir + File.separator + dbName;

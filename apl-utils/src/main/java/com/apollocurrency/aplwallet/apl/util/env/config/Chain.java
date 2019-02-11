@@ -17,11 +17,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@JsonPropertyOrder({"chainId", "isTestnet", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
+@JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
         "prefix", "project", "genesisLocation", "blockchainProperties"})
 public class Chain {
     private UUID chainId;
-    private boolean isTestnet;
     private boolean active;
     private List<String> defaultPeers;
     private List<String> wellKnownPeers;
@@ -35,7 +34,6 @@ public class Chain {
     private Map<Integer, BlockchainProperties> blockchainProperties;
     @JsonCreator
     public Chain(@JsonProperty("chainId") UUID chainId,
-                 @JsonProperty("isTestnet") boolean isTestnet,
                  @JsonProperty("active") boolean active,
                  @JsonProperty("defaultPeers") List<String> defaultPeers,
                  @JsonProperty("wellKnownPeers") List<String> wellKnownPeers,
@@ -49,7 +47,6 @@ public class Chain {
                  @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties
     ) {
         this.chainId = chainId;
-        this.isTestnet = isTestnet;
         this.active = active;
         this.defaultPeers = defaultPeers;
         this.wellKnownPeers = wellKnownPeers;
@@ -74,10 +71,6 @@ public class Chain {
 
     public void setChainId(UUID chainId) {
         this.chainId = chainId;
-    }
-
-    public void setTestnet(boolean testnet) {
-        isTestnet = testnet;
     }
 
     public void setActive(boolean active) {
@@ -126,11 +119,6 @@ public class Chain {
 
     public UUID getChainId() {
         return chainId;
-    }
-
-    @JsonGetter("isTestnet")
-    public boolean isTestnet() {
-        return isTestnet;
     }
 
     public List<String> getDefaultPeers() {

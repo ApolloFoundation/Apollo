@@ -10,5 +10,10 @@ echo "* a) Unsigned transaction file path - mandatory                     *"
 echo "* a) Signed transaction file path - optional                        *"
 echo "* TODO fix app launch                                               *"
 echo "*********************************************************************"
-java -cp "target/classes:target/lib/*:conf" com.apollocurrency.aplwallet.apl.tools.SignTransactionJSON $@
+
+SCRIPT=`realpath -s $0`
+DIR=`dirname $SCRIPT`
+ . ${DIR}/../bin/apl-common.sh
+
+${JAVA_CMD}  -jar ${APL_TOOLS_JAR} signtx -json
 exit $?

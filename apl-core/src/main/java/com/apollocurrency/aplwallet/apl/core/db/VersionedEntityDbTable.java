@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TRIM_TRANSACTION_TIME_THRESHHOLD;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -36,7 +35,8 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
@@ -169,7 +169,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                              "AND latest = FALSE ");
              PreparedStatement pstmtDeleteDeleted = con.prepareStatement("DELETE FROM " + table + " WHERE height < ? AND height >= 0 AND latest = FALSE "
                      + " AND (" + dbKeyFactory.getPKColumns() + ") NOT IN (SELECT (" + dbKeyFactory.getPKColumns() + ") FROM "
-                     + table + " WHERE height >= ?) LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
+                     + table + " WHERE height >= ?) LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
             pstmtSelect.setInt(1, height);
             long startDeleteTime;
             long deleted = 0L;
@@ -213,7 +213,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
-            if (trimTime > TRIM_TRANSACTION_TIME_THRESHHOLD) {
+            if (trimTime > propertiesHolder.TRIM_TRANSACTION_TIME_THRESHHOLD()) {
                 LOG.debug("Trim for table {} took {} ms", table, trimTime);
             }
         }
@@ -260,7 +260,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             deleted = pstm.executeUpdate();
             totalDeleted += deleted;
             db.commitTransaction();
-        } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+        } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
         return totalDeleted;
     }
 }

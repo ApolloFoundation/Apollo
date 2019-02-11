@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class ServiceModeDirProvider extends AbstractDirProvider {
 //    assume that installation dir is a directory where application executables are storing
-    private static final String INSTALLATION_DIR = DirProviderUtil.getBinDir().toAbsolutePath().toString();
+    private static final String INSTALLATION_DIR = DirProvider.getBinDir().toAbsolutePath().toString();
 
 
 

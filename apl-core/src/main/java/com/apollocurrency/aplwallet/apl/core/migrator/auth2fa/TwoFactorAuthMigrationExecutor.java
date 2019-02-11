@@ -4,17 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.auth2fa;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.migrator.DefaultDirectoryMigrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 /**
  * Provide 2fa specific components for migration
  * @see MigrationExecutor
@@ -22,16 +21,16 @@ import java.util.List;
  */
 public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
 
+    public static final String TWO_FACTOR_AUTH_DIR_PROPERTY_NAME = "apl.dir2FA";
+
     @Inject
-    public TwoFactorAuthMigrationExecutor(PropertiesHolder holder, BlockchainConfig config) {
-        super(holder, config, "2fa", true);
+    public TwoFactorAuthMigrationExecutor(PropertiesHolder holder) {
+        super(holder,  "2fa", true);
     }
 
     @Override
     protected List<Path> getSrcPaths() {
-        boolean testnet = config.isTestnet();
-        String twoFactorAuthDirPropertyName = testnet ? "apl.testnetDir2FA" : "apl.dir2FA";
-        String twoFactorAuthDir = holder.getStringProperty(twoFactorAuthDirPropertyName);
+        String twoFactorAuthDir = holder.getStringProperty(TWO_FACTOR_AUTH_DIR_PROPERTY_NAME);
         List<Path> paths = new ArrayList<>();
         if (twoFactorAuthDir != null) {
             Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();

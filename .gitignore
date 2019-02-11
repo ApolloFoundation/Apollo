@@ -15,3 +15,5 @@ Apolloservice.jar
 /lib
 logs
 apl_test_db
+nbactions.xml
+**/nbactions.xml

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -71,19 +72,19 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
 
-    private static final boolean enableTransactionRebroadcasting = propertiesLoader.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static final boolean testUnconfirmedTransactions = propertiesLoader.getBooleanProperty("apl.testUnconfirmedTransactions");
+    private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
+    private static final boolean testUnconfirmedTransactions = propertiesHolder.getBooleanProperty("apl.testUnconfirmedTransactions");
     private static int maxUnconfirmedTransactions;
 /*
     static {
-        int n = propertiesLoader.getIntProperty("apl.maxUnconfirmedTransactions");
+        int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
     }
 
@@ -347,8 +348,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
 //    private TransactionProcessorImpl() {
     public void init() {
-        if (!Constants.isLightClient) {
-            if (!Constants.isOffline) {
+        if (!propertiesHolder.isLightClient()) {
+            if (!propertiesHolder.isOffline()) {
                 ThreadPool.scheduleThread("ProcessTransactions", processTransactionsThread, 5);
                 ThreadPool.runAfterStart("InitialUnconfirmedTxsRebroadcasting",this::rebroadcastAllUnconfirmedTransactions);
                 ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
@@ -356,7 +357,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
             ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
         }
-        int n = propertiesLoader.getIntProperty("apl.maxUnconfirmedTransactions");
+        int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         blockchain = CDI.current().select(BlockchainImpl.class).get();
     }

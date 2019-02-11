@@ -4,18 +4,17 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
+import javax.inject.Inject;
 
 /**
  * <p>Provide database specific components for migration, also add special {@link DbMigrationExecutor#afterMigration} and
@@ -26,10 +25,14 @@ import java.util.List;
  * @see DbMigrator
  */
 public class DbMigrationExecutor extends MigrationExecutor {
-
+    private LegacyDbLocationsProvider legacyDbLocationsProvider;
+    private DbInfoExtractor dbInfoExtractor;
     @Inject
-    public DbMigrationExecutor(BlockchainConfig config, PropertiesHolder propertiesHolder) {
-        super(propertiesHolder, config, "db", true);
+    public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider, DbInfoExtractor dbInfoExtractor) {
+        super(propertiesHolder, "db", true);
+        this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
+        this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
+
     }
 
     @Override
@@ -51,13 +54,11 @@ public class DbMigrationExecutor extends MigrationExecutor {
 
     @Override
     protected List<Path> getSrcPaths() {
-        LegacyDbLocationsProvider legacyDbLocationsProvider = CDI.current().select(LegacyDbLocationsProvider.class).get();
         return legacyDbLocationsProvider.getDbLocations();
     }
 
     @Override
     protected Migrator getMigrator() {
-        DbInfoExtractor dbInfoExtractor = CDI.current().select(DbInfoExtractor.class).get();
         return new DbMigrator(dbInfoExtractor);
     }
 }
