@@ -19,9 +19,15 @@ import javax.enterprise.inject.spi.CDI;
 
 public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
         private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
-    /** Pending table updates */
+    /**
+     * Pending table updates
+     * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
+     */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
-
+    /**
+     * Trigger cannot have constructor, so these values will be initialized in
+     * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
+     */
     private LuceneFullTextSearchEngine ftl;
     private TableData tableData;
 

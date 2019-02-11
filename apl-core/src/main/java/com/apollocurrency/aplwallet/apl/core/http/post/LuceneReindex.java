@@ -21,19 +21,20 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.SQLException;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 public final class LuceneReindex extends AbstractAPIRequestHandler {
-
+    private final FullTextSearchProvider fullTextSearchProvider = CDI.current().select(FullTextSearchProvider.class).get();
     private static class LuceneReindexHolder {
         private static final LuceneReindex INSTANCE = new LuceneReindex();
     }
@@ -50,7 +51,7 @@ public final class LuceneReindex extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try (Connection con = Db.getDb().getConnection()) {
-            FullText.reindex(con);
+            fullTextSearchProvider.reindexAll(con);
             response.put("done", true);
         } catch (SQLException e) {
             JSONData.putException(response, e);

@@ -59,6 +59,7 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
         try {
             Connection connection = dataSource.getConnection();
             connection.createStatement().execute("SHUTDOWN");
+            dataSource.dispose();
         }
         catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

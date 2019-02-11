@@ -20,14 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,8 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 public class TransactionalDb extends BasicDb {
     private static final Logger LOG = getLogger(TransactionalDb.class);
@@ -66,7 +67,7 @@ public class TransactionalDb extends BasicDb {
     private volatile long statsTime = 0;
 
     public TransactionalDb(DbProperties dbProperties) {
-        super(dbProperties);
+        super(dbProperties, CDI.current().select(FullTextSearchProvider.class).get());
     }
 
     @Override

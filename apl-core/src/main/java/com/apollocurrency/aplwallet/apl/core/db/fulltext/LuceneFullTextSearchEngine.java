@@ -17,19 +17,28 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.h2.tools.SimpleResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 import java.util.StringJoiner;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 public class LuceneFullTextSearchEngine {
     private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
@@ -54,7 +63,7 @@ public class LuceneFullTextSearchEngine {
 
 
     @Inject
-    public LuceneFullTextSearchEngine(NtpTime ntpTime, Path indexPath) throws IOException {
+    public LuceneFullTextSearchEngine(NtpTime ntpTime, @Named("indexDirPath") Path indexPath) throws IOException {
         this.ntpTime = ntpTime;
         this.indexDirPath = indexPath;
         if (!Files.exists(indexPath)) {
@@ -179,6 +188,74 @@ public class LuceneFullTextSearchEngine {
             indexLock.writeLock().unlock();
         }
     }
+    /**
+     * Search the Lucene index
+     *
+     * The result set will have the following columns:
+     *   SCHEMA  - Schema name (String)
+     *   TABLE   - Table name (String)
+     *   COLUMNS - Primary key column names (String[]) - this is always DB_ID
+     *   KEYS    - Primary key values (Long[]) - this is always the DB_ID value for the table row
+     *   SCORE   - Lucene score (Float)
+     *
+     * @param   schema              Schema name
+     * @param   table               Table name
+     * @param   queryText           Query expression
+     * @param   limit               Number of rows to return
+     * @param   offset              Offset with result set
+     * @return                      Search results
+     * @throws  SQLException        Unable to search the index
+     */
+    public ResultSet search(String schema, String table, String queryText, int limit, int offset)
+            throws SQLException {
+        //
+        // Create the result set columns
+        //
+        SimpleResultSet result = new SimpleResultSet();
+        result.addColumn("SCHEMA", Types.VARCHAR, 0, 0);
+        result.addColumn("TABLE", Types.VARCHAR, 0, 0);
+        result.addColumn("COLUMNS", Types.ARRAY, 0, 0);
+        result.addColumn("KEYS", Types.ARRAY, 0, 0);
+        result.addColumn("SCORE", Types.FLOAT, 0, 0);
+        //
+        // Perform the search
+        //
+        // The _QUERY field contains the table and row identification (schema.table;keyName;keyValue)
+        // The _TABLE field is used to limit the search results to the current table
+        // The _DATA field contains the indexed row data (this is the default search field)
+        // The _MODIFIED field contains the row modification time (YYYYMMDDhhmmss) in GMT
+        //
+        indexLock.readLock().lock();
+        try {
+            QueryParser parser = new QueryParser("_DATA", analyzer);
+            parser.setDateResolution("_MODIFIED", DateTools.Resolution.SECOND);
+            parser.setDefaultOperator(QueryParser.Operator.AND);
+            Query query = parser.parse("_TABLE:" + schema.toUpperCase() + "." + table.toUpperCase() + " AND (" + queryText + ")");
+            TopDocs documents = indexSearcher.search(query, limit);
+            ScoreDoc[] hits = documents.scoreDocs;
+            int resultCount = Math.min(hits.length, (limit == 0 ? hits.length : limit));
+            int resultOffset = Math.min(offset, resultCount);
+            for (int i=resultOffset; i<resultCount; i++) {
+                Document document = indexSearcher.doc(hits[i].doc);
+                String[] indexParts = document.get("_QUERY").split(";");
+                String[] nameParts = indexParts[0].split("\\.");
+                result.addRow(nameParts[0],
+                        nameParts[1],
+                        new String[] {indexParts[1]},
+                        new Long[] {Long.parseLong(indexParts[2])},
+                        hits[i].score);
+            }
+        } catch (ParseException exc) {
+            LOG.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
+            throw new SQLException("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
+        } catch (IOException exc) {
+            LOG.error("Unable to search Lucene index", exc);
+            throw new SQLException("Unable to search Lucene index", exc);
+        } finally {
+            indexLock.readLock().unlock();
+        }
+        return result;
+    }
 
 
     /**
@@ -200,54 +277,4 @@ public class LuceneFullTextSearchEngine {
             indexLock.writeLock().unlock();
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    /**
-//     * Get the Lucene index path.
-//     * Note: it's a current implementation
-//     *
-//     * @param   conn                SQL connection
-//     * @throws  SQLException        Unable to get the Lucene index path
-//     */
-//    private Path getIndexPath(Connection conn) throws SQLException {
-//        indexLock.writeLock().lock();
-//        Path indexPath;
-//        try {
-//                try (Statement stmt = conn.createStatement();
-//                     ResultSet rs = stmt.executeQuery("CALL DATABASE_PATH()")) {
-//                    rs.next();
-//                    indexPath = Paths.get(rs.getString(1));
-//                    if (!Files.exists(indexPath)) {
-//                        Files.createDirectory(indexPath);
-//                    }
-//                } catch (IOException exc) {
-//                    LOG.error("Unable to create the Lucene index directory", exc);
-//                    throw new SQLException("Unable to create the Lucene index directory", exc);
-//            }
-//        } finally {
-//            indexLock.writeLock().unlock();
-//        }
-//        return indexPath;
-//    }
 }

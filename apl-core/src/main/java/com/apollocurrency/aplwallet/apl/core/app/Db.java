@@ -22,17 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Db {
     private static final Logger LOG = getLogger(Db.class);

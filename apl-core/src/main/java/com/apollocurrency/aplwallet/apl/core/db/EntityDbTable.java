@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -47,6 +47,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+    private static FullTextSearchProvider fullText;
 
     protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -482,7 +483,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
             LOG.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
-            FullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
+            fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }
 

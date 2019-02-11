@@ -19,6 +19,10 @@ public interface DirProvider {
      * @return path to the directory where current database stored
      */
     Path getDbDir();
+    /**
+     * @return path to the directory where current fulltext search index stored
+     */
+    Path getFullTextSearchIndexDir();
 
     /**
      * @return path to the directory where current keystore stored

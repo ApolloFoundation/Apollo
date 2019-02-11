@@ -14,10 +14,10 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 public class IndexService {
     private static final Logger LOG = LoggerFactory.getLogger(IndexService.class);
@@ -25,64 +25,21 @@ public class IndexService {
     private Path indexDirPath;
 
     @Inject
-    public IndexService(LuceneFullTextSearchEngine ftl, Path indexDir) {
+    public IndexService(LuceneFullTextSearchEngine ftl, @Named("indexDirPath") Path indexDir) {
         this.ftl = ftl;
         this.indexDirPath = indexDir;
     }
 
-    /**
-     * Reindex the table
-     *
-     * @param conn SQL connection
-     * @throws SQLException Unable to reindex table
-     */
-    /**
-     * Create the fulltext index for a table
-     *
-     * @param   conn                SQL connection
-     * @param   schema              Schema name
-     * @param   table               Table name
-     * @param   columnList          Indexed column names separated by commas
-     * @throws  SQLException        Unable to create fulltext index
-     */
-    public void createIndex(Connection conn, String schema, String table, String columnList)
-            throws SQLException {
-        String upperSchema = schema.toUpperCase();
-        String upperTable = table.toUpperCase();
-        String tableName = upperSchema + "." + upperTable;
-        getIndexAccess(conn);
-        //
-        // Drop an existing index and the associated database trigger
-        //
-        dropIndex(conn, schema, table);
-        //
-        // Update our schema and create a new database trigger.  Note that the trigger
-        // will be initialized when it is created.
-        //
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, table, columns) "
-                            + "VALUES('%s', '%s', '%s')",
-                    upperSchema, upperTable, columnList.toUpperCase()));
-            stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
-                            + "FOR EACH ROW CALL \"%s\"",
-                    upperTable, tableName, FullText.class.getName()));
+    public void init() {
+        try {
+            ftl.init();
         }
-        //
-        // Index the table
-        //
-        FullText trigger = indexTriggers.get(tableName);
-        if (trigger == null) {
-            LOG.error("ARS fulltext trigger for table " + tableName + " was not initialized");
-        } else {
-            try {
-                trigger.reindexTable(conn);
-                LOG.info("Lucene search index created for table " + tableName);
-            } catch (SQLException exc) {
-                LOG.error("Unable to create Lucene search index for table " + tableName);
-                throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
-            }
+        catch (IOException e) {
+            throw new RuntimeException("Cannot init lucene fulltext search");
         }
     }
+
+
     public void reindexTable(Connection conn, String tableName, String schemaName) throws SQLException {
         //
         // Build the SELECT statement for just the indexed columns
@@ -120,15 +77,13 @@ public class IndexService {
      * @param   conn                SQL connection
      * @throws  SQLException        Unable to reindex tables
      */
-    public void reindexAll(Connection conn, List<String> tables, String schema) throws SQLException, IOException {
+    public void reindexAll(Connection conn, List<String> tables, String schema) throws SQLException {
         LOG.info("Rebuilding the Lucene search index");
         try {
             //
             // Delete the current Lucene index
             //
-            ftl.shutdown();
-            removeIndexFiles();
-            ftl.init();
+            clearIndex();
             //
             // Reindex each table
             //
@@ -146,21 +101,31 @@ public class IndexService {
      *
      * @throws  SQLException        I/O error occurred
      */
-    private void removeIndexFiles() throws SQLException {
+    void clearIndex() throws SQLException {
         try {
             //
             // Delete the index files
             //
+            ftl.shutdown();
             try (Stream<Path> stream = Files.list(indexDirPath)) {
                 Path[] paths = stream.toArray(Path[]::new);
                 for (Path path : paths) {
                     Files.delete(path);
                 }
             }
+            ftl.init();
             LOG.info("Lucene search index deleted");
         } catch (IOException exc) {
             LOG.error("Unable to remove Lucene index files", exc);
             throw new SQLException("Unable to remove Lucene index files", exc);
         }
+    }
+    public ResultSet search(String schema, String table, String queryText, int limit, int offset)
+            throws SQLException {
+        return ftl.search(schema, table, queryText, limit, offset);
+    }
+
+    public void shutdown() {
+        ftl.shutdown();
     }
 }

@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
@@ -109,8 +109,8 @@ public class BasicDb implements DataSource {
     private final int maxMemoryRows;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-
-    public BasicDb(DbProperties dbProperties) {
+    private  FullTextSearchProvider fullTextSearchProvider;
+    public BasicDb(DbProperties dbProperties, FullTextSearchProvider fullTextSearchProvider) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
@@ -133,11 +133,15 @@ public class BasicDb implements DataSource {
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
         this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+        this.fullTextSearchProvider = fullTextSearchProvider;
+    }
+
+    public BasicDb(DbProperties dbProperties) {
+        this(dbProperties, null);
     }
 
     public void init(DbVersion dbVersion) {
         LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        FullText.setActive(true);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
         cp.setLoginTimeout(loginTimeout);
@@ -147,6 +151,9 @@ public class BasicDb implements DataSource {
             stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
+        }
+        if (fullTextSearchProvider != null) {
+            fullTextSearchProvider.init();
         }
         dbVersion.init(this);
         initialized = true;
@@ -158,8 +165,9 @@ public class BasicDb implements DataSource {
             return;
         }
         try {
-            FullText.setActive(false);
-            FullText.shutdown();
+            if (fullTextSearchProvider != null) {
+                fullTextSearchProvider.shutdown();
+            }
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");

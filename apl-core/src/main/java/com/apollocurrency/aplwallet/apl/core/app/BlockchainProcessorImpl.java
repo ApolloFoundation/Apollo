@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
@@ -30,7 +31,6 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -89,6 +89,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final byte[] CHECKSUM_1 = null;
+    private FullTextSearchProvider fullTextSearchProvider;
 
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
@@ -1073,6 +1074,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return derivedTables;
     }
 
+    private FullTextSearchProvider lookupFullTextSearchProvider() {
+        if (fullTextSearchProvider == null) {
+
+            fullTextSearchProvider = CDI.current().select(FullTextSearchProvider.class).get();
+        }
+        return fullTextSearchProvider;
+    }
     @Override
     public Peer getLastBlockchainFeeder() {
         return lastBlockchainFeeder;
@@ -1898,7 +1906,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (height == 0) {
                     LOG.debug("Dropping all full text search indexes");
-                    FullText.dropAll(con);
+                    lookupFullTextSearchProvider().dropAll(con);
                 }
                 for (DerivedDbTable table : derivedTables) {
                     if (height == 0) {

@@ -14,10 +14,11 @@ public class TableData {
     private final String table;
     private final String schema;
     private final List<String> columnNames;
-    private final List<String> columnTypes;
+    private final List<Integer> columnTypes;
     private final List<Integer> indexColumns;
 
-    public TableData(int dbIdColumnPosition, String table, String schema, List<String> columnNames, List<String> columnTypes, List<Integer> indexColumns) {
+    public TableData(int dbIdColumnPosition, String table, String schema, List<String> columnNames, List<Integer> columnTypes,
+                     List<Integer> indexColumns) {
         this.dbIdColumnPosition = dbIdColumnPosition;
         this.table = table;
         this.schema = schema;
@@ -38,7 +39,7 @@ public class TableData {
         return columnNames;
     }
 
-    public List<String> getColumnTypes() {
+    public List<Integer> getColumnTypes() {
         return columnTypes;
     }
 

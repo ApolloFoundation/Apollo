@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullText;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -26,21 +26,22 @@ import javax.inject.Inject;
  */
 public class DbMigrationExecutor extends MigrationExecutor {
     private LegacyDbLocationsProvider legacyDbLocationsProvider;
+    private FullTextSearchProvider fullTextSearchProvider;
     private DbInfoExtractor dbInfoExtractor;
     @Inject
-    public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider, DbInfoExtractor dbInfoExtractor) {
+    public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider, DbInfoExtractor dbInfoExtractor,
+                               FullTextSearchProvider fullTextSearchProvider) {
         super(propertiesHolder, "db", true);
         this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
         this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
-
+        this.fullTextSearchProvider = Objects.requireNonNull(fullTextSearchProvider, "Fulltext search provider cannot be null");
     }
 
     @Override
     protected void afterMigration() {
         Db.init();
-        FullText.init();
         try (Connection connection = Db.getDb().getConnection()) {
-            FullText.reindex(connection);
+            fullTextSearchProvider.reindexAll(connection);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

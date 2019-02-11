@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.nio.file.Path;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
@@ -21,12 +21,6 @@ public class PropertyBasedFileConfig {
     @Inject
     public PropertyBasedFileConfig(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
-    }
-
-    @Produces
-    @Named("chainsConfigFilePath")
-    public String getChainsConfigFileLocation() {
-        return "conf/chains.json";
     }
 
     @Produces

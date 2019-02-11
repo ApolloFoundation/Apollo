@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
@@ -37,7 +38,7 @@ public class DbMigrationExecutorTest {
 
     private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
 
-
+    private FullTextSearchProvider fullTextSearchProvider = Mockito.mock(FullTextSearchProvider.class);
     private PropertiesHolder propertiesHolder = mockPropertiesHolder();
 
     private Path targetDbDir = createTempDir();
@@ -48,6 +49,7 @@ public class DbMigrationExecutorTest {
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
+            .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchProvider.class))
             .build();
     @Inject
     private H2DbInfoExtractor h2DbInfoExtractor;
@@ -103,7 +105,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, fullTextSearchProvider);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();
@@ -118,7 +120,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigration() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, fullTextSearchProvider);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();
