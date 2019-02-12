@@ -77,7 +77,7 @@ public class LuceneFullTextSearchEngine {
                 List<String> columnNames = tableData.getColumnNames();
                 List<Integer> indexColumns = tableData.getIndexColumns();
                 int dbColumn = tableData.getDbIdColumnPosition();
-                String tableName = tableData.getTable();
+                String tableName = tableData.getSchema().toUpperCase() + "." + tableData.getTable().toUpperCase();
                 String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
                 Document document = new Document();
                 document.add(new StringField("_QUERY", query, Field.Store.YES));
@@ -262,14 +262,14 @@ public class LuceneFullTextSearchEngine {
     public void shutdown() {
         indexLock.writeLock().lock();
         try {
-//            should not be null when initialization was successful
+            commitIndex();
             if (indexReader != null) {
                 indexReader.close();
             }
             if (indexWriter != null) {
                 indexWriter.close();
             }
-        } catch (IOException exc) {
+        } catch (IOException | SQLException exc) {
             LOG.error("Unable to remove Lucene index access", exc);
         } finally {
             indexLock.writeLock().unlock();
