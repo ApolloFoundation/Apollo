@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -194,12 +195,12 @@ public final class Poll extends AbstractPoll {
         return pollTable.getCount();
     }
 
-    static void addPoll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
+    public static void addPoll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
         Poll poll = new Poll(transaction, attachment);
         pollTable.insert(poll);
     }
 
-    static void init() {
+    public static void init() {
         if (Poll.isPollsProcessing) {
             blockchainProcessor.addListener(block -> {
                 int height = block.getHeight();

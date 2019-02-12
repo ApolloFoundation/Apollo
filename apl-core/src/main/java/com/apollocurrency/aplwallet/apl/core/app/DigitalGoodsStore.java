@@ -660,7 +660,7 @@ public final class DigitalGoodsStore {
             return purchaseTable.getManyBy(dbClause, from, to);
         }
 
-        static Purchase getPendingPurchase(long purchaseId) {
+        public static Purchase getPendingPurchase(long purchaseId) {
             Purchase purchase = getPurchase(purchaseId);
             return purchase == null || ! purchase.isPending() ? null : purchase;
         }
@@ -917,14 +917,14 @@ public final class DigitalGoodsStore {
 
     }
 
-    static void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
+    public static void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
         Goods goods = new Goods(transaction, attachment);
         Tag.add(goods);
         Goods.goodsTable.insert(goods);
         goodsListeners.notify(goods, Event.GOODS_LISTED);
     }
 
-    static void delistGoods(long goodsId) {
+    public static void delistGoods(long goodsId) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.setDelisted(true);
@@ -934,7 +934,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void changePrice(long goodsId, long priceATM) {
+    public static void changePrice(long goodsId, long priceATM) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.changePrice(priceATM);
@@ -944,7 +944,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void changeQuantity(long goodsId, int deltaQuantity) {
+    public static void changeQuantity(long goodsId, int deltaQuantity) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.changeQuantity(deltaQuantity);
@@ -954,7 +954,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
+    public static void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
@@ -971,7 +971,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
+    public static void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
         Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
         purchase.setPending(false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
@@ -988,7 +988,7 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.DELIVERY);
     }
 
-    static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
+    public static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
                        EncryptedMessageAppendix encryptedMessage) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
@@ -1002,7 +1002,7 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.REFUND);
     }
 
-    static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
+    public static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         if (encryptedMessage != null) {
             purchase.addFeedbackNote(encryptedMessage.getEncryptedData());

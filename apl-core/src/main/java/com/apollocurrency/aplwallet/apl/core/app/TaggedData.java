@@ -508,7 +508,7 @@ public class TaggedData {
         return blockTimestamp;
     }
 
-    static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
+    public static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
@@ -522,7 +522,7 @@ public class TaggedData {
         timestampTable.insert(timestamp);
     }
 
-    static void extend(Transaction transaction, Attachment.TaggedDataExtend attachment) {
+    public static void extend(Transaction transaction, Attachment.TaggedDataExtend attachment) {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         Timestamp timestamp = timestampTable.get(dbKey);
@@ -571,7 +571,7 @@ public class TaggedData {
         }
     }
 
-    static boolean isPruned(long transactionId) {
+    public static boolean isPruned(long transactionId) {
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);

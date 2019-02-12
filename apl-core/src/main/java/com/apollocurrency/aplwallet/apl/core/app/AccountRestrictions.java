@@ -20,11 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import static com.apollocurrency.aplwallet.apl.core.app.TransactionType.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -67,7 +68,7 @@ public final class AccountRestrictions {
             return phasingControlTable.getAll(from, to);
         }
 
-        static void set(Account senderAccount, Attachment.SetPhasingOnly attachment) {
+        public static void set(Account senderAccount, Attachment.SetPhasingOnly attachment) {
             PhasingParams phasingParams = attachment.getPhasingParams();
             if (phasingParams.getVoteWeighting().getVotingModel() == VotingModel.NONE) {
                 //no voting - remove the control

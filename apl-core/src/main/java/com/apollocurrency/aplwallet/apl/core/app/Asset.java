@@ -106,18 +106,18 @@ public final class Asset {
         return assetTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC ");
     }
 
-    static void addAsset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
+    public static void addAsset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
         assetTable.insert(new Asset(transaction, attachment));
     }
 
-    static void deleteAsset(Transaction transaction, long assetId, long quantityATU) {
+    public static void deleteAsset(Transaction transaction, long assetId, long quantityATU) {
         Asset asset = getAsset(assetId);
         asset.quantityATU = Math.max(0, asset.quantityATU - quantityATU);
         assetTable.insert(asset);
         AssetDelete.addAssetDelete(transaction, assetId, quantityATU);
     }
 
-    static void init() {}
+    public static void init() {}
 
 
     private final long assetId;

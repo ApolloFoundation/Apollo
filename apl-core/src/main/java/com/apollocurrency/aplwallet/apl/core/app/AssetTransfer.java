@@ -139,7 +139,7 @@ public final class AssetTransfer {
         return assetTransferTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    static AssetTransfer addAssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
+    public static AssetTransfer addAssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment);
         assetTransferTable.insert(assetTransfer);
         listeners.notify(assetTransfer, Event.ASSET_TRANSFER);

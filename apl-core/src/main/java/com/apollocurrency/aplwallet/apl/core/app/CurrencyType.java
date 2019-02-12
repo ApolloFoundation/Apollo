@@ -42,11 +42,11 @@ public enum CurrencyType {
     EXCHANGEABLE(0x01) {
 
         @Override
-        void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 if (!validators.contains(CLAIMABLE)) {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
@@ -64,7 +64,7 @@ public enum CurrencyType {
     CONTROLLABLE(0x02) {
 
         @Override
-        void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
                 if (currency == null ||  (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
@@ -78,7 +78,7 @@ public enum CurrencyType {
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {}
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {}
 
     },
     /**
@@ -87,7 +87,7 @@ public enum CurrencyType {
     RESERVABLE(0x04) {
 
         @Override
-        void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
@@ -121,7 +121,7 @@ public enum CurrencyType {
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
@@ -149,7 +149,7 @@ public enum CurrencyType {
     CLAIMABLE(0x08) {
 
         @Override
-        void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
@@ -170,7 +170,7 @@ public enum CurrencyType {
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
                 throw new AplException.NotValidException("Cannot claim reserve since currency is not claimable");
             }
@@ -181,7 +181,7 @@ public enum CurrencyType {
      */
     MINTABLE(0x10) {
         @Override
-        void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 Attachment.MonetarySystemCurrencyIssuance issuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
@@ -205,7 +205,7 @@ public enum CurrencyType {
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 Attachment.MonetarySystemCurrencyIssuance issuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
@@ -225,14 +225,14 @@ public enum CurrencyType {
      */
     NON_SHUFFLEABLE(0x20) {
         @Override
-        void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == ShufflingTransaction.SHUFFLING_CREATION) {
                 throw new AplException.NotValidException("Shuffling is not allowed for this currency");
             }
         }
 
         @Override
-        void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
         }
     };
 
@@ -250,9 +250,9 @@ public enum CurrencyType {
         return code;
     }
 
-    abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+    public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
-    abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
     public static CurrencyType get(int code) {
         for (CurrencyType currencyType : values()) {
@@ -263,14 +263,14 @@ public enum CurrencyType {
         return null;
     }
 
-    static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
+    public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         if (currency == null) {
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
         validate(currency, currency.getType(), transaction);
     }
 
-    static void validate(int type, Transaction transaction) throws AplException.ValidationException {
+    public static void validate(int type, Transaction transaction) throws AplException.ValidationException {
         validate(null, type, transaction);
     }
 
@@ -297,7 +297,7 @@ public enum CurrencyType {
         }
     }
 
-    static void validateCurrencyNaming(long issuerAccountId, Attachment.MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public static void validateCurrencyNaming(long issuerAccountId, Attachment.MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();

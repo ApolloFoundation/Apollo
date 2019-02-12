@@ -3,8 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
-
 public class PrunableTransaction {
 
     private final long id;

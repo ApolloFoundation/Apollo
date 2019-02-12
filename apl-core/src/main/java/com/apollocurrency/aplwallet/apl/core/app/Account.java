@@ -1043,7 +1043,7 @@ public final class Account {
         return accountInfoTable.get(accountDbKeyFactory.newKey(this));
     }
 
-    void setAccountInfo(String name, String description) {
+    public void setAccountInfo(String name, String description) {
         name = Convert.emptyToNull(name.trim());
         description = Convert.emptyToNull(description.trim());
         AccountInfo accountInfo = getAccountInfo();
@@ -1281,7 +1281,7 @@ public final class Account {
         return controls;
     }
 
-    void leaseEffectiveBalance(long lesseeId, int period) {
+    public void leaseEffectiveBalance(long lesseeId, int period) {
         int height = blockchain.getHeight();
         AccountLease accountLease = accountLeaseTable.get(accountDbKeyFactory.newKey(this));
         int leasingDelay = blockchainConfig.getLeasingDelay();
@@ -1306,7 +1306,7 @@ public final class Account {
         leaseListeners.notify(accountLease, Event.LEASE_SCHEDULED);
     }
 
-    void addControl(ControlType control) {
+    public void addControl(ControlType control) {
         if (controls.contains(control)) {
             return;
         }
@@ -1316,7 +1316,7 @@ public final class Account {
         accountTable.insert(this);
     }
 
-    void removeControl(ControlType control) {
+    public void removeControl(ControlType control) {
         if (!controls.contains(control)) {
             return;
         }
@@ -1326,7 +1326,7 @@ public final class Account {
         save();
     }
 
-    void setProperty(Transaction transaction, Account setterAccount, String property, String value) {
+    public void setProperty(Transaction transaction, Account setterAccount, String property, String value) {
         value = Convert.emptyToNull(value);
         AccountProperty accountProperty = getProperty(this.id, property, setterAccount.id);
         if (accountProperty == null) {
@@ -1339,7 +1339,7 @@ public final class Account {
         propertyListeners.notify(accountProperty, Event.SET_PROPERTY);
     }
 
-    void deleteProperty(long propertyId) {
+   public  void deleteProperty(long propertyId) {
         AccountProperty accountProperty = accountPropertyTable.get(accountPropertyDbKeyFactory.newKey(propertyId));
         if (accountProperty == null) {
             return;
@@ -1356,7 +1356,7 @@ public final class Account {
         apply(key, false);
     }
 
-    void apply(byte[] key, boolean isGenesis) {
+    public void apply(byte[] key, boolean isGenesis) {
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
@@ -1382,7 +1382,7 @@ public final class Account {
         this.publicKey = publicKey;
     }
 
-    void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
+    public void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
         if (quantityATU == 0) {
             return;
         }
@@ -1404,7 +1404,7 @@ public final class Account {
         }
     }
 
-    void addToUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
+    public void addToUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
         if (quantityATU == 0) {
             return;
         }
@@ -1430,7 +1430,7 @@ public final class Account {
         }
     }
 
-    void addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
+    public void addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
         if (quantityATU == 0) {
             return;
         }
@@ -1463,7 +1463,7 @@ public final class Account {
         }
     }
 
-    void addToCurrencyUnits(LedgerEvent event, long eventId, long currencyId, long units) {
+    public void addToCurrencyUnits(LedgerEvent event, long eventId, long currencyId, long units) {
         if (units == 0) {
             return;
         }
@@ -1485,7 +1485,7 @@ public final class Account {
         }
     }
 
-    void addToUnconfirmedCurrencyUnits(LedgerEvent event, long eventId, long currencyId, long units) {
+    public void addToUnconfirmedCurrencyUnits(LedgerEvent event, long eventId, long currencyId, long units) {
         if (units == 0) {
             return;
         }
@@ -1540,11 +1540,11 @@ public final class Account {
         }
     }
 
-    void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+   public  void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToBalanceATM(event, eventId, amountATM, 0);
     }
 
-    void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
@@ -1561,7 +1561,7 @@ public final class Account {
         addToUnconfirmedBalanceATM(event, eventId, amountATM, 0);
     }
 
-    void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
@@ -1589,11 +1589,11 @@ public final class Account {
         }
     }
 
-    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+    public void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToBalanceAndUnconfirmedBalanceATM(event, eventId, amountATM, 0);
     }
 
-    void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    public void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
@@ -1625,7 +1625,7 @@ public final class Account {
         }
     }
 
-    void addToForgedBalanceATM(long amountATM) {
+    public void addToForgedBalanceATM(long amountATM) {
         if (amountATM == 0) {
             return;
         }
@@ -1661,7 +1661,7 @@ public final class Account {
         }
     }
 
-    void payDividends(final long transactionId, Attachment.ColoredCoinsDividendPayment attachment) {
+    public void payDividends(final long transactionId, Attachment.ColoredCoinsDividendPayment attachment) {
         long totalDividend = 0;
         List<AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<AccountAsset> iterator = getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {

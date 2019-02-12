@@ -87,13 +87,13 @@ public final class Vote {
         return voteTable.getBy(clause);
     }
 
-    static Vote addVote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
+    public static Vote addVote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
         Vote vote = new Vote(transaction, attachment);
         voteTable.insert(vote);
         return vote;
     }
 
-    static void init() {}
+    public static void init() {}
 
 
     private final long id;

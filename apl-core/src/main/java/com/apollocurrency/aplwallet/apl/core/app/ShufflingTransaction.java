@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import javax.enterprise.inject.spi.CDI;
@@ -47,7 +48,7 @@ public abstract class ShufflingTransaction extends TransactionType {
     private static final byte SUBTYPE_SHUFFLING_VERIFICATION = 4;
     private static final byte SUBTYPE_SHUFFLING_CANCELLATION = 5;
 
-    static TransactionType findTransactionType(byte subtype) {
+    public static TransactionType findTransactionType(byte subtype) {
         switch (subtype) {
             case SUBTYPE_SHUFFLING_CREATION:
                 return SHUFFLING_CREATION;
@@ -155,7 +156,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
@@ -175,7 +176,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             Shuffling.addShuffling(transaction, attachment);
         }
@@ -271,7 +272,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
@@ -292,7 +293,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.addParticipant(transaction.getSenderId());
@@ -407,12 +408,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.updateParticipantData(transaction, attachment);
@@ -427,7 +428,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean isPruned(long transactionId) {
+        public boolean isPruned(long transactionId) {
             Transaction transaction = blockchain.getTransaction(transactionId);
             Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
@@ -522,12 +523,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingRecipients attachment = (Attachment.ShufflingRecipients)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.updateRecipients(transaction, attachment);
@@ -607,12 +608,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingVerification attachment = (Attachment.ShufflingVerification) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.verify(transaction.getSenderId());
@@ -721,12 +722,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             return true;
         }
 
         @Override
-        void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             Attachment.ShufflingCancellation attachment = (Attachment.ShufflingCancellation) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             ShufflingParticipant participant = ShufflingParticipant.getParticipant(shuffling.getId(), senderAccount.getId());
@@ -742,7 +743,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        boolean isPruned(long transactionId) {
+        public boolean isPruned(long transactionId) {
             return super.isPruned(transactionId);
         }
     };
