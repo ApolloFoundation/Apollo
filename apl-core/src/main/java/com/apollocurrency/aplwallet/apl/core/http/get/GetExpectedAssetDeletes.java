@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
@@ -58,7 +59,7 @@ public final class GetExpectedAssetDeletes extends AbstractAPIRequestHandler {
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != TransactionType.ColoredCoins.ASSET_DELETE) {
+            if (transaction.getType() != ColoredCoins.ASSET_DELETE) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {

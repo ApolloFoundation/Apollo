@@ -1,0 +1,645 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+package com.apollocurrency.aplwallet.apl.core.app.transaction;
+
+import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.Asset;
+import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import org.json.simple.JSONObject;
+
+/**
+ *
+ * @author al
+ */
+public abstract class ColoredCoins extends TransactionType {
+    
+    private ColoredCoins() {
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_COLORED_COINS;
+    }
+    public static final TransactionType ASSET_ISSUANCE = new ColoredCoins() {
+        private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
+            public int getSize(TransactionImpl transaction, Appendix appendage) {
+                Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+                return attachment.getDescription().length();
+            }
+        };
+        private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * Constants.ONE_APL;
+
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_ASSET_ISSUANCE;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_ISSUANCE;
+        }
+
+        @Override
+        public String getName() {
+            return "AssetIssuance";
+        }
+
+        @Override
+        public Fee getBaselineFee(Transaction transaction) {
+            return ASSET_ISSUANCE_FEE;
+        }
+
+        @Override
+        public long[] getBackFees(Transaction transaction) {
+            if (isSingletonIssuance(transaction)) {
+                return Convert.EMPTY_LONG;
+            }
+            long feeATM = transaction.getFeeATM();
+            return new long[]{feeATM * 3 / 10, feeATM * 2 / 10, feeATM / 10};
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAssetIssuance(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAssetIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAssetIssuance(attachmentData);
+        }
+
+        @Override
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+            long assetId = transaction.getId();
+            Asset.addAsset(transaction, attachment);
+            senderAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+            if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH || attachment.getDecimals() < 0 || attachment.getDecimals() > 8 || attachment.getQuantityATU() <= 0 || attachment.getQuantityATU() > Constants.MAX_ASSET_QUANTITY_ATU) {
+                throw new AplException.NotValidException("Invalid asset issuance: " + attachment.getJSONObject());
+            }
+            String normalizedName = attachment.getName().toLowerCase();
+            for (int i = 0; i < normalizedName.length(); i++) {
+                if (Constants.ALPHABET.indexOf(normalizedName.charAt(i)) < 0) {
+                    throw new AplException.NotValidException("Invalid asset name: " + normalizedName);
+                }
+            }
+        }
+
+        @Override
+        public boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
+            return !isSingletonIssuance(transaction) && isDuplicate(ColoredCoins.ASSET_ISSUANCE, getName(), duplicates, true);
+        }
+
+        @Override
+        public boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public boolean isPhasingSafe() {
+            return true;
+        }
+
+        private boolean isSingletonIssuance(Transaction transaction) {
+            Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+            return attachment.getQuantityATU() == 1 && attachment.getDecimals() == 0 && attachment.getDescription().length() <= Constants.MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH;
+        }
+    };
+    public static final TransactionType ASSET_TRANSFER = new ColoredCoins() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_ASSET_TRANSFER;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_TRANSFER;
+        }
+
+        @Override
+        public String getName() {
+            return "AssetTransfer";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAssetTransfer(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAssetTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAssetTransfer(attachmentData);
+        }
+
+        @Override
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
+            if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+            if (recipientAccount.getId() == Genesis.CREATOR_ID) {
+                Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
+            } else {
+                recipientAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+                AssetTransfer.addAssetTransfer(transaction, attachment);
+            }
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            if (transaction.getAmountATM() != 0 || attachment.getAssetId() == 0) {
+                throw new AplException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
+            }
+            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+                throw new AplException.NotValidException("Asset transfer to Genesis not allowed, " + "use asset delete attachment instead");
+            }
+            Asset asset = Asset.getAsset(attachment.getAssetId());
+            if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
+                throw new AplException.NotValidException("Invalid asset transfer asset or quantity: " + attachment.getJSONObject());
+            }
+            if (asset == null) {
+                throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
+            }
+        }
+
+        @Override
+        public boolean canHaveRecipient() {
+            return true;
+        }
+
+        @Override
+        public boolean isPhasingSafe() {
+            return true;
+        }
+    };
+    public static final TransactionType ASSET_DELETE = new ColoredCoins() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_ASSET_DELETE;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_DELETE;
+        }
+
+        @Override
+        public String getName() {
+            return "AssetDelete";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAssetDelete(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAssetDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAssetDelete(attachmentData);
+        }
+
+        @Override
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
+            if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+            Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            if (attachment.getAssetId() == 0) {
+                throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
+            }
+            Asset asset = Asset.getAsset(attachment.getAssetId());
+            if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
+                throw new AplException.NotValidException("Invalid asset delete asset or quantity: " + attachment.getJSONObject());
+            }
+            if (asset == null) {
+                throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
+            }
+        }
+
+        @Override
+        public boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public boolean isPhasingSafe() {
+            return true;
+        }
+    };
+
+    static abstract class ColoredCoinsOrderPlacement extends ColoredCoins {
+
+        @Override
+        public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement) transaction.getAttachment();
+            if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM() || attachment.getAssetId() == 0) {
+                throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
+            }
+            Asset asset = Asset.getAsset(attachment.getAssetId());
+            if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
+                throw new AplException.NotValidException("Invalid asset order placement asset or quantity: " + attachment.getJSONObject());
+            }
+            if (asset == null) {
+                throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
+            }
+        }
+
+        @Override
+        public final boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public final boolean isPhasingSafe() {
+            return true;
+        }
+    }
+    public static final TransactionType ASK_ORDER_PLACEMENT = new ColoredCoins.ColoredCoinsOrderPlacement() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_ASK_ORDER_PLACEMENT;
+        }
+
+        @Override
+        public String getName() {
+            return "AskOrderPlacement";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAskOrderPlacement parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAskOrderPlacement(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAskOrderPlacement parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAskOrderPlacement(attachmentData);
+        }
+
+        @Override
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
+            long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
+            if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
+            Order.Ask.addOrder(transaction, attachment);
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsAskOrderPlacement attachment = (Attachment.ColoredCoinsAskOrderPlacement) transaction.getAttachment();
+            senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+        }
+    };
+    public static final TransactionType BID_ORDER_PLACEMENT = new ColoredCoins.ColoredCoinsOrderPlacement() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_BID_ORDER_PLACEMENT;
+        }
+
+        @Override
+        public String getName() {
+            return "BidOrderPlacement";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsBidOrderPlacement parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsBidOrderPlacement(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsBidOrderPlacement parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsBidOrderPlacement(attachmentData);
+        }
+
+        @Override
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
+            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
+            Order.Bid.addOrder(transaction, attachment);
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsBidOrderPlacement attachment = (Attachment.ColoredCoinsBidOrderPlacement) transaction.getAttachment();
+            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
+        }
+    };
+
+    static abstract class ColoredCoinsOrderCancellation extends ColoredCoins {
+
+        @Override
+        public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            return true;
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        }
+
+        @Override
+        public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            Attachment.ColoredCoinsOrderCancellation attachment = (Attachment.ColoredCoinsOrderCancellation) transaction.getAttachment();
+            return TransactionType.isDuplicate(ColoredCoins.ASK_ORDER_CANCELLATION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+        }
+
+        @Override
+        public final boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public final boolean isPhasingSafe() {
+            return true;
+        }
+    }
+    public static final TransactionType ASK_ORDER_CANCELLATION = new ColoredCoins.ColoredCoinsOrderCancellation() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_ASK_ORDER_CANCELLATION;
+        }
+
+        @Override
+        public String getName() {
+            return "AskOrderCancellation";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAskOrderCancellation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAskOrderCancellation(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsAskOrderCancellation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsAskOrderCancellation(attachmentData);
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
+            Order order = Order.Ask.getAskOrder(attachment.getOrderId());
+            Order.Ask.removeOrder(attachment.getOrderId());
+            if (order != null) {
+                senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), order.getAssetId(), order.getQuantityATU());
+            }
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsAskOrderCancellation attachment = (Attachment.ColoredCoinsAskOrderCancellation) transaction.getAttachment();
+            Order ask = Order.Ask.getAskOrder(attachment.getOrderId());
+            if (ask == null) {
+                throw new AplException.NotCurrentlyValidException("Invalid ask order: " + Long.toUnsignedString(attachment.getOrderId()));
+            }
+            if (ask.getAccountId() != transaction.getSenderId()) {
+                throw new AplException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account " + Long.toUnsignedString(ask.getAccountId()));
+            }
+        }
+    };
+    public static final TransactionType BID_ORDER_CANCELLATION = new ColoredCoins.ColoredCoinsOrderCancellation() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_BID_ORDER_CANCELLATION;
+        }
+
+        @Override
+        public String getName() {
+            return "BidOrderCancellation";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsBidOrderCancellation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsBidOrderCancellation(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsBidOrderCancellation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ColoredCoinsBidOrderCancellation(attachmentData);
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
+            Order order = Order.Bid.getBidOrder(attachment.getOrderId());
+            Order.Bid.removeOrder(attachment.getOrderId());
+            if (order != null) {
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Math.multiplyExact(order.getQuantityATU(), order.getPriceATM()));
+            }
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsBidOrderCancellation attachment = (Attachment.ColoredCoinsBidOrderCancellation) transaction.getAttachment();
+            Order bid = Order.Bid.getBidOrder(attachment.getOrderId());
+            if (bid == null) {
+                throw new AplException.NotCurrentlyValidException("Invalid bid order: " + Long.toUnsignedString(attachment.getOrderId()));
+            }
+            if (bid.getAccountId() != transaction.getSenderId()) {
+                throw new AplException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account " + Long.toUnsignedString(bid.getAccountId()));
+            }
+        }
+    };
+    public static final TransactionType DIVIDEND_PAYMENT = new ColoredCoins() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT;
+        }
+
+        @Override
+        public AccountLedger.LedgerEvent getLedgerEvent() {
+            return AccountLedger.LedgerEvent.ASSET_DIVIDEND_PAYMENT;
+        }
+
+        @Override
+        public String getName() {
+            return "DividendPayment";
+        }
+
+        @Override
+        public Attachment.ColoredCoinsDividendPayment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ColoredCoinsDividendPayment(buffer);
+        }
+
+        @Override
+        public Attachment.ColoredCoinsDividendPayment parseAttachment(JSONObject attachmentData) {
+            return new Attachment.ColoredCoinsDividendPayment(attachmentData);
+        }
+
+        @Override
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+            long assetId = attachment.getAssetId();
+            Asset asset = Asset.getAsset(assetId, attachment.getHeight());
+            if (asset == null) {
+                return true;
+            }
+            long quantityATU = asset.getQuantityATU() - senderAccount.getAssetBalanceATU(assetId, attachment.getHeight());
+            long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
+            if (senderAccount.getUnconfirmedBalanceATM() >= totalDividendPayment) {
+                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+            senderAccount.payDividends(transaction.getId(), attachment);
+        }
+
+        @Override
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+            Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+            long assetId = attachment.getAssetId();
+            Asset asset = Asset.getAsset(assetId, attachment.getHeight());
+            if (asset == null) {
+                return;
+            }
+            long quantityATU = asset.getQuantityATU() - senderAccount.getAssetBalanceATU(assetId, attachment.getHeight());
+            long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
+            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), totalDividendPayment);
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+            if (attachment.getHeight() > blockchain.getHeight()) {
+                throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
+            }
+            if (attachment.getHeight() <= attachment.getFinishValidationHeight(transaction) - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
+                throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + " blocks before " + attachment.getFinishValidationHeight(transaction));
+            }
+            Asset asset = Asset.getAsset(attachment.getAssetId(), attachment.getHeight());
+            if (asset == null) {
+                throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " for dividend payment doesn't exist yet");
+            }
+            if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountATMPerATU() <= 0) {
+                throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
+            }
+            AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
+            if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
+                throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight() + ", limit is one dividend per 60 blocks");
+            }
+        }
+
+        @Override
+        public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            Attachment.ColoredCoinsDividendPayment attachment = (Attachment.ColoredCoinsDividendPayment) transaction.getAttachment();
+            return isDuplicate(ColoredCoins.DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
+        }
+
+        @Override
+        public boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public boolean isPhasingSafe() {
+            return false;
+        }
+    };
+    
+}

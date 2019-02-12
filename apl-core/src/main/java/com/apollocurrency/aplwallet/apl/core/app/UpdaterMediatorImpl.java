@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -95,7 +96,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public boolean isUpdateTransaction(Transaction transaction) {
-        return TransactionType.Update.isUpdate(transaction.getType());
+        return Update.isUpdate(transaction.getType());
     }
 
     @Override

@@ -9,6 +9,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -51,7 +52,7 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
                 firstIndex, lastIndex)) {
             while (transactionsIterator.hasNext()) {
                 Transaction transaction = transactionsIterator.next();
-                if (data.isEncrypt() && transaction.getType() == TransactionType.Payment.PRIVATE) {
+                if (data.isEncrypt() && transaction.getType() == Payment.PRIVATE) {
                     transactions.add(JSONData.encryptedUnconfirmedTransaction(transaction, data.getSharedKey()));
                 } else {
                     transactions.add(JSONData.unconfirmedTransaction(transaction));

@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
@@ -117,7 +118,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                 if (expectedVersion.greaterThan(updaterMediator.getWalletVersion())) {
                     LOG.error("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + updaterMediator.getWalletVersion() +
                             " " + " updateVersion: " + expectedVersion);
-                    if (transaction.getType() == TransactionType.Update.CRITICAL) {
+                    if (transaction.getType() == Update.CRITICAL) {
                         updaterMediator.suspendBlockchain();
                         UpdateInfo currentUpdateInfo = transactionToUpdateInfo(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
                         setUpdateInfo(currentUpdateInfo);
@@ -185,7 +186,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
             transactions.forEach(transaction -> {
                 UpdateData updateData = verifier.process(transaction);
                 if (updateData != null) {
-                    if (((TransactionType.Update) updateData.getTransaction().getType()).getLevel() != Level.MINOR) {
+                    if (((Update) updateData.getTransaction().getType()).getLevel() != Level.MINOR) {
                         updaterMediator.removeUpdateListener(this);
                     }
                     LOG.debug("Found appropriate update transaction: " + updateData.getTransaction().getJSONObject().get("attachment"));
@@ -227,11 +228,11 @@ public class UpdaterCoreImpl implements UpdaterCore {
 
     private Level from(TransactionType type) {
 
-        if (type == TransactionType.Update.CRITICAL) {
+        if (type == Update.CRITICAL) {
             return Level.CRITICAL;
-        } else if (type == TransactionType.Update.IMPORTANT) {
+        } else if (type == Update.IMPORTANT) {
             return Level.IMPORTANT;
-        } else if (type == TransactionType.Update.MINOR) {
+        } else if (type == Update.MINOR) {
             return Level.MINOR;
         }
         return null;

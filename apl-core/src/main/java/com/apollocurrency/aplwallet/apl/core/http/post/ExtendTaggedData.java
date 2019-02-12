@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Data;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import org.json.simple.JSONStreamAware;
 
@@ -57,7 +58,7 @@ public final class ExtendTaggedData extends CreateTransaction {
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null) {
             Transaction transaction = lookupBlockchain().getTransaction(transactionId);
-            if (transaction == null || transaction.getType() != TransactionType.Data.TAGGED_DATA_UPLOAD) {
+            if (transaction == null || transaction.getType() != Data.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }
             Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);

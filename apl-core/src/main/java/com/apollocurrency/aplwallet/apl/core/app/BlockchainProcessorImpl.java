@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
@@ -1530,7 +1531,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         possiblyApprovedTransactions.add(phasedTransaction);
                     }
                 });
-                if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
+                if (transaction.getType() == Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     Attachment.MessagingPhasingVoteCasting voteCasting = (Attachment.MessagingPhasingVoteCasting)transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
                         PhasingPoll phasingPoll = PhasingPoll.getPoll(Convert.fullHashToId(hash));
@@ -1541,7 +1542,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
-                if (phasedTransaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
+                if (phasedTransaction.getType() == Messaging.PHASING_VOTE_CASTING) {
                     PhasingPoll.PhasingPollResult result = PhasingPoll.getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         Attachment.MessagingPhasingVoteCasting phasingVoteCasting = (Attachment.MessagingPhasingVoteCasting) phasedTransaction.getAttachment();

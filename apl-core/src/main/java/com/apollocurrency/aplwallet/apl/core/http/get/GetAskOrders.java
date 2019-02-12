@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -63,7 +64,7 @@ public final class GetAskOrders extends AbstractAPIRequestHandler {
 
         long[] cancellations = null;
         if (showExpectedCancellations) {
-            Filter<Transaction> filter = transaction -> transaction.getType() == TransactionType.ColoredCoins.ASK_ORDER_CANCELLATION;
+            Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION;
             List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {

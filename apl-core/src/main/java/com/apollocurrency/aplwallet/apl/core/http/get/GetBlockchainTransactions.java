@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import org.json.simple.JSONArray;
@@ -79,7 +80,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         catch (NumberFormatException e) {
             subtype = -1;
         }
-        if (TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
+        if (TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
         int firstIndex = ParameterParser.getFirstIndex(req);

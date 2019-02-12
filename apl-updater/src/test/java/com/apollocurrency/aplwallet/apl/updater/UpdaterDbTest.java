@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -35,7 +36,7 @@ public class UpdaterDbTest {
     public void testLoadUpdateTransaction() throws Exception {
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
-        Assert.assertEquals(TransactionType.Update.IMPORTANT, transaction.getType());
+        Assert.assertEquals(Update.IMPORTANT, transaction.getType());
         Assert.assertEquals(104595, transaction.getHeight());
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
@@ -59,7 +60,7 @@ public class UpdaterDbTest {
         repository.save(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
-        Assert.assertEquals(TransactionType.Update.CRITICAL, transaction.getType());
+        Assert.assertEquals(Update.CRITICAL, transaction.getType());
         Assert.assertEquals(104671, transaction.getHeight());
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
         Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.AMD64);
@@ -74,7 +75,7 @@ public class UpdaterDbTest {
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(-4081443370478530685L, transaction.getId());
-        Assert.assertEquals(TransactionType.Update.CRITICAL, transaction.getAttachment().getTransactionType());
+        Assert.assertEquals(Update.CRITICAL, transaction.getAttachment().getTransactionType());
         Assert.assertFalse(updateTransaction.isUpdated());
     }
 

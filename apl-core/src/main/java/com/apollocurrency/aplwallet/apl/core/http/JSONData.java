@@ -62,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -1029,13 +1030,13 @@ public final class JSONData {
         json.put("deadline", transaction.getDeadline());
         json.put("senderPublicKey", Convert.toHexString(transaction.getSenderPublicKey()));
         if (transaction.getRecipientId() != 0) {
-            if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
+            if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
                 putPrivateAccount(json, "recipient", transaction.getRecipientId());
             } else {
                 putAccount(json, "recipient", transaction.getRecipientId());
             }
         }
-        if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
+        if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
             Random random = new Random();
             json.put("amountATM", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
         } else {
@@ -1071,7 +1072,7 @@ public final class JSONData {
             }
             json.put("attachment", attachmentJSON);
         }
-        if (transaction.getType().equals(TransactionType.Payment.PRIVATE) && isPrivate) {
+        if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
             putPrivateAccount(json, "sender", transaction.getSenderId());
         } else {
             putAccount(json, "sender", transaction.getSenderId());

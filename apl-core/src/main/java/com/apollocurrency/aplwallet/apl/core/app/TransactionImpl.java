@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
@@ -729,7 +730,7 @@ public class TransactionImpl implements Transaction {
                 builder.recipientId(recipientId);
             }
             int position = 1;
-            if ((flags & position) != 0 || (version == 0 && transactionType == TransactionType.Messaging.ARBITRARY_MESSAGE)) {
+            if ((flags & position) != 0 || (version == 0 && transactionType == Messaging.ARBITRARY_MESSAGE)) {
                 builder.appendix(new MessageAppendix(buffer));
             }
             position <<= 1;

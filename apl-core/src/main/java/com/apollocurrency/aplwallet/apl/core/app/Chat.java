@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -31,11 +32,11 @@ public class Chat {
                             + DbUtils.limitsClause(from, to)
             );
             int i = 0;
-            stmt.setByte(++i, TransactionType.Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, TransactionType.Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, accountId);
-            stmt.setByte(++i, TransactionType.Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, TransactionType.Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, accountId);
             DbUtils.setLimits(++i, stmt, from, to);
             return new DbIterator<>(con, stmt, (conection, rs) -> {
@@ -61,8 +62,8 @@ public class Chat {
                             + DbUtils.limitsClause(from, to)
             );
             int i = 0;
-            stmt.setByte(++i, TransactionType.Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, TransactionType.Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, account1);
             stmt.setLong(++i, account2);
             stmt.setLong(++i, account2);

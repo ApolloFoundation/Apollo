@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
@@ -170,8 +171,8 @@ public final class Poll extends AbstractPoll {
                             + DbUtils.limitsClause(from, to) + ")");
             int i = 0;
             pollStatement.setLong(++i, accountId);
-            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
-            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
+            pollStatement.setByte(++i, Messaging.VOTE_CASTING.getType());
+            pollStatement.setByte(++i, Messaging.VOTE_CASTING.getSubtype());
             DbUtils.setLimits(++i, pollStatement, from, to);
             return pollTable.getManyBy(connection, pollStatement, false);
         }

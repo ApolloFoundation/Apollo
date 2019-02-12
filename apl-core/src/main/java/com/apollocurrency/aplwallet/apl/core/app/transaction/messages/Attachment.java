@@ -46,6 +46,13 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.AccountControl;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Data;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.DigitalGoods;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -154,7 +161,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Payment.ORDINARY;
+            return Payment.ORDINARY;
         }
 
     };
@@ -163,7 +170,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Payment.PRIVATE;
+            return Payment.PRIVATE;
         }
 
     };
@@ -175,7 +182,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ARBITRARY_MESSAGE;
+            return Messaging.ARBITRARY_MESSAGE;
         }
 
     };
@@ -229,7 +236,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ALIAS_ASSIGNMENT;
+            return Messaging.ALIAS_ASSIGNMENT;
         }
 
         public String getAliasName() {
@@ -269,7 +276,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ALIAS_SELL;
+            return Messaging.ALIAS_SELL;
         }
 
         @Override
@@ -324,7 +331,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ALIAS_BUY;
+            return Messaging.ALIAS_BUY;
         }
 
         @Override
@@ -373,7 +380,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ALIAS_DELETE;
+            return Messaging.ALIAS_DELETE;
         }
 
         @Override
@@ -607,7 +614,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.POLL_CREATION;
+            return Messaging.POLL_CREATION;
         }
 
         public String getPollName() {
@@ -705,7 +712,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.VOTE_CASTING;
+            return Messaging.VOTE_CASTING;
         }
 
         public long getPollId() {
@@ -782,7 +789,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.PHASING_VOTE_CASTING;
+            return Messaging.PHASING_VOTE_CASTING;
         }
 
         public List<byte[]> getTransactionFullHashes() {
@@ -843,7 +850,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ACCOUNT_INFO;
+            return Messaging.ACCOUNT_INFO;
         }
 
         public String getName() {
@@ -905,7 +912,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ACCOUNT_PROPERTY;
+            return Messaging.ACCOUNT_PROPERTY;
         }
 
         public String getProperty() {
@@ -953,7 +960,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Messaging.ACCOUNT_PROPERTY_DELETE;
+            return Messaging.ACCOUNT_PROPERTY_DELETE;
         }
 
         public long getPropertyId() {
@@ -1023,7 +1030,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.ASSET_ISSUANCE;
+            return ColoredCoins.ASSET_ISSUANCE;
         }
 
         public String getName() {
@@ -1084,7 +1091,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.ASSET_TRANSFER;
+            return ColoredCoins.ASSET_TRANSFER;
         }
 
         public long getAssetId() {
@@ -1138,7 +1145,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.ASSET_DELETE;
+            return ColoredCoins.ASSET_DELETE;
         }
 
         public long getAssetId() {
@@ -1225,7 +1232,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.ASK_ORDER_PLACEMENT;
+            return ColoredCoins.ASK_ORDER_PLACEMENT;
         }
 
     }
@@ -1246,7 +1253,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.BID_ORDER_PLACEMENT;
+            return ColoredCoins.BID_ORDER_PLACEMENT;
         }
 
     }
@@ -1305,7 +1312,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.ASK_ORDER_CANCELLATION;
+            return ColoredCoins.ASK_ORDER_CANCELLATION;
         }
 
     }
@@ -1326,7 +1333,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.BID_ORDER_CANCELLATION;
+            return ColoredCoins.BID_ORDER_CANCELLATION;
         }
 
     }
@@ -1378,7 +1385,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.ColoredCoins.DIVIDEND_PAYMENT;
+            return ColoredCoins.DIVIDEND_PAYMENT;
         }
 
         public long getAssetId() {
@@ -1465,7 +1472,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.LISTING;
+            return DigitalGoods.LISTING;
         }
 
         public String getName() { return name; }
@@ -1515,7 +1522,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.DELISTING;
+            return DigitalGoods.DELISTING;
         }
 
         public long getGoodsId() { return goodsId; }
@@ -1563,7 +1570,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.PRICE_CHANGE;
+            return DigitalGoods.PRICE_CHANGE;
         }
 
         public long getGoodsId() { return goodsId; }
@@ -1613,7 +1620,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.QUANTITY_CHANGE;
+            return DigitalGoods.QUANTITY_CHANGE;
         }
 
         public long getGoodsId() { return goodsId; }
@@ -1675,7 +1682,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.PURCHASE;
+            return DigitalGoods.PURCHASE;
         }
 
         public long getGoodsId() { return goodsId; }
@@ -1752,7 +1759,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public final TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.DELIVERY;
+            return DigitalGoods.DELIVERY;
         }
 
         public final long getPurchaseId() {
@@ -1881,7 +1888,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.FEEDBACK;
+            return DigitalGoods.FEEDBACK;
         }
 
         public long getPurchaseId() { return purchaseId; }
@@ -1929,7 +1936,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.DigitalGoods.REFUND;
+            return DigitalGoods.REFUND;
         }
 
         public long getPurchaseId() { return purchaseId; }
@@ -1973,7 +1980,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.AccountControl.EFFECTIVE_BALANCE_LEASING;
+            return AccountControl.EFFECTIVE_BALANCE_LEASING;
         }
 
         public int getPeriod() {
@@ -3393,7 +3400,7 @@ public interface Attachment extends Appendix {
     final class TaggedDataUpload extends TaggedDataAttachment {
 
         public static TaggedDataUpload parse(JSONObject attachmentData) {
-            if (!Appendix.hasAppendix(TransactionType.Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
+            if (!Appendix.hasAppendix(Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
                 return null;
             }
             return new TaggedDataUpload(attachmentData);
@@ -3444,7 +3451,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Data.TAGGED_DATA_UPLOAD;
+            return Data.TAGGED_DATA_UPLOAD;
         }
 
         @Override
@@ -3471,7 +3478,7 @@ public interface Attachment extends Appendix {
         private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
         public static TaggedDataExtend parse(JSONObject attachmentData) {
-            if (!Appendix.hasAppendix(TransactionType.Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
+            if (!Appendix.hasAppendix(Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
                 return null;
             }
             return new TaggedDataExtend(attachmentData);
@@ -3518,7 +3525,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Data.TAGGED_DATA_EXTEND;
+            return Data.TAGGED_DATA_EXTEND;
         }
 
         public long getTaggedDataId() {
@@ -3585,7 +3592,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.AccountControl.SET_PHASING_ONLY;
+            return AccountControl.SET_PHASING_ONLY;
         }
 
         @Override
@@ -3757,11 +3764,11 @@ public interface Attachment extends Appendix {
 
         public static Attachment.UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[]
                 hash, byte level) {
-            if (level == TransactionType.Update.CRITICAL.getSubtype()) {
+            if (level == Update.CRITICAL.getSubtype()) {
                 return new Attachment.CriticalUpdate(platform, architecture, url, version, hash);
-            } else if (level == TransactionType.Update.IMPORTANT.getSubtype()) {
+            } else if (level == Update.IMPORTANT.getSubtype()) {
                 return new Attachment.ImportantUpdate(platform, architecture, url, version, hash);
-            } else if (level == TransactionType.Update.MINOR.getSubtype()) {
+            } else if (level == Update.MINOR.getSubtype()) {
                 return new Attachment.MinorUpdate(platform, architecture, url, version, hash);
             }
             return null;
@@ -3783,7 +3790,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Update.CRITICAL;
+            return Update.CRITICAL;
         }
     }
 
@@ -3802,7 +3809,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Update.IMPORTANT;
+            return Update.IMPORTANT;
         }
     }
 
@@ -3821,7 +3828,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return TransactionType.Update.MINOR;
+            return Update.MINOR;
         }
     }
 

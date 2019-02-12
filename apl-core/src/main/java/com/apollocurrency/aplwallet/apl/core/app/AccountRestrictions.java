@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import static com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.app.transaction.AccountControl.SET_PHASING_ONLY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -37,6 +37,7 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -155,7 +156,7 @@ public final class AccountRestrictions {
                 throw new AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double)maxFees)/Constants.ONE_APL,
                         blockchainConfig.getCoinSymbol()));
             }
-            if (transaction.getType() == TransactionType.Messaging.PHASING_VOTE_CASTING) {
+            if (transaction.getType() == Messaging.PHASING_VOTE_CASTING) {
                 return;
             }
             try {
