@@ -37,7 +37,7 @@ public abstract class DbVersion {
 
     protected BasicDb db;
 
-    void init(BasicDb db) {
+    public void init(BasicDb db) {
         this.db = db;
         Connection con = null;
         Statement stmt = null;

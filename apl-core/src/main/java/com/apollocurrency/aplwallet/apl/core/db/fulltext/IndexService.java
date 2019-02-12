@@ -45,6 +45,10 @@ public class IndexService {
         // Build the SELECT statement for just the indexed columns
         //
         TableData tableData = DbUtils.getTableData(conn, tableName, schemaName);
+        if (tableData.getDbIdColumnPosition() == -1) {
+            LOG.debug("Table {} has not dbId column", tableName);
+            return;
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT DB_ID");
         for (int index : tableData.getIndexColumns()) {

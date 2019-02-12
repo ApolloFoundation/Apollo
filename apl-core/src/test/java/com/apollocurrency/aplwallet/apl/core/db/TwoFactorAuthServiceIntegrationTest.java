@@ -34,7 +34,7 @@ import java.security.GeneralSecurityException;
 import java.util.Random;
 
 @EnableWeld
-public class TwoFactorAuthServiceIntegrationTest extends DbIntegrationTest {
+public class TwoFactorAuthServiceIntegrationTest extends DbTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

@@ -138,10 +138,9 @@ public class LuceneFullTextSearchEngine {
             obtainedUpdateLock = true;
         }
         try {
-            if (indexWriter == null) {
+
                 indexLock.writeLock().lock();
                 try {
-                    if (indexWriter == null) {
                         IndexWriterConfig config = new IndexWriterConfig(analyzer);
                         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
                         Directory indexDir = FSDirectory.open(indexDirPath);
@@ -152,11 +151,10 @@ public class LuceneFullTextSearchEngine {
                         indexWriter.commit();
                         indexReader = DirectoryReader.open(indexDir);
                         indexSearcher = new IndexSearcher(indexReader);
-                    }
                 } finally {
                     indexLock.writeLock().unlock();
                 }
-            }
+
         } catch (IOException exc) {
             LOG.error("Unable to access the Lucene index", exc);
             throw new IOException("Unable to access the Lucene index", exc);
