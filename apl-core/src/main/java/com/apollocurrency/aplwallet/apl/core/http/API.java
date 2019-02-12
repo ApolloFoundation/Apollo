@@ -98,6 +98,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
@@ -110,7 +113,7 @@ public final class API {
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
-    private static KeyPair elGamalKeyPair;    
+    private static AsymmetricCipherKeyPair elGamalKeyPair;    
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -144,6 +147,7 @@ public final class API {
                 byte[] keySeed = Crypto.getKeySeed(keyBytes);
                 privateKey = Crypto.getPrivateKey(keySeed);
                 publicKey = Crypto.getPublicKey(keySeed);
+                
                 elGamalKeyPair = Crypto.getElGamalKeyPair();
             }
             try {
@@ -162,8 +166,15 @@ public final class API {
         return privateKey;
     }
 
-    public static synchronized byte[] getServerElGamalPublicKey() {
-        return elGamalKeyPair.getPublic().getEncoded();
+    public static synchronized ImmutablePair<BigInteger, BigInteger> getServerElGamalPublicKey() {
+        ImmutablePair XYPair = new ImmutablePair<>(Crypto.getElGamalX(elGamalKeyPair), Crypto.getElGamalY(elGamalKeyPair));
+        return XYPair;
+        
+    }
+    
+    public static String elGamalDecrypt(String cryptogramm)
+    {
+        return Crypto.elGamalDecrypt(cryptogramm, elGamalKeyPair);
     }
     
     public static void init() {

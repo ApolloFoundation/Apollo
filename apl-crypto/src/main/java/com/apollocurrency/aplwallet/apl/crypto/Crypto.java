@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import io.firstbridge.cryptolib.FBCryptoParams;
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 
@@ -44,6 +45,15 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.math.ec.ECFieldElement;
 
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
@@ -333,20 +343,52 @@ public final class Crypto {
         return Curve25519.isCanonicalSignature(signature);
     }
     
-    public static KeyPair getElGamalKeyPair(){
-        FBCryptoParams params = FBCryptoParams.createDefault();
-        try
-        {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DiffieHellman");
-            keyGen.initialize(512);
-            KeyPair kpAlice = keyGen.genKeyPair();
-            return kpAlice;
-        }
-        catch (NoSuchAlgorithmException e){
-            LOG.debug(e.getMessage());
-        }
-                
-        return null;
+    public static AsymmetricCipherKeyPair getElGamalKeyPair(){
+       
+        X9ECParameters xparams = SECNamedCurves.getByName("secp521r1");
+
+        ECKeyPairGenerator kpGen = new ECKeyPairGenerator();
+
+        ECDomainParameters domainParams = new ECDomainParameters(xparams.getCurve(), xparams.getG(), xparams.getN(), xparams.getH(), xparams.getSeed());
+
+        kpGen.init(new ECKeyGenerationParameters(domainParams, new SecureRandom()));
+
+        AsymmetricCipherKeyPair keyPairAlice;        
+        
+        keyPairAlice = kpGen.generateKeyPair();
+        
+        return keyPairAlice;
+        
+    }
+    
+    public static BigInteger getElGamalX(AsymmetricCipherKeyPair keyPairAlice){
+        ECPublicKeyParameters aliceECPublicKeyParameters = (ECPublicKeyParameters)keyPairAlice.getPublic();
+        ECFieldElement alicePublicX = aliceECPublicKeyParameters.getQ().getXCoord();
+        BigInteger alicePublicXBI = alicePublicX.toBigInteger();
+        return alicePublicXBI;
+        
+    }
+    
+    public static BigInteger getElGamalY(AsymmetricCipherKeyPair keyPairAlice){
+        ECPublicKeyParameters aliceECPublicKeyParameters = (ECPublicKeyParameters)keyPairAlice.getPublic();
+        ECFieldElement alicePublicY = aliceECPublicKeyParameters.getQ().getYCoord();
+        BigInteger alicePublicXBI = alicePublicY.toBigInteger();
+        return alicePublicXBI;
+        
+    }
+    
+    public static String elGamalDecrypt(String cryptogramm, AsymmetricCipherKeyPair keyPair)
+    {
+        int cryptogrammDivider = cryptogramm.length() - 132;
+        String aesKey = cryptogramm.substring(cryptogrammDivider);
+        byte[] aesKeyArray = new BigInteger(aesKey, 16).toByteArray();
+        String aesCryptogramm = cryptogramm.substring(0, cryptogrammDivider);
+        byte[] aesCryptogrammArray = new BigInteger(aesCryptogramm, 16).toByteArray();
+        
+        //AsymJCEElGamalImpl elGamalInstalnce = new AsymJCEElGamalImpl(params);
+        //elGamalInstalnce.setAsymmetricKeysBC(aliceECPublicKeyParameters, aliceECPrivateKeyParameters, bobECPublicKeyParameters );
+        
+        return "";
     }
 
 }

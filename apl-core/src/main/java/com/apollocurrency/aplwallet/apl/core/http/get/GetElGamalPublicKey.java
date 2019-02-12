@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import java.math.BigInteger;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -37,7 +39,11 @@ public final class GetElGamalPublicKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         
         JSONObject response = new JSONObject();
-        response.put("ElGamalPublicKey", Convert.toHexString(API.getServerElGamalPublicKey()));
+        ImmutablePair XYPair = API.getServerElGamalPublicKey();
+        BigInteger elGamalX = (BigInteger) XYPair.getKey();
+        BigInteger elGamalY = (BigInteger) XYPair.getValue();
+        response.put("ElGamalX", elGamalX.toString(16));
+        response.put("ElGamalY", elGamalY.toString(16));
         return response;
     }
 }
