@@ -24,7 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
@@ -67,7 +67,7 @@ public class TransactionalDb extends BasicDb {
     private volatile long statsTime = 0;
 
     public TransactionalDb(DbProperties dbProperties) {
-        super(dbProperties, CDI.current().select(FullTextSearchProvider.class).get());
+        super(dbProperties, CDI.current().select(FullTextSearchService.class).get());
     }
 
     @Override

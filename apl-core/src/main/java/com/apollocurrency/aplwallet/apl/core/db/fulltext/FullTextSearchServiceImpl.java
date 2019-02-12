@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,19 +17,19 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class FullTextSearchProvider {
+public class FullTextSearchServiceImpl implements FullTextSearchService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchProvider.class);
-    private IndexService indexService;
+    private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);
+    private FullTextSearchEngine ftl;
     private List<String> indexTables;
     private String schemaName;
 
 
     @Inject
-    public FullTextSearchProvider(IndexService indexService,
-                                  @Named("fullTextTables") List<String> indexTables,
-                                  @Named("tablesSchema") String schemaName) {
-        this.indexService = indexService;
+    public FullTextSearchServiceImpl(FullTextSearchEngine ftl,
+                                     @Named("fullTextTables") List<String> indexTables,
+                                     @Named("tablesSchema") String schemaName) {
+        this.ftl = ftl;
         this.indexTables = indexTables;
         this.schemaName = schemaName;
     }
@@ -66,7 +67,7 @@ public class FullTextSearchProvider {
         // Index the table
         //
         try {
-                indexService.reindexTable(conn, tableName, schemaName);
+                reindex(conn, tableName, schemaName);
                 LOG.info("Lucene search index created for table " + tableName);
             } catch (SQLException exc) {
                 LOG.error("Unable to create Lucene search index for table " + tableName);
@@ -106,7 +107,7 @@ public class FullTextSearchProvider {
         // Rebuild the Lucene index
         //
         if (reindex) {
-                indexService.reindexAll(conn, indexTables, schema);
+                reindexAll(conn, indexTables, schema);
         }
     }
 
@@ -117,7 +118,12 @@ public class FullTextSearchProvider {
      * that enables fulltext search support
      */
     public void init() {
-        indexService.init();
+        try {
+            ftl.init();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Unable to init fulltext engine");
+        }
         String triggerClassName = FullTextTrigger.class.getName();
         try (Connection conn = Db.getDb().getConnection();
              Statement stmt = conn.createStatement();
@@ -143,7 +149,7 @@ public class FullTextSearchProvider {
             //
             // We need to delete an existing Lucene index since the V3 file format is not compatible with V5
             //
-            indexService.clearIndex();
+            ftl.clearIndex();
             //
             // Drop the H2 Lucene V3 function aliases
             // Mainly for backward compatibility with old databases, which
@@ -189,12 +195,10 @@ public class FullTextSearchProvider {
             //
             // Rebuild the Lucene index since the Lucene V3 index is not compatible with Lucene V5
             //
-            indexService.reindexAll(conn, indexTables, schemaName);
+            reindexAll(conn);
 //            //
 //            // Create our function aliases
 //            //
-//            stmt.execute("CREATE ALIAS FTL_CREATE_INDEX FOR \"" + triggerClassName + ".createIndex\"");
-//            stmt.execute("CREATE ALIAS FTL_DROP_INDEX FOR \"" + triggerClassName + ".dropIndex\"");
             stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + FullTextStoredProcedures.class.getName() + ".search\"");
             LOG.info("Fulltext aliases created");
         } catch (SQLException exc) {
@@ -224,18 +228,72 @@ public class FullTextSearchProvider {
         //
         // Delete the Lucene index
         //
-        indexService.clearIndex();
+        ftl.clearIndex();
     }
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
             throws SQLException {
-        return indexService.search(schema, table, queryText, limit, offset);
+        return ftl.search(schema, table, queryText, limit, offset);
     }
 
     public void shutdown() {
-        indexService.shutdown();
+        ftl.shutdown();
     }
 
-    public void reindexAll(Connection con) throws SQLException {
-        indexService.reindexAll(con, indexTables, schemaName);
+    public void reindex(Connection conn, String tableName, String schemaName) throws SQLException {
+        //
+        // Build the SELECT statement for just the indexed columns
+        //
+        TableData tableData = DbUtils.getTableData(conn, tableName, schemaName);
+        if (tableData.getDbIdColumnPosition() == -1) {
+            LOG.debug("Table {} has not dbId column", tableName);
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT DB_ID");
+        for (int index : tableData.getIndexColumns()) {
+            sb.append(", ").append(tableData.getColumnNames().get(index));
+        }
+        sb.append(" FROM ").append(tableName);
+        Object[] row = new Object[tableData.getColumnNames().size()];
+        //
+        // Index each row in the table
+        //
+        try (Statement qstmt = conn.createStatement();
+             ResultSet rs = qstmt.executeQuery(sb.toString())) {
+            while (rs.next()) {
+                row[tableData.getDbIdColumnPosition()] = rs.getObject(1);
+                int i = 2;
+                for (int index : tableData.getIndexColumns()) {
+                    row[index] = rs.getObject(i++);
+                }
+                ftl.indexRow(row, tableData);
+            }
+        }
+        //
+        // Commit the index updates
+        //
+        ftl.commitIndex();
+    }
+
+    public void reindexAll(Connection conn) throws SQLException {
+        reindexAll(conn, indexTables, schemaName);
+    }
+    private void reindexAll(Connection conn, List<String> tables, String schema) throws SQLException {
+        LOG.info("Rebuilding the Lucene search index");
+        try {
+            //
+            // Delete the current Lucene index
+            //
+            ftl.clearIndex();
+            //
+            // Reindex each table
+            //
+            for (String tableName : tables) {
+                reindex(conn, tableName, schema);
+            }
+        } catch (SQLException exc) {
+            throw new SQLException("Unable to rebuild the Lucene index", exc);
+        }
+        LOG.info("Lucene search index successfully rebuilt");
     }
 }

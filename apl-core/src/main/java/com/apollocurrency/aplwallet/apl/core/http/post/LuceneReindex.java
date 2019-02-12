@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -34,7 +34,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class LuceneReindex extends AbstractAPIRequestHandler {
-    private final FullTextSearchProvider fullTextSearchProvider = CDI.current().select(FullTextSearchProvider.class).get();
+    private final FullTextSearchService fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
     private static class LuceneReindexHolder {
         private static final LuceneReindex INSTANCE = new LuceneReindex();
     }

@@ -29,4 +29,4 @@ INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
 -- set here last value from AplDbVersion
 INSERT into PUBLIC.VERSION values(251);
 INSERT INTO FTL.INDEXES (schema, table, columns)
-                         VALUES('PUBLIC', 'currency', 'code,name,description');
+                         VALUES('PUBLIC', 'CURRENCY', 'code,name,description');

@@ -28,7 +28,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
      */
-    private LuceneFullTextSearchEngine ftl;
+    private FullTextSearchEngine ftl;
     private TableData tableData;
 
 
@@ -53,7 +53,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
             throws SQLException {
         this.tableData = readTableData(schema, table);
-        this.ftl = CDI.current().select(LuceneFullTextSearchEngine.class).get();
+        this.ftl = CDI.current().select(FullTextSearchEngine.class).get();
     }
 
     /**
@@ -82,10 +82,6 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      */
     @Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
-        //
-        // Ignore the trigger if it is not enabled
-        //
-
         //
         // Commit the change immediately if we are not in a transaction
         //

@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchProvider;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -38,8 +38,7 @@ import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
- * Note, that while creating instance of {@link BasicDb} {@link FullText} will
- * be also enabled, so use it carefully
+ * can be initialized with optional fulltext support by using {@link FullTextSearchService} in constructor
  */
 public class BasicDb implements DataSource {
     private static final Logger LOG = getLogger(BasicDb.class);
@@ -109,8 +108,8 @@ public class BasicDb implements DataSource {
     private final int maxMemoryRows;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-    private  FullTextSearchProvider fullTextSearchProvider;
-    public BasicDb(DbProperties dbProperties, FullTextSearchProvider fullTextSearchProvider) {
+    private FullTextSearchService fullTextSearchProvider;
+    public BasicDb(DbProperties dbProperties, FullTextSearchService fullTextSearchProvider) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;

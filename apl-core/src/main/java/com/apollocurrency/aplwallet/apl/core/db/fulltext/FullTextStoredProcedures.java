@@ -17,7 +17,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  */
 public class FullTextStoredProcedures {
-    private static FullTextSearchProvider fullTextSearchProvider = CDI.current().select(FullTextSearchProvider.class).get();
+    private static FullTextSearchServiceImpl fullTextSearchProvider = CDI.current().select(FullTextSearchServiceImpl.class).get();
     public static ResultSet search(String schema, String table, String queryText, int limit, int offset)
             throws SQLException {
         return fullTextSearchProvider.search(schema, table, queryText, limit, offset);

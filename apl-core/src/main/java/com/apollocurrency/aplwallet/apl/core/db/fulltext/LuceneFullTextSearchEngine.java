@@ -37,10 +37,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class LuceneFullTextSearchEngine {
+public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
 
     /** Index lock */
@@ -71,6 +72,10 @@ public class LuceneFullTextSearchEngine {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void indexRow(Object[] row, TableData tableData) throws SQLException {
             indexLock.readLock().lock();
             try {
@@ -99,13 +104,11 @@ public class LuceneFullTextSearchEngine {
                 indexLock.readLock().unlock();
             }
         }
+
     /**
-     * Update the Lucene index for a committed row
-     *
-     * @param   oldRow              Old row column data
-     * @param   newRow              New row column data
-     * @throws  SQLException        Unable to commit row
+     * {@inheritDoc}
      */
+    @Override
     public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
         if (oldRow != null) {
             if (newRow != null) {
@@ -131,6 +134,10 @@ public class LuceneFullTextSearchEngine {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void init() throws IOException {
         boolean obtainedUpdateLock = false;
         if (!indexLock.writeLock().hasLock()) {
@@ -164,11 +171,11 @@ public class LuceneFullTextSearchEngine {
             }
         }
     }
+
     /**
-     * Commit the index updates
-     *
-     * @throws  SQLException        Unable to commit index updates
+     * {@inheritDoc}
      */
+    @Override
     public void commitIndex() throws SQLException {
         indexLock.writeLock().lock();
         try {
@@ -186,24 +193,43 @@ public class LuceneFullTextSearchEngine {
             indexLock.writeLock().unlock();
         }
     }
+
     /**
-     * Search the Lucene index
+     * Remove the Lucene index files
      *
-     * The result set will have the following columns:
-     *   SCHEMA  - Schema name (String)
-     *   TABLE   - Table name (String)
-     *   COLUMNS - Primary key column names (String[]) - this is always DB_ID
-     *   KEYS    - Primary key values (Long[]) - this is always the DB_ID value for the table row
-     *   SCORE   - Lucene score (Float)
-     *
-     * @param   schema              Schema name
-     * @param   table               Table name
-     * @param   queryText           Query expression
-     * @param   limit               Number of rows to return
-     * @param   offset              Offset with result set
-     * @return                      Search results
-     * @throws  SQLException        Unable to search the index
+     * @throws  SQLException        I/O error occurred
      */
+    @Override
+    public void clearIndex() throws SQLException {
+        indexLock.writeLock().lock();
+        try {
+            try {
+                //
+                // Delete the index files
+                //
+                shutdown();
+                try (Stream<Path> stream = Files.list(indexDirPath)) {
+                    Path[] paths = stream.toArray(Path[]::new);
+                    for (Path path : paths) {
+                        Files.delete(path);
+                    }
+                }
+                init();
+                LOG.info("Lucene search index deleted");
+            }
+            catch (IOException exc) {
+                LOG.error("Unable to remove Lucene index files", exc);
+                throw new SQLException("Unable to remove Lucene index files", exc);
+            }
+        }
+        finally {
+            indexLock.writeLock().unlock();
+        }
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
             throws SQLException {
         //
@@ -255,10 +281,10 @@ public class LuceneFullTextSearchEngine {
         return result;
     }
 
-
     /**
-     * Remove Lucene index access
+     * {@inheritDoc}
      */
+    @Override
     public void shutdown() {
         indexLock.writeLock().lock();
         try {
