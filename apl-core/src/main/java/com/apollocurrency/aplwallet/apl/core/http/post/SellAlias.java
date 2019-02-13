@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -78,7 +77,7 @@ public final class SellAlias extends CreateTransaction {
             return INCORRECT_ALIAS_OWNER;
         }
 
-        Attachment attachment = new MessagingAliasSell(alias.getAliasName(), priceATM);
+        Attachment attachment = new Attachment.MessagingAliasSell(alias.getAliasName(), priceATM);
         return createTransaction(req, owner, recipientId, 0, attachment);
     }
 }

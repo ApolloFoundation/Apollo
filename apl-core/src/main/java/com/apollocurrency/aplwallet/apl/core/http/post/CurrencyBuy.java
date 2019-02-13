@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchangeBuy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -72,7 +71,7 @@ public final class CurrencyBuy extends CreateTransaction {
         long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = ParameterParser.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
+        Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

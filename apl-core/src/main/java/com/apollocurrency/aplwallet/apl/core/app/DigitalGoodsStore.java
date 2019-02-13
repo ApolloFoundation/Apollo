@@ -28,9 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -324,7 +321,7 @@ public final class DigitalGoodsStore {
         private long priceATM;
         private boolean delisted;
 
-        private Goods(Transaction transaction, DigitalGoodsListing attachment) {
+        private Goods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
             this.id = transaction.getId();
             this.dbKey = goodsDbKeyFactory.newKey(this.id);
             this.sellerId = transaction.getSenderId();
@@ -706,7 +703,7 @@ public final class DigitalGoodsStore {
         private long discountATM;
         private long refundATM;
 
-        private Purchase(Transaction transaction, DigitalGoodsPurchase attachment, long sellerId) {
+        private Purchase(Transaction transaction, Attachment.DigitalGoodsPurchase attachment, long sellerId) {
             this.id = transaction.getId();
             this.dbKey = purchaseDbKeyFactory.newKey(this.id);
             this.buyerId = transaction.getSenderId();
@@ -920,7 +917,7 @@ public final class DigitalGoodsStore {
 
     }
 
-    public static void listGoods(Transaction transaction, DigitalGoodsListing attachment) {
+    public static void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
         Goods goods = new Goods(transaction, attachment);
         Tag.add(goods);
         Goods.goodsTable.insert(goods);
@@ -957,7 +954,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    public static void purchase(Transaction transaction,  DigitalGoodsPurchase attachment) {
+    public static void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
@@ -974,7 +971,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    public static void deliver(Transaction transaction, DigitalGoodsDelivery attachment) {
+    public static void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
         Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
         purchase.setPending(false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());

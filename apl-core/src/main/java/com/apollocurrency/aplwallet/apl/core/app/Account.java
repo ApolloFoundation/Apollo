@@ -45,9 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRecipients;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -372,7 +370,7 @@ public final class Account {
                         publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getRecipientId()));
                     }
                     if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                        ShufflingRecipients shufflingRecipients = (ShufflingRecipients) transaction.getAttachment();
+                        Attachment.ShufflingRecipients shufflingRecipients = (Attachment.ShufflingRecipients) transaction.getAttachment();
                         for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
                             publicKeyCache.remove(accountDbKeyFactory.newKey(Account.getId(publicKey)));
                         }
@@ -1663,7 +1661,7 @@ public final class Account {
         }
     }
 
-    public void payDividends(final long transactionId, ColoredCoinsDividendPayment attachment) {
+    public void payDividends(final long transactionId, Attachment.ColoredCoinsDividendPayment attachment) {
         long totalDividend = 0;
         List<AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<AccountAsset> iterator = getAssetAccounts(attachment.getAssetId(), attachment.getHeight(), 0, -1)) {

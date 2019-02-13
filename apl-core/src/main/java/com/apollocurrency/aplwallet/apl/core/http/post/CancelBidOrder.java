@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsBidOrderCancellation;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -55,7 +54,7 @@ public final class CancelBidOrder extends CreateTransaction {
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;
         }
-        Attachment attachment = new ColoredCoinsBidOrderCancellation(orderId);
+        Attachment attachment = new Attachment.ColoredCoinsBidOrderCancellation(orderId);
         return createTransaction(req, account, attachment);
     }
 

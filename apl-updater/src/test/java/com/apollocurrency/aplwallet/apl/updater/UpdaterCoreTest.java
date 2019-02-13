@@ -21,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
@@ -47,7 +46,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class UpdaterCoreTest {
 
-    private UpdateAttachment attachment = UpdateAttachment.getAttachment(
+    private Attachment.UpdateAttachment attachment = Attachment.UpdateAttachment.getAttachment(
             Platform.current(),
             Architecture.current(),
             new DoubleByteArrayTuple(new byte[0], new byte[0]),

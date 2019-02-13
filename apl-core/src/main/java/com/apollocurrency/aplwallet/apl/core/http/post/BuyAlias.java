@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasBuy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -57,7 +56,7 @@ public final class BuyAlias extends CreateTransaction {
             return INCORRECT_ALIAS_NOTFORSALE;
         }
         long sellerId = alias.getAccountId();
-        Attachment attachment = new MessagingAliasBuy(alias.getAliasName());
+        Attachment attachment = new Attachment.MessagingAliasBuy(alias.getAliasName());
         return createTransaction(req, buyer, sellerId, amountATM, attachment);
     }
 }

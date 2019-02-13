@@ -37,8 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.app.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.app.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionScheduler;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchangeBuy;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -84,7 +82,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = ParameterParser.getSenderAccount(req);
                 byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
-                Attachment attachment = new MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
+                Attachment attachment = new Attachment.MonetarySystemExchangeBuy(currency.getId(), rateATM, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
@@ -105,7 +103,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 response.put("fullHash", transaction.getFullHashString());
             }
 
-            MonetarySystemExchangeBuy attachment = (MonetarySystemExchangeBuy)transaction.getAttachment();
+            Attachment.MonetarySystemExchangeBuy attachment = (Attachment.MonetarySystemExchangeBuy)transaction.getAttachment();
             Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
             lookupBlockchain().updateLock();
@@ -170,7 +168,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     || transaction.getPhasing() != null) {
                 return false;
             }
-            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
             if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
                 return false;
             }

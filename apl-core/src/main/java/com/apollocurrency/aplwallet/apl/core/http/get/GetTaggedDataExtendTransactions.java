@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -59,7 +58,7 @@ public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHan
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = lookupBlockchain();
-        Filter<Appendix> filter = (appendix) -> ! (appendix instanceof TaggedDataExtend);
+        Filter<Appendix> filter = (appendix) -> ! (appendix instanceof Attachment.TaggedDataExtend);
         extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(transactionId), filter, false)));
         response.put("extendTransactions", jsonArray);
         return response;

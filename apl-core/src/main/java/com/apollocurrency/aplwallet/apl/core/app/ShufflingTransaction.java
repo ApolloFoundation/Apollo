@@ -21,15 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCancellation;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCreation;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingProcessing;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRecipients;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRegistration;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingVerification;
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -113,18 +106,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
-            return new ShufflingCreation(buffer);
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ShufflingCreation(buffer);
         }
 
         @Override
-        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new ShufflingCreation(attachmentData);
+        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            return new Attachment.ShufflingCreation(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+            Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             long amount = attachment.getAmount();
             if (holdingType == HoldingType.APL) {
@@ -164,7 +157,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+            Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
@@ -184,13 +177,13 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+            Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             Shuffling.addShuffling(transaction, attachment);
         }
 
         @Override
         public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+            Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
@@ -202,7 +195,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+            Attachment.ShufflingCreation attachment = (Attachment.ShufflingCreation) transaction.getAttachment();
             if (attachment.getHoldingType() != HoldingType.CURRENCY) {
                 return false;
             }
@@ -236,18 +229,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
-            return new ShufflingRegistration(buffer);
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ShufflingRegistration(buffer);
         }
 
         @Override
-        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new ShufflingRegistration(attachmentData);
+        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            return new Attachment.ShufflingRegistration(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
+            Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
@@ -270,7 +263,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
+            Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             return TransactionType.isDuplicate(SHUFFLING_REGISTRATION,
                     Long.toUnsignedString(shuffling.getId()) + "." + Long.toUnsignedString(transaction.getSenderId()), duplicates, true)
@@ -280,7 +273,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
+            Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
@@ -301,14 +294,14 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
+            Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.addParticipant(transaction.getSenderId());
         }
 
         @Override
         public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
+            Attachment.ShufflingRegistration attachment = (Attachment.ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
@@ -344,18 +337,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new ShufflingProcessing(buffer);
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ShufflingProcessing(buffer);
         }
 
         @Override
-        public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new ShufflingProcessing(attachmentData);
+        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.ShufflingProcessing(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ShufflingProcessing attachment = (ShufflingProcessing)transaction.getAttachment();
+            Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
@@ -409,7 +402,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ShufflingProcessing attachment = (ShufflingProcessing) transaction.getAttachment();
+            Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             return TransactionType.isDuplicate(SHUFFLING_PROCESSING, Long.toUnsignedString(shuffling.getId()), duplicates, true);
         }
@@ -421,7 +414,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            ShufflingProcessing attachment = (ShufflingProcessing)transaction.getAttachment();
+            Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.updateParticipantData(transaction, attachment);
         }
@@ -437,7 +430,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         public boolean isPruned(long transactionId) {
             Transaction transaction = blockchain.getTransaction(transactionId);
-            ShufflingProcessing attachment = (ShufflingProcessing)transaction.getAttachment();
+            Attachment.ShufflingProcessing attachment = (Attachment.ShufflingProcessing)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
 
@@ -466,18 +459,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new ShufflingRecipients(buffer);
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ShufflingRecipients(buffer);
         }
 
         @Override
-       public  AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new ShufflingRecipients(attachmentData);
+       public  Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            return new Attachment.ShufflingRecipients(attachmentData);
         }
 
         @Override
        public  void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ShufflingRecipients attachment = (ShufflingRecipients)transaction.getAttachment();
+            Attachment.ShufflingRecipients attachment = (Attachment.ShufflingRecipients)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
@@ -524,7 +517,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ShufflingRecipients attachment = (ShufflingRecipients) transaction.getAttachment();
+            Attachment.ShufflingRecipients attachment = (Attachment.ShufflingRecipients) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             return TransactionType.isDuplicate(SHUFFLING_PROCESSING, Long.toUnsignedString(shuffling.getId()), duplicates, true);
         }
@@ -536,7 +529,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            ShufflingRecipients attachment = (ShufflingRecipients)transaction.getAttachment();
+            Attachment.ShufflingRecipients attachment = (Attachment.ShufflingRecipients)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.updateRecipients(transaction, attachment);
         }
@@ -569,18 +562,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
-            return new ShufflingVerification(buffer);
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new Attachment.ShufflingVerification(buffer);
         }
 
         @Override
-        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new ShufflingVerification(attachmentData);
+        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            return new Attachment.ShufflingVerification(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ShufflingVerification attachment = (ShufflingVerification) transaction.getAttachment();
+            Attachment.ShufflingVerification attachment = (Attachment.ShufflingVerification) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
@@ -608,7 +601,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ShufflingVerification attachment = (ShufflingVerification) transaction.getAttachment();
+            Attachment.ShufflingVerification attachment = (Attachment.ShufflingVerification) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             return TransactionType.isDuplicate(SHUFFLING_VERIFICATION,
                     Long.toUnsignedString(shuffling.getId()) + "." + Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
@@ -621,7 +614,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            ShufflingVerification attachment = (ShufflingVerification) transaction.getAttachment();
+            Attachment.ShufflingVerification attachment = (Attachment.ShufflingVerification) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.verify(transaction.getSenderId());
         }
@@ -660,18 +653,18 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new ShufflingCancellation(buffer);
+        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.ShufflingCancellation(buffer);
         }
 
         @Override
-        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new ShufflingCancellation(attachmentData);
+        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            return new Attachment.ShufflingCancellation(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ShufflingCancellation attachment = (ShufflingCancellation) transaction.getAttachment();
+            Attachment.ShufflingCancellation attachment = (Attachment.ShufflingCancellation) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
@@ -705,7 +698,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (dataProcessingTransaction == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }
-            ShufflingProcessing shufflingProcessing = (ShufflingProcessing) dataProcessingTransaction.getAttachment();
+            Attachment.ShufflingProcessing shufflingProcessing = (Attachment.ShufflingProcessing) dataProcessingTransaction.getAttachment();
             if (!Arrays.equals(shufflingProcessing.getHash(), attachment.getHash())) {
                 throw new AplException.NotValidException("Blame data hash doesn't match processing data hash");
             }
@@ -722,7 +715,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
        public  boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ShufflingCancellation attachment = (ShufflingCancellation) transaction.getAttachment();
+            Attachment.ShufflingCancellation attachment = (Attachment.ShufflingCancellation) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             return TransactionType.isDuplicate(SHUFFLING_VERIFICATION, // use VERIFICATION for unique type
                     Long.toUnsignedString(shuffling.getId()) + "." + Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
@@ -735,7 +728,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            ShufflingCancellation attachment = (ShufflingCancellation) transaction.getAttachment();
+            Attachment.ShufflingCancellation attachment = (Attachment.ShufflingCancellation) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             ShufflingParticipant participant = ShufflingParticipant.getParticipant(shuffling.getId(), senderAccount.getId());
             shuffling.cancelBy(participant, attachment.getBlameData(), attachment.getKeySeeds());

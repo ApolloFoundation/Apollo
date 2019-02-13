@@ -33,9 +33,6 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -385,7 +382,7 @@ public class TaggedData {
     private int blockTimestamp;
     private int height;
 
-    public TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
+    public TaggedData(Transaction transaction, Attachment.TaggedDataAttachment attachment, int blockTimestamp, int height) {
         this.id = transaction.getId();
         this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
@@ -511,7 +508,7 @@ public class TaggedData {
         return blockTimestamp;
     }
 
-    public static void add(TransactionImpl transaction, TaggedDataUpload attachment) {
+    public static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
@@ -525,7 +522,7 @@ public class TaggedData {
         timestampTable.insert(timestamp);
     }
 
-    public static void extend(Transaction transaction, TaggedDataExtend attachment) {
+    public static void extend(Transaction transaction, Attachment.TaggedDataExtend attachment) {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         Timestamp timestamp = timestampTable.get(dbKey);
@@ -555,7 +552,7 @@ public class TaggedData {
         }
     }
 
-    public static void restore(Transaction transaction, TaggedDataUpload attachment, int blockTimestamp, int height) {
+    public static void restore(Transaction transaction, Attachment.TaggedDataUpload attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
         Tag.add(taggedData, height);

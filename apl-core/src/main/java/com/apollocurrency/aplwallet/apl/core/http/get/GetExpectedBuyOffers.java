@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -54,8 +53,8 @@ public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
     }
 
     private final Comparator<Transaction> rateComparator = (o1, o2) -> {
-        MonetarySystemPublishExchangeOffer a1 = (MonetarySystemPublishExchangeOffer)o1.getAttachment();
-        MonetarySystemPublishExchangeOffer a2 = (MonetarySystemPublishExchangeOffer)o2.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer a1 = (Attachment.MonetarySystemPublishExchangeOffer)o1.getAttachment();
+        Attachment.MonetarySystemPublishExchangeOffer a2 = (Attachment.MonetarySystemPublishExchangeOffer)o2.getAttachment();
         return Long.compare(a2.getBuyRateATM(), a1.getBuyRateATM());
     };
 
@@ -73,7 +72,7 @@ public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+            Attachment.MonetarySystemPublishExchangeOffer attachment = (Attachment.MonetarySystemPublishExchangeOffer)transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

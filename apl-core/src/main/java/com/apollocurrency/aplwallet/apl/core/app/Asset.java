@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -107,7 +106,7 @@ public final class Asset {
         return assetTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC ");
     }
 
-    public static void addAsset(Transaction transaction, ColoredCoinsAssetIssuance attachment) {
+    public static void addAsset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
         assetTable.insert(new Asset(transaction, attachment));
     }
 
@@ -130,7 +129,7 @@ public final class Asset {
     private long quantityATU;
     private final byte decimals;
 
-    private Asset(Transaction transaction, ColoredCoinsAssetIssuance attachment) {
+    private Asset(Transaction transaction, Attachment.ColoredCoinsAssetIssuance attachment) {
         this.assetId = transaction.getId();
         this.dbKey = assetDbKeyFactory.newKey(this.assetId);
         this.accountId = transaction.getSenderId();

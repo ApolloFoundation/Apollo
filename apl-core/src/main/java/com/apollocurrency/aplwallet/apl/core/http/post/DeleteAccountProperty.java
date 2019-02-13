@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAccountPropertyDelete;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -69,7 +68,7 @@ public final class DeleteAccountProperty extends CreateTransaction {
         if (accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
             return JSONResponses.INCORRECT_PROPERTY;
         }
-        Attachment attachment = new MessagingAccountPropertyDelete(accountProperty.getId());
+        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty.getId());
         return createTransaction(req, senderAccount, recipientId, 0, attachment);
 
     }

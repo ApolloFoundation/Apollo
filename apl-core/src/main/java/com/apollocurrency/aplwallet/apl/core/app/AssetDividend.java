@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -97,7 +96,7 @@ public final class AssetDividend {
         return null;
     }
 
-    static AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
+    static AssetDividend addAssetDividend(long transactionId, Attachment.ColoredCoinsDividendPayment attachment,
                                           long totalDividend, long numAccounts) {
         AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);
@@ -118,7 +117,7 @@ public final class AssetDividend {
     private final int timestamp;
     private final int height;
 
-    private AssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
+    private AssetDividend(long transactionId, Attachment.ColoredCoinsDividendPayment attachment,
                           long totalDividend, long numAccounts) {
         this.id = transactionId;
         this.dbKey = dividendDbKeyFactory.newKey(this.id);

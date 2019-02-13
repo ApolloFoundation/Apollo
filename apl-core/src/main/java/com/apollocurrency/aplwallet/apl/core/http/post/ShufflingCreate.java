@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCreation;
 import org.json.simple.JSONStreamAware;
 
 public final class ShufflingCreate extends CreateTransaction {
@@ -63,7 +62,7 @@ public final class ShufflingCreate extends CreateTransaction {
         byte participantCount = ParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
         short registrationPeriod = (short) ParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
-        Attachment attachment = new ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
+        Attachment attachment = new Attachment.ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
         Account account = ParameterParser.getSenderAccount(req);
         if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot start a shuffling");

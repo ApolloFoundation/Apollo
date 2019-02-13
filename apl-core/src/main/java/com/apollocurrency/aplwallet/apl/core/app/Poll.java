@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -197,7 +196,7 @@ public final class Poll extends AbstractPoll {
         return pollTable.getCount();
     }
 
-    public static void addPoll(Transaction transaction, MessagingPollCreation attachment) {
+    public static void addPoll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
         Poll poll = new Poll(transaction, attachment);
         pollTable.insert(poll);
     }
@@ -235,7 +234,7 @@ public final class Poll extends AbstractPoll {
     private final byte maxRangeValue;
     private final int timestamp;
 
-    private Poll(Transaction transaction, MessagingPollCreation attachment) {
+    private Poll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
         super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
         this.dbKey = pollDbKeyFactory.newKey(this.id);
         this.name = attachment.getPollName();

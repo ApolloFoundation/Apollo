@@ -23,8 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasAssignment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -185,7 +183,7 @@ public final class Alias {
         aliasTable.delete(alias);
     }
 
-    public static void addOrUpdateAlias(Transaction transaction, MessagingAliasAssignment attachment) {
+    public static void addOrUpdateAlias(Transaction transaction, Attachment.MessagingAliasAssignment attachment) {
         Alias alias = getAlias(attachment.getAliasName());
         if (alias == null) {
             alias = new Alias(transaction, attachment);
@@ -197,7 +195,7 @@ public final class Alias {
         aliasTable.insert(alias);
     }
 
-    public static void sellAlias(Transaction transaction, MessagingAliasSell attachment) {
+    public static void sellAlias(Transaction transaction, Attachment.MessagingAliasSell attachment) {
         final String aliasName = attachment.getAliasName();
         final long priceATM = attachment.getPriceATM();
         final long buyerId = transaction.getRecipientId();
@@ -239,7 +237,7 @@ public final class Alias {
     private String aliasURI;
     private int timestamp;
 
-    private Alias(Transaction transaction, MessagingAliasAssignment attachment) {
+    private Alias(Transaction transaction, Attachment.MessagingAliasAssignment attachment) {
         this.id = transaction.getId();
         this.dbKey = aliasDbKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();

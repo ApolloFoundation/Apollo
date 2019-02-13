@@ -31,8 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UnencryptedDigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -106,9 +104,9 @@ public final class DGSDelivery extends CreateTransaction {
         }
 
         Attachment attachment = encryptedGoods == null ?
-                new UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
+                new Attachment.UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
                         goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
-                new DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
+                new Attachment.DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
                         goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 

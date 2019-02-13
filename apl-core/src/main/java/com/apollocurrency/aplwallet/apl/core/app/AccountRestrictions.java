@@ -38,7 +38,6 @@ import java.util.Map;
 import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -70,7 +69,7 @@ public final class AccountRestrictions {
             return phasingControlTable.getAll(from, to);
         }
 
-        public static void set(Account senderAccount, SetPhasingOnly attachment) {
+        public static void set(Account senderAccount, Attachment.SetPhasingOnly attachment) {
             PhasingParams phasingParams = attachment.getPhasingParams();
             if (phasingParams.getVoteWeighting().getVotingModel() == VotingModel.NONE) {
                 //no voting - remove the control

@@ -24,9 +24,6 @@ import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsBidOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -49,7 +46,7 @@ public abstract class Order {
     private final short transactionIndex;
     private final int transactionHeight;
     private long quantityATU;
-    private Order(Transaction transaction, ColoredCoinsOrderPlacement attachment) {
+    private Order(Transaction transaction, Attachment.ColoredCoinsOrderPlacement attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.assetId = attachment.getAssetId();
@@ -227,7 +224,7 @@ public abstract class Order {
         };
         private final DbKey dbKey;
 
-        private Ask(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
+        private Ask(Transaction transaction, Attachment.ColoredCoinsAskOrderPlacement attachment) {
             super(transaction, attachment);
             this.dbKey = askOrderDbKeyFactory.newKey(super.id);
         }
@@ -281,7 +278,7 @@ public abstract class Order {
             }
         }
 
-        public static void addOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
+        public static void addOrder(Transaction transaction, Attachment.ColoredCoinsAskOrderPlacement attachment) {
             Ask order = new Ask(transaction, attachment);
             askOrderTable.insert(order);
             matchOrders(attachment.getAssetId());
@@ -348,7 +345,7 @@ public abstract class Order {
         };
         private final DbKey dbKey;
 
-        private Bid(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
+        private Bid(Transaction transaction, Attachment.ColoredCoinsBidOrderPlacement attachment) {
             super(transaction, attachment);
             this.dbKey = bidOrderDbKeyFactory.newKey(super.id);
         }
@@ -402,7 +399,7 @@ public abstract class Order {
             }
         }
 
-        public static void addOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
+        public static void addOrder(Transaction transaction, Attachment.ColoredCoinsBidOrderPlacement attachment) {
             Bid order = new Bid(transaction, attachment);
             bidOrderTable.insert(order);
             matchOrders(attachment.getAssetId());

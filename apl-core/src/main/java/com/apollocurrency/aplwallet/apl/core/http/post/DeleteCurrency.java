@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyDeletion;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +52,7 @@ public final class DeleteCurrency extends CreateTransaction {
         if (!currency.canBeDeletedBy(account.getId())) {
             return JSONResponses.CANNOT_DELETE_CURRENCY;
         }
-        Attachment attachment = new MonetarySystemCurrencyDeletion(currency.getId());
+        Attachment attachment = new Attachment.MonetarySystemCurrencyDeletion(currency.getId());
         return createTransaction(req, account, attachment);
     }
 }

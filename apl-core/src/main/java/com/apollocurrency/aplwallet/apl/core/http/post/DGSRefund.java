@@ -31,7 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsRefund;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -84,7 +83,7 @@ public final class DGSRefund extends CreateTransaction {
 
         Account buyerAccount = Account.getAccount(purchase.getBuyerId());
 
-        Attachment attachment = new DigitalGoodsRefund(purchase.getId(), refundATM);
+        Attachment attachment = new Attachment.DigitalGoodsRefund(purchase.getId(), refundATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

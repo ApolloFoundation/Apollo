@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasDelete;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -57,7 +56,7 @@ public final class DeleteAlias extends CreateTransaction {
             return INCORRECT_ALIAS_OWNER;
         }
 
-        final Attachment attachment = new MessagingAliasDelete(alias.getAliasName());
+        final Attachment attachment = new Attachment.MessagingAliasDelete(alias.getAliasName());
         return createTransaction(req, owner, attachment);
     }
 }

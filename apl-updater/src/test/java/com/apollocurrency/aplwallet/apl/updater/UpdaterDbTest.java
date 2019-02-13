@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -39,10 +38,10 @@ public class UpdaterDbTest {
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(Update.IMPORTANT, transaction.getType());
         Assert.assertEquals(104595, transaction.getHeight());
-        Assert.assertEquals(((UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
-        Assert.assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
-        Assert.assertEquals(((UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
-        Assert.assertEquals(Convert.toHexString(((UpdateAttachment) transaction.getAttachment()).getHash()), (
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
+        Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), (
                 "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
         Assert.assertTrue(updateTransaction.isUpdated());
     }
@@ -63,10 +62,10 @@ public class UpdaterDbTest {
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(Update.CRITICAL, transaction.getType());
         Assert.assertEquals(104671, transaction.getHeight());
-        Assert.assertEquals(((UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
-        Assert.assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.AMD64);
-        Assert.assertEquals(((UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
-        Assert.assertEquals(Convert.toHexString(((UpdateAttachment) transaction.getAttachment()).getHash()), ("a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.AMD64);
+        Assert.assertEquals(((Attachment.UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
+        Assert.assertEquals(Convert.toHexString(((Attachment.UpdateAttachment) transaction.getAttachment()).getHash()), ("a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
         Assert.assertFalse(updateTransaction.isUpdated());
     }
 
@@ -102,7 +101,7 @@ public class UpdaterDbTest {
 
                 ByteBuffer buffer = ByteBuffer.wrap(attachmentBytes);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                UpdateAttachment attachment = (UpdateAttachment) transactionType.parseAttachment(buffer);
+                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transactionType.parseAttachment(buffer);
                 SimpleTransaction simpleTransaction = new SimpleTransaction(id, transactionType, height);
                 simpleTransaction.setAttachment(attachment);
                 return simpleTransaction;

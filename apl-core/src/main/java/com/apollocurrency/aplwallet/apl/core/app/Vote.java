@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -88,7 +87,7 @@ public final class Vote {
         return voteTable.getBy(clause);
     }
 
-    public static Vote addVote(Transaction transaction, MessagingVoteCasting attachment) {
+    public static Vote addVote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
         Vote vote = new Vote(transaction, attachment);
         voteTable.insert(vote);
         return vote;
@@ -103,7 +102,7 @@ public final class Vote {
     private final long voterId;
     private final byte[] voteBytes;
 
-    private Vote(Transaction transaction, MessagingVoteCasting attachment) {
+    private Vote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
         this.id = transaction.getId();
         this.dbKey = voteDbKeyFactory.newKey(this.id);
         this.pollId = attachment.getPollId();

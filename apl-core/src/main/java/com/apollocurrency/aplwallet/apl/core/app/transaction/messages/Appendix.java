@@ -30,27 +30,27 @@ import org.json.simple.JSONObject;
 
 public interface Appendix {
 
-    public int getSize();
-    public int getFullSize();
-    public void putBytes(ByteBuffer buffer);
-    public JSONObject getJSONObject();
-    public byte getVersion();
-    public int getBaselineFeeHeight();
-    public Fee getBaselineFee(Transaction transaction);
-    public int getNextFeeHeight();
-    public Fee getNextFee(Transaction transaction);
-    public default boolean isPhasable() {return false;}
-    public boolean isPhased(Transaction transaction);
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-    public void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
-    public void validate(Transaction transaction, int blockHeight ) throws AplException.ValidationException;
+    int getSize();
+    int getFullSize();
+    void putBytes(ByteBuffer buffer);
+    JSONObject getJSONObject();
+    byte getVersion();
+    int getBaselineFeeHeight();
+    Fee getBaselineFee(Transaction transaction);
+    int getNextFeeHeight();
+    Fee getNextFee(Transaction transaction);
+    default boolean isPhasable() {return false;}
+    boolean isPhased(Transaction transaction);
+    void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
+    void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+    void validate(Transaction transaction, int blockHeight ) throws AplException.ValidationException;
 
-    public static boolean hasAppendix(String appendixName, JSONObject attachmentData) {
+    static boolean hasAppendix(String appendixName, JSONObject attachmentData) {
         return attachmentData.get("version." + appendixName) != null;
     }
 
-    public default void loadPrunable(Transaction transaction) {}
-    public default void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
-    public default String getAppendixName() { return null;}
+    default void loadPrunable(Transaction transaction) {}
+    default void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
+    default String getAppendixName() { return null;}
 
 }

@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
@@ -69,12 +68,12 @@ public abstract class Payment extends TransactionType {
         }
 
         @Override
-        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return Attachment.ORDINARY_PAYMENT;
         }
 
         @Override
-        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return Attachment.ORDINARY_PAYMENT;
         }
 
@@ -102,12 +101,12 @@ public abstract class Payment extends TransactionType {
         }
 
         @Override
-        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return Attachment.PRIVATE_PAYMENT;
         }
 
         @Override
-        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return Attachment.PRIVATE_PAYMENT;
         }
 

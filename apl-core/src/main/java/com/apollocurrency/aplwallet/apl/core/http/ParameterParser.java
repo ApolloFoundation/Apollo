@@ -94,7 +94,6 @@ import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -858,7 +857,7 @@ public final class ParameterParser {
         }
     }
 
-    public static TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
+    public static Attachment.TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -937,7 +936,7 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+        return new Attachment.TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
     }
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {

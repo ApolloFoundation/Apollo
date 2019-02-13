@@ -31,7 +31,6 @@ import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -172,7 +171,7 @@ public final class Currency {
     }
 
     static void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
-                            MonetarySystemCurrencyIssuance attachment) {
+                            Attachment.MonetarySystemCurrencyIssuance attachment) {
         Currency oldCurrency;
         if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
             oldCurrency.delete(event, eventId, senderAccount);
@@ -227,7 +226,7 @@ public final class Currency {
     private final long initialSupply;
     private CurrencySupply currencySupply;
 
-    private Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment) {
+    private Currency(Transaction transaction, Attachment.MonetarySystemCurrencyIssuance attachment) {
         this.currencyId = transaction.getId();
         this.dbKey = currencyDbKeyFactory.newKey(this.currencyId);
         this.accountId = transaction.getSenderId();

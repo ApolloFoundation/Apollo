@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
@@ -36,9 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingProcessing;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -80,7 +76,7 @@ public class TransactionImpl implements Transaction {
         private long feeATM;
         private TransactionType type;
         private byte version;
-        private AbstractAttachment attachment;
+        private Attachment.AbstractAttachment attachment;
 
         private long recipientId;
         private byte[] referencedTransactionFullHash;
@@ -108,7 +104,7 @@ public class TransactionImpl implements Transaction {
         }
 
         BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
-                    AbstractAttachment attachment) {
+                    Attachment.AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
@@ -160,7 +156,7 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl appendix(AbstractAttachment attachment) {
+        BuilderImpl appendix(Attachment.AbstractAttachment attachment) {
             this.attachment = attachment;
             return this;
         }
@@ -281,7 +277,7 @@ public class TransactionImpl implements Transaction {
     private final byte version;
     private final int timestamp;
     private final byte[] signature;
-    private final AbstractAttachment attachment;
+    private final Attachment.AbstractAttachment attachment;
     private final MessageAppendix message;
     private final EncryptedMessageAppendix encryptedMessage;
     private final EncryptToSelfMessageAppendix encryptToSelfMessage;
@@ -513,7 +509,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public AbstractAttachment getAttachment() {
+    public Attachment.AbstractAttachment getAttachment() {
         attachment.loadPrunable(this);
         return attachment;
     }
@@ -774,15 +770,15 @@ public class TransactionImpl implements Transaction {
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
         BuilderImpl builder = newTransactionBuilder(bytes);
         if (prunableAttachments != null) {
-            ShufflingProcessing shufflingProcessing = ShufflingProcessing.parse(prunableAttachments);
+            Attachment.ShufflingProcessing shufflingProcessing = Attachment.ShufflingProcessing.parse(prunableAttachments);
             if (shufflingProcessing != null) {
                 builder.appendix(shufflingProcessing);
             }
-            TaggedDataUpload taggedDataUpload = TaggedDataUpload.parse(prunableAttachments);
+            Attachment.TaggedDataUpload taggedDataUpload = Attachment.TaggedDataUpload.parse(prunableAttachments);
             if (taggedDataUpload != null) {
                 builder.appendix(taggedDataUpload);
             }
-            TaggedDataExtend taggedDataExtend = TaggedDataExtend.parse(prunableAttachments);
+            Attachment.TaggedDataExtend taggedDataExtend = Attachment.TaggedDataExtend.parse(prunableAttachments);
             if (taggedDataExtend != null) {
                 builder.appendix(taggedDataExtend);
             }

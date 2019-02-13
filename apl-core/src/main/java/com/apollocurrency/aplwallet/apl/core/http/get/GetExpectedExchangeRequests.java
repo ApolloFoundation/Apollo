@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchange;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -65,7 +64,7 @@ public final class GetExpectedExchangeRequests extends AbstractAPIRequestHandler
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            MonetarySystemExchange attachment = (MonetarySystemExchange) transaction.getAttachment();
+            Attachment.MonetarySystemExchange attachment = (Attachment.MonetarySystemExchange) transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

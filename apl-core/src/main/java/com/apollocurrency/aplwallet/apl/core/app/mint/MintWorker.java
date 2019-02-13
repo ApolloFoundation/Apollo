@@ -27,7 +27,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -208,7 +207,7 @@ public class MintWorker implements Runnable{
 
     private JSONObject currencyMint(byte[] keySeed, long currencyId, long nonce, long units, long counter) {
         JSONObject ecBlock = getECBlock();
-        Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
+        Attachment attachment = new Attachment.MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
         Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
                 (short) 120, attachment)
                 .timestamp(((Long) ecBlock.get("timestamp")).intValue())

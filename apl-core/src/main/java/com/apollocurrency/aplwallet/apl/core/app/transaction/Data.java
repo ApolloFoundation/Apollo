@@ -11,8 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -81,18 +79,18 @@ public abstract class Data extends TransactionType {
         }
 
         @Override
-        public TaggedDataUpload parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new TaggedDataUpload(buffer);
+        public Attachment.TaggedDataUpload parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.TaggedDataUpload(buffer);
         }
 
         @Override
-        public TaggedDataUpload parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new TaggedDataUpload(attachmentData);
+        public Attachment.TaggedDataUpload parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.TaggedDataUpload(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            TaggedDataUpload attachment = (TaggedDataUpload) transaction.getAttachment();
+            Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
             if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
@@ -123,7 +121,7 @@ public abstract class Data extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            TaggedDataUpload attachment = (TaggedDataUpload) transaction.getAttachment();
+            Attachment.TaggedDataUpload attachment = (Attachment.TaggedDataUpload) transaction.getAttachment();
             TaggedData.add((TransactionImpl) transaction, attachment);
         }
 
@@ -149,18 +147,18 @@ public abstract class Data extends TransactionType {
         }
 
         @Override
-        public TaggedDataExtend parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new TaggedDataExtend(buffer);
+        public Attachment.TaggedDataExtend parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new Attachment.TaggedDataExtend(buffer);
         }
 
         @Override
-        public TaggedDataExtend parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new TaggedDataExtend(attachmentData);
+        public Attachment.TaggedDataExtend parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new Attachment.TaggedDataExtend(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            TaggedDataExtend attachment = (TaggedDataExtend) transaction.getAttachment();
+            Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
             if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
@@ -172,7 +170,7 @@ public abstract class Data extends TransactionType {
                 throw new AplException.NotValidException("Transaction " + Long.toUnsignedString(attachment.getTaggedDataId()) + " is not a tagged data upload");
             }
             if (attachment.getData() != null) {
-                TaggedDataUpload taggedDataUpload = (TaggedDataUpload) uploadTransaction.getAttachment();
+                Attachment.TaggedDataUpload taggedDataUpload = (Attachment.TaggedDataUpload) uploadTransaction.getAttachment();
                 if (!Arrays.equals(attachment.getHash(), taggedDataUpload.getHash())) {
                     throw new AplException.NotValidException("Hashes don't match! Extend hash: " + Convert.toHexString(attachment.getHash()) + " upload hash: " + Convert.toHexString(taggedDataUpload.getHash()));
                 }
@@ -185,7 +183,7 @@ public abstract class Data extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            TaggedDataExtend attachment = (TaggedDataExtend) transaction.getAttachment();
+            Attachment.TaggedDataExtend attachment = (Attachment.TaggedDataExtend) transaction.getAttachment();
             TaggedData.extend(transaction, attachment);
         }
 

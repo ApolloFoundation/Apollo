@@ -23,8 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemReserveIncrease;
 import javax.enterprise.inject.spi.CDI;
 import java.util.EnumSet;
 import java.util.Set;
@@ -91,7 +89,7 @@ public enum CurrencyType {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
                 int finishHeight = attachment.getFinishValidationHeight(transaction);
                 if  (issuanceHeight <= finishHeight) {
@@ -115,7 +113,7 @@ public enum CurrencyType {
                 }
             }
             if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
-                MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
+                Attachment.MonetarySystemReserveIncrease attachment = (Attachment.MonetarySystemReserveIncrease) transaction.getAttachment();
                 if (currency != null && currency.getIssuanceHeight() <= attachment.getFinishValidationHeight(transaction)) {
                     throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                 }
@@ -128,7 +126,7 @@ public enum CurrencyType {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (attachment.getIssuanceHeight() != 0) {
                     throw new AplException.NotValidException("Issuance height for non-reservable currency must be 0");
                 }
@@ -153,7 +151,7 @@ public enum CurrencyType {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                Attachment.MonetarySystemCurrencyIssuance attachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
                     throw new AplException.NotValidException("Claimable currency must be reservable");
                 }
@@ -185,7 +183,7 @@ public enum CurrencyType {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                Attachment.MonetarySystemCurrencyIssuance issuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
                     HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
                     if (!CurrencyMinting.acceptedHashFunctions.contains(hashFunction)) {
@@ -209,7 +207,7 @@ public enum CurrencyType {
         @Override
         public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                Attachment.MonetarySystemCurrencyIssuance issuanceAttachment = (Attachment.MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
                         issuanceAttachment.getMaxDifficulty() != 0 ||
                         issuanceAttachment.getAlgorithm() != 0) {
@@ -299,7 +297,7 @@ public enum CurrencyType {
         }
     }
 
-    public static void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public static void validateCurrencyNaming(long issuerAccountId, Attachment.MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();

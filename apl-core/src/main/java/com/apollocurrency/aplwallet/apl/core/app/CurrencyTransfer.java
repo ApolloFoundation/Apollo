@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -142,7 +141,7 @@ public final class CurrencyTransfer {
         return currencyTransferTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    static CurrencyTransfer addTransfer(Transaction transaction, MonetarySystemCurrencyTransfer attachment) {
+    static CurrencyTransfer addTransfer(Transaction transaction, Attachment.MonetarySystemCurrencyTransfer attachment) {
         CurrencyTransfer transfer = new CurrencyTransfer(transaction, attachment);
         currencyTransferTable.insert(transfer);
         listeners.notify(transfer, Event.TRANSFER);
@@ -161,7 +160,7 @@ public final class CurrencyTransfer {
     private final long units;
     private final int timestamp;
 
-    private CurrencyTransfer(Transaction transaction, MonetarySystemCurrencyTransfer attachment) {
+    private CurrencyTransfer(Transaction transaction, Attachment.MonetarySystemCurrencyTransfer attachment) {
         this.id = transaction.getId();
         this.dbKey = currencyTransferDbKeyFactory.newKey(this.id);
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
