@@ -22,6 +22,21 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetIssuance;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderCancellation;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsDelivery;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsRefund;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemReserveClaim;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -578,12 +593,12 @@ public final class DebugTrace {
 
     private Map<String,String> getValues(long accountId, Transaction transaction, Attachment attachment, boolean isRecipient) {
         Map<String,String> map = getValues(accountId, false);
-        if (attachment instanceof Attachment.ColoredCoinsOrderPlacement) {
+        if (attachment instanceof ColoredCoinsOrderPlacement) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsOrderPlacement orderPlacement = (Attachment.ColoredCoinsOrderPlacement)attachment;
-            boolean isAsk = orderPlacement instanceof Attachment.ColoredCoinsAskOrderPlacement;
+            ColoredCoinsOrderPlacement orderPlacement = (ColoredCoinsOrderPlacement)attachment;
+            boolean isAsk = orderPlacement instanceof ColoredCoinsAskOrderPlacement;
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
             map.put("order", transaction.getStringId());
             map.put("order price", String.valueOf(orderPlacement.getPriceATM()));
@@ -599,16 +614,16 @@ public final class DebugTrace {
             map.put("order cost", orderCost.toString());
             String event = (isAsk ? "ask" : "bid") + " order";
             map.put("event", event);
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetIssuance) {
+        } else if (attachment instanceof ColoredCoinsAssetIssuance) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetIssuance assetIssuance = (Attachment.ColoredCoinsAssetIssuance)attachment;
+            ColoredCoinsAssetIssuance assetIssuance = (ColoredCoinsAssetIssuance)attachment;
             map.put("asset", transaction.getStringId());
             map.put("asset quantity", String.valueOf(assetIssuance.getQuantityATU()));
             map.put("event", "asset issuance");
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetTransfer) {
-            Attachment.ColoredCoinsAssetTransfer assetTransfer = (Attachment.ColoredCoinsAssetTransfer)attachment;
+        } else if (attachment instanceof ColoredCoinsAssetTransfer) {
+            ColoredCoinsAssetTransfer assetTransfer = (ColoredCoinsAssetTransfer)attachment;
             map.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
             long quantity = assetTransfer.getQuantityATU();
             if (! isRecipient) {
@@ -616,28 +631,28 @@ public final class DebugTrace {
             }
             map.put("asset quantity", String.valueOf(quantity));
             map.put("event", "asset transfer");
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetDelete) {
+        } else if (attachment instanceof ColoredCoinsAssetDelete) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetDelete assetDelete = (Attachment.ColoredCoinsAssetDelete)attachment;
+            ColoredCoinsAssetDelete assetDelete = (ColoredCoinsAssetDelete)attachment;
             map.put("asset", Long.toUnsignedString(assetDelete.getAssetId()));
             long quantity = assetDelete.getQuantityATU();
             map.put("asset quantity", String.valueOf(-quantity));
             map.put("event", "asset delete");
-        } else if (attachment instanceof Attachment.ColoredCoinsOrderCancellation) {
-            Attachment.ColoredCoinsOrderCancellation orderCancellation = (Attachment.ColoredCoinsOrderCancellation)attachment;
+        } else if (attachment instanceof ColoredCoinsOrderCancellation) {
+            ColoredCoinsOrderCancellation orderCancellation = (ColoredCoinsOrderCancellation)attachment;
             map.put("order", Long.toUnsignedString(orderCancellation.getOrderId()));
             map.put("event", "order cancel");
-        } else if (attachment instanceof Attachment.DigitalGoodsPurchase) {
-            Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase)transaction.getAttachment();
+        } else if (attachment instanceof DigitalGoodsPurchase) {
+            DigitalGoodsPurchase purchase = (DigitalGoodsPurchase)transaction.getAttachment();
             if (isRecipient) {
                 map = getValues(DigitalGoodsStore.Goods.getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
             map.put("purchase", transaction.getStringId());
-        } else if (attachment instanceof Attachment.DigitalGoodsDelivery) {
-            Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
+        } else if (attachment instanceof DigitalGoodsDelivery) {
+            DigitalGoodsDelivery delivery = (DigitalGoodsDelivery)transaction.getAttachment();
             DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(delivery.getPurchaseId());
             if (isRecipient) {
                 map = getValues(purchase.getBuyerId(), false);
@@ -656,8 +671,8 @@ public final class DebugTrace {
                 discount = - discount;
             }
             map.put("discount", String.valueOf(discount));
-        } else if (attachment instanceof Attachment.DigitalGoodsRefund) {
-            Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund)transaction.getAttachment();
+        } else if (attachment instanceof DigitalGoodsRefund) {
+            DigitalGoodsRefund refund = (DigitalGoodsRefund)transaction.getAttachment();
             if (isRecipient) {
                 map = getValues(DigitalGoodsStore.Purchase.getPurchase(refund.getPurchaseId()).getBuyerId(), false);
             }
@@ -679,8 +694,8 @@ public final class DebugTrace {
             } else {
                 map.put("recipient", Long.toUnsignedString(transaction.getRecipientId()));
             }
-        } else if (attachment instanceof Attachment.MonetarySystemPublishExchangeOffer) {
-            Attachment.MonetarySystemPublishExchangeOffer publishOffer = (Attachment.MonetarySystemPublishExchangeOffer)attachment;
+        } else if (attachment instanceof MonetarySystemPublishExchangeOffer) {
+            MonetarySystemPublishExchangeOffer publishOffer = (MonetarySystemPublishExchangeOffer)attachment;
             map.put("currency", Long.toUnsignedString(publishOffer.getCurrencyId()));
             map.put("offer", transaction.getStringId());
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateATM()));
@@ -694,13 +709,13 @@ public final class DebugTrace {
             BigInteger sellCost = BigInteger.valueOf(publishOffer.getSellRateATM()).multiply(BigInteger.valueOf(sellUnits));
             map.put("sell cost", sellCost.toString());
             map.put("event", "offer");
-        } else if (attachment instanceof Attachment.MonetarySystemCurrencyIssuance) {
-            Attachment.MonetarySystemCurrencyIssuance currencyIssuance = (Attachment.MonetarySystemCurrencyIssuance) attachment;
+        } else if (attachment instanceof MonetarySystemCurrencyIssuance) {
+            MonetarySystemCurrencyIssuance currencyIssuance = (MonetarySystemCurrencyIssuance) attachment;
             map.put("currency", transaction.getStringId());
             map.put("currency units", String.valueOf(currencyIssuance.getInitialSupply()));
             map.put("event", "currency issuance");
-        } else if (attachment instanceof Attachment.MonetarySystemCurrencyTransfer) {
-            Attachment.MonetarySystemCurrencyTransfer currencyTransfer = (Attachment.MonetarySystemCurrencyTransfer) attachment;
+        } else if (attachment instanceof MonetarySystemCurrencyTransfer) {
+            MonetarySystemCurrencyTransfer currencyTransfer = (MonetarySystemCurrencyTransfer) attachment;
             map.put("currency", Long.toUnsignedString(currencyTransfer.getCurrencyId()));
             long units = currencyTransfer.getUnits();
             if (!isRecipient) {
@@ -708,21 +723,21 @@ public final class DebugTrace {
             }
             map.put("currency units", String.valueOf(units));
             map.put("event", "currency transfer");
-        } else if (attachment instanceof Attachment.MonetarySystemReserveClaim) {
-            Attachment.MonetarySystemReserveClaim claim = (Attachment.MonetarySystemReserveClaim) attachment;
+        } else if (attachment instanceof MonetarySystemReserveClaim) {
+            MonetarySystemReserveClaim claim = (MonetarySystemReserveClaim) attachment;
             map.put("currency", Long.toUnsignedString(claim.getCurrencyId()));
             Currency currency = Currency.getCurrency(claim.getCurrencyId());
             map.put("currency units", String.valueOf(-claim.getUnits()));
             map.put("currency cost", String.valueOf(Math.multiplyExact(claim.getUnits(), currency.getCurrentReservePerUnitATM())));
             map.put("event", "currency claim");
-        } else if (attachment instanceof Attachment.MonetarySystemReserveIncrease) {
-            Attachment.MonetarySystemReserveIncrease reserveIncrease = (Attachment.MonetarySystemReserveIncrease) attachment;
+        } else if (attachment instanceof MonetarySystemReserveIncrease) {
+            MonetarySystemReserveIncrease reserveIncrease = (MonetarySystemReserveIncrease) attachment;
             map.put("currency", Long.toUnsignedString(reserveIncrease.getCurrencyId()));
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
             map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitATM(), currency.getReserveSupply())));
             map.put("event", "currency reserve");
-        } else if (attachment instanceof Attachment.ColoredCoinsDividendPayment) {
-            Attachment.ColoredCoinsDividendPayment dividendPayment = (Attachment.ColoredCoinsDividendPayment)attachment;
+        } else if (attachment instanceof ColoredCoinsDividendPayment) {
+            ColoredCoinsDividendPayment dividendPayment = (ColoredCoinsDividendPayment)attachment;
             long totalDividend = 0;
             String assetId = Long.toUnsignedString(dividendPayment.getAssetId());
             try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(dividendPayment.getAssetId(), dividendPayment.getHeight(), 0, -1)) {

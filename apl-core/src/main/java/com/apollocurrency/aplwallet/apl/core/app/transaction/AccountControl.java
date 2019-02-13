@@ -9,7 +9,10 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.nio.ByteBuffer;
@@ -55,24 +58,24 @@ public abstract class AccountControl extends TransactionType {
         }
 
         @Override
-        public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
+        public AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new AccountControlEffectiveBalanceLeasing(buffer);
         }
 
         @Override
-        public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.AccountControlEffectiveBalanceLeasing(attachmentData);
+        public AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new AccountControlEffectiveBalanceLeasing(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
+            AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
             Account.getAccount(transaction.getSenderId()).leaseEffectiveBalance(transaction.getRecipientId(), attachment.getPeriod());
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
+            AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
             if (transaction.getSenderId() == transaction.getRecipientId()) {
                 throw new AplException.NotValidException("Account cannot lease balance to itself");
             }
@@ -113,18 +116,18 @@ public abstract class AccountControl extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
-            return new Attachment.SetPhasingOnly(buffer);
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
+            return new SetPhasingOnly(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new Attachment.SetPhasingOnly(attachmentData);
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
+            return new SetPhasingOnly(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly) transaction.getAttachment();
+            SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
             VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
             attachment.getPhasingParams().validate();
             if (votingModel == VoteWeighting.VotingModel.NONE) {
@@ -160,7 +163,7 @@ public abstract class AccountControl extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly) transaction.getAttachment();
+            SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
             AccountRestrictions.PhasingOnly.set(senderAccount, attachment);
         }
 

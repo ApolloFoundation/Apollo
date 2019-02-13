@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
@@ -46,7 +47,7 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
     public UpdateData process(Transaction transaction) {
         if (updaterMediator.isUpdateTransaction(transaction)) {
             LOG.debug("Processing update transaction " + transaction.getId());
-            Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+            UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
             if (attachment.getAppVersion().greaterThan(updaterMediator.getWalletVersion())) {
                 Platform currentPlatform = Platform.current();
                 Architecture currentArchitecture = Architecture.current();

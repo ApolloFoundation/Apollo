@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -56,7 +57,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
         }
         DoubleByteArrayTuple url = new DoubleByteArrayTuple(urlFirstPart, urlSecondPart);
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = Attachment.UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
+        Attachment attachment = UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
         return createTransaction(req, account, attachment);
     }
 }
