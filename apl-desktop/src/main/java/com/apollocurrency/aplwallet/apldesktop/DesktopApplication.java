@@ -28,13 +28,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.awt.*;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+//import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+//import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+//import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
@@ -101,11 +101,11 @@ public class DesktopApplication extends Application {
     private static volatile boolean isLaunched;
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
-    private static OptionDAO optionDAO = new OptionDAO();
+    //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+//    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+//    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         
     public static void refreshMainApplication() {
         MainApplication.refresh();
@@ -147,21 +147,25 @@ public class DesktopApplication extends Application {
         }
     }
 
-    public static void recoverDbUI() {
+    //TODO: Recover DB in core
+    /*public static void recoverDbUI() {
         DB_RECOVERING_UI.tryToRecoverDB();
-    }
+    }*/
 
     public static void startDesktopApplication() {
         if (isSplashScreenLaunched) {
             shutdownSplashScreen();
         }
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
+
+//TODO:: make with changelog
+        /*        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
             optionDAO.set("Previous launch APP Version", Constants.VERSION.toString());
             
-        }
+        }*/
+
     }
 
     //start javaFx splash screen
@@ -407,8 +411,9 @@ public class DesktopApplication extends Application {
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-
-                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
+//TODO: Get Blockchain config from API
+                        //mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
+                        mainStage.setTitle("Apollo" + " Desktop - " + webEngine.getLocation());
 
                        // updateClientState("Desktop Wallet started");
 /*                       
@@ -560,7 +565,8 @@ public class DesktopApplication extends Application {
             boolean retrieve = "true".equals(params.get("retrieve"));
             if (requestType.equals("downloadTaggedData")) {
                 if (taggedData == null && retrieve) {
-                    try {
+                    //TODO: Do something with tagged data
+                    /*try {
                         if (blockchainProcessor.restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
@@ -569,7 +575,7 @@ public class DesktopApplication extends Application {
                     catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
-                    }
+                    }*/
                     taggedData = TaggedData.getData(transactionId);
                 }
                 if (taggedData == null) {
@@ -585,7 +591,8 @@ public class DesktopApplication extends Application {
             } else if (requestType.equals("downloadPrunableMessage")) {
                 PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 if (prunableMessage == null && retrieve) {
-                    try {
+                    //TODO: Do something with tagged data
+                    /*try {
                         if (blockchainProcessor.restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned message not currently available from any peer");
                             return;
@@ -594,7 +601,7 @@ public class DesktopApplication extends Application {
                     catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
-                    }
+                    }*/
                     prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 }
                 String secretPhrase = params.get("secretPhrase");
@@ -678,7 +685,8 @@ public class DesktopApplication extends Application {
             return instance;
         }
 
-        public void tryToRecoverDB() {
+        //TODO: Reindex in core
+        /*public void tryToRecoverDB() {
             new JFXPanel(); // prepare JavaFX toolkit and environment
             Platform.runLater(() -> {
                 Alert alert = prepareAlert(Alert.AlertType.ERROR, "Db initialization failed", "Db was crashed! Do you want to recover db?", 180, new ButtonType("Yes", ButtonBar.ButtonData.YES), new ButtonType("No", ButtonBar.ButtonData.NO));
@@ -707,11 +715,12 @@ public class DesktopApplication extends Application {
                 System.exit(0);
             });
         }
-
-        private Alert reindexDbUI() throws SQLException {
+        */
+        
+        /*private Alert reindexDbUI() throws SQLException {
             FullTextTrigger.reindex(Db.getDb().getConnection());
             return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
-        }
+        }*/
 
 
         private Alert prepareAlert(Alert.AlertType alertType, String title, String contentText, int height, ButtonType... buttons) {
@@ -727,7 +736,8 @@ public class DesktopApplication extends Application {
             return alert;
         }
 
-        private Alert deleteDbAndHandleException() {
+        //TODO: recover DB in core
+/*        private Alert deleteDbAndHandleException() {
 
             Alert alert;
             try {
@@ -739,6 +749,7 @@ public class DesktopApplication extends Application {
                 alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete db folder.", 180);
             }
             return alert;
-        }
+        }*/
     }
+        
 }
