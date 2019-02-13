@@ -54,7 +54,7 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
                 }
             }
-            if (transaction.getType() instanceof MonetarySystem.MonetarySystemExchange || transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() instanceof MonetarySystemExchange || transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
                 throw new AplException.NotValidException("Currency is not exchangeable");
             }
         }
