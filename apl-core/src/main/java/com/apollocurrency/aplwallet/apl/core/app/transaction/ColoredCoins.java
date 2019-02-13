@@ -38,7 +38,7 @@ import org.json.simple.JSONObject;
  */
 public abstract class ColoredCoins extends TransactionType {
     
-    private ColoredCoins() {
+    public ColoredCoins() {
     }
 
     @Override
@@ -303,34 +303,7 @@ public abstract class ColoredCoins extends TransactionType {
         }
     };
 
-    static abstract class ColoredCoinsOrderPlacement extends ColoredCoins {
-
-        @Override
-        public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
-            if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM() || attachment.getAssetId() == 0) {
-                throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
-            }
-            Asset asset = Asset.getAsset(attachment.getAssetId());
-            if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
-                throw new AplException.NotValidException("Invalid asset order placement asset or quantity: " + attachment.getJSONObject());
-            }
-            if (asset == null) {
-                throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
-            }
-        }
-
-        @Override
-        public final boolean canHaveRecipient() {
-            return false;
-        }
-
-        @Override
-        public final boolean isPhasingSafe() {
-            return true;
-        }
-    }
-    public static final TransactionType ASK_ORDER_PLACEMENT = new ColoredCoins.ColoredCoinsOrderPlacement() {
+    public static final TransactionType ASK_ORDER_PLACEMENT = new ColoredCoinsOrderPlacement() {
         @Override
         public final byte getSubtype() {
             return TransactionType.SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT;
@@ -379,7 +352,7 @@ public abstract class ColoredCoins extends TransactionType {
             senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
         }
     };
-    public static final TransactionType BID_ORDER_PLACEMENT = new ColoredCoins.ColoredCoinsOrderPlacement() {
+    public static final TransactionType BID_ORDER_PLACEMENT = new ColoredCoinsOrderPlacement() {
         @Override
         public final byte getSubtype() {
             return TransactionType.SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT;
@@ -428,34 +401,7 @@ public abstract class ColoredCoins extends TransactionType {
         }
     };
 
-    static abstract class ColoredCoinsOrderCancellation extends ColoredCoins {
-
-        @Override
-        public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            return true;
-        }
-
-        @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        }
-
-        @Override
-        public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            ColoredCoinsOrderCancellationAttachment attachment = (ColoredCoinsOrderCancellationAttachment) transaction.getAttachment();
-            return TransactionType.isDuplicate(ColoredCoins.ASK_ORDER_CANCELLATION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
-        }
-
-        @Override
-        public final boolean canHaveRecipient() {
-            return false;
-        }
-
-        @Override
-        public final boolean isPhasingSafe() {
-            return true;
-        }
-    }
-    public static final TransactionType ASK_ORDER_CANCELLATION = new ColoredCoins.ColoredCoinsOrderCancellation() {
+    public static final TransactionType ASK_ORDER_CANCELLATION = new ColoredCoinsOrderCancellation() {
         @Override
         public final byte getSubtype() {
             return TransactionType.SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION;
@@ -503,7 +449,7 @@ public abstract class ColoredCoins extends TransactionType {
             }
         }
     };
-    public static final TransactionType BID_ORDER_CANCELLATION = new ColoredCoins.ColoredCoinsOrderCancellation() {
+    public static final TransactionType BID_ORDER_CANCELLATION = new ColoredCoinsOrderCancellation() {
         @Override
         public final byte getSubtype() {
             return TransactionType.SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION;
