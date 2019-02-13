@@ -23,7 +23,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,11 +37,13 @@ import java.util.Properties;
 import javax.inject.Inject;
 
 @EnableWeld
+@ExtendWith(MockitoExtension.class)
 public class DbMigrationExecutorTest {
 
     private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
 
-    private FullTextSearchService fullTextSearchProvider = Mockito.mock(FullTextSearchService.class);
+    @Mock
+    private FullTextSearchService fullTextSearchProvider;
     private PropertiesHolder propertiesHolder = mockPropertiesHolder();
 
     private Path targetDbDir = createTempDir();
@@ -63,7 +68,7 @@ public class DbMigrationExecutorTest {
         manipulator = new DbManipulator(pathToDbForMigration, "sa", "sa");
         manipulator.init();
         manipulator.populate();
-        Db.init(targetDbProperties);
+        Db.init(targetDbProperties, fullTextSearchProvider);
     }
 
     PropertiesHolder mockPropertiesHolder() {

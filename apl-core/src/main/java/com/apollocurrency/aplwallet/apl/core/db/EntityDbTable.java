@@ -47,7 +47,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
-    private static FullTextSearchService fullText;
+    private static FullTextSearchService fullText = CDI.current().select(FullTextSearchService.class).get();
 
     protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);

@@ -144,7 +144,7 @@ public class BasicDb implements DataSource {
      * @param dbVersion database version related information
      */
     public void init(DbVersion dbVersion) {
-        LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
+        log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
         cp.setLoginTimeout(loginTimeout);

@@ -22,8 +22,11 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -39,16 +42,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
-import org.slf4j.Logger;
+import javax.inject.Singleton;
 
 @Singleton
 public class Db {
     private static final Logger log = getLogger(Db.class);
 
     private static DbProperties baseDbProperties;
+    private static FullTextSearchService searchService;
     private static TransactionalDb currentDb;
     private static Map<String, TransactionalDb> shards = new ConcurrentHashMap<>(3);
 
@@ -59,19 +60,44 @@ public class Db {
         return currentDb;
     }
 
+    /**
+     * Init current database and shards using dbProperties and optional fulltext search service
+     * @param dbProperties config for database init
+     * @param fullTextSearchService service which provide full
+     */
+    public static void init(DbProperties dbProperties, FullTextSearchService fullTextSearchService) {
+        init(dbProperties, fullTextSearchService, false);
+    }
+
+    /**
+     *
+     * @param dbProperties
+     */
     public static void init(DbProperties dbProperties) {
-        baseDbProperties = dbProperties;
-        currentDb = new TransactionalDb(dbProperties);
+        init(dbProperties, null, false);
+    }
+
+    private static void init(DbProperties dbProperties, FullTextSearchService fullTextSearchService, boolean useExistingConfig) {
+        baseDbProperties = Objects.requireNonNull(useExistingConfig ? baseDbProperties : dbProperties, "Db Properties cannot be null");
+        searchService = useExistingConfig ? searchService : fullTextSearchService; // optional
+        currentDb = new TransactionalDb(baseDbProperties, searchService);
         currentDb.init(new AplDbVersion());
         List<String> shardList = trySelectShard(currentDb);
         log.debug("Found [{}] shards...", shardList.size());
         for (String shardName : shardList) {
-            DbProperties shardDbProperties = dbProperties.dbFileName(shardName);
+            DbProperties shardDbProperties = baseDbProperties.dbFileName(shardName);
             TransactionalDb shardDb = new TransactionalDb(shardDbProperties);
             shardDb.init(new AplDbVersion());
             shards.put(shardName, shardDb);
             log.debug("Prepared '{}' shard...", shardName);
         }
+    }
+
+    /**
+     * Reinit database with existing config
+     */
+    public static void init() {
+        init(null, null, true);
     }
 
     private static List<String> trySelectShard(TransactionalDb db) {

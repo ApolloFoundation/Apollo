@@ -21,14 +21,13 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
@@ -37,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -146,7 +146,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
-                Db.init(CDI.current().select(DbProperties.class).get());
+                Db.init(CDI.current().select(DbProperties.class).get(), CDI.current().select(FullTextSearchService.class).get());
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
 

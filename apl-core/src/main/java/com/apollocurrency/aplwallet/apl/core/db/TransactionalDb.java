@@ -67,7 +67,11 @@ public class TransactionalDb extends BasicDb {
     private volatile long statsTime = 0;
 
     public TransactionalDb(DbProperties dbProperties) {
-        super(dbProperties, CDI.current().select(FullTextSearchService.class).get());
+        super(dbProperties);
+    }
+
+    public TransactionalDb(DbProperties dbProperties, FullTextSearchService fullTextSearchService) {
+        super(dbProperties, fullTextSearchService);
     }
 
     @Override
