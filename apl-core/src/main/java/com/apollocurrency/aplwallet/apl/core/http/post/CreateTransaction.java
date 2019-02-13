@@ -32,7 +32,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUG
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;

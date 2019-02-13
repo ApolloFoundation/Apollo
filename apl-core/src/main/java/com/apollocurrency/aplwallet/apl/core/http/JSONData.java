@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Asset;
 import com.apollocurrency.aplwallet.apl.core.app.AssetDelete;

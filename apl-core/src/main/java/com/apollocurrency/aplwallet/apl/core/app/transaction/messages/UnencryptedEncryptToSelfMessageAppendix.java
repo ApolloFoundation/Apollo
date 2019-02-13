@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.transaction.messages;
 
 import java.nio.ByteBuffer;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;

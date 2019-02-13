@@ -18,8 +18,9 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
@@ -35,7 +36,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account.ControlType;
+import com.apollocurrency.aplwallet.apl.core.account.Account.ControlType;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting.VotingModel;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.SetPhasingOnly;
@@ -223,10 +229,10 @@ public final class AccountRestrictions {
         }
     };
 
-    static void init() {
+    public static void init() {
     }
 
-    static void checkTransaction(Transaction transaction) throws AplException.NotCurrentlyValidException {
+    public static void checkTransaction(Transaction transaction) throws AplException.NotCurrentlyValidException {
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         if (senderAccount == null) {
             throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");

@@ -20,6 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+
 public enum HoldingType {
 
     APL((byte) 0) {

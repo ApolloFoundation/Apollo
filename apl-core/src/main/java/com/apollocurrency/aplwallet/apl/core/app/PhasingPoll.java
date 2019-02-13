@@ -381,7 +381,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    static long getSenderPhasedTransactionFees(long accountId) {
+    public static long getSenderPhasedTransactionFees(long accountId) {
         try (Connection con = Db.getDb().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +

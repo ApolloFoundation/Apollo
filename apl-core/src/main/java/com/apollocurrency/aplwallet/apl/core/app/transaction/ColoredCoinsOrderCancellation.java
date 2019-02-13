@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderCancellationAttachment;
 import java.util.Map;

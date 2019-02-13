@@ -18,8 +18,10 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -41,9 +43,31 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.Exchange;
+import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.LegacyAccountGenerator;
+import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.app.Trade;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
@@ -714,11 +738,11 @@ public final class Account {
         return key;
     }
 
-    static Account addOrGetAccount(long id) {
+    public static Account addOrGetAccount(long id) {
         return addOrGetAccount(id, false);
     }
 
-    static Account addOrGetAccount(long id, boolean isGenesis) {
+    public static Account addOrGetAccount(long id, boolean isGenesis) {
         if (id == 0) {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
@@ -966,7 +990,7 @@ public final class Account {
         return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
     }
 
-    static void init() {}
+    public static void init() {}
 
     public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {

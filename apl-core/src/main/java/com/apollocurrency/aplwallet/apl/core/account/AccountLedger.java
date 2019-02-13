@@ -18,8 +18,14 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Db;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -169,7 +175,7 @@ public class AccountLedger {
  We don't do anything but we need to be called from AplCore.init() in order to
  register our table
      */
-    static void init() {
+    public static void init() {
     }
 
     /**
@@ -279,7 +285,7 @@ public class AccountLedger {
     /**
      * Commit pending ledger entries
      */
-    static void commitEntries() {
+    public static void commitEntries() {
         int count = 0;
         for (LedgerEntry ledgerEntry : pendingEntries) {
             accountLedgerTable.insert(ledgerEntry);
@@ -291,7 +297,7 @@ public class AccountLedger {
     /**
      * Clear pending ledger entries
      */
-    static void clearEntries() {
+    public static void clearEntries() {
         pendingEntries.clear();
     }
 

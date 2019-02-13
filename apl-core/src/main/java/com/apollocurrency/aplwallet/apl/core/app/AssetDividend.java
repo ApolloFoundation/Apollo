@@ -97,7 +97,7 @@ public final class AssetDividend {
         return null;
     }
 
-    static AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
+    public static AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
                                           long totalDividend, long numAccounts) {
         AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
         assetDividendTable.insert(assetDividend);

@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.core.app.GeneratedAccount;
+import com.apollocurrency.aplwallet.apl.core.account.GeneratedAccount;
 import com.apollocurrency.aplwallet.apl.core.app.LegacyAccountGenerator;
-import com.apollocurrency.aplwallet.apl.core.app.AccountGenerator;
+import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.Test;
