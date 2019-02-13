@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.app.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -40,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -235,9 +235,9 @@ public abstract class TransactionType {
 
     public abstract LedgerEvent getLedgerEvent();
 
-    public abstract Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
+    public abstract AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
 
-    public abstract Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
+    public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 

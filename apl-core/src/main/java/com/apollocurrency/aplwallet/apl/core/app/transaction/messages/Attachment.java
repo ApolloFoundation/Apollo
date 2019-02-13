@@ -66,96 +66,9 @@ import org.json.simple.JSONObject;
 
 public interface Attachment extends Appendix {
 
-    TransactionType getTransactionType();
+    public TransactionType getTransactionType();
 
-    abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
-        private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
-        private AbstractAttachment(ByteBuffer buffer) {
-            super(buffer);
-        }
-
-        private AbstractAttachment(JSONObject attachmentData) {
-            super(attachmentData);
-        }
-
-        private AbstractAttachment(int version) {
-            super(version);
-        }
-
-        private AbstractAttachment() {}
-
-        @Override
-        public String getAppendixName() {
-            return getTransactionType().getName();
-        }
-
-        @Override
-        public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-            getTransactionType().validateAttachment(transaction);
-        }
-
-        @Override
-        public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            getTransactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
-        }
-
-        @Override
-        public final Fee getBaselineFee(Transaction transaction) {
-            return getTransactionType().getBaselineFee(transaction);
-        }
-
-        @Override
-        public final Fee getNextFee(Transaction transaction) {
-            return getTransactionType().getNextFee(transaction);
-        }
-
-        @Override
-        public final int getBaselineFeeHeight() {
-            return getTransactionType().getBaselineFeeHeight();
-        }
-
-        @Override
-        public final int getNextFeeHeight() {
-            return getTransactionType().getNextFeeHeight();
-        }
-
-        @Override
-        public boolean isPhasable() {
-            return !(this instanceof Prunable) && getTransactionType().isPhasable();
-        }
-
-        public int getFinishValidationHeight(Transaction transaction) {
-            return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : blockchain.getHeight();
-        }
-
-    }
-
-    abstract class EmptyAttachment extends AbstractAttachment {
-
-        private EmptyAttachment() {
-            super(0);
-        }
-
-        @Override
-        final int getMySize() {
-            return 0;
-        }
-
-        @Override
-        final void putMyBytes(ByteBuffer buffer) {
-        }
-
-        @Override
-        final void putMyJSON(JSONObject json) {
-        }
-
-        @Override
-        public boolean verifyVersion() {
-            return getVersion() == 0;
-        }
-
-    }
 
     EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {
 
@@ -187,982 +100,15 @@ public interface Attachment extends Appendix {
 
     };
 
-    final class MessagingAliasAssignment extends AbstractAttachment {
 
-        private final String aliasName;
-        private final String aliasURI;
 
-        public MessagingAliasAssignment(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH).trim();
-                aliasURI = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ALIAS_URI_LENGTH).trim();
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
 
-        public MessagingAliasAssignment(JSONObject attachmentData) {
-            super(attachmentData);
-            aliasName = Convert.nullToEmpty((String) attachmentData.get("alias")).trim();
-            aliasURI = Convert.nullToEmpty((String) attachmentData.get("uri")).trim();
-        }
-
-        public MessagingAliasAssignment(String aliasName, String aliasURI) {
-            this.aliasName = aliasName.trim();
-            this.aliasURI = aliasURI.trim();
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(aliasName).length + 2 + Convert.toBytes(aliasURI).length;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] alias = Convert.toBytes(this.aliasName);
-            byte[] uri = Convert.toBytes(this.aliasURI);
-            buffer.put((byte)alias.length);
-            buffer.put(alias);
-            buffer.putShort((short) uri.length);
-            buffer.put(uri);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("alias", aliasName);
-            attachment.put("uri", aliasURI);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ALIAS_ASSIGNMENT;
-        }
-
-        public String getAliasName() {
-            return aliasName;
-        }
-
-        public String getAliasURI() {
-            return aliasURI;
-        }
-    }
-
-    final class MessagingAliasSell extends AbstractAttachment {
-
-        private final String aliasName;
-        private final long priceATM;
-
-        public MessagingAliasSell(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-            this.priceATM = buffer.getLong();
-        }
-
-        public MessagingAliasSell(JSONObject attachmentData) {
-            super(attachmentData);
-            this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-            this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
-        }
-
-        public MessagingAliasSell(String aliasName, long priceATM) {
-            this.aliasName = aliasName;
-            this.priceATM = priceATM;
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ALIAS_SELL;
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(aliasName).length + 8;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] aliasBytes = Convert.toBytes(aliasName);
-            buffer.put((byte)aliasBytes.length);
-            buffer.put(aliasBytes);
-            buffer.putLong(priceATM);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("alias", aliasName);
-            attachment.put("priceATM", priceATM);
-        }
-
-        public String getAliasName(){
-            return aliasName;
-        }
-
-        public long getPriceATM(){
-            return priceATM;
-        }
-    }
-
-    final class MessagingAliasBuy extends AbstractAttachment {
-
-        private final String aliasName;
-
-        public MessagingAliasBuy(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
-            } catch (NotValidException ex) {
-               throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
-
-        public MessagingAliasBuy(JSONObject attachmentData) {
-            super(attachmentData);
-            this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-        }
-
-        public MessagingAliasBuy(String aliasName) {
-            this.aliasName = aliasName;
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ALIAS_BUY;
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(aliasName).length;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] aliasBytes = Convert.toBytes(aliasName);
-            buffer.put((byte) aliasBytes.length);
-            buffer.put(aliasBytes);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("alias", aliasName);
-        }
-
-        public String getAliasName(){
-            return aliasName;
-        }
-    }
-
-    final class MessagingAliasDelete extends AbstractAttachment {
-
-        private final String aliasName;
-
-        public MessagingAliasDelete(final ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.aliasName = Convert.readString(buffer, buffer.get(), Constants.MAX_ALIAS_LENGTH);
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
-
-        public MessagingAliasDelete(final JSONObject attachmentData) {
-            super(attachmentData);
-            this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-        }
-
-        public MessagingAliasDelete(final String aliasName) {
-            this.aliasName = aliasName;
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ALIAS_DELETE;
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(aliasName).length;
-        }
-
-        @Override
-        void putMyBytes(final ByteBuffer buffer) {
-            byte[] aliasBytes = Convert.toBytes(aliasName);
-            buffer.put((byte)aliasBytes.length);
-            buffer.put(aliasBytes);
-        }
-
-        @Override
-        void putMyJSON(final JSONObject attachment) {
-            attachment.put("alias", aliasName);
-        }
-
-        public String getAliasName(){
-            return aliasName;
-        }
-    }
-
-    final class MessagingPollCreation extends AbstractAttachment {
-
-        public final static class PollBuilder {
-            private final String pollName;
-            private final String pollDescription;
-            private final String[] pollOptions;
-
-            private final int finishHeight;
-            private final byte votingModel;
-
-            private long minBalance = 0;
-            private byte minBalanceModel;
-
-            private final byte minNumberOfOptions;
-            private final byte maxNumberOfOptions;
-
-            private final byte minRangeValue;
-            private final byte maxRangeValue;
-
-            private long holdingId;
-
-            public PollBuilder(final String pollName, final String pollDescription, final String[] pollOptions,
-                               final int finishHeight, final byte votingModel,
-                               byte minNumberOfOptions, byte maxNumberOfOptions,
-                               byte minRangeValue, byte maxRangeValue) {
-                this.pollName = pollName;
-                this.pollDescription = pollDescription;
-                this.pollOptions = pollOptions;
-
-                this.finishHeight = finishHeight;
-                this.votingModel = votingModel;
-                this.minNumberOfOptions = minNumberOfOptions;
-                this.maxNumberOfOptions = maxNumberOfOptions;
-                this.minRangeValue = minRangeValue;
-                this.maxRangeValue = maxRangeValue;
-
-                this.minBalanceModel = VoteWeighting.VotingModel.get(votingModel).getMinBalanceModel().getCode();
-            }
-
-            public PollBuilder minBalance(byte minBalanceModel, long minBalance) {
-                this.minBalanceModel = minBalanceModel;
-                this.minBalance = minBalance;
-                return this;
-            }
-
-            public PollBuilder holdingId(long holdingId) {
-                this.holdingId = holdingId;
-                return this;
-            }
-
-            public MessagingPollCreation build() {
-                return new MessagingPollCreation(this);
-            }
-        }
-
-        private final String pollName;
-        private final String pollDescription;
-        private final String[] pollOptions;
-
-        private final int finishHeight;
-
-        private final byte minNumberOfOptions;
-        private final byte maxNumberOfOptions;
-        private final byte minRangeValue;
-        private final byte maxRangeValue;
-        private final VoteWeighting voteWeighting;
-
-        public MessagingPollCreation(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.pollName = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_NAME_LENGTH);
-                this.pollDescription = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_DESCRIPTION_LENGTH);
-                
-                this.finishHeight = buffer.getInt();
-                
-                int numberOfOptions = buffer.get();
-                if (numberOfOptions > Constants.MAX_POLL_OPTION_COUNT) {
-                    throw new AplException.NotValidException("Invalid number of poll options: " + numberOfOptions);
-                }
-                
-                this.pollOptions = new String[numberOfOptions];
-                for (int i = 0; i < numberOfOptions; i++) {
-                    this.pollOptions[i] = Convert.readString(buffer, buffer.getShort(), Constants.MAX_POLL_OPTION_LENGTH);
-                }
-                
-                byte votingModel = buffer.get();
-                
-                this.minNumberOfOptions = buffer.get();
-                this.maxNumberOfOptions = buffer.get();
-                
-                this.minRangeValue = buffer.get();
-                this.maxRangeValue = buffer.get();
-                
-                long minBalance = buffer.getLong();
-                byte minBalanceModel = buffer.get();
-                long holdingId = buffer.getLong();
-                this.voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
-
-        public MessagingPollCreation(JSONObject attachmentData) {
-            super(attachmentData);
-
-            this.pollName = ((String) attachmentData.get("name")).trim();
-            this.pollDescription = ((String) attachmentData.get("description")).trim();
-            this.finishHeight = ((Long) attachmentData.get("finishHeight")).intValue();
-
-            JSONArray options = (JSONArray) attachmentData.get("options");
-            this.pollOptions = new String[options.size()];
-            for (int i = 0; i < pollOptions.length; i++) {
-                this.pollOptions[i] = ((String) options.get(i)).trim();
-            }
-            byte votingModel = ((Long) attachmentData.get("votingModel")).byteValue();
-
-            this.minNumberOfOptions = ((Long) attachmentData.get("minNumberOfOptions")).byteValue();
-            this.maxNumberOfOptions = ((Long) attachmentData.get("maxNumberOfOptions")).byteValue();
-            this.minRangeValue = ((Long) attachmentData.get("minRangeValue")).byteValue();
-            this.maxRangeValue = ((Long) attachmentData.get("maxRangeValue")).byteValue();
-
-            long minBalance = Convert.parseLong(attachmentData.get("minBalance"));
-            byte minBalanceModel = ((Long) attachmentData.get("minBalanceModel")).byteValue();
-            long holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
-            this.voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
-        }
-
-        private MessagingPollCreation(PollBuilder builder) {
-            this.pollName = builder.pollName;
-            this.pollDescription = builder.pollDescription;
-            this.pollOptions = builder.pollOptions;
-            this.finishHeight = builder.finishHeight;
-            this.minNumberOfOptions = builder.minNumberOfOptions;
-            this.maxNumberOfOptions = builder.maxNumberOfOptions;
-            this.minRangeValue = builder.minRangeValue;
-            this.maxRangeValue = builder.maxRangeValue;
-            this.voteWeighting = new VoteWeighting(builder.votingModel, builder.holdingId, builder.minBalance, builder.minBalanceModel);
-        }
-
-        @Override
-        int getMySize() {
-            int size = 2 + Convert.toBytes(pollName).length + 2 + Convert.toBytes(pollDescription).length + 1;
-            for (String pollOption : pollOptions) {
-                size += 2 + Convert.toBytes(pollOption).length;
-            }
-
-            size += 4 + 1 + 1 + 1 + 1 + 1 + 8 + 1 + 8;
-
-            return size;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] name = Convert.toBytes(this.pollName);
-            byte[] description = Convert.toBytes(this.pollDescription);
-            byte[][] options = new byte[this.pollOptions.length][];
-            for (int i = 0; i < this.pollOptions.length; i++) {
-                options[i] = Convert.toBytes(this.pollOptions[i]);
-            }
-
-            buffer.putShort((short) name.length);
-            buffer.put(name);
-            buffer.putShort((short) description.length);
-            buffer.put(description);
-            buffer.putInt(finishHeight);
-            buffer.put((byte) options.length);
-            for (byte[] option : options) {
-                buffer.putShort((short) option.length);
-                buffer.put(option);
-            }
-            buffer.put(this.voteWeighting.getVotingModel().getCode());
-
-            buffer.put(this.minNumberOfOptions);
-            buffer.put(this.maxNumberOfOptions);
-            buffer.put(this.minRangeValue);
-            buffer.put(this.maxRangeValue);
-
-            buffer.putLong(this.voteWeighting.getMinBalance());
-            buffer.put(this.voteWeighting.getMinBalanceModel().getCode());
-            buffer.putLong(this.voteWeighting.getHoldingId());
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("name", this.pollName);
-            attachment.put("description", this.pollDescription);
-            attachment.put("finishHeight", this.finishHeight);
-            JSONArray options = new JSONArray();
-            if (this.pollOptions != null) {
-                Collections.addAll(options, this.pollOptions);
-            }
-            attachment.put("options", options);
-
-
-            attachment.put("minNumberOfOptions", this.minNumberOfOptions);
-            attachment.put("maxNumberOfOptions", this.maxNumberOfOptions);
-
-            attachment.put("minRangeValue", this.minRangeValue);
-            attachment.put("maxRangeValue", this.maxRangeValue);
-
-            attachment.put("votingModel", this.voteWeighting.getVotingModel().getCode());
-
-            attachment.put("minBalance", this.voteWeighting.getMinBalance());
-            attachment.put("minBalanceModel", this.voteWeighting.getMinBalanceModel().getCode());
-            attachment.put("holding", Long.toUnsignedString(this.voteWeighting.getHoldingId()));
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.POLL_CREATION;
-        }
-
-        public String getPollName() {
-            return pollName;
-        }
-
-        public String getPollDescription() {
-            return pollDescription;
-        }
-
-        public int getFinishHeight() {
-            return finishHeight;
-        }
-
-        public String[] getPollOptions() {
-            return pollOptions;
-        }
-
-        public byte getMinNumberOfOptions() {
-            return minNumberOfOptions;
-        }
-
-        public byte getMaxNumberOfOptions() {
-            return maxNumberOfOptions;
-        }
-
-        public byte getMinRangeValue() {
-            return minRangeValue;
-        }
-
-        public byte getMaxRangeValue() {
-            return maxRangeValue;
-        }
-
-        public VoteWeighting getVoteWeighting() {
-            return voteWeighting;
-        }
-
-    }
-
-    final class MessagingVoteCasting extends AbstractAttachment {
-
-        private final long pollId;
-        private final byte[] pollVote;
-
-        public MessagingVoteCasting(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            pollId = buffer.getLong();
-            int numberOfOptions = buffer.get();
-            if (numberOfOptions > Constants.MAX_POLL_OPTION_COUNT) {
-                throw new AplException.NotValidException("More than " + Constants.MAX_POLL_OPTION_COUNT + " options in a vote");
-            }
-            pollVote = new byte[numberOfOptions];
-            buffer.get(pollVote);
-        }
-
-        public MessagingVoteCasting(JSONObject attachmentData) {
-            super(attachmentData);
-            pollId = Convert.parseUnsignedLong((String) attachmentData.get("poll"));
-            JSONArray vote = (JSONArray) attachmentData.get("vote");
-            pollVote = new byte[vote.size()];
-            for (int i = 0; i < pollVote.length; i++) {
-                pollVote[i] = ((Long) vote.get(i)).byteValue();
-            }
-        }
-
-        public MessagingVoteCasting(long pollId, byte[] pollVote) {
-            this.pollId = pollId;
-            this.pollVote = pollVote;
-        }
-
-        @Override
-        int getMySize() {
-            return 8 + 1 + this.pollVote.length;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            buffer.putLong(this.pollId);
-            buffer.put((byte) this.pollVote.length);
-            buffer.put(this.pollVote);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("poll", Long.toUnsignedString(this.pollId));
-            JSONArray vote = new JSONArray();
-            if (this.pollVote != null) {
-                for (byte aPollVote : this.pollVote) {
-                    vote.add(aPollVote);
-                }
-            }
-            attachment.put("vote", vote);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.VOTE_CASTING;
-        }
-
-        public long getPollId() {
-            return pollId;
-        }
-
-        public byte[] getPollVote() {
-            return pollVote;
-        }
-    }
-
-    final class MessagingPhasingVoteCasting extends AbstractAttachment {
-
-        private final List<byte[]> transactionFullHashes;
-        private final byte[] revealedSecret;
-
-        public MessagingPhasingVoteCasting(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            byte length = buffer.get();
-            transactionFullHashes = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                byte[] hash = new byte[32];
-                buffer.get(hash);
-                transactionFullHashes.add(hash);
-            }
-            int secretLength = buffer.getInt();
-            if (secretLength > Constants.MAX_PHASING_REVEALED_SECRET_LENGTH) {
-                throw new AplException.NotValidException("Invalid revealed secret length " + secretLength);
-            }
-            if (secretLength > 0) {
-                revealedSecret = new byte[secretLength];
-                buffer.get(revealedSecret);
-            } else {
-                revealedSecret = Convert.EMPTY_BYTE;
-            }
-        }
-
-        public MessagingPhasingVoteCasting(JSONObject attachmentData) {
-            super(attachmentData);
-            JSONArray hashes = (JSONArray) attachmentData.get("transactionFullHashes");
-            transactionFullHashes = new ArrayList<>(hashes.size());
-            hashes.forEach(hash -> transactionFullHashes.add(Convert.parseHexString((String) hash)));
-            String revealedSecret = Convert.emptyToNull((String) attachmentData.get("revealedSecret"));
-            this.revealedSecret = revealedSecret != null ? Convert.parseHexString(revealedSecret) : Convert.EMPTY_BYTE;
-        }
-
-        public MessagingPhasingVoteCasting(List<byte[]> transactionFullHashes, byte[] revealedSecret) {
-            this.transactionFullHashes = transactionFullHashes;
-            this.revealedSecret = revealedSecret;
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + 32 * transactionFullHashes.size() + 4 + revealedSecret.length;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            buffer.put((byte) transactionFullHashes.size());
-            transactionFullHashes.forEach(buffer::put);
-            buffer.putInt(revealedSecret.length);
-            buffer.put(revealedSecret);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            JSONArray jsonArray = new JSONArray();
-            transactionFullHashes.forEach(hash -> jsonArray.add(Convert.toHexString(hash)));
-            attachment.put("transactionFullHashes", jsonArray);
-            if (revealedSecret.length > 0) {
-                attachment.put("revealedSecret", Convert.toHexString(revealedSecret));
-            }
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.PHASING_VOTE_CASTING;
-        }
-
-        public List<byte[]> getTransactionFullHashes() {
-            return transactionFullHashes;
-        }
-
-        public byte[] getRevealedSecret() {
-            return revealedSecret;
-        }
-    }
-
-    final class MessagingAccountInfo extends AbstractAttachment {
-
-        private final String name;
-        private final String description;
-
-        public MessagingAccountInfo(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_NAME_LENGTH);
-                this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH);
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
-
-        public MessagingAccountInfo(JSONObject attachmentData) {
-            super(attachmentData);
-            this.name = Convert.nullToEmpty((String) attachmentData.get("name"));
-            this.description = Convert.nullToEmpty((String) attachmentData.get("description"));
-        }
-
-        public MessagingAccountInfo(String name, String description) {
-            this.name = name;
-            this.description = description;
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(name).length + 2 + Convert.toBytes(description).length;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] name = Convert.toBytes(this.name);
-            byte[] description = Convert.toBytes(this.description);
-            buffer.put((byte)name.length);
-            buffer.put(name);
-            buffer.putShort((short) description.length);
-            buffer.put(description);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("name", name);
-            attachment.put("description", description);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ACCOUNT_INFO;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-    }
-
-    final class MessagingAccountProperty extends AbstractAttachment {
-
-        private final String property;
-        private final String value;
-
-        public MessagingAccountProperty(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.property = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH).trim();
-                this.value = Convert.readString(buffer, buffer.get(), Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH).trim();
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
-
-        public MessagingAccountProperty(JSONObject attachmentData) {
-            super(attachmentData);
-            this.property = Convert.nullToEmpty((String) attachmentData.get("property")).trim();
-            this.value = Convert.nullToEmpty((String) attachmentData.get("value")).trim();
-        }
-
-        public MessagingAccountProperty(String property, String value) {
-            this.property = property.trim();
-            this.value = Convert.nullToEmpty(value).trim();
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(property).length + 1 + Convert.toBytes(value).length;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] property = Convert.toBytes(this.property);
-            byte[] value = Convert.toBytes(this.value);
-            buffer.put((byte)property.length);
-            buffer.put(property);
-            buffer.put((byte)value.length);
-            buffer.put(value);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("property", property);
-            attachment.put("value", value);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ACCOUNT_PROPERTY;
-        }
-
-        public String getProperty() {
-            return property;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-    }
-
-    final class MessagingAccountPropertyDelete extends AbstractAttachment {
-
-        private final long propertyId;
-
-        public MessagingAccountPropertyDelete(ByteBuffer buffer) {
-            super(buffer);
-            this.propertyId = buffer.getLong();
-        }
-
-        public MessagingAccountPropertyDelete(JSONObject attachmentData) {
-            super(attachmentData);
-            this.propertyId = Convert.parseUnsignedLong((String)attachmentData.get("property"));
-        }
-
-        public MessagingAccountPropertyDelete(long propertyId) {
-            this.propertyId = propertyId;
-        }
-
-        @Override
-        int getMySize() {
-            return 8;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            buffer.putLong(propertyId);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("property", Long.toUnsignedString(propertyId));
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return Messaging.ACCOUNT_PROPERTY_DELETE;
-        }
-
-        public long getPropertyId() {
-            return propertyId;
-        }
-
-    }
-
-    final class ColoredCoinsAssetIssuance extends AbstractAttachment {
-
-        private final String name;
-        private final String description;
-        private final long quantityATU;
-        private final byte decimals;
-
-        public ColoredCoinsAssetIssuance(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            try {
-                this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_ASSET_NAME_LENGTH);
-                this.description = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ASSET_DESCRIPTION_LENGTH);
-                this.quantityATU = buffer.getLong();
-                this.decimals = buffer.get();
-            } catch (NotValidException ex) {
-                throw new AplException.NotValidException(ex.getMessage());
-            }
-        }
-
-        public ColoredCoinsAssetIssuance(JSONObject attachmentData) {
-            super(attachmentData);
-            this.name = (String) attachmentData.get("name");
-            this.description = Convert.nullToEmpty((String) attachmentData.get("description"));
-            this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
-            this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
-        }
-
-        public ColoredCoinsAssetIssuance(String name, String description, long quantityATU, byte decimals) {
-            this.name = name;
-            this.description = Convert.nullToEmpty(description);
-            this.quantityATU = quantityATU;
-            this.decimals = decimals;
-        }
-
-        @Override
-        int getMySize() {
-            return 1 + Convert.toBytes(name).length + 2 + Convert.toBytes(description).length + 8 + 1;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            byte[] name = Convert.toBytes(this.name);
-            byte[] description = Convert.toBytes(this.description);
-            buffer.put((byte)name.length);
-            buffer.put(name);
-            buffer.putShort((short) description.length);
-            buffer.put(description);
-            buffer.putLong(quantityATU);
-            buffer.put(decimals);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("name", name);
-            attachment.put("description", description);
-            attachment.put("quantityATU", quantityATU);
-            attachment.put("decimals", decimals);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return ColoredCoins.ASSET_ISSUANCE;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public long getQuantityATU() {
-            return quantityATU;
-        }
-
-        public byte getDecimals() {
-            return decimals;
-        }
-    }
-
-    final class ColoredCoinsAssetTransfer extends AbstractAttachment {
-
-        private final long assetId;
-        private final long quantityATU;
-
-        public ColoredCoinsAssetTransfer(ByteBuffer buffer) throws AplException.NotValidException {
-            super(buffer);
-            this.assetId = buffer.getLong();
-            this.quantityATU = buffer.getLong();
-        }
-
-        public ColoredCoinsAssetTransfer(JSONObject attachmentData) {
-            super(attachmentData);
-            this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-            this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
-        }
-
-        public ColoredCoinsAssetTransfer(long assetId, long quantityATU) {
-            this.assetId = assetId;
-            this.quantityATU = quantityATU;
-        }
-
-        @Override
-        int getMySize() {
-            return 8 + 8;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            buffer.putLong(assetId);
-            buffer.putLong(quantityATU);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityATU", quantityATU);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return ColoredCoins.ASSET_TRANSFER;
-        }
-
-        public long getAssetId() {
-            return assetId;
-        }
-
-        public long getQuantityATU() {
-            return quantityATU;
-        }
-
-    }
-
-    final class ColoredCoinsAssetDelete extends AbstractAttachment {
-
-        private final long assetId;
-        private final long quantityATU;
-
-        public ColoredCoinsAssetDelete(ByteBuffer buffer) {
-            super(buffer);
-            this.assetId = buffer.getLong();
-            this.quantityATU = buffer.getLong();
-        }
-
-        public ColoredCoinsAssetDelete(JSONObject attachmentData) {
-            super(attachmentData);
-            this.assetId = Convert.parseUnsignedLong((String)attachmentData.get("asset"));
-            this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT")) ;;
-        }
-
-        public ColoredCoinsAssetDelete(long assetId, long quantityATU) {
-            this.assetId = assetId;
-            this.quantityATU = quantityATU;
-        }
-
-        @Override
-        int getMySize() {
-            return 8 + 8;
-        }
-
-        @Override
-        void putMyBytes(ByteBuffer buffer) {
-            buffer.putLong(assetId);
-            buffer.putLong(quantityATU);
-        }
-
-        @Override
-        void putMyJSON(JSONObject attachment) {
-            attachment.put("asset", Long.toUnsignedString(assetId));
-            attachment.put("quantityATU", quantityATU);
-        }
-
-        @Override
-        public TransactionType getTransactionType() {
-            return ColoredCoins.ASSET_DELETE;
-        }
-
-        public long getAssetId() {
-            return assetId;
-        }
-
-        public long getQuantityATU() {
-            return quantityATU;
-        }
-
-    }
 
     abstract class ColoredCoinsOrderPlacement extends AbstractAttachment {
 
-        private final long assetId;
-        private final long quantityATU;
-        private final long priceATM;
+        final long assetId;
+        final long quantityATU;
+        final long priceATM;
 
         public ColoredCoinsOrderPlacement(ByteBuffer buffer) {
             super(buffer);
@@ -1260,7 +206,7 @@ public interface Attachment extends Appendix {
 
     abstract class ColoredCoinsOrderCancellation extends AbstractAttachment {
 
-        private final long orderId;
+        final long orderId;
 
         public ColoredCoinsOrderCancellation(ByteBuffer buffer) {
             super(buffer);
@@ -1340,9 +286,9 @@ public interface Attachment extends Appendix {
 
     final class ColoredCoinsDividendPayment extends AbstractAttachment {
 
-        private final long assetId;
-        private final int height;
-        private final long amountATMPerATU;
+        final long assetId;
+        final int height;
+        final long amountATMPerATU;
 
         public ColoredCoinsDividendPayment(ByteBuffer buffer) {
             super(buffer);
@@ -1404,11 +350,11 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsListing extends AbstractAttachment {
 
-        private final String name;
-        private final String description;
-        private final String tags;
-        private final int quantity;
-        private final long priceATM;
+        final String name;
+        final String description;
+        final String tags;
+        final int quantity;
+        final long priceATM;
 
         public DigitalGoodsListing(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
@@ -1489,7 +435,7 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsDelisting extends AbstractAttachment {
 
-        private final long goodsId;
+        final long goodsId;
 
         public DigitalGoodsDelisting(ByteBuffer buffer) {
             super(buffer);
@@ -1531,8 +477,8 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsPriceChange extends AbstractAttachment {
 
-        private final long goodsId;
-        private final long priceATM;
+        final long goodsId;
+        final long priceATM;
 
         public DigitalGoodsPriceChange(ByteBuffer buffer) {
             super(buffer);
@@ -1581,8 +527,8 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsQuantityChange extends AbstractAttachment {
 
-        private final long goodsId;
-        private final int deltaQuantity;
+        final long goodsId;
+        final int deltaQuantity;
 
         public DigitalGoodsQuantityChange(ByteBuffer buffer) {
             super(buffer);
@@ -1631,10 +577,10 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsPurchase extends AbstractAttachment {
 
-        private final long goodsId;
-        private final int quantity;
-        private final long priceATM;
-        private final int deliveryDeadlineTimestamp;
+        final long goodsId;
+        final int quantity;
+        final long priceATM;
+        final int deliveryDeadlineTimestamp;
 
         public DigitalGoodsPurchase(ByteBuffer buffer) {
             super(buffer);
@@ -1697,10 +643,10 @@ public interface Attachment extends Appendix {
 
     class DigitalGoodsDelivery extends AbstractAttachment {
 
-        private final long purchaseId;
-        private EncryptedData goods;
-        private final long discountATM;
-        private final boolean goodsIsText;
+        final long purchaseId;
+        EncryptedData goods;
+        final long discountATM;
+        final boolean goodsIsText;
 
         public DigitalGoodsDelivery(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
@@ -1790,8 +736,8 @@ public interface Attachment extends Appendix {
 
     final class UnencryptedDigitalGoodsDelivery extends DigitalGoodsDelivery implements Encryptable {
 
-        private final byte[] goodsToEncrypt;
-        private final byte[] recipientPublicKey;
+        final byte[] goodsToEncrypt;
+        final byte[] recipientPublicKey;
 
         public UnencryptedDigitalGoodsDelivery(JSONObject attachmentData) {
             super(attachmentData);
@@ -1855,7 +801,7 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsFeedback extends AbstractAttachment {
 
-        private final long purchaseId;
+        final long purchaseId;
 
         public DigitalGoodsFeedback(ByteBuffer buffer) {
             super(buffer);
@@ -1897,8 +843,8 @@ public interface Attachment extends Appendix {
 
     final class DigitalGoodsRefund extends AbstractAttachment {
 
-        private final long purchaseId;
-        private final long refundATM;
+        final long purchaseId;
+        final long refundATM;
 
         public DigitalGoodsRefund(ByteBuffer buffer) {
             super(buffer);
@@ -1947,7 +893,7 @@ public interface Attachment extends Appendix {
 
     final class AccountControlEffectiveBalanceLeasing extends AbstractAttachment {
 
-        private final int period;
+        final int period;
 
         public AccountControlEffectiveBalanceLeasing(ByteBuffer buffer) {
             super(buffer);
@@ -1996,20 +942,20 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
 
-        private final String name;
-        private final String code;
-        private final String description;
-        private final byte type;
-        private final long initialSupply;
-        private final long reserveSupply;
-        private final long maxSupply;
-        private final int issuanceHeight;
-        private final long minReservePerUnitATM;
-        private final int minDifficulty;
-        private final int maxDifficulty;
-        private final byte ruleset;
-        private final byte algorithm;
-        private final byte decimals;
+        final String name;
+        final String code;
+        final String description;
+        final byte type;
+        final long initialSupply;
+        final long reserveSupply;
+        final long maxSupply;
+        final int issuanceHeight;
+        final long minReservePerUnitATM;
+        final int minDifficulty;
+        final int maxDifficulty;
+        final byte ruleset;
+        final byte algorithm;
+        final byte decimals;
 
         public MonetarySystemCurrencyIssuance(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
@@ -2182,8 +1128,8 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemReserveIncrease extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long currencyId;
-        private final long amountPerUnitATM;
+        final long currencyId;
+        final long amountPerUnitATM;
 
         public MonetarySystemReserveIncrease(ByteBuffer buffer) {
             super(buffer);
@@ -2237,8 +1183,8 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemReserveClaim extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long currencyId;
-        private final long units;
+        final long currencyId;
+        final long units;
 
         public MonetarySystemReserveClaim(ByteBuffer buffer) {
             super(buffer);
@@ -2292,8 +1238,8 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemCurrencyTransfer extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long currencyId;
-        private final long units;
+        final long currencyId;
+        final long units;
 
         public MonetarySystemCurrencyTransfer(ByteBuffer buffer) {
             super(buffer);
@@ -2346,14 +1292,14 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemPublishExchangeOffer extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long currencyId;
-        private final long buyRateATM;
-        private final long sellRateATM;
-        private final long totalBuyLimit;
-        private final long totalSellLimit;
-        private final long initialBuySupply;
-        private final long initialSellSupply;
-        private final int expirationHeight;
+        final long currencyId;
+        final long buyRateATM;
+        final long sellRateATM;
+        final long totalBuyLimit;
+        final long totalSellLimit;
+        final long initialBuySupply;
+        final long initialSellSupply;
+        final int expirationHeight;
 
         public MonetarySystemPublishExchangeOffer(ByteBuffer buffer) {
             super(buffer);
@@ -2462,9 +1408,9 @@ public interface Attachment extends Appendix {
 
     abstract class MonetarySystemExchange extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long currencyId;
-        private final long rateATM;
-        private final long units;
+        final long currencyId;
+        final long rateATM;
+        final long units;
 
         public MonetarySystemExchange(ByteBuffer buffer) {
             super(buffer);
@@ -2564,10 +1510,10 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemCurrencyMinting extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long nonce;
-        private final long currencyId;
-        private final long units;
-        private final long counter;
+        final long nonce;
+        final long currencyId;
+        final long units;
+        final long counter;
 
         public MonetarySystemCurrencyMinting(ByteBuffer buffer) {
             super(buffer);
@@ -2639,7 +1585,7 @@ public interface Attachment extends Appendix {
 
     final class MonetarySystemCurrencyDeletion extends AbstractAttachment implements MonetarySystemAttachment {
 
-        private final long currencyId;
+        final long currencyId;
 
         public MonetarySystemCurrencyDeletion(ByteBuffer buffer) {
             super(buffer);
@@ -2683,11 +1629,11 @@ public interface Attachment extends Appendix {
 
     final class ShufflingCreation extends AbstractAttachment {
 
-        private final long holdingId;
-        private final HoldingType holdingType;
-        private final long amount;
-        private final byte participantCount;
-        private final short registrationPeriod;
+        final long holdingId;
+        final HoldingType holdingType;
+        final long amount;
+        final byte participantCount;
+        final short registrationPeriod;
 
         public ShufflingCreation(ByteBuffer buffer) {
             super(buffer);
@@ -2774,8 +1720,8 @@ public interface Attachment extends Appendix {
 
     abstract class AbstractShufflingAttachment extends AbstractAttachment implements ShufflingAttachment {
 
-        private final long shufflingId;
-        private final byte[] shufflingStateHash;
+        final long shufflingId;
+        final byte[] shufflingStateHash;
 
         public AbstractShufflingAttachment(ByteBuffer buffer) {
             super(buffer);
@@ -2826,7 +1772,7 @@ public interface Attachment extends Appendix {
 
     final class ShufflingRegistration extends AbstractAttachment implements ShufflingAttachment {
 
-        private final byte[] shufflingFullHash;
+        final byte[] shufflingFullHash;
 
         public ShufflingRegistration(ByteBuffer buffer) {
             super(buffer);
@@ -2886,8 +1832,8 @@ public interface Attachment extends Appendix {
             return new ShufflingProcessing(attachmentData);
         }
 
-        private volatile byte[][] data;
-        private final byte[] hash;
+        volatile byte[][] data;
+        final byte[] hash;
 
         public ShufflingProcessing(ByteBuffer buffer) {
             super(buffer);
@@ -2999,7 +1945,7 @@ public interface Attachment extends Appendix {
 
     final class ShufflingRecipients extends AbstractShufflingAttachment {
 
-        private final byte[][] recipientPublicKeys;
+        final byte[][] recipientPublicKeys;
 
         public ShufflingRecipients(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
@@ -3089,9 +2035,9 @@ public interface Attachment extends Appendix {
 
     final class ShufflingCancellation extends AbstractShufflingAttachment {
         private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        private final byte[][] blameData;
-        private final byte[][] keySeeds;
-        private final long cancellingAccountId;
+        final byte[][] blameData;
+        final byte[][] keySeeds;
+        final long cancellingAccountId;
 
         public ShufflingCancellation(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);
@@ -3218,14 +2164,14 @@ public interface Attachment extends Appendix {
 
     abstract class TaggedDataAttachment extends AbstractAttachment implements Prunable {
 
-        private final String name;
-        private final String description;
-        private final String tags;
-        private final String type;
-        private final String channel;
-        private final boolean isText;
-        private final String filename;
-        private final byte[] data;
+        final String name;
+        final String description;
+        final String tags;
+        final String type;
+        final String channel;
+        final boolean isText;
+        final String filename;
+        final byte[] data;
         private volatile TaggedData taggedData;
 
         public TaggedDataAttachment(ByteBuffer buffer) {
@@ -3406,7 +2352,7 @@ public interface Attachment extends Appendix {
             return new TaggedDataUpload(attachmentData);
         }
 
-        private final byte[] hash;
+        final byte[] hash;
 
         public TaggedDataUpload(ByteBuffer buffer) {
             super(buffer);
@@ -3485,8 +2431,8 @@ public interface Attachment extends Appendix {
         }
 
         private volatile byte[] hash;
-        private final long taggedDataId;
-        private final boolean jsonIsPruned;
+        final long taggedDataId;
+        final boolean jsonIsPruned;
 
         public TaggedDataExtend(ByteBuffer buffer) {
             super(buffer);
@@ -3562,9 +2508,9 @@ public interface Attachment extends Appendix {
     final class SetPhasingOnly extends AbstractAttachment {
 
         private final PhasingParams phasingParams;
-        private final long maxFees;
-        private final short minDuration;
-        private final short maxDuration;
+        final long maxFees;
+        final short minDuration;
+        final short maxDuration;
 
         public SetPhasingOnly(PhasingParams params, long maxFees, short minDuration, short maxDuration) {
             phasingParams = params;
@@ -3638,11 +2584,11 @@ public interface Attachment extends Appendix {
 
     abstract class UpdateAttachment extends AbstractAttachment {
 
-        private final Platform platform;
-        private final Architecture architecture;
-        private final DoubleByteArrayTuple url;
-        private final Version version;
-        private final byte[] hash;
+        final Platform platform;
+        final Architecture architecture;
+        final DoubleByteArrayTuple url;
+        final Version version;
+        final byte[] hash;
 
         public UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             super(buffer);

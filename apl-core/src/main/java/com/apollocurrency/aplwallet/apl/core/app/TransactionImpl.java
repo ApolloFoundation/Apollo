@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
@@ -76,7 +77,7 @@ public class TransactionImpl implements Transaction {
         private long feeATM;
         private TransactionType type;
         private byte version;
-        private Attachment.AbstractAttachment attachment;
+        private AbstractAttachment attachment;
 
         private long recipientId;
         private byte[] referencedTransactionFullHash;
@@ -104,7 +105,7 @@ public class TransactionImpl implements Transaction {
         }
 
         BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
-                    Attachment.AbstractAttachment attachment) {
+                    AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
@@ -156,7 +157,7 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl appendix(Attachment.AbstractAttachment attachment) {
+        BuilderImpl appendix(AbstractAttachment attachment) {
             this.attachment = attachment;
             return this;
         }
@@ -277,7 +278,7 @@ public class TransactionImpl implements Transaction {
     private final byte version;
     private final int timestamp;
     private final byte[] signature;
-    private final Attachment.AbstractAttachment attachment;
+    private final AbstractAttachment attachment;
     private final MessageAppendix message;
     private final EncryptedMessageAppendix encryptedMessage;
     private final EncryptToSelfMessageAppendix encryptToSelfMessage;
@@ -509,7 +510,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public Attachment.AbstractAttachment getAttachment() {
+    public AbstractAttachment getAttachment() {
         attachment.loadPrunable(this);
         return attachment;
     }

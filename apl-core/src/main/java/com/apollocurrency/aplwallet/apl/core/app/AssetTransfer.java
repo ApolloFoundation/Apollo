@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -139,7 +140,7 @@ public final class AssetTransfer {
         return assetTransferTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    public static AssetTransfer addAssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
+    public static AssetTransfer addAssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment);
         assetTransferTable.insert(assetTransfer);
         listeners.notify(assetTransfer, Event.ASSET_TRANSFER);
@@ -158,7 +159,7 @@ public final class AssetTransfer {
     private final long quantityATM;
     private final int timestamp;
 
-    private AssetTransfer(Transaction transaction, Attachment.ColoredCoinsAssetTransfer attachment) {
+    private AssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
         this.id = transaction.getId();
         this.dbKey = transferDbKeyFactory.newKey(this.id);
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();

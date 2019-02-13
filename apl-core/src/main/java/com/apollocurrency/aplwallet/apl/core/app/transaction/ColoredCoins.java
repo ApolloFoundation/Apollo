@@ -15,6 +15,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetIssuance;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -38,7 +41,7 @@ public abstract class ColoredCoins extends TransactionType {
     public static final TransactionType ASSET_ISSUANCE = new ColoredCoins() {
         private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+                ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
                 return attachment.getDescription().length();
             }
         };
@@ -74,13 +77,13 @@ public abstract class ColoredCoins extends TransactionType {
         }
 
         @Override
-        public Attachment.ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.ColoredCoinsAssetIssuance(buffer);
+        public ColoredCoinsAssetIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new ColoredCoinsAssetIssuance(buffer);
         }
 
         @Override
-        public Attachment.ColoredCoinsAssetIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.ColoredCoinsAssetIssuance(attachmentData);
+        public ColoredCoinsAssetIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new ColoredCoinsAssetIssuance(attachmentData);
         }
 
         @Override
@@ -90,7 +93,7 @@ public abstract class ColoredCoins extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+            ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
             long assetId = transaction.getId();
             Asset.addAsset(transaction, attachment);
             senderAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
@@ -102,7 +105,7 @@ public abstract class ColoredCoins extends TransactionType {
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+            ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
             if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH || attachment.getDecimals() < 0 || attachment.getDecimals() > 8 || attachment.getQuantityATU() <= 0 || attachment.getQuantityATU() > Constants.MAX_ASSET_QUANTITY_ATU) {
                 throw new AplException.NotValidException("Invalid asset issuance: " + attachment.getJSONObject());
             }
@@ -130,7 +133,7 @@ public abstract class ColoredCoins extends TransactionType {
         }
 
         private boolean isSingletonIssuance(Transaction transaction) {
-            Attachment.ColoredCoinsAssetIssuance attachment = (Attachment.ColoredCoinsAssetIssuance) transaction.getAttachment();
+            ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
             return attachment.getQuantityATU() == 1 && attachment.getDecimals() == 0 && attachment.getDescription().length() <= Constants.MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH;
         }
     };
@@ -151,18 +154,18 @@ public abstract class ColoredCoins extends TransactionType {
         }
 
         @Override
-        public Attachment.ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.ColoredCoinsAssetTransfer(buffer);
+        public ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new ColoredCoinsAssetTransfer(buffer);
         }
 
         @Override
-        public Attachment.ColoredCoinsAssetTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.ColoredCoinsAssetTransfer(attachmentData);
+        public ColoredCoinsAssetTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new ColoredCoinsAssetTransfer(attachmentData);
         }
 
         @Override
         public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
             long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
             if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
                 senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
@@ -173,7 +176,7 @@ public abstract class ColoredCoins extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
             senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
             if (recipientAccount.getId() == Genesis.CREATOR_ID) {
                 Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
@@ -185,13 +188,13 @@ public abstract class ColoredCoins extends TransactionType {
 
         @Override
         public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
             senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+            ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
             if (transaction.getAmountATM() != 0 || attachment.getAssetId() == 0) {
                 throw new AplException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
             }
@@ -234,18 +237,18 @@ public abstract class ColoredCoins extends TransactionType {
         }
 
         @Override
-        public Attachment.ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.ColoredCoinsAssetDelete(buffer);
+        public ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new ColoredCoinsAssetDelete(buffer);
         }
 
         @Override
-        public Attachment.ColoredCoinsAssetDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.ColoredCoinsAssetDelete(attachmentData);
+        public ColoredCoinsAssetDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new ColoredCoinsAssetDelete(attachmentData);
         }
 
         @Override
         public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
             long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
             if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
                 senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
@@ -256,20 +259,20 @@ public abstract class ColoredCoins extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
             senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
             Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
         }
 
         @Override
         public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
             senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+            ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
             if (attachment.getAssetId() == 0) {
                 throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
             }

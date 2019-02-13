@@ -22,6 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetIssuance;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -599,16 +602,16 @@ public final class DebugTrace {
             map.put("order cost", orderCost.toString());
             String event = (isAsk ? "ask" : "bid") + " order";
             map.put("event", event);
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetIssuance) {
+        } else if (attachment instanceof ColoredCoinsAssetIssuance) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetIssuance assetIssuance = (Attachment.ColoredCoinsAssetIssuance)attachment;
+            ColoredCoinsAssetIssuance assetIssuance = (ColoredCoinsAssetIssuance)attachment;
             map.put("asset", transaction.getStringId());
             map.put("asset quantity", String.valueOf(assetIssuance.getQuantityATU()));
             map.put("event", "asset issuance");
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetTransfer) {
-            Attachment.ColoredCoinsAssetTransfer assetTransfer = (Attachment.ColoredCoinsAssetTransfer)attachment;
+        } else if (attachment instanceof ColoredCoinsAssetTransfer) {
+            ColoredCoinsAssetTransfer assetTransfer = (ColoredCoinsAssetTransfer)attachment;
             map.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
             long quantity = assetTransfer.getQuantityATU();
             if (! isRecipient) {
@@ -616,11 +619,11 @@ public final class DebugTrace {
             }
             map.put("asset quantity", String.valueOf(quantity));
             map.put("event", "asset transfer");
-        } else if (attachment instanceof Attachment.ColoredCoinsAssetDelete) {
+        } else if (attachment instanceof ColoredCoinsAssetDelete) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsAssetDelete assetDelete = (Attachment.ColoredCoinsAssetDelete)attachment;
+            ColoredCoinsAssetDelete assetDelete = (ColoredCoinsAssetDelete)attachment;
             map.put("asset", Long.toUnsignedString(assetDelete.getAssetId()));
             long quantity = assetDelete.getQuantityATU();
             map.put("asset quantity", String.valueOf(-quantity));

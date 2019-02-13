@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import javax.enterprise.inject.spi.CDI;
@@ -106,12 +107,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
             return new Attachment.ShufflingCreation(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return new Attachment.ShufflingCreation(attachmentData);
         }
 
@@ -229,12 +230,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
             return new Attachment.ShufflingRegistration(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return new Attachment.ShufflingRegistration(attachmentData);
         }
 
@@ -337,12 +338,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.ShufflingProcessing(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return new Attachment.ShufflingProcessing(attachmentData);
         }
 
@@ -459,12 +460,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.ShufflingRecipients(buffer);
         }
 
         @Override
-       public  Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+       public  AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return new Attachment.ShufflingRecipients(attachmentData);
         }
 
@@ -562,12 +563,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
             return new Attachment.ShufflingVerification(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return new Attachment.ShufflingVerification(attachmentData);
         }
 
@@ -653,12 +654,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return new Attachment.ShufflingCancellation(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return new Attachment.ShufflingCancellation(attachmentData);
         }
 

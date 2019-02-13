@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -113,12 +114,12 @@ public abstract class AccountControl extends TransactionType {
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(ByteBuffer buffer) {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
             return new Attachment.SetPhasingOnly(buffer);
         }
 
         @Override
-        public Attachment.AbstractAttachment parseAttachment(JSONObject attachmentData) {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return new Attachment.SetPhasingOnly(attachmentData);
         }
 

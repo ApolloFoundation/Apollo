@@ -17,6 +17,17 @@ import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EmptyAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAccountInfo;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAccountProperty;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAccountPropertyDelete;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasAssignment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasBuy;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasDelete;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingAliasSell;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingPhasingVoteCasting;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingPollCreation;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -65,12 +76,12 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
             return Attachment.ARBITRARY_MESSAGE;
         }
 
         @Override
-        public Attachment.EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
             return Attachment.ARBITRARY_MESSAGE;
         }
 
@@ -109,7 +120,7 @@ public abstract class Messaging extends TransactionType {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
+                MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
                 return attachment.getAliasName().length() + attachment.getAliasURI().length();
             }
         };
@@ -135,35 +146,35 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAliasAssignment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasAssignment(buffer);
+        public MessagingAliasAssignment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAliasAssignment(buffer);
         }
 
         @Override
-        public Attachment.MessagingAliasAssignment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasAssignment(attachmentData);
+        public MessagingAliasAssignment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAliasAssignment(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
+            MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
             Alias.addOrUpdateAlias(transaction, attachment);
         }
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
+            MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
             return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
         }
 
         @Override
         public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            return Alias.getAlias(((Attachment.MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null && isDuplicate(Messaging.ALIAS_ASSIGNMENT, "", duplicates, true);
+            return Alias.getAlias(((MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null && isDuplicate(Messaging.ALIAS_ASSIGNMENT, "", duplicates, true);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingAliasAssignment attachment = (Attachment.MessagingAliasAssignment) transaction.getAttachment();
+            MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
             if (attachment.getAliasName().length() == 0 || attachment.getAliasName().length() > Constants.MAX_ALIAS_LENGTH || attachment.getAliasURI().length() > Constants.MAX_ALIAS_URI_LENGTH) {
                 throw new AplException.NotValidException("Invalid alias assignment: " + attachment.getJSONObject());
             }
@@ -206,24 +217,24 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAliasSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasSell(buffer);
+        public MessagingAliasSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAliasSell(buffer);
         }
 
         @Override
-        public Attachment.MessagingAliasSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasSell(attachmentData);
+        public MessagingAliasSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAliasSell(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingAliasSell attachment = (Attachment.MessagingAliasSell) transaction.getAttachment();
+            MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
             Alias.sellAlias(transaction, attachment);
         }
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            Attachment.MessagingAliasSell attachment = (Attachment.MessagingAliasSell) transaction.getAttachment();
+            MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
             // not a bug, uniqueness is based on Messaging.ALIAS_ASSIGNMENT
             return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
         }
@@ -233,7 +244,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Invalid sell alias transaction: " + transaction.getJSONObject());
             }
-            final Attachment.MessagingAliasSell attachment = (Attachment.MessagingAliasSell) transaction.getAttachment();
+            final MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
             if (aliasName == null || aliasName.length() == 0) {
                 throw new AplException.NotValidException("Missing alias name");
@@ -292,32 +303,32 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAliasBuy parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasBuy(buffer);
+        public MessagingAliasBuy parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAliasBuy(buffer);
         }
 
         @Override
-        public Attachment.MessagingAliasBuy parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasBuy(attachmentData);
+        public MessagingAliasBuy parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAliasBuy(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            final Attachment.MessagingAliasBuy attachment = (Attachment.MessagingAliasBuy) transaction.getAttachment();
+            final MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
             Alias.changeOwner(transaction.getSenderId(), aliasName);
         }
 
         @Override
         public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            Attachment.MessagingAliasBuy attachment = (Attachment.MessagingAliasBuy) transaction.getAttachment();
+            MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
             // not a bug, uniqueness is based on Messaging.ALIAS_ASSIGNMENT
             return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            final Attachment.MessagingAliasBuy attachment = (Attachment.MessagingAliasBuy) transaction.getAttachment();
+            final MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
             final Alias alias = Alias.getAlias(aliasName);
             if (alias == null) {
@@ -365,31 +376,31 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAliasDelete parseAttachment(final ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasDelete(buffer);
+        public MessagingAliasDelete parseAttachment(final ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAliasDelete(buffer);
         }
 
         @Override
-        public Attachment.MessagingAliasDelete parseAttachment(final JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAliasDelete(attachmentData);
+        public MessagingAliasDelete parseAttachment(final JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAliasDelete(attachmentData);
         }
 
         @Override
         public void applyAttachment(final Transaction transaction, final Account senderAccount, final Account recipientAccount) {
-            final Attachment.MessagingAliasDelete attachment = (Attachment.MessagingAliasDelete) transaction.getAttachment();
+            final MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
             Alias.deleteAlias(attachment.getAliasName());
         }
 
         @Override
         public boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
-            Attachment.MessagingAliasDelete attachment = (Attachment.MessagingAliasDelete) transaction.getAttachment();
+            MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
             // not a bug, uniqueness is based on Messaging.ALIAS_ASSIGNMENT
             return isDuplicate(Messaging.ALIAS_ASSIGNMENT, attachment.getAliasName().toLowerCase(), duplicates, true);
         }
 
         @Override
         public void validateAttachment(final Transaction transaction) throws AplException.ValidationException {
-            final Attachment.MessagingAliasDelete attachment = (Attachment.MessagingAliasDelete) transaction.getAttachment();
+            final MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
             if (aliasName == null || aliasName.length() == 0) {
                 throw new AplException.NotValidException("Missing alias name");
@@ -416,16 +427,16 @@ public abstract class Messaging extends TransactionType {
         private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                int numOptions = ((Attachment.MessagingPollCreation) appendage).getPollOptions().length;
+                int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
                 return numOptions <= 19 ? 0 : numOptions - 19;
             }
         };
         private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) appendage;
+                MessagingPollCreation attachment = (MessagingPollCreation) appendage;
                 int size = attachment.getPollName().length() + attachment.getPollDescription().length();
-                for (String option : ((Attachment.MessagingPollCreation) appendage).getPollOptions()) {
+                for (String option : ((MessagingPollCreation) appendage).getPollOptions()) {
                     size += option.length();
                 }
                 return size <= 288 ? 0 : size - 288;
@@ -454,24 +465,24 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingPollCreation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingPollCreation(buffer);
+        public MessagingPollCreation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingPollCreation(buffer);
         }
 
         @Override
-        public Attachment.MessagingPollCreation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingPollCreation(attachmentData);
+        public MessagingPollCreation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingPollCreation(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) transaction.getAttachment();
+            MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
             Poll.addPoll(transaction, attachment);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingPollCreation attachment = (Attachment.MessagingPollCreation) transaction.getAttachment();
+            MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
             int optionsCount = attachment.getPollOptions().length;
             if (attachment.getPollName().length() > Constants.MAX_POLL_NAME_LENGTH || attachment.getPollName().isEmpty() || attachment.getPollDescription().length() > Constants.MAX_POLL_DESCRIPTION_LENGTH || optionsCount > Constants.MAX_POLL_OPTION_COUNT || optionsCount == 0) {
                 throw new AplException.NotValidException("Invalid poll attachment: " + attachment.getJSONObject());
@@ -531,24 +542,24 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingVoteCasting(buffer);
+        public MessagingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingVoteCasting(buffer);
         }
 
         @Override
-        public Attachment.MessagingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingVoteCasting(attachmentData);
+        public MessagingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingVoteCasting(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
+            MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
             Vote.addVote(transaction, attachment);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
+            MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
             if (attachment.getPollId() == 0 || attachment.getPollVote() == null || attachment.getPollVote().length > Constants.MAX_POLL_OPTION_COUNT) {
                 throw new AplException.NotValidException("Invalid vote casting attachment: " + attachment.getJSONObject());
             }
@@ -580,7 +591,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
-            Attachment.MessagingVoteCasting attachment = (Attachment.MessagingVoteCasting) transaction.getAttachment();
+            MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
             String key = Long.toUnsignedString(attachment.getPollId()) + ":" + Long.toUnsignedString(transaction.getSenderId());
             return isDuplicate(Messaging.VOTE_CASTING, key, duplicates, true);
         }
@@ -597,7 +608,7 @@ public abstract class Messaging extends TransactionType {
     };
     public static final TransactionType PHASING_VOTE_CASTING = new Messaging() {
         private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
-            Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
+            MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             return attachment.getTransactionFullHashes().size() * Constants.ONE_APL;
         };
 
@@ -622,13 +633,13 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingPhasingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingPhasingVoteCasting(buffer);
+        public MessagingPhasingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingPhasingVoteCasting(buffer);
         }
 
         @Override
-        public Attachment.MessagingPhasingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingPhasingVoteCasting(attachmentData);
+        public MessagingPhasingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingPhasingVoteCasting(attachmentData);
         }
 
         @Override
@@ -638,7 +649,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
+            MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             byte[] revealedSecret = attachment.getRevealedSecret();
             if (revealedSecret.length > Constants.MAX_PHASING_REVEALED_SECRET_LENGTH) {
                 throw new AplException.NotValidException("Invalid revealed secret length " + revealedSecret.length);
@@ -695,7 +706,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingPhasingVoteCasting attachment = (Attachment.MessagingPhasingVoteCasting) transaction.getAttachment();
+            MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
                 PhasingVote.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
@@ -711,7 +722,7 @@ public abstract class Messaging extends TransactionType {
         private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                Attachment.MessagingAccountInfo attachment = (Attachment.MessagingAccountInfo) transaction.getAttachment();
+                MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
                 return attachment.getName().length() + attachment.getDescription().length();
             }
         };
@@ -737,18 +748,18 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAccountInfo parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAccountInfo(buffer);
+        public MessagingAccountInfo parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAccountInfo(buffer);
         }
 
         @Override
-        public Attachment.MessagingAccountInfo parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAccountInfo(attachmentData);
+        public MessagingAccountInfo parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAccountInfo(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingAccountInfo attachment = (Attachment.MessagingAccountInfo) transaction.getAttachment();
+            MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
             if (attachment.getName().length() > Constants.MAX_ACCOUNT_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH) {
                 throw new AplException.NotValidException("Invalid account info issuance: " + attachment.getJSONObject());
             }
@@ -756,7 +767,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingAccountInfo attachment = (Attachment.MessagingAccountInfo) transaction.getAttachment();
+            MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
             senderAccount.setAccountInfo(attachment.getName(), attachment.getDescription());
         }
 
@@ -779,7 +790,7 @@ public abstract class Messaging extends TransactionType {
         private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
             @Override
             public int getSize(TransactionImpl transaction, Appendix appendage) {
-                Attachment.MessagingAccountProperty attachment = (Attachment.MessagingAccountProperty) transaction.getAttachment();
+                MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
                 return attachment.getValue().length();
             }
         };
@@ -805,18 +816,18 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAccountProperty parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAccountProperty(buffer);
+        public MessagingAccountProperty parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAccountProperty(buffer);
         }
 
         @Override
-        public Attachment.MessagingAccountProperty parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAccountProperty(attachmentData);
+        public MessagingAccountProperty parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAccountProperty(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingAccountProperty attachment = (Attachment.MessagingAccountProperty) transaction.getAttachment();
+            MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
             if (attachment.getProperty().length() > Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH || attachment.getProperty().length() == 0 || attachment.getValue().length() > Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH) {
                 throw new AplException.NotValidException("Invalid account property: " + attachment.getJSONObject());
             }
@@ -830,7 +841,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingAccountProperty attachment = (Attachment.MessagingAccountProperty) transaction.getAttachment();
+            MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
             recipientAccount.setProperty(transaction, senderAccount, attachment.getProperty(), attachment.getValue());
         }
 
@@ -861,18 +872,18 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public Attachment.MessagingAccountPropertyDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MessagingAccountPropertyDelete(buffer);
+        public MessagingAccountPropertyDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MessagingAccountPropertyDelete(buffer);
         }
 
         @Override
-        public Attachment.MessagingAccountPropertyDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MessagingAccountPropertyDelete(attachmentData);
+        public MessagingAccountPropertyDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MessagingAccountPropertyDelete(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.MessagingAccountPropertyDelete attachment = (Attachment.MessagingAccountPropertyDelete) transaction.getAttachment();
+            MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
             Account.AccountProperty accountProperty = Account.getProperty(attachment.getPropertyId());
             if (accountProperty == null) {
                 throw new AplException.NotCurrentlyValidException("No such property " + Long.toUnsignedString(attachment.getPropertyId()));
@@ -893,7 +904,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.MessagingAccountPropertyDelete attachment = (Attachment.MessagingAccountPropertyDelete) transaction.getAttachment();
+            MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
             senderAccount.deleteProperty(attachment.getPropertyId());
         }
 

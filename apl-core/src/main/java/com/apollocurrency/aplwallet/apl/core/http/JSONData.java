@@ -65,6 +65,8 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -886,7 +888,7 @@ public final class JSONData {
 
     public static JSONObject expectedAssetTransfer(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsAssetTransfer attachment = (Attachment.ColoredCoinsAssetTransfer) transaction.getAttachment();
+        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
         json.put("assetTransfer", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -915,7 +917,7 @@ public final class JSONData {
 
     public static JSONObject expectedAssetDelete(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        Attachment.ColoredCoinsAssetDelete attachment = (Attachment.ColoredCoinsAssetDelete) transaction.getAttachment();
+        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
         json.put("assetDelete", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
