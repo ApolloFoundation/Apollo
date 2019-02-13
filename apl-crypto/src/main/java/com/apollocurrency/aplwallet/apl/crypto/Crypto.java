@@ -373,6 +373,10 @@ public final class Crypto {
         String aesCryptogramm = cryptogramm.substring(0, cryptogrammDivider);
         byte[] aesCryptogrammArray = new BigInteger(aesCryptogramm, 16).toByteArray();
         
+        FBCryptoParams params = FBCryptoParams.createDefault();
+        AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+
+        BigInteger restored = instanceOfAlice.decryptAsymmetric(keyPair.getPrivateKey(), cryptogramm);
         
         return "";
     }

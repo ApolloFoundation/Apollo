@@ -152,7 +152,7 @@ public final class API {
                 elGamalKeyPair = Crypto.getElGamalKeyPair();
             }
             try {
-                TimeUnit.SECONDS.sleep(5);
+                TimeUnit.MINUTES.sleep(15);
             }
             catch (InterruptedException e) {
                 return;
