@@ -4,16 +4,21 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +33,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @EnableWeld
+@ExtendWith(MockitoExtension.class)
 class DbTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
@@ -41,11 +47,14 @@ class DbTest {
     private Db db;
     @Inject
     private PropertiesHolder propertiesHolder;
+    @Mock
+    private FullTextSearchService fullTextSearchService;
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(Db.class, DbProperties.class, ConnectionProviderImpl.class, NtpTime.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class,
             Time.EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            .addBeans(MockBean.of(fullTextSearchService, FullTextSearchService.class))
             .build();
 
     @BeforeEach
@@ -98,13 +107,13 @@ class DbTest {
 
     @Test
     void init() throws Exception {
-        Db.init(baseDbProperties);
+        Db.init(baseDbProperties, fullTextSearchService);
         Db.shutdown();
     }
 
     @Test
     void createAndAddShard() throws Exception {
-        db.init(baseDbProperties);
+        db.init(baseDbProperties, fullTextSearchService);
         TransactionalDb newShardDb = db.createAndAddShard("apl-shard-000001");
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());

@@ -20,11 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -32,15 +34,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class EntityDbTable<T> extends DerivedDbTable {
-    
+
     private static final Logger LOG = getLogger(EntityDbTable.class);
-    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     private final boolean multiversion;
     protected final DbKey.Factory<T> dbKeyFactory;
@@ -48,6 +47,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+    private static FullTextSearchService fullText = CDI.current().select(FullTextSearchService.class).get();
 
     protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -483,7 +483,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
             LOG.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
-            FullTextTrigger.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
+            fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }
 

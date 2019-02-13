@@ -37,7 +37,7 @@ public abstract class DbVersion {
 
     protected BasicDb db;
 
-    void init(BasicDb db, boolean initFullTextSearch) {
+    public void init(BasicDb db) {
         this.db = db;
         Connection con = null;
         Statement stmt = null;
@@ -62,7 +62,7 @@ public abstract class DbVersion {
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();
             }
-            update(nextUpdate, initFullTextSearch);
+            update(nextUpdate);
         } catch (SQLException e) {
             DbUtils.rollback(con);
             throw new RuntimeException(e.toString(), e);
@@ -72,8 +72,8 @@ public abstract class DbVersion {
 
     }
 
-    protected DbVersion(BasicDb db, boolean initFullTextSearch) {
-        init(db, initFullTextSearch);
+    protected DbVersion(BasicDb db) {
+        init(db);
     }
 
     protected void apply(String sql) {
@@ -100,6 +100,6 @@ public abstract class DbVersion {
         }
     }
 
-    protected abstract void update(int nextUpdate, boolean initFullTextSearch);
+    protected abstract void update(int nextUpdate);
 
 }

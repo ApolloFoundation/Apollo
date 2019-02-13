@@ -20,16 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.enterprise.inject.spi.CDI;
 
 public abstract class DerivedDbTable {
 
@@ -37,11 +38,13 @@ public abstract class DerivedDbTable {
 
     protected final String table;
     private static BlockchainProcessor blockchainProcessor;
-
+    // We should find better place for table init
     protected DerivedDbTable(String table) {
+        StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         blockchainProcessor.registerDerivedTable(this);
+        FullTextConfig.getInstance().registerTable(table);
     }
 
     public void rollback(int height) {

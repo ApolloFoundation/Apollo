@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -37,8 +38,7 @@ import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
- * Note, that while creating instance of {@link BasicDb} {@link FullTextTrigger} will
- * be also enabled, so use it carefully
+ * can be initialized with optional fulltext support by using {@link FullTextSearchService} in constructor
  */
 public class BasicDb implements DataSource {
     private static final Logger log = getLogger(BasicDb.class);
@@ -108,8 +108,8 @@ public class BasicDb implements DataSource {
     private final int maxMemoryRows;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-
-    public BasicDb(DbProperties dbProperties) {
+    private FullTextSearchService fullTextSearchProvider;
+    public BasicDb(DbProperties dbProperties, FullTextSearchService fullTextSearchProvider) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
@@ -132,25 +132,19 @@ public class BasicDb implements DataSource {
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
         this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+        this.fullTextSearchProvider = fullTextSearchProvider;
+    }
+
+    public BasicDb(DbProperties dbProperties) {
+        this(dbProperties, null);
     }
 
     /**
-     * Constructor creates internal DataSource with 'Full Text Search' indexes created by default.
+     * Constructor creates internal DataSource with optional 'Full Text Search' indexes.
      * @param dbVersion database version related information
      */
     public void init(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        init(dbVersion, true);
-    }
-
-    /**
-     * Constructor creates internal DataSource with 'Full Text Search' indexes created by specified value.
-     * @param dbVersion database version related information
-     * @param initFullTextSearch true - Full text search indexes are created, false otherwise
-     */
-    public void init(DbVersion dbVersion, boolean initFullTextSearch) {
-        log.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
-        FullTextTrigger.setActive(initFullTextSearch);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         cp.setMaxConnections(maxConnections);
         cp.setLoginTimeout(loginTimeout);
@@ -161,7 +155,10 @@ public class BasicDb implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        dbVersion.init(this, initFullTextSearch);
+        if (fullTextSearchProvider != null) {
+            fullTextSearchProvider.init();
+        }
+        dbVersion.init(this);
         initialized = true;
         shutdown = false;
     }
@@ -171,8 +168,9 @@ public class BasicDb implements DataSource {
             return;
         }
         try {
-            FullTextTrigger.setActive(false);
-            FullTextTrigger.shutdown();
+            if (fullTextSearchProvider != null) {
+                fullTextSearchProvider.shutdown();
+            }
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");

@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -27,25 +27,22 @@ import javax.inject.Inject;
  */
 public class DbMigrationExecutor extends MigrationExecutor {
     private LegacyDbLocationsProvider legacyDbLocationsProvider;
+    private FullTextSearchService fullTextSearchProvider;
     private DbInfoExtractor dbInfoExtractor;
-    private DbProperties dbProperties;// it should be present and initialized
-
     @Inject
-    public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider,
-                               DbInfoExtractor dbInfoExtractor, DbProperties dbProperties) {
+    public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider, DbInfoExtractor dbInfoExtractor,
+                               FullTextSearchService fullTextSearchProvider) {
         super(propertiesHolder, "db", true);
         this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
         this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
-        this.dbProperties = dbProperties;
-
+        this.fullTextSearchProvider = Objects.requireNonNull(fullTextSearchProvider, "Fulltext search service cannot be null");
     }
 
     @Override
     protected void afterMigration() {
-        Db.init(dbProperties);
-        FullTextTrigger.init();
+        Db.init();
         try (Connection connection = Db.getDb().getConnection()) {
-            FullTextTrigger.reindex(connection);
+            fullTextSearchProvider.reindexAll(connection);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
