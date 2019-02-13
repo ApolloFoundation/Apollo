@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
@@ -145,7 +146,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
-                Db.init();
+                Db.init(CDI.current().select(DbProperties.class).get());
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
 

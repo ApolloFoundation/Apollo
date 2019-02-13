@@ -41,7 +41,7 @@ import javax.sql.DataSource;
  * can be initialized with optional fulltext support by using {@link FullTextSearchService} in constructor
  */
 public class BasicDb implements DataSource {
-    private static final Logger LOG = getLogger(BasicDb.class);
+    private static final Logger log = getLogger(BasicDb.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
 
     @Override
@@ -139,6 +139,10 @@ public class BasicDb implements DataSource {
         this(dbProperties, null);
     }
 
+    /**
+     * Constructor creates internal DataSource with optional 'Full Text Search' indexes.
+     * @param dbVersion database version related information
+     */
     public void init(DbVersion dbVersion) {
         LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
@@ -170,11 +174,12 @@ public class BasicDb implements DataSource {
             Connection con = cp.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
-            LOG.info("Database shutdown completed");
+            log.info("Database shutdown completed");
+            cp.dispose();
             shutdown = true;
             initialized = false;
         } catch (SQLException e) {
-            LOG.info(e.toString(), e);
+            log.info(e.toString(), e);
         }
     }
 
@@ -202,7 +207,7 @@ public class BasicDb implements DataSource {
         int activeConnections = cp.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            LOG.debug("Database connection pool current size: " + activeConnections);
+            log.debug("Database connection pool current size: " + activeConnections);
         }
         return con;
     }
