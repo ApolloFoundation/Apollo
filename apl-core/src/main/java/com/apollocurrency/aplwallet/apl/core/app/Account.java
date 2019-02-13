@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRecipients;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -371,7 +372,7 @@ public final class Account {
                         publicKeyCache.remove(accountDbKeyFactory.newKey(transaction.getRecipientId()));
                     }
                     if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                        Attachment.ShufflingRecipients shufflingRecipients = (Attachment.ShufflingRecipients) transaction.getAttachment();
+                        ShufflingRecipients shufflingRecipients = (ShufflingRecipients) transaction.getAttachment();
                         for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
                             publicKeyCache.remove(accountDbKeyFactory.newKey(Account.getId(publicKey)));
                         }

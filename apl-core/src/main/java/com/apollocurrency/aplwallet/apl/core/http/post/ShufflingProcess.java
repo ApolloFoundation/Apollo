@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -85,7 +86,7 @@ public final class ShufflingProcess extends CreateTransaction {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 
-        Attachment.ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
         return createTransaction(req, senderAccount, attachment);
     }
 

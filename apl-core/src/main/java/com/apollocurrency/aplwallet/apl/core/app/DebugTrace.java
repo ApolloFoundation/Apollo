@@ -32,6 +32,11 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoi
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsRefund;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemReserveClaim;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -689,8 +694,8 @@ public final class DebugTrace {
             } else {
                 map.put("recipient", Long.toUnsignedString(transaction.getRecipientId()));
             }
-        } else if (attachment instanceof Attachment.MonetarySystemPublishExchangeOffer) {
-            Attachment.MonetarySystemPublishExchangeOffer publishOffer = (Attachment.MonetarySystemPublishExchangeOffer)attachment;
+        } else if (attachment instanceof MonetarySystemPublishExchangeOffer) {
+            MonetarySystemPublishExchangeOffer publishOffer = (MonetarySystemPublishExchangeOffer)attachment;
             map.put("currency", Long.toUnsignedString(publishOffer.getCurrencyId()));
             map.put("offer", transaction.getStringId());
             map.put("buy rate", String.valueOf(publishOffer.getBuyRateATM()));
@@ -704,13 +709,13 @@ public final class DebugTrace {
             BigInteger sellCost = BigInteger.valueOf(publishOffer.getSellRateATM()).multiply(BigInteger.valueOf(sellUnits));
             map.put("sell cost", sellCost.toString());
             map.put("event", "offer");
-        } else if (attachment instanceof Attachment.MonetarySystemCurrencyIssuance) {
-            Attachment.MonetarySystemCurrencyIssuance currencyIssuance = (Attachment.MonetarySystemCurrencyIssuance) attachment;
+        } else if (attachment instanceof MonetarySystemCurrencyIssuance) {
+            MonetarySystemCurrencyIssuance currencyIssuance = (MonetarySystemCurrencyIssuance) attachment;
             map.put("currency", transaction.getStringId());
             map.put("currency units", String.valueOf(currencyIssuance.getInitialSupply()));
             map.put("event", "currency issuance");
-        } else if (attachment instanceof Attachment.MonetarySystemCurrencyTransfer) {
-            Attachment.MonetarySystemCurrencyTransfer currencyTransfer = (Attachment.MonetarySystemCurrencyTransfer) attachment;
+        } else if (attachment instanceof MonetarySystemCurrencyTransfer) {
+            MonetarySystemCurrencyTransfer currencyTransfer = (MonetarySystemCurrencyTransfer) attachment;
             map.put("currency", Long.toUnsignedString(currencyTransfer.getCurrencyId()));
             long units = currencyTransfer.getUnits();
             if (!isRecipient) {
@@ -718,15 +723,15 @@ public final class DebugTrace {
             }
             map.put("currency units", String.valueOf(units));
             map.put("event", "currency transfer");
-        } else if (attachment instanceof Attachment.MonetarySystemReserveClaim) {
-            Attachment.MonetarySystemReserveClaim claim = (Attachment.MonetarySystemReserveClaim) attachment;
+        } else if (attachment instanceof MonetarySystemReserveClaim) {
+            MonetarySystemReserveClaim claim = (MonetarySystemReserveClaim) attachment;
             map.put("currency", Long.toUnsignedString(claim.getCurrencyId()));
             Currency currency = Currency.getCurrency(claim.getCurrencyId());
             map.put("currency units", String.valueOf(-claim.getUnits()));
             map.put("currency cost", String.valueOf(Math.multiplyExact(claim.getUnits(), currency.getCurrentReservePerUnitATM())));
             map.put("event", "currency claim");
-        } else if (attachment instanceof Attachment.MonetarySystemReserveIncrease) {
-            Attachment.MonetarySystemReserveIncrease reserveIncrease = (Attachment.MonetarySystemReserveIncrease) attachment;
+        } else if (attachment instanceof MonetarySystemReserveIncrease) {
+            MonetarySystemReserveIncrease reserveIncrease = (MonetarySystemReserveIncrease) attachment;
             map.put("currency", Long.toUnsignedString(reserveIncrease.getCurrencyId()));
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
             map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitATM(), currency.getReserveSupply())));

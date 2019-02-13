@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -717,7 +718,7 @@ public final class FundingMonitor {
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
-            Attachment attachment = new Attachment.MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
+            Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)

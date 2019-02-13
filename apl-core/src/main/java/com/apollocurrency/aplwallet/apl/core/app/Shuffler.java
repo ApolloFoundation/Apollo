@@ -22,6 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCancellation;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRegistration;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingVerification;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -441,30 +445,30 @@ public final class Shuffler {
 
     private void submitRegister(Shuffling shuffling) {
         LOG.debug("Account {} registering for shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingRegistration attachment = new Attachment.ShufflingRegistration(shufflingFullHash);
+        ShufflingRegistration attachment = new ShufflingRegistration(shufflingFullHash);
         submitTransaction(attachment);
     }
 
     private void submitProcess(Shuffling shuffling) {
         LOG.debug("Account {} processing shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingAttachment attachment = shuffling.process(accountId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shuffling.process(accountId, secretBytes, recipientPublicKey);
         submitTransaction(attachment);
     }
 
     private void submitVerify(Shuffling shuffling) {
         LOG.debug("Account {} verifying shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingVerification attachment = new Attachment.ShufflingVerification(shuffling.getId(), shuffling.getStateHash());
+        ShufflingVerification attachment = new ShufflingVerification(shuffling.getId(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
     private void submitCancel(Shuffling shuffling) {
         LOG.debug("Account {} cancelling shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        Attachment.ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
+        ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
                 shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
-    private void submitTransaction(Attachment.ShufflingAttachment attachment) {
+    private void submitTransaction(ShufflingAttachment attachment) {
         if (lookupBlockchainProcessor().isProcessingBlock()) {
             if (hasUnconfirmedTransaction(attachment, transactionProcessor.getWaitingTransactions())) {
                 LOG.debug("Transaction already submitted");
@@ -503,7 +507,7 @@ public final class Shuffler {
         }
     }
 
-    private boolean hasUnconfirmedTransaction(Attachment.ShufflingAttachment shufflingAttachment, Iterable<UnconfirmedTransaction> unconfirmedTransactions) {
+    private boolean hasUnconfirmedTransaction(ShufflingAttachment shufflingAttachment, Iterable<UnconfirmedTransaction> unconfirmedTransactions) {
         for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
             if (unconfirmedTransaction.getSenderId() != accountId) {
                 continue;
@@ -512,7 +516,7 @@ public final class Shuffler {
             if (!attachment.getClass().equals(shufflingAttachment.getClass())) {
                 continue;
             }
-            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((Attachment.ShufflingAttachment)attachment).getShufflingStateHash())) {
+            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((ShufflingAttachment)attachment).getShufflingStateHash())) {
                 return true;
             }
         }

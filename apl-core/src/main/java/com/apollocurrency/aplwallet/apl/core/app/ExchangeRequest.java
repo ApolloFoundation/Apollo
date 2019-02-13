@@ -23,6 +23,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchangeAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchangeSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -82,12 +85,12 @@ public final class ExchangeRequest {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("currency_id", currencyId)), from, to);
     }
 
-    static void addExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeBuy attachment) {
+    static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
 
-    static void addExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeSell attachment) {
+    static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
@@ -105,15 +108,15 @@ public final class ExchangeRequest {
     private final long rate;
     private final boolean isBuy;
 
-    private ExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeBuy attachment) {
+    private ExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
         this(transaction, attachment, true);
     }
 
-    private ExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchangeSell attachment) {
+    private ExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
         this(transaction, attachment, false);
     }
 
-    private ExchangeRequest(Transaction transaction, Attachment.MonetarySystemExchange attachment, boolean isBuy) {
+    private ExchangeRequest(Transaction transaction, MonetarySystemExchangeAttachment attachment, boolean isBuy) {
         this.id = transaction.getId();
         this.dbKey = exchangeRequestDbKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();

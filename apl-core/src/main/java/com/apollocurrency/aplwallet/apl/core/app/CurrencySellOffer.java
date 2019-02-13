@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -103,7 +104,7 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
         return sellOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
-    static void addOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+    static void addOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
         sellOfferTable.insert(new CurrencySellOffer(transaction, attachment));
     }
 
@@ -115,7 +116,7 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
 
     private final DbKey dbKey;
 
-    private CurrencySellOffer(Transaction transaction, Attachment.MonetarySystemPublishExchangeOffer attachment) {
+    private CurrencySellOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
         super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
                 attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
                 transaction.getIndex());

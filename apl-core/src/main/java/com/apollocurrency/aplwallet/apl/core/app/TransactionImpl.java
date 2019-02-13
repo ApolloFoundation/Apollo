@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingProcessing;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -771,7 +772,7 @@ public class TransactionImpl implements Transaction {
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
         BuilderImpl builder = newTransactionBuilder(bytes);
         if (prunableAttachments != null) {
-            Attachment.ShufflingProcessing shufflingProcessing = Attachment.ShufflingProcessing.parse(prunableAttachments);
+            ShufflingProcessing shufflingProcessing = ShufflingProcessing.parse(prunableAttachments);
             if (shufflingProcessing != null) {
                 builder.appendix(shufflingProcessing);
             }
