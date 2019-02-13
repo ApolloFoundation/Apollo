@@ -22,9 +22,16 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetDelete;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderCancellationAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsDelivery;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.DigitalGoodsRefund;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -581,12 +588,12 @@ public final class DebugTrace {
 
     private Map<String,String> getValues(long accountId, Transaction transaction, Attachment attachment, boolean isRecipient) {
         Map<String,String> map = getValues(accountId, false);
-        if (attachment instanceof Attachment.ColoredCoinsOrderPlacement) {
+        if (attachment instanceof ColoredCoinsOrderPlacementAttachment) {
             if (isRecipient) {
                 return Collections.emptyMap();
             }
-            Attachment.ColoredCoinsOrderPlacement orderPlacement = (Attachment.ColoredCoinsOrderPlacement)attachment;
-            boolean isAsk = orderPlacement instanceof Attachment.ColoredCoinsAskOrderPlacement;
+            ColoredCoinsOrderPlacementAttachment orderPlacement = (ColoredCoinsOrderPlacementAttachment)attachment;
+            boolean isAsk = orderPlacement instanceof ColoredCoinsAskOrderPlacement;
             map.put("asset", Long.toUnsignedString(orderPlacement.getAssetId()));
             map.put("order", transaction.getStringId());
             map.put("order price", String.valueOf(orderPlacement.getPriceATM()));
@@ -628,19 +635,19 @@ public final class DebugTrace {
             long quantity = assetDelete.getQuantityATU();
             map.put("asset quantity", String.valueOf(-quantity));
             map.put("event", "asset delete");
-        } else if (attachment instanceof Attachment.ColoredCoinsOrderCancellation) {
-            Attachment.ColoredCoinsOrderCancellation orderCancellation = (Attachment.ColoredCoinsOrderCancellation)attachment;
+        } else if (attachment instanceof ColoredCoinsOrderCancellationAttachment) {
+            ColoredCoinsOrderCancellationAttachment orderCancellation = (ColoredCoinsOrderCancellationAttachment)attachment;
             map.put("order", Long.toUnsignedString(orderCancellation.getOrderId()));
             map.put("event", "order cancel");
-        } else if (attachment instanceof Attachment.DigitalGoodsPurchase) {
-            Attachment.DigitalGoodsPurchase purchase = (Attachment.DigitalGoodsPurchase)transaction.getAttachment();
+        } else if (attachment instanceof DigitalGoodsPurchase) {
+            DigitalGoodsPurchase purchase = (DigitalGoodsPurchase)transaction.getAttachment();
             if (isRecipient) {
                 map = getValues(DigitalGoodsStore.Goods.getGoods(purchase.getGoodsId()).getSellerId(), false);
             }
             map.put("event", "purchase");
             map.put("purchase", transaction.getStringId());
-        } else if (attachment instanceof Attachment.DigitalGoodsDelivery) {
-            Attachment.DigitalGoodsDelivery delivery = (Attachment.DigitalGoodsDelivery)transaction.getAttachment();
+        } else if (attachment instanceof DigitalGoodsDelivery) {
+            DigitalGoodsDelivery delivery = (DigitalGoodsDelivery)transaction.getAttachment();
             DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(delivery.getPurchaseId());
             if (isRecipient) {
                 map = getValues(purchase.getBuyerId(), false);
@@ -659,8 +666,8 @@ public final class DebugTrace {
                 discount = - discount;
             }
             map.put("discount", String.valueOf(discount));
-        } else if (attachment instanceof Attachment.DigitalGoodsRefund) {
-            Attachment.DigitalGoodsRefund refund = (Attachment.DigitalGoodsRefund)transaction.getAttachment();
+        } else if (attachment instanceof DigitalGoodsRefund) {
+            DigitalGoodsRefund refund = (DigitalGoodsRefund)transaction.getAttachment();
             if (isRecipient) {
                 map = getValues(DigitalGoodsStore.Purchase.getPurchase(refund.getPurchaseId()).getBuyerId(), false);
             }
@@ -724,8 +731,8 @@ public final class DebugTrace {
             Currency currency = Currency.getCurrency(reserveIncrease.getCurrencyId());
             map.put("currency cost", String.valueOf(-Math.multiplyExact(reserveIncrease.getAmountPerUnitATM(), currency.getReserveSupply())));
             map.put("event", "currency reserve");
-        } else if (attachment instanceof Attachment.ColoredCoinsDividendPayment) {
-            Attachment.ColoredCoinsDividendPayment dividendPayment = (Attachment.ColoredCoinsDividendPayment)attachment;
+        } else if (attachment instanceof ColoredCoinsDividendPayment) {
+            ColoredCoinsDividendPayment dividendPayment = (ColoredCoinsDividendPayment)attachment;
             long totalDividend = 0;
             String assetId = Long.toUnsignedString(dividendPayment.getAssetId());
             try (DbIterator<Account.AccountAsset> iterator = Account.getAssetAccounts(dividendPayment.getAssetId(), dividendPayment.getHeight(), 0, -1)) {

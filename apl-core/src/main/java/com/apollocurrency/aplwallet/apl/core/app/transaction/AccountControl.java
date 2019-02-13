@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -56,24 +57,24 @@ public abstract class AccountControl extends TransactionType {
         }
 
         @Override
-        public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.AccountControlEffectiveBalanceLeasing(buffer);
+        public AccountControlEffectiveBalanceLeasing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new AccountControlEffectiveBalanceLeasing(buffer);
         }
 
         @Override
-        public Attachment.AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.AccountControlEffectiveBalanceLeasing(attachmentData);
+        public AccountControlEffectiveBalanceLeasing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new AccountControlEffectiveBalanceLeasing(attachmentData);
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
+            AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
             Account.getAccount(transaction.getSenderId()).leaseEffectiveBalance(transaction.getRecipientId(), attachment.getPeriod());
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.AccountControlEffectiveBalanceLeasing attachment = (Attachment.AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
+            AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
             if (transaction.getSenderId() == transaction.getRecipientId()) {
                 throw new AplException.NotValidException("Account cannot lease balance to itself");
             }

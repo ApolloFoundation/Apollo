@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -54,8 +55,8 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
     }
 
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
-        Attachment.ColoredCoinsOrderPlacement a1 = (Attachment.ColoredCoinsOrderPlacement)o1.getAttachment();
-        Attachment.ColoredCoinsOrderPlacement a2 = (Attachment.ColoredCoinsOrderPlacement)o2.getAttachment();
+        ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment)o1.getAttachment();
+        ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment)o2.getAttachment();
         return Long.compare(a1.getPriceATM(), a2.getPriceATM());
     };
 
@@ -68,7 +69,7 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
             if (transaction.getType() != ColoredCoins.ASK_ORDER_PLACEMENT) {
                 return false;
             }
-            Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
+            ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment)transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 
