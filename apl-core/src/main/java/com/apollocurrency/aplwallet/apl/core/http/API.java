@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 
 import java.security.KeyPair;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -113,7 +114,7 @@ public final class API {
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
-    private static AsymmetricCipherKeyPair elGamalKeyPair;    
+    private static FBElGamalKeyPair elGamalKeyPair;    
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -151,7 +152,7 @@ public final class API {
                 elGamalKeyPair = Crypto.getElGamalKeyPair();
             }
             try {
-                TimeUnit.MINUTES.sleep(15);
+                TimeUnit.SECONDS.sleep(5);
             }
             catch (InterruptedException e) {
                 return;
@@ -166,9 +167,9 @@ public final class API {
         return privateKey;
     }
 
-    public static synchronized ImmutablePair<BigInteger, BigInteger> getServerElGamalPublicKey() {
-        ImmutablePair XYPair = new ImmutablePair<>(Crypto.getElGamalX(elGamalKeyPair), Crypto.getElGamalY(elGamalKeyPair));
-        return XYPair;
+    public static synchronized FBElGamalKeyPair getServerElGamalPublicKey() {
+        
+        return elGamalKeyPair;
         
     }
     

@@ -56,6 +56,12 @@
                     </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>io.firstbridge</groupId>
+            <artifactId>cryptolib</artifactId>
+            <version>1.2.3</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>

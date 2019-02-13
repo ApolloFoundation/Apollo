@@ -39,11 +39,9 @@ public final class GetElGamalPublicKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         
         JSONObject response = new JSONObject();
-        ImmutablePair XYPair = API.getServerElGamalPublicKey();
-        BigInteger elGamalX = (BigInteger) XYPair.getKey();
-        BigInteger elGamalY = (BigInteger) XYPair.getValue();
-        response.put("ElGamalX", elGamalX.toString(16));
-        response.put("ElGamalY", elGamalY.toString(16));
+        
+        response.put("ElGamalX", API.getServerElGamalPublicKey().getPrivateKeyX().toString(16));
+        response.put("ElGamalY", API.getServerElGamalPublicKey().getPrivateKeyY().toString(16));
         return response;
     }
 }

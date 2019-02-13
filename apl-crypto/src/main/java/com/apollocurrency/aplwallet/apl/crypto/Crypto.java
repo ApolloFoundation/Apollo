@@ -22,6 +22,8 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import io.firstbridge.cryptolib.FBCryptoParams;
+import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+import io.firstbridge.cryptolib.exception.CryptoNotValidException;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -45,6 +47,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.logging.Level;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
@@ -343,50 +346,33 @@ public final class Crypto {
         return Curve25519.isCanonicalSignature(signature);
     }
     
-    public static AsymmetricCipherKeyPair getElGamalKeyPair(){
+    public static FBElGamalKeyPair getElGamalKeyPair() {
        
-        X9ECParameters xparams = SECNamedCurves.getByName("secp521r1");
-
-        ECKeyPairGenerator kpGen = new ECKeyPairGenerator();
-
-        ECDomainParameters domainParams = new ECDomainParameters(xparams.getCurve(), xparams.getG(), xparams.getN(), xparams.getH(), xparams.getSeed());
-
-        kpGen.init(new ECKeyGenerationParameters(domainParams, new SecureRandom()));
-
-        AsymmetricCipherKeyPair keyPairAlice;        
+            try {
+                FBCryptoParams params = FBCryptoParams.createDefault();
+                AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+                instanceOfAlice.setCurveParameters();
+                return instanceOfAlice.generateOwnKeys();
+            } catch (CryptoNotValidException ex) {
+                LOG.debug(ex.getLocalizedMessage());
+            }
+            
+            return null;
         
-        keyPairAlice = kpGen.generateKeyPair();
-        
-        return keyPairAlice;
         
     }
     
-    public static BigInteger getElGamalX(AsymmetricCipherKeyPair keyPairAlice){
-        ECPublicKeyParameters aliceECPublicKeyParameters = (ECPublicKeyParameters)keyPairAlice.getPublic();
-        ECFieldElement alicePublicX = aliceECPublicKeyParameters.getQ().getXCoord();
-        BigInteger alicePublicXBI = alicePublicX.toBigInteger();
-        return alicePublicXBI;
-        
-    }
-    
-    public static BigInteger getElGamalY(AsymmetricCipherKeyPair keyPairAlice){
-        ECPublicKeyParameters aliceECPublicKeyParameters = (ECPublicKeyParameters)keyPairAlice.getPublic();
-        ECFieldElement alicePublicY = aliceECPublicKeyParameters.getQ().getYCoord();
-        BigInteger alicePublicXBI = alicePublicY.toBigInteger();
-        return alicePublicXBI;
-        
-    }
-    
-    public static String elGamalDecrypt(String cryptogramm, AsymmetricCipherKeyPair keyPair)
+    public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
     {
-        int cryptogrammDivider = cryptogramm.length() - 132;
+        
+        int sha256length = 64;
+        int elGamalCryptogrammLength = 132;
+        int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
         String aesKey = cryptogramm.substring(cryptogrammDivider);
         byte[] aesKeyArray = new BigInteger(aesKey, 16).toByteArray();
         String aesCryptogramm = cryptogramm.substring(0, cryptogrammDivider);
         byte[] aesCryptogrammArray = new BigInteger(aesCryptogramm, 16).toByteArray();
         
-        //AsymJCEElGamalImpl elGamalInstalnce = new AsymJCEElGamalImpl(params);
-        //elGamalInstalnce.setAsymmetricKeysBC(aliceECPublicKeyParameters, aliceECPrivateKeyParameters, bobECPublicKeyParameters );
         
         return "";
     }
