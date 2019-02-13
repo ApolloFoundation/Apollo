@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.http.API;

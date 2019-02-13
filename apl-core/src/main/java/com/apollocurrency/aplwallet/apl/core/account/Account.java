@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
