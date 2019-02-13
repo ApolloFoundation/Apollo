@@ -8,6 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.CriticalUpdate;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ImportantUpdate;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MinorUpdate;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -51,7 +55,7 @@ public abstract class Update extends TransactionType {
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+        UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
         if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
             throw new AplException.NotValidException("Invalid update transaction attachment:" + attachment.getJSONObject());
         }
@@ -93,13 +97,13 @@ public abstract class Update extends TransactionType {
         }
 
         @Override
-        public Attachment.CriticalUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.CriticalUpdate(buffer);
+        public CriticalUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new CriticalUpdate(buffer);
         }
 
         @Override
-        public Attachment.CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.CriticalUpdate(attachmentData);
+        public CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new CriticalUpdate(attachmentData);
         }
     };
     public static final TransactionType IMPORTANT = new Update() {
@@ -124,13 +128,13 @@ public abstract class Update extends TransactionType {
         }
 
         @Override
-        public Attachment.ImportantUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.ImportantUpdate(buffer);
+        public ImportantUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new ImportantUpdate(buffer);
         }
 
         @Override
-        public Attachment.ImportantUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.ImportantUpdate(attachmentData);
+        public ImportantUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new ImportantUpdate(attachmentData);
         }
     };
     public static final TransactionType MINOR = new Update() {
@@ -155,13 +159,13 @@ public abstract class Update extends TransactionType {
         }
 
         @Override
-        public Attachment.MinorUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new Attachment.MinorUpdate(buffer);
+        public MinorUpdate parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new MinorUpdate(buffer);
         }
 
         @Override
-        public Attachment.MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new Attachment.MinorUpdate(attachmentData);
+        public MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new MinorUpdate(attachmentData);
         }
     };
     

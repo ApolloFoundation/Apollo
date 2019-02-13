@@ -37,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEn
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingProcessing;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataExtend;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -776,11 +778,11 @@ public class TransactionImpl implements Transaction {
             if (shufflingProcessing != null) {
                 builder.appendix(shufflingProcessing);
             }
-            Attachment.TaggedDataUpload taggedDataUpload = Attachment.TaggedDataUpload.parse(prunableAttachments);
+            TaggedDataUpload taggedDataUpload = TaggedDataUpload.parse(prunableAttachments);
             if (taggedDataUpload != null) {
                 builder.appendix(taggedDataUpload);
             }
-            Attachment.TaggedDataExtend taggedDataExtend = Attachment.TaggedDataExtend.parse(prunableAttachments);
+            TaggedDataExtend taggedDataExtend = TaggedDataExtend.parse(prunableAttachments);
             if (taggedDataExtend != null) {
                 builder.appendix(taggedDataExtend);
             }

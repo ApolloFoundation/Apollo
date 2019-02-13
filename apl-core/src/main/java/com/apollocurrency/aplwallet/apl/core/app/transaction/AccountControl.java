@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.nio.ByteBuffer;
@@ -116,17 +117,17 @@ public abstract class AccountControl extends TransactionType {
 
         @Override
         public AbstractAttachment parseAttachment(ByteBuffer buffer) {
-            return new Attachment.SetPhasingOnly(buffer);
+            return new SetPhasingOnly(buffer);
         }
 
         @Override
         public AbstractAttachment parseAttachment(JSONObject attachmentData) {
-            return new Attachment.SetPhasingOnly(attachmentData);
+            return new SetPhasingOnly(attachmentData);
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly) transaction.getAttachment();
+            SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
             VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
             attachment.getPhasingParams().validate();
             if (votingModel == VoteWeighting.VotingModel.NONE) {
@@ -162,7 +163,7 @@ public abstract class AccountControl extends TransactionType {
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            Attachment.SetPhasingOnly attachment = (Attachment.SetPhasingOnly) transaction.getAttachment();
+            SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
             AccountRestrictions.PhasingOnly.set(senderAccount, attachment);
         }
 
