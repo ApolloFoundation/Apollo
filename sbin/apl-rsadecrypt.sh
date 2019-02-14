@@ -11,5 +11,9 @@
 #"* bytes real to real UTF-8 string                                     *"
 #"* TODO fix app  launch                                                *"
 #"***********************************************************************"
+SCRIPT=`realpath -s $0`
+DIR=`dirname $SCRIPT`
+ . ${DIR}/../bin/apl-common.sh
 
-java -cp "target/classes;target/lib/*" com.apollocurrency.aplwallet.apl.tools.RSADecryption
+${JAVA_CMD}  -jar ${APL_TOOLS_JAR} updaterurl --decrypt --in $1 --out $2
+exit $?
