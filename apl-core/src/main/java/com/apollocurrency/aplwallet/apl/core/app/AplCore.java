@@ -21,14 +21,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
@@ -37,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -62,13 +61,11 @@ public final class AplCore {
 
     private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
 
 
-    public AplCore(BlockchainConfig config) {
-        this.blockchainConfig = config;
+    public AplCore() {
     }
     
     public static boolean isShutdown() {
@@ -146,15 +143,13 @@ public final class AplCore {
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
                 Db.init();
+                CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
+
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
 
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                 // create inside Apollo and passed into AplCore constructor
-                blockchainConfig.updateToLatestConfig();
-
-               
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");

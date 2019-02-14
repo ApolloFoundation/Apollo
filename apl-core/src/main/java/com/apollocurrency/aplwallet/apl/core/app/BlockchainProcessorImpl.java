@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
@@ -88,6 +89,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     // TODO: YL remove static instance later
    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+   private  BlockchainConfigUpdater blockchainConfigUpdater;
     private static final byte[] CHECKSUM_1 = null;
 
     private static Blockchain blockchain;
@@ -127,6 +129,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private Blockchain lookupBlockhain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;
+    }
+    private BlockchainConfigUpdater lookupBlockhainConfigUpdater() {
+        if (blockchainConfigUpdater == null) blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+        return blockchainConfigUpdater;
     }
 
     private final Runnable getMoreBlocksThread = new Runnable() {
@@ -1651,7 +1657,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long blockIdAtHeight = blockchain.getBlockIdAtHeight(height);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
                 lookupBlockhain().setLastBlock(lastBLock);
-                blockchainConfig.rollback(lastBLock.getHeight());
+                lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
             } finally {
                 scan(0, false);
