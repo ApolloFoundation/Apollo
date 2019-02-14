@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -29,9 +29,9 @@ import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;

@@ -22,13 +22,13 @@ public class LedgerEntry {
     /** Ledger identifier */
     private long ledgerId = -1;
     /** Ledger event */
-    private final AccountLedger.LedgerEvent event;
+    private final LedgerEvent event;
     /** Associated event identifier */
     private final long eventId;
     /** Account identifier */
     private final long accountId;
     /** Holding */
-    private final AccountLedger.LedgerHolding holding;
+    private final LedgerHolding holding;
     /** Holding identifier */
     private final Long holdingId;
     /** Change in balance */
@@ -53,7 +53,7 @@ public class LedgerEntry {
      * @param   change                  Change in balance
      * @param   balance                 New balance
      */
-    public LedgerEntry(AccountLedger.LedgerEvent event, long eventId, long accountId, AccountLedger.LedgerHolding holding, Long holdingId, long change, long balance) {
+    public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance) {
         this.event = event;
         this.eventId = eventId;
         this.accountId = accountId;
@@ -76,7 +76,7 @@ public class LedgerEntry {
      * @param   change                  Change in balance
      * @param   balance                 New balance
      */
-    public LedgerEntry(AccountLedger.LedgerEvent event, long eventId, long accountId, long change, long balance) {
+    public LedgerEntry(LedgerEvent event, long eventId, long accountId, long change, long balance) {
         this(event, eventId, accountId, null, null, change, balance);
     }
 
@@ -88,12 +88,12 @@ public class LedgerEntry {
      */
     LedgerEntry(ResultSet rs) throws SQLException {
         ledgerId = rs.getLong("db_id");
-        event = AccountLedger.LedgerEvent.fromCode(rs.getByte("event_type"));
+        event = LedgerEvent.fromCode(rs.getByte("event_type"));
         eventId = rs.getLong("event_id");
         accountId = rs.getLong("account_id");
         int holdingType = rs.getByte("holding_type");
         if (holdingType >= 0) {
-            holding = AccountLedger.LedgerHolding.fromCode(holdingType);
+            holding = LedgerHolding.fromCode(holdingType);
         } else {
             holding = null;
         }
@@ -124,7 +124,7 @@ public class LedgerEntry {
      *
      * @return                          Ledger event
      */
-    public AccountLedger.LedgerEvent getEvent() {
+    public LedgerEvent getEvent() {
         return event;
     }
 
@@ -151,7 +151,7 @@ public class LedgerEntry {
      *
      * @return                          Holding or null if there is no holding
      */
-    public AccountLedger.LedgerHolding getHolding() {
+    public LedgerHolding getHolding() {
         return holding;
     }
 

@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;

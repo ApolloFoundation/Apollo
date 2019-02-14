@@ -15,7 +15,7 @@ import java.sql.SQLException;
  */
 public final class AccountAsset {
     
-    private final long accountId;
+    final long accountId;
     private final long assetId;
     final DbKey dbKey;
     long quantityATU;
@@ -72,15 +72,6 @@ public final class AccountAsset {
 
     public long getUnconfirmedQuantityATU() {
         return unconfirmedQuantityATU;
-    }
-
-    void save() {
-        Account.checkBalance(this.accountId, this.quantityATU, this.unconfirmedQuantityATU);
-        if (this.quantityATU > 0 || this.unconfirmedQuantityATU > 0) {
-            Account.accountAssetTable.insert(this);
-        } else {
-            Account.accountAssetTable.delete(this);
-        }
     }
 
     @Override

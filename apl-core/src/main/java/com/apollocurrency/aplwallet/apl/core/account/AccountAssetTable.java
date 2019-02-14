@@ -32,9 +32,18 @@ class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
 
     @Override
     protected void save(Connection con, AccountAsset accountAsset) throws SQLException {
-        accountAsset.save(con);
+        save(accountAsset);
     }
-
+    
+    public void save(AccountAsset accountAsset) {
+        Account.checkBalance(accountAsset.accountId, accountAsset.quantityATU, accountAsset.unconfirmedQuantityATU);
+        if (accountAsset.quantityATU > 0 || accountAsset.unconfirmedQuantityATU > 0) {
+            Account.accountAssetTable.insert(accountAsset);
+        } else {
+            Account.accountAssetTable.delete(accountAsset);
+        }
+    }
+    
     @Override
     public void trim(int height) {
         super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));

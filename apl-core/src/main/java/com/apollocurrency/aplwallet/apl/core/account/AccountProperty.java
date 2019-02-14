@@ -17,11 +17,11 @@ import java.sql.SQLException;
  */
 public final class AccountProperty {
     
-    private final long id;
+    final long id;
     final DbKey dbKey;
-    private final long recipientId;
-    private final long setterId;
-    private String property;
+    final long recipientId;
+    final long setterId;
+    String property;
     String value;
     
     static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
@@ -50,19 +50,6 @@ public final class AccountProperty {
         this.setterId = setterIdL == 0 ? recipientId : setterIdL;
         this.property = rs.getString("property");
         this.value = rs.getString("value");
-    }
-
-    public void save(Connection con) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, value, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")) {
-            int i = 0;
-            pstmt.setLong(++i, this.id);
-            pstmt.setLong(++i, this.recipientId);
-            DbUtils.setLongZeroToNull(pstmt, ++i, this.setterId != this.recipientId ? this.setterId : 0);
-            DbUtils.setString(pstmt, ++i, this.property);
-            DbUtils.setString(pstmt, ++i, this.value);
-            pstmt.setInt(++i, Account.blockchain.getHeight());
-            pstmt.executeUpdate();
-        }
     }
 
     public long getId() {

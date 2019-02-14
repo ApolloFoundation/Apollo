@@ -22,11 +22,11 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCancellation;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRegistration;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingVerification;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerification;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;

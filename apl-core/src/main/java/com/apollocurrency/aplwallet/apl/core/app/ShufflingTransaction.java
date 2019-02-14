@@ -20,18 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCancellation;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingCreation;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingProcessing;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRecipients;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRegistration;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingVerification;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipients;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerification;
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -105,8 +111,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AccountLedger.LedgerEvent getLedgerEvent() {
-            return AccountLedger.LedgerEvent.SHUFFLING_REGISTRATION;
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.SHUFFLING_REGISTRATION;
         }
 
         @Override
@@ -228,8 +234,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AccountLedger.LedgerEvent getLedgerEvent() {
-            return AccountLedger.LedgerEvent.SHUFFLING_REGISTRATION;
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.SHUFFLING_REGISTRATION;
         }
 
         @Override
@@ -331,8 +337,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AccountLedger.LedgerEvent getLedgerEvent() {
-            return AccountLedger.LedgerEvent.SHUFFLING_PROCESSING;
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.SHUFFLING_PROCESSING;
         }
 
         @Override
@@ -453,8 +459,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AccountLedger.LedgerEvent getLedgerEvent() {
-            return AccountLedger.LedgerEvent.SHUFFLING_PROCESSING;
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.SHUFFLING_PROCESSING;
         }
 
         @Override
@@ -561,8 +567,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AccountLedger.LedgerEvent getLedgerEvent() {
-            return AccountLedger.LedgerEvent.SHUFFLING_PROCESSING;
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.SHUFFLING_PROCESSING;
         }
 
         @Override
@@ -647,8 +653,8 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public AccountLedger.LedgerEvent getLedgerEvent() {
-            return AccountLedger.LedgerEvent.SHUFFLING_PROCESSING;
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.SHUFFLING_PROCESSING;
         }
 
         @Override

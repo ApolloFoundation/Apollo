@@ -32,10 +32,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.TaggedDataUpload;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;

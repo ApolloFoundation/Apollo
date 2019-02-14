@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import com.apollocurrency.aplwallet.apl.util.Version;

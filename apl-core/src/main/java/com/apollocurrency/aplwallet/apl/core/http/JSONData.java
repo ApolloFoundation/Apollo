@@ -28,30 +28,31 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Asset;
-import com.apollocurrency.aplwallet.apl.core.app.AssetDelete;
-import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.app.Exchange;
-import com.apollocurrency.aplwallet.apl.core.app.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.app.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.app.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingVote;
@@ -64,20 +65,20 @@ import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetDelete;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsOrderPlacementAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemCurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemExchangeAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -1324,7 +1325,7 @@ public final class JSONData {
         json.put("isTransactionEvent", entry.getEvent().isTransaction());
         json.put("change", String.valueOf(entry.getChange()));
         json.put("balance", String.valueOf(entry.getBalance()));
-        AccountLedger.LedgerHolding ledgerHolding = entry.getHolding();
+        LedgerHolding ledgerHolding = entry.getHolding();
         if (ledgerHolding != null) {
             json.put("holdingType", ledgerHolding.name());
             if (entry.getHoldingId() != null) {
@@ -1332,12 +1333,12 @@ public final class JSONData {
             }
             if (includeHoldingInfo) {
                 JSONObject holdingJson = null;
-                if (ledgerHolding == AccountLedger.LedgerHolding.ASSET_BALANCE
-                        || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
+                if (ledgerHolding == LedgerHolding.ASSET_BALANCE
+                        || ledgerHolding == LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
                     holdingJson = new JSONObject();
                     putAssetInfo(holdingJson, entry.getHoldingId());
-                } else if (ledgerHolding == AccountLedger.LedgerHolding.CURRENCY_BALANCE
-                        || ledgerHolding == AccountLedger.LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
+                } else if (ledgerHolding == LedgerHolding.CURRENCY_BALANCE
+                        || ledgerHolding == LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
                     holdingJson = new JSONObject();
                     putCurrencyInfo(holdingJson, entry.getHoldingId());
                 }

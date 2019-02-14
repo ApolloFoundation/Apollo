@@ -41,24 +41,22 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRecipients;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipients;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -118,71 +116,46 @@ public final class Account {
 
     };
     
-    private static final VersionedEntityDbTable<Account> accountTable = new AccountTable("account", accountDbKeyFactory);
-    
+    private static final AccountTable accountTable = new AccountTable("account", accountDbKeyFactory);
 
     
-    static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
-
-        @Override
-        public DbKey newKey(AccountLease accountLease) {
-            return accountLease.dbKey;
-        }
-
-    };
+    private static final AccountLeaseTable accountLeaseTable = new AccountLeaseTable("account_lease",
+            AccountLease.accountLeaseDbKeyFactory);
     
-    private static final VersionedEntityDbTable<AccountLease> accountLeaseTable = new VersionedEntityDbTable<AccountLease>("account_lease",
-            accountLeaseDbKeyFactory) {
-  
-        @Override
-        protected AccountLease load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new AccountLease(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, AccountLease accountLease) throws SQLException {
-            accountLease.save(con);
-        }
-
-    };
-    
-    static final VersionedEntityDbTable<AccountInfo> accountInfoTable = new AccountInfoTable("account_info",
+    static final AccountInfoTable accountInfoTable = new AccountInfoTable("account_info",
             AccountInfo.accountInfoDbKeyFactory, "name,description");
     
-    public static final LongKeyFactory<PublicKey> publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
+    public static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
     
-    private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new PublicKeyTable("public_key", publicKeyDbKeyFactory);
+    private static final PublicKeyTable publicKeyTable = new PublicKeyTable("public_key", publicKeyDbKeyFactory);
     
-    private static final VersionedPersistentDbTable<PublicKey> genesisPublicKeyTable = new PublicKeyTable("genesis_public_key", publicKeyDbKeyFactory, false);
+    private static final PublicKeyTable genesisPublicKeyTable = new PublicKeyTable("genesis_public_key", publicKeyDbKeyFactory, false);
     
-    static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new AccountAssetTable("account_asset", AccountAsset.accountAssetDbKeyFactory);
+    static final AccountAssetTable accountAssetTable = new AccountAssetTable("account_asset", AccountAsset.accountAssetDbKeyFactory);
     
-    static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new AccountCurrecnyTable("account_currency", AccountCurrency.accountCurrencyDbKeyFactory);
+    static final AccountCurrecnyTable accountCurrencyTable = new AccountCurrecnyTable("account_currency", AccountCurrency.accountCurrencyDbKeyFactory);
 
     
-    private static final VersionedEntityDbTable<AccountProperty> accountPropertyTable = new VersionedEntityDbTable<AccountProperty>("account_property", 
-                                                            AccountProperty.accountPropertyDbKeyFactory) {
-
-        @Override
-        protected AccountProperty load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new AccountProperty(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, AccountProperty accountProperty) throws SQLException {
-            accountProperty.save(con);
-        }
-
-    };
+    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable("account_property", 
+                                                            AccountProperty.accountPropertyDbKeyFactory);
     
     private static final ConcurrentMap<DbKey, byte[]> publicKeyCache = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache") ?
             new ConcurrentHashMap<>() : null;
+    
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
     private static final Listeners<AccountCurrency, Event> currencyListeners = new Listeners<>();
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
+    final long id;
+    private final DbKey dbKey;
+    private PublicKey publicKey;
+    long balanceATM;
+    long unconfirmedBalanceATM;
+    long forgedBalanceATM;
+    long activeLesseeId;
+    Set<ControlType> controls;
 
     public static void init(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
@@ -254,14 +227,6 @@ public final class Account {
 
     }
 
-    final long id;
-    private final DbKey dbKey;
-    private PublicKey publicKey;
-    long balanceATM;
-    long unconfirmedBalanceATM;
-    long forgedBalanceATM;
-    long activeLesseeId;
-    Set<ControlType> controls;
 
     public Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
@@ -1155,7 +1120,7 @@ public final class Account {
         } else {
             accountAsset.quantityATU = assetBalance;
         }
-        accountAsset.save();
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
@@ -1177,7 +1142,7 @@ public final class Account {
         } else {
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        accountAsset.save();
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (event == null) {
@@ -1206,7 +1171,7 @@ public final class Account {
             accountAsset.quantityATU = assetBalance;
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        accountAsset.save();
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
