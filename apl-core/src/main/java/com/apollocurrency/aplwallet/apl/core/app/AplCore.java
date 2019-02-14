@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
+
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
@@ -38,11 +39,17 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
+
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -50,7 +57,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -80,6 +86,7 @@ public final class AplCore {
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
+    private FullTextSearchService fullTextSearchService;
 
 
     public AplCore() {
@@ -122,6 +129,9 @@ public final class AplCore {
             blockchainProcessor.shutdown();
         }
         Peers.shutdown();
+        if (fullTextSearchService != null) {
+            fullTextSearchService.shutdown();
+        }
         if (databaseManager != null) {
             databaseManager.shutdown();
         }
@@ -168,11 +178,20 @@ public final class AplCore {
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
 
                 CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
+                fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+                fullTextSearchService.init(); // first time BEFORE migration
+/*
+                fullTextSearchService.shutdown();
+
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
-                dataSource = databaseManager.getDataSource(); // retrieve again after migrate
+                dataSource = databaseManager.getDataSource(); // retrieve again after migration
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
+
+                fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+                fullTextSearchService.init(); // second time AFTER migration
+*/
 
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");

@@ -38,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -51,8 +50,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import javax.inject.Singleton;
 
-@ApplicationScoped
+@Singleton
 public class TransactionDaoImpl implements TransactionDao {
 
     private final DatabaseManager databaseManager;

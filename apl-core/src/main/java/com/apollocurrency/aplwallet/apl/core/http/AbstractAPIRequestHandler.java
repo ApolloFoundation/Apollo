@@ -54,7 +54,9 @@ public abstract class AbstractAPIRequestHandler {
     }
 
     protected TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         return databaseManager.getDataSource();
     }
 

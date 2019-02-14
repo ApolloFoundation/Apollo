@@ -10,11 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIntegrationTest;
+import com.apollocurrency.aplwallet.apl.core.db.DbTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class H2DbInfoExtractorTest extends DbIntegrationTest {
+public class H2DbInfoExtractorTest extends DbTest {
     private static Path path;
     private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("user", "pass");
 

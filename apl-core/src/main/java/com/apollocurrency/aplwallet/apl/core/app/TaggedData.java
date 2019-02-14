@@ -67,7 +67,9 @@ public class TaggedData {
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         return databaseManager.getDataSource();
     }
 

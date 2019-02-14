@@ -23,20 +23,24 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -86,8 +90,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 @Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger log = getLogger(BlockchainProcessorImpl.class);
@@ -98,6 +100,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
    private  BlockchainConfigUpdater blockchainConfigUpdater;
 
     private static final byte[] CHECKSUM_1 = null;
+    private FullTextSearchService fullTextSearchProvider;
 
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
@@ -138,13 +141,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;
     }
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
-        return databaseManager.getDataSource();
-    }
+
     private BlockchainConfigUpdater lookupBlockhainConfigUpdater() {
         if (blockchainConfigUpdater == null) blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         return blockchainConfigUpdater;
+    }
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
     }
 
     private final Runnable getMoreBlocksThread = new Runnable() {
@@ -1094,6 +1100,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return derivedTables;
     }
 
+    private FullTextSearchService lookupFullTextSearchProvider() {
+        if (fullTextSearchProvider == null) {
+            fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
+        }
+        return fullTextSearchProvider;
+    }
     @Override
     public Peer getLastBlockchainFeeder() {
         return lastBlockchainFeeder;
@@ -1686,7 +1698,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
                 lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
                 log.debug("Deleted blocks starting from height %s", height);
-                
             } finally {
                 scan(0, false);
             }
@@ -1935,7 +1946,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (height == 0) {
                     log.debug("Dropping all full text search indexes");
-                    FullTextTrigger.dropAll(con);
+                    lookupFullTextSearchProvider().dropAll(con);
                 }
                 for (DerivedDbTable table : derivedTables) {
                     if (height == 0) {

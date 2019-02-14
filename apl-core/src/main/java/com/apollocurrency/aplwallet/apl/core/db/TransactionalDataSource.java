@@ -60,15 +60,14 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private volatile long statsTime = 0;
 
     @Inject
-    public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
+    public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         super(dbProperties);
-        propertiesHolder = propertiesHolderParam;
+        TransactionalDataSource.propertiesHolder = propertiesHolder;
         stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
         txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
         txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
-        enableSqlLogs = propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
+        enableSqlLogs = TransactionalDataSource.propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
         factory = new FilteredFactoryImpl(stmtThreshold);
-//        blockchain = CDI.current().select(BlockchainImpl.class).get();
     }
 
     @Override

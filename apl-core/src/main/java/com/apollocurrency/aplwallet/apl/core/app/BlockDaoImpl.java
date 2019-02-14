@@ -76,33 +76,11 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         return databaseManager.getDataSource();
     }
-/*
-    public void attachCacheListener() {
-        AplCore.getBlockchainProcessor().addListener((block) -> {
-
-            synchronized (blockCache) {
-                int height = block.getHeight();
-                Iterator<BlockImpl> it = blockCache.values().iterator();
-                while (it.hasNext()) {
-                    Block cacheBlock = it.next();
-                    int cacheHeight = cacheBlock.getHeight();
-                    if (cacheHeight <= height - blockCacheSize || cacheHeight >= height) {
-                        cacheBlock.getTransactions().forEach((tx) -> transactionCache.remove(tx.getId()));
-                        heightMap.remove(cacheHeight);
-                        it.remove();
-                    }
-                }
-                block.getTransactions().forEach((tx) -> transactionCache.put(tx.getId(), (TransactionImpl)tx));
-                heightMap.put(height, (BlockImpl)block);
-                blockCache.put(block.getId(), (BlockImpl)block);
-            }
-        }, BlockchainProcessor.Event.BLOCK_PUSHED);
-    }
-*/
-
 
     private void clearBlockCache() {
         synchronized (blockCache) {

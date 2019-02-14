@@ -115,4 +115,9 @@ public abstract class AbstractDirProvider implements DirProvider {
                 ? Paths.get(baseDir, String.format(PID_FORMAT, applicationName, (chainId)))
                 : pidFilePath;
     }
+
+    @Override
+    public Path getFullTextSearchIndexDir() {
+        return getDbDir().resolve(applicationName);
+    }
 }
