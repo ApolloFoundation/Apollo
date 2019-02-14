@@ -42,6 +42,7 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
 
 
     private void loadFromResources() {
+        // using '/' as separator instead of platform dependent File.separator
         String fn = DEFAULT_CONFIG_DIR + "/" + resourceName;
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream(fn)) {
