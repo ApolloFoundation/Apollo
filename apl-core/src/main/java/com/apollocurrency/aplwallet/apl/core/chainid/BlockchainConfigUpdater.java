@@ -19,17 +19,19 @@ import java.util.Map;
 import java.util.Optional;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
  *  on current height, change part of config represented by {@link HeightConfig}</p>
  *  <p>Note that this class is not thread-safe and cannot be used without additional synchronization. Its important especially, when dynamic
- *  chain switch will be implemented and {@link BlockchainConfigUpdater#changeChain} method will be called not only at startup but from different
+ *  chain switch will be implemented and {@link BlockchainConfigUpdater#updateChain} method will be called not only at startup but from different
  *  parts of
  *  application in concurrent environment</p>
  *  <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
  * blockTime, adaptiveBlockTime, maxBalance and so on</p>
  */
+@Singleton
 public class BlockchainConfigUpdater {
     private static final Logger LOG = LoggerFactory.getLogger(BlockchainConfigUpdater.class);
 
@@ -38,20 +40,21 @@ public class BlockchainConfigUpdater {
     private BlockchainConfig blockchainConfig;
     // inner listener
     private ConfigChangeListener configChangeListener;
-
+    private Chain chain;
     @Inject
     public BlockchainConfigUpdater(BlockchainConfig blockchainConfig) {
         this.blockchainConfig = blockchainConfig;
     }
 
-    public void changeChain(Chain chain) {
+    public void updateChain(Chain chain) {
+        this.chain = chain;
         blockchainConfig.updateChain(chain);
         deregisterConfigChangeListener();
         registerConfigChangeListener();
     }
 
     public void registerConfigChangeListener() {
-        configChangeListener = new ConfigChangeListener(blockchainConfig.getChain().getBlockchainProperties().keySet(), this);
+        configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties().keySet(), this);
         lookupBlockchainProcessor().addListener(configChangeListener,
                 BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
         lookupBlockchainProcessor().addListener(configChangeListener,
@@ -110,7 +113,7 @@ public class BlockchainConfigUpdater {
     }
 
     private HeightConfig getConfigAtHeight(int targetHeight, boolean inclusive) {
-        Map<Integer, BlockchainProperties> blockchainProperties = blockchainConfig.getChain().getBlockchainProperties();
+        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
         if (targetHeight == 0) {
             return new HeightConfig(blockchainProperties.get(0));
         }

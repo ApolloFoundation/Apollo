@@ -12,10 +12,8 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import javax.inject.Singleton;
 
 /**
@@ -77,7 +75,7 @@ public class BlockchainConfig {
         updateChain(chain, maxPrunableLifetime);
     }
 
-    public void updateChain(Chain chain) {
+    void updateChain(Chain chain) {
         updateChain(chain, 0);
     }
 
@@ -139,21 +137,5 @@ public class BlockchainConfig {
 
     void setCurrentConfig(HeightConfig currentConfig) {
         this.currentConfig = currentConfig;
-    }
-
-    private HeightConfig getConfigAtHeight(int targetHeight, boolean inclusive) {
-        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        if (targetHeight == 0) {
-            return new HeightConfig(blockchainProperties.get(0));
-        }
-        Optional<Integer> maxHeight =
-                blockchainProperties
-                        .keySet()
-                        .stream()
-                        .filter(height -> inclusive ? targetHeight >= height : targetHeight > height)
-                        .max(Comparator.naturalOrder());
-        return maxHeight
-                .map(height -> new HeightConfig(blockchainProperties.get(height)))
-                .orElse(null);
     }
 }

@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
@@ -207,8 +207,8 @@ public class Apollo {
         app.propertiesHolder.init(propertiesLoader.load());
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
-        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        blockchainConfig.updateChain(chainsConfigHolder.getActiveChain());
+        BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+        blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
