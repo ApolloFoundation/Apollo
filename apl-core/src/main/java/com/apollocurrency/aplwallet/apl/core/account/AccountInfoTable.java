@@ -16,7 +16,7 @@ import java.sql.SQLException;
  * @author al
  */
 class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
-    
+
     public AccountInfoTable(String table, DbKey.Factory<AccountInfo> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, fullTextSearchColumns);
     }

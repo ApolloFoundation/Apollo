@@ -64,7 +64,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
@@ -99,8 +98,7 @@ public final class Account {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
    
-    private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
-            Genesis.loadGenesisAccounts();
+    private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =  Genesis.loadGenesisAccounts();
     static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static DatabaseManager databaseManager;
@@ -122,14 +120,7 @@ public final class Account {
     
     private static final VersionedEntityDbTable<Account> accountTable = new AccountTable("account", accountDbKeyFactory);
     
-    static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
 
-        @Override
-        public DbKey newKey(AccountInfo accountInfo) {
-            return accountInfo.dbKey;
-        }
-
-    };
     
     static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
@@ -156,67 +147,21 @@ public final class Account {
     };
     
     static final VersionedEntityDbTable<AccountInfo> accountInfoTable = new AccountInfoTable("account_info",
-            accountInfoDbKeyFactory, "name,description");
+            AccountInfo.accountInfoDbKeyFactory, "name,description");
     
     public static final LongKeyFactory<PublicKey> publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
     
     private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new PublicKeyTable("public_key", publicKeyDbKeyFactory);
-    private static final VersionedPersistentDbTable<PublicKey> genesisPublicKeyTable = new PublicKeyTable("genesis_public_key",
-            publicKeyDbKeyFactory, false);
-    static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LinkKeyFactory<AccountAsset>("account_id", "asset_id") {
-
-        @Override
-        public DbKey newKey(AccountAsset accountAsset) {
-            return accountAsset.dbKey;
-        }
-
-    };
     
-    static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new AccountAssetTable("account_asset", accountAssetDbKeyFactory);
+    private static final VersionedPersistentDbTable<PublicKey> genesisPublicKeyTable = new PublicKeyTable("genesis_public_key", publicKeyDbKeyFactory, false);
     
-    static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
-
-        @Override
-        public DbKey newKey(AccountCurrency accountCurrency) {
-            return accountCurrency.dbKey;
-        }
-
-    };
+    static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new AccountAssetTable("account_asset", AccountAsset.accountAssetDbKeyFactory);
     
-    static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new AccountCurrecnyTable("account_currency", accountCurrencyDbKeyFactory);
+    static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new AccountCurrecnyTable("account_currency", AccountCurrency.accountCurrencyDbKeyFactory);
+
     
-    private static final DerivedDbTable accountGuaranteedBalanceTable = new DerivedDbTable("account_guaranteed_balance") {
-
-        @Override
-        public void trim(int height) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
-                         + "WHERE height < ? AND height >= 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
-                pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
-                int count;
-                do {
-                    count = pstmtDelete.executeUpdate();
-                    dataSource.commit(false);
-                } while (count >= propertiesHolder.BATCH_COMMIT_SIZE());
-            }
-            catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-
-    };
-    
-    static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
-
-        @Override
-        public DbKey newKey(AccountProperty accountProperty) {
-            return accountProperty.dbKey;
-        }
-
-    };
-    
-    private static final VersionedEntityDbTable<AccountProperty> accountPropertyTable = new VersionedEntityDbTable<AccountProperty>("account_property", accountPropertyDbKeyFactory) {
+    private static final VersionedEntityDbTable<AccountProperty> accountPropertyTable = new VersionedEntityDbTable<AccountProperty>("account_property", 
+                                                            AccountProperty.accountPropertyDbKeyFactory) {
 
         @Override
         protected AccountProperty load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -445,7 +390,7 @@ public final class Account {
     }
 
     public static AccountProperty getProperty(long propertyId) {
-        return accountPropertyTable.get(accountPropertyDbKeyFactory.newKey(propertyId));
+        return accountPropertyTable.get(AccountProperty.accountPropertyDbKeyFactory.newKey(propertyId));
     }
 
     public static DbIterator<AccountProperty> getProperties(long recipientId, long setterId, String property, int from, int to) {
@@ -721,11 +666,11 @@ public final class Account {
     }
 
     public static AccountAsset getAccountAsset(long accountId, long assetId) {
-        return accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
+        return accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(accountId, assetId));
     }
 
     public static AccountAsset getAccountAsset(long accountId, long assetId, int height) {
-        return accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId), height);
+        return accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(accountId, assetId), height);
     }
 
     public static DbIterator<AccountAsset> getAssetAccounts(long assetId, int from, int to) {
@@ -737,11 +682,11 @@ public final class Account {
     }
 
     public static AccountCurrency getAccountCurrency(long accountId, long currencyId) {
-        return accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(accountId, currencyId));
+        return accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(accountId, currencyId));
     }
 
     public static AccountCurrency getAccountCurrency(long accountId, long currencyId, int height) {
-        return accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(accountId, currencyId), height);
+        return accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(accountId, currencyId), height);
     }
 
     public static DbIterator<AccountCurrency> getAccountCurrencies(long accountId, int from, int to) {
@@ -761,32 +706,32 @@ public final class Account {
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId, int height) {
-        AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId), height);
+        AccountAsset accountAsset = accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(accountId, assetId), height);
         return accountAsset == null ? 0 : accountAsset.quantityATU;
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId) {
-        AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
+        AccountAsset accountAsset = accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.quantityATU;
     }
 
     public static long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
-        AccountAsset accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(accountId, assetId));
+        AccountAsset accountAsset = accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
     }
 
     public static long getCurrencyUnits(long accountId, long currencyId, int height) {
-        AccountCurrency accountCurrency = accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(accountId, currencyId), height);
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(accountId, currencyId), height);
         return accountCurrency == null ? 0 : accountCurrency.units;
     }
 
     public static long getCurrencyUnits(long accountId, long currencyId) {
-        AccountCurrency accountCurrency = accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(accountId, currencyId));
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(accountId, currencyId));
         return accountCurrency == null ? 0 : accountCurrency.units;
     }
 
     public static long getUnconfirmedCurrencyUnits(long accountId, long currencyId) {
-        AccountCurrency accountCurrency = accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(accountId, currencyId));
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(accountId, currencyId));
         return accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
     }
 
@@ -1045,11 +990,11 @@ public final class Account {
     }
 
     public AccountAsset getAsset(long assetId) {
-        return accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
+        return accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(this.id, assetId));
     }
 
     public AccountAsset getAsset(long assetId, int height) {
-        return accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId), height);
+        return accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(this.id, assetId), height);
     }
 
     public long getAssetBalanceATU(long assetId) {
@@ -1065,11 +1010,11 @@ public final class Account {
     }
 
     public AccountCurrency getCurrency(long currencyId) {
-        return accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
+        return accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
     }
 
     public AccountCurrency getCurrency(long currencyId, int height) {
-        return accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(this.id, currencyId), height);
+        return accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(this.id, currencyId), height);
     }
 
     public DbIterator<AccountCurrency> getCurrencies(int from, int to) {
@@ -1155,7 +1100,7 @@ public final class Account {
     }
 
    public  void deleteProperty(long propertyId) {
-        AccountProperty accountProperty = accountPropertyTable.get(accountPropertyDbKeyFactory.newKey(propertyId));
+        AccountProperty accountProperty = accountPropertyTable.get(AccountProperty.accountPropertyDbKeyFactory.newKey(propertyId));
         if (accountProperty == null) {
             return;
         }
@@ -1202,7 +1147,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
@@ -1224,7 +1169,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(this.id, assetId));
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
@@ -1250,7 +1195,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = accountAssetTable.get(accountAssetDbKeyFactory.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAsset.accountAssetDbKeyFactory.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
@@ -1283,7 +1228,7 @@ public final class Account {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
         currencyUnits = Math.addExact(currencyUnits, units);
         if (accountCurrency == null) {
@@ -1304,7 +1249,7 @@ public final class Account {
         if (units == 0) {
             return;
         }
-        AccountCurrency accountCurrency = accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {
@@ -1327,7 +1272,7 @@ public final class Account {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = accountCurrencyTable.get(accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrency.accountCurrencyDbKeyFactory.newKey(this.id, currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
         currencyUnits = Math.addExact(currencyUnits, units);
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;

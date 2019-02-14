@@ -22,11 +22,19 @@ public final class AccountCurrency {
     final DbKey dbKey;
     long units;
     long unconfirmedUnits;
+    
+    static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
 
+        @Override
+        public DbKey newKey(AccountCurrency accountCurrency) {
+            return accountCurrency.dbKey;
+        }
+
+    };
     public AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU) {
         this.accountId = accountId;
         this.currencyId = currencyId;
-        this.dbKey = Account.accountCurrencyDbKeyFactory.newKey(this.accountId, this.currencyId);
+        this.dbKey = accountCurrencyDbKeyFactory.newKey(this.accountId, this.currencyId);
         this.units = quantityATU;
         this.unconfirmedUnits = unconfirmedQuantityATU;
     }
