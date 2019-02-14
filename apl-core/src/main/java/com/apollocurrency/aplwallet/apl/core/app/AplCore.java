@@ -158,11 +158,16 @@ public final class AplCore {
                 DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
+                fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+                fullTextSearchService.init(); // first time BEFORE migration
+
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
-                dataSource = databaseManager.getDataSource(); // retrieve again after migrate
+                dataSource = databaseManager.getDataSource(); // retrieve again after migration
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
+
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+                fullTextSearchService.init(); // second time AFTER migration
 
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
