@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -56,9 +57,9 @@ public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONArray accountCurrencies = new JSONArray();
-        try (DbIterator<Account.AccountCurrency> iterator = Account.getCurrencyAccounts(currencyId, height, firstIndex, lastIndex)) {
+        try (DbIterator<AccountCurrency> iterator = Account.getCurrencyAccounts(currencyId, height, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
-                Account.AccountCurrency accountCurrency = iterator.next();
+                AccountCurrency accountCurrency = iterator.next();
                 accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false));
             }
         }

@@ -21,6 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
@@ -683,8 +685,8 @@ public final class FundingMonitor {
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        Account.AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
-        Account.AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
+        AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
+        AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
@@ -720,8 +722,8 @@ public final class FundingMonitor {
     private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        Account.AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
-        Account.AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
+        AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
+        AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",
@@ -881,7 +883,7 @@ public final class FundingMonitor {
     /**
      * Asset event handler (ASSET_BALANCE event)
      */
-    private static final class AssetEventHandler implements Listener<Account.AccountAsset> {
+    private static final class AssetEventHandler implements Listener<AccountAsset> {
 
         /**
          * Asset event notification
@@ -889,7 +891,7 @@ public final class FundingMonitor {
          * @param   asset                   Account asset
          */
         @Override
-        public void notify(Account.AccountAsset asset) {
+        public void notify(AccountAsset asset) {
             if (stopped) {
                 return;
             }
@@ -917,7 +919,7 @@ public final class FundingMonitor {
     /**
      * Currency event handler (CURRENCY_BALANCE event)
      */
-    private static final class CurrencyEventHandler implements Listener<Account.AccountCurrency> {
+    private static final class CurrencyEventHandler implements Listener<AccountCurrency> {
 
         /**
          * Currency event notification
@@ -925,7 +927,7 @@ public final class FundingMonitor {
          * @param   currency                Account currency
          */
         @Override
-        public void notify(Account.AccountCurrency currency) {
+        public void notify(AccountCurrency currency) {
             if (stopped) {
                 return;
             }

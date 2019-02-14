@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,32 +41,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
-import com.apollocurrency.aplwallet.apl.core.app.LegacyAccountGenerator;
-import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ShufflingRecipients;
@@ -78,23 +66,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
 @SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
@@ -103,8 +82,17 @@ import org.slf4j.Logger;
  * TODO Required massive refactoring
  */
 public final class Account {
+    
     private static final Logger LOG = getLogger(Account.class);
+    
+    public enum Event {
+        BALANCE, UNCONFIRMED_BALANCE, ASSET_BALANCE, UNCONFIRMED_ASSET_BALANCE, CURRENCY_BALANCE, UNCONFIRMED_CURRENCY_BALANCE,
+        LEASE_SCHEDULED, LEASE_STARTED, LEASE_ENDED, SET_PROPERTY, DELETE_PROPERTY
+    }
 
+    public enum ControlType {
+        PHASING_ONLY
+    }
 
     // TODO: YL remove static instance later
 
@@ -134,7 +122,7 @@ public final class Account {
     
     private static final VersionedEntityDbTable<Account> accountTable = new AccountTable("account", accountDbKeyFactory);
     
-    private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
+    static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
 
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
@@ -143,7 +131,7 @@ public final class Account {
 
     };
     
-    private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
+    static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
         @Override
         public DbKey newKey(AccountLease accountLease) {
@@ -154,7 +142,7 @@ public final class Account {
     
     private static final VersionedEntityDbTable<AccountLease> accountLeaseTable = new VersionedEntityDbTable<AccountLease>("account_lease",
             accountLeaseDbKeyFactory) {
-
+  
         @Override
         protected AccountLease load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new AccountLease(rs, dbKey);
@@ -167,27 +155,15 @@ public final class Account {
 
     };
     
-    private static final VersionedEntityDbTable<AccountInfo> accountInfoTable = new VersionedEntityDbTable<AccountInfo>("account_info",
-            accountInfoDbKeyFactory, "name,description") {
-
-        @Override
-        protected AccountInfo load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new AccountInfo(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, AccountInfo accountInfo) throws SQLException {
-            accountInfo.save(con);
-        }
-
-    };
+    static final VersionedEntityDbTable<AccountInfo> accountInfoTable = new AccountInfoTable("account_info",
+            accountInfoDbKeyFactory, "name,description");
     
     public static final LongKeyFactory<PublicKey> publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
     
     private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new PublicKeyTable("public_key", publicKeyDbKeyFactory);
     private static final VersionedPersistentDbTable<PublicKey> genesisPublicKeyTable = new PublicKeyTable("genesis_public_key",
             publicKeyDbKeyFactory, false);
-    private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LinkKeyFactory<AccountAsset>("account_id", "asset_id") {
+    static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new DbKey.LinkKeyFactory<AccountAsset>("account_id", "asset_id") {
 
         @Override
         public DbKey newKey(AccountAsset accountAsset) {
@@ -196,41 +172,9 @@ public final class Account {
 
     };
     
-    private static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new VersionedEntityDbTable<AccountAsset>("account_asset", accountAssetDbKeyFactory) {
-
-        @Override
-        protected AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new AccountAsset(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, AccountAsset accountAsset) throws SQLException {
-            accountAsset.save(con);
-        }
-
-        @Override
-        public void trim(int height) {
-            super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
-        }
-
-        @Override
-        public void checkAvailable(int height) {
-            if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
-                throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
-            }
-            if (height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
-            }
-        }
-
-        @Override
-        protected String defaultSort() {
-            return " ORDER BY quantity DESC, account_id, asset_id ";
-        }
-
-    };
+    static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new AccountAssetTable("account_asset", accountAssetDbKeyFactory);
     
-    private static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
+    static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
 
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
@@ -239,24 +183,7 @@ public final class Account {
 
     };
     
-    private static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new VersionedEntityDbTable<AccountCurrency>("account_currency", accountCurrencyDbKeyFactory) {
-
-        @Override
-        protected AccountCurrency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new AccountCurrency(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
-            accountCurrency.save(con);
-        }
-
-        @Override
-        protected String defaultSort() {
-            return " ORDER BY units DESC, account_id, currency_id ";
-        }
-
-    };
+    static final VersionedEntityDbTable<AccountCurrency> accountCurrencyTable = new AccountCurrecnyTable("account_currency", accountCurrencyDbKeyFactory);
     
     private static final DerivedDbTable accountGuaranteedBalanceTable = new DerivedDbTable("account_guaranteed_balance") {
 
@@ -311,6 +238,12 @@ public final class Account {
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
+
+    public static void init(DatabaseManager databaseManagerParam) {
+        databaseManager = databaseManagerParam;
+    }
+    
+//TODO: move to init or constructor
     static {
 
         blockchainProcessor.addListener(block -> {
@@ -742,6 +675,7 @@ public final class Account {
         }
         return publicKey;
     }
+    
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
         PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
@@ -860,11 +794,6 @@ public final class Account {
         return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
     }
 
-
-    public static void init(DatabaseManager databaseManagerParam) {
-        databaseManager = databaseManagerParam;
-    }
-
     public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {
             data = Convert.compress(data);
@@ -894,7 +823,7 @@ public final class Account {
         return Arrays.equals(publicKey.publicKey, key);
     }
 
-    private static void checkBalance(long accountId, long confirmed, long unconfirmed) {
+    static void checkBalance(long accountId, long confirmed, long unconfirmed) {
         if (accountId == Genesis.CREATOR_ID) {
             return;
         }
@@ -1575,293 +1504,5 @@ public final class Account {
     public String toString() {
         return "Account " + Long.toUnsignedString(getId());
     }
-
-    public enum Event {
-        BALANCE, UNCONFIRMED_BALANCE, ASSET_BALANCE, UNCONFIRMED_ASSET_BALANCE, CURRENCY_BALANCE, UNCONFIRMED_CURRENCY_BALANCE,
-        LEASE_SCHEDULED, LEASE_STARTED, LEASE_ENDED, SET_PROPERTY, DELETE_PROPERTY
-    }
-
-    public enum ControlType {
-        PHASING_ONLY
-    }
-
-    public static final class AccountAsset {
-
-        private final long accountId;
-        private final long assetId;
-        private final DbKey dbKey;
-        private long quantityATU;
-        private long unconfirmedQuantityATU;
-
-        private AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU) {
-            this.accountId = accountId;
-            this.assetId = assetId;
-            this.dbKey = accountAssetDbKeyFactory.newKey(this.accountId, this.assetId);
-            this.quantityATU = quantityATU;
-            this.unconfirmedQuantityATU = unconfirmedQuantityATU;
-        }
-
-        private AccountAsset(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.accountId = rs.getLong("account_id");
-            this.assetId = rs.getLong("asset_id");
-            this.dbKey = dbKey;
-            this.quantityATU = rs.getLong("quantity");
-            this.unconfirmedQuantityATU = rs.getLong("unconfirmed_quantity");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset "
-                    + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) "
-                    + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.accountId);
-                pstmt.setLong(++i, this.assetId);
-                pstmt.setLong(++i, this.quantityATU);
-                pstmt.setLong(++i, this.unconfirmedQuantityATU);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public long getAssetId() {
-            return assetId;
-        }
-
-        public long getQuantityATU() {
-            return quantityATU;
-        }
-
-        public long getUnconfirmedQuantityATU() {
-            return unconfirmedQuantityATU;
-        }
-
-        private void save() {
-            checkBalance(this.accountId, this.quantityATU, this.unconfirmedQuantityATU);
-            if (this.quantityATU > 0 || this.unconfirmedQuantityATU > 0) {
-                accountAssetTable.insert(this);
-            } else {
-                accountAssetTable.delete(this);
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "AccountAsset account_id: " + Long.toUnsignedString(accountId) + " asset_id: " + Long.toUnsignedString(assetId)
-                    + " quantity: " + quantityATU + " unconfirmedQuantity: " + unconfirmedQuantityATU;
-        }
-
-    }
-
-    @SuppressWarnings("UnusedDeclaration")
-    public static final class AccountCurrency {
-
-        private final long accountId;
-        private final long currencyId;
-        private final DbKey dbKey;
-        private long units;
-        private long unconfirmedUnits;
-
-        private AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU) {
-            this.accountId = accountId;
-            this.currencyId = currencyId;
-            this.dbKey = accountCurrencyDbKeyFactory.newKey(this.accountId, this.currencyId);
-            this.units = quantityATU;
-            this.unconfirmedUnits = unconfirmedQuantityATU;
-        }
-
-        private AccountCurrency(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.accountId = rs.getLong("account_id");
-            this.currencyId = rs.getLong("currency_id");
-            this.dbKey = dbKey;
-            this.units = rs.getLong("units");
-            this.unconfirmedUnits = rs.getLong("unconfirmed_units");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency "
-                    + "(account_id, currency_id, units, unconfirmed_units, height, latest) "
-                    + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.accountId);
-                pstmt.setLong(++i, this.currencyId);
-                pstmt.setLong(++i, this.units);
-                pstmt.setLong(++i, this.unconfirmedUnits);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public long getCurrencyId() {
-            return currencyId;
-        }
-
-        public long getUnits() {
-            return units;
-        }
-
-        public long getUnconfirmedUnits() {
-            return unconfirmedUnits;
-        }
-
-        private void save() {
-            checkBalance(this.accountId, this.units, this.unconfirmedUnits);
-            if (this.units > 0 || this.unconfirmedUnits > 0) {
-                accountCurrencyTable.insert(this);
-            } else if (this.units == 0 && this.unconfirmedUnits == 0) {
-                accountCurrencyTable.delete(this);
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "AccountCurrency account_id: " + Long.toUnsignedString(accountId) + " currency_id: " + Long.toUnsignedString(currencyId)
-                    + " quantity: " + units + " unconfirmedQuantity: " + unconfirmedUnits;
-        }
-
-    }
-
-    public static final class AccountLease {
-
-        private final long lessorId;
-        private final DbKey dbKey;
-        private long currentLesseeId;
-        private int currentLeasingHeightFrom;
-        private int currentLeasingHeightTo;
-        private long nextLesseeId;
-        private int nextLeasingHeightFrom;
-        private int nextLeasingHeightTo;
-
-        private AccountLease(long lessorId,
-                             int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId) {
-            this.lessorId = lessorId;
-            this.dbKey = accountLeaseDbKeyFactory.newKey(this.lessorId);
-            this.currentLeasingHeightFrom = currentLeasingHeightFrom;
-            this.currentLeasingHeightTo = currentLeasingHeightTo;
-            this.currentLesseeId = currentLesseeId;
-        }
-
-        private AccountLease(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.lessorId = rs.getLong("lessor_id");
-            this.dbKey = dbKey;
-            this.currentLeasingHeightFrom = rs.getInt("current_leasing_height_from");
-            this.currentLeasingHeightTo = rs.getInt("current_leasing_height_to");
-            this.currentLesseeId = rs.getLong("current_lessee_id");
-            this.nextLeasingHeightFrom = rs.getInt("next_leasing_height_from");
-            this.nextLeasingHeightTo = rs.getInt("next_leasing_height_to");
-            this.nextLesseeId = rs.getLong("next_lessee_id");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_lease "
-                    + "(lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, "
-                    + "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest) "
-                    + "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.lessorId);
-                DbUtils.setIntZeroToNull(pstmt, ++i, this.currentLeasingHeightFrom);
-                DbUtils.setIntZeroToNull(pstmt, ++i, this.currentLeasingHeightTo);
-                DbUtils.setLongZeroToNull(pstmt, ++i, this.currentLesseeId);
-                DbUtils.setIntZeroToNull(pstmt, ++i, this.nextLeasingHeightFrom);
-                DbUtils.setIntZeroToNull(pstmt, ++i, this.nextLeasingHeightTo);
-                DbUtils.setLongZeroToNull(pstmt, ++i, this.nextLesseeId);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getLessorId() {
-            return lessorId;
-        }
-
-        public long getCurrentLesseeId() {
-            return currentLesseeId;
-        }
-
-        public int getCurrentLeasingHeightFrom() {
-            return currentLeasingHeightFrom;
-        }
-
-        public int getCurrentLeasingHeightTo() {
-            return currentLeasingHeightTo;
-        }
-
-        public long getNextLesseeId() {
-            return nextLesseeId;
-        }
-
-        public int getNextLeasingHeightFrom() {
-            return nextLeasingHeightFrom;
-        }
-
-        public int getNextLeasingHeightTo() {
-            return nextLeasingHeightTo;
-        }
-
-    }
-
-    public static final class AccountInfo {
-
-        private final long accountId;
-        private final DbKey dbKey;
-        private String name;
-        private String description;
-
-        private AccountInfo(long accountId, String name, String description) {
-            this.accountId = accountId;
-            this.dbKey = accountInfoDbKeyFactory.newKey(this.accountId);
-            this.name = name;
-            this.description = description;
-        }
-
-        private AccountInfo(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.accountId = rs.getLong("account_id");
-            this.dbKey = dbKey;
-            this.name = rs.getString("name");
-            this.description = rs.getString("description");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info "
-                    + "(account_id, name, description, height, latest) "
-                    + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.accountId);
-                DbUtils.setString(pstmt, ++i, this.name);
-                DbUtils.setString(pstmt, ++i, this.description);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        private void save() {
-            if (this.name != null || this.description != null) {
-                accountInfoTable.insert(this);
-            } else {
-                accountInfoTable.delete(this);
-            }
-        }
-
-    }
-
 
 }

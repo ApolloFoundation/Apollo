@@ -11,6 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -79,13 +82,13 @@ public class BlockEventSourceProcessor implements Runnable {
         int sellerPurchaseCount = DigitalGoodsStore.Purchase.getSellerPurchaseCount(accountId, false, false);
         int aliasCount = Alias.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
-        try (DbIterator<Account.AccountAsset> accountAssets = Account.getAccountAssets(accountId, -1, 0, 2)) {
+        try (DbIterator<AccountAsset> accountAssets = Account.getAccountAssets(accountId, -1, 0, 2)) {
             while (accountAssets.hasNext()) {
                 assetJson.add(JSONData.accountAsset(accountAssets.next(), false, true));
             }
         }
         JSONArray currencyJSON = new JSONArray();
-        try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getAccountCurrencies(accountId, -1, 0, 2)) {
+        try (DbIterator<AccountCurrency> accountCurrencies = Account.getAccountCurrencies(accountId, -1, 0, 2)) {
             while (accountCurrencies.hasNext()) {
                 currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));
             }
@@ -123,7 +126,7 @@ public class BlockEventSourceProcessor implements Runnable {
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }
-        Account.AccountInfo accountInfo = account.getAccountInfo();
+        AccountInfo accountInfo = account.getAccountInfo();
         if (accountInfo != null) {
             response.put("name", Convert.nullToEmpty(accountInfo.getName()));
             response.put("description", Convert.nullToEmpty(accountInfo.getDescription()));

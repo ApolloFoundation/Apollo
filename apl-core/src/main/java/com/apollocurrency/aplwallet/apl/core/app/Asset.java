@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import javax.enterprise.inject.spi.CDI;
 
@@ -200,11 +201,11 @@ public final class Asset {
         return decimals;
     }
 
-    public DbIterator<Account.AccountAsset> getAccounts(int from, int to) {
+    public DbIterator<AccountAsset> getAccounts(int from, int to) {
         return Account.getAssetAccounts(this.assetId, from, to);
     }
 
-    public DbIterator<Account.AccountAsset> getAccounts(int height, int from, int to) {
+    public DbIterator<AccountAsset> getAccounts(int height, int from, int to) {
         return Account.getAssetAccounts(this.assetId, height, from, to);
     }
 
