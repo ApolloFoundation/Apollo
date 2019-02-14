@@ -21,6 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -55,7 +57,12 @@ public final class Genesis {
     private static final byte[] CREATOR_PUBLIC_KEY;
     public static final long CREATOR_ID;
     public static final long EPOCH_BEGINNING;
+    public static final String LOADING_STRING_PUB_KEYS = "Loading public keys %d / %d...";
+    public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
+
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static DatabaseManager databaseManager; // lazy init
+
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
@@ -67,6 +74,11 @@ public final class Genesis {
             throw new RuntimeException("Failed to load genesis parameters", e);
         }
         
+    }
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
     }
 
     private static JSONObject genesisAccountsJSON = null;
@@ -94,18 +106,24 @@ public final class Genesis {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
+        TransactionalDataSource dataSource = lookupDataSource();
         blockchainConfig.reset();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         String loadingPublicKeysString = "Loading public keys";
-        LOG.debug(loadingPublicKeysString);
+        LOG.debug("Loading public keys [{}]...", publicKeys.size());
         AppStatus.getInstance().update(loadingPublicKeysString + "...");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
             account.apply(publicKey, true);
             if (count++ % 100 == 0) {
-                Db.getDb().commitTransaction();
+                dataSource.commit(false);
+            }
+            if (publicKeys.size() > 20000 && count % 10000 == 0) {
+                String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
+                LOG.debug(message);
+                AppStatus.getInstance().update(message);
             }
         }
         LOG.debug("Loaded " + publicKeys.size() + " public keys");
@@ -120,14 +138,19 @@ public final class Genesis {
             account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
-                Db.getDb().commitTransaction();
+                dataSource.commit(false);
+            }
+            if (balances.size() > 10000 && count % 10000 == 0) {
+                String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, balances.size());
+                LOG.debug(message);
+                AppStatus.getInstance().update(message);
             }
         }
         long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
-        LOG.debug("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
+        LOG.debug(String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);

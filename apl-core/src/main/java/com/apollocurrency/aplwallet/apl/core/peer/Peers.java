@@ -28,8 +28,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -114,6 +115,8 @@ public final class Peers {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static DatabaseManager databaseManager;
+    private static PeerDb peerDb;
 
     static final int connectTimeout;
     static final int readTimeout;
@@ -368,17 +371,19 @@ public final class Peers {
             ThreadPool.runBeforeStart("PeerLoader", new Runnable() {
 
                 private final Set<PeerDb.Entry> entries = new HashSet<>();
+                private PeerDb peerDb;
 
                 @Override
                 public void run() {
                     LOG.trace("'Peer loader': thread starting...");
+                    if (peerDb == null) peerDb = CDI.current().select(PeerDb.class).get();
                     final int now = timeService.getEpochTime();
                     wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
                     if (usePeersDb) {
                         LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
                         defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
                         if (savePeers) {
-                            List<PeerDb.Entry> dbPeers = PeerDb.loadPeers();
+                            List<PeerDb.Entry> dbPeers = peerDb.loadPeers();
                             dbPeers.forEach(entry -> {
                                 if (!entries.add(entry)) {
                                     // Database entries override entries from chains.json
@@ -429,6 +434,11 @@ public final class Peers {
             LOG.debug("Known peers: " + peers.size());
         });
 
+    }
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
     }
 
     private static class Init {
@@ -765,38 +775,44 @@ public final class Peers {
             //
             // Update the peer database
             //
+            TransactionalDataSource dataSource = lookupDataSource();
             try {
-                Db.getDb().beginTransaction();
+                dataSource.begin();
                 PeerDb.deletePeers(toDelete);
                 PeerDb.updatePeers(toUpdate);
-                Db.getDb().commitTransaction();
+                dataSource.commit();
             } catch (Exception e) {
-                Db.getDb().rollbackTransaction();
+                dataSource.rollback();
                 throw e;
-            } finally {
-                Db.getDb().endTransaction();
-            }
+            }/* finally {
+                DatabaseManager.getDataSource().endTransaction();
+            }*/
         }
 
     };
 
+/*
     static {
         Peers.addListener(peer -> peersService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    Db.getDb().beginTransaction();
+                    DatabaseManager.getDataSource().begin();
                     PeerDb.updatePeer((PeerImpl)peer);
-                    Db.getDb().commitTransaction();
+                    DatabaseManager.getDataSource().commit();
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
-                    Db.getDb().rollbackTransaction();
-                } finally {
-                    Db.getDb().endTransaction();
-                }
+                    DatabaseManager.getDataSource().rollback();
+                }*/
+/* finally {
+                    DatabaseManager.getDataSource().endTransaction();
+                }*//*
+
             }
         }), Peers.Event.CHANGED_SERVICES);
     }
+*/
 
+/*
     static {
         Account.addListener(account -> peers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
@@ -804,7 +820,9 @@ public final class Peers {
             }
         }), Account.Event.BALANCE);
     }
+*/
 
+/*
     static {
         if (! propertiesHolder.isOffline()) {
             ThreadPool.scheduleThread("PeerConnecting", Peers.peerConnectingThread, 20);
@@ -814,8 +832,40 @@ public final class Peers {
             }
         }
     }
+*/
 
     public static void init() {
+
+        TransactionalDataSource dataSource = lookupDataSource();
+
+        Peers.addListener(peer -> peersService.submit(() -> {
+            if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
+                try {
+                    dataSource.begin();
+                    PeerDb.updatePeer((PeerImpl)peer);
+                    dataSource.commit();
+                } catch (RuntimeException e) {
+                    LOG.error("Unable to update peer database", e);
+                    dataSource.rollback();
+                }/* finally {
+                    DatabaseManager.getDataSource().endTransaction();
+                }*/
+            }
+        }), Peers.Event.CHANGED_SERVICES);
+
+        Account.addListener(account -> peers.values().forEach(peer -> {
+            if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
+                Peers.listeners.notify(peer, Event.WEIGHT);
+            }
+        }), Account.Event.BALANCE);
+
+        if (! propertiesHolder.isOffline()) {
+            ThreadPool.scheduleThread("PeerConnecting", Peers.peerConnectingThread, 20);
+            ThreadPool.scheduleThread("PeerUnBlacklisting", Peers.peerUnBlacklistingThread, 60);
+            if (Peers.getMorePeers) {
+                ThreadPool.scheduleThread("GetMorePeers", Peers.getMorePeersThread, 20);
+            }
+        }
         Init.init();
     }
 

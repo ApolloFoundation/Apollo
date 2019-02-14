@@ -29,20 +29,22 @@ import java.sql.Statement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.sql.DataSource;
+
 public abstract class DbVersion {
-    private static final Logger LOG = getLogger(DbVersion.class);
+    private static final Logger log = getLogger(DbVersion.class);
 
     public DbVersion() {
     }
 
-    protected BasicDb db;
+    protected DataSource basicDataSource;
 
-    void init(BasicDb db) {
-        this.db = db;
+    void init(DataSource dataSource, boolean initFullTextSearch) {
+        this.basicDataSource = dataSource;
         Connection con = null;
         Statement stmt = null;
         try {
-            con = db.getConnection();
+            con = dataSource.getConnection();
             stmt = con.createStatement();
             int nextUpdate = 1;
             try {
@@ -55,14 +57,14 @@ public abstract class DbVersion {
                     throw new RuntimeException("Invalid version table");
                 }
                 rs.close();
-                LOG.info("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
+                log.info("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
             } catch (SQLException e) {
-                LOG.info("Initializing an empty database");
+                log.info("Initializing an empty database");
                 stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL)");
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();
             }
-            update(nextUpdate);
+            update(nextUpdate, initFullTextSearch);
         } catch (SQLException e) {
             DbUtils.rollback(con);
             throw new RuntimeException(e.toString(), e);
@@ -72,19 +74,19 @@ public abstract class DbVersion {
 
     }
 
-    protected DbVersion(BasicDb db) {
-        init(db);
+    protected DbVersion(DataSourceWrapper db, boolean initFullTextSearch) {
+        init(db, initFullTextSearch);
     }
 
     protected void apply(String sql) {
         Connection con = null;
         Statement stmt = null;
         try {
-            con = db.getConnection();
+            con = basicDataSource.getConnection();
             stmt = con.createStatement();
             try {
                 if (sql != null) {
-                    LOG.debug("Will apply sql:\n" + sql);
+                    log.debug("Will apply sql:\n" + sql);
                     stmt.executeUpdate(sql);
                 }
                 stmt.executeUpdate("UPDATE version SET next_update = next_update + 1");
@@ -100,6 +102,6 @@ public abstract class DbVersion {
         }
     }
 
-    protected abstract void update(int nextUpdate);
+    protected abstract void update(int nextUpdate, boolean initFullTextSearch);
 
 }

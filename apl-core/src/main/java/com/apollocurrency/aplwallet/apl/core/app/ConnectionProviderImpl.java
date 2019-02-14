@@ -4,41 +4,47 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 
-@Singleton
 public class ConnectionProviderImpl implements ConnectionProvider {
-    @Override
-    public Connection getConnection() throws SQLException {
-        return Db.getDb().getConnection();
+
+    private TransactionalDataSource dataSource;
+
+    public ConnectionProviderImpl(TransactionalDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
-    public Connection beginTransaction() {
-        return Db.getDb().beginTransaction();
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+
+    @Override
+    public void begin() {
+        dataSource.begin();
     }
 
     @Override
     public void rollbackTransaction(Connection connection) {
-        Db.getDb().rollbackTransaction();
+        dataSource.rollback();
     }
 
     @Override
     public void commitTransaction(Connection connection) {
-        Db.getDb().commitTransaction();
+        dataSource.commit();
     }
 
     @Override
     public void endTransaction(Connection connection) {
-        Db.getDb().endTransaction();
+//        DatabaseManager.getDataSource().endTransaction();
     }
 
     @Override
     public boolean isInTransaction(Connection connection) {
-        return Db.getDb().isInTransaction();
+        return dataSource.isInTransaction();
     }
 }

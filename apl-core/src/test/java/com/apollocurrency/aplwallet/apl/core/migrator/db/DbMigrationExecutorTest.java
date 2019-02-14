@@ -6,8 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -44,7 +45,8 @@ public class DbMigrationExecutorTest {
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
     private DbProperties targetDbProperties = createDbProperties(targetDbPath);
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class)
+    public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
+            TransactionalDataSource.class, DatabaseManager.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
@@ -54,6 +56,7 @@ public class DbMigrationExecutorTest {
 
     private Path pathToDbForMigration;
     private DbManipulator manipulator;
+    private DatabaseManager databaseManager;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -61,7 +64,7 @@ public class DbMigrationExecutorTest {
         manipulator = new DbManipulator(pathToDbForMigration, "sa", "sa");
         manipulator.init();
         manipulator.populate();
-        Db.init(targetDbProperties);
+        databaseManager = new DatabaseManager(targetDbProperties, propertiesHolder);
     }
 
     PropertiesHolder mockPropertiesHolder() {
@@ -94,7 +97,7 @@ public class DbMigrationExecutorTest {
 
     @AfterEach
     void tearDown() throws Exception {
-//        Db.shutdown();
+//        DatabaseManager.shutdown();
         Files.deleteIfExists(pathToDbForMigration);
         manipulator.shutdown();
         FileUtils.deleteDirectory(targetDbDir.toFile());
@@ -103,7 +106,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();
@@ -118,7 +121,7 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigration() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO();

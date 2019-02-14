@@ -20,12 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -34,7 +33,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +44,7 @@ import java.util.TreeSet;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -60,16 +59,16 @@ public class AccountLedger {
 
 
     /** Account ledger is enabled */
-    private static final boolean ledgerEnabled;
+    private static boolean ledgerEnabled;
 
     /** Track all accounts */
-    private static final boolean trackAllAccounts;
+    private static boolean trackAllAccounts;
 
     /** Accounts to track */
     private static final SortedSet<Long> trackAccounts = new TreeSet<>();
 
     /** Unconfirmed logging */
-    private static final int logUnconfirmed;
+    private static int logUnconfirmed;
 
     // TODO: YL remove static instance later
 
@@ -84,6 +83,7 @@ public class AccountLedger {
 
     /** Blockchain processor */
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static DatabaseManager databaseManager;
 
     /** Pending ledger entries */
     private static final List<LedgerEntry> pendingEntries = new ArrayList<>();
@@ -96,6 +96,7 @@ public class AccountLedger {
     /**
      * Process apl.ledgerAccounts
      */
+/*
     static {
         List<String> ledgerAccounts = propertiesHolder.getStringListProperty("apl.ledgerAccounts");
         ledgerEnabled = !ledgerAccounts.isEmpty();
@@ -119,6 +120,7 @@ public class AccountLedger {
         int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
         logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
     }
+*/
 
     private static final AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
 
@@ -128,7 +130,31 @@ public class AccountLedger {
  We don't do anything but we need to be called from AplCore.init() in order to
  register our table
      */
-    public static void init() {
+
+    public static void init(DatabaseManager databaseManagerParam) {
+        databaseManager = databaseManagerParam;
+
+        List<String> ledgerAccounts = propertiesHolder.getStringListProperty("apl.ledgerAccounts");
+        ledgerEnabled = !ledgerAccounts.isEmpty();
+        trackAllAccounts = ledgerAccounts.contains("*");
+        if (ledgerEnabled) {
+            if (trackAllAccounts) {
+                LOG.info("Account ledger is tracking all accounts");
+            } else {
+                for (String account : ledgerAccounts) {
+                    try {
+                        trackAccounts.add(Convert.parseAccountId(account));
+                        LOG.info("Account ledger is tracking account " + account);
+                    } catch (RuntimeException e) {
+                        LOG.error("Account " + account + " is not valid; ignored");
+                    }
+                }
+            }
+        } else {
+            LOG.info("Account ledger is not enabled");
+        }
+        int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
+        logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
     }
 
     /**
@@ -210,7 +236,8 @@ public class AccountLedger {
         //
         // Must be in a database transaction
         //
-        if (!Db.getDb().isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         //
@@ -269,8 +296,9 @@ public class AccountLedger {
         if (!allowPrivate) {
             sql += " AND event_id NOT IN (select event_id from account_ledger where event_type = ? ) ";
         }
-        try (Connection con = Db.getDb().getConnection();
-                PreparedStatement stmt = con.prepareStatement(sql)) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setLong(1, ledgerId);
             if (!allowPrivate) {
                 stmt.setInt(2, LedgerEvent.PRIVATE_PAYMENT.code);
@@ -353,8 +381,9 @@ public class AccountLedger {
         //
         // Get the ledger entries
         //
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         blockchain.readLock();
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
             if (accountId != 0) {

@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
+
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -55,7 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.LegacyAccountGenerator;
@@ -116,6 +115,7 @@ public final class Account {
             Genesis.loadGenesisAccounts();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static DatabaseManager databaseManager;
 
 
     private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
@@ -294,14 +294,15 @@ public final class Account {
 
         @Override
         public void trim(int height) {
-            try (Connection con = Db.getDb().getConnection();
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                          + "WHERE height < ? AND height >= 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
                 int count;
                 do {
                     count = pstmtDelete.executeUpdate();
-                    Db.getDb().commitTransaction();
+                    dataSource.commit(false);
                 } while (count >= propertiesHolder.BATCH_COMMIT_SIZE());
             }
             catch (SQLException e) {
@@ -339,11 +340,11 @@ public final class Account {
     private static final Listeners<AccountLease, Event> leaseListeners = new Listeners<>();
     private static final Listeners<AccountProperty, Event> propertyListeners = new Listeners<>();
 
-    private static final TwoFactorAuthService service2FA = new TwoFactorAuthServiceImpl(
+    private static TwoFactorAuthService service2FA/* = new TwoFactorAuthServiceImpl(
             propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem")
                     ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
-                    : new TwoFactorAuthRepositoryImpl(Db.getDb()),
-            propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
+                    : new TwoFactorAuthRepositoryImpl(DatabaseManager.getDataSource()),
+            propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"))*/;
 
     static {
 
@@ -640,7 +641,8 @@ public final class Account {
             return accountTable.getManyBy(con, pstmt, false);
     }
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
-        try(Connection con = Db.getDb().getConnection()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection()) {
             return getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
         }
         catch (SQLException e) {
@@ -682,7 +684,8 @@ public final class Account {
         }
     }
     public static long getTotalNumberOfAccounts() {
-        try(Connection con = Db.getDb().getConnection()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection()) {
             return getTotalNumberOfAccounts(con);
         }
         catch (SQLException e) {
@@ -707,7 +710,8 @@ public final class Account {
         }
     }
     public static long getTotalSupply() {
-        try(Connection con = Db.getDb().getConnection()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection()) {
             return getTotalSupply(con);
         }
         catch (SQLException e) {
@@ -790,8 +794,9 @@ public final class Account {
 
     private static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(
                     "SELECT * FROM account_lease WHERE current_leasing_height_from = ? AND latest = TRUE "
                             + "UNION ALL SELECT * FROM account_lease WHERE current_leasing_height_to = ? AND latest = TRUE "
@@ -990,7 +995,15 @@ public final class Account {
         return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
     }
 
-    public static void init() {}
+
+    public static void init(DatabaseManager databaseManagerParam) {
+        databaseManager = databaseManagerParam;
+        service2FA = new TwoFactorAuthServiceImpl(
+                propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem")
+                        ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
+                        : new TwoFactorAuthRepositoryImpl(databaseManager.getDataSource()),
+                propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
+    }
 
     public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {
@@ -1156,7 +1169,8 @@ public final class Account {
             balances[i] = lessors.get(i).getBalanceATM();
         }
         int blockchainHeight = blockchain.getHeight();
-        try (Connection con = Db.getDb().getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
                      + (height < blockchainHeight ? " AND height <= ? " : "")
@@ -1209,7 +1223,8 @@ public final class Account {
                     || height > blockchain.getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
-            try (Connection con = Db.getDb().getConnection();
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
                          + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
                 pstmt.setLong(1, this.id);
@@ -1664,7 +1679,8 @@ public final class Account {
             return;
         }
         int blockchainHeight = blockchain.getHeight();
-        try (Connection con = Db.getDb().getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
                      + "WHERE account_id = ? and height = ?");
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "

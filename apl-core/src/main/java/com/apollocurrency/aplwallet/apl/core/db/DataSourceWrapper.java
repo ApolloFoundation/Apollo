@@ -20,11 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
@@ -33,16 +35,17 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
- * Note, that while creating instance of {@link BasicDb} {@link FullTextTrigger} will
+ * Note, that while creating instance of {@link DataSourceWrapper} {@link FullTextTrigger} will
  * be also enabled, so use it carefully
  */
-public class BasicDb implements DataSource {
-    private static final Logger LOG = getLogger(BasicDb.class);
-    private static final String DB_INITIALIZATION_ERROR_TEXT = "Db was not initialized!";
+public class DataSourceWrapper implements DataSource {
+    private static final Logger log = getLogger(DataSourceWrapper.class);
+    private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
 
     @Override
     public Connection getConnection(String username, String password) {
@@ -52,7 +55,7 @@ public class BasicDb implements DataSource {
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         requireInitialization();
-        return cp.unwrap(iface);
+        return dataSource.unwrap(iface);
     }
 
     private void requireInitialization() {
@@ -64,40 +67,41 @@ public class BasicDb implements DataSource {
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         requireInitialization();
-        return cp.isWrapperFor(iface);
+        return dataSource.isWrapperFor(iface);
     }
 
     @Override
-    public PrintWriter getLogWriter() {
+    public PrintWriter getLogWriter() throws SQLException {
         requireInitialization();
-        return this.cp.getLogWriter();
+        return this.dataSource.getLogWriter();
     }
 
     @Override
-    public void setLogWriter(PrintWriter out) {
+    public void setLogWriter(PrintWriter out) throws SQLException {
         requireInitialization();
-        this.cp.setLogWriter(out);
+        this.dataSource.setLogWriter(out);
     }
 
     @Override
-    public void setLoginTimeout(int seconds) {
+    public void setLoginTimeout(int seconds) throws SQLException {
         requireInitialization();
-        this.cp.setLoginTimeout(seconds);
+        this.dataSource.setLoginTimeout(seconds);
     }
 
     @Override
-    public int getLoginTimeout() {
+    public int getLoginTimeout() throws SQLException {
         requireInitialization();
-        return this.cp.getLoginTimeout();
+        return this.dataSource.getLoginTimeout();
     }
 
     @Override
     public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
         requireInitialization();
-        return this.cp.getParentLogger();
+        return this.dataSource.getParentLogger();
     }
 
-    private JdbcConnectionPool cp;
+//    private HikariDataSource dataSource;
+    private JdbcConnectionPool dataSource;
     private volatile int maxActiveConnections;
     private final String dbUrl;
     private final String dbUsername;
@@ -109,7 +113,7 @@ public class BasicDb implements DataSource {
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
-    public BasicDb(DbProperties dbProperties) {
+    public DataSourceWrapper(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
@@ -134,20 +138,45 @@ public class BasicDb implements DataSource {
         this.maxMemoryRows = dbProperties.getMaxMemoryRows();
     }
 
+    /**
+     * Constructor creates internal DataSource with 'Full Text Search' indexes created by default.
+     * @param dbVersion database version related information
+     */
     public void init(DbVersion dbVersion) {
-        LOG.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        FullTextTrigger.setActive(true);
-        cp = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
-        cp.setMaxConnections(maxConnections);
-        cp.setLoginTimeout(loginTimeout);
-        try (Connection con = cp.getConnection();
+        log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
+        init(dbVersion, true);
+    }
+
+    /**
+     * Constructor creates internal DataSource with 'Full Text Search' indexes created by specified value.
+     * @param dbVersion database version related information
+     * @param initFullTextSearch true - Full text search indexes are created, false otherwise
+     */
+    public void init(DbVersion dbVersion, boolean initFullTextSearch) {
+        log.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
+/*
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(dbUsername);
+        config.setPassword(dbPassword);
+        config.setMaximumPoolSize(maxConnections);
+        config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
+        dataSource = new HikariDataSource(config);
+*/
+
+        dataSource = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
+        dataSource.setMaxConnections(maxConnections);
+        dataSource.setLoginTimeout(loginTimeout);
+        log.debug("Attempting to create DataSource by path = {}...", dbUrl);
+        try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
             stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        dbVersion.init(this);
+        FullTextTrigger.setActive(initFullTextSearch);
+        dbVersion.init(dataSource, initFullTextSearch);
         initialized = true;
         shutdown = false;
     }
@@ -159,14 +188,16 @@ public class BasicDb implements DataSource {
         try {
             FullTextTrigger.setActive(false);
             FullTextTrigger.shutdown();
-            Connection con = cp.getConnection();
+            Connection con = dataSource.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
-            LOG.info("Database shutdown completed");
+            log.info("Database shutdown completed");
             shutdown = true;
             initialized = false;
+//            dataSource.close();
+//            dataSource.dispose();
         } catch (SQLException e) {
-            LOG.info(e.toString(), e);
+            log.info(e.toString(), e);
         }
     }
 
@@ -175,7 +206,7 @@ public class BasicDb implements DataSource {
     }
 
     public void analyzeTables() {
-        try (Connection con = cp.getConnection();
+        try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.execute("ANALYZE");
         } catch (SQLException e) {
@@ -185,16 +216,18 @@ public class BasicDb implements DataSource {
     @Override
     public Connection getConnection() throws SQLException {
         Connection con = getPooledConnection();
-        con.setAutoCommit(true);
+        con.setAutoCommit(false);
         return con;
     }
 
     protected Connection getPooledConnection() throws SQLException {
-        Connection con = cp.getConnection();
-        int activeConnections = cp.getActiveConnections();
+        Connection con = dataSource.getConnection();
+//        int activeConnections = dataSource.getMaximumPoolSize();
+        int activeConnections = dataSource.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            LOG.debug("Database connection pool current size: " + activeConnections);
+            log.debug("Used/Maximum connections from Pool '{}'/'{}'",
+                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
         }
         return con;
     }

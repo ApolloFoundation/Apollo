@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import javax.sql.DataSource;
+
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +34,7 @@ public class DbIntegrationTest {
         manipulator.shutdown();
     }
 
-    public BasicDb getDb() {
-        return manipulator.getDb();
+    public DataSource getDataSource() {
+        return manipulator.getDataSource();
     }
 }

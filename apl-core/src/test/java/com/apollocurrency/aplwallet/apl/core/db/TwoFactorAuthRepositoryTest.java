@@ -11,12 +11,14 @@ import org.junit.jupiter.api.BeforeEach;
 
 public class TwoFactorAuthRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {
     private static DbManipulator manipulator = new DbManipulator();
-static {
-        manipulator.init();
-}
+
+    static {
+            manipulator.init();
+    }
+
     public TwoFactorAuthRepositoryTest() {
 
-        super(new TwoFactorAuthRepositoryImpl(manipulator.getDb()));
+        super(new TwoFactorAuthRepositoryImpl(manipulator.getDataSource()));
     }
 
     @AfterAll

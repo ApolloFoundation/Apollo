@@ -34,9 +34,9 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedM
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -55,14 +55,14 @@ import java.util.Objects;
 @ApplicationScoped
 public class TransactionDaoImpl implements TransactionDao {
 
-    private final ConnectionProvider connectionProvider;
+    private final DatabaseManager databaseManager;
     private final BlockDao blockDao;
 
     @Inject
-    public TransactionDaoImpl(BlockDao blockDao, ConnectionProvider connectionProvider) {
+    public TransactionDaoImpl(BlockDao blockDao, DatabaseManager databaseManager) {
         Objects.requireNonNull(blockDao);
         this.blockDao = blockDao;
-        this.connectionProvider = connectionProvider;
+        this.databaseManager = databaseManager;
     }
 
     @Override
@@ -80,7 +80,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -113,7 +114,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -145,7 +147,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -173,7 +176,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -194,7 +198,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -294,7 +299,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -422,7 +428,8 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public int getTransactionCount() {
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
              ResultSet rs = pstmt.executeQuery()) {
             rs.next();
@@ -435,8 +442,9 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public DbIterator<Transaction> getAllTransactions() {
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
             return getTransactions(con, pstmt);
         } catch (SQLException e) {
@@ -529,8 +537,9 @@ public class TransactionDaoImpl implements TransactionDao {
         buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
         buf.append(DbUtils.limitsClause(from, to));
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(buf.toString());
             int i = 0;
             pstmt.setLong(++i, accountId);
@@ -594,8 +603,9 @@ public class TransactionDaoImpl implements TransactionDao {
         sqlQuery.append("ORDER BY block_timestamp DESC, transaction_index DESC ");
         sqlQuery.append(DbUtils.limitsClause(from, to));
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
             int i = 0;
             statement.setByte(++i, Payment.PRIVATE.getType());
@@ -624,8 +634,9 @@ public class TransactionDaoImpl implements TransactionDao {
                 sqlQuery.append("AND subtype = ? ");
             }
         }
-        try (Connection con = connectionProvider.getConnection();
-                PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
             statement.setByte(++i, Payment.PRIVATE.getType());
             statement.setByte(++i, Payment.PRIVATE.getSubtype());
@@ -655,8 +666,9 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
                     + "WHERE referenced_transaction.referenced_transaction_id = ? "
                     + "AND referenced_transaction.transaction_id = transaction.id "

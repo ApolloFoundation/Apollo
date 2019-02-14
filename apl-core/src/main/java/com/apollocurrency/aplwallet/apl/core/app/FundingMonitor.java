@@ -71,12 +71,12 @@ public final class FundingMonitor {
     /** Minimum funding interval */
     public static final int MIN_FUND_INTERVAL = 10;
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static PropertiesHolder propertiesLoader;
+    private static BlockchainConfig blockchainConfig;
+    private static Blockchain blockchain;
+    private static TransactionProcessor transactionProcessor;
     /** Maximum number of monitors */
-    private static final int MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
+    private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
     /** Monitor started */
     private static volatile boolean started = false;
@@ -256,6 +256,13 @@ public final class FundingMonitor {
      */
     public static boolean startMonitor(HoldingType holdingType, long holdingId, String property,
                                     long amount, long threshold, int interval, byte[] keySeed) {
+        propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+        blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        blockchain = CDI.current().select(BlockchainImpl.class).get();
+        transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        /** Maximum number of monitors */
+        MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
+
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
         // instead of during ARS initialization so we don't start the monitor thread if it

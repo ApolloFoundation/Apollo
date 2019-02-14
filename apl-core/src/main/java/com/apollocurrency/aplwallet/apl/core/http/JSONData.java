@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Currency;
@@ -39,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.app.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.ExchangeRequest;
@@ -97,6 +98,8 @@ import java.util.Random;
 public final class JSONData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+
     private JSONData() {} // never
 
     public static JSONObject alias(Alias alias) {
@@ -384,8 +387,9 @@ public final class JSONData {
     public static JSONObject getAccountsStatistic(int numberOfAccounts) {
         //using one connection for 4 queries
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             long totalSupply = Account.getTotalSupply(con);
             long totalAccounts = Account.getTotalNumberOfAccounts(con);
             long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);

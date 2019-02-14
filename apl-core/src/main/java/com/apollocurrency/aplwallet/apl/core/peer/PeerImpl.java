@@ -382,6 +382,7 @@ final class PeerImpl implements Peer {
             return;
         }
         if (! isBlacklisted()) {
+            LOG.error("Connect error", cause);
             if (cause instanceof IOException || cause instanceof ParseException || cause instanceof IllegalArgumentException) {
                 LOG.debug("Blacklisting " + host + " because of: " + cause.toString());
             } else {

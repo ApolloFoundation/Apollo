@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 
 public class AplDbVersion extends DbVersion {
 
-    protected void update(int nextUpdate) {
+    protected void update(int nextUpdate, boolean initFullTextSearch) {
         switch (nextUpdate) {
             case 1:
                 apply("CREATE TABLE IF NOT EXISTS block (db_id IDENTITY, id BIGINT NOT NULL, version INT NOT NULL, "
@@ -549,7 +549,9 @@ public class AplDbVersion extends DbVersion {
             case 198:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_extend_height_id_idx ON tagged_data_extend(height, id)");
             case 199:
-                com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger.init();
+                if (initFullTextSearch) {
+                    FullTextTrigger.init();
+                }
                 apply(null);
             case 200:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_id_height_idx ON asset (id, height DESC)");
@@ -650,7 +652,9 @@ public class AplDbVersion extends DbVersion {
             case 237:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
             case 238:
-                FullTextTrigger.init();
+                if (initFullTextSearch) {
+                    FullTextTrigger.init();
+                }
                 apply(null);
             case 239:
                 apply("CREATE TABLE IF NOT EXISTS update_status ("
@@ -687,6 +691,15 @@ public class AplDbVersion extends DbVersion {
             case 248:
                 apply("ALTER TABLE currency_supply ALTER COLUMN current_reserve_per_unit_nqt RENAME TO current_reserve_per_unit_atm");
             case 249:
+                // create SHARDING meta-info inside main database
+                apply("CREATE TABLE IF NOT EXISTS shard (key VARCHAR(100) not null)");
+            case 250:
+                apply("CREATE UNIQUE INDEX shard_key_idx ON shard(key)");
+            case 251:
+                // it's an example of previously created shard for checking purpose
+//                apply("INSERT INTO shard(key) VALUES('000000001')");
+                return;
+            case 252:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

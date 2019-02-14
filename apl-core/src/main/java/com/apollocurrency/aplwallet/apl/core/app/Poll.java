@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -54,6 +54,7 @@ public final class Poll extends AbstractPoll {
     private static final boolean isPollsProcessing = propertiesLoader.getBooleanProperty("apl.processPolls");
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager;
 
     public static final class OptionResult {
 
@@ -160,10 +161,15 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(dbClause, from, to);
     }
 
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
+    }
+
     public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) {
         Connection connection = null;
         try {
-            connection = Db.getDb().getConnection();
+            connection = lookupDataSource().getConnection();
             PreparedStatement pollStatement = connection.prepareStatement(
                     "SELECT * FROM poll WHERE id IN" +
                             " (SELECT bytes_to_long(attachment_bytes, 1) FROM transaction WHERE " +

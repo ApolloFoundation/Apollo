@@ -40,7 +40,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import org.apache.lucene.analysis.Analyzer;
@@ -105,7 +105,7 @@ import org.slf4j.Logger;
  * The table index trigger is defined as follows:
  *   CREATE TRIGGER trigger_name AFTER INSERT,UPDATE,DELETE ON table_name FOR EACH ROW CALL "com.apollocurrency.aplwallet.apl.db.FullTextTrigger"
  */
-public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCallback {
+public class FullTextTrigger implements Trigger, TransactionCallback {
     private static final Logger LOG = getLogger(FullTextTrigger.class);
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
@@ -159,6 +159,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
 
     /** Pending table updates */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
+    private static DatabaseManager databaseManager;
 
     /**
      * This method is called by ARS initialization to indicate ARS is active.
@@ -187,9 +188,11 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
      */
     public static void init() {
         String ourClassName = FullTextTrigger.class.getName();
-        try (Connection conn = Db.getDb().getConnection();
-                Statement stmt = conn.createStatement();
-                Statement qstmt = conn.createStatement()) {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement();
+             Statement qstmt = conn.createStatement()) {
             //
             // Check if we have already been initialized.
             //
@@ -610,7 +613,9 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         // Commit the change immediately if we are not in a transaction
         //
-        if (!Db.getDb().isInTransaction()) {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             try {
                 commitRow(oldRow, newRow);
                 commitIndex();
@@ -629,7 +634,7 @@ public class FullTextTrigger implements Trigger, TransactionalDb.TransactionCall
         //
         // Register our transaction callback
         //
-        Db.getDb().registerCallback(this);
+        dataSource.registerCallback(this);
     }
 
     /**

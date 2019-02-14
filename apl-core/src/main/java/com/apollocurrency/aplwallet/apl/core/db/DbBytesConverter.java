@@ -4,7 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -18,7 +20,7 @@ import java.sql.Statement;
 public class DbBytesConverter {
     public static final String BYTE_TO_LONG_DB_FUNCTION_NAME = "bytes_to_long";
     public static final String BYTE_TO_LONG_METHOD_NAME = "getLong";
-
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     public static long getLong(byte[] bytes, int startPosition) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
@@ -28,7 +30,7 @@ public class DbBytesConverter {
     }
 
     public static void init() {
-        try (Connection connection = Db.getDb().getConnection();
+        try (Connection connection = databaseManager.getDataSource().getConnection();
              Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("DROP ALIAS IF EXISTS " + BYTE_TO_LONG_DB_FUNCTION_NAME);
             String className = DbBytesConverter.class.getName();

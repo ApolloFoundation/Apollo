@@ -27,8 +27,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.*;
 
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -106,7 +107,8 @@ public class DesktopApplication extends Application {
     private static volatile Stage changelogStage;
     private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+
     public static void refreshMainApplication() {
         MainApplication.refresh();
     }
@@ -709,7 +711,8 @@ public class DesktopApplication extends Application {
         }
 
         private Alert reindexDbUI() throws SQLException {
-            FullTextTrigger.reindex(Db.getDb().getConnection());
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            FullTextTrigger.reindex(dataSource.getConnection());
             return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
         }
 
@@ -731,7 +734,7 @@ public class DesktopApplication extends Application {
 
             Alert alert;
             try {
-                Db.tryToDeleteDb();
+                DatabaseManager.tryToDeleteDb();
                 alert = prepareAlert(Alert.AlertType.INFORMATION, "Success", "DB was removed successfully! Please, restart the wallet.", 180);
             }
             catch (IOException e) {
