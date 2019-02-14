@@ -101,7 +101,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static DatabaseManager databaseManager;
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));

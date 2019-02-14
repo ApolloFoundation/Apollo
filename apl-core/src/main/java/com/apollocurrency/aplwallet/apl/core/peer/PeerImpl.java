@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -112,7 +113,7 @@ final class PeerImpl implements Peer {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
 
     PeerImpl(String host, String announcedAddress) {

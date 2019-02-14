@@ -41,6 +41,7 @@ public class BlockchainConfigUpdater {
     // inner listener
     private ConfigChangeListener configChangeListener;
     private Chain chain;
+    
     @Inject
     public BlockchainConfigUpdater(BlockchainConfig blockchainConfig) {
         this.blockchainConfig = blockchainConfig;

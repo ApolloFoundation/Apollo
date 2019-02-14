@@ -53,7 +53,7 @@ class DbTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
-            Time.EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             TransactionalDataSource.class, DatabaseManager.class)
             .build();
 

@@ -51,7 +51,7 @@ public class BlockchainImpl implements Blockchain {
     private BlockDao blockDao;
     private final TransactionDao transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     public BlockchainImpl() {}

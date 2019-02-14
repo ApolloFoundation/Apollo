@@ -34,6 +34,7 @@ import java.util.Map;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
@@ -104,7 +105,7 @@ public abstract class TransactionType {
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    public static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    public static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {

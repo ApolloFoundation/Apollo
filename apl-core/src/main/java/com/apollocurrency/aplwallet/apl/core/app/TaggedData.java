@@ -63,7 +63,7 @@ public class TaggedData {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     private static TransactionalDataSource lookupDataSource() {

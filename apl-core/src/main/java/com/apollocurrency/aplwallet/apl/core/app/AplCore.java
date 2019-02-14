@@ -75,7 +75,7 @@ public final class AplCore {
     
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile Time time = CDI.current().select(EpochTime.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;

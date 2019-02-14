@@ -47,7 +47,7 @@ public final class ShufflingParticipant {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
 
     public enum State {

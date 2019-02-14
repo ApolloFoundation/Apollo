@@ -82,7 +82,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static DatabaseManager databaseManager;
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
