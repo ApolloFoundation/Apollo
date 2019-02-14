@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,7 +39,7 @@ import java.sql.SQLException;
 
 public final class ExchangeRequest {
 
-    private static final DbKey.LongKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory = new DbKey.LongKeyFactory<ExchangeRequest>("id") {
+    private static final LongKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory = new LongKeyFactory<ExchangeRequest>("id") {
 
         @Override
         public DbKey newKey(ExchangeRequest exchangeRequest) {

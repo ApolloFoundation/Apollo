@@ -66,29 +66,8 @@ public interface DbKey {
     int setPK(PreparedStatement pstmt, int index) throws SQLException;
 
 
-    abstract class LongKeyFactory<T> extends Factory<T> {
 
-        private final String idColumn;
-
-        public LongKeyFactory(String idColumn) {
-            super(" WHERE " + idColumn + " = ? ",
-                    idColumn,
-                    " a." + idColumn + " = b." + idColumn + " ");
-            this.idColumn = idColumn;
-        }
-
-        @Override
-        public DbKey newKey(ResultSet rs) throws SQLException {
-            return new LongKey(rs.getLong(idColumn));
-        }
-
-        public DbKey newKey(long id) {
-            return new LongKey(id);
-        }
-
-    }
-
-    abstract class StringKeyFactory<T> extends Factory<T> {
+    public abstract class StringKeyFactory<T> extends Factory<T> {
 
         private final String idColumn;
 
@@ -110,7 +89,7 @@ public interface DbKey {
 
     }
 
-    abstract class LinkKeyFactory<T> extends Factory<T> {
+    public abstract class LinkKeyFactory<T> extends Factory<T> {
 
         private final String idColumnA;
         private final String idColumnB;
@@ -134,11 +113,11 @@ public interface DbKey {
 
     }
 
-    final class LongKey implements DbKey {
+    public final class LongKey implements DbKey {
 
         private final long id;
 
-        private LongKey(long id) {
+        public LongKey(long id) {
             this.id = id;
         }
 
@@ -169,7 +148,7 @@ public interface DbKey {
 
     }
 
-    final class StringKey implements DbKey {
+    public final class StringKey implements DbKey {
 
         private final String id;
 
@@ -204,7 +183,7 @@ public interface DbKey {
 
     }
 
-    final class IntKey implements DbKey {
+    public final class IntKey implements DbKey {
 
         private final Integer id;
 
@@ -240,7 +219,7 @@ public interface DbKey {
     }
 
 
-    final class LinkKey implements DbKey {
+    public final class LinkKey implements DbKey {
 
         private final long idA;
         private final long idB;

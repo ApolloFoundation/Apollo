@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoi
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
@@ -207,7 +208,7 @@ public abstract class Order {
 
     public static final class Ask extends Order {
 
-        private static final DbKey.LongKeyFactory<Ask> askOrderDbKeyFactory = new DbKey.LongKeyFactory<Ask>("id") {
+        private static final LongKeyFactory<Ask> askOrderDbKeyFactory = new LongKeyFactory<Ask>("id") {
 
             @Override
             public DbKey newKey(Ask ask) {
@@ -327,7 +328,7 @@ public abstract class Order {
 
     public static final class Bid extends Order {
 
-        private static final DbKey.LongKeyFactory<Bid> bidOrderDbKeyFactory = new DbKey.LongKeyFactory<Bid>("id") {
+        private static final LongKeyFactory<Bid> bidOrderDbKeyFactory = new LongKeyFactory<Bid>("id") {
 
             @Override
             public DbKey newKey(Bid bid) {

@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySy
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -34,7 +35,7 @@ import java.sql.SQLException;
 
 public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
 
-    private static final DbKey.LongKeyFactory<CurrencyBuyOffer> buyOfferDbKeyFactory = new DbKey.LongKeyFactory<CurrencyBuyOffer>("id") {
+    private static final LongKeyFactory<CurrencyBuyOffer> buyOfferDbKeyFactory = new LongKeyFactory<CurrencyBuyOffer>("id") {
 
         @Override
         public DbKey newKey(CurrencyBuyOffer offer) {

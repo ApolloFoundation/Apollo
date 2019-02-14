@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -96,7 +97,7 @@ public final class Alias {
         }
     }
 
-    private static final DbKey.LongKeyFactory<Alias> aliasDbKeyFactory = new DbKey.LongKeyFactory<Alias>("id") {
+    private static final LongKeyFactory<Alias> aliasDbKeyFactory = new LongKeyFactory<Alias>("id") {
 
         @Override
         public DbKey newKey(Alias alias) {
@@ -124,7 +125,7 @@ public final class Alias {
 
     };
 
-    private static final DbKey.LongKeyFactory<Offer> offerDbKeyFactory = new DbKey.LongKeyFactory<Offer>("id") {
+    private static final LongKeyFactory<Offer> offerDbKeyFactory = new LongKeyFactory<Offer>("id") {
 
         @Override
         public DbKey newKey(Offer offer) {

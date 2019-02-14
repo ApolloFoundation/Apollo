@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -240,7 +241,7 @@ public final class DigitalGoodsStore {
 
     public static final class Goods {
 
-        private static final DbKey.LongKeyFactory<Goods> goodsDbKeyFactory = new DbKey.LongKeyFactory<Goods>("id") {
+        private static final LongKeyFactory<Goods> goodsDbKeyFactory = new LongKeyFactory<Goods>("id") {
 
             @Override
             public DbKey newKey(Goods goods) {
@@ -453,7 +454,7 @@ public final class DigitalGoodsStore {
 
     public static final class Purchase {
 
-        private static final DbKey.LongKeyFactory<Purchase> purchaseDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+        private static final LongKeyFactory<Purchase> purchaseDbKeyFactory = new LongKeyFactory<Purchase>("id") {
 
             @Override
             public DbKey newKey(Purchase purchase) {
@@ -481,7 +482,7 @@ public final class DigitalGoodsStore {
 
         };
 
-        private static final DbKey.LongKeyFactory<Purchase> feedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+        private static final LongKeyFactory<Purchase> feedbackDbKeyFactory = new LongKeyFactory<Purchase>("id") {
 
             @Override
             public DbKey newKey(Purchase purchase) {
@@ -513,7 +514,7 @@ public final class DigitalGoodsStore {
 
         };
 
-        private static final DbKey.LongKeyFactory<Purchase> publicFeedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+        private static final LongKeyFactory<Purchase> publicFeedbackDbKeyFactory = new LongKeyFactory<Purchase>("id") {
 
             @Override
             public DbKey newKey(Purchase purchase) {

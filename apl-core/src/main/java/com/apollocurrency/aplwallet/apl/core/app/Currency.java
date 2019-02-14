@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MonetarySy
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -49,7 +50,7 @@ public final class Currency {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static final DbKey.LongKeyFactory<Currency> currencyDbKeyFactory = new DbKey.LongKeyFactory<Currency>("id") {
+    private static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<Currency>("id") {
 
         @Override
         public DbKey newKey(Currency currency) {
@@ -111,7 +112,7 @@ public final class Currency {
         }
     }
 
-    private static final DbKey.LongKeyFactory<CurrencySupply> currencySupplyDbKeyFactory = new DbKey.LongKeyFactory<CurrencySupply>("id") {
+    private static final LongKeyFactory<CurrencySupply> currencySupplyDbKeyFactory = new LongKeyFactory<CurrencySupply>("id") {
 
         @Override
         public DbKey newKey(CurrencySupply currencySupply) {

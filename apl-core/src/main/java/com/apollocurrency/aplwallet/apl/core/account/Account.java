@@ -77,6 +77,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
@@ -109,16 +110,16 @@ public final class Account {
     // TODO: YL remove static instance later
 
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final VaultKeyStore KEYSTORE = CDI.current().select(VaultKeyStore.class).get();
     private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =
             Genesis.loadGenesisAccounts();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static DatabaseManager databaseManager;
 
 
-    private static final DbKey.LongKeyFactory<Account> accountDbKeyFactory = new DbKey.LongKeyFactory<Account>("id") {
+    private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
         @Override
         public DbKey newKey(Account account) {
@@ -131,39 +132,10 @@ public final class Account {
         }
 
     };
-    private static final VersionedEntityDbTable<Account> accountTable = new VersionedEntityDbTable<Account>("account", accountDbKeyFactory) {
-
-        @Override
-        protected Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new Account(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, Account account) throws SQLException {
-            account.save(con);
-        }
-
-        @Override
-        public void trim(int height) {
-            if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
-                return;
-            }
-            super.trim(height);
-        }
-
-        @Override
-        public void checkAvailable(int height) {
-            if (height > blockchainConfig.getGuaranteedBalanceConfirmations()) {
-                super.checkAvailable(height);
-                return;
-            }
-            if (height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
-            }
-        }
-
-    };
-    private static final DbKey.LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new DbKey.LongKeyFactory<AccountInfo>("account_id") {
+    
+    private static final VersionedEntityDbTable<Account> accountTable = new AccountTable("account", accountDbKeyFactory);
+    
+    private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
 
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
@@ -171,7 +143,7 @@ public final class Account {
         }
 
     };
-    private static final DbKey.LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new DbKey.LongKeyFactory<AccountLease>("lessor_id") {
+    private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
         @Override
         public DbKey newKey(AccountLease accountLease) {
@@ -207,19 +179,8 @@ public final class Account {
         }
 
     };
-    private static final DbKey.LongKeyFactory<PublicKey> publicKeyDbKeyFactory = new DbKey.LongKeyFactory<PublicKey>("account_id") {
-
-        @Override
-        public DbKey newKey(PublicKey publicKey) {
-            return publicKey.dbKey;
-        }
-
-        @Override
-        public PublicKey newEntity(DbKey dbKey) {
-            return new PublicKey(((DbKey.LongKey) dbKey).getId(), null);
-        }
-
-    };
+    
+    public static final LongKeyFactory<PublicKey> publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
     private static final VersionedPersistentDbTable<PublicKey> publicKeyTable = new PublicKeyTable("public_key", publicKeyDbKeyFactory);
     private static final VersionedPersistentDbTable<PublicKey> genesisPublicKeyTable = new PublicKeyTable("genesis_public_key",
             publicKeyDbKeyFactory, false);
@@ -231,6 +192,7 @@ public final class Account {
         }
 
     };
+    
     private static final VersionedEntityDbTable<AccountAsset> accountAssetTable = new VersionedEntityDbTable<AccountAsset>("account_asset", accountAssetDbKeyFactory) {
 
         @Override
@@ -311,7 +273,8 @@ public final class Account {
         }
 
     };
-    private static final DbKey.LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new DbKey.LongKeyFactory<AccountProperty>("id") {
+    
+    static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
 
         @Override
         public DbKey newKey(AccountProperty accountProperty) {
@@ -319,6 +282,7 @@ public final class Account {
         }
 
     };
+    
     private static final VersionedEntityDbTable<AccountProperty> accountPropertyTable = new VersionedEntityDbTable<AccountProperty>("account_property", accountPropertyDbKeyFactory) {
 
         @Override
@@ -411,14 +375,14 @@ public final class Account {
 
     }
 
-    private final long id;
+    final long id;
     private final DbKey dbKey;
     private PublicKey publicKey;
-    private long balanceATM;
-    private long unconfirmedBalanceATM;
-    private long forgedBalanceATM;
-    private long activeLesseeId;
-    private Set<ControlType> controls;
+    long balanceATM;
+    long unconfirmedBalanceATM;
+    long forgedBalanceATM;
+    long activeLesseeId;
+    Set<ControlType> controls;
 
     private Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
@@ -429,7 +393,7 @@ public final class Account {
         this.controls = Collections.emptySet();
     }
 
-    private Account(ResultSet rs, DbKey dbKey) throws SQLException {
+    Account(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
         this.balanceATM = rs.getLong("balance");
@@ -1049,22 +1013,7 @@ public final class Account {
         }
     }
 
-    private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
-                + "balance, unconfirmed_balance, forged_balance, "
-                + "active_lessee_id, has_control_phasing, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
-            int i = 0;
-            pstmt.setLong(++i, this.id);
-            pstmt.setLong(++i, this.balanceATM);
-            pstmt.setLong(++i, this.unconfirmedBalanceATM);
-            pstmt.setLong(++i, this.forgedBalanceATM);
-            DbUtils.setLongZeroToNull(pstmt, ++i, this.activeLesseeId);
-            pstmt.setBoolean(++i, controls.contains(ControlType.PHASING_ONLY));
-            pstmt.setInt(++i, blockchain.getHeight());
-            pstmt.executeUpdate();
-        }
-    }
+
 
     private void save() {
         if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
@@ -2018,143 +1967,10 @@ public final class Account {
 
     }
 
-    public static final class AccountProperty {
-
-        private final long id;
-        private final DbKey dbKey;
-        private final long recipientId;
-        private final long setterId;
-        private String property;
-        private String value;
-
-        private AccountProperty(long id, long recipientId, long setterId, String property, String value) {
-            this.id = id;
-            this.dbKey = accountPropertyDbKeyFactory.newKey(this.id);
-            this.recipientId = recipientId;
-            this.setterId = setterId;
-            this.property = property;
-            this.value = value;
-        }
-
-        private AccountProperty(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.id = rs.getLong("id");
-            this.dbKey = dbKey;
-            this.recipientId = rs.getLong("recipient_id");
-            long setterId = rs.getLong("setter_id");
-            this.setterId = setterId == 0 ? recipientId : setterId;
-            this.property = rs.getString("property");
-            this.value = rs.getString("value");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property "
-                    + "(id, recipient_id, setter_id, property, value, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.id);
-                pstmt.setLong(++i, this.recipientId);
-                DbUtils.setLongZeroToNull(pstmt, ++i, this.setterId != this.recipientId ? this.setterId : 0);
-                DbUtils.setString(pstmt, ++i, this.property);
-                DbUtils.setString(pstmt, ++i, this.value);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public long getRecipientId() {
-            return recipientId;
-        }
-
-        public long getSetterId() {
-            return setterId;
-        }
-
-        public String getProperty() {
-            return property;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-    }
-
-    public static final class PublicKey {
-
-        private final long accountId;
-        private final DbKey dbKey;
-        private byte[] publicKey;
-        private int height;
-
-        private PublicKey(long accountId, byte[] publicKey) {
-            this.accountId = accountId;
-            this.dbKey = publicKeyDbKeyFactory.newKey(accountId);
-            this.publicKey = publicKey;
-            this.height = blockchain.getHeight();
-        }
-
-        private PublicKey(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.accountId = rs.getLong("account_id");
-            this.dbKey = dbKey;
-            this.publicKey = rs.getBytes("public_key");
-            this.height = rs.getInt("height");
-        }
-
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public byte[] getPublicKey() {
-            return publicKey;
-        }
-
-        public int getHeight() {
-            return height;
-        }
-
-    }
-
-    static class DoubleSpendingException extends RuntimeException {
-
-        DoubleSpendingException(String message, long accountId, long confirmed, long unconfirmed) {
-            super(message + " account: " + Long.toUnsignedString(accountId) + " confirmed: " + confirmed + " unconfirmed: " + unconfirmed);
-        }
-
-    }
 
 
-    static class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
-        protected PublicKeyTable(String table, DbKey.Factory<PublicKey> dbKeyFactory) {
-            super(table, dbKeyFactory);
-        }
 
-        protected PublicKeyTable(String table, DbKey.Factory<PublicKey> dbKeyFactory, boolean multiversion) {
-            super(table, dbKeyFactory, multiversion, null );
-        }
 
-        @Override
-        protected PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new PublicKey(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, PublicKey publicKey) throws SQLException {
-            publicKey.height = blockchain.getHeight();
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table +" (account_id, public_key, height, latest) "
-                    + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, publicKey.accountId);
-                DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
-                pstmt.setInt(++i, publicKey.height);
-                pstmt.executeUpdate();
-            }
-        }
-
-    }
 
     public static GeneratedAccount generateAccount(String passphrase) throws ParameterException {
         GeneratedAccount account = accountGenerator.generate(passphrase);
@@ -2183,4 +1999,6 @@ public final class Account {
         validateKeyStoreStatus(accountId, status, "imported");
         return new ImmutablePair<>(status, passphrase);
     }
+
+
 }

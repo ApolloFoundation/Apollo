@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -103,7 +104,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private volatile boolean cacheInitialized = false;
 
-    private DbKey.LongKeyFactory<UnconfirmedTransaction> unconfirmedTransactionDbKeyFactory = new DbKey.LongKeyFactory<UnconfirmedTransaction>("id") {
+    private LongKeyFactory<UnconfirmedTransaction> unconfirmedTransactionDbKeyFactory = new LongKeyFactory<UnconfirmedTransaction>("id") {
 
         @Override
         public DbKey newKey(UnconfirmedTransaction unconfirmedTransaction) {
@@ -112,7 +113,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     };
 
-    public DbKey.LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory() {
+    public LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory() {
         return unconfirmedTransactionDbKeyFactory;
     }
 

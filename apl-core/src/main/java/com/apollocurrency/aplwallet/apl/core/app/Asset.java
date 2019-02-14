@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoi
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -41,7 +42,7 @@ public final class Asset {
     private static BlockchainProcessor blockchainProcessor;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
-    private static final DbKey.LongKeyFactory<Asset> assetDbKeyFactory = new DbKey.LongKeyFactory<Asset>("id") {
+    private static final LongKeyFactory<Asset> assetDbKeyFactory = new LongKeyFactory<Asset>("id") {
 
         @Override
         public DbKey newKey(Asset asset) {

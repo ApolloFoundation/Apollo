@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -44,7 +45,7 @@ public final class AssetDividend {
 
     private static final Listeners<AssetDividend,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<AssetDividend> dividendDbKeyFactory = new DbKey.LongKeyFactory<AssetDividend>("id") {
+    private static final LongKeyFactory<AssetDividend> dividendDbKeyFactory = new LongKeyFactory<AssetDividend>("id") {
 
         @Override
         public DbKey newKey(AssetDividend assetDividend) {

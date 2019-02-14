@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
@@ -51,7 +52,7 @@ import org.slf4j.Logger;
 public class TaggedData {
     private static final Logger LOG = getLogger(TaggedData.class);
 
-    private static final DbKey.LongKeyFactory<TaggedData> taggedDataKeyFactory = new DbKey.LongKeyFactory<TaggedData>("id") {
+    private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<TaggedData>("id") {
 
         @Override
         public DbKey newKey(TaggedData taggedData) {
@@ -149,7 +150,7 @@ public class TaggedData {
     }
 
 
-    private static final DbKey.LongKeyFactory<Timestamp> timestampKeyFactory = new DbKey.LongKeyFactory<Timestamp>("id") {
+    private static final LongKeyFactory<Timestamp> timestampKeyFactory = new LongKeyFactory<Timestamp>("id") {
 
         @Override
         public DbKey newKey(Timestamp timestamp) {
@@ -303,7 +304,7 @@ public class TaggedData {
 
     }
 
-    private static final DbKey.LongKeyFactory<Long> extendDbKeyFactory = new DbKey.LongKeyFactory<Long>("id") {
+    private static final LongKeyFactory<Long> extendDbKeyFactory = new LongKeyFactory<Long>("id") {
 
         @Override
         public DbKey newKey(Long taggedDataId) {

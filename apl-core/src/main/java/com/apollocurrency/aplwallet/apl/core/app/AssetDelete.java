@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -42,7 +43,7 @@ public final class AssetDelete {
 
     private static final Listeners<AssetDelete,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<AssetDelete> deleteDbKeyFactory = new DbKey.LongKeyFactory<AssetDelete>("id") {
+    private static final LongKeyFactory<AssetDelete> deleteDbKeyFactory = new LongKeyFactory<AssetDelete>("id") {
 
         @Override
         public DbKey newKey(AssetDelete assetDelete) {

@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -162,7 +163,7 @@ public final class Shuffling {
 
     private static final Listeners<Shuffling, Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<Shuffling> shufflingDbKeyFactory = new DbKey.LongKeyFactory<Shuffling>("id") {
+    private static final LongKeyFactory<Shuffling> shufflingDbKeyFactory = new LongKeyFactory<Shuffling>("id") {
 
         @Override
         public DbKey newKey(Shuffling shuffling) {

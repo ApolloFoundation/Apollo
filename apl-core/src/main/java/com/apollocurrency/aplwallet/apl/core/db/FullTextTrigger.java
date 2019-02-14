@@ -188,7 +188,9 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      */
     public static void init() {
         String ourClassName = FullTextTrigger.class.getName();
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null){
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();

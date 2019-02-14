@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.app.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
@@ -884,7 +885,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
-            Account.AccountProperty accountProperty = Account.getProperty(attachment.getPropertyId());
+            AccountProperty accountProperty = Account.getProperty(attachment.getPropertyId());
             if (accountProperty == null) {
                 throw new AplException.NotCurrentlyValidException("No such property " + Long.toUnsignedString(attachment.getPropertyId()));
             }

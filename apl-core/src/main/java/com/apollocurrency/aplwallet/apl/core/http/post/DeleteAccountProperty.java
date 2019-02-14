@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -62,7 +63,7 @@ public final class DeleteAccountProperty extends CreateTransaction {
         if (property.isEmpty()) {
             return JSONResponses.MISSING_PROPERTY;
         }
-        Account.AccountProperty accountProperty = Account.getProperty(recipientId, property, setterId);
+        AccountProperty accountProperty = Account.getProperty(recipientId, property, setterId);
         if (accountProperty == null) {
             return JSONResponses.UNKNOWN_PROPERTY;
         }

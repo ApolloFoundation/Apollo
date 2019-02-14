@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.ColoredCoinsAssetTransfer;
@@ -281,9 +282,9 @@ public final class FundingMonitor {
             // Locate monitored accounts based on the account property and the setter identifier
             //
             List<MonitoredAccount> accountList = new ArrayList<>();
-            try (DbIterator<Account.AccountProperty> it = Account.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
+            try (DbIterator<AccountProperty> it = Account.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
                 while (it.hasNext()) {
-                    Account.AccountProperty accountProperty = it.next();
+                    AccountProperty accountProperty = it.next();
                     MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
                             monitor, accountProperty.getValue());
                     accountList.add(account);
@@ -952,7 +953,7 @@ public final class FundingMonitor {
     /**
      * Property event handler (SET_PROPERTY event)
      */
-    private static final class SetPropertyEventHandler implements Listener<Account.AccountProperty> {
+    private static final class SetPropertyEventHandler implements Listener<AccountProperty> {
 
         /**
          * Property event notification
@@ -960,7 +961,7 @@ public final class FundingMonitor {
          * @param   property                Account property
          */
         @Override
-        public void notify(Account.AccountProperty property) {
+        public void notify(AccountProperty property) {
             if (stopped) {
                 return;
             }
@@ -1024,7 +1025,7 @@ public final class FundingMonitor {
     /**
      * Property event handler (DELETE_PROPERTY event)
      */
-    private static final class DeletePropertyEventHandler implements Listener<Account.AccountProperty> {
+    private static final class DeletePropertyEventHandler implements Listener<AccountProperty> {
 
         /**
          * Property event notification
@@ -1032,7 +1033,7 @@ public final class FundingMonitor {
          * @param   property                Account property
          */
         @Override
-        public void notify(Account.AccountProperty property) {
+        public void notify(AccountProperty property) {
             if (stopped) {
                 return;
             }

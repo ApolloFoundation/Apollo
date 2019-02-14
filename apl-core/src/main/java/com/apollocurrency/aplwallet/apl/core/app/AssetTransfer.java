@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -48,7 +49,7 @@ public final class AssetTransfer {
 
     private static final Listeners<AssetTransfer,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LongKeyFactory<AssetTransfer> transferDbKeyFactory = new DbKey.LongKeyFactory<AssetTransfer>("id") {
+    private static final LongKeyFactory<AssetTransfer> transferDbKeyFactory = new LongKeyFactory<AssetTransfer>("id") {
 
         @Override
         public DbKey newKey(AssetTransfer assetTransfer) {

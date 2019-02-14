@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
@@ -81,7 +82,7 @@ public final class Poll extends AbstractPoll {
 
     }
 
-    private static final DbKey.LongKeyFactory<Poll> pollDbKeyFactory = new DbKey.LongKeyFactory<Poll>("id") {
+    private static final LongKeyFactory<Poll> pollDbKeyFactory = new LongKeyFactory<Poll>("id") {
         @Override
         public DbKey newKey(Poll poll) {
             return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
@@ -101,7 +102,7 @@ public final class Poll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<Poll> pollResultsDbKeyFactory = new DbKey.LongKeyFactory<Poll>("poll_id") {
+    private static final LongKeyFactory<Poll> pollResultsDbKeyFactory = new LongKeyFactory<Poll>("poll_id") {
         @Override
         public DbKey newKey(Poll poll) {
             return poll.dbKey;

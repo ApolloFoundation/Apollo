@@ -1,8 +1,11 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
@@ -204,6 +207,9 @@ public class Apollo {
                 .recursiveScanPackages(Updater.class)
                 .recursiveScanPackages(ServerInfoEndpoint.class)
                 .recursiveScanPackages(ServerInfoService.class)
+                .recursiveScanPackages(Account.class)
+                .recursiveScanPackages(TransactionType.class)
+                .recursiveScanPackages(DatabaseManager.class)
                 .annotatedDiscoveryMode().build();
 
         // init config holders
