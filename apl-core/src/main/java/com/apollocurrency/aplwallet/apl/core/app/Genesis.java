@@ -20,13 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +56,7 @@ public final class Genesis {
     public static final long CREATOR_ID;
     public static final long EPOCH_BEGINNING;
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
@@ -93,7 +95,7 @@ public final class Genesis {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
-        blockchainConfig.reset();
+        blockchainConfigUpdater.reset();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         String loadingPublicKeysString = "Loading public keys";
