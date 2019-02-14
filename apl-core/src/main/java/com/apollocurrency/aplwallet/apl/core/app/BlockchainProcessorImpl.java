@@ -970,7 +970,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     private BlockchainProcessorImpl(BlockValidator validator, DbProperties dbProperties) {
-        TransactionalDataSource dataSource = lookupDataSource();
         final int trimFrequency = propertiesHolder.getIntProperty("apl.trimFrequency");
         this.validator = validator;
         blockListeners.addListener(block -> {
@@ -993,14 +992,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (block.getHeight() % 5000 == 0) {
                 log.info("received block " + block.getHeight());
                 if (!isDownloading || block.getHeight() % 50000 == 0) {
-                    networkService.submit(dataSource::analyzeTables);
+                    networkService.submit(lookupDataSource()::analyzeTables);
                 }
             }
         }, Event.BLOCK_PUSHED);
 
         blockListeners.addListener(checksumListener, Event.BLOCK_PUSHED);
 
-        blockListeners.addListener(block -> dataSource.analyzeTables(), Event.RESCAN_END);
+        blockListeners.addListener(block -> lookupDataSource().analyzeTables(), Event.RESCAN_END);
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -1011,7 +1010,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 boolean rescan;
                 boolean validate;
                 int height;
-                try (Connection con = dataSource.getConnection();
+                try (Connection con = lookupDataSource().getConnection();
                      Statement stmt = con.createStatement();
                      ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
                     rs.next();
