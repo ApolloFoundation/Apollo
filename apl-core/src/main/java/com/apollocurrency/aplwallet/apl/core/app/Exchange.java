@@ -47,7 +47,9 @@ public final class Exchange {
     private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         return databaseManager.getDataSource();
     }
 

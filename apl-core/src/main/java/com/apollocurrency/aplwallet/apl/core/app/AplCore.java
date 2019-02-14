@@ -26,11 +26,11 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -68,6 +68,7 @@ public final class AplCore {
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
+    private FullTextSearchService fullTextSearchService;
 
 
     public AplCore(BlockchainConfig config) {
@@ -111,6 +112,9 @@ public final class AplCore {
             blockchainProcessor.shutdown();
         }
         Peers.shutdown();
+        if (fullTextSearchService != null) {
+            fullTextSearchService.shutdown();
+        }
         if (databaseManager != null) {
             databaseManager.shutdown();
         }
@@ -152,6 +156,7 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
+//                Db.init(CDI.current().select(DbProperties.class).get(), CDI.current().select(FullTextSearchService.class).get());
                 DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -159,6 +164,7 @@ public final class AplCore {
                 migrationManager.executeDataMigration();
                 dataSource = databaseManager.getDataSource(); // retrieve again after migrate
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
+                fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
 
                  // create inside Apollo and passed into AplCore constructor
                 blockchainConfig.updateToLatestConfig();

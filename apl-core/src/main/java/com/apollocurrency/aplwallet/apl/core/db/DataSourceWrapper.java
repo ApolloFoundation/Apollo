@@ -40,8 +40,6 @@ import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
- * Note, that while creating instance of {@link DataSourceWrapper} {@link FullTextTrigger} will
- * be also enabled, so use it carefully
  */
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
@@ -139,21 +137,11 @@ public class DataSourceWrapper implements DataSource {
     }
 
     /**
-     * Constructor creates internal DataSource with 'Full Text Search' indexes created by default.
+     * Constructor creates internal DataSource.
      * @param dbVersion database version related information
      */
     public void init(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        init(dbVersion, true);
-    }
-
-    /**
-     * Constructor creates internal DataSource with 'Full Text Search' indexes created by specified value.
-     * @param dbVersion database version related information
-     * @param initFullTextSearch true - Full text search indexes are created, false otherwise
-     */
-    public void init(DbVersion dbVersion, boolean initFullTextSearch) {
-        log.debug("Database jdbc url set to {} username {}, text search = {}", dbUrl, dbUsername, initFullTextSearch);
 /*
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -175,8 +163,7 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        FullTextTrigger.setActive(initFullTextSearch);
-        dbVersion.init(dataSource, initFullTextSearch);
+        dbVersion.init(this);
         initialized = true;
         shutdown = false;
     }
@@ -186,8 +173,6 @@ public class DataSourceWrapper implements DataSource {
             return;
         }
         try {
-            FullTextTrigger.setActive(false);
-            FullTextTrigger.shutdown();
             Connection con = dataSource.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
@@ -213,10 +198,11 @@ public class DataSourceWrapper implements DataSource {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
     @Override
     public Connection getConnection() throws SQLException {
         Connection con = getPooledConnection();
-        con.setAutoCommit(false);
+        con.setAutoCommit(true);
         return con;
     }
 

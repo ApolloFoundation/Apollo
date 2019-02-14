@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
@@ -27,26 +27,27 @@ import javax.inject.Inject;
  */
 public class DbMigrationExecutor extends MigrationExecutor {
     private LegacyDbLocationsProvider legacyDbLocationsProvider;
+    private FullTextSearchService fullTextSearchProvider;
     private DbInfoExtractor dbInfoExtractor;
     private DatabaseManager databaseManager;
 
     @Inject
     public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider,
-                               DbInfoExtractor dbInfoExtractor, DatabaseManager databaseManager) {
+                               DbInfoExtractor dbInfoExtractor, DatabaseManager databaseManager, FullTextSearchService fullTextSearchProvider) {
         super(propertiesHolder, "db", true);
         this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
-        this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "DatabaseManager info extractor cannot be null");
+        this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
+        this.fullTextSearchProvider = Objects.requireNonNull(fullTextSearchProvider, "Fulltext search service cannot be null");
+        this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
         this.databaseManager = databaseManager;
     }
 
     @Override
     protected void afterMigration() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        FullTextTrigger.init();
         try (Connection connection = dataSource.getConnection()) {
-            FullTextTrigger.reindex(connection);
-        }
-        catch (SQLException e) {
+            fullTextSearchProvider.reindexAll(connection);
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

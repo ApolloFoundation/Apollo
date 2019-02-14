@@ -5,14 +5,16 @@
 package com.apollocurrency.aplwallet.apl.testutil;
 
 import javax.sql.DataSource;
+
+import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 public class DbManipulator {
     protected final Path tempDbFile;
@@ -58,17 +60,12 @@ public class DbManipulator {
     }
 
     public void init() {
-
-        dataSourceWrapper.init(new DbVersion() {
-            @Override
-            protected void update(int nextUpdate, boolean initFullTextSearch) {
-                // do nothing to prevent version db creation (FullTextTrigger exception), instead store db structure in db/schema.sql
-            }
-        });
+        AplDbVersion dbVersion = new AplDbVersion();
+        dataSourceWrapper.init(dbVersion);
         populator.initDb();
     }
 
-    public void shutdown() throws Exception {
+    public void shutdown() throws IOException {
         dataSourceWrapper.shutdown();
         Files.deleteIfExists(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
     }

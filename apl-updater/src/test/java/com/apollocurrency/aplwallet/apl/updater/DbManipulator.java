@@ -5,11 +5,11 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
-
+import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+
+import java.sql.SQLException;
 
 public class DbManipulator {
     protected final DataSourceWrapper dataSourceWrapper =
@@ -19,12 +19,8 @@ public class DbManipulator {
 
     public void init() throws SQLException {
 
-        dataSourceWrapper.init(new DbVersion() {
-            @Override
-            protected void update(int nextUpdate, boolean initFullTextSearch) {
-                // do nothing to prevent version db creation (FullTextTrigger exception), instead store db structure in db/schema.sql
-            }
-        });
+        AplDbVersion dbVersion = new AplDbVersion();
+        dataSourceWrapper.init(dbVersion);
         populator.initDb();
     }
     public void shutdown() throws Exception {

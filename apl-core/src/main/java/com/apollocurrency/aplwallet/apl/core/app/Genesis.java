@@ -75,7 +75,9 @@ public final class Genesis {
     }
 
     private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         return databaseManager.getDataSource();
     }
 

@@ -22,6 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.slf4j.Logger;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -42,44 +46,71 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+
 
 @Singleton
 public class DatabaseManager {
     private static final Logger log = getLogger(DatabaseManager.class);
 
+    private static DbProperties baseDbProperties;
+//    private static FullTextSearchService searchService;
     private PropertiesHolder propertiesHolder;
-    private DbProperties baseDbProperties;
     private static TransactionalDataSource currentTransactionalDataSource;
     private Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3);
 
     public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            currentTransactionalDataSource.init(new AplDbVersion(), true);
+            currentTransactionalDataSource.init(new AplDbVersion());
 //            throw new RuntimeException("DatabaseManager is null or was already shutdown. Call DatabaseManager.init for starting current DatabaseManager");
         }
         return currentTransactionalDataSource;
     }
 
+    /**
+     * Init current database and shards using dbProperties and optional fulltext search service
+     * @param dbProperties config for database init
+     * @param fullTextSearchService service which provide full
+     */
+    public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolder,  FullTextSearchService fullTextSearchService) {
+        this(dbProperties, propertiesHolder/*, fullTextSearchService, false*/);
+    }
+
+    /**
+     *
+     * @param dbProperties
+     */
+    public DatabaseManager(DbProperties dbProperties) {
+        this(dbProperties, null);
+    }
+
     @Inject
     public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
-        baseDbProperties = dbProperties;
+        baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
+//        searchService = useExistingConfig ? searchService : fullTextSearchService; // optional
         propertiesHolder = propertiesHolderParam;
-        currentTransactionalDataSource = new TransactionalDataSource(dbProperties, propertiesHolder);
-        currentTransactionalDataSource.init(new AplDbVersion(), true);
+        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+        currentTransactionalDataSource.init(new AplDbVersion());
         List<String> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
         for (String shardName : shardList) {
-            DbProperties shardDbProperties = dbProperties.dbFileName(shardName);
+            DbProperties shardDbProperties = baseDbProperties.dbFileName(shardName);
             TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-            shardDb.init(new AplDbVersion(), false);
+            shardDb.init(new AplDbVersion());
             connectedShardDataSourceMap.put(shardName, shardDb);
             log.debug("Prepared '{}' shard...", shardName);
         }
     }
+
+    /**
+     * Reinit database with existing config
+     */
+/*
+    public static void init() {
+        init(null, null, true);
+    }
+*/
 
     public List<String> findAllShards(TransactionalDataSource transactionalDataSource) {
         String shardSelect = "SELECT key from shard";
@@ -112,7 +143,7 @@ public class DatabaseManager {
             log.error("DbProperties cloning error", e);
         }
         TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-        shardDb.init(new AplDbVersion(), false);
+        shardDb.init(new AplDbVersion());
         connectedShardDataSourceMap.put(shardName, shardDb);
         log.debug("new SHARD '{}' is CREATED", shardName);
         return shardDb;

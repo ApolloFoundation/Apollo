@@ -93,7 +93,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         return databaseManager.getDataSource();
     }
 
