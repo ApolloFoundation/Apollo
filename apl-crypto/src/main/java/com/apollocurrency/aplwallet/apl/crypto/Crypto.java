@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import io.firstbridge.cryptolib.FBCryptoParams;
+import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 import io.firstbridge.cryptolib.exception.CryptoNotValidException;
 import java.math.BigInteger;
@@ -365,20 +366,51 @@ public final class Crypto {
     public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
     {
         
-        int sha256length = 64;
+        /*int sha256length = 64;
         int elGamalCryptogrammLength = 132;
         int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
         String aesKey = cryptogramm.substring(cryptogrammDivider);
         byte[] aesKeyArray = new BigInteger(aesKey, 16).toByteArray();
         String aesCryptogramm = cryptogramm.substring(0, cryptogrammDivider);
         byte[] aesCryptogrammArray = new BigInteger(aesCryptogramm, 16).toByteArray();
-        
-        FBCryptoParams params = FBCryptoParams.createDefault();
-        AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+        */
+        LOG.debug("Reach1");
 
-        BigInteger restored = instanceOfAlice.decryptAsymmetric(keyPair.getPrivateKey(), cryptogramm);
-        
-        return "";
+        FBCryptoParams params = FBCryptoParams.createDefault();
+        LOG.debug("Reach2");
+        AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+        LOG.debug("Reach3");
+        FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
+        LOG.debug("Reach4");
+        cryptogram1.setM2( new BigInteger("1e4c9037d2ab8687d6d3312f5b5b10a73d83a3ada7e59e744310292b7c1dd5955eda4a8555dcc6e67dd179733bde55b32dec0561f258629045ab02a477f09580aa6", 16)); 
+        LOG.debug("Reach5");
+        org.bouncycastle.math.ec.ECPoint.Fp _M1 = 
+            instanceOfAlice.extrapolateECPoint(
+                    new BigInteger("3323515dee1b436e222a542d9982f1c5681c6529c106a034d5b8dff59728a265316443d6965464f47355b92387ad4c4deb63b190a9d3e75f9c0529bc3d027f87e4", 16),
+                    new BigInteger("182a8ff4d18d7924a6f0773cf52632277d1263ab0b26c00b90e7d656b1f209cc07c522d1e511eab2bec4ee335cd79247e22637bb13a1902a056fc4bd076df42b9b8", 16));
+        LOG.debug("Reach6");
+        // setting M1 to the instance of cryptogram
+        cryptogram1.setM1(_M1);
+        LOG.debug("Reach7");
+        BigInteger pKey = new BigInteger("f7778e563581602bfaa4c03a32c4efcd925e952c0256365d02c6eb27f0452432481b1a1cadc65eed531b0391828366bb583edd563f3ce450cf4a470a49ce150fae", 16);
+        LOG.debug("Reach8");
+        BigInteger restored = BigInteger.ZERO;
+        LOG.debug("Reach9");
+        try
+        {
+            LOG.debug("Reach10");
+            restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
+            LOG.debug("Reach11");
+            LOG.debug(restored.toString(16));
+        }
+        catch (CryptoNotValidException e)
+        {
+            LOG.debug(e.getMessage());
+        }
+        LOG.debug("Reach12");
+        LOG.debug(restored.toString(16));
+        LOG.debug("Reach13");
+        return restored.toString(16);
     }
 
 }

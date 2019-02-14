@@ -150,6 +150,7 @@ public final class API {
                 publicKey = Crypto.getPublicKey(keySeed);
                 
                 elGamalKeyPair = Crypto.getElGamalKeyPair();
+                
             }
             try {
                 TimeUnit.MINUTES.sleep(15);

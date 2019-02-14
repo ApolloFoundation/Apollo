@@ -501,7 +501,7 @@ public final class ParameterParser {
         if (!getIsElGamalEncrypted(req, isMandatory)) return secretPhrase;
         else {
             
-            return "0";
+            return API.elGamalDecrypt(secretPhrase);
         }
         
     }
