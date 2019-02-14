@@ -160,6 +160,8 @@ public final class AplCore {
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
                 fullTextSearchService.init(); // first time BEFORE migration
+/*
+                fullTextSearchService.shutdown();
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
@@ -168,6 +170,7 @@ public final class AplCore {
 
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
                 fullTextSearchService.init(); // second time AFTER migration
+*/
 
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
