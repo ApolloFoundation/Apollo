@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
@@ -92,8 +93,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger log = getLogger(BlockchainProcessorImpl.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+   private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+   private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+   private  BlockchainConfigUpdater blockchainConfigUpdater;
+
     private static final byte[] CHECKSUM_1 = null;
 
     private static Blockchain blockchain;
@@ -138,6 +141,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
         return databaseManager.getDataSource();
+    }
+    private BlockchainConfigUpdater lookupBlockhainConfigUpdater() {
+        if (blockchainConfigUpdater == null) blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+        return blockchainConfigUpdater;
     }
 
     private final Runnable getMoreBlocksThread = new Runnable() {
@@ -1676,8 +1683,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long blockIdAtHeight = blockchain.getBlockIdAtHeight(height);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
                 lookupBlockhain().setLastBlock(lastBLock);
-                blockchainConfig.rollback(lastBLock.getHeight());
+
+                lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
                 log.debug("Deleted blocks starting from height %s", height);
+                
             } finally {
                 scan(0, false);
             }
