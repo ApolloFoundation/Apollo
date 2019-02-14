@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -32,7 +33,7 @@ public class ExportKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
-        byte[] secretBytes = Account.exportSecretBytes(passphrase, accountId);
+        byte[] secretBytes = Helper2FA.exportSecretBytes(passphrase, accountId);
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
         response.put("secretBytes", Convert.toHexString(secretBytes));

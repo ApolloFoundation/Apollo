@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Helper2FA;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.HoldingType;
@@ -513,7 +514,7 @@ public final class JSONResponses {
         response.put("errorDescription", "Unknown account");
         response.put("account", Long.toUnsignedString(id));
         response.put("accountRS", Convert2.rsAccount(id));
-        response.put("is2FA", Account.isEnabled2FA(id));
+        response.put("is2FA", Helper2FA.isEnabled2FA(id));
         return JSON.prepare(response);
     }
 

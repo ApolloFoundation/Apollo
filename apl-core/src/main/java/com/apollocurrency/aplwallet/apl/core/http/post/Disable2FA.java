@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -37,9 +38,9 @@ public class Disable2FA extends AbstractAPIRequestHandler {
 
         Status2FA status2FA;
         if (params2FA.isPassphrasePresent()) {
-            status2FA = Account.disable2FA(params2FA.getAccountId(), params2FA.getPassphrase(), code);
+            status2FA = Helper2FA.disable2FA(params2FA.getAccountId(), params2FA.getPassphrase(), code);
         } else {
-            status2FA = Account.disable2FA(params2FA.getSecretPhrase(), code);
+            status2FA = Helper2FA.disable2FA(params2FA.getSecretPhrase(), code);
         }
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", params2FA.getAccountId());

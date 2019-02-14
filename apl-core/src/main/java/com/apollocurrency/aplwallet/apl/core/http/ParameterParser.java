@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -462,7 +463,7 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            SecretBytesDetails secretBytes = Account.findSecretBytes(senderId, passphrase, isMandatory);
+            SecretBytesDetails secretBytes = Helper2FA.findSecretBytes(senderId, passphrase, isMandatory);
             return secretBytes == null ? null : secretBytes.getSecretBytes();
         }
         if (isMandatory) {
@@ -518,7 +519,7 @@ public final class ParameterParser {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-                        SecretBytesDetails secretBytesDetails = Account.findSecretBytes(accountId, passphrase, isMandatory);
+                        SecretBytesDetails secretBytesDetails = Helper2FA.findSecretBytes(accountId, passphrase, isMandatory);
                         if (secretBytesDetails != null && secretBytesDetails.getSecretBytes() != null) {
                             return Crypto.getPublicKey(Crypto.getKeySeed(secretBytesDetails.getSecretBytes()));
                         }

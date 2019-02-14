@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -60,7 +61,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
 
         JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance);
         JSONData.putAccount(response, "account", account.getId());
-        response.put("is2FA", Account.isEnabled2FA(account.getId()));
+        response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
         byte[] publicKey = Account.getPublicKey(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
