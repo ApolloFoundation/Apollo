@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -146,6 +147,12 @@ public final class Shuffling {
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager;
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
+    }
 
     private static final Listeners<Shuffling, Event> listeners = new Listeners<>();
 
@@ -237,7 +244,7 @@ public final class Shuffling {
     public static DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT shuffling.* FROM shuffling, shuffling_participant WHERE "
                     + "shuffling_participant.account_id = ? AND shuffling.id = shuffling_participant.shuffling_id "
                     + (includeFinished ? "" : "AND shuffling.blocks_remaining IS NOT NULL ")

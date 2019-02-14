@@ -74,7 +74,7 @@ public abstract class DbVersion {
 
     }
 
-    protected DbVersion(BasicDataSource db, boolean initFullTextSearch) {
+    protected DbVersion(DataSourceWrapper db, boolean initFullTextSearch) {
         init(db, initFullTextSearch);
     }
 

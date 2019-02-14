@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import javax.inject.Inject;
@@ -32,20 +36,25 @@ class DbTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
     private static String DB_FILE_NAME = "test_db";
+    private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
+            "socksProxyHost",
+            "socksProxyPort",
+            "apl.enablePeerUPnP");
 
     private DbProperties baseDbProperties;
     private Path pathToDb;
     private Path pathToDbFolder;
 
-    @Inject
-    private Db db;
+//    @Inject
+    private static DatabaseManager databaseManager;
     @Inject
     private PropertiesHolder propertiesHolder;
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(Db.class, DbProperties.class, ConnectionProviderImpl.class, NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class,
-            Time.EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+    public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
+            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
+            Time.EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            TransactionalDataSource.class, DatabaseManager.class)
             .build();
 
     @BeforeEach
@@ -53,7 +62,7 @@ class DbTest {
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
         FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
         String workingDir = System.getProperty("user.dir");
-        // path to temporary db inside project
+        // path to temporary databaseManager inside project
         Path currentPath = FileSystems.getDefault().getPath(workingDir + File.separator  + BASE_SUB_DIR);
         // check or create database folder
         if (!Files.exists(currentPath)) {
@@ -96,20 +105,31 @@ class DbTest {
         FileUtils.deleteQuietly(pathToDbFolder.toFile());
     }
 
+    @AfterAll
+    static void stopAll() {
+        databaseManager.shutdown();
+    }
+
     @Test
     void init() throws Exception {
-        Db.init(baseDbProperties);
-        Db.shutdown();
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+//        databaseManager.shutdown();
     }
 
     @Test
     void createAndAddShard() throws Exception {
-        db.init(baseDbProperties);
-        TransactionalDataSource newShardDb = db.createAndAddShard("apl-shard-000001");
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard("apl-shard-000001");
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
 //        newShardDb.shutdown(); // not needed
-        db.shutdown();
+//        databaseManager.shutdown();
     }
 
 }

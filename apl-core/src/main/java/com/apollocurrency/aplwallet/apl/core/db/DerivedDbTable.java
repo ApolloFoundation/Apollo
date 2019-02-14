@@ -24,7 +24,7 @@ import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,22 +33,23 @@ import java.sql.Statement;
 
 public abstract class DerivedDbTable {
 
-    protected static final TransactionalDataSource transactionalDataSource = Db.getDb();
-
     protected final String table;
     private static BlockchainProcessor blockchainProcessor;
+    protected static DatabaseManager databaseManager;
 
     protected DerivedDbTable(String table) {
         this.table = table;
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         blockchainProcessor.registerDerivedTable(this);
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     public void rollback(int height) {
-        if (!transactionalDataSource.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = transactionalDataSource.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
             pstmtDelete.executeUpdate();
@@ -58,10 +59,11 @@ public abstract class DerivedDbTable {
     }
 
     public void truncate() {
-        if (!transactionalDataSource.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = transactionalDataSource.getConnection();
+        try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.executeUpdate("TRUNCATE TABLE " + table);
         } catch (SQLException e) {

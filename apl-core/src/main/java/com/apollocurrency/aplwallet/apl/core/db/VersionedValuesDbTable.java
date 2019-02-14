@@ -45,13 +45,14 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         if (t == null) {
             return false;
         }
-        if (!transactionalDataSource.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         DbKey dbKey = dbKeyFactory.newKey(t);
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         int height = blockchain.getHeight();
-        try (Connection con = transactionalDataSource.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
@@ -91,7 +92,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            transactionalDataSource.getCache(table).remove(dbKey);
+            dataSource.getCache(table).remove(dbKey);
         }
     }
     

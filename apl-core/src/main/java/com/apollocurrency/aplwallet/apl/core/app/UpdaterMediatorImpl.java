@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -108,8 +109,9 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     }
 
     @Override
-    public ConnectionProvider getConnectionProvider() {
-        return new ConnectionProviderImpl();
+    public TransactionalDataSource getDataSource() {
+        DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
     }
 
     @Override

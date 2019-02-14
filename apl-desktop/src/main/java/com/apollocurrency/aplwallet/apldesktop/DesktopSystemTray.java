@@ -26,9 +26,10 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -58,7 +59,7 @@ public class DesktopSystemTray {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     private SystemTray tray;
     private final JFrame wrapper = new JFrame();
@@ -204,7 +205,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).toAbsolutePath()));
-        addDataRow(statusPanel, "Database URL", Db.getDb() == null ? "unavailable" : Db.getDb().getUrl());
+//        addDataRow(statusPanel, "Database URL", dataSource == null ? "unavailable" : dataSource.getUrl());
         addEmptyRow(statusPanel);
 
         if (lastBlock != null) {

@@ -44,10 +44,11 @@ public abstract class VersionedPrunableDbTable<T> extends PrunableDbTable<T> {
 
     @Override
     public final void rollback(int height) {
-        if (!transactionalDataSource.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = transactionalDataSource.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSetLatest = con.prepareStatement("UPDATE " + table
                      + " AS a SET a.latest = TRUE WHERE a.latest = FALSE AND a.height = "
                      + " (SELECT MAX(height) FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + ")")) {

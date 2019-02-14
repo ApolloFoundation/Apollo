@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -49,7 +48,7 @@ public final class LuceneReindex extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        try (Connection con = Db.getDb().getConnection()) {
+        try (Connection con = lookupDataSource().getConnection()) {
             FullTextTrigger.reindex(con);
             response.put("done", true);
         } catch (SQLException e) {

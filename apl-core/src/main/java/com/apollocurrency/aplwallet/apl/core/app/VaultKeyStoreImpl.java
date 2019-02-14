@@ -37,7 +37,7 @@ import org.slf4j.Logger;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
-     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
+     private NtpTime ntpTime;
 
     @Inject
     @Named("keystoreDirPath")
@@ -51,6 +51,7 @@ import org.slf4j.Logger;
          }
          this.version = version;
          this.keystoreDirPath = keystoreDir;
+         this.ntpTime = CDI.current().select(NtpTime.class).get();
          if (!Files.exists(keystoreDirPath)) {
              try {
                  Files.createDirectories(keystoreDirPath);

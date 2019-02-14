@@ -5,17 +5,17 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
-public class DbConnection extends FilteredConnection {
+public class DbConnectionWrapper extends FilteredConnection {
 
-    private ThreadLocal<DbConnection> localConnection;
+    private ThreadLocal<DbConnectionWrapper> localConnection;
     private ThreadLocal<Map<String, Map<DbKey,Object>>> transactionCaches;
     private ThreadLocal<Set<TransactionCallback>> transactionCallback;
 
     long txStart = 0;
 
-    public DbConnection(Connection con, DbFactory factory, ThreadLocal<DbConnection> localConnection,
-                        ThreadLocal<Map<String, Map<DbKey,Object>>> transactionCaches,
-                        ThreadLocal<Set<TransactionCallback>> transactionCallback) {
+    public DbConnectionWrapper(Connection con, FilteredFactoryImpl factory, ThreadLocal<DbConnectionWrapper> localConnection,
+                               ThreadLocal<Map<String, Map<DbKey,Object>>> transactionCaches,
+                               ThreadLocal<Set<TransactionCallback>> transactionCallback) {
         super(con, factory);
         this.localConnection = localConnection;
         this.transactionCaches = transactionCaches;
@@ -24,7 +24,7 @@ public class DbConnection extends FilteredConnection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        throw new UnsupportedOperationException("Use Db.beginTransaction() to start a new transaction");
+        throw new UnsupportedOperationException("Use DatabaseManager.begin() to start a new transaction");
     }
 
     @Override
@@ -35,7 +35,7 @@ public class DbConnection extends FilteredConnection {
             throw new IllegalStateException("Previous connection not committed");
         } else {
 //            commitTransaction();
-            DbConnection con = localConnection.get();
+            DbConnectionWrapper con = localConnection.get();
             if (con == null) {
                 throw new IllegalStateException("Not in transaction");
             }
@@ -63,8 +63,8 @@ public class DbConnection extends FilteredConnection {
         } else if (this != localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         } else {
-//            rollbackTransaction();
-            DbConnection con = localConnection.get();
+//            rollback();
+            DbConnectionWrapper con = localConnection.get();
             if (con == null) {
                 throw new IllegalStateException("Not in transaction");
             }

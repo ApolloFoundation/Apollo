@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
@@ -112,19 +113,22 @@ public class UpdaterDbTest {
         }
 
         @Override
-        public ConnectionProvider getConnectionProvider() {
-            return new ConnectionProvider() {
+        public TransactionalDataSource getDataSource() {
+            return new TransactionalDataSource(null, null) {
+                Connection connection;
+
                 @Override
                 public Connection getConnection() throws SQLException {
-                    return dataSource.getConnection();
+                    connection = dataSource.getConnection();
+                    return connection;
                 }
 
                 @Override
-                public Connection beginTransaction() {
+                public void begin() {
                     try {
-                        Connection connection = dataSource.getConnection();
+                        connection = dataSource.getConnection();
                         connection.setAutoCommit(false);
-                        return connection;
+//                        return connection;
                     }
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
@@ -132,7 +136,7 @@ public class UpdaterDbTest {
                 }
 
                 @Override
-                public void rollbackTransaction(Connection connection) {
+                public void rollback() {
                     if (connection != null) {
                         try {
                             connection.rollback();
@@ -144,7 +148,7 @@ public class UpdaterDbTest {
                 }
 
                 @Override
-                public void commitTransaction(Connection connection) {
+                public void commit() {
                     try {
                         connection.commit();
                         connection.setAutoCommit(true);
@@ -153,8 +157,8 @@ public class UpdaterDbTest {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
-            @Override
-            public void endTransaction (Connection connection){
+//            @Override
+            private void endTransaction (Connection connection){
                 try {
                     if (connection != null) {
                         connection.close();
@@ -164,7 +168,7 @@ public class UpdaterDbTest {
                     throw new RuntimeException(e.toString(), e);
                 }
             }
-            @Override
+//            @Override
             public boolean isInTransaction(Connection connection) {
                 return false;
             }

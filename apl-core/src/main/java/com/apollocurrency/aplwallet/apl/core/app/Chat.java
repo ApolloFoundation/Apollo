@@ -11,14 +11,21 @@ import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 public class Chat {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
+    }
 
     public static DbIterator<ChatInfo> getChatAccounts(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement stmt = con.prepareStatement(
                     "select account, max(timestamp) as timestamp from "
                             + "((SELECT recipient_id as account, timestamp from transaction "
@@ -52,7 +59,7 @@ public class Chat {
     public static DbIterator<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement stmt = con.prepareStatement(
                     "SELECT * from transaction "
                             + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +

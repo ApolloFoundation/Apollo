@@ -21,36 +21,37 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class TransactionalDataSource extends BasicDataSource implements TableCache/*, UserTransaction*/ {
-    private static final Logger LOG = getLogger(TransactionalDataSource.class);
+@Vetoed
+public class TransactionalDataSource extends DataSourceWrapper implements TableCache, TransactionManagement {
+    private static final Logger log = getLogger(TransactionalDataSource.class);
 
     // TODO: YL remove static instance later
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static DbFactory factory;// = new DbFactory();
+//    private static Blockchain blockchain;// = CDI.current().select(BlockchainImpl.class).get();
+    private static PropertiesHolder propertiesHolder;// = CDI.current().select(PropertiesHolder.class).get();
+    private static FilteredFactoryImpl factory;// = new FilteredFactoryImpl();
 
     private static long stmtThreshold;
     private static long txThreshold;
     private static long txInterval;
     private static boolean enableSqlLogs;
 
-    private final ThreadLocal<DbConnection> localConnection = new ThreadLocal<>();
+    private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
     private final ThreadLocal<Map<String,Map<DbKey,Object>>> transactionCaches = new ThreadLocal<>();
     private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
 
@@ -58,102 +59,117 @@ public class TransactionalDataSource extends BasicDataSource implements TableCac
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
 
-    public TransactionalDataSource(DbProperties dbProperties) {
+    @Inject
+    public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         super(dbProperties);
+        propertiesHolder = propertiesHolderParam;
         stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
         txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
         txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
         enableSqlLogs = propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
-        factory = new DbFactory(stmtThreshold);
+        factory = new FilteredFactoryImpl(stmtThreshold);
+//        blockchain = CDI.current().select(BlockchainImpl.class).get();
     }
 
     @Override
     public Connection getConnection() throws SQLException {
         Connection con = localConnection.get();
-        if (con != null) {
+        if (con != null /*&& !con.isClosed() && !super.getConnection().isClosed()*/) {
             return enableSqlLogs ? new ConnectionSpy(con) : con;
         }
-        DbConnection realConnection = new DbConnection(super.getConnection(), factory,
+        DbConnectionWrapper realConnection = new DbConnectionWrapper(super.getConnection(), factory,
+//        DbConnectionWrapper realConnection = new DbConnectionWrapper(getPooledConnection(), factory,
                 localConnection, transactionCaches, transactionCallback);
         return enableSqlLogs ? new ConnectionSpy(realConnection) : realConnection;
     }
 
-/*
     public Connection getConnection(boolean doSqlLog) throws SQLException {
         if (!enableSqlLogs && doSqlLog) {
             return new ConnectionSpy(getConnection());
         }
         return getConnection();
     }
-*/
 
+    @Override
     public boolean isInTransaction() {
         return localConnection.get() != null;
     }
 
-    public Connection beginTransaction() {
+    @Override
+    public void begin() {
         if (localConnection.get() != null) {
             throw new IllegalStateException("Transaction already in progress");
         }
         try {
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
-            con = new DbConnection(con, factory, localConnection, transactionCaches, transactionCallback);
-            ((DbConnection)con).txStart = System.currentTimeMillis();
-            localConnection.set((DbConnection)con);
+            con = new DbConnectionWrapper(con, factory, localConnection, transactionCaches, transactionCallback);
+            ((DbConnectionWrapper)con).txStart = System.currentTimeMillis();
+            localConnection.set((DbConnectionWrapper)con);
             transactionCaches.set(new HashMap<>());
-            return enableSqlLogs ? new ConnectionSpy(con) : con;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-/*
-    public Connection beginTransaction(boolean doSqlLog) {
-        if (!enableSqlLogs && doSqlLog) {
-            return new ConnectionSpy(beginTransaction());
-        }
-        return beginTransaction();
+    @Override
+    public void commit() {
+        this.commit(true);
     }
-*/
 
-    public void commitTransaction() {
-        DbConnection con = localConnection.get();
+    @Override
+    public void commit(boolean closeConnection) {
+        DbConnectionWrapper con = localConnection.get();
         if (con == null) {
             throw new IllegalStateException("Not in transaction");
         }
         try {
             con.doCommit();
-            Set<TransactionCallback> callbacks = transactionCallback.get();
-            if (callbacks != null) {
-                callbacks.forEach(TransactionCallback::commit);
-                transactionCallback.set(null);
-            }
+            cleanupTransactionCallback(TransactionCallback::commit);
         } catch (SQLException e) {
+            log.error("Commit data error with close = '{}'", closeConnection, e);
             throw new RuntimeException(e.toString(), e);
+        } finally {
+            if (closeConnection) {
+                endTransaction();
+            }
         }
     }
 
-    public void rollbackTransaction() {
-        DbConnection con = localConnection.get();
+    @Override
+    public void rollback() {
+        this.rollback(true);
+    }
+
+    @Override
+    public void rollback(boolean closeConnection) {
+        DbConnectionWrapper con = localConnection.get();
         if (con == null) {
             throw new IllegalStateException("Not in transaction");
         }
         try {
             con.doRollback();
         } catch (SQLException e) {
+            log.error("Rollback data error with close = '{}'", closeConnection, e);
             throw new RuntimeException(e.toString(), e);
         } finally {
             transactionCaches.get().clear();
-            Set<TransactionCallback> callbacks = transactionCallback.get();
-            if (callbacks != null) {
-                callbacks.forEach(TransactionCallback::rollback);
-                transactionCallback.set(null);
+            cleanupTransactionCallback(TransactionCallback::rollback);
+            if (closeConnection) {
+                endTransaction();
             }
         }
     }
 
-    public void endTransaction() {
+    private void cleanupTransactionCallback(Consumer<TransactionCallback> consumer) {
+        Set<TransactionCallback> callbacks = transactionCallback.get();
+        if (callbacks != null) {
+            callbacks.forEach(consumer);
+            transactionCallback.set(null);
+        }
+    }
+
+    private void endTransaction() {
         Connection con = localConnection.get();
         if (con == null) {
             throw new IllegalStateException("Not in transaction");
@@ -161,10 +177,10 @@ public class TransactionalDataSource extends BasicDataSource implements TableCac
         localConnection.set(null);
         transactionCaches.set(null);
         long now = System.currentTimeMillis();
-        long elapsed = now - ((DbConnection)con).txStart;
+        long elapsed = now - ((DbConnectionWrapper)con).txStart;
         if (elapsed >= txThreshold) {
-            logThreshold(String.format("Database transaction required %.3f seconds at height %d",
-                                       (double)elapsed/1000.0, blockchain.getHeight()));
+            logThreshold(String.format("Database transaction required %.3f seconds",
+                                       (double)elapsed/1000.0/*, blockchain.getHeight()*/));
         } else {
             long count, times;
             boolean logStats = false;
@@ -179,12 +195,16 @@ public class TransactionalDataSource extends BasicDataSource implements TableCac
                 }
             }
             if (logStats)
-                LOG.debug(String.format("Average database transaction time is %.3f seconds",
+                log.debug(String.format("Average database transaction time is %.3f seconds",
                                                      (double)times/1000.0/(double)count));
         }
         DbUtils.close(con);
     }
 
+    /**
+     * Used by FullTestSearch triggers
+     * @param callback will be called later
+     */
     public void registerCallback(TransactionCallback callback) {
         Set<TransactionCallback> callbacks = transactionCallback.get();
         if (callbacks == null) {
@@ -235,7 +255,7 @@ public class TransactionalDataSource extends BasicDataSource implements TableCac
                 sb.append('\n');
             sb.append("  ").append(line);
         }
-        LOG.debug(sb.toString());
+        log.debug(sb.toString());
     }
 
     private static long getPropertyOrDefault(String propertyName, long defaultValue) {

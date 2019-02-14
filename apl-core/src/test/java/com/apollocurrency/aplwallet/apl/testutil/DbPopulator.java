@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.db.BasicDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class DbPopulator {
     private String schemaScriptPath;
     private String dataScriptPath;
 
-    public DbPopulator(BasicDataSource db, String schemaScriptPath, String dataScriptPath) {
+    public DbPopulator(DataSourceWrapper db, String schemaScriptPath, String dataScriptPath) {
         this.basicDataSource = db;
         this.schemaScriptPath = schemaScriptPath;
         this.dataScriptPath = dataScriptPath;

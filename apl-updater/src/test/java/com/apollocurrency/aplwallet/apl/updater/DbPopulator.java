@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.db.BasicDataSource;
 import org.slf4j.Logger;
 
 import java.io.IOException;

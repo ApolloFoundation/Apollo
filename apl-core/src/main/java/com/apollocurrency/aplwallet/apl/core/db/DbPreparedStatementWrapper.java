@@ -3,61 +3,61 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import org.slf4j.Logger;
 
-public class DbStatement extends FilteredStatement {
-    private static final Logger log = getLogger(DbStatement.class);
+public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
+    private static final Logger log = getLogger(DbPreparedStatementWrapper.class);
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private long stmtThreshold;
 
 /*
-    public DbStatement(Statement stmt) {
-        super(stmt);
+    public DbPreparedStatementWrapper(PreparedStatement stmt, String sql) {
+        super(stmt, sql);
     }
 */
 
-    public DbStatement(Statement stmt, long stmtThreshold) {
-        super(stmt);
+    public DbPreparedStatementWrapper(PreparedStatement stmt, String sql, long stmtThreshold) {
+        super(stmt, sql);
         this.stmtThreshold = stmtThreshold;
     }
 
     @Override
-    public boolean execute(String sql) throws SQLException {
+    public boolean execute() throws SQLException {
         long start = System.currentTimeMillis();
-        boolean b = super.execute(sql);
+        boolean b = super.execute();
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                    (double)elapsed/1000.0, blockchain.getHeight(), sql));
+                    (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
         return b;
     }
 
     @Override
-    public ResultSet executeQuery(String sql) throws SQLException {
+    public ResultSet executeQuery() throws SQLException {
         long start = System.currentTimeMillis();
-        ResultSet r = super.executeQuery(sql);
+        ResultSet r = super.executeQuery();
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                    (double)elapsed/1000.0, blockchain.getHeight(), sql));
+                    (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
         return r;
     }
 
     @Override
-    public int executeUpdate(String sql) throws SQLException {
+    public int executeUpdate() throws SQLException {
         long start = System.currentTimeMillis();
-        int c = super.executeUpdate(sql);
+        int c = super.executeUpdate();
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                    (double)elapsed/1000.0, blockchain.getHeight(), sql));
+                    (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
         return c;
     }
 

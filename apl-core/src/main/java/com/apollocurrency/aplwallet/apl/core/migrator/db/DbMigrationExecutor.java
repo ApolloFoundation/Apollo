@@ -3,11 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.nio.file.Path;
@@ -28,23 +28,22 @@ import javax.inject.Inject;
 public class DbMigrationExecutor extends MigrationExecutor {
     private LegacyDbLocationsProvider legacyDbLocationsProvider;
     private DbInfoExtractor dbInfoExtractor;
-    private DbProperties dbProperties;// it should be present and initialized
+    private DatabaseManager databaseManager;
 
     @Inject
     public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider,
-                               DbInfoExtractor dbInfoExtractor, DbProperties dbProperties) {
+                               DbInfoExtractor dbInfoExtractor, DatabaseManager databaseManager) {
         super(propertiesHolder, "db", true);
         this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
-        this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
-        this.dbProperties = dbProperties;
-
+        this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "DatabaseManager info extractor cannot be null");
+        this.databaseManager = databaseManager;
     }
 
     @Override
     protected void afterMigration() {
-        Db.init(dbProperties);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         FullTextTrigger.init();
-        try (Connection connection = Db.getDb().getConnection()) {
+        try (Connection connection = dataSource.getConnection()) {
             FullTextTrigger.reindex(connection);
         }
         catch (SQLException e) {
@@ -54,7 +53,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
 
     @Override
     protected void beforeMigration() {
-        Db.shutdown();
+        databaseManager.shutdown();
     }
 
     @Override

@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -39,44 +40,51 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 @Singleton
-public class Db {
-    private static final Logger log = getLogger(Db.class);
+public class DatabaseManager {
+    private static final Logger log = getLogger(DatabaseManager.class);
 
-    private static DbProperties baseDbProperties;
+    private PropertiesHolder propertiesHolder;
+    private DbProperties baseDbProperties;
     private static TransactionalDataSource currentTransactionalDataSource;
-    private static Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3);
+    private Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3);
 
-    public static TransactionalDataSource getDb() {
+    public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
-            throw new RuntimeException("Db is null or was already shutdown. Call Db.init for starting current Db");
+            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+            currentTransactionalDataSource.init(new AplDbVersion(), true);
+//            throw new RuntimeException("DatabaseManager is null or was already shutdown. Call DatabaseManager.init for starting current DatabaseManager");
         }
         return currentTransactionalDataSource;
     }
 
-    public static void init(DbProperties dbProperties) {
+    @Inject
+    public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = dbProperties;
-        currentTransactionalDataSource = new TransactionalDataSource(dbProperties);
+        propertiesHolder = propertiesHolderParam;
+        currentTransactionalDataSource = new TransactionalDataSource(dbProperties, propertiesHolder);
         currentTransactionalDataSource.init(new AplDbVersion(), true);
-        List<String> shardList = trySelectShard(currentTransactionalDataSource);
+        List<String> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
         for (String shardName : shardList) {
             DbProperties shardDbProperties = dbProperties.dbFileName(shardName);
-            TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties);
+            TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
             shardDb.init(new AplDbVersion(), false);
             connectedShardDataSourceMap.put(shardName, shardDb);
             log.debug("Prepared '{}' shard...", shardName);
         }
     }
 
-    private static List<String> trySelectShard(TransactionalDataSource db) {
+    public List<String> findAllShards(TransactionalDataSource transactionalDataSource) {
         String shardSelect = "SELECT key from shard";
         List<String> result = new ArrayList<>(3);
-        try (Connection con = db.getConnection();
+        try (Connection con = transactionalDataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(shardSelect)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -103,28 +111,24 @@ public class Db {
         } catch (CloneNotSupportedException e) {
             log.error("DbProperties cloning error", e);
         }
-        TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties);
+        TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
         shardDb.init(new AplDbVersion(), false);
         connectedShardDataSourceMap.put(shardName, shardDb);
         log.debug("new SHARD '{}' is CREATED", shardName);
         return shardDb;
     }
 
-/*
-    public static void init() {
-        DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
-        init(dbProperties);
-    }
-*/
-
-    public static void shutdown() {
+    public void shutdown() {
         if (connectedShardDataSourceMap.size() > 0) {
-            connectedShardDataSourceMap.values().stream().forEach(shard -> shard.shutdown());
+            connectedShardDataSourceMap.values().stream().forEach(DataSourceWrapper::shutdown);
         }
-        currentTransactionalDataSource.shutdown();
+        if (currentTransactionalDataSource != null) {
+            currentTransactionalDataSource.shutdown();
+            currentTransactionalDataSource = null;
+        }
     }
 
-    public Db() {} // never use it directly
+    public DatabaseManager() {} // never use it directly
 
     public static void tryToDeleteDb() throws IOException {
             currentTransactionalDataSource.shutdown();

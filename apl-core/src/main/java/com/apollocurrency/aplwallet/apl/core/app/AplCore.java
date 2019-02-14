@@ -22,6 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 
@@ -31,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -66,6 +67,7 @@ public final class AplCore {
     private BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+    private DatabaseManager databaseManager;
 
 
     public AplCore(BlockchainConfig config) {
@@ -105,9 +107,13 @@ public final class AplCore {
         API.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
-        blockchainProcessor.shutdown();
+        if (blockchainProcessor != null) {
+            blockchainProcessor.shutdown();
+        }
         Peers.shutdown();
-        Db.shutdown();
+        if (databaseManager != null) {
+            databaseManager.shutdown();
+        }
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         AplCore.shutdown = true;
     }
@@ -146,10 +152,12 @@ public final class AplCore {
 
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
-                Db.init(CDI.current().select(DbProperties.class).get());
+                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
+                databaseManager = CDI.current().select(DatabaseManager.class).get();
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
-
+                dataSource = databaseManager.getDataSource(); // retrieve again after migrate
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
                  // create inside Apollo and passed into AplCore constructor
@@ -168,10 +176,10 @@ public final class AplCore {
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 transactionProcessor.init();
 
-                Account.init();
+                Account.init(databaseManager);
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");
-                AccountLedger.init();
+                AccountLedger.init(databaseManager);
                 Alias.init();
                 Asset.init();
                 DigitalGoodsStore.init();
@@ -179,7 +187,7 @@ public final class AplCore {
                 Poll.init();
                 PhasingPoll.init();
                 Trade.init();
-                AssetTransfer.init();
+                AssetTransfer.init(databaseManager);
                 AssetDelete.init();
                 AssetDividend.init();
                 Vote.init();

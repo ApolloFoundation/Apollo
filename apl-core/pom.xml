@@ -95,16 +95,6 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-cdi</artifactId>
         </dependency>
-        <dependency>
-            <groupId>javax.transaction</groupId>
-            <artifactId>jta</artifactId>
-        </dependency>
-<!--
-        <dependency>
-            <groupId>com.atomikos</groupId>
-            <artifactId>transactions-jta</artifactId>
-        </dependency>
--->
 
         <!-- Swagger runtime dependencies -->
         <!-- Swagger annotation for API auto-documenting --> 
@@ -238,6 +228,10 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
         </dependency> 
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>

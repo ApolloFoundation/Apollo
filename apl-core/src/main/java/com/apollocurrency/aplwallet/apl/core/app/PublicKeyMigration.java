@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
@@ -16,17 +17,26 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class PublicKeyMigration {
     private static final Logger LOG = getLogger(PublicKeyMigration.class);
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    
+    private static DatabaseManager databaseManager;
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
+    }
+
     public static void init() {
+        TransactionalDataSource dataSource = lookupDataSource();
         Connection con;
         boolean isInTransaction = false;
         try {
-            if (Db.getDb().isInTransaction()) {
+            if (dataSource.isInTransaction()) {
                 isInTransaction = true;
-                con = Db.getDb().getConnection();
+//                con = DatabaseManager.getDataSource().getConnection();
             } else {
-                con = Db.getDb().beginTransaction();
+//                con = DatabaseManager.getDataSource().begin();
+                dataSource.begin();
             }
+            con = dataSource.getConnection();
 
             try (Statement stmt = con.createStatement();
                  PreparedStatement selectGenesisKeysStatement = con.prepareStatement((
@@ -78,13 +88,14 @@ public class PublicKeyMigration {
                             pstm.addBatch();
                             if (++counter % 500 == 0) {
                                 pstm.executeBatch();
-                                Db.getDb().commitTransaction();
+                                dataSource.commit(false);
                                 LOG.debug("Copied {} / {}", counter, totalNumberOfGenesisKeys);
                             }
                         }
                         pstm.executeBatch();
                     }
                 }
+                dataSource.commit(false);
                 //delete genesis keys
                 int deleted;
                 int totalDeleted = 0;
@@ -94,20 +105,22 @@ public class PublicKeyMigration {
                     deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE());
                     totalDeleted += deleted;
                     LOG.debug("Migration performed for {}/{} public keys", totalDeleted, totalNumberOfGenesisKeys);
-                    Db.getDb().commitTransaction();
+                    dataSource.commit(false);
                 } while (deleted == propertiesHolder.BATCH_COMMIT_SIZE());
                 //add indices
             }
-            Db.getDb().commitTransaction();
+            dataSource.commit();
         }
         catch (SQLException e) {
-            Db.getDb().rollbackTransaction();
+            dataSource.rollback();
             throw new RuntimeException(e.toString(), e);
         }
+/*
         finally {
             if (!isInTransaction) {
-                Db.getDb().endTransaction();
+                DatabaseManager.getDataSource().endTransaction();
             }
         }
+*/
     }
 }

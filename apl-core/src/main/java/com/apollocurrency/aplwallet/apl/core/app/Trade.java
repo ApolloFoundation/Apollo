@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -41,6 +42,13 @@ public final class Trade {
 
     public enum Event {
         TRADE
+    }
+
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        return databaseManager.getDataSource();
     }
 
     private static final Listeners<Trade,Event> listeners = new Listeners<>();
@@ -93,7 +101,7 @@ public final class Trade {
     }
 
     public static List<Trade> getLastTrades(long[] assetIds) {
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = lookupDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trade WHERE asset_id = ? ORDER BY asset_id, height DESC LIMIT 1")) {
             List<Trade> result = new ArrayList<>();
             for (long assetId : assetIds) {
@@ -113,7 +121,7 @@ public final class Trade {
     public static DbIterator<Trade> getAccountTrades(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trade WHERE seller_id = ?"
                     + " UNION ALL SELECT * FROM trade WHERE buyer_id = ? AND seller_id <> ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));
@@ -132,7 +140,7 @@ public final class Trade {
     public static DbIterator<Trade> getAccountAssetTrades(long accountId, long assetId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trade WHERE seller_id = ? AND asset_id = ?"
                     + " UNION ALL SELECT * FROM trade WHERE buyer_id = ? AND seller_id <> ? AND asset_id = ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));

@@ -47,24 +47,26 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     protected abstract void save(Connection con, T t, V v) throws SQLException;
 
     protected void clearCache() {
-        transactionalDataSource.clearCache(table);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.clearCache(table);
     }
 
     public final List<V> get(DbKey dbKey) {
         List<V> values;
-        if (transactionalDataSource.isInTransaction()) {
-            values = (List<V>) transactionalDataSource.getCache(table).get(dbKey);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (dataSource.isInTransaction()) {
+            values = (List<V>) dataSource.getCache(table).get(dbKey);
             if (values != null) {
                 return values;
             }
         }
-        try (Connection con = transactionalDataSource.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
                      + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
             dbKey.setPK(pstmt);
             values = get(con, pstmt);
-            if (transactionalDataSource.isInTransaction()) {
-                transactionalDataSource.getCache(table).put(dbKey, values);
+            if (dataSource.isInTransaction()) {
+                dataSource.getCache(table).put(dbKey, values);
             }
             return values;
         } catch (SQLException e) {
@@ -87,15 +89,16 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     }
 
     public final void insert(T t, List<V> values) {
-        if (!transactionalDataSource.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         DbKey dbKey = dbKeyFactory.newKey(t);
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        transactionalDataSource.getCache(table).put(dbKey, values);
-        try (Connection con = transactionalDataSource.getConnection()) {
+        dataSource.getCache(table).put(dbKey, values);
+        try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                         + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
@@ -114,7 +117,8 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     @Override
     public final void rollback(int height) {
         if (multiversion) {
-            VersionedEntityDbTable.rollback(transactionalDataSource, table, height, dbKeyFactory);
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            VersionedEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
         } else {
             super.rollback(height);
         }
@@ -123,7 +127,8 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     @Override
     public final void trim(int height) {
         if (multiversion) {
-            VersionedEntityDbTable.trim(transactionalDataSource, table, height, dbKeyFactory);
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         } else {
             super.trim(height);
         }
