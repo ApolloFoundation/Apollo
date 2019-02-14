@@ -22,6 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
@@ -31,14 +34,11 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -51,6 +51,9 @@ import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -78,9 +81,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
@@ -89,6 +89,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     // TODO: YL remove static instance later
    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+   private  BlockchainConfigUpdater blockchainConfigUpdater;
     private static final byte[] CHECKSUM_1 = null;
     private FullTextSearchService fullTextSearchProvider;
 
@@ -129,6 +130,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private Blockchain lookupBlockhain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;
+    }
+    private BlockchainConfigUpdater lookupBlockhainConfigUpdater() {
+        if (blockchainConfigUpdater == null) blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+        return blockchainConfigUpdater;
     }
 
     private final Runnable getMoreBlocksThread = new Runnable() {
@@ -1077,7 +1082,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private FullTextSearchService lookupFullTextSearchProvider() {
         if (fullTextSearchProvider == null) {
-
             fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
         }
         return fullTextSearchProvider;
@@ -1660,7 +1664,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long blockIdAtHeight = blockchain.getBlockIdAtHeight(height);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
                 lookupBlockhain().setLastBlock(lastBLock);
-                blockchainConfig.rollback(lastBLock.getHeight());
+                lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
                 LOG.debug("Deleted blocks starting from height %s", height);
             } finally {
                 scan(0, false);
