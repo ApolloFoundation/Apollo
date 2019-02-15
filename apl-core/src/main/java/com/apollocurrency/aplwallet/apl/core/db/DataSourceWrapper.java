@@ -174,11 +174,12 @@ public class DataSourceWrapper implements DataSource {
             Connection con = dataSource.getConnection();
             Statement stmt = con.createStatement();
             stmt.execute("SHUTDOWN COMPACT");
-            log.info("Database shutdown completed");
             shutdown = true;
             initialized = false;
 //            dataSource.close();
             dataSource.dispose();
+            log.info("Database shutdown completed");
+
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
