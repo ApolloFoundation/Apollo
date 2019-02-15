@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
@@ -37,14 +38,17 @@ import java.util.function.Consumer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * Data source with Transaction support implemented by ThreadLocal connection management.
+ * That class should be used only by retrieving from {@link DatabaseManager}. Should not be retrieved from CDI directly.
+ */
 @Vetoed
 public class TransactionalDataSource extends DataSourceWrapper implements TableCache, TransactionManagement {
     private static final Logger log = getLogger(TransactionalDataSource.class);
 
     // TODO: YL remove static instance later
-//    private static Blockchain blockchain;// = CDI.current().select(BlockchainImpl.class).get();
-    private static PropertiesHolder propertiesHolder;// = CDI.current().select(PropertiesHolder.class).get();
-    private static FilteredFactoryImpl factory;// = new FilteredFactoryImpl();
+    private static PropertiesHolder propertiesHolder;
+    private static FilteredFactoryImpl factory;
 
     private static long stmtThreshold;
     private static long txThreshold;
@@ -59,6 +63,11 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
 
+    /**
+     * Created by CDI with previously initialized properties.
+     * @param dbProperties main db properties
+     * @param propertiesHolder the rest of properties
+     */
     @Inject
     public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         super(dbProperties);
@@ -70,6 +79,11 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         factory = new FilteredFactoryImpl(stmtThreshold);
     }
 
+    /**
+     * Return Connection from ThreadLocal or create new one. AUTO COMMIT = TRUE for such db connection.
+     * @return db connection with autoCommit = true
+     * @throws SQLException possible ini exception
+     */
     @Override
     public Connection getConnection() throws SQLException {
         Connection con = localConnection.get();
@@ -77,11 +91,16 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             return enableSqlLogs ? new ConnectionSpy(con) : con;
         }
         DbConnectionWrapper realConnection = new DbConnectionWrapper(super.getConnection(), factory,
-//        DbConnectionWrapper realConnection = new DbConnectionWrapper(getPooledConnection(), factory,
                 localConnection, transactionCaches, transactionCallback);
         return enableSqlLogs ? new ConnectionSpy(realConnection) : realConnection;
     }
 
+    /**
+     * Optional
+     * @param doSqlLog dump sql
+     * @return spied db connection
+     * @throws SQLException
+     */
     public Connection getConnection(boolean doSqlLog) throws SQLException {
         if (!enableSqlLogs && doSqlLog) {
             return new ConnectionSpy(getConnection());
@@ -89,11 +108,17 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         return getConnection();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isInTransaction() {
         return localConnection.get() != null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void begin() {
         if (localConnection.get() != null) {
@@ -111,11 +136,17 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void commit() {
         this.commit(true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void commit(boolean closeConnection) {
         DbConnectionWrapper con = localConnection.get();
@@ -135,11 +166,17 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void rollback() {
         this.rollback(true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void rollback(boolean closeConnection) {
         DbConnectionWrapper con = localConnection.get();
@@ -168,6 +205,9 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         }
     }
 
+    /**
+     * internal resources clean up.
+     */
     private void endTransaction() {
         Connection con = localConnection.get();
         if (con == null) {
@@ -213,6 +253,9 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         callbacks.add(callback);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<DbKey,Object> getCache(String tableName) {
         if (!isInTransaction()) {
@@ -226,6 +269,9 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         return cacheMap;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void clearCache(String tableName) {
         Map<DbKey,Object> cacheMap = transactionCaches.get().get(tableName);
@@ -234,6 +280,9 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void clearCache() {
         transactionCaches.get().values().forEach(Map::clear);

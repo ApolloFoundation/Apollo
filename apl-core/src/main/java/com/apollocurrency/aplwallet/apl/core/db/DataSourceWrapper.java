@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
@@ -99,6 +100,7 @@ public class DataSourceWrapper implements DataSource {
     }
 
 //    private HikariDataSource dataSource;
+//    private HikariPoolMXBean jmxBean;
     private JdbcConnectionPool dataSource;
     private volatile int maxActiveConnections;
     private final String dbUrl;
@@ -150,8 +152,8 @@ public class DataSourceWrapper implements DataSource {
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         dataSource = new HikariDataSource(config);
+        jmxBean = dataSource.getHikariPoolMXBean();
 */
-
         dataSource = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         dataSource.setMaxConnections(maxConnections);
         dataSource.setLoginTimeout(loginTimeout);
@@ -208,12 +210,13 @@ public class DataSourceWrapper implements DataSource {
 
     protected Connection getPooledConnection() throws SQLException {
         Connection con = dataSource.getConnection();
-//        int activeConnections = dataSource.getMaximumPoolSize();
+//        int activeConnections = jmxBean.getActiveConnections();
         int activeConnections = dataSource.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
             log.debug("Used/Maximum connections from Pool '{}'/'{}'",
                     dataSource.getActiveConnections(), dataSource.getMaxConnections());
+//                    jmxBean.getActiveConnections(), jmxBean.getTotalConnections());
         }
         return con;
     }

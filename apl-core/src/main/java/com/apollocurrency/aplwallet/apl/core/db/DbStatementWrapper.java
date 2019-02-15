@@ -17,12 +17,6 @@ public class DbStatementWrapper extends FilteredStatement {
 
     private long stmtThreshold;
 
-/*
-    public DbStatementWrapper(Statement stmt) {
-        super(stmt);
-    }
-*/
-
     public DbStatementWrapper(Statement stmt, long stmtThreshold) {
         super(stmt);
         this.stmtThreshold = stmtThreshold;

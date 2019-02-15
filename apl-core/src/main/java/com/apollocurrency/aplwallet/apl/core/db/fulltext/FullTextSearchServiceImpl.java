@@ -121,7 +121,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     public void init() {
         try {
             ftl.init();
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
+            if (databaseManager  == null) {
+                databaseManager = CDI.current().select(DatabaseManager.class).get();
+            }
         } catch (IOException e) {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }

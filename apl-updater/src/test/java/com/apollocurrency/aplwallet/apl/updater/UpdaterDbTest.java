@@ -129,7 +129,6 @@ public class UpdaterDbTest {
                     try {
                         connection = dataSource.getConnection();
                         connection.setAutoCommit(false);
-//                        return connection;
                     }
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
@@ -158,21 +157,6 @@ public class UpdaterDbTest {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
-//            @Override
-            private void endTransaction (Connection connection){
-                try {
-                    if (connection != null) {
-                        connection.close();
-                    }
-                }
-                catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }
-//            @Override
-            public boolean isInTransaction(Connection connection) {
-                return false;
-            }
         };}
 
 

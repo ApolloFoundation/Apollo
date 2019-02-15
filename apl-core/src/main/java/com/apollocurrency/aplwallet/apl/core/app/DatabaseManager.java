@@ -48,22 +48,27 @@ import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-
+/**
+ * Class is used for high level database and shard management.
+ * It keeps track on main database's data source and internal connections as well as secondary shards.
+ */
 @Singleton
-public class DatabaseManager {
+public class DatabaseManager implements ShardManagement {
     private static final Logger log = getLogger(DatabaseManager.class);
 
-    private static DbProperties baseDbProperties;
-//    private static FullTextSearchService searchService;
+    private static DbProperties baseDbProperties; // main database properties
     private PropertiesHolder propertiesHolder;
-    private static TransactionalDataSource currentTransactionalDataSource;
-    private Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3);
+    private static TransactionalDataSource currentTransactionalDataSource; // main/shard database
+    private Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3); // secondary shards
 
+    /**
+     * Create, initialize and return main database source.
+     * @return main data source
+     */
     public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
             currentTransactionalDataSource.init(new AplDbVersion());
-//            throw new RuntimeException("DatabaseManager is null or was already shutdown. Call DatabaseManager.init for starting current DatabaseManager");
         }
         return currentTransactionalDataSource;
     }
@@ -78,17 +83,13 @@ public class DatabaseManager {
     }
 
     /**
-     *
-     * @param dbProperties
+     * Create main db instance with db properties, all other properties injected by CDI
+     * @param dbProperties database only properties from CDI
+     * @param propertiesHolderParam the rest global properties in holder from CDI
      */
-    public DatabaseManager(DbProperties dbProperties) {
-        this(dbProperties, null);
-    }
-
     @Inject
     public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
-//        searchService = useExistingConfig ? searchService : fullTextSearchService; // optional
         propertiesHolder = propertiesHolderParam;
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         currentTransactionalDataSource.init(new AplDbVersion());
@@ -103,15 +104,7 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Reinit database with existing config
-     */
-/*
-    public static void init() {
-        init(null, null, true);
-    }
-*/
-
+    @Override
     public List<String> findAllShards(TransactionalDataSource transactionalDataSource) {
         String shardSelect = "SELECT key from shard";
         List<String> result = new ArrayList<>(3);
@@ -131,8 +124,9 @@ public class DatabaseManager {
     /**
      * Method gives ability to create new 'shard database', open existing shard and add it into shard list.
      * @param shardName shard name to be added
-     * @return shard database connection pool
+     * @return shard database connection pool instance
      */
+    @Override
     public TransactionalDataSource createAndAddShard(String shardName) {
         Objects.requireNonNull(shardName, "shardName is NULL");
         log.debug("Create new SHARD '{}'", shardName);
@@ -149,6 +143,10 @@ public class DatabaseManager {
         return shardDb;
     }
 
+    /**
+     * Shutdown main db and secondary shards.
+     * After that the db can be reinitialized/opened again
+     */
     public void shutdown() {
         if (connectedShardDataSourceMap.size() > 0) {
             connectedShardDataSourceMap.values().stream().forEach(DataSourceWrapper::shutdown);
@@ -161,6 +159,10 @@ public class DatabaseManager {
 
     public DatabaseManager() {} // never use it directly
 
+    /**
+     * Optional method, needs revising for shards
+     * @throws IOException
+     */
     public static void tryToDeleteDb() throws IOException {
             currentTransactionalDataSource.shutdown();
             log.info("Removing current Db...");
@@ -169,6 +171,11 @@ public class DatabaseManager {
             log.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
     }
 
+    /**
+     * Optional method, needs revising for shards
+     * @param dbPath path to db folder
+     * @throws IOException
+     */
     public static void removeDb(Path dbPath) throws IOException {
         Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
             @Override

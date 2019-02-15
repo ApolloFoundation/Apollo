@@ -787,58 +787,13 @@ public final class Peers {
             } catch (Exception e) {
                 dataSource.rollback();
                 throw e;
-            }/* finally {
-                DatabaseManager.getDataSource().endTransaction();
-            }*/
+            }
         }
 
     };
 
-/*
-    static {
-        Peers.addListener(peer -> peersService.submit(() -> {
-            if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
-                try {
-                    DatabaseManager.getDataSource().begin();
-                    PeerDb.updatePeer((PeerImpl)peer);
-                    DatabaseManager.getDataSource().commit();
-                } catch (RuntimeException e) {
-                    LOG.error("Unable to update peer database", e);
-                    DatabaseManager.getDataSource().rollback();
-                }*/
-/* finally {
-                    DatabaseManager.getDataSource().endTransaction();
-                }*//*
-
-            }
-        }), Peers.Event.CHANGED_SERVICES);
-    }
-*/
-
-/*
-    static {
-        Account.addListener(account -> peers.values().forEach(peer -> {
-            if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                Peers.listeners.notify(peer, Event.WEIGHT);
-            }
-        }), Account.Event.BALANCE);
-    }
-*/
-
-/*
-    static {
-        if (! propertiesHolder.isOffline()) {
-            ThreadPool.scheduleThread("PeerConnecting", Peers.peerConnectingThread, 20);
-            ThreadPool.scheduleThread("PeerUnBlacklisting", Peers.peerUnBlacklistingThread, 60);
-            if (Peers.getMorePeers) {
-                ThreadPool.scheduleThread("GetMorePeers", Peers.getMorePeersThread, 20);
-            }
-        }
-    }
-*/
-
     public static void init() {
-
+        // get main db data source
         TransactionalDataSource dataSource = lookupDataSource();
 
         Peers.addListener(peer -> peersService.submit(() -> {
@@ -850,9 +805,7 @@ public final class Peers {
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
                     dataSource.rollback();
-                }/* finally {
-                    DatabaseManager.getDataSource().endTransaction();
-                }*/
+                }
             }
         }), Peers.Event.CHANGED_SERVICES);
 

@@ -78,9 +78,7 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
                     }
                     dataSource.commit(false);
                 } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
-//                dataSource.commit();
             } catch (SQLException e) {
-//                dataSource.rollback();
                 throw new RuntimeException(e.toString(), e);
             }
         }
