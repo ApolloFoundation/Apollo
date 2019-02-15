@@ -180,7 +180,7 @@ public class DataSourceWrapper implements DataSource {
             shutdown = true;
             initialized = false;
 //            dataSource.close();
-//            dataSource.dispose();
+            dataSource.dispose();
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
