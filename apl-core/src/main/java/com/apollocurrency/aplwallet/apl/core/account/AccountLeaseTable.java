@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,9 +17,21 @@ import java.sql.SQLException;
  * @author al
  */
 class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
+    private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
+
+        @Override
+        public DbKey newKey(AccountLease accountLease) {
+            return accountLease.dbKey;
+        }
+
+    };
     
-    public AccountLeaseTable(String table, DbKey.Factory<AccountLease> dbKeyFactory) {
-        super(table, dbKeyFactory);
+    public static DbKey newKey(long id){
+        return accountLeaseDbKeyFactory.newKey(id);
+    } 
+    
+    public AccountLeaseTable() {
+        super("account_lease", accountLeaseDbKeyFactory);
     }
 
     @Override

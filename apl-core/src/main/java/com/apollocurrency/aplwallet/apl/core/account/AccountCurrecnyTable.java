@@ -16,9 +16,21 @@ import java.sql.SQLException;
  * @author al
  */
 class AccountCurrecnyTable extends VersionedEntityDbTable<AccountCurrency> {
+    private static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
+
+        @Override
+        public DbKey newKey(AccountCurrency accountCurrency) {
+            return accountCurrency.dbKey;
+        }
+
+    };  
     
-    public AccountCurrecnyTable(String table, DbKey.Factory<AccountCurrency> dbKeyFactory) {
-        super(table, dbKeyFactory);
+    public static DbKey newKey(long idA, long idB){
+        return accountCurrencyDbKeyFactory.newKey(idA,idB);
+    } 
+    
+    public AccountCurrecnyTable() {
+        super("account_currency", accountCurrencyDbKeyFactory);
     }
 
     @Override

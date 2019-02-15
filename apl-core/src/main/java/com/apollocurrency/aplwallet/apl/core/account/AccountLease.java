@@ -4,10 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -26,20 +22,9 @@ public final class AccountLease {
     int nextLeasingHeightFrom;
     int nextLeasingHeightTo;
     
-
-    
-    static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
-
-        @Override
-        public DbKey newKey(AccountLease accountLease) {
-            return accountLease.dbKey;
-        }
-
-    };
-    
     public AccountLease(long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId) {
         this.lessorId = lessorId;
-        this.dbKey = accountLeaseDbKeyFactory.newKey(this.lessorId);
+        this.dbKey = AccountLeaseTable.newKey(this.lessorId);
         this.currentLeasingHeightFrom = currentLeasingHeightFrom;
         this.currentLeasingHeightTo = currentLeasingHeightTo;
         this.currentLesseeId = currentLesseeId;

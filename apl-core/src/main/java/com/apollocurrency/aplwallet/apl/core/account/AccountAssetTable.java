@@ -20,10 +20,28 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
+    
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     
-    public AccountAssetTable(String table, DbKey.Factory<AccountAsset> dbKeyFactory) {
-        super(table, dbKeyFactory);
+    private static class AccountAssetDbKeyFactory extends DbKey.LinkKeyFactory<AccountAsset> {
+
+        public AccountAssetDbKeyFactory(String idColumnA, String idColumnB) {
+            super(idColumnA, idColumnB);
+        }
+
+        @Override
+        public DbKey newKey(AccountAsset accountAsset) {
+            return accountAsset.dbKey;
+        }
+    } 
+    private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
+
+    public static DbKey newKey(long idA, long idB){
+        return accountAssetDbKeyFactory.newKey(idA,idB);
+    }
+    
+    public AccountAssetTable() {
+        super("account_asset",accountAssetDbKeyFactory);
     }
 
     @Override
@@ -72,5 +90,7 @@ class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     protected String defaultSort() {
         return " ORDER BY quantity DESC, account_id, asset_id ";
     }
+
+
     
 }

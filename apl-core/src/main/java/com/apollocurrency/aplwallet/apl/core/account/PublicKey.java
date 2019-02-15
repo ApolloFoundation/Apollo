@@ -23,7 +23,7 @@ public final class PublicKey {
 
     public PublicKey(long accountId, byte[] publicKey) {
         this.accountId = accountId;
-        this.dbKey = Account.publicKeyDbKeyFactory.newKey(accountId);
+        this.dbKey = PublicKeyTable.newKey(accountId);
         this.publicKey = publicKey;
         this.height = blockchain.getHeight();
     }

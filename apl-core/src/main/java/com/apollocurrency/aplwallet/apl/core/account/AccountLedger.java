@@ -127,7 +127,7 @@ public class AccountLedger {
 
     private static final AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
 
-    /**
+    /*
      * Initialization
 
  We don't do anything but we need to be called from AplCore.init() in order to

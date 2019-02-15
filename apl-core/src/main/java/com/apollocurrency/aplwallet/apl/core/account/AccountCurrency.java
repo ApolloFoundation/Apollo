@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -23,18 +21,10 @@ public final class AccountCurrency {
     long units;
     long unconfirmedUnits;
     
-    static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
-
-        @Override
-        public DbKey newKey(AccountCurrency accountCurrency) {
-            return accountCurrency.dbKey;
-        }
-
-    };
     public AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU) {
         this.accountId = accountId;
         this.currencyId = currencyId;
-        this.dbKey = accountCurrencyDbKeyFactory.newKey(this.accountId, this.currencyId);
+        this.dbKey = AccountCurrecnyTable.newKey(this.accountId, this.currencyId);
         this.units = quantityATU;
         this.unconfirmedUnits = unconfirmedQuantityATU;
     }

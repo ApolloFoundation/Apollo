@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,14 +20,38 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
+
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
+    private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
+
+        public PublicKeyDbFactory(String idColumn) {
+            super(idColumn);
+        }
+
+        @Override
+        public DbKey newKey(PublicKey publicKey) {
+            return publicKey.dbKey;
+        }
+
+        @Override
+        public PublicKey newEntity(DbKey dbKey) {
+            return new PublicKey(((DbKey.LongKey) dbKey).getId(), null);
+        }
+
+    }
+    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
     
-    protected PublicKeyTable(String table, DbKey.Factory<PublicKey> dbKeyFactory) {
-        super(table, dbKeyFactory);
+    public static DbKey newKey(long id){
+        return publicKeyDbKeyFactory.newKey(id);
+    }
+    
+    protected PublicKeyTable() {
+        super("public_key", publicKeyDbKeyFactory);
     }
 
-    protected PublicKeyTable(String table, DbKey.Factory<PublicKey> dbKeyFactory, boolean multiversion) {
-        super(table, dbKeyFactory, multiversion, null);
+    protected PublicKeyTable(String table,  boolean multiversion) {
+        super(table, publicKeyDbKeyFactory, multiversion, null);
     }
 
     @Override
@@ -45,5 +70,5 @@ class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
             pstmt.executeUpdate();
         }
     }
-    
+
 }
