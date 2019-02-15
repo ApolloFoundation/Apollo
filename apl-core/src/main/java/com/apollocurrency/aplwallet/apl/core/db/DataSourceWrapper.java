@@ -25,9 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.HikariPoolMXBean;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 
@@ -36,7 +33,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 /**
@@ -165,9 +161,9 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        dbVersion.init(this);
         initialized = true;
         shutdown = false;
+        dbVersion.init(this);
     }
 
     public void shutdown() {
