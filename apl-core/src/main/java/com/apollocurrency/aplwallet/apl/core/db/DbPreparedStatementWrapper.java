@@ -2,18 +2,18 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 
 public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
     private static final Logger log = getLogger(DbPreparedStatementWrapper.class);
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    @Inject
+    private static Blockchain blockchain; // = CDI.current().select(BlockchainImpl.class).get();
 
     private long stmtThreshold;
 

@@ -63,8 +63,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -73,7 +71,6 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-@SuppressWarnings({"UnusedDeclaration", "SuspiciousNameCombination"})
 /**
  * Used as global access point to all interactions with account and public keys
  * TODO Required massive refactoring
@@ -96,7 +93,7 @@ public final class Account {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
    
-    private static final List<Map.Entry<String, Long>> initialGenesisAccountsBalances =  Genesis.loadGenesisAccounts();
+    private static List<Map.Entry<String, Long>> initialGenesisAccountsBalances;
     static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static DatabaseManager databaseManager;
@@ -159,11 +156,8 @@ public final class Account {
 
     public static void init(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
-    }
-    
-//TODO: move to init or constructor
-    static {
-
+        initialGenesisAccountsBalances =  Genesis.loadGenesisAccounts();
+//from static section
         blockchainProcessor.addListener(block -> {
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
