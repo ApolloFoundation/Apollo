@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.db.BasicDb;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -19,15 +18,17 @@ import java.util.StringTokenizer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.sql.DataSource;
+
 public class DbPopulator {
     private static final Logger LOG = getLogger(DbPopulator.class);
 
-    private BasicDb db;
+    private DataSource basicDataSource;
     private String schemaScriptPath;
     private String dataScriptPath;
 
-    public DbPopulator(BasicDb db, String schemaScriptPath, String dataScriptPath) {
-        this.db = db;
+    public DbPopulator(DataSource db, String schemaScriptPath, String dataScriptPath) {
+        this.basicDataSource = db;
         this.schemaScriptPath = schemaScriptPath;
         this.dataScriptPath = dataScriptPath;
     }
@@ -47,7 +48,7 @@ public class DbPopulator {
         StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
         while (tokenizer.hasMoreElements()) {
             String sqlCommand = tokenizer.nextToken();
-            try (Connection con = db.getConnection();
+            try (Connection con = basicDataSource.getConnection();
                  Statement stm = con.createStatement()) {
                 stm.executeUpdate(sqlCommand);
                 con.commit();

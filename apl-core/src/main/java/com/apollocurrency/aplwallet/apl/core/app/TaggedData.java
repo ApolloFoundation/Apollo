@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPrunableDbTable;
@@ -59,6 +60,14 @@ public class TaggedData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
 
     private static final VersionedPrunableDbTable<TaggedData> taggedDataTable = new VersionedPrunableDbTable<TaggedData>(
             "tagged_data", taggedDataKeyFactory, "name,description,tags") {
@@ -81,7 +90,8 @@ public class TaggedData {
         @Override
         protected void prune() {
             if (blockchainConfig.isEnablePruning()) {
-                try (Connection con = db.getConnection();
+                TransactionalDataSource dataSource = lookupDataSource();
+                try (Connection con = dataSource.getConnection();
                      PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                              + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
                     int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
@@ -217,7 +227,7 @@ public class TaggedData {
         }
 
         private static void add(TaggedData taggedData, int height) {
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count + 1 WHERE tag = ? AND height >= ?")) {
                 for (String tagValue : taggedData.getParsedTags()) {
                     pstmt.setString(1, tagValue);
@@ -235,7 +245,7 @@ public class TaggedData {
         }
 
         private static void delete(Map<String,Integer> expiredTags) {
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count - ? WHERE tag = ?");
                  PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM data_tag WHERE tag_count <= 0")) {
                 for (Map.Entry<String,Integer> entry : expiredTags.entrySet()) {
@@ -572,7 +582,7 @@ public class TaggedData {
     }
 
     static boolean isPruned(long transactionId) {
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = lookupDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {

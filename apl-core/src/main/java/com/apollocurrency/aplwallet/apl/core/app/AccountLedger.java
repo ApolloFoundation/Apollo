@@ -40,6 +40,7 @@ import java.util.TreeSet;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -54,16 +55,16 @@ public class AccountLedger {
 
 
     /** Account ledger is enabled */
-    private static final boolean ledgerEnabled;
+    private static boolean ledgerEnabled;
 
     /** Track all accounts */
-    private static final boolean trackAllAccounts;
+    private static boolean trackAllAccounts;
 
     /** Accounts to track */
     private static final SortedSet<Long> trackAccounts = new TreeSet<>();
 
     /** Unconfirmed logging */
-    private static final int logUnconfirmed;
+    private static int logUnconfirmed;
 
     // TODO: YL remove static instance later
 
@@ -78,6 +79,7 @@ public class AccountLedger {
 
     /** Blockchain processor */
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static DatabaseManager databaseManager;
 
     /** Pending ledger entries */
     private static final List<LedgerEntry> pendingEntries = new ArrayList<>();
@@ -88,9 +90,65 @@ public class AccountLedger {
     }
 
     /**
-     * Process apl.ledgerAccounts
+     * Account ledger table
      */
-    static {
+    private static class AccountLedgerTable extends DerivedDbTable {
+
+        /**
+         * Create the account ledger table
+         */
+        public AccountLedgerTable() {
+            super("account_ledger");
+        }
+
+        /**
+         * Insert an entry into the table
+         *
+         * @param   ledgerEntry             Ledger entry
+         */
+        public void insert(LedgerEntry ledgerEntry) {
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            try (Connection con = dataSource.getConnection()) {
+                ledgerEntry.save(con);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+
+        /**
+         * Trim the account ledger table
+         *
+         * @param   height                  Trim height
+         */
+        @Override
+        public void trim(int height) {
+            if (trimKeep <= 0)
+                return;
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            try (Connection con = dataSource.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
+                pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
+                int trimmed;
+                do {
+                    trimmed = pstmt.executeUpdate();
+                    dataSource.commit(false);
+                } while (trimmed >= propertiesHolder.BATCH_COMMIT_SIZE());
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+    }
+    private static final AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
+
+    /**
+     * Initialization
+
+ We don't do anything but we need to be called from AplCore.init() in order to
+ register our table
+     */
+    static void init(DatabaseManager databaseManagerParam) {
+        databaseManager = databaseManagerParam;
+
         List<String> ledgerAccounts = propertiesHolder.getStringListProperty("apl.ledgerAccounts");
         ledgerEnabled = !ledgerAccounts.isEmpty();
         trackAllAccounts = ledgerAccounts.contains("*");
@@ -112,64 +170,6 @@ public class AccountLedger {
         }
         int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
         logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
-    }
-
-    /**
-     * Account ledger table
-     */
-    private static class AccountLedgerTable extends DerivedDbTable {
-
-        /**
-         * Create the account ledger table
-         */
-        public AccountLedgerTable() {
-            super("account_ledger");
-        }
-
-        /**
-         * Insert an entry into the table
-         *
-         * @param   ledgerEntry             Ledger entry
-         */
-        public void insert(LedgerEntry ledgerEntry) {
-            try (Connection con = db.getConnection()) {
-                ledgerEntry.save(con);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-
-        /**
-         * Trim the account ledger table
-         *
-         * @param   height                  Trim height
-         */
-        @Override
-        public void trim(int height) {
-            if (trimKeep <= 0)
-                return;
-            try (Connection con = db.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
-                pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
-                int trimmed;
-                do {
-                    trimmed = pstmt.executeUpdate();
-                    Db.getDb().commitTransaction();
-                } while (trimmed >= propertiesHolder.BATCH_COMMIT_SIZE());
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-    }
-    private static final AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
-
-    /**
-     * Initialization
-
- We don't do anything but we need to be called from AplCore.init() in order to
- register our table
-     */
-    static void init() {
     }
 
     /**
@@ -251,7 +251,8 @@ public class AccountLedger {
         //
         // Must be in a database transaction
         //
-        if (!Db.getDb().isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         //
@@ -310,8 +311,9 @@ public class AccountLedger {
         if (!allowPrivate) {
             sql += " AND event_id NOT IN (select event_id from account_ledger where event_type = ? ) ";
         }
-        try (Connection con = Db.getDb().getConnection();
-                PreparedStatement stmt = con.prepareStatement(sql)) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setLong(1, ledgerId);
             if (!allowPrivate) {
                 stmt.setInt(2, LedgerEvent.PRIVATE_PAYMENT.code);
@@ -394,8 +396,9 @@ public class AccountLedger {
         //
         // Get the ledger entries
         //
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         blockchain.readLock();
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
             if (accountId != 0) {

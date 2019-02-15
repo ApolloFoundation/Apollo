@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -41,6 +42,8 @@ public final class AssetTransfer {
     public enum Event {
         ASSET_TRANSFER
     }
+
+    private static DatabaseManager databaseManager;
 
     private static final Listeners<AssetTransfer,Event> listeners = new Listeners<>();
 
@@ -97,8 +100,9 @@ public final class AssetTransfer {
 
     public static DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, int from, int to) {
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM asset_transfer WHERE sender_id = ?"
                     + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));
@@ -116,8 +120,9 @@ public final class AssetTransfer {
 
     public static DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, long assetId, int from, int to) {
         Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM asset_transfer WHERE sender_id = ? AND asset_id = ?"
                     + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? AND asset_id = ? ORDER BY height DESC, db_id DESC"
                     + DbUtils.limitsClause(from, to));
@@ -146,7 +151,9 @@ public final class AssetTransfer {
         return assetTransfer;
     }
 
-    static void init() {}
+    static void init(DatabaseManager databaseManagerParam) {
+        databaseManager = databaseManagerParam;
+    }
 
 
     private final long id;

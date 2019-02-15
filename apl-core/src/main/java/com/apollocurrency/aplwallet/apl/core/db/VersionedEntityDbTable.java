@@ -35,8 +35,6 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
@@ -62,12 +60,13 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         if (t == null) {
             return false;
         }
-        if (!db.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         DbKey dbKey = dbKeyFactory.newKey(t);
-        try (Connection con = db.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table
                      + dbKeyFactory.getPKClause() + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
@@ -95,12 +94,12 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         }
         finally {
             if (!keepInCache) {
-                db.getCache(table).remove(dbKey);
+                dataSource.getCache(table).remove(dbKey);
             }
         }
     }
 
-    static void rollback(final TransactionalDb db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void rollback(final TransactionalDataSource db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
@@ -137,7 +136,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 i = dbKey.setPK(pstmtSetLatest, i);
                 i = dbKey.setPK(pstmtSetLatest, i);
                 pstmtSetLatest.executeUpdate();
-                //Db.getCache(table).remove(dbKey);
+                //DatabaseManager.getCache(table).remove(dbKey);
             }
         }
         catch (SQLException e) {
@@ -146,12 +145,12 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
-    static void trim(final TransactionalDb db,  final String table, final int height, final DbKey.Factory dbKeyFactory) {
-        if (!db.isInTransaction()) {
+    static void trim(final TransactionalDataSource dataSource, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         long startTime = System.currentTimeMillis();
-        try (Connection con = db.getConnection();
+        try (Connection con = dataSource.getConnection();
              //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + dbKeyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + dbKeyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1");
@@ -196,11 +195,11 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                         deleted += pstmtDeleteByIds.executeUpdate();
                         deleteStm++;
                         if (deleted % 100 == 0) {
-                            db.commitTransaction();
+                            dataSource.commit(false);
                         }
                     }
                 }
-                db.commitTransaction();
+                dataSource.commit(false);
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
                 // changed algo - select all dbkeys from query and insert to hashset, create index for height and latest and select db_key and
@@ -235,6 +234,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             }
         }
         pstmtSelectDeleteDeletedCandidates.setInt(1, height);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (ResultSet candidatesRs = pstmtSelectDeleteDeletedCandidates.executeQuery()) {
             while (candidatesRs.next()) {
                 DbKey dbKey = dbKeyFactory.newKey(candidatesRs);
@@ -242,12 +242,12 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                     pstmtDeletedById.setLong(1, candidatesRs.getLong(1));
                     pstmtDeletedById.executeUpdate();
                     if (++deleted % 100 == 0) {
-                        db.commitTransaction();
+                        dataSource.commit(false);
                     }
                 }
             }
         }
-        db.commitTransaction();
+        dataSource.commit();
         return deleted;
     }
 
@@ -259,7 +259,8 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         do {
             deleted = pstm.executeUpdate();
             totalDeleted += deleted;
-            db.commitTransaction();
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            dataSource.commit(false);
         } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
         return totalDeleted;
     }

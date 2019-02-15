@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -37,6 +38,7 @@ import java.sql.SQLException;
 public abstract class Order {
 
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager;
 
     private final long id;
     private final long accountId;
@@ -194,6 +196,13 @@ public abstract class Order {
                 + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
     }
 
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
+
     public static final class Ask extends Order {
 
         private static final DbKey.LongKeyFactory<Ask> askOrderDbKeyFactory = new DbKey.LongKeyFactory<Ask>("id") {
@@ -265,7 +274,7 @@ public abstract class Order {
         }
 
         private static Ask getNextOrder(long assetId) {
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM ask_order WHERE asset_id = ? "
                          + "AND latest = TRUE ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);
@@ -386,7 +395,7 @@ public abstract class Order {
         }
 
         private static Bid getNextOrder(long assetId) {
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM bid_order WHERE asset_id = ? "
                          + "AND latest = TRUE ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);

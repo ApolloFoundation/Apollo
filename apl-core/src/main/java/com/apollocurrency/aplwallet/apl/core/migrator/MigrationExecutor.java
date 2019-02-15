@@ -4,8 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -48,12 +51,12 @@ public abstract class MigrationExecutor {
     private static final String MIGRATION_REQUIRED_TEMPLATE = "%sMigrationRequired-%d";
     private static final String DELETE_AFTER_MIGRATION_TEMPLATE = "apl.migrator.%s.deleteAfterMigration";
     private static final int ATTEMPT = 0;
+    private static DatabaseManager databaseManager;
 
     protected PropertiesHolder holder;
     protected BlockchainConfig config;
     private String migrationRequiredPropertyName;
     private String deleteAfterMigrationPropertyName;
-    protected OptionDAO optionDAO;
     private String migrationItemName;
     private boolean autoCleanup;
 
@@ -68,22 +71,23 @@ public abstract class MigrationExecutor {
         this.holder = holder;
         this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
-        this.optionDAO = new OptionDAO(Db.getDb());
         this.migrationItemName = migrationItemName;
+        databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     protected abstract List<Path> getSrcPaths();
 
     public void performMigration(Path toPath) throws IOException {
         if (isMigrationRequired()) {
-            optionDAO.set(migrationRequiredPropertyName, "true");
+            new OptionDAO(databaseManager).set(migrationRequiredPropertyName, "true");
             LOG.info("Migration of the {} required", migrationItemName);
             List<Path> listFromPaths = getSrcPaths();
             LOG.debug("Found {} possible migration candidates", listFromPaths.size());
             beforeMigration();
             this.migratedPaths = getMigrator().migrate(listFromPaths, toPath);
             afterMigration();
-            optionDAO.set(migrationRequiredPropertyName, "false");
+            TransactionalDataSource dataSource = databaseManager.getDataSource(); // retrieve again to refresh
+            new OptionDAO(databaseManager).set(migrationRequiredPropertyName, "false");
             if (migratedPaths != null && !migratedPaths.isEmpty()) {
                 if (autoCleanup) {
                     performAfterMigrationCleanup();
@@ -122,7 +126,7 @@ public abstract class MigrationExecutor {
     }
 
     private boolean parseBooleanProperty(String property, boolean defaultValue) {
-        String propertyString = optionDAO.get(property);
+        String propertyString = new OptionDAO(databaseManager).get(property);
         if (propertyString == null) {
             return defaultValue;
         }

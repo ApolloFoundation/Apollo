@@ -32,7 +32,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * The wrapper forwards all methods to the wrapped statement
  */
 public class FilteredStatement implements Statement {
-        private static final Logger LOG = getLogger(FilteredStatement.class);
+    private static final Logger log = getLogger(FilteredStatement.class);
 
     private final Statement stmt;
 
@@ -305,7 +305,7 @@ public class FilteredStatement implements Statement {
             cancel();
         }
         catch (SQLException e) {
-            LOG.debug("Cannot cancel filtered statement", e);
+            log.debug("Cannot cancel filtered statement", e);
         }
     }
 }

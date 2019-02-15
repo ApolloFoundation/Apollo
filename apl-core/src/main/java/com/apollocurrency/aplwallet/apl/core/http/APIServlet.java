@@ -45,8 +45,8 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -63,6 +63,7 @@ public final class APIServlet extends HttpServlet {
     public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     static {
 
@@ -177,9 +178,10 @@ public final class APIServlet extends HttpServlet {
                 blockchain.readLock();
             }
             try {
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
                 try {
                     if (apiRequestHandler.startDbTransaction()) {
-                        Db.getDb().beginTransaction();
+                        dataSource.begin();
                     }
                     if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
@@ -196,7 +198,7 @@ public final class APIServlet extends HttpServlet {
                     }
                 } finally {
                     if (apiRequestHandler.startDbTransaction()) {
-                        Db.getDb().endTransaction();
+                        dataSource.commit(true);
                     }
                 }
             } finally {

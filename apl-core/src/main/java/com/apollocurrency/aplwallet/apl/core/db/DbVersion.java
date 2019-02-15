@@ -29,20 +29,25 @@ import java.sql.Statement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.sql.DataSource;
+
+/**
+ * Abstract base classs for running database migration process.
+ */
 public abstract class DbVersion {
-    private static final Logger LOG = getLogger(DbVersion.class);
+    private static final Logger log = getLogger(DbVersion.class);
 
     public DbVersion() {
     }
 
-    protected BasicDb db;
+    protected DataSource basicDataSource;
 
-    void init(BasicDb db) {
-        this.db = db;
+    void init(DataSource dataSource) {
+        this.basicDataSource = dataSource;
         Connection con = null;
         Statement stmt = null;
         try {
-            con = db.getConnection();
+            con = dataSource.getConnection();
             stmt = con.createStatement();
             int nextUpdate = 1;
             try {
@@ -55,9 +60,9 @@ public abstract class DbVersion {
                     throw new RuntimeException("Invalid version table");
                 }
                 rs.close();
-                LOG.info("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
+                log.info("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
             } catch (SQLException e) {
-                LOG.info("Initializing an empty database");
+                log.info("Initializing an empty database");
                 stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL)");
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();
@@ -72,7 +77,7 @@ public abstract class DbVersion {
 
     }
 
-    protected DbVersion(BasicDb db) {
+    protected DbVersion(DataSourceWrapper db) {
         init(db);
     }
 
@@ -80,11 +85,11 @@ public abstract class DbVersion {
         Connection con = null;
         Statement stmt = null;
         try {
-            con = db.getConnection();
+            con = basicDataSource.getConnection();
             stmt = con.createStatement();
             try {
                 if (sql != null) {
-                    LOG.debug("Will apply sql:\n" + sql);
+                    log.debug("Will apply sql:\n" + sql);
                     stmt.executeUpdate(sql);
                 }
                 stmt.executeUpdate("UPDATE version SET next_update = next_update + 1");

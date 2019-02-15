@@ -20,13 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.h2.tools.Shell;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -108,6 +109,7 @@ public final class DbShellServlet extends HttpServlet {
     private static final String PASSWORD_FORM = String.format(PASSWORD_FORM_TEMPLATE,
             "<p>This page is password-protected. Please enter the administrator's password</p>");
 
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -180,7 +182,7 @@ public final class DbShellServlet extends HttpServlet {
                 Shell shell = new Shell();
                 shell.setErr(out);
                 shell.setOut(out);
-                shell.runTool(Db.getDb().getConnection(), "-sql", line);
+                shell.runTool(databaseManager.getDataSource().getConnection(), "-sql", line);
             } catch (SQLException e) {
                 out.println(e.toString());
             }

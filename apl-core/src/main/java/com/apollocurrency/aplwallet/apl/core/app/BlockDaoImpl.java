@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.math.BigInteger;
@@ -35,14 +34,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -58,49 +57,29 @@ public class BlockDaoImpl implements BlockDao {
     private final Map<Long, Block> blockCache;
     private final SortedMap<Integer, Block> heightMap;
     private final Map<Long, Transaction> transactionCache;
-    private final ConnectionProvider connectionProvider;
+    private DatabaseManager databaseManager;
     private TransactionDao transactionDao;
 
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
-                        Map<Long, Transaction> transactionCache, ConnectionProvider connectionProvider) {
-        Objects.requireNonNull(connectionProvider, "Connection provider is null");
+                        Map<Long, Transaction> transactionCache) {
         this.blockCacheSize = blockCacheSize;
         this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
         this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
         this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
-        this.connectionProvider = connectionProvider;
     }
 
     @Inject
-    public BlockDaoImpl(ConnectionProvider connectionProvider) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), connectionProvider);
+    public BlockDaoImpl() {
+        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>());
     }
 
-/*
-    public void attachCacheListener() {
-        AplCore.getBlockchainProcessor().addListener((block) -> {
-
-            synchronized (blockCache) {
-                int height = block.getHeight();
-                Iterator<BlockImpl> it = blockCache.values().iterator();
-                while (it.hasNext()) {
-                    Block cacheBlock = it.next();
-                    int cacheHeight = cacheBlock.getHeight();
-                    if (cacheHeight <= height - blockCacheSize || cacheHeight >= height) {
-                        cacheBlock.getTransactions().forEach((tx) -> transactionCache.remove(tx.getId()));
-                        heightMap.remove(cacheHeight);
-                        it.remove();
-                    }
-                }
-                block.getTransactions().forEach((tx) -> transactionCache.put(tx.getId(), (TransactionImpl)tx));
-                heightMap.put(height, (BlockImpl)block);
-                blockCache.put(block.getId(), (BlockImpl)block);
-            }
-        }, BlockchainProcessor.Event.BLOCK_PUSHED);
+    private TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
     }
-*/
-
 
     private void clearBlockCache() {
         synchronized (blockCache) {
@@ -120,7 +99,8 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -150,7 +130,8 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
                      "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
             pstmt.setLong(1, blockId);
@@ -172,7 +153,8 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -206,7 +188,8 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -235,7 +218,8 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public Block findLastBlock() {
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
                      "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             Block block = null;
@@ -253,8 +237,9 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getAllBlocks() {
         Connection con = null;
+        TransactionalDataSource dataSource = lookupDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
             return getBlocks(con, pstmt);
         } catch (SQLException e) {
@@ -272,8 +257,9 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
         Connection con = null;
+        TransactionalDataSource dataSource = lookupDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
                     + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
                     + DbUtils.limitsClause(from, to));
@@ -293,8 +279,9 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
         Connection con = null;
+        TransactionalDataSource dataSource = lookupDataSource();
         try {
-            con = Db.getDb().getConnection();
+            con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
@@ -307,7 +294,8 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public int getBlockCount(long accountId) {
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
             pstmt.setLong(1, accountId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -322,7 +310,8 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit, List<Long> result) {
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block "
                      + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
                      + "ORDER BY db_id ASC LIMIT ?")) {
@@ -342,7 +331,8 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(long blockId, int limit, List<Block> result) {
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
                      + "ORDER BY db_id ASC LIMIT ?")) {
@@ -362,7 +352,8 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result) {
         // Search the database
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
                      + "ORDER BY db_id ASC LIMIT ?")) {
@@ -386,7 +377,8 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public Block findBlockWithVersion(int skipCount, int version) {
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
              "SELECT * FROM block WHERE version = ? ORDER BY block_timestamp DESC LIMIT 1 OFFSET ?)")) {
             int i = 0;
@@ -437,7 +429,8 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public Block findLastBlock(int timestamp) {
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 1")) {
             pstmt.setInt(1, timestamp);
             Block block = null;
@@ -455,8 +448,9 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public Set<Long> getBlockGenerators(int startHeight) {
         Set<Long> generators = new HashSet<>();
-        try (Connection con = connectionProvider.getConnection();
-                PreparedStatement pstmt = con.prepareStatement(
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
                         "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id")) {
             pstmt.setInt(1, startHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -566,7 +560,8 @@ public class BlockDaoImpl implements BlockDao {
     //set next_block_id to null instead of 0 to indicate successful block push
     @Override
     public void commit(Block block) {
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
             pstmt.setLong(1, block.getId());
             pstmt.executeUpdate();
@@ -578,7 +573,8 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public void deleteBlocksFromHeight(int height) {
         long blockId;
-        try (Connection con = connectionProvider.getConnection();
+        TransactionalDataSource dataSource = lookupDataSource();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -597,33 +593,34 @@ public class BlockDaoImpl implements BlockDao {
     // relying on cascade triggers in the database to delete the transactions and public keys for all deleted blocks
     @Override
     public Block deleteBlocksFrom(long blockId) {
-        if (!connectionProvider.isInTransaction(null)) {
-            Block lastBlock;
+        TransactionalDataSource dataSource = lookupDataSource();
+        if (!dataSource.isInTransaction()) {
+            Block lastBlock = null;
             try {
-                Connection connection = connectionProvider.beginTransaction();
+                Connection con = dataSource.getConnection();
                 // TODO: Recursion, check if safe...
                 lastBlock = deleteBlocksFrom(blockId);
-                connectionProvider.commitTransaction(connection);
-            } catch (Exception e) {
-                connectionProvider.rollbackTransaction(null);
-                throw e;
-            } finally {
-                connectionProvider.endTransaction(null);
-            }
+                dataSource.commit();
+            } catch (SQLException e) {
+                dataSource.rollback();
+//                throw e;
+            } /*finally {
+                dataSource.endTransaction(null);
+            }*/
             return lastBlock;
         }
-        try (Connection con = connectionProvider.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT db_id FROM block WHERE timestamp >= "
                      + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?")) {
             try {
                 pstmtSelect.setLong(1, blockId);
                 try (ResultSet rs = pstmtSelect.executeQuery()) {
-                    connectionProvider.commitTransaction(con);
+                    dataSource.commit(false);
                     while (rs.next()) {
         	            pstmtDelete.setLong(1, rs.getLong("db_id"));
             	        pstmtDelete.executeUpdate();
-                        connectionProvider.commitTransaction(con);
+                        dataSource.commit(false);
                     }
 	            }
                 Block lastBlock = findLastBlock();
@@ -632,10 +629,10 @@ public class BlockDaoImpl implements BlockDao {
                     pstmt.setLong(1, lastBlock.getId());
                     pstmt.executeUpdate();
                 }
-                connectionProvider.commitTransaction(con);
+                dataSource.commit();
                 return lastBlock;
             } catch (SQLException e) {
-                connectionProvider.rollbackTransaction(con);
+                dataSource.rollback();
                 throw e;
             }
         } catch (SQLException e) {
@@ -647,21 +644,22 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public void deleteAll() {
-        if (!connectionProvider.isInTransaction(null)) {
+        TransactionalDataSource dataSource = lookupDataSource();
+        if (!dataSource.isInTransaction()) {
             try {
-                Connection connection = connectionProvider.beginTransaction();
+                Connection con = dataSource.getConnection();
                 deleteAll();
-                connectionProvider.commitTransaction(connection);
-            } catch (Exception e) {
-                connectionProvider.rollbackTransaction(null);
-                throw e;
-            } finally {
-                connectionProvider.endTransaction(null);
-            }
+                dataSource.commit();
+            } catch (SQLException e) {
+                dataSource.rollback();
+//                throw e;
+            } /*finally {
+                dataSource.endTransaction(null);
+            }*/
             return;
         }
         LOG.info("Deleting blockchain...");
-        try (Connection con = connectionProvider.getConnection();
+        try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
@@ -674,9 +672,9 @@ public class BlockDaoImpl implements BlockDao {
                     } catch (SQLException ignore) {}
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");
-                connectionProvider.commitTransaction(con);
+                dataSource.commit();
             } catch (SQLException e) {
-                connectionProvider.rollbackTransaction(con);
+                dataSource.rollback();
                 throw e;
             }
         } catch (SQLException e) {

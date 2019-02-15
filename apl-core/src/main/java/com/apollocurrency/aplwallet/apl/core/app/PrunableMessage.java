@@ -24,6 +24,7 @@ import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,6 +42,14 @@ import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
 public final class PrunableMessage {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
 
     private static final DbKey.LongKeyFactory<PrunableMessage> prunableMessageKeyFactory = new DbKey.LongKeyFactory<PrunableMessage>("id") {
 
@@ -85,7 +94,7 @@ public final class PrunableMessage {
     public static DbIterator<PrunableMessage> getPrunableMessages(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM prunable_message WHERE sender_id = ?"
                     + " UNION ALL SELECT * FROM prunable_message WHERE recipient_id = ? AND sender_id <> ? ORDER BY block_timestamp DESC, db_id DESC "
                     + DbUtils.limitsClause(from, to));
@@ -104,7 +113,7 @@ public final class PrunableMessage {
     public static DbIterator<PrunableMessage> getPrunableMessages(long accountId, long otherAccountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? "
                     + "UNION ALL SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? AND sender_id <> recipient_id "
                     + "ORDER BY block_timestamp DESC, db_id DESC "
@@ -322,8 +331,8 @@ public final class PrunableMessage {
         if (!hasPrunablePlainMessage && !hasPrunableEncryptedMessage) {
             return false;
         }
-        try (Connection con = Db.getDb().getConnection();
-                PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
+        try (Connection con = lookupDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT message, encrypted_message FROM prunable_message WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return !rs.next()

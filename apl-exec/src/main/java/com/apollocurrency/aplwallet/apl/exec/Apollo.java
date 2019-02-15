@@ -106,8 +106,12 @@ public class Apollo {
     }
 
     public static void shutdown() {
-        container.shutdown();
         AplCoreRuntime.getInstance().shutdown();
+        try {
+            container.shutdown();
+        } catch (IllegalStateException e) {
+            log.error("Weld is stopped");
+        }
     }
 
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
