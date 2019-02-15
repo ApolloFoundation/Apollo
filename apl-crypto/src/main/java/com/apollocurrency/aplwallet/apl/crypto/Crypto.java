@@ -379,6 +379,8 @@ public final class Crypto {
         FBCryptoParams params = FBCryptoParams.createDefault();
         LOG.debug("Reach2");
         AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+        instanceOfAlice.setCurveParameters();
+
         LOG.debug("Reach3");
         FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
         LOG.debug("Reach4");
