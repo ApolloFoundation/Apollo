@@ -231,9 +231,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                             LOG.error(e.toString(), e);
                             dataSource.rollback();
                             throw e;
-                        }/* finally {
-                            DatabaseManager.getDataSource().endTransaction();
-                        }*/
+                        }
                     } finally {
                         blockchain.writeUnlock();
                     }
@@ -519,9 +517,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 LOG.error(e.toString(), e);
                 dataSource.rollback();
                 throw e;
-            }/* finally {
-                DatabaseManager.getDataSource().endTransaction();
-            }*/
+            }
             unconfirmedDuplicates.clear();
             waitingTransactions.clear();
             broadcastedTransactions.clear();
@@ -546,9 +542,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     LOG.error(e.toString(), e);
                     dataSource.rollback();
                     throw e;
-                }/* finally {
-                    DatabaseManager.getDataSource().endTransaction();
-                }*/
+                }
                 return;
             }
             List<Transaction> removed = new ArrayList<>();
@@ -599,9 +593,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 LOG.error(e.toString(), e);
                 dataSource.rollback();
                 throw e;
-            }/* finally {
-                DatabaseManager.getDataSource().endTransaction();
-            }*/
+            }
             return;
         }
         try (Connection con = dataSource.getConnection();
@@ -632,7 +624,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
-                ((TransactionImpl)transaction).unsetBlock();
+                transaction.unsetBlock();
                 waitingTransactions.add(new UnconfirmedTransaction((TransactionImpl)transaction, Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()))));
             }
         } finally {
@@ -770,9 +762,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             } catch (Exception e) {
                 dataSource.rollback();
                 throw e;
-            }/* finally {
-                DatabaseManager.getDataSource().endTransaction();
-            }*/
+            }
         } finally {
             blockchain.writeUnlock();
         }
@@ -887,9 +877,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 dataSource.rollback();
                 processed.clear();
                 throw e;
-            }/* finally {
-                DatabaseManager.getDataSource().endTransaction();
-            }*/
+            }
         } finally {
             blockchain.readUnlock();
         }

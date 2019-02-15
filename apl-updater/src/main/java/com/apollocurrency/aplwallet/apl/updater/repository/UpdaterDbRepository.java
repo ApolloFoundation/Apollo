@@ -134,11 +134,6 @@ public class UpdaterDbRepository implements UpdaterRepository {
             LOG.error(e.toString(), e);
             throw new RuntimeException(e.toString(), e);
         }
-/*
-        finally {
-            if (!isInTransaction) dataSource.endTransaction(con);
-        }
-*/
     }
 
     @Override

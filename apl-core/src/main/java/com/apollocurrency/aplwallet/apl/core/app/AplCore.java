@@ -144,14 +144,9 @@ public final class AplCore {
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
                                 
-//TODO: check, may be we still need this 
-//                this.blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");
-
-
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
                 CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
@@ -163,7 +158,7 @@ public final class AplCore {
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
-                dataSource = databaseManager.getDataSource(); // retrieve again after migration
+                dataSource = databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
                 //TODO: move to application level this UPnP initialization

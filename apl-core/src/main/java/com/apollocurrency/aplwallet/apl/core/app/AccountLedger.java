@@ -90,35 +90,6 @@ public class AccountLedger {
     }
 
     /**
-     * Process apl.ledgerAccounts
-     */
-/*
-    static {
-        List<String> ledgerAccounts = propertiesHolder.getStringListProperty("apl.ledgerAccounts");
-        ledgerEnabled = !ledgerAccounts.isEmpty();
-        trackAllAccounts = ledgerAccounts.contains("*");
-        if (ledgerEnabled) {
-            if (trackAllAccounts) {
-                LOG.info("Account ledger is tracking all accounts");
-            } else {
-                for (String account : ledgerAccounts) {
-                    try {
-                        trackAccounts.add(Convert.parseAccountId(account));
-                        LOG.info("Account ledger is tracking account " + account);
-                    } catch (RuntimeException e) {
-                        LOG.error("Account " + account + " is not valid; ignored");
-                    }
-                }
-            }
-        } else {
-            LOG.info("Account ledger is not enabled");
-        }
-        int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
-        logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
-    }
-*/
-
-    /**
      * Account ledger table
      */
     private static class AccountLedgerTable extends DerivedDbTable {

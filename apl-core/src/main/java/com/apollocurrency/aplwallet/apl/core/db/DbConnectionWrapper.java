@@ -5,6 +5,9 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Connection wrapper pinned to ThreadLocal with caches
+ */
 public class DbConnectionWrapper extends FilteredConnection {
 
     private ThreadLocal<DbConnectionWrapper> localConnection;
@@ -34,7 +37,7 @@ public class DbConnectionWrapper extends FilteredConnection {
         } else if (this != localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         } else {
-//            commitTransaction();
+            // repeated commit() functionality
             DbConnectionWrapper con = localConnection.get();
             if (con == null) {
                 throw new IllegalStateException("Not in transaction");
@@ -63,7 +66,7 @@ public class DbConnectionWrapper extends FilteredConnection {
         } else if (this != localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         } else {
-//            rollback();
+            // repeated rollback() functionality
             DbConnectionWrapper con = localConnection.get();
             if (con == null) {
                 throw new IllegalStateException("Not in transaction");

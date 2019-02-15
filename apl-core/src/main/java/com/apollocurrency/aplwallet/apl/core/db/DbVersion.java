@@ -31,6 +31,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.sql.DataSource;
 
+/**
+ * Abstract base classs for running database migration process.
+ */
 public abstract class DbVersion {
     private static final Logger log = getLogger(DbVersion.class);
 

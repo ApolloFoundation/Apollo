@@ -1064,9 +1064,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.info(e.toString(), e);
             dataSource.rollback();
             throw e;
-        }/* finally {
-            DatabaseManager.getDataSource().endTransaction();
-        }*/
+        }
     }
 
     private void doTrimDerivedTables() {
@@ -1248,9 +1246,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } catch (SQLException e) {
             dataSource.rollback();
             throw new RuntimeException(e.toString(), e);
-        }/* finally {
-            DatabaseManager.getDataSource().endTransaction();
-        }*/
+        }
         synchronized (prunableTransactions) {
             return prunableTransactions.size();
         }
@@ -1362,9 +1358,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.rollback();
             log.info(e.getMessage());
             throw new RuntimeException(e.toString(), e);
-        }/* finally {
-            DatabaseManager.getDataSource().endTransaction();
-        }*/
+        }
     }
 
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
@@ -1410,9 +1404,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 popOffTo(previousLastBlock);
                 blockchain.setLastBlock(previousLastBlock);
                 throw e;
-            }/* finally {
-                DatabaseManager.getDataSource().endTransaction();
-            }*/
+            }
             blockListeners.notify(block, Event.AFTER_BLOCK_ACCEPT);
         } finally {
             lookupBlockhain().writeUnlock();
@@ -1624,9 +1616,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } catch (Exception e){
                     dataSource.rollback();
                     log.error("popOff error", e);
-                }/* finally {
-                    DatabaseManager.getDataSource().endTransaction();
-                }*/
+                }
             }
             if (commonBlock.getHeight() < getMinRollbackHeight()) {
                 log.info("Rollback to height " + commonBlock.getHeight() + " not supported, will do a full rescan");
@@ -1907,7 +1897,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     dataSource.rollback(false);
                     throw e;
                 } finally {
-//                    Db.getDb().endTransaction();
                     blockListeners.removeListener(checksumListener, Event.BLOCK_SCANNED);
                 }
                 return;

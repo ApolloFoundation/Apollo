@@ -17,12 +17,6 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
 
     private long stmtThreshold;
 
-/*
-    public DbPreparedStatementWrapper(PreparedStatement stmt, String sql) {
-        super(stmt, sql);
-    }
-*/
-
     public DbPreparedStatementWrapper(PreparedStatement stmt, String sql, long stmtThreshold) {
         super(stmt, sql);
         this.stmtThreshold = stmtThreshold;

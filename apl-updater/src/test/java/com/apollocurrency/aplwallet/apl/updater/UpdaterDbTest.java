@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.junit.Assert;
 import org.junit.Test;
@@ -128,7 +127,6 @@ public class UpdaterDbTest {
                     try {
                         connection = dataSource.getConnection();
                         connection.setAutoCommit(false);
-//                        return connection;
                     }
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
@@ -157,21 +155,6 @@ public class UpdaterDbTest {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
-//            @Override
-            private void endTransaction (Connection connection){
-                try {
-                    if (connection != null) {
-                        connection.close();
-                    }
-                }
-                catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }
-//            @Override
-            public boolean isInTransaction(Connection connection) {
-                return false;
-            }
         };}
 
 
