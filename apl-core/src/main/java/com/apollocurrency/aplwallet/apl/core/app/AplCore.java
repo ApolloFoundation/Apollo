@@ -108,13 +108,16 @@ public final class AplCore {
         ThreadPool.shutdown();
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
+            LOG.info("blockchainProcessor Shutdown...");
         }
         Peers.shutdown();
         if (fullTextSearchService != null) {
             fullTextSearchService.shutdown();
+            LOG.info("blockchainProcessor Shutdown...");
         }
         if (databaseManager != null) {
             databaseManager.shutdown();
+            LOG.info("blockchainProcessor Shutdown...");
         }
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         AplCore.shutdown = true;
