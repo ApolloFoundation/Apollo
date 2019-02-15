@@ -123,7 +123,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             ftl.init();
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         } catch (IOException e) {
-            throw new RuntimeException("Unable to init fulltext engine");
+            throw new RuntimeException("Unable to init fulltext engine", e);
         }
         String triggerClassName = FullTextTrigger.class.getName();
         try (Connection conn = databaseManager.getDataSource().getConnection();

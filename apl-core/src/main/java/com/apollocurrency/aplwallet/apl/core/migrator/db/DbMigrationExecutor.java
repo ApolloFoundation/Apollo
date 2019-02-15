@@ -45,6 +45,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
     @Override
     protected void afterMigration() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        fullTextSearchProvider.init();
         try (Connection connection = dataSource.getConnection()) {
             fullTextSearchProvider.reindexAll(connection);
         } catch (SQLException e) {
@@ -54,6 +55,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
 
     @Override
     protected void beforeMigration() {
+        fullTextSearchProvider.shutdown();
         databaseManager.shutdown();
     }
 

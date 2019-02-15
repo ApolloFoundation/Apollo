@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
@@ -32,7 +33,15 @@ class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
 
     @Override
     protected void save(Connection con, AccountAsset accountAsset) throws SQLException {
-        save(accountAsset);
+         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+            int i = 0;
+            pstmt.setLong(++i, accountAsset.accountId);
+            pstmt.setLong(++i, accountAsset.assetId);
+            pstmt.setLong(++i, accountAsset.quantityATU);
+            pstmt.setLong(++i, accountAsset.unconfirmedQuantityATU);
+            pstmt.setInt(++i, Account.blockchain.getHeight());
+            pstmt.executeUpdate();
+        }       
     }
     
     public void save(AccountAsset accountAsset) {

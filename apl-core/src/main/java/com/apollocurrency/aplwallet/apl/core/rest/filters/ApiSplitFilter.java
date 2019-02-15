@@ -56,16 +56,17 @@ public class ApiSplitFilter implements Filter{
 
         String rqType = request.getParameter("requestType");
            logger.trace("========= RequestType IS EMPTY!==========");
+           if(!isCoreReady){
+               // Core is not signaled that is its ready to serve requests
+               resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
+               return;
+           }
 
         String forwardUri = NewApiRegistry.getRestPath(rqType);
         if(forwardUri != null && !forwardUri.isEmpty()){
            logger.trace("Request "+rqType+" forwarded to: "+forwardUri);
-           if(isCoreReady){
             rq.getRequestDispatcher(forwardUri).forward(request, response);
-           }else{ // Core is not signaled that is its ready to serve requests
-               resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
-           }
-           return;
+            return;
         }
 
         chain.doFilter(request, resp);

@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;

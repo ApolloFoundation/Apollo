@@ -16,7 +16,7 @@ import java.sql.SQLException;
 public final class AccountAsset {
     
     final long accountId;
-    private final long assetId;
+    final long assetId;
     final DbKey dbKey;
     long quantityATU;
     long unconfirmedQuantityATU;
@@ -44,18 +44,6 @@ public final class AccountAsset {
         this.dbKey = dbKey;
         this.quantityATU = rs.getLong("quantity");
         this.unconfirmedQuantityATU = rs.getLong("unconfirmed_quantity");
-    }
-
-    public void save(Connection con) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
-            int i = 0;
-            pstmt.setLong(++i, this.accountId);
-            pstmt.setLong(++i, this.assetId);
-            pstmt.setLong(++i, this.quantityATU);
-            pstmt.setLong(++i, this.unconfirmedQuantityATU);
-            pstmt.setInt(++i, Account.blockchain.getHeight());
-            pstmt.executeUpdate();
-        }
     }
 
     public long getAccountId() {
