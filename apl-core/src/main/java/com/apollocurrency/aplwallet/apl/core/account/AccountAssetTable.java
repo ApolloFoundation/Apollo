@@ -22,8 +22,6 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
-    private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
-    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     
     private static class AccountAssetDbKeyFactory extends DbKey.LinkKeyFactory<AccountAsset> {
 
@@ -37,7 +35,9 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         }
     } 
     private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
-
+    private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    
     public static DbKey newKey(long idA, long idB){
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }

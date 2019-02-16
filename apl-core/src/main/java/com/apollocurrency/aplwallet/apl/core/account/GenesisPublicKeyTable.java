@@ -19,9 +19,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
-    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");    
-    private static final PublicKeyTable publicKeyTable = new PublicKeyTable();
+    public class GenesisPublicKeyTable  extends VersionedPersistentDbTable<PublicKey> {
     
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
@@ -42,9 +40,10 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
         }
 
     }
-
+    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
+    private static final GenesisPublicKeyTable publicKeyTable = new GenesisPublicKeyTable();
     
-    public static PublicKeyTable getInstance(){
+    public static  GenesisPublicKeyTable getInstance(){
         return publicKeyTable;
     }
     
@@ -52,8 +51,8 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
         return publicKeyDbKeyFactory.newKey(id);
     }
     
-    protected PublicKeyTable() {
-        super("public_key", publicKeyDbKeyFactory, false, null);
+    protected GenesisPublicKeyTable() {
+        super("genesis_public_key", publicKeyDbKeyFactory, false, null);
     }
 
     @Override
@@ -72,5 +71,5 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
             pstmt.executeUpdate();
         }
     }
-
+    
 }

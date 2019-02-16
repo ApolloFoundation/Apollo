@@ -85,8 +85,6 @@ public final class Account {
     private static BlockchainProcessor blockchainProcessor;
     private static DatabaseManager databaseManager;
 
-    private static final PublicKeyTable genesisPublicKeyTable = new PublicKeyTable("genesis_public_key", false);
-
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
            
     
@@ -235,7 +233,7 @@ public final class Account {
     }
 
     public static int getCount() {
-        return PublicKeyTable.getInstance().getCount() + genesisPublicKeyTable.getCount();
+        return PublicKeyTable.getInstance().getCount() + GenesisPublicKeyTable.getInstance().getCount();
     }
 
     public static int getActiveLeaseCount() {
@@ -358,8 +356,8 @@ public final class Account {
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null) {
                 if (isGenesis) {
-                    publicKey = genesisPublicKeyTable.newEntity(dbKey);
-                    genesisPublicKeyTable.insert(publicKey);
+                    publicKey = GenesisPublicKeyTable.getInstance().newEntity(dbKey);
+                    GenesisPublicKeyTable.getInstance().insert(publicKey);
                 } else {
                     publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
                     PublicKeyTable.getInstance().insert(publicKey);
@@ -373,7 +371,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey) {
         PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey);
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey);
+            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey);
         }
         return publicKey;
     }
@@ -381,7 +379,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
         PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey, cache);
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, cache);
+            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, cache);
         }
         return publicKey;
     }
@@ -389,7 +387,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey, int height) {
         PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey, height);
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, height);
+            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, height);
         }
         return publicKey;
     }
@@ -777,7 +775,7 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
-                genesisPublicKeyTable.insert(publicKey);
+                GenesisPublicKeyTable.getInstance().insert(publicKey);
             } else {
                PublicKeyTable.getInstance().insert(publicKey);
             }

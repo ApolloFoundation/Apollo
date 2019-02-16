@@ -40,8 +40,6 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
         BEFORE_BLOCK_APPLY, AFTER_BLOCK_APPLY
     }
 
-    List<DerivedDbTable> getDerivedTables();
-
     Peer getLastBlockchainFeeder();
 
     int getLastBlockchainFeederHeight();
@@ -76,8 +74,6 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
     List<Block> popOffTo(int height);
 
     List<Block> popOffTo(Block commonBlock);
-
-    void registerDerivedTable(DerivedDbTable table);
 
     void trimDerivedTables();
 

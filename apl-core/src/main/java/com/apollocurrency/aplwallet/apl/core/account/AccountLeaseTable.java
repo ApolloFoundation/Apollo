@@ -19,7 +19,6 @@ import java.sql.SQLException;
  * @author al
  */
 public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
-    private static final AccountLeaseTable accountLeaseTable = new AccountLeaseTable();
     private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
         @Override
@@ -28,7 +27,8 @@ public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
         }
 
     };
-    
+    private static final AccountLeaseTable accountLeaseTable = new AccountLeaseTable();
+  
     public static DbKey newKey(long id){
         return accountLeaseDbKeyFactory.newKey(id);
     } 

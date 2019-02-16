@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
@@ -35,15 +33,15 @@ import javax.enterprise.inject.spi.CDI;
 public abstract class DerivedDbTable {
 
     protected final String table;
-    private static BlockchainProcessor blockchainProcessor;
+    private static DerivedDbTablesRegistry dbTables;
     protected static DatabaseManager databaseManager;
 
     // We should find better place for table init
     protected DerivedDbTable(String table) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        blockchainProcessor.registerDerivedTable(this);
+        if (dbTables == null) dbTables = CDI.current().select(DerivedDbTablesRegistry.class).get();
+        dbTables.registerDerivedTable(this);
         FullTextConfig.getInstance().registerTable(table);
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
@@ -94,8 +92,4 @@ public abstract class DerivedDbTable {
         return table;
     }
 
-    protected void trimTables() {
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        blockchainProcessor.trimDerivedTables();
-    }
 }

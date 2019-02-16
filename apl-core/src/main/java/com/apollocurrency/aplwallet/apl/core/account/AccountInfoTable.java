@@ -19,7 +19,7 @@ import java.sql.SQLException;
  * @author al
  */
 public class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
-    private  static final AccountInfoTable accountInfoTable = new AccountInfoTable(); 
+
     private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
 
         @Override
@@ -28,7 +28,8 @@ public class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
         }
 
     };
-    
+       
+    private  static final AccountInfoTable accountInfoTable = new AccountInfoTable();  
     public static DbKey newKey(long id){
         return accountInfoDbKeyFactory.newKey(id);
     }

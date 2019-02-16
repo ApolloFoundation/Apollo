@@ -22,7 +22,6 @@ import java.util.EnumSet;
  * @author al
  */
 public class AccountTable extends VersionedEntityDbTable<Account> {
-    private static final AccountTable accountTable = new AccountTable();
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
         @Override
@@ -36,6 +35,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
         }
 
     };
+    private static final AccountTable accountTable = new AccountTable();
     
     public static AccountTable getInstance(){
         return accountTable;

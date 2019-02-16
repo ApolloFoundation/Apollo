@@ -195,8 +195,8 @@ public final class AplCore {
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 transactionProcessor.init();
-                GenesisAccounts.init();
                 Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain);
+                GenesisAccounts.init();
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");
                 AccountLedger.init(databaseManager);
