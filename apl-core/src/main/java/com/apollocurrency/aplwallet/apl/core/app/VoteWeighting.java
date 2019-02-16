@@ -23,6 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
 public final class VoteWeighting {
@@ -66,7 +68,7 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atuBalance = Account.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                long atuBalance = AccountAssetTable.getInstance().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
                 return atuBalance >= voteWeighting.minBalance ? atuBalance : 0;
             }
             @Override
@@ -77,7 +79,7 @@ public final class VoteWeighting {
         CURRENCY(3) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long units = Account.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                long units = AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
                 return units >= voteWeighting.minBalance ? units : 0;
             }
             @Override
@@ -154,13 +156,13 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                return AccountAssetTable.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
             }
         },
         CURRENCY(3) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                return AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
             }
         };
 

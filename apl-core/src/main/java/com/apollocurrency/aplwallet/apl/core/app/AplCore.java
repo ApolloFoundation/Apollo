@@ -42,6 +42,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
@@ -79,12 +80,12 @@ public final class AplCore {
     private static volatile boolean shutdown = false;
 
     private static volatile Time time = CDI.current().select(EpochTime.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
-
+    private static BlockchainConfig blockchainConfig;
 
     public AplCore() {
     }
@@ -191,10 +192,11 @@ public final class AplCore {
                 }
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 transactionProcessor.init();
-
-                Account.init(databaseManager);
+                GenesisAccounts.init();
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain);
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");
                 AccountLedger.init(databaseManager);

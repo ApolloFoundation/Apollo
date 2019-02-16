@@ -20,7 +20,8 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
-
+    private static final PublicKeyTable publicKeyTable = new PublicKeyTable();
+    
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
@@ -41,6 +42,10 @@ class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
 
     }
     private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
+    
+    public static PublicKeyTable getInstance(){
+        return publicKeyTable;
+    }
     
     public static DbKey newKey(long id){
         return publicKeyDbKeyFactory.newKey(id);

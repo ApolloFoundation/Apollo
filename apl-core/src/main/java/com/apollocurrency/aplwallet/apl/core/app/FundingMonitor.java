@@ -23,8 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
@@ -285,7 +288,7 @@ public final class FundingMonitor {
             // Locate monitored accounts based on the account property and the setter identifier
             //
             List<MonitoredAccount> accountList = new ArrayList<>();
-            try (DbIterator<AccountProperty> it = Account.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
+            try (DbIterator<AccountProperty> it = AccountPropertyTable.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
                 while (it.hasNext()) {
                     AccountProperty accountProperty = it.next();
                     MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
@@ -686,8 +689,8 @@ public final class FundingMonitor {
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
-        AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
+        AccountAsset targetAsset = AccountAssetTable.getAccountAsset(targetAccount.getId(), monitor.holdingId);
+        AccountAsset fundingAsset = AccountAssetTable.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
@@ -723,8 +726,8 @@ public final class FundingMonitor {
     private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
-        AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
+        AccountCurrency targetCurrency = AccountCurrencyTable.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
+        AccountCurrency fundingCurrency = AccountCurrencyTable.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",

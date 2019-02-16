@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -207,11 +207,11 @@ public final class Asset {
     }
 
     public DbIterator<AccountAsset> getAccounts(int from, int to) {
-        return Account.getAssetAccounts(this.assetId, from, to);
+        return AccountAssetTable.getAssetAccounts(this.assetId, from, to);
     }
 
     public DbIterator<AccountAsset> getAccounts(int height, int from, int to) {
-        return Account.getAssetAccounts(this.assetId, height, from, to);
+        return AccountAssetTable.getAssetAccounts(this.assetId, height, from, to);
     }
 
     public DbIterator<Trade> getTrades(int from, int to) {

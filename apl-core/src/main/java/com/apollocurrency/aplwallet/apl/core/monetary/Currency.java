@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -464,11 +465,11 @@ public final class Currency {
     }
 
     public DbIterator<AccountCurrency> getAccounts(int from, int to) {
-        return Account.getCurrencyAccounts(this.currencyId, from, to);
+        return AccountCurrencyTable.getCurrencyAccounts(this.currencyId, from, to);
     }
 
     public DbIterator<AccountCurrency> getAccounts(int height, int from, int to) {
-        return Account.getCurrencyAccounts(this.currencyId, height, from, to);
+        return AccountCurrencyTable.getCurrencyAccounts(this.currencyId, height, from, to);
     }
 
     public DbIterator<Exchange> getExchanges(int from, int to) {
@@ -493,7 +494,7 @@ public final class Currency {
         if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
             return false;
         }
-        try (DbIterator<AccountCurrency> accountCurrencies = Account.getCurrencyAccounts(this.currencyId, 0, -1)) {
+        try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getCurrencyAccounts(this.currencyId, 0, -1)) {
             return ! accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && ! accountCurrencies.hasNext();
         }
     }

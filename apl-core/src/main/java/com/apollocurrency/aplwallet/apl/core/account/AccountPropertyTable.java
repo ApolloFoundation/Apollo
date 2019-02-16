@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -16,9 +18,11 @@ import java.sql.SQLException;
  *
  * @author al
  */
-class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty> {
-     
-    static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
+public class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty> {
+    
+    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable(); 
+    
+    private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
 
         @Override
         public DbKey newKey(AccountProperty accountProperty) {
@@ -27,11 +31,15 @@ class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty> {
 
     };
     
+    public static AccountPropertyTable getInstance(){
+        return accountPropertyTable;
+    }
+    
     public static DbKey newKey(long id){
         return accountPropertyDbKeyFactory.newKey(id);
     }
     
-    public AccountPropertyTable() {
+    private AccountPropertyTable() {
         super("account_property", accountPropertyDbKeyFactory);
     }
 
@@ -53,5 +61,51 @@ class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty> {
             pstmt.executeUpdate();
         }
     }
+    
+    public static AccountProperty getProperty(long propertyId) {
+        return accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
+    }
+
+    public static DbIterator<AccountProperty> getProperties(long recipientId, long setterId, String property, int from, int to) {
+        if (recipientId == 0 && setterId == 0) {
+            throw new IllegalArgumentException("At least one of recipientId and setterId must be specified");
+        }
+        DbClause dbClause = null;
+        if (setterId == recipientId) {
+            dbClause = new DbClause.NullClause("setter_id");
+        } else if (setterId != 0) {
+            dbClause = new DbClause.LongClause("setter_id", setterId);
+        }
+        if (recipientId != 0) {
+            if (dbClause != null) {
+                dbClause = dbClause.and(new DbClause.LongClause("recipient_id", recipientId));
+            } else {
+                dbClause = new DbClause.LongClause("recipient_id", recipientId);
+            }
+        }
+        if (property != null) {
+            dbClause = dbClause.and(new DbClause.StringClause("property", property));
+        }
+        return accountPropertyTable.getManyBy(dbClause, from, to, " ORDER BY property ");
+    }
+
+    public static AccountProperty getProperty(long recipientId, String property) {
+        return getProperty(recipientId, property, recipientId);
+    }
+
+    public static AccountProperty getProperty(long recipientId, String property, long setterId) {
+        if (recipientId == 0 || setterId == 0) {
+            throw new IllegalArgumentException("Both recipientId and setterId must be specified");
+        }
+        DbClause dbClause = new DbClause.LongClause("recipient_id", recipientId);
+        dbClause = dbClause.and(new DbClause.StringClause("property", property));
+        if (setterId != recipientId) {
+            dbClause = dbClause.and(new DbClause.LongClause("setter_id", setterId));
+        } else {
+            dbClause = dbClause.and(new DbClause.NullClause("setter_id"));
+        }
+        return accountPropertyTable.getBy(dbClause);
+    }
+
     
 }

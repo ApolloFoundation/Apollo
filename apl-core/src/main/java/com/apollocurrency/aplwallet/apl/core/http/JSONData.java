@@ -22,12 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
@@ -51,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
@@ -65,12 +67,10 @@ import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
@@ -185,7 +185,7 @@ public final class JSONData {
         if (includeCounts) {
             json.put("numberOfTrades", Trade.getTradeCount(asset.getId()));
             json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
-            json.put("numberOfAccounts", Account.getAssetAccountCount(asset.getId()));
+            json.put("numberOfAccounts", AccountAssetTable.getAssetAccountCount(asset.getId()));
         }
         return json;
     }
@@ -375,7 +375,7 @@ public final class JSONData {
 
     public static JSONObject genesisBalancesJson(int firstIndex, int lastIndex) {
         JSONObject result = new JSONObject();
-        List<Map.Entry<String, Long>> genesisBalances = Account.getGenesisBalances(firstIndex, lastIndex);
+        List<Map.Entry<String, Long>> genesisBalances = GenesisAccounts.getGenesisBalances(firstIndex, lastIndex);
         JSONArray accountArray = new JSONArray();
         for (int i = 0; i < genesisBalances.size(); i++) {
             Map.Entry<String, Long> accountBalanceEntry = genesisBalances.get(i);
@@ -385,7 +385,7 @@ public final class JSONData {
             accountArray.add(accountBalanceJson);
         }
         result.put("accounts", accountArray);
-        result.put("total", Account.getGenesisBalancesNumber());
+        result.put("total", GenesisAccounts.getGenesisBalancesNumber());
         return result;
     }
 
@@ -395,10 +395,10 @@ public final class JSONData {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
-            long totalSupply = Account.getTotalSupply(con);
-            long totalAccounts = Account.getTotalNumberOfAccounts(con);
-            long totalAmountOnTopAccounts = Account.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            try(DbIterator<Account> topHolders = Account.getTopHolders(con, numberOfAccounts)) {
+            long totalSupply = AccountTable.getTotalSupply(con);
+            long totalAccounts = AccountTable.getTotalNumberOfAccounts(con);
+            long totalAmountOnTopAccounts = AccountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
+            try(DbIterator<Account> topHolders = AccountTable.getTopHolders(con, numberOfAccounts)) {
                 return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
             }
         }

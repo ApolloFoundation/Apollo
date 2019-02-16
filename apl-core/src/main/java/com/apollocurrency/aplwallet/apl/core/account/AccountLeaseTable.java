@@ -3,9 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +18,8 @@ import java.sql.SQLException;
  *
  * @author al
  */
-class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
+public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
+    private static final AccountLeaseTable accountLeaseTable = new AccountLeaseTable();
     private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
         @Override
@@ -29,7 +32,9 @@ class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
     public static DbKey newKey(long id){
         return accountLeaseDbKeyFactory.newKey(id);
     } 
-    
+    public static AccountLeaseTable getInstance(){
+        return accountLeaseTable;
+    }
     public AccountLeaseTable() {
         super("account_lease", accountLeaseDbKeyFactory);
     }
@@ -54,5 +59,28 @@ class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
             pstmt.executeUpdate();
         }
     }
-    
+   
+
+    public static int getAccountLeaseCount() {
+        return accountLeaseTable.getCount();
+    }
+    static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
+        Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            con = dataSource.getConnection();
+            PreparedStatement pstmt = con.prepareStatement(
+                    "SELECT * FROM account_lease WHERE current_leasing_height_from = ? AND latest = TRUE "
+                            + "UNION ALL SELECT * FROM account_lease WHERE current_leasing_height_to = ? AND latest = TRUE "
+                            + "ORDER BY current_lessee_id, lessor_id");
+            int i = 0;
+            pstmt.setInt(++i, height);
+            pstmt.setInt(++i, height);
+            return accountLeaseTable.getManyBy(con, pstmt, true);
+        }
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }    
 }

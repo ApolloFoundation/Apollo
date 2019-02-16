@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -19,8 +21,8 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
-    
+public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
+    private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     
     private static class AccountAssetDbKeyFactory extends DbKey.LinkKeyFactory<AccountAsset> {
@@ -40,7 +42,10 @@ class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }
     
-    public AccountAssetTable() {
+    public static AccountAssetTable getInstance(){
+        return accountAssetTable;
+    }
+    private AccountAssetTable() {
         super("account_asset",accountAssetDbKeyFactory);
     }
 
@@ -65,9 +70,9 @@ class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     public void save(AccountAsset accountAsset) {
         Account.checkBalance(accountAsset.accountId, accountAsset.quantityATU, accountAsset.unconfirmedQuantityATU);
         if (accountAsset.quantityATU > 0 || accountAsset.unconfirmedQuantityATU > 0) {
-            Account.accountAssetTable.insert(accountAsset);
+            accountAssetTable.insert(accountAsset);
         } else {
-            Account.accountAssetTable.delete(accountAsset);
+            accountAssetTable.delete(accountAsset);
         }
     }
     
@@ -91,6 +96,60 @@ class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         return " ORDER BY quantity DESC, account_id, asset_id ";
     }
 
+    public static int getAssetAccountCount(long assetId) {
+        return accountAssetTable.getCount(new DbClause.LongClause("asset_id", assetId));
+    }
 
-    
+    public static int getAssetAccountCount(long assetId, int height) {
+        return accountAssetTable.getCount(new DbClause.LongClause("asset_id", assetId), height);
+    }
+
+    public static int getAccountAssetCount(long accountId) {
+        return accountAssetTable.getCount(new DbClause.LongClause("account_id", accountId));
+    }
+
+    public static int getAccountAssetCount(long accountId, int height) {
+        return accountAssetTable.getCount(new DbClause.LongClause("account_id", accountId), height);
+    }
+
+    public static DbIterator<AccountAsset> getAccountAssets(long accountId, int from, int to) {
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
+    }
+
+    public static DbIterator<AccountAsset> getAccountAssets(long accountId, int height, int from, int to) {
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", accountId), height, from, to);
+    }
+
+    public static AccountAsset getAccountAsset(long accountId, long assetId) {
+        return accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
+    }
+
+    public static AccountAsset getAccountAsset(long accountId, long assetId, int height) {
+        return accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
+    }
+
+    public static DbIterator<AccountAsset> getAssetAccounts(long assetId, int from, int to) {
+        return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to, " ORDER BY quantity DESC, account_id ");
+    }
+
+  
+    public static long getAssetBalanceATU(long accountId, long assetId, int height) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
+        return accountAsset == null ? 0 : accountAsset.quantityATU;
+    }
+
+    public static long getAssetBalanceATU(long accountId, long assetId) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
+        return accountAsset == null ? 0 : accountAsset.quantityATU;
+    }
+
+    public static long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
+        return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
+    }
+
+    public static DbIterator<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
+        return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id ");
+    }
+  
 }

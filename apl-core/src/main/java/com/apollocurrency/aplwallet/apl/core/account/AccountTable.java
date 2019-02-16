@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -11,14 +13,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
+import java.util.EnumSet;
 
 /**
  *
  * @author al
  */
-class AccountTable extends VersionedEntityDbTable<Account> {
- 
-    static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
+public class AccountTable extends VersionedEntityDbTable<Account> {
+    private static final AccountTable accountTable = new AccountTable();
+    private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
         @Override
         public DbKey newKey(Account account) {
@@ -32,13 +37,37 @@ class AccountTable extends VersionedEntityDbTable<Account> {
 
     };
     
+    public static AccountTable getInstance(){
+        return accountTable;
+    }
+    
+    public static DbKey newKey(long id){
+        return accountDbKeyFactory.newKey(id);
+    }
+    
+    public static DbKey newKey(Account a){
+        return accountDbKeyFactory.newKey(a);
+    }
+    
     public AccountTable() {
         super("account", accountDbKeyFactory);
     }
 
     @Override
     protected Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new Account(rs, dbKey);
+        long id = rs.getLong("id");
+        Account res = new Account(id);
+        res.dbKey = dbKey;
+        res.balanceATM = rs.getLong("balance");
+        res.unconfirmedBalanceATM = rs.getLong("unconfirmed_balance");
+        res.forgedBalanceATM = rs.getLong("forged_balance");
+        res.activeLesseeId = rs.getLong("active_lessee_id");
+        if (rs.getBoolean("has_control_phasing")) {
+            res.controls = Collections.unmodifiableSet(EnumSet.of(Account.ControlType.PHASING_ONLY));
+        } else {
+            res.controls = Collections.emptySet();
+        }
+        return res;
     }
 
     @Override
@@ -74,5 +103,58 @@ class AccountTable extends VersionedEntityDbTable<Account> {
             throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Account.blockchain.getHeight());
         }
     }
-    
+ 
+    public static long getTotalSupply(Connection con) throws SQLException {
+        try (
+                PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
+        ) {
+            int i = 0;
+            pstmt.setLong(++i, Genesis.CREATOR_ID);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("total_supply");
+                } else {
+                    throw new RuntimeException("Cannot retrieve total_amount: no data");
+                }
+            }
+        }
+    }
+     public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
+            int i = 0;
+            DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
+            return AccountTable.getInstance().getManyBy(con, pstmt, false);
+    }
+     
+    public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
+        try (
+                PreparedStatement pstmt =
+                        con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
+                                " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
+            int i = 0;
+            DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("total_amount");
+                } else {
+                    throw new RuntimeException("Cannot retrieve total_amount: no data");
+                }
+            }
+        }
+    }  
+
+    public static long getTotalNumberOfAccounts(Connection con) throws SQLException {
+        try (
+                Statement stmt =con.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
+        ) {
+            if (rs.next()) {
+                return rs.getLong("number_of_accounts");
+            } else {
+                throw new RuntimeException("Cannot retrieve number of accounts: no data");
+            }
+        }
+    }
+   
 }

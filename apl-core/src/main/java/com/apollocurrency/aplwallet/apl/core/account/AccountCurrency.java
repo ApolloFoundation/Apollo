@@ -24,7 +24,7 @@ public final class AccountCurrency {
     public AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU) {
         this.accountId = accountId;
         this.currencyId = currencyId;
-        this.dbKey = AccountCurrecnyTable.newKey(this.accountId, this.currencyId);
+        this.dbKey = AccountCurrencyTable.newKey(this.accountId, this.currencyId);
         this.units = quantityATU;
         this.unconfirmedUnits = unconfirmedQuantityATU;
     }
@@ -56,9 +56,9 @@ public final class AccountCurrency {
     void save() {
         Account.checkBalance(this.accountId, this.units, this.unconfirmedUnits);
         if (this.units > 0 || this.unconfirmedUnits > 0) {
-            Account.accountCurrencyTable.insert(this);
+            AccountCurrencyTable.getInstance().insert(this);
         } else if (this.units == 0 && this.unconfirmedUnits == 0) {
-            Account.accountCurrencyTable.delete(this);
+            AccountCurrencyTable.getInstance().delete(this);
         }
     }
 

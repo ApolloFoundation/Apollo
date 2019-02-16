@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

@@ -50,13 +50,13 @@ public final class AccountInfo {
 
     void save() {
         if (this.name != null || this.description != null) {
-            Account.accountInfoTable.insert(this);
+            AccountInfoTable.getInstance().insert(this);
         } else {
-            Account.accountInfoTable.delete(this);
+            AccountInfoTable.getInstance().delete(this);
         }
     }
   
     public static DbIterator<AccountInfo> searchAccounts(String query, int from, int to) {
-        return Account.accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
+        return AccountInfoTable.getInstance().search(query, DbClause.EMPTY_CLAUSE, from, to);
     } 
 }

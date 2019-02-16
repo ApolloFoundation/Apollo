@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -16,9 +18,9 @@ import java.sql.SQLException;
  *
  * @author al
  */
-class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
-    
-    static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
+public class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
+    private  static final AccountInfoTable accountInfoTable = new AccountInfoTable(); 
+    private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
 
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
@@ -30,6 +32,11 @@ class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
     public static DbKey newKey(long id){
         return accountInfoDbKeyFactory.newKey(id);
     }
+    
+    public static AccountInfoTable getInstance(){
+        return accountInfoTable;
+    }
+    
     public AccountInfoTable() {
         super("account_info",
             accountInfoDbKeyFactory, "name,description");
@@ -51,5 +58,9 @@ class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
             pstmt.executeUpdate();
         }
     }
-    
+   
+
+    public static DbIterator<AccountInfo> searchAccounts(String query, int from, int to) {
+        return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
+    } 
 }
