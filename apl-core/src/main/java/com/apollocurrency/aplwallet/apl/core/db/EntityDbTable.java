@@ -205,9 +205,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 return null;
             }
             T t = null;
+
             DbKey dbKey = null;
             if (doCache) {
-                dbKey = dbKeyFactory.newKey(rs);                
+                dbKey = dbKeyFactory.newKey(rs);                              
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
