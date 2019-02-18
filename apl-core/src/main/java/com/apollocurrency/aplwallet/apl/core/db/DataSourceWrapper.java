@@ -161,9 +161,9 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        dbVersion.init(this);
         initialized = true;
         shutdown = false;
-        dbVersion.init(this);
     }
 
     public void shutdown() {

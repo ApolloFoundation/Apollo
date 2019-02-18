@@ -4,13 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
-import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
@@ -27,21 +25,15 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import javax.inject.Inject;
 
 @EnableWeld
-class DbTest {
+class DatabaseManagerTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
     private static String DB_FILE_NAME = "test_db";
-    private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
-            "socksProxyHost",
-            "socksProxyPort",
-            "apl.enablePeerUPnP");
 
     private DbProperties baseDbProperties;
     private Path pathToDb;
