@@ -42,5 +42,12 @@ public final class LongKey implements DbKey {
     public int hashCode() {
         return (int) (id ^ (id >>> 32));
     }
-    
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("LongKey{");
+        sb.append("id=").append(id);
+        sb.append('}');
+        return sb.toString();
+    }
 }

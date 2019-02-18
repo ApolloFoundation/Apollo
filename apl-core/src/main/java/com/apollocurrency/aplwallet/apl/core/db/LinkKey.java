@@ -45,5 +45,13 @@ public final class LinkKey implements DbKey {
     public int hashCode() {
         return (int) (idA ^ (idA >>> 32)) ^ (int) (idB ^ (idB >>> 32));
     }
-    
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("LinkKey{");
+        sb.append("idA=").append(idA);
+        sb.append(", idB=").append(idB);
+        sb.append('}');
+        return sb.toString();
+    }
 }
