@@ -20,14 +20,14 @@ import org.json.simple.JSONObject;
  *
  * @author al
  */
-public final class ShufflingCancellation extends AbstractShufflingAttachment {
+public final class ShufflingCancellationAttachment extends AbstractShufflingAttachment {
     
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     final byte[][] blameData;
     final byte[][] keySeeds;
     final long cancellingAccountId;
 
-    public ShufflingCancellation(ByteBuffer buffer) throws AplException.NotValidException {
+    public ShufflingCancellationAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         int count = buffer.get();
         if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count <= 0) {
@@ -54,7 +54,7 @@ public final class ShufflingCancellation extends AbstractShufflingAttachment {
         this.cancellingAccountId = buffer.getLong();
     }
 
-    public ShufflingCancellation(JSONObject attachmentData) {
+    public ShufflingCancellationAttachment(JSONObject attachmentData) {
         super(attachmentData);
         JSONArray jsonArray = (JSONArray) attachmentData.get("blameData");
         this.blameData = new byte[jsonArray.size()][];
@@ -69,7 +69,7 @@ public final class ShufflingCancellation extends AbstractShufflingAttachment {
         this.cancellingAccountId = Convert.parseUnsignedLong((String) attachmentData.get("cancellingAccount"));
     }
 
-    public ShufflingCancellation(long shufflingId, byte[][] blameData, byte[][] keySeeds, byte[] shufflingStateHash, long cancellingAccountId) {
+    public ShufflingCancellationAttachment(long shufflingId, byte[][] blameData, byte[][] keySeeds, byte[] shufflingStateHash, long cancellingAccountId) {
         super(shufflingId, shufflingStateHash);
         this.blameData = blameData;
         this.keySeeds = keySeeds;

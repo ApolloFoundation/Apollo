@@ -24,9 +24,9 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerification;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -458,13 +458,13 @@ public final class Shuffler {
 
     private void submitVerify(Shuffling shuffling) {
         LOG.debug("Account {} verifying shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingVerification attachment = new ShufflingVerification(shuffling.getId(), shuffling.getStateHash());
+        ShufflingVerificationAttachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
     private void submitCancel(Shuffling shuffling) {
         LOG.debug("Account {} cancelling shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingCancellation attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
+        ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
                 shuffling.getStateHash());
         submitTransaction(attachment);
     }

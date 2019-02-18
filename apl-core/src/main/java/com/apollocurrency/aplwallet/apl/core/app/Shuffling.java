@@ -26,10 +26,10 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipients;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -507,8 +507,8 @@ public final class Shuffling {
                 outputDataList.add(decrypted);
             } catch (Exception e) {
                 LOG.info("Decryption failed", e);
-                return isLast ? new ShufflingRecipients(this.id, Convert.EMPTY_BYTES, shufflingStateHash)
-                        : new ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                return isLast ? new ShufflingRecipientsAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash)
+                        : new ShufflingProcessingAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
             }
         }
         // Calculate the token for the current sender by iteratively encrypting it using the public key of all the participants
@@ -530,31 +530,31 @@ public final class Shuffling {
                 if (!Crypto.isCanonicalPublicKey(publicKey) || !recipientAccounts.add(Account.getId(publicKey))) {
                     // duplicate or invalid recipient public key
                     LOG.debug("Invalid recipient public key " + Convert.toHexString(publicKey));
-                    return new ShufflingRecipients(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                    return new ShufflingRecipientsAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
             }
             // last participant prepares ShufflingRecipients transaction instead of ShufflingProcessing
-            return new ShufflingRecipients(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
+            return new ShufflingRecipientsAttachment(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
                     shufflingStateHash);
         } else {
             byte[] previous = null;
             for (byte[] decrypted : outputDataList) {
                 if (previous != null && Arrays.equals(decrypted, previous)) {
                     LOG.debug("Duplicate decrypted data");
-                    return new ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                    return new ShufflingProcessingAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
                 if (decrypted.length != 32 + 64 * (participantCount - participantIndex - 1)) {
                     LOG.debug("Invalid encrypted data length in process " + decrypted.length);
-                    return new ShufflingProcessing(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
+                    return new ShufflingProcessingAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
                 }
                 previous = decrypted;
             }
-            return new ShufflingProcessing(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
+            return new ShufflingProcessingAttachment(this.id, outputDataList.toArray(new byte[outputDataList.size()][]),
                     shufflingStateHash);
         }
     }
 
-    public ShufflingCancellation revealKeySeeds(final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
+    public ShufflingCancellationAttachment revealKeySeeds(final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
         blockchain.readLock();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             if (cancellingAccountId != this.assigneeAccountId) {
@@ -607,7 +607,7 @@ public final class Shuffling {
                 AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.readEncryptedData(decryptedBytes);
                 decryptedBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
             }
-            return new ShufflingCancellation(this.id, data, keySeeds.toArray(new byte[keySeeds.size()][]),
+            return new ShufflingCancellationAttachment(this.id, data, keySeeds.toArray(new byte[keySeeds.size()][]),
                     shufflingStateHash, cancellingAccountId);
         } finally {
             blockchain.readUnlock();
@@ -633,7 +633,7 @@ public final class Shuffling {
         }
     }
 
-    void updateParticipantData(Transaction transaction, ShufflingProcessing attachment) {
+    void updateParticipantData(Transaction transaction, ShufflingProcessingAttachment attachment) {
         long participantId = transaction.getSenderId();
         byte[][] data = attachment.getData();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
@@ -650,7 +650,7 @@ public final class Shuffling {
         listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
     }
 
-    void updateRecipients(Transaction transaction, ShufflingRecipients attachment) {
+    void updateRecipients(Transaction transaction, ShufflingRecipientsAttachment attachment) {
         long participantId = transaction.getSenderId();
         this.recipientPublicKeys = attachment.getRecipientPublicKeys();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
