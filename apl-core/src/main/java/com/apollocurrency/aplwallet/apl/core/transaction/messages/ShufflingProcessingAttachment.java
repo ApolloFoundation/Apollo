@@ -19,27 +19,27 @@ import org.json.simple.JSONObject;
  *
  * @author al
  */
-public final class ShufflingProcessing extends AbstractShufflingAttachment implements Prunable {
+public final class ShufflingProcessingAttachment extends AbstractShufflingAttachment implements Prunable {
     
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
 
-    public static ShufflingProcessing parse(JSONObject attachmentData) {
+    public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(ShufflingTransaction.SHUFFLING_PROCESSING.getName(), attachmentData)) {
             return null;
         }
-        return new ShufflingProcessing(attachmentData);
+        return new ShufflingProcessingAttachment(attachmentData);
     }
     volatile byte[][] data;
     final byte[] hash;
 
-    public ShufflingProcessing(ByteBuffer buffer) {
+    public ShufflingProcessingAttachment(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(hash);
         this.data = Arrays.equals(hash, emptyDataHash) ? Convert.EMPTY_BYTES : null;
     }
 
-    public ShufflingProcessing(JSONObject attachmentData) {
+    public ShufflingProcessingAttachment(JSONObject attachmentData) {
         super(attachmentData);
         JSONArray jsonArray = (JSONArray) attachmentData.get("data");
         if (jsonArray != null) {
@@ -54,7 +54,7 @@ public final class ShufflingProcessing extends AbstractShufflingAttachment imple
         }
     }
 
-    public ShufflingProcessing(long shufflingId, byte[][] data, byte[] shufflingStateHash) {
+    public ShufflingProcessingAttachment(long shufflingId, byte[][] data, byte[] shufflingStateHash) {
         super(shufflingId, shufflingStateHash);
         this.data = data;
         this.hash = null;

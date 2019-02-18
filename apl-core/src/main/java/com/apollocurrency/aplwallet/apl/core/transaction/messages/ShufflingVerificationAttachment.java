@@ -12,17 +12,17 @@ import org.json.simple.JSONObject;
  *
  * @author al
  */
-public final class ShufflingVerification extends AbstractShufflingAttachment {
+public final class ShufflingVerificationAttachment extends AbstractShufflingAttachment {
     
-    public ShufflingVerification(ByteBuffer buffer) {
+    public ShufflingVerificationAttachment(ByteBuffer buffer) {
         super(buffer);
     }
 
-    public ShufflingVerification(JSONObject attachmentData) {
+    public ShufflingVerificationAttachment(JSONObject attachmentData) {
         super(attachmentData);
     }
 
-    public ShufflingVerification(long shufflingId, byte[] shufflingStateHash) {
+    public ShufflingVerificationAttachment(long shufflingId, byte[] shufflingStateHash) {
         super(shufflingId, shufflingStateHash);
     }
 

@@ -16,11 +16,11 @@ import org.json.simple.JSONObject;
  *
  * @author al
  */
-public final class ShufflingRecipients extends AbstractShufflingAttachment {
+public final class ShufflingRecipientsAttachment extends AbstractShufflingAttachment {
     
     final byte[][] recipientPublicKeys;
 
-    public ShufflingRecipients(ByteBuffer buffer) throws AplException.NotValidException {
+    public ShufflingRecipientsAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         int count = buffer.get();
         if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count < 0) {
@@ -33,7 +33,7 @@ public final class ShufflingRecipients extends AbstractShufflingAttachment {
         }
     }
 
-    public ShufflingRecipients(JSONObject attachmentData) {
+    public ShufflingRecipientsAttachment(JSONObject attachmentData) {
         super(attachmentData);
         JSONArray jsonArray = (JSONArray) attachmentData.get("recipientPublicKeys");
         this.recipientPublicKeys = new byte[jsonArray.size()][];
@@ -42,7 +42,7 @@ public final class ShufflingRecipients extends AbstractShufflingAttachment {
         }
     }
 
-    public ShufflingRecipients(long shufflingId, byte[][] recipientPublicKeys, byte[] shufflingStateHash) {
+    public ShufflingRecipientsAttachment(long shufflingId, byte[][] recipientPublicKeys, byte[] shufflingStateHash) {
         super(shufflingId, shufflingStateHash);
         this.recipientPublicKeys = recipientPublicKeys;
     }

@@ -46,11 +46,13 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 
 /**
  * Maintain a ledger of changes to selected accounts
  */
+@Singleton
 public class AccountLedger {
     private static final Logger LOG = getLogger(AccountLedger.class);
 
@@ -95,35 +97,6 @@ public class AccountLedger {
     public AccountLedger() {
       
     }
-
-    /**
-     * Process apl.ledgerAccounts
-     */
-/*
-    static {
-        List<String> ledgerAccounts = propertiesHolder.getStringListProperty("apl.ledgerAccounts");
-        ledgerEnabled = !ledgerAccounts.isEmpty();
-        trackAllAccounts = ledgerAccounts.contains("*");
-        if (ledgerEnabled) {
-            if (trackAllAccounts) {
-                LOG.info("Account ledger is tracking all accounts");
-            } else {
-                for (String account : ledgerAccounts) {
-                    try {
-                        trackAccounts.add(Convert.parseAccountId(account));
-                        LOG.info("Account ledger is tracking account " + account);
-                    } catch (RuntimeException e) {
-                        LOG.error("Account " + account + " is not valid; ignored");
-                    }
-                }
-            }
-        } else {
-            LOG.info("Account ledger is not enabled");
-        }
-        int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
-        logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
-    }
-*/
 
     private static final AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
 
