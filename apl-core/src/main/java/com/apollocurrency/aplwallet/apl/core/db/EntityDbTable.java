@@ -205,8 +205,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 return null;
             }
             T t = null;
-            DbKey dbKey  = dbKeyFactory.newKey(rs);
-            if (doCache) {
+            DbKey dbKey = dbKeyFactory.newKey(rs);
+            if (doCache) {                
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
@@ -215,9 +215,12 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                     dataSource.getCache(table).put(dbKey, t);
                 }
             }
-            if (rs.next()) {
-               // throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
-               log.warn("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
+            //TODO: check this
+            // OL: there are a lot of duplicates really in PUBLIC_KEY table, one with real key and next with null
+            // I do not now why old code does not react on this. So we just log, not thow here
+            if (rs.next() && dbKey!=null) {
+               log.debug("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
+//               throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
             }
             return t;
         }
