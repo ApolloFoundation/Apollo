@@ -91,7 +91,7 @@
         <resteasy.version>3.6.2.Final</resteasy.version>
         <swagger.version>2.0.6</swagger.version>
         <junit-5-bom.version>5.3.1</junit-5-bom.version>
-        <hikari.version>3.2.0</hikari.version>
+        <hikari.version>3.3.1</hikari.version>
         <jcommander.version>1.72</jcommander.version>
         <jdbi3-core.version>3.5.1</jdbi3-core.version>
         <jdbi3-sqlobject.version>3.5.1</jdbi3-sqlobject.version>

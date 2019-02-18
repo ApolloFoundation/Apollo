@@ -99,9 +99,9 @@ public class DataSourceWrapper implements DataSource {
         return this.dataSource.getParentLogger();
     }
 
-//    private HikariDataSource dataSource;
-//    private HikariPoolMXBean jmxBean;
-    private JdbcConnectionPool dataSource;
+    private HikariDataSource dataSource;
+    private HikariPoolMXBean jmxBean;
+//    private JdbcConnectionPool dataSource;
     private volatile int maxActiveConnections;
     private final String dbUrl;
     private final String dbUsername;
@@ -144,7 +144,6 @@ public class DataSourceWrapper implements DataSource {
      */
     public void init(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-/*
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUsername);
@@ -153,10 +152,11 @@ public class DataSourceWrapper implements DataSource {
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
-*/
+/*
         dataSource = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         dataSource.setMaxConnections(maxConnections);
         dataSource.setLoginTimeout(loginTimeout);
+*/
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
@@ -180,8 +180,8 @@ public class DataSourceWrapper implements DataSource {
             stmt.execute("SHUTDOWN COMPACT");
             shutdown = true;
             initialized = false;
-//            dataSource.close();
-            dataSource.dispose();
+            dataSource.close();
+//            dataSource.dispose();
             log.info("Database shutdown completed");
         } catch (SQLException e) {
             log.info(e.toString(), e);
@@ -210,13 +210,13 @@ public class DataSourceWrapper implements DataSource {
 
     protected Connection getPooledConnection() throws SQLException {
         Connection con = dataSource.getConnection();
-//        int activeConnections = jmxBean.getActiveConnections();
-        int activeConnections = dataSource.getActiveConnections();
+//        int activeConnections = dataSource.getActiveConnections();
+        int activeConnections = jmxBean.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
             log.debug("Used/Maximum connections from Pool '{}'/'{}'",
-                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
-//                    jmxBean.getActiveConnections(), jmxBean.getTotalConnections());
+//                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
+                    jmxBean.getActiveConnections(), jmxBean.getTotalConnections());
         }
         return con;
     }
