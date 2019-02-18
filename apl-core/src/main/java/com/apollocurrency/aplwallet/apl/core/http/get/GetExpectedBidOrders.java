@@ -20,14 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -53,8 +55,8 @@ public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
     }
 
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
-        Attachment.ColoredCoinsOrderPlacement a1 = (Attachment.ColoredCoinsOrderPlacement)o1.getAttachment();
-        Attachment.ColoredCoinsOrderPlacement a2 = (Attachment.ColoredCoinsOrderPlacement)o2.getAttachment();
+        ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment)o1.getAttachment();
+        ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment)o2.getAttachment();
         return Long.compare(a2.getPriceATM(), a1.getPriceATM());
     };
 
@@ -64,10 +66,10 @@ public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
         long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
         boolean sortByPrice = "true".equalsIgnoreCase(req.getParameter("sortByPrice"));
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != TransactionType.ColoredCoins.BID_ORDER_PLACEMENT) {
+            if (transaction.getType() != ColoredCoins.BID_ORDER_PLACEMENT) {
                 return false;
             }
-            Attachment.ColoredCoinsOrderPlacement attachment = (Attachment.ColoredCoinsOrderPlacement)transaction.getAttachment();
+            ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment)transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

@@ -39,7 +39,7 @@ public class TransactionScheduler {
 
     private static final Map<Transaction, TransactionScheduler> transactionSchedulers = new ConcurrentHashMap<>();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     public static void schedule(Filter<Transaction> filter, Transaction transaction) {
         if (transactionSchedulers.size() >= 100) {

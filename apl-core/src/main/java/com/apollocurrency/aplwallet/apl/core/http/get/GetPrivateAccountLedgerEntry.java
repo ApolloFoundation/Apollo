@@ -8,8 +8,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;

@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -36,23 +37,23 @@ import org.slf4j.Logger;
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     protected static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
     }
 
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
-    PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
-    protected PrunableDbTable(DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    protected PrunableDbTable(KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super("", dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 

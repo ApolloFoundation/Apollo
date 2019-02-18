@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -34,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -42,23 +44,37 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Inject;
 
 @Singleton
 public class BlockchainImpl implements Blockchain {
 
     private BlockDao blockDao;
-    private final TransactionDao transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private TransactionDao transactionDao;// = CDI.current().select(TransactionDaoImpl.class).get();
+    private BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
+    private EpochTime timeService; // = CDI.current().select(EpochTime.class).get();
+    private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
 
-    public BlockchainImpl() {}
+    public BlockchainImpl() {        
+    }
+    
+    @Inject
+    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService, PropertiesHolder propertiesHolder) {
+        this.blockDao = blockDao;
+        this.transactionDao = transactionDao;
+        this.blockchainConfig = blockchainConfig;
+        this.timeService = timeService;
+        this.propertiesHolder = propertiesHolder;
+    }
+    
 
     private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
 
     private BlockDao lookupBlockDao() {
-        if (blockDao == null) blockDao = CDI.current().select(BlockDaoImpl.class).get();
+        if (blockDao == null){
+            blockDao = CDI.current().select(BlockDaoImpl.class).get();
+        }
         return blockDao;
     }
 

@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -58,7 +59,7 @@ public final class GetAccountAssets extends AbstractAPIRequestHandler {
 
         if (assetId == 0) {
             JSONObject response = new JSONObject();
-            try (DbIterator<Account.AccountAsset> accountAssets = Account.getAccountAssets(accountId, height, 0, -1)) {
+            try (DbIterator<AccountAsset> accountAssets = AccountAssetTable.getAccountAssets(accountId, height, 0, -1)) {
                 JSONArray assetJSON = new JSONArray();
                 while (accountAssets.hasNext()) {
                     assetJSON.add(JSONData.accountAsset(accountAssets.next(), false, includeAssetInfo));
@@ -67,7 +68,7 @@ public final class GetAccountAssets extends AbstractAPIRequestHandler {
                 return response;
             }
         } else {
-            Account.AccountAsset accountAsset = Account.getAccountAsset(accountId, assetId, height);
+            AccountAsset accountAsset = AccountAssetTable.getAccountAsset(accountId, assetId, height);
             if (accountAsset != null) {
                 return JSONData.accountAsset(accountAsset, false, includeAssetInfo);
             }

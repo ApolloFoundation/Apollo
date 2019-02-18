@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Observable;
 import org.json.simple.JSONArray;
@@ -44,7 +45,7 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void init();
 
-    DbKey.LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory();
+    LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory();
 
     DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions();
 

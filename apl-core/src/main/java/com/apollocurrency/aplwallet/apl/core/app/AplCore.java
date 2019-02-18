@@ -21,11 +21,28 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
+
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
@@ -62,13 +79,13 @@ public final class AplCore {
     
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static volatile Time time = CDI.current().select(EpochTime.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
-
+    private static BlockchainConfig blockchainConfig;
 
     public AplCore() {
     }
@@ -141,10 +158,16 @@ public final class AplCore {
             try {
                 long startTime = System.currentTimeMillis();
                 checkPorts();  
+                //TODO: move to application level this UPnP initialization
+                boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
+                boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
+                if(enableAPIUPnP || enablePeerUPnP){
+                    UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
+                    UPnP.getInstance();
+                }                
                 //try to start API as early as possible
                 API.init();
                 
-                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
                                 
                 AplCoreRuntime.logSystemProperties();
@@ -152,10 +175,11 @@ public final class AplCore {
                 AppStatus.getInstance().update("Database initialization...");
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
-                CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
                 DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
+
+                CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
                 fullTextSearchService.init(); // first time BEFORE migration
 
@@ -164,19 +188,15 @@ public final class AplCore {
                 dataSource = databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                //TODO: move to application level this UPnP initialization
-                boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
-                boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
-                if(enableAPIUPnP || enablePeerUPnP){
-                    UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
-                    UPnP.getInstance();
-                }
+
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
+                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 transactionProcessor.init();
-
-                Account.init(databaseManager);
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain);
+                GenesisAccounts.init();
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");
                 AccountLedger.init(databaseManager);
@@ -212,7 +232,7 @@ public final class AplCore {
                 Generator.init();
                 AddOns.init();
                 AppStatus.getInstance().update("API initialization...");
-                DebugTrace.init();
+                Helper2FA.init(databaseManager);
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 

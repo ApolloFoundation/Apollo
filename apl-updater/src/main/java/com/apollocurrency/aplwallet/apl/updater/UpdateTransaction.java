@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 
 import java.util.Objects;
 
@@ -49,7 +50,7 @@ public class UpdateTransaction {
     }
 
     public boolean requireManualUpdate() {
-        return transaction.getType() == TransactionType.Update.MINOR;
+        return transaction.getType() == Update.MINOR;
     }
 
 }

@@ -33,11 +33,11 @@ import java.util.List;
 
 public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
 
-    protected VersionedValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 
-    protected VersionedValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion) {
+    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
         super(table, dbKeyFactory, multiversion);
     }
 

@@ -20,8 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
 import java.math.BigInteger;
@@ -37,7 +38,7 @@ public final class CurrencyMinting {
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.SHA3, HashFunction.SCRYPT, HashFunction.Keccak25));
 
-    public static boolean meetsTarget(long accountId, Currency currency, Attachment.MonetarySystemCurrencyMinting attachment) {
+    public static boolean meetsTarget(long accountId, Currency currency, MonetarySystemCurrencyMinting attachment) {
         byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
                 attachment.getCounter(), accountId);
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),

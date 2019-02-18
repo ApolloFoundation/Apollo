@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.Time;
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 final class GetInfo extends PeerServlet.PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
 
     private static class GetInfoHolder {

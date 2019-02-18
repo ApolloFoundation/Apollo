@@ -20,23 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -49,8 +50,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import javax.inject.Singleton;
 
-@ApplicationScoped
+@Singleton
 public class TransactionDaoImpl implements TransactionDao {
 
     private final DatabaseManager databaseManager;
@@ -470,7 +472,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (blockTimestamp > 0) {
             buf.append("AND block_timestamp >= ? ");
         }
-        if (!includePrivate && TransactionType.findTransactionType(type, subtype) == TransactionType.Payment.PRIVATE) {
+        if (!includePrivate && TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {
@@ -552,8 +554,8 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
             }
             if (!includePrivate) {
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+                pstmt.setByte(++i, Payment.PRIVATE.getType());
+                pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
             }
             if (height < Integer.MAX_VALUE) {
                 pstmt.setInt(++i, height);
@@ -572,8 +574,8 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
             }
             if (!includePrivate) {
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-                pstmt.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+                pstmt.setByte(++i, Payment.PRIVATE.getType());
+                pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
             }
             if (height < Integer.MAX_VALUE) {
                 pstmt.setInt(++i, height);
@@ -606,8 +608,8 @@ public class TransactionDaoImpl implements TransactionDao {
             con = dataSource.getConnection();
             PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
             int i = 0;
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            statement.setByte(++i, Payment.PRIVATE.getType());
+            statement.setByte(++i, Payment.PRIVATE.getSubtype());
             if (type >= 0) {
                 statement.setByte(++i, type);
                 if (subtype >= 0) {
@@ -636,8 +638,8 @@ public class TransactionDaoImpl implements TransactionDao {
         try (Connection con = dataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getType());
-            statement.setByte(++i, TransactionType.Payment.PRIVATE.getSubtype());
+            statement.setByte(++i, Payment.PRIVATE.getType());
+            statement.setByte(++i, Payment.PRIVATE.getSubtype());
             statement.setLong(++i, accountId);
             statement.setLong(++i, accountId);
             if (type >= 0) {
