@@ -216,7 +216,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 }
             }
             if (rs.next()) {
-                throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
+               // throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
+               log.warn("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
             }
             return t;
         }
