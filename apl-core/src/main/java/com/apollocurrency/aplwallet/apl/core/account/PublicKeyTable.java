@@ -54,7 +54,7 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
     }
     
     protected PublicKeyTable() {
-        super("public_key", publicKeyDbKeyFactory, false, null);
+        super("public_key", publicKeyDbKeyFactory, true, null);
     }
 
     @Override
