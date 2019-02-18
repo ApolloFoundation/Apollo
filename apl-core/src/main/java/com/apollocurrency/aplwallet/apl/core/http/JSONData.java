@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
@@ -800,7 +801,7 @@ public final class JSONData {
         }
     }
 
-    public static JSONObject phasingOnly(AccountRestrictions.PhasingOnly phasingOnly) {
+    public static JSONObject phasingOnly(PhasingOnly phasingOnly) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", phasingOnly.getAccountId());
         json.put("quorum", String.valueOf(phasingOnly.getPhasingParams().getQuorum()));

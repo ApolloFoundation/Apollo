@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
@@ -41,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
@@ -178,7 +178,7 @@ public class TaggedData {
 
     public static final class Tag {
 
-        private static final DbKey.StringKeyFactory<Tag> tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
+        private static final StringKeyFactory<Tag> tagDbKeyFactory = new StringKeyFactory<Tag>("tag") {
             @Override
             public DbKey newKey(Tag tag) {
                 return tag.dbKey;

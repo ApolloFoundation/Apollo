@@ -41,19 +41,19 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     protected static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
     }
 
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
-    PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
-    protected PrunableDbTable(DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    protected PrunableDbTable(KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super("", dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 

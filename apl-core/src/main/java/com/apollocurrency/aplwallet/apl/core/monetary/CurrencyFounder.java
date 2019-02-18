@@ -27,6 +27,7 @@ import javax.enterprise.inject.spi.CDI;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -43,7 +44,7 @@ import java.util.List;
  */
 public class CurrencyFounder {
 
-    private static final DbKey.LinkKeyFactory<CurrencyFounder> currencyFounderDbKeyFactory = new DbKey.LinkKeyFactory<CurrencyFounder>("currency_id", "account_id") {
+    private static final LinkKeyFactory<CurrencyFounder> currencyFounderDbKeyFactory = new LinkKeyFactory<CurrencyFounder>("currency_id", "account_id") {
 
         @Override
         public DbKey newKey(CurrencyFounder currencyFounder) {

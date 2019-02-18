@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
 import java.sql.Connection;
@@ -36,7 +37,7 @@ import javax.enterprise.inject.spi.CDI;
 
         @Override
         public PublicKey newEntity(DbKey dbKey) {
-            return new PublicKey(((DbKey.LongKey) dbKey).getId(), null);
+            return new PublicKey(((LongKey) dbKey).getId(), null);
         }
 
     }

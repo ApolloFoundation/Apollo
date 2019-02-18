@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;

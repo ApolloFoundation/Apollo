@@ -176,6 +176,7 @@ public final class PhasingPoll extends AbstractPoll {
 
     private static final ValuesDbTable<PhasingPoll, Long> votersTable = new ValuesDbTable<PhasingPoll, Long>("phasing_poll_voter", votersDbKeyFactory) {
 
+
         @Override
         protected Long load(Connection con, ResultSet rs) throws SQLException {
             return rs.getLong("voter_id");

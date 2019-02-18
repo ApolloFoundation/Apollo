@@ -40,15 +40,15 @@ import org.slf4j.Logger;
 public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(VersionedEntityDbTable.class);
 
-    protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected VersionedEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
     }
 
-    protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    protected VersionedEntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
-    protected VersionedEntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected VersionedEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 
@@ -99,7 +99,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         }
     }
 
-    static void rollback(final TransactionalDataSource db, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void rollback(final TransactionalDataSource db, final String table, final int height, final KeyFactory dbKeyFactory) {
         if (!db.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
@@ -145,7 +145,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
     }
 
-    static void trim(final TransactionalDataSource dataSource, final String table, final int height, final DbKey.Factory dbKeyFactory) {
+    static void trim(final TransactionalDataSource dataSource, final String table, final int height, final KeyFactory dbKeyFactory) {
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
@@ -223,7 +223,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
 
     private static int deleteDeletedNewAlgo(PreparedStatement pstmtSelectDeleteDeletedIds,
                                             PreparedStatement pstmtSelectDeleteDeletedCandidates,
-                                            PreparedStatement pstmtDeletedById, DbKey.Factory dbKeyFactory,
+                                            PreparedStatement pstmtDeletedById, KeyFactory dbKeyFactory,
                                             int height) throws SQLException {
         int deleted = 0;
         pstmtSelectDeleteDeletedIds.setInt(1, height);

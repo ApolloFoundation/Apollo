@@ -22,15 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 public abstract class VersionedPersistentDbTable<T> extends VersionedPrunableDbTable<T> {
 
-    protected VersionedPersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected VersionedPersistentDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
     }
 
-    protected VersionedPersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected VersionedPersistentDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
-    protected VersionedPersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    protected VersionedPersistentDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 

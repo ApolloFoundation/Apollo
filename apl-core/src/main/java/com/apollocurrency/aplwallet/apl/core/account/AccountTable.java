@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import java.sql.Connection;
@@ -31,7 +32,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
 
         @Override
         public Account newEntity(DbKey dbKey) {
-            return new Account(((DbKey.LongKey) dbKey).getId());
+            return new Account(((LongKey) dbKey).getId());
         }
 
     };

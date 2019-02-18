@@ -158,10 +158,16 @@ public final class AplCore {
             try {
                 long startTime = System.currentTimeMillis();
                 checkPorts();  
+                //TODO: move to application level this UPnP initialization
+                boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
+                boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
+                if(enableAPIUPnP || enablePeerUPnP){
+                    UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
+                    UPnP.getInstance();
+                }                
                 //try to start API as early as possible
                 API.init();
                 
-                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 CDI.current().select(NtpTime.class).get().start();
                                 
                 AplCoreRuntime.logSystemProperties();
@@ -177,20 +183,14 @@ public final class AplCore {
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
                 fullTextSearchService.init(); // first time BEFORE migration
 
-
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
                 dataSource = databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
-                //TODO: move to application level this UPnP initialization
-                boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
-                boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
-                if(enableAPIUPnP || enablePeerUPnP){
-                    UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
-                    UPnP.getInstance();
-                }
+
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
+                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();

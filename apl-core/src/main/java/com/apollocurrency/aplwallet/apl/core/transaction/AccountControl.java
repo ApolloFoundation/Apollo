@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -165,7 +166,7 @@ public abstract class AccountControl extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
-            AccountRestrictions.PhasingOnly.set(senderAccount, attachment);
+            PhasingOnly.set(senderAccount, attachment);
         }
 
         @Override

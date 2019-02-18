@@ -42,22 +42,22 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     private final boolean multiversion;
-    protected final DbKey.Factory<T> dbKeyFactory;
+    protected final KeyFactory<T> dbKeyFactory;
     private final String defaultSort;
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static FullTextSearchService fullText = CDI.current().select(FullTextSearchService.class).get();
 
-    protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
     }
 
-    protected EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         this(table, dbKeyFactory, false, fullTextSearchColumns);
     }
 
-    EntityDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
@@ -65,7 +65,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
-     protected EntityDbTable(String table, boolean multiversion, DbKey.Factory<T> dbKeyFactory) {
+     protected EntityDbTable(String table, boolean multiversion, KeyFactory<T> dbKeyFactory) {
          super(table);
          this.multiversion = multiversion;
          this.dbKeyFactory = dbKeyFactory;
@@ -205,9 +205,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 return null;
             }
             T t = null;
-            DbKey dbKey = null;
+            DbKey dbKey  = dbKeyFactory.newKey(rs);
             if (doCache) {
-                dbKey = dbKeyFactory.newKey(rs);
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
@@ -217,7 +216,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 }
             }
             if (rs.next()) {
-                throw new RuntimeException("Multiple records found");
+                throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
             }
             return t;
         }

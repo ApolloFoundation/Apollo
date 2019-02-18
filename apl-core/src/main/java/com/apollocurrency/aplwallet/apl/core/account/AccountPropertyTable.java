@@ -20,8 +20,6 @@ import java.sql.SQLException;
  */
 public class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty> {
     
-    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable(); 
-    
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
 
         @Override
@@ -30,6 +28,7 @@ public class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty
         }
 
     };
+    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable(); 
     
     public static AccountPropertyTable getInstance(){
         return accountPropertyTable;

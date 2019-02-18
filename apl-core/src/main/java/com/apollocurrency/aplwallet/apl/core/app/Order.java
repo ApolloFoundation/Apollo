@@ -219,6 +219,7 @@ public abstract class Order {
         };
 
         private static final VersionedEntityDbTable<Ask> askOrderTable = new VersionedEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
+
             @Override
             protected Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Ask(rs, dbKey);

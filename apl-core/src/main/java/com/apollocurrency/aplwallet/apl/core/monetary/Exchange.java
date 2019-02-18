@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -59,7 +59,7 @@ public final class Exchange {
 
     private static final Listeners<Exchange,Event> listeners = new Listeners<>();
 
-    private static final DbKey.LinkKeyFactory<Exchange> exchangeDbKeyFactory = new DbKey.LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
+    private static final LinkKeyFactory<Exchange> exchangeDbKeyFactory = new LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
 
         @Override
         public DbKey newKey(Exchange exchange) {

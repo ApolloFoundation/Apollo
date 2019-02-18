@@ -69,7 +69,7 @@ public final class Currency {
     };
 
     private static final VersionedEntityDbTable<Currency> currencyTable = new VersionedEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
-
+ 
         @Override
         protected Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Currency(rs, dbKey);

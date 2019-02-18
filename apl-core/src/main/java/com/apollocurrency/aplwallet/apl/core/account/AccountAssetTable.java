@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
@@ -23,7 +24,7 @@ import javax.enterprise.inject.spi.CDI;
  */
 public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     
-    private static class AccountAssetDbKeyFactory extends DbKey.LinkKeyFactory<AccountAsset> {
+    private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
         public AccountAssetDbKeyFactory(String idColumnA, String idColumnB) {
             super(idColumnA, idColumnB);
@@ -34,7 +35,7 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
             return accountAsset.dbKey;
         }
     } 
-    private static final DbKey.LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
+    private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
     private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     

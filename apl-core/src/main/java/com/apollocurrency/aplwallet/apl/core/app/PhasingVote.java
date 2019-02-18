@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,7 +36,7 @@ import java.sql.SQLException;
 
 public class PhasingVote {
 
-    private static final DbKey.LinkKeyFactory<PhasingVote> phasingVoteDbKeyFactory = new DbKey.LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
+    private static final LinkKeyFactory<PhasingVote> phasingVoteDbKeyFactory = new LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
         @Override
         public DbKey newKey(PhasingVote vote) {
             return vote.dbKey;

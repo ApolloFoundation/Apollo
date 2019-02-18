@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,9 +19,8 @@ import java.sql.SQLException;
  * @author al
  */
 public class AccountCurrencyTable extends VersionedEntityDbTable<AccountCurrency> {
-    private static final AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
 
-    private static final DbKey.LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new DbKey.LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
+    private static final LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
     
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
@@ -28,6 +28,7 @@ public class AccountCurrencyTable extends VersionedEntityDbTable<AccountCurrency
         }
 
     };  
+    private static final AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
     
     public static DbKey newKey(long idA, long idB){
         return accountCurrencyDbKeyFactory.newKey(idA,idB);

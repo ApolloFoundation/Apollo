@@ -30,13 +30,13 @@ import java.util.List;
 public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
 
     private final boolean multiversion;
-    protected final DbKey.Factory<T> dbKeyFactory;
+    protected final KeyFactory<T> dbKeyFactory;
 
-    protected ValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion) {
+    ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
         super(table);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;

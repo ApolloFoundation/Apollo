@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
@@ -102,7 +103,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfActiveAccountLeases", Account.getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
-            response.put("numberOfPhasingOnlyAccounts", AccountRestrictions.PhasingOnly.getCount());
+            response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
         }
         response.put("numberOfPeers", Peers.getAllPeers().size());
         response.put("numberOfActivePeers", Peers.getActivePeers().size());

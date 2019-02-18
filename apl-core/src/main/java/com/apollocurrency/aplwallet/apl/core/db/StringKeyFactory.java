@@ -10,22 +10,22 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public abstract class LongKeyFactory<T> extends KeyFactory<T> {
+public abstract class StringKeyFactory<T> extends KeyFactory<T> {
     
     private final String idColumn;
 
-    public LongKeyFactory(String idColumn) {
+    public StringKeyFactory(String idColumn) {
         super(" WHERE " + idColumn + " = ? ", idColumn, " a." + idColumn + " = b." + idColumn + " ");
         this.idColumn = idColumn;
     }
 
     @Override
     public DbKey newKey(ResultSet rs) throws SQLException {
-        return new LongKey(rs.getLong(idColumn));
+        return new StringKey(rs.getString(idColumn));
     }
 
-    public DbKey newKey(long id) {
-        return new LongKey(id);
+    public DbKey newKey(String id) {
+        return new StringKey(id);
     }
     
 }
