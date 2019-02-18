@@ -13,13 +13,20 @@ import org.slf4j.Logger;
 
 public class DbStatementWrapper extends FilteredStatement {
     private static final Logger log = getLogger(DbStatementWrapper.class);
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain;
 
     private long stmtThreshold;
 
     public DbStatementWrapper(Statement stmt, long stmtThreshold) {
         super(stmt);
         this.stmtThreshold = stmtThreshold;
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(BlockchainImpl.class).get();
+        }
+        return blockchain;
     }
 
     @Override
@@ -29,7 +36,7 @@ public class DbStatementWrapper extends FilteredStatement {
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                    (double)elapsed/1000.0, blockchain.getHeight(), sql));
+                    (double)elapsed/1000.0, lookupBlockchain().getHeight(), sql));
         return b;
     }
 
@@ -40,7 +47,7 @@ public class DbStatementWrapper extends FilteredStatement {
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                    (double)elapsed/1000.0, blockchain.getHeight(), sql));
+                    (double)elapsed/1000.0, lookupBlockchain().getHeight(), sql));
         return r;
     }
 
@@ -51,7 +58,7 @@ public class DbStatementWrapper extends FilteredStatement {
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                    (double)elapsed/1000.0, blockchain.getHeight(), sql));
+                    (double)elapsed/1000.0, lookupBlockchain().getHeight(), sql));
         return c;
     }
 
