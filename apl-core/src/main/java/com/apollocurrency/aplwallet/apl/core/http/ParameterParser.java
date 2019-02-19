@@ -498,11 +498,12 @@ public final class ParameterParser {
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
-        if (!getIsElGamalEncrypted(req, isMandatory)) return secretPhrase;
+         return API.elGamalDecrypt(secretPhrase);
+/*        if (!getIsElGamalEncrypted(req, isMandatory)) return secretPhrase;
         else {
             
             return API.elGamalDecrypt(secretPhrase);
-        }
+        }*/
         
     }
 
