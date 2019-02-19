@@ -349,10 +349,6 @@ public final class ParameterParser {
         return currency;
     }
     
-    public static boolean getIsElGamalEncrypted(HttpServletRequest req, boolean isMandatory) throws ParameterException{
-        return getBoolean(req, "elgamal", isMandatory);
-    }
-    
     public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
         CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
@@ -499,12 +495,7 @@ public final class ParameterParser {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
         return API.elGamalDecrypt(secretPhrase);
-/*        if (!getIsElGamalEncrypted(req, isMandatory)) return secretPhrase;
-        else {
-            
-            return API.elGamalDecrypt(secretPhrase);
-        }*/
-        
+       
     }
 
     
