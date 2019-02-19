@@ -40,6 +40,7 @@ import java.util.TreeMap;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import javax.inject.Singleton;
@@ -665,8 +666,7 @@ public class BlockDaoImpl implements BlockDao {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-                BlockchainProcessorImpl blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-                blockchainProcessor.getDerivedTables().forEach(table -> {
+                DerivedDbTablesRegistry.getInstance().getDerivedTables().forEach(table -> {
                     try {
                         stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
                     } catch (SQLException ignore) {}

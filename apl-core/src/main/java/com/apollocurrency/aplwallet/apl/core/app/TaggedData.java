@@ -32,11 +32,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
@@ -48,7 +52,7 @@ import org.slf4j.Logger;
 public class TaggedData {
     private static final Logger LOG = getLogger(TaggedData.class);
 
-    private static final DbKey.LongKeyFactory<TaggedData> taggedDataKeyFactory = new DbKey.LongKeyFactory<TaggedData>("id") {
+    private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<TaggedData>("id") {
 
         @Override
         public DbKey newKey(TaggedData taggedData) {
@@ -59,7 +63,7 @@ public class TaggedData {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     private static TransactionalDataSource lookupDataSource() {
@@ -148,7 +152,7 @@ public class TaggedData {
     }
 
 
-    private static final DbKey.LongKeyFactory<Timestamp> timestampKeyFactory = new DbKey.LongKeyFactory<Timestamp>("id") {
+    private static final LongKeyFactory<Timestamp> timestampKeyFactory = new LongKeyFactory<Timestamp>("id") {
 
         @Override
         public DbKey newKey(Timestamp timestamp) {
@@ -174,7 +178,7 @@ public class TaggedData {
 
     public static final class Tag {
 
-        private static final DbKey.StringKeyFactory<Tag> tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
+        private static final StringKeyFactory<Tag> tagDbKeyFactory = new StringKeyFactory<Tag>("tag") {
             @Override
             public DbKey newKey(Tag tag) {
                 return tag.dbKey;
@@ -302,7 +306,7 @@ public class TaggedData {
 
     }
 
-    private static final DbKey.LongKeyFactory<Long> extendDbKeyFactory = new DbKey.LongKeyFactory<Long>("id") {
+    private static final LongKeyFactory<Long> extendDbKeyFactory = new LongKeyFactory<Long>("id") {
 
         @Override
         public DbKey newKey(Long taggedDataId) {
@@ -392,7 +396,7 @@ public class TaggedData {
     private int blockTimestamp;
     private int height;
 
-    public TaggedData(Transaction transaction, Attachment.TaggedDataAttachment attachment, int blockTimestamp, int height) {
+    public TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
         this.id = transaction.getId();
         this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
@@ -518,7 +522,7 @@ public class TaggedData {
         return blockTimestamp;
     }
 
-    static void add(TransactionImpl transaction, Attachment.TaggedDataUpload attachment) {
+    public static void add(TransactionImpl transaction, TaggedDataUpload attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
             if (taggedData == null) {
@@ -532,7 +536,7 @@ public class TaggedData {
         timestampTable.insert(timestamp);
     }
 
-    static void extend(Transaction transaction, Attachment.TaggedDataExtend attachment) {
+    public static void extend(Transaction transaction, TaggedDataExtend attachment) {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         Timestamp timestamp = timestampTable.get(dbKey);
@@ -562,7 +566,7 @@ public class TaggedData {
         }
     }
 
-    public static void restore(Transaction transaction, Attachment.TaggedDataUpload attachment, int blockTimestamp, int height) {
+    public static void restore(Transaction transaction, TaggedDataUpload attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
         Tag.add(taggedData, height);
@@ -581,7 +585,8 @@ public class TaggedData {
         }
     }
 
-    static boolean isPruned(long transactionId) {
+
+    public static boolean isPruned(long transactionId) {
         try (Connection con = lookupDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);

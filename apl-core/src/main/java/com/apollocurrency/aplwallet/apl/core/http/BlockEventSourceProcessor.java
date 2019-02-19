@@ -10,7 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -25,9 +30,9 @@ import java.util.concurrent.TimeUnit;
 
 public class BlockEventSourceProcessor implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(BlockEventSourceProcessor.class);
-    private BlockEventSource eventSource;
-    private long accountId;
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private final BlockEventSource eventSource;
+    private final long accountId;
+    private final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -79,20 +84,20 @@ public class BlockEventSourceProcessor implements Runnable {
         int sellerPurchaseCount = DigitalGoodsStore.Purchase.getSellerPurchaseCount(accountId, false, false);
         int aliasCount = Alias.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
-        try (DbIterator<Account.AccountAsset> accountAssets = Account.getAccountAssets(accountId, -1, 0, 2)) {
+        try (DbIterator<AccountAsset> accountAssets = AccountAssetTable.getAccountAssets(accountId, -1, 0, 2)) {
             while (accountAssets.hasNext()) {
                 assetJson.add(JSONData.accountAsset(accountAssets.next(), false, true));
             }
         }
         JSONArray currencyJSON = new JSONArray();
-        try (DbIterator<Account.AccountCurrency> accountCurrencies = Account.getAccountCurrencies(accountId, -1, 0, 2)) {
+        try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getAccountCurrencies(accountId, -1, 0, 2)) {
             while (accountCurrencies.hasNext()) {
                 currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));
             }
         }
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);
-        int currencyCount = Account.getAccountCurrencyCount(accountId, -1);
-        int assetCount = Account.getAccountAssetCount(accountId, -1);
+        int currencyCount = AccountCurrencyTable.getAccountCurrencyCount(accountId, -1);
+        int assetCount = AccountAssetTable.getAccountAssetCount(accountId, -1);
         JSONObject accountJson = putAccount(accountId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactions", transactionsArray);
@@ -123,7 +128,7 @@ public class BlockEventSourceProcessor implements Runnable {
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }
-        Account.AccountInfo accountInfo = account.getAccountInfo();
+        AccountInfo accountInfo = account.getAccountInfo();
         if (accountInfo != null) {
             response.put("name", Convert.nullToEmpty(accountInfo.getName()));
             response.put("description", Convert.nullToEmpty(accountInfo.getDescription()));

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
@@ -38,8 +39,6 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
         BEFORE_BLOCK_ACCEPT, AFTER_BLOCK_ACCEPT,
         BEFORE_BLOCK_APPLY, AFTER_BLOCK_APPLY
     }
-
-    List<DerivedDbTable> getDerivedTables();
 
     Peer getLastBlockchainFeeder();
 
@@ -75,8 +74,6 @@ public interface BlockchainProcessor extends Observable<Block,BlockchainProcesso
     List<Block> popOffTo(int height);
 
     List<Block> popOffTo(Block commonBlock);
-
-    void registerDerivedTable(DerivedDbTable table);
 
     void trimDerivedTables();
 

@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -42,7 +43,7 @@ public abstract class AbstractUpdater implements Updater {
         this.updateData = updateData;
         this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getId(), updateData.getTransaction().getHeight() + blocksWait,
                 updateData.getTransaction().getHeight(), getLevel(),
-                ((Attachment.UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion());
+                ((UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion());
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;
         this.blocksWait = blocksWait;
@@ -54,7 +55,7 @@ public abstract class AbstractUpdater implements Updater {
         this.updateData = updateData;
         this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getId(), updateData.getTransaction().getHeight() + blocksWait,
                 updateData.getTransaction().getHeight(), getLevel(),
-                ((Attachment.UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
+                ((UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;
         this.blocksWait = blocksWait;
@@ -86,7 +87,7 @@ public abstract class AbstractUpdater implements Updater {
     }
 
     protected boolean tryUpdate() {
-        Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) updateData.getTransaction().getAttachment();
+        UpdateAttachment attachment = (UpdateAttachment) updateData.getTransaction().getAttachment();
         LOG.info("Update to version: " + attachment.getAppVersion());
         //Downloader downloads update package
         Path path = updaterService.tryDownload(updateData.getDecryptedUrl(), attachment.getHash());

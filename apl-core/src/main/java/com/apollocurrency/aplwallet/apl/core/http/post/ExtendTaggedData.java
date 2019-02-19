@@ -20,14 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Data;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -57,15 +60,15 @@ public final class ExtendTaggedData extends CreateTransaction {
         TaggedData taggedData = TaggedData.getData(transactionId);
         if (taggedData == null) {
             Transaction transaction = lookupBlockchain().getTransaction(transactionId);
-            if (transaction == null || transaction.getType() != TransactionType.Data.TAGGED_DATA_UPLOAD) {
+            if (transaction == null || transaction.getType() != Data.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }
-            Attachment.TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
+            TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
             taggedData = new TaggedData(transaction, taggedDataUpload,
                     lookupBlockchain().getLastBlockTimestamp(),
                     lookupBlockchain().getHeight());
         }
-        Attachment.TaggedDataExtend taggedDataExtend = new Attachment.TaggedDataExtend(taggedData);
+        TaggedDataExtend taggedDataExtend = new TaggedDataExtend(taggedData);
         return createTransaction(req, account, taggedDataExtend);
 
     }

@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -60,14 +61,14 @@ public final class VerifyTaggedData extends AbstractAPIRequestHandler {
             return UNKNOWN_TRANSACTION;
         }
 
-        Attachment.TaggedDataUpload taggedData = ParameterParser.getTaggedData(req);
+        TaggedDataUpload taggedData = ParameterParser.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
-        if (!(attachment instanceof Attachment.TaggedDataUpload)) {
+        if (!(attachment instanceof TaggedDataUpload)) {
             return INCORRECT_TRANSACTION;
         }
 
-        Attachment.TaggedDataUpload myTaggedData = (Attachment.TaggedDataUpload) attachment;
+        TaggedDataUpload myTaggedData = (TaggedDataUpload) attachment;
         if (!Arrays.equals(myTaggedData.getHash(), taggedData.getHash())) {
             return HASHES_MISMATCH;
         }

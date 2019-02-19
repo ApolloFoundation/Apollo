@@ -17,7 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
@@ -69,7 +70,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
         if (height != -1) {
             Block block = blockchain.getBlockAtHeight(height);
             block.getTransactions().forEach(transaction -> {
-                if (transaction.getType() == TransactionType.Payment.PRIVATE) {
+                if (transaction.getType() == Payment.PRIVATE) {
 
                     if (transaction.getSenderId() != data.getAccountId() && transaction.getRecipientId() != data.getAccountId()) {
                         transactions.add(JSONData.transaction(true, transaction));
@@ -90,7 +91,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
                 while (iterator.hasNext()) {
                     Transaction transaction = iterator.next();
 
-                    if (TransactionType.Payment.PRIVATE == transaction.getType() && data.isEncrypt()) {
+                    if (Payment.PRIVATE == transaction.getType() && data.isEncrypt()) {
                         transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
 
                     } else {

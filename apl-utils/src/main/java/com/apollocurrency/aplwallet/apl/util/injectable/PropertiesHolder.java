@@ -149,4 +149,11 @@ public class PropertiesHolder {
         return getBooleanProperty("apl.correctInvalidFees");
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("PropertiesHolder{");
+        sb.append("properties size=[]").append(properties != null ? properties.size() : -1);
+        sb.append('}');
+        return sb.toString();
+    }
 }

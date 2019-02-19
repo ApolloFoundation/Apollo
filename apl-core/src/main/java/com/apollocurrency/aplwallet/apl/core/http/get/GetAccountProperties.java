@@ -20,7 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -70,7 +72,7 @@ public final class GetAccountProperties extends AbstractAPIRequestHandler {
         if (setterId != 0) {
             JSONData.putAccount(response, "setter", setterId);
         }
-        try (DbIterator<Account.AccountProperty> iterator = Account.getProperties(recipientId, setterId, property, firstIndex, lastIndex)) {
+        try (DbIterator<AccountProperty> iterator = AccountPropertyTable.getProperties(recipientId, setterId, property, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 propertiesJSON.add(JSONData.accountProperty(iterator.next(), recipientId == 0, setterId == 0));
             }

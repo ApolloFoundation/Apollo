@@ -26,15 +26,15 @@ import java.sql.SQLException;
 
 public abstract class VersionedPrunableDbTable<T> extends PrunableDbTable<T> {
 
-    protected VersionedPrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected VersionedPrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
     }
 
-    protected VersionedPrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected VersionedPrunableDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 
-    protected VersionedPrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    protected VersionedPrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 

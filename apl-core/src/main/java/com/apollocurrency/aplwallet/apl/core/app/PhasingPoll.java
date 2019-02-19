@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -121,7 +122,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    private static final DbKey.LongKeyFactory<PhasingPoll> phasingPollDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("id") {
+    private static final LongKeyFactory<PhasingPoll> phasingPollDbKeyFactory = new LongKeyFactory<PhasingPoll>("id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey;
@@ -166,7 +167,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<PhasingPoll> votersDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("transaction_id") {
+    private static final LongKeyFactory<PhasingPoll> votersDbKeyFactory = new LongKeyFactory<PhasingPoll>("transaction_id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
@@ -174,6 +175,7 @@ public final class PhasingPoll extends AbstractPoll {
     };
 
     private static final ValuesDbTable<PhasingPoll, Long> votersTable = new ValuesDbTable<PhasingPoll, Long>("phasing_poll_voter", votersDbKeyFactory) {
+
 
         @Override
         protected Long load(Connection con, ResultSet rs) throws SQLException {
@@ -193,7 +195,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("transaction_id") {
+    private static final LongKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new LongKeyFactory<PhasingPoll>("transaction_id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
@@ -222,7 +224,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<PhasingPollResult> resultDbKeyFactory = new DbKey.LongKeyFactory<PhasingPollResult>("id") {
+    private static final LongKeyFactory<PhasingPollResult> resultDbKeyFactory = new LongKeyFactory<PhasingPollResult>("id") {
         @Override
         public DbKey newKey(PhasingPollResult phasingPollResult) {
             return phasingPollResult.dbKey;
@@ -390,8 +392,9 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    static long getSenderPhasedTransactionFees(long accountId) {
+    public static long getSenderPhasedTransactionFees(long accountId) {
         try (Connection con = lookupDataSource().getConnection();
+
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                      " WHERE phasing_poll.id = transaction.id AND transaction.sender_id = ? " +
