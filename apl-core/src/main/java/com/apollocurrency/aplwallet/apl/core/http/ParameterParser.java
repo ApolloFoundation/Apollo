@@ -348,6 +348,7 @@ public final class ParameterParser {
         }
         return currency;
     }
+    
     public static boolean getIsElGamalEncrypted(HttpServletRequest req, boolean isMandatory) throws ParameterException{
         return getBoolean(req, "elgamal", isMandatory);
     }
@@ -494,11 +495,10 @@ public final class ParameterParser {
 
     public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
-        LOG.debug("SecretPhrase here:" + secretPhrase);
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
-         return API.elGamalDecrypt(secretPhrase);
+        return API.elGamalDecrypt(secretPhrase);
 /*        if (!getIsElGamalEncrypted(req, isMandatory)) return secretPhrase;
         else {
             
@@ -608,10 +608,13 @@ public final class ParameterParser {
     }
 
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
-        return getStringParameter(req, "passphrase", isMandatory);
+        String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
+        return API.elGamalDecrypt(secretPhrase);
     }
+
     public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
-        return getStringParameter(req, parameterName, isMandatory);
+        String secretPhrase = getStringParameter(req, parameterName, isMandatory);
+        return API.elGamalDecrypt(secretPhrase);
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
