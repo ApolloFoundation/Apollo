@@ -400,6 +400,16 @@
                 <artifactId>h2</artifactId>
                 <version>${h2.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-core</artifactId>
+                <version>${jdbi3-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-sqlobject</artifactId>
+                <version>${jdbi3-sqlobject.version}</version>
+            </dependency>
 
             <!-- Apache Tika libs-->
             <dependency>

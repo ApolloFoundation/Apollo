@@ -24,8 +24,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -60,6 +62,7 @@ public class DatabaseManager implements ShardManagement {
     private PropertiesHolder propertiesHolder;
     private static TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3); // secondary shards
+    private Jdbi jdbi;
 
     /**
      * Create, initialize and return main database source.
@@ -68,7 +71,7 @@ public class DatabaseManager implements ShardManagement {
     public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            currentTransactionalDataSource.init(new AplDbVersion());
+            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
         }
         return currentTransactionalDataSource;
     }
@@ -91,8 +94,11 @@ public class DatabaseManager implements ShardManagement {
     public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
-        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-        currentTransactionalDataSource.init(new AplDbVersion());
+        // init internal data source stuff only one time till next shutdown() will be called
+        if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
+            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+        }
 /*
         List<String> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
@@ -104,6 +110,11 @@ public class DatabaseManager implements ShardManagement {
             log.debug("Prepared '{}' shard...", shardName);
         }
 */
+    }
+
+    @Produces
+    public Jdbi getJdbi() {
+        return jdbi;
     }
 
     @Override
@@ -156,6 +167,7 @@ public class DatabaseManager implements ShardManagement {
         if (currentTransactionalDataSource != null) {
             currentTransactionalDataSource.shutdown();
             currentTransactionalDataSource = null;
+            jdbi = null;
         }
     }
 

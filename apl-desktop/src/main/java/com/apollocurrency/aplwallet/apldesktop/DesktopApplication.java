@@ -64,7 +64,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-import netscape.javascript.JSObject;
+//import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -331,7 +331,7 @@ public class DesktopApplication extends Application {
         private static volatile WebEngine webEngine;
         private static volatile WebEngine webEngine2;
         private static MainApplication instance = new MainApplication();
-        private JSObject ars;
+//        private JSObject ars;
         private volatile long updateTime;
         private JavaScriptBridge javaScriptBridge;
       
@@ -398,12 +398,14 @@ public class DesktopApplication extends Application {
                             LOG.debug("loadWorker state change ignored");
                             return;
                         }
+/*
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         javaScriptBridge = new JavaScriptBridge(this); // Must be a member variable to prevent gc
                         window.setMember("java", javaScriptBridge);
                         Locale locale = Locale.getDefault();
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
+*/
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
 
                         mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());

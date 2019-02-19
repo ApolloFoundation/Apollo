@@ -22,10 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import org.h2.jdbcx.JdbcConnectionPool;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
+import org.jdbi.v3.core.ConnectionException;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.h2.H2DatabasePlugin;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
 import java.io.PrintWriter;
@@ -33,6 +40,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 /**
@@ -117,7 +125,7 @@ public class DataSourceWrapper implements DataSource {
         String dbUrl = dbProperties.getDbUrl();
         if (StringUtils.isBlank(dbUrl)) {
             String dbFileName = dbProperties.getDbFileName();
-            dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
+            dbUrl = String.format("jdbc:%s:file:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
         }
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
@@ -126,6 +134,7 @@ public class DataSourceWrapper implements DataSource {
             dbUrl += ";CACHE_SIZE=" + maxCacheSize;
         }
         this.dbUrl = dbUrl;
+        dbProperties.dbUrl(dbUrl);
         this.dbUsername = dbProperties.getDbUsername();
         this.dbPassword = dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
@@ -138,7 +147,7 @@ public class DataSourceWrapper implements DataSource {
      * Constructor creates internal DataSource.
      * @param dbVersion database version related information
      */
-    public void init(DbVersion dbVersion) {
+    public Jdbi init(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -162,8 +171,26 @@ public class DataSourceWrapper implements DataSource {
             throw new RuntimeException(e.toString(), e);
         }
         dbVersion.init(this);
+
+        log.debug("Attempting to create Jdbi instance...");
+        Jdbi jdbi = Jdbi.create(dataSource);
+        jdbi.installPlugin(new SqlObjectPlugin());
+        jdbi.installPlugin(new H2DatabasePlugin());
+        jdbi.registerArgument(new BigIntegerArgumentFactory());
+
+        log.debug("Attempting to open Jdbi handler to database..");
+        try {
+            Integer result = jdbi.withHandle(handle ->
+                    handle.createQuery("select X from dual;")
+                            .mapTo(Integer.class).findOnly());
+            log.debug("check SQL result ? = {}", result);
+        } catch (ConnectionException e) {
+            log.error("Error on opening database connection", e);
+            throw e;
+        }
         initialized = true;
         shutdown = false;
+        return jdbi;
     }
 
     public void shutdown() {
@@ -207,8 +234,8 @@ public class DataSourceWrapper implements DataSource {
 
     protected Connection getPooledConnection() throws SQLException {
         Connection con = dataSource.getConnection();
-//        int activeConnections = dataSource.getActiveConnections();
         int activeConnections = jmxBean.getActiveConnections();
+//        int activeConnections = dataSource.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
             log.debug("Used/Maximum connections from Pool '{}'/'{}'",

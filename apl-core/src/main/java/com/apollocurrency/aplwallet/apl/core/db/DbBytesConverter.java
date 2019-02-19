@@ -20,7 +20,7 @@ import java.sql.Statement;
 public class DbBytesConverter {
     public static final String BYTE_TO_LONG_DB_FUNCTION_NAME = "bytes_to_long";
     public static final String BYTE_TO_LONG_METHOD_NAME = "getLong";
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static DatabaseManager databaseManager;
 
     public static long getLong(byte[] bytes, int startPosition) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
@@ -30,6 +30,9 @@ public class DbBytesConverter {
     }
 
     public static void init() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
         try (Connection connection = databaseManager.getDataSource().getConnection();
              Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("DROP ALIAS IF EXISTS " + BYTE_TO_LONG_DB_FUNCTION_NAME);

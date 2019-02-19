@@ -6,4 +6,7 @@
     <decorators>
         <class>org.jboss.weld.environment.se.threading.RunnableDecorator</class>
     </decorators>
+    <interceptors>
+        <class>com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor</class>
+    </interceptors>
 </beans>
