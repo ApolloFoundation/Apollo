@@ -91,8 +91,11 @@ public class DatabaseManager implements ShardManagement {
     public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
-        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-        currentTransactionalDataSource.init(new AplDbVersion());
+        // init internal data source stuff only one time till next shutdown() will be called
+        if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
+            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+            currentTransactionalDataSource.init(new AplDbVersion());
+        }
 /*
         List<String> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
