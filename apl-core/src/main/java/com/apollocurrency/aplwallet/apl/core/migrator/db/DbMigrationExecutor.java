@@ -34,7 +34,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
     @Inject
     public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider,
                                DbInfoExtractor dbInfoExtractor, DatabaseManager databaseManager, FullTextSearchService fullTextSearchProvider) {
-        super(propertiesHolder, "db", true);
+        super(propertiesHolder, databaseManager, "db", true);
         this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
         this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
         this.fullTextSearchProvider = Objects.requireNonNull(fullTextSearchProvider, "Fulltext search service cannot be null");

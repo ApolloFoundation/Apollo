@@ -63,7 +63,7 @@ public abstract class MigrationExecutor {
 //    set up by perfomMigration method to perform cleanup in future
     private List<Path> migratedPaths;
 
-    public MigrationExecutor(PropertiesHolder holder, String migrationItemName, boolean autoCleanup) {
+    public MigrationExecutor(PropertiesHolder holder, DatabaseManager databaseManagerParam, String migrationItemName, boolean autoCleanup) {
         Objects.requireNonNull(holder, "Properties holder cannot be null");
         StringValidator.requireNonBlank(migrationItemName, "Option prefix cannot be null or blank");
 
@@ -72,7 +72,13 @@ public abstract class MigrationExecutor {
         this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
         this.migrationItemName = migrationItemName;
-        databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (databaseManager == null) {
+            if (databaseManagerParam != null) {
+                databaseManager = databaseManagerParam;
+            } else {
+                databaseManager = CDI.current().select(DatabaseManager.class).get();
+            }
+        }
     }
 
     protected abstract List<Path> getSrcPaths();

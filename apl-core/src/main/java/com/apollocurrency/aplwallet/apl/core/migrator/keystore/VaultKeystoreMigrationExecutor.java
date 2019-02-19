@@ -26,7 +26,7 @@ public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
 
     @Inject
     public VaultKeystoreMigrationExecutor(PropertiesHolder holder) {
-        super(holder, "vaultkeystore", false);
+        super(holder, null,  "vaultkeystore", false);
     }
 
 
