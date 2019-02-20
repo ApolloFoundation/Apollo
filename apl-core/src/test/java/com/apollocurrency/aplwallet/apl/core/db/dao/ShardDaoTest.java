@@ -45,14 +45,11 @@ import org.junit.jupiter.api.Test;
 @EnableWeld
 class ShardDaoTest {
 
-//    @Inject
     private static PropertiesHolder propertiesHolder;
-//    @Inject
     private DbProperties dbProperties;
     @Inject
     private DaoConfig daoConfig;
     private static DatabaseManager databaseManager;
-//    @Inject
     private static Jdbi jdbi;
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
@@ -65,7 +62,6 @@ class ShardDaoTest {
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             TransactionalDataSource.class, DatabaseManager.class)
 //            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-//            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .build();
 
     @Inject
@@ -74,25 +70,16 @@ class ShardDaoTest {
     @BeforeAll
     static void setup() {
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
                 false,
                 "./unit-test-db",
                 Constants.APPLICATION_DIR_NAME + ".properties",
                 Collections.emptyList());
-//        propertiesLoader.load();
         propertiesHolder = new PropertiesHolder();
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         databaseManager = new DatabaseManager(dbConfig.getDbConfig(), propertiesHolder);
-/*
-        jdbi = databaseManager.getJdbi();
-        JdbiHandleFactory jdbiHandleFactory = CDI.current().select(JdbiHandleFactory.class).get();
-        jdbiHandleFactory.setJdbi(jdbi);
-        DaoConfig daoConfig = CDI.current().select(DaoConfig.class).get();
-        daoConfig.setJdbiHandleFactory(jdbiHandleFactory);
-*/
     }
 
     @AfterAll
@@ -103,10 +90,8 @@ class ShardDaoTest {
     @BeforeEach
     void setUp() {
         jdbi = databaseManager.getJdbi();
-//        JdbiHandleFactory jdbiHandleFactory;
         jdbiHandleFactory.setJdbi(jdbi);
         daoConfig.setJdbiHandleFactory(jdbiHandleFactory);
-//        dao = CDI.current().select(ShardDao.class).get();
     }
 
     @AfterEach
