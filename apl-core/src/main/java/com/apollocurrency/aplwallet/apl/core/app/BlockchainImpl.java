@@ -150,10 +150,12 @@ public class BlockchainImpl implements Blockchain {
         return lastBlock.get().getId() == blockId || lookupBlockDao().hasBlock(blockId);
     }
 
+/*
     @Override
     public DbIterator<Block> getAllBlocks() {
         return lookupBlockDao().getAllBlocks();
     }
+*/
 
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
@@ -163,10 +165,12 @@ public class BlockchainImpl implements Blockchain {
         return lookupBlockDao().getBlocks(calculatedFrom, calculatedTo);
     }
 
+/*
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp) {
         return getBlocks(accountId, timestamp, 0, -1);
     }
+*/
 
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
@@ -198,10 +202,12 @@ public class BlockchainImpl implements Blockchain {
         return lookupBlockDao().getBlockCount(accountId);
     }
 
+/*
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
         return lookupBlockDao().getBlocks(con, pstmt);
     }
+*/
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {

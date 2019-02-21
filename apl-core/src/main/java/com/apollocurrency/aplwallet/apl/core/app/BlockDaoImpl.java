@@ -235,6 +235,7 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+/*
     @Override
     public DbIterator<Block> getAllBlocks() {
         Connection con = null;
@@ -248,6 +249,7 @@ public class BlockDaoImpl implements BlockDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
+*/
 
 
     @Override

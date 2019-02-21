@@ -62,11 +62,11 @@ public interface Blockchain {
 
     boolean hasBlock(long blockId);
 
-    DbIterator<? extends Block> getAllBlocks();
+//    DbIterator<? extends Block> getAllBlocks();
 
     DbIterator<Block> getBlocks(int from, int to);
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp);
+//    DbIterator<Block> getBlocks(long accountId, int timestamp);
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
@@ -80,7 +80,7 @@ public interface Blockchain {
 
     int getBlockCount(long accountId);
 
-    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
+//    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
