@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import javax.inject.Inject;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -75,7 +75,7 @@ class BlockIndexDaoTest {
 
     @AfterAll
     static void cleanup() {
-        databaseManager.shutdown();
+//        databaseManager.shutdown();
     }
 
     @BeforeEach

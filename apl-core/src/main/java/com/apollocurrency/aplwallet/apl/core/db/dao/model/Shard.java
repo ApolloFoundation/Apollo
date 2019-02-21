@@ -57,7 +57,7 @@ public class Shard {
         }
 
         public Shard build() {
-            return new Shard(/*shardId, */shardHash);
+            return new Shard(shardId, shardHash);
         }
     }
 }

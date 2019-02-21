@@ -3,10 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -22,22 +19,17 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.rometools.rome.io.impl.PropertiesLoader;
-import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,7 +76,7 @@ class ShardDaoTest {
 
     @AfterAll
     static void cleanup() {
-        databaseManager.shutdown();
+//        databaseManager.shutdown();
     }
 
     @BeforeEach
@@ -102,8 +94,29 @@ class ShardDaoTest {
         List<Shard> result = dao.getAllShard();
         assertNotNull(result);
         assertEquals(1, result.size());
+        assertNotNull(result.get(0).getShardId());
+        assertNotNull(result.get(0).getShardHash());
 
         long count = dao.countShard();
+        assertEquals(1, count);
+
+        Shard shard2 = new Shard(2L, "0000002");
+        dao.saveShard(shard2);
+
+        Shard found1 = dao.getShardById(1L);
+        assertNotNull(found1);
+        assertNotNull(found1.getShardId());
+        assertEquals("0000001", found1.getShardHash());
+
+        found1.setShardHash("000000123");
+        dao.updateShard(found1);
+
+        Shard found3 = dao.getShardById(1L);
+        assertNotNull(found3);
+        assertEquals("000000123", found3.getShardHash());
+
+        dao.hardDeleteShard(1L);
+        count = dao.countShard();
         assertEquals(1, count);
 
         dao.hardDeleteAllShards();
