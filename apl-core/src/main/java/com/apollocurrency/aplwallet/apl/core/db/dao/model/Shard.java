@@ -10,8 +10,12 @@ public class Shard {
     public Shard() {
     }
 
-    public Shard(/*Long shardId,*/ String shardHash) {
-//        this.shardId = shardId;
+    public Shard(String shardHash) {
+        this.shardHash = shardHash;
+    }
+
+    public Shard(Long shardId, String shardHash) {
+        this.shardId = shardId;
         this.shardHash = shardHash;
     }
 
