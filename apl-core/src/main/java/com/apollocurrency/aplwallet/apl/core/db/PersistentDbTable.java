@@ -22,15 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 public abstract class PersistentDbTable<T> extends EntityDbTable<T> {
 
-    protected PersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected PersistentDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, false, null);
     }
 
-    protected PersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected PersistentDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, false, fullTextSearchColumns);
     }
 
-    PersistentDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    PersistentDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 

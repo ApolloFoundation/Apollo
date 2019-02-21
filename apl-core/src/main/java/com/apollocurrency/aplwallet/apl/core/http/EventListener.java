@@ -41,17 +41,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDb;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -73,7 +74,7 @@ import org.slf4j.Logger;
  *
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
  */
-public class EventListener implements Runnable, AsyncListener, TransactionalDb.TransactionCallback {
+public class EventListener implements Runnable, AsyncListener, TransactionCallback {
     private static final Logger LOG = getLogger(EventListener.class);
     private static NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
@@ -90,6 +91,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionalDb.T
 
     /** Transaction processor */
     static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     /** Active event users */
     public static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();
@@ -779,11 +781,12 @@ public class EventListener implements Runnable, AsyncListener, TransactionalDb.T
              */
             protected void dispatch(PendingEvent pendingEvent) {
                 lock.lock();
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
                 try {
-                    if (waitTransaction() && Db.getDb().isInTransaction()) {
+                    if (waitTransaction() && dataSource.isInTransaction()) {
                         pendingEvent.setThread(Thread.currentThread());
                         dbEvents.add(pendingEvent);
-                        Db.getDb().registerCallback(owner);
+                        dataSource.registerCallback(owner);
                     } else {
                         pendingEvents.add(pendingEvent);
                         if (!pendingWaits.isEmpty() && !dispatched) {

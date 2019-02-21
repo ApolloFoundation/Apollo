@@ -9,10 +9,12 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Singleton;
 
 /**
  * Holds all available chains
  */
+@Singleton
 public class ChainsConfigHolder {
     private Map<UUID, Chain> chains;
 

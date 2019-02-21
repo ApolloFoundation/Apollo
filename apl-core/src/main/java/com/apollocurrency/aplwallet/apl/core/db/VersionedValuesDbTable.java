@@ -33,11 +33,11 @@ import java.util.List;
 
 public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
 
-    protected VersionedValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 
-    protected VersionedValuesDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion) {
+    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
         super(table, dbKeyFactory, multiversion);
     }
 
@@ -45,13 +45,14 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         if (t == null) {
             return false;
         }
-        if (!db.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         DbKey dbKey = dbKeyFactory.newKey(t);
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         int height = blockchain.getHeight();
-        try (Connection con = db.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
@@ -91,7 +92,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            db.getCache(table).remove(dbKey);
+            dataSource.getCache(table).remove(dbKey);
         }
     }
     

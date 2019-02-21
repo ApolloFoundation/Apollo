@@ -22,11 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -94,7 +96,7 @@ public final class Alias {
         }
     }
 
-    private static final DbKey.LongKeyFactory<Alias> aliasDbKeyFactory = new DbKey.LongKeyFactory<Alias>("id") {
+    private static final LongKeyFactory<Alias> aliasDbKeyFactory = new LongKeyFactory<Alias>("id") {
 
         @Override
         public DbKey newKey(Alias alias) {
@@ -122,7 +124,7 @@ public final class Alias {
 
     };
 
-    private static final DbKey.LongKeyFactory<Offer> offerDbKeyFactory = new DbKey.LongKeyFactory<Offer>("id") {
+    private static final LongKeyFactory<Offer> offerDbKeyFactory = new LongKeyFactory<Offer>("id") {
 
         @Override
         public DbKey newKey(Offer offer) {
@@ -173,7 +175,7 @@ public final class Alias {
         return offerTable.getBy(new DbClause.LongClause("id", alias.getId()).and(new DbClause.LongClause("price", DbClause.Op.NE, Long.MAX_VALUE)));
     }
 
-    static void deleteAlias(final String aliasName) {
+    public static void deleteAlias(final String aliasName) {
         final Alias alias = getAlias(aliasName);
         final Offer offer = Alias.getOffer(alias);
         if (offer != null) {
@@ -183,7 +185,7 @@ public final class Alias {
         aliasTable.delete(alias);
     }
 
-    static void addOrUpdateAlias(Transaction transaction, Attachment.MessagingAliasAssignment attachment) {
+    public static void addOrUpdateAlias(Transaction transaction, MessagingAliasAssignment attachment) {
         Alias alias = getAlias(attachment.getAliasName());
         if (alias == null) {
             alias = new Alias(transaction, attachment);
@@ -195,7 +197,7 @@ public final class Alias {
         aliasTable.insert(alias);
     }
 
-    static void sellAlias(Transaction transaction, Attachment.MessagingAliasSell attachment) {
+    public static void sellAlias(Transaction transaction, MessagingAliasSell attachment) {
         final String aliasName = attachment.getAliasName();
         final long priceATM = attachment.getPriceATM();
         final long buyerId = transaction.getRecipientId();
@@ -215,7 +217,7 @@ public final class Alias {
 
     }
 
-    static void changeOwner(long newOwnerId, String aliasName) {
+    public static void changeOwner(long newOwnerId, String aliasName) {
         Alias alias = getAlias(aliasName);
         alias.accountId = newOwnerId;
         alias.timestamp = blockchain.getLastBlockTimestamp();
@@ -227,7 +229,7 @@ public final class Alias {
         }
     }
 
-    static void init() {}
+    public static void init() {}
 
 
     private long accountId;
@@ -237,7 +239,7 @@ public final class Alias {
     private String aliasURI;
     private int timestamp;
 
-    private Alias(Transaction transaction, Attachment.MessagingAliasAssignment attachment) {
+    private Alias(Transaction transaction, MessagingAliasAssignment attachment) {
         this.id = transaction.getId();
         this.dbKey = aliasDbKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();

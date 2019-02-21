@@ -23,12 +23,13 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -59,7 +60,7 @@ public final class LeaseBalance extends CreateTransaction {
             response.put("errorDescription", "recipient account does not have public key");
             return response;
         }
-        Attachment attachment = new Attachment.AccountControlEffectiveBalanceLeasing(period);
+        Attachment attachment = new AccountControlEffectiveBalanceLeasing(period);
         return createTransaction(req, account, recipient, 0, attachment);
 
     }

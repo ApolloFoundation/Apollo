@@ -20,13 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
@@ -37,6 +42,7 @@ import java.sql.SQLException;
 public abstract class Order {
 
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager;
 
     private final long id;
     private final long accountId;
@@ -46,7 +52,7 @@ public abstract class Order {
     private final short transactionIndex;
     private final int transactionHeight;
     private long quantityATU;
-    private Order(Transaction transaction, Attachment.ColoredCoinsOrderPlacement attachment) {
+    private Order(Transaction transaction, ColoredCoinsOrderPlacementAttachment attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.assetId = attachment.getAssetId();
@@ -194,9 +200,16 @@ public abstract class Order {
                 + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
     }
 
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
+
     public static final class Ask extends Order {
 
-        private static final DbKey.LongKeyFactory<Ask> askOrderDbKeyFactory = new DbKey.LongKeyFactory<Ask>("id") {
+        private static final LongKeyFactory<Ask> askOrderDbKeyFactory = new LongKeyFactory<Ask>("id") {
 
             @Override
             public DbKey newKey(Ask ask) {
@@ -206,6 +219,7 @@ public abstract class Order {
         };
 
         private static final VersionedEntityDbTable<Ask> askOrderTable = new VersionedEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
+
             @Override
             protected Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Ask(rs, dbKey);
@@ -224,7 +238,7 @@ public abstract class Order {
         };
         private final DbKey dbKey;
 
-        private Ask(Transaction transaction, Attachment.ColoredCoinsAskOrderPlacement attachment) {
+        private Ask(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
             super(transaction, attachment);
             this.dbKey = askOrderDbKeyFactory.newKey(super.id);
         }
@@ -265,7 +279,7 @@ public abstract class Order {
         }
 
         private static Ask getNextOrder(long assetId) {
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM ask_order WHERE asset_id = ? "
                          + "AND latest = TRUE ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);
@@ -278,17 +292,17 @@ public abstract class Order {
             }
         }
 
-        static void addOrder(Transaction transaction, Attachment.ColoredCoinsAskOrderPlacement attachment) {
+        public static void addOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
             Ask order = new Ask(transaction, attachment);
             askOrderTable.insert(order);
             matchOrders(attachment.getAssetId());
         }
 
-        static void removeOrder(long orderId) {
+        public static void removeOrder(long orderId) {
             askOrderTable.delete(getAskOrder(orderId));
         }
 
-        static void init() {}
+        public static void init() {}
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);
@@ -316,7 +330,7 @@ public abstract class Order {
 
     public static final class Bid extends Order {
 
-        private static final DbKey.LongKeyFactory<Bid> bidOrderDbKeyFactory = new DbKey.LongKeyFactory<Bid>("id") {
+        private static final LongKeyFactory<Bid> bidOrderDbKeyFactory = new LongKeyFactory<Bid>("id") {
 
             @Override
             public DbKey newKey(Bid bid) {
@@ -345,7 +359,7 @@ public abstract class Order {
         };
         private final DbKey dbKey;
 
-        private Bid(Transaction transaction, Attachment.ColoredCoinsBidOrderPlacement attachment) {
+        private Bid(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
             super(transaction, attachment);
             this.dbKey = bidOrderDbKeyFactory.newKey(super.id);
         }
@@ -386,7 +400,7 @@ public abstract class Order {
         }
 
         private static Bid getNextOrder(long assetId) {
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM bid_order WHERE asset_id = ? "
                          + "AND latest = TRUE ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);
@@ -399,17 +413,17 @@ public abstract class Order {
             }
         }
 
-        static void addOrder(Transaction transaction, Attachment.ColoredCoinsBidOrderPlacement attachment) {
+        public static void addOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
             Bid order = new Bid(transaction, attachment);
             bidOrderTable.insert(order);
             matchOrders(attachment.getAssetId());
         }
 
-        static void removeOrder(long orderId) {
+        public static void removeOrder(long orderId) {
             bidOrderTable.delete(getBidOrder(orderId));
         }
 
-        static void init() {}
+        public static void init() {}
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);

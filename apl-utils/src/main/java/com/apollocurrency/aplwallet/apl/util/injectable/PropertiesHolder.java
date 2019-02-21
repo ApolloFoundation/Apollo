@@ -34,6 +34,9 @@ public class PropertiesHolder {
 
     public int getIntProperty(String name, int defaultValue) {
         try {
+            if (properties == null) {
+                return defaultValue;
+            }
             int result = Integer.parseInt(properties.getProperty(name));
   //          LOG.debug(name + " = \"" + result + "\"");
             return result;
@@ -56,6 +59,9 @@ public class PropertiesHolder {
     }
 
     public String getStringProperty(String name, String defaultValue, boolean doNotLog, String encoding) {
+        if (properties == null) {
+            return defaultValue;
+        }
         String value = properties.getProperty(name);
         if (value != null && ! "".equals(value)) {
            // LOG.debug(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
@@ -96,6 +102,9 @@ public class PropertiesHolder {
     }
 
     public boolean getBooleanProperty(String name, boolean defaultValue) {
+        if (properties == null) {
+            return defaultValue;
+        }
         String value = properties.getProperty(name);
         if (Boolean.TRUE.toString().equals(value)) {
             // LOG.debug(name + " = \"true\"");

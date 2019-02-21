@@ -21,7 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -61,7 +62,7 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
         if (accountIds.isEmpty()) {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> transaction.getType() != TransactionType.Payment.PRIVATE,
+                    transaction -> transaction.getType() != Payment.PRIVATE,
                     firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();
@@ -71,7 +72,7 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
         } else {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
                     lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> transaction.getType() != TransactionType.Payment.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
+                    transaction -> transaction.getType() != Payment.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
                             accountIds.contains(transaction.getRecipientId())),
                     firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {

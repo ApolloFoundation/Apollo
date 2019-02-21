@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -35,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -43,20 +44,39 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Inject;
 
 @Singleton
 public class BlockchainImpl implements Blockchain {
 
-    private final BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
-    private final TransactionDao transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private BlockDao blockDao;
+    private TransactionDao transactionDao;// = CDI.current().select(TransactionDaoImpl.class).get();
+    private BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
+    private EpochTime timeService; // = CDI.current().select(EpochTime.class).get();
+    private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
 
-    public BlockchainImpl() {}
+    public BlockchainImpl() {        
+    }
+    
+    @Inject
+    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService, PropertiesHolder propertiesHolder) {
+        this.blockDao = blockDao;
+        this.transactionDao = transactionDao;
+        this.blockchainConfig = blockchainConfig;
+        this.timeService = timeService;
+        this.propertiesHolder = propertiesHolder;
+    }
+    
 
     private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
+
+    private BlockDao lookupBlockDao() {
+        if (blockDao == null){
+            blockDao = CDI.current().select(BlockDaoImpl.class).get();
+        }
+        return blockDao;
+    }
 
     @Override
     public void readLock() {
@@ -113,7 +133,7 @@ public class BlockchainImpl implements Blockchain {
         if (timestamp >= block.getTimestamp()) {
             return block;
         }
-        return blockDao.findLastBlock(timestamp);
+        return lookupBlockDao().findLastBlock(timestamp);
     }
 
     @Override
@@ -122,17 +142,17 @@ public class BlockchainImpl implements Blockchain {
         if (block.getId() == blockId) {
             return block;
         }
-        return blockDao.findBlock(blockId);
+        return lookupBlockDao().findBlock(blockId);
     }
 
     @Override
     public boolean hasBlock(long blockId) {
-        return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId);
+        return lastBlock.get().getId() == blockId || lookupBlockDao().hasBlock(blockId);
     }
 
     @Override
     public DbIterator<Block> getAllBlocks() {
-        return blockDao.getAllBlocks();
+        return lookupBlockDao().getAllBlocks();
     }
 
     @Override
@@ -140,7 +160,7 @@ public class BlockchainImpl implements Blockchain {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(calculatedFrom, calculatedTo);
+        return lookupBlockDao().getBlocks(calculatedFrom, calculatedTo);
     }
 
     @Override
@@ -150,42 +170,43 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
-        return blockDao.getBlocks(accountId, timestamp, from, to);
+        return lookupBlockDao().getBlocks(accountId, timestamp, from, to);
     }
 
     @Override
     public Block findLastBlock() {
-        return blockDao.findLastBlock();
+        return lookupBlockDao().findLastBlock();
     }
 
     @Override
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
-        return blockDao.loadBlock(con, rs, loadTransactions);
+        return lookupBlockDao().loadBlock(con, rs, loadTransactions);
     }
 
     @Override
     public void saveBlock(Connection con, Block block) {
-        blockDao.saveBlock(con, block);
+        lookupBlockDao().saveBlock(con, block);
     }
 
     @Override
     public void commit(Block block) {
-        blockDao.commit(block);
+        lookupBlockDao().commit(block);
     }
 
     @Override
     public int getBlockCount(long accountId) {
-        return blockDao.getBlockCount(accountId);
+        return lookupBlockDao().getBlockCount(accountId);
     }
 
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
-        return blockDao.getBlocks(con, pstmt);
+        return lookupBlockDao().getBlocks(con, pstmt);
     }
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
         // Check the block cache
+        lookupBlockDao();
         List<Long> result = new ArrayList<>(blockDao.getBlockCacheSize());
         synchronized(blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
@@ -209,6 +230,7 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
+        lookupBlockDao();
         List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
         synchronized(blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
@@ -232,6 +254,7 @@ public class BlockchainImpl implements Blockchain {
             return Collections.emptyList();
         }
         // Check the block cache
+        lookupBlockDao();
         List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
         synchronized(blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
@@ -259,7 +282,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        return blockDao.findBlockIdAtHeight(height);
+        return lookupBlockDao().findBlockIdAtHeight(height);
     }
 
     @Override
@@ -271,7 +294,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block;
         }
-        return blockDao.findBlockAtHeight(height);
+        return lookupBlockDao().findBlockAtHeight(height);
     }
 
     @Override
@@ -280,27 +303,27 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return getBlockAtHeight(0);
         }
-        return blockDao.findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
+        return lookupBlockDao().findBlockAtHeight(Math.max(block.getHeight() - 720, 0));
     }
 
     @Override
     public void deleteBlocksFromHeight(int height) {
-        blockDao.deleteBlocksFromHeight(height);
+        lookupBlockDao().deleteBlocksFromHeight(height);
     }
 
     @Override
     public Block deleteBlocksFrom(long blockId) {
-        return blockDao.deleteBlocksFrom(blockId);
+        return lookupBlockDao().deleteBlocksFrom(blockId);
     }
 
     @Override
     public void deleteAll() {
-        blockDao.deleteAll();
+        lookupBlockDao().deleteAll();
     }
 
     @Override
     public Map<Long, Transaction> getTransactionCache() {
-        return blockDao.getTransactionCache();
+        return lookupBlockDao().getTransactionCache();
     }
 
     @Override
@@ -454,7 +477,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public Set<Long> getBlockGenerators(int startHeight) {
-        return blockDao.getBlockGenerators(startHeight);
+        return lookupBlockDao().getBlockGenerators(startHeight);
     }
 
 }

@@ -22,11 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,7 +37,7 @@ import java.sql.SQLException;
 
 public final class Vote {
 
-    private static final DbKey.LongKeyFactory<Vote> voteDbKeyFactory = new DbKey.LongKeyFactory<Vote>("id") {
+    private static final LongKeyFactory<Vote> voteDbKeyFactory = new LongKeyFactory<Vote>("id") {
         @Override
         public DbKey newKey(Vote vote) {
             return vote.dbKey;
@@ -57,7 +59,7 @@ public final class Vote {
         @Override
         public void trim(int height) {
             super.trim(height);
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = databaseManager.getDataSource().getConnection();
                  DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                 for (Poll poll : polls) {
@@ -87,13 +89,13 @@ public final class Vote {
         return voteTable.getBy(clause);
     }
 
-    static Vote addVote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
+    public static Vote addVote(Transaction transaction, MessagingVoteCasting attachment) {
         Vote vote = new Vote(transaction, attachment);
         voteTable.insert(vote);
         return vote;
     }
 
-    static void init() {}
+    public static void init() {}
 
 
     private final long id;
@@ -102,7 +104,7 @@ public final class Vote {
     private final long voterId;
     private final byte[] voteBytes;
 
-    private Vote(Transaction transaction, Attachment.MessagingVoteCasting attachment) {
+    private Vote(Transaction transaction, MessagingVoteCasting attachment) {
         this.id = transaction.getId();
         this.dbKey = voteDbKeyFactory.newKey(this.id);
         this.pollId = attachment.getPollId();

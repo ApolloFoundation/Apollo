@@ -22,13 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -48,6 +50,14 @@ public final class PhasingPoll extends AbstractPoll {
     public static final Set<HashFunction> acceptedHashFunctions =
             Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager;
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
 
     public static HashFunction getHashFunction(byte code) {
         try {
@@ -112,7 +122,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    private static final DbKey.LongKeyFactory<PhasingPoll> phasingPollDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("id") {
+    private static final LongKeyFactory<PhasingPoll> phasingPollDbKeyFactory = new LongKeyFactory<PhasingPoll>("id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey;
@@ -134,7 +144,7 @@ public final class PhasingPoll extends AbstractPoll {
         @Override
         public void trim(int height) {
             super.trim(height);
-            try (Connection con = Db.getDb().getConnection();
+            try (Connection con = lookupDataSource().getConnection();
                  DbIterator<PhasingPoll> pollsToTrim = phasingPollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
                  PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");
                  PreparedStatement pstmt2 = con.prepareStatement("DELETE FROM phasing_poll_voter WHERE transaction_id = ?");
@@ -157,7 +167,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<PhasingPoll> votersDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("transaction_id") {
+    private static final LongKeyFactory<PhasingPoll> votersDbKeyFactory = new LongKeyFactory<PhasingPoll>("transaction_id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
@@ -165,6 +175,7 @@ public final class PhasingPoll extends AbstractPoll {
     };
 
     private static final ValuesDbTable<PhasingPoll, Long> votersTable = new ValuesDbTable<PhasingPoll, Long>("phasing_poll_voter", votersDbKeyFactory) {
+
 
         @Override
         protected Long load(Connection con, ResultSet rs) throws SQLException {
@@ -184,7 +195,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new DbKey.LongKeyFactory<PhasingPoll>("transaction_id") {
+    private static final LongKeyFactory<PhasingPoll> linkedTransactionDbKeyFactory = new LongKeyFactory<PhasingPoll>("transaction_id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
             return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
@@ -213,7 +224,7 @@ public final class PhasingPoll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<PhasingPollResult> resultDbKeyFactory = new DbKey.LongKeyFactory<PhasingPollResult>("id") {
+    private static final LongKeyFactory<PhasingPollResult> resultDbKeyFactory = new LongKeyFactory<PhasingPollResult>("id") {
         @Override
         public DbKey newKey(PhasingPollResult phasingPollResult) {
             return phasingPollResult.dbKey;
@@ -249,7 +260,7 @@ public final class PhasingPoll extends AbstractPoll {
     static DbIterator<Transaction> getFinishingTransactions(int height) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
@@ -264,7 +275,7 @@ public final class PhasingPoll extends AbstractPoll {
     public static DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* "
                     + "FROM transaction, phasing_poll_voter, phasing_poll "
                     + "LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id "
@@ -292,7 +303,7 @@ public final class PhasingPoll extends AbstractPoll {
 
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* " +
                     "FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.holding_id = ? " +
@@ -322,7 +333,7 @@ public final class PhasingPoll extends AbstractPoll {
     public static DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         Connection con = null;
         try {
-            con = Db.getDb().getConnection();
+            con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                     " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
@@ -343,7 +354,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public static int getAccountPhasedTransactionCount(long accountId) {
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = lookupDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                      " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
@@ -363,7 +374,7 @@ public final class PhasingPoll extends AbstractPoll {
     }
 
     public static List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
-        try (Connection con = Db.getDb().getConnection();
+        try (Connection con = lookupDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                      "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
@@ -381,8 +392,9 @@ public final class PhasingPoll extends AbstractPoll {
         }
     }
 
-    static long getSenderPhasedTransactionFees(long accountId) {
-        try (Connection con = Db.getDb().getConnection();
+    public static long getSenderPhasedTransactionFees(long accountId) {
+        try (Connection con = lookupDataSource().getConnection();
+
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                      " WHERE phasing_poll.id = transaction.id AND transaction.sender_id = ? " +

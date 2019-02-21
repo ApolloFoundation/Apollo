@@ -100,7 +100,7 @@ public class UPnP {
     public synchronized void deletePort(int port) {
 
         try {
-            if (gateway.deletePortMapping(port, "TCP")) {
+            if (gateway != null && gateway.deletePortMapping(port, "TCP")) {
                 LOG.debug("Mapping deleted for port " + port);
             } else {
                 LOG.debug("Unable to delete mapping for port " + port);

@@ -41,8 +41,6 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
     private boolean hasNext;
     private boolean iterated;
 
-    private boolean hasPrev;
-
     public DbIterator(Connection con, PreparedStatement pstmt, ResultSetReader<T> rsReader) {
         this.con = con;
         this.pstmt = pstmt;
@@ -97,14 +95,5 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
         }
         iterated = true;
         return this;
-    }
-
-    protected T prev() {
-        //implementation required
-        return null;
-    }
-
-    protected boolean hasPrev() {
-        return hasPrev;
     }
 }

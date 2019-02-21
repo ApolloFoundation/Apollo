@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.Connection;
 import java.sql.SQLException;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 public final class LuceneReindex extends AbstractAPIRequestHandler {
-
+    private final FullTextSearchService fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
     private static class LuceneReindexHolder {
         private static final LuceneReindex INSTANCE = new LuceneReindex();
     }
@@ -49,8 +49,8 @@ public final class LuceneReindex extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        try (Connection con = Db.getDb().getConnection()) {
-            FullTextTrigger.reindex(con);
+        try (Connection con = lookupDataSource().getConnection()) {
+            fullTextSearchProvider.reindexAll(con);
             response.put("done", true);
         } catch (SQLException e) {
             JSONData.putException(response, e);

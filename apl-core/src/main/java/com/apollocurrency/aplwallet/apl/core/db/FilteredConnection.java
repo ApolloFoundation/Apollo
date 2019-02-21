@@ -326,7 +326,9 @@ public class FilteredConnection implements Connection {
         return con.isWrapperFor(iface);
     }
 
+/*
     protected Statement getFileteredStatement(Statement stmt) {
         return factory.createStatement(stmt);
     }
+*/
 }

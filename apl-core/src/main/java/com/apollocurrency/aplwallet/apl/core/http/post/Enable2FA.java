@@ -6,7 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -36,9 +37,9 @@ public class Enable2FA extends AbstractAPIRequestHandler {
 
         TwoFactorAuthDetails twoFactorAuthDetails;
         if (params2FA.isPassphrasePresent()) {
-            twoFactorAuthDetails = Account.enable2FA(params2FA.getAccountId(), params2FA.getPassphrase());
+            twoFactorAuthDetails = Helper2FA.enable2FA(params2FA.getAccountId(), params2FA.getPassphrase());
         } else {
-            twoFactorAuthDetails = Account.enable2FA(params2FA.getSecretPhrase());
+            twoFactorAuthDetails = Helper2FA.enable2FA(params2FA.getSecretPhrase());
         }
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", params2FA.getAccountId());

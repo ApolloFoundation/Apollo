@@ -6,29 +6,29 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Named;
- import javax.inject.Singleton;
- import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+ import com.apollocurrency.aplwallet.apl.crypto.Convert;
+ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+ import com.apollocurrency.aplwallet.apl.util.JSON;
+ import com.apollocurrency.aplwallet.apl.util.NtpTime;
+ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.ObjectWriter;
+ import org.slf4j.Logger;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import org.slf4j.Logger;
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.time.Instant;
+ import java.time.OffsetDateTime;
+ import java.time.ZoneOffset;
+ import java.time.format.DateTimeFormatter;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.stream.Collectors;
+ import javax.enterprise.inject.spi.CDI;
+ import javax.inject.Inject;
+ import javax.inject.Named;
+ import javax.inject.Singleton;
 @Singleton
  public class VaultKeyStoreImpl implements VaultKeyStore {
      private static final Logger LOG = getLogger(VaultKeyStoreImpl.class);
@@ -37,11 +37,10 @@ import org.slf4j.Logger;
      private byte version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
-     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
+     private NtpTime ntpTime;
 
     @Inject
-    @Named("keystoreDirPath")
-    public VaultKeyStoreImpl(Path keystoreDir) {
+    public VaultKeyStoreImpl(@Named("keystoreDirPath")Path keystoreDir) {
         this(keystoreDir, DEFAULT_VERSION);
     }
 
@@ -51,6 +50,7 @@ import org.slf4j.Logger;
          }
          this.version = version;
          this.keystoreDirPath = keystoreDir;
+         this.ntpTime = CDI.current().select(NtpTime.class).get();
          if (!Files.exists(keystoreDirPath)) {
              try {
                  Files.createDirectories(keystoreDirPath);

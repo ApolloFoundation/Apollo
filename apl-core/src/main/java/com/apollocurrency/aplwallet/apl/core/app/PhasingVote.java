@@ -20,12 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +36,7 @@ import java.sql.SQLException;
 
 public class PhasingVote {
 
-    private static final DbKey.LinkKeyFactory<PhasingVote> phasingVoteDbKeyFactory = new DbKey.LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
+    private static final LinkKeyFactory<PhasingVote> phasingVoteDbKeyFactory = new LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
         @Override
         public DbKey newKey(PhasingVote vote) {
             return vote.dbKey;
@@ -67,7 +69,7 @@ public class PhasingVote {
         return phasingVoteTable.getCount(new DbClause.LongClause("transaction_id", phasedTransactionId));
     }
 
-    static void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
+    public static void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
         PhasingVote phasingVote = phasingVoteTable.get(phasingVoteDbKeyFactory.newKey(phasedTransactionId, voter.getId()));
         if (phasingVote == null) {
             phasingVote = new PhasingVote(transaction, voter, phasedTransactionId);
