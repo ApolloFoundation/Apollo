@@ -159,10 +159,12 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+/*
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
+*/
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
@@ -439,6 +441,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+/*
     @Override
     public DbIterator<Transaction> getAllTransactions() {
         Connection con = null;
@@ -452,6 +455,7 @@ public class TransactionDaoImpl implements TransactionDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
+*/
 
     @Override
     public DbIterator<Transaction> getTransactions(

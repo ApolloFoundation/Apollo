@@ -23,7 +23,7 @@ public interface TransactionDao {
 
     boolean hasTransaction(long transactionId, int height);
 
-    boolean hasTransactionByFullHash(byte[] fullHash);
+//    boolean hasTransactionByFullHash(byte[] fullHash);
 
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
 
@@ -41,7 +41,7 @@ public interface TransactionDao {
 
     int getTransactionCount();
 
-    DbIterator<Transaction> getAllTransactions();
+//    DbIterator<Transaction> getAllTransactions();
 
     DbIterator<Transaction> getTransactions(
             long accountId, int numberOfConfirmations, byte type, byte subtype,

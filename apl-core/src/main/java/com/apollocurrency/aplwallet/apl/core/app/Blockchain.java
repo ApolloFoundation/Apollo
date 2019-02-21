@@ -114,7 +114,7 @@ public interface Blockchain {
 
     boolean hasTransaction(long transactionId, int height);
 
-    boolean hasTransactionByFullHash(String fullHash);
+//    boolean hasTransactionByFullHash(String fullHash);
 
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
 
@@ -124,10 +124,10 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    DbIterator<Transaction> getAllTransactions();
+//    DbIterator<Transaction> getAllTransactions();
 
-    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-                                                      boolean includeExpiredPrunable);
+//    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
+//                                                      boolean includeExpiredPrunable);
 
     DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,

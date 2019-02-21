@@ -367,10 +367,12 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.hasTransaction(transactionId, height);
     }
 
+/*
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
         return transactionDao.hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
+*/
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
@@ -392,11 +394,14 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.getTransactionCount();
     }
 
+/*
     @Override
     public DbIterator<Transaction> getAllTransactions() {
         return transactionDao.getAllTransactions();
     }
+*/
 
+/*
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
@@ -405,6 +410,7 @@ public class BlockchainImpl implements Blockchain {
                 blockTimestamp, false, false, false,
                 0, -1, includeExpiredPrunable, false, true);
     }
+*/
 
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
