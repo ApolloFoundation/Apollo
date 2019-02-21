@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -106,6 +107,12 @@ class BlockIndexDaoTest {
         assertEquals(1, count);
 
         dao.hardDeleteAllBlockIndex();
+    }
+
+    @Test
+    void searchForMissingBlock() {
+        BlockIndex blockIndex = dao.getByBlockId(100L);
+        assertNull(blockIndex);
     }
 
     @Test

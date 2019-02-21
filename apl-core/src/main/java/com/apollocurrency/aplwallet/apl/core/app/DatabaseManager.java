@@ -107,7 +107,14 @@ public class DatabaseManager implements ShardManagement {
         log.debug("Found [{}] shards...", shardList.size());
         for (Long shardId : shardList) {
             String shardName = ShardNameHelper.getShardNameByShardId(shardId); // shard's file name formatted from Id
-            DbProperties shardDbProperties = baseDbProperties.dbFileName(shardName);
+            DbProperties shardDbProperties = null;
+            try {
+                shardDbProperties = baseDbProperties.deepCopy(); // create copy instance
+                shardDbProperties.dbUrl(null); // nullify dbUrl intentionally!
+                shardDbProperties.dbFileName(shardName); // change file name
+            } catch (CloneNotSupportedException e) {
+                log.error("Db props clone error", e);
+            }
             TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
             shardDb.init(new AplDbVersion());
             connectedShardDataSourceMap.put(shardId, shardDb);
