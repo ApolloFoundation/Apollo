@@ -6,6 +6,7 @@ import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 
 /**
@@ -24,6 +25,11 @@ public class DaoConfig {
     @Produces
     private ShardDao shardDao() {
         return createDaoInterfaceProxy(ShardDao.class);
+    }
+
+    @Produces
+    private BlockIndexDao blockIndexDao() {
+        return createDaoInterfaceProxy(BlockIndexDao.class);
     }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {

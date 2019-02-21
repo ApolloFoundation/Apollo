@@ -691,14 +691,21 @@ public class AplDbVersion extends DbVersion {
             case 250:
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
+/*
                 // create SHARDING meta-info inside main database
                 apply("CREATE TABLE IF NOT EXISTS shard (shard_id IDENTITY NOT NULL PRIMARY KEY, shard_hash VARCHAR not null)");
             case 252:
-                apply("CREATE TABLE IF NOT EXISTS secondary_block (shard_id BIGINT(19) NOT NULL, block_id BINARY(32) not null, block_height BIGINT NOT NULL)");
-//            case 253:
-//                 it's an example of previously created shard for checking purpose
-//                apply("INSERT INTO shard(key) VALUES('000000001')");
+                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 253:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_shard_1_idx ON block_index (block_id, shard_id DESC)");
+                return;
+            case 254:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_shard_2_idx ON block_index (block_height, shard_id DESC)");
+                return;
+            case 255:
+//                 it's an example of previously created shard for checking purpose
+//                apply("INSERT INTO shard(shard_id, shard_hash) VALUES(1, '000000001')");
+*/
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
