@@ -121,11 +121,10 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard("apl-shard-000001");
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L);
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
 //        newShardDb.shutdown(); // not needed
-//        databaseManager.shutdown();
     }
 
 }

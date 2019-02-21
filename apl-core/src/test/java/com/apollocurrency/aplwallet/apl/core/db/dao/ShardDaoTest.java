@@ -94,14 +94,10 @@ class ShardDaoTest {
         daoConfig.setJdbiHandleFactory(jdbiHandleFactory);
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
     void insertDelete() {
 
-        Shard shard = new Shard("new shard");
+        Shard shard = new Shard(1L, "0000001");
         dao.saveShard(shard);
         List<Shard> result = dao.getAllShard();
         assertNotNull(result);

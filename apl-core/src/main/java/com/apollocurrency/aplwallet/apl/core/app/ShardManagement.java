@@ -10,17 +10,19 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 public interface ShardManagement {
 
     /**
-     * Find and return all available shards in main db
-     * @param transactionalDataSource main db data source to search in
+     * Find and return all available shard Ids from main db
+     * @param transactionalDataSource main db data source to search for another shards in
      * @return shard and file name
      */
-    List<String> findAllShards(TransactionalDataSource transactionalDataSource);
+    List<Long> findAllShards(TransactionalDataSource transactionalDataSource);
 
     /**
      * Create new shard db or return existing shard by name
-     * @param shardName shard name
+     * @param shardId shard Id, it will be formatted into String shard file name later
      * @return opened data source
      */
-    TransactionalDataSource createAndAddShard(String shardName);
+    TransactionalDataSource createAndAddShard(Long shardId);
+
+    TransactionalDataSource getShardDataSourceById(Long shardId);
 
 }
