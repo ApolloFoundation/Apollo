@@ -29,9 +29,9 @@
             <artifactId>apl-core</artifactId>
             <version>${project.version}</version>
         </dependency>  
-                  <dependency>
 
-   <groupId>org.openjfx</groupId>
+        <dependency>
+            <groupId>org.openjfx</groupId>
             <artifactId>javafx-base</artifactId>
             <version>${openjfx.version}</version>
             <classifier>win</classifier>
