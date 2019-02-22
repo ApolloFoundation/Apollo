@@ -80,6 +80,7 @@ public class DbMigrationExecutorTest {
         properties.put("apl.batchCommitSize", 100);
         properties.put("apl.dbPassword", "sa");
         properties.put("apl.dbUsername", "sa");
+        properties.put("apl.dbParams", "DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE;MV_STORE=FALSE;");
         PropertiesHolder ph = new PropertiesHolder();
         ph.init(properties);
         return ph;
@@ -104,7 +105,7 @@ public class DbMigrationExecutorTest {
 
     @AfterEach
     void tearDown() throws Exception {
-//        DatabaseManager.shutdown();
+        databaseManager.shutdown();
         Files.deleteIfExists(pathToDbForMigration);
         manipulator.shutdown();
         FileUtils.deleteDirectory(targetDbDir.toFile());

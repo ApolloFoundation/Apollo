@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -36,7 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @EnableWeld
-class BlockIndexDaoTest {
+class TransactionIndexDaoTest {
 
     private static PropertiesHolder propertiesHolder;
     @Inject
@@ -50,13 +51,15 @@ class BlockIndexDaoTest {
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
             PropertiesConfigLoader.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class, DaoConfig.class,
-            JdbiHandleFactory.class, BlockIndexDao.class,
+            JdbiHandleFactory.class, BlockIndexDao.class, TransactionIndexDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             TransactionalDataSource.class, DatabaseManager.class)
             .build();
 
     @Inject
-    private BlockIndexDao dao;
+    private BlockIndexDao blockIndexDao;
+    @Inject
+    private TransactionIndexDao dao;
 
     @BeforeAll
     static void setup() {
@@ -75,7 +78,7 @@ class BlockIndexDaoTest {
 
     @AfterAll
     static void cleanup() {
-//        databaseManager.shutdown();
+        databaseManager.shutdown();
     }
 
     @BeforeEach
@@ -87,86 +90,96 @@ class BlockIndexDaoTest {
 
     @Test
     void insertGetAllDelete() {
-        BlockIndex blockIndex = new BlockIndex(1L, 2L, 2);
-        dao.saveBlockIndex(blockIndex);
+        BlockIndex blockIndex = new BlockIndex(10L, 30L, 30);
+        blockIndexDao.saveBlockIndex(blockIndex);
 
-        List<BlockIndex> result = dao.getAllBlockIndex();
+        TransactionIndex transactionIndex = new TransactionIndex(100L, 30L);
+        dao.saveTransactionIndex(transactionIndex);
+        List<TransactionIndex> result = dao.getAllTransactionIndex();
         assertNotNull(result);
         assertEquals(1, result.size());
+        assertNotNull(result.get(0).getTransactionId());
+        assertEquals(100L, result.get(0).getTransactionId().longValue());
+        assertNotNull(result.get(0).getBlockId());
+        assertEquals(30L, result.get(0).getBlockId().longValue());
 
-        BlockIndex blockIndex2 = new BlockIndex(2L, 300L, 3);
-        dao.saveBlockIndex(blockIndex2);
+        long count = dao.countTransactionIndexByBlockId(30L);
+        assertEquals(1L, count);
 
-        long shardId = dao.getShardIdByBlockId(300L);
-        assertEquals(2L, shardId);
+        TransactionIndex found = dao.getByTransactionId(100L);
+        assertNotNull(found);
+        assertNotNull(found.getTransactionId());
+        assertEquals(100L, found.getTransactionId().longValue());
+        assertNotNull(found.getBlockId());
+        assertEquals(30L, found.getBlockId().longValue());
 
-        shardId = dao.getShardIdByBlockHeight(2);
-        assertEquals(1L, shardId);
+        dao.hardDeleteTransactionIndex(transactionIndex);
+        count = dao.countTransactionIndexByBlockId(30L);
+        assertEquals(0L, count);
 
-        dao.hardDeleteAllBlockIndex();
-    }
-
-    @Test
-    void insertCountDelete() {
-        BlockIndex blockIndex = new BlockIndex(1L, 1L, 1);
-        dao.saveBlockIndex(blockIndex);
-
-        long count = dao.countBlockIndexByShard(1L);
-        assertEquals(1, count);
-
-        dao.hardDeleteAllBlockIndex();
+        dao.hardDeleteAllTransactionIndex();
+        blockIndexDao.hardDeleteAllBlockIndex();
     }
 
     @Test
     void searchForMissingData() {
-        BlockIndex blockIndex = dao.getByBlockId(100L);
-        assertNull(blockIndex);
+        TransactionIndex transactionIndex = dao.getByTransactionId(200L);
+        assertNull(transactionIndex);
 
-        Long shardId = dao.getShardIdByBlockId(100L);
+        Long shardId = dao.getShardIdByTransactionId(200L);
         assertNull(shardId);
 
-        shardId = dao.getShardIdByBlockHeight(100);
-        assertNull(shardId);
+        List<TransactionIndex> result = dao.getByBlockId(200L, 10);
+        assertNotNull(result);
+        assertEquals(0, result.size());
     }
 
     @Test
     void insertUpdateDelete() {
         BlockIndex blockIndex = new BlockIndex(1L, 1L, 1);
-        dao.saveBlockIndex(blockIndex);
+        blockIndexDao.saveBlockIndex(blockIndex);
 
-        BlockIndex blockIndex2 = new BlockIndex(1L, 2L, 2);
-        dao.saveBlockIndex(blockIndex2);
-        BlockIndex blockIndex3 = new BlockIndex(1L, 3L, 3);
-        dao.saveBlockIndex(blockIndex3);
+        BlockIndex blockIndex2 = new BlockIndex(2L, 2L, 2);
+        blockIndexDao.saveBlockIndex(blockIndex2);
 
-        BlockIndex blockIndexFound = dao.getByBlockId(2L);
-        assertNotNull(blockIndexFound);
-        assertNotNull(blockIndexFound.getShardId());
-        assertEquals(1L, blockIndexFound.getShardId().longValue());
+        TransactionIndex transactionIndex = new TransactionIndex(100L, 1L);
+        dao.saveTransactionIndex(transactionIndex);
+        TransactionIndex transactionIndex2 = new TransactionIndex(101L, 1L);
+        dao.saveTransactionIndex(transactionIndex2);
+        TransactionIndex transactionIndex3 = new TransactionIndex(102L, 1L);
+        dao.saveTransactionIndex(transactionIndex3);
 
-        blockIndexFound = dao.getByBlockHeight(3);
-        assertNotNull(blockIndexFound);
-        assertNotNull(blockIndexFound.getBlockHeight());
-        assertEquals(3, blockIndexFound.getBlockHeight().intValue());
+        Long shardId = dao.getShardIdByTransactionId(102L);
+        assertNotNull(shardId);
+        assertEquals(1L, shardId.longValue());
 
-        blockIndexFound.setBlockHeight(4);
-        dao.updateBlockIndex(blockIndexFound);
-        blockIndexFound = dao.getByBlockHeight(4);
-        assertNotNull(blockIndexFound);
-        assertNotNull(blockIndexFound.getBlockHeight());
-        assertEquals(4, blockIndexFound.getBlockHeight().intValue());
 
-        List<BlockIndex> result = dao.getByShardId(1L, 10);
+        TransactionIndex transactionIndex4 = new TransactionIndex(200L, 2L);
+        dao.saveTransactionIndex(transactionIndex4);
+        TransactionIndex transactionIndex5 = new TransactionIndex(201L, 2L);
+        dao.saveTransactionIndex(transactionIndex5);
+
+        List<TransactionIndex> result = dao.getByBlockId(2L, 10);
         assertNotNull(result);
-        assertEquals(3, result.size());
-        assertEquals(1L, result.get(0).getShardId().longValue());
-        assertEquals(1L, result.get(0).getBlockId().longValue());
-        assertEquals(1, result.get(0).getBlockHeight().intValue());
+        assertEquals(2, result.size());
 
-        dao.hardBlockIndex(blockIndexFound);
-        long count = dao.countBlockIndexByShard(1L);
-        assertEquals(2, count);
+        shardId = dao.getShardIdByTransactionId(200L);
+        assertNotNull(shardId);
+        assertEquals(2L, shardId.longValue());
 
-        dao.hardDeleteAllBlockIndex();
+        transactionIndex3.setBlockId(2L);
+        dao.updateBlockIndex(transactionIndex3);
+        TransactionIndex found2 = dao.getByTransactionId(200L);
+        assertNotNull(found2);
+        assertNotNull(found2.getTransactionId());
+        assertNotNull(found2.getBlockId());
+        assertEquals(2L, found2.getBlockId().longValue());
+
+        result = dao.getAllTransactionIndex();
+        assertNotNull(result);
+        assertEquals(5L, result.size());
+
+        dao.hardDeleteAllTransactionIndex();
+        blockIndexDao.hardDeleteAllBlockIndex();
     }
 }

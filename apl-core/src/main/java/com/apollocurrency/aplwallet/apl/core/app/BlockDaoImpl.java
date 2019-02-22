@@ -46,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
 import org.slf4j.Logger;
 
 @Singleton
@@ -136,10 +135,10 @@ public class BlockDaoImpl implements BlockDao {
     private TransactionalDataSource getDataSourceWithSharding(long blockId) {
 //        lookupDataSource();
         TransactionalDataSource dataSource;
-        BlockIndex blockIndex = lookupBlockIndexDao().getByBlockId(blockId);
-        if (blockIndex != null) {
+        Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
+        if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getShardDataSourceById(blockIndex.getShardId());
+            dataSource = databaseManager.getShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = lookupDataSource();
@@ -150,10 +149,10 @@ public class BlockDaoImpl implements BlockDao {
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
 //        lookupDataSource();
         TransactionalDataSource dataSource;
-        BlockIndex blockIndex = lookupBlockIndexDao().getByBlockHeight(blockHeight);
-        if (blockIndex != null) {
+        Long shardId = lookupBlockIndexDao().getShardIdByBlockHeight(blockHeight);
+        if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getShardDataSourceById(blockIndex.getShardId());
+            dataSource = databaseManager.getShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = lookupDataSource();

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 
 /**
  * Configuration DAO classes with Jdbi, Transaction resources
@@ -30,6 +31,11 @@ public class DaoConfig {
     @Produces
     private BlockIndexDao blockIndexDao() {
         return createDaoInterfaceProxy(BlockIndexDao.class);
+    }
+
+    @Produces
+    private TransactionIndexDao transactionIndexDao() {
+        return createDaoInterfaceProxy(TransactionIndexDao.class);
     }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {

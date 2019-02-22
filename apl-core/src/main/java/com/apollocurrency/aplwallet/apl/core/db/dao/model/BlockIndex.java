@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
 /**
- * Shard db dto entity
+ * Block global secondary index entity.
  */
 public class BlockIndex {
     private Long shardId;

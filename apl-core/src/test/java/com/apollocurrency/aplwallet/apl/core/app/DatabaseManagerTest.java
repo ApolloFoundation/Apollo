@@ -88,7 +88,7 @@ class DatabaseManagerTest {
                 .dbType("h2")
                 .loginTimeout(1000 * 30)
                 .maxMemoryRows(100000)
-                .dbParams("")
+                .dbParams("DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE;MV_STORE=FALSE;")
                 .maxConnections(100)
                 .maxCacheSize(0);
 

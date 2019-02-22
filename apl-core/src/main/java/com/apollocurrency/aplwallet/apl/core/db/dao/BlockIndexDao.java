@@ -13,13 +13,13 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
- * Shard retrieving interface
+ * Global Block Index management + retrieving interface
  */
 public interface BlockIndexDao {
 
     /**
      * For Unit tests ONLY
-     * @param shardId hsard id
+     * @param shardId shard id
      * @param limit limit number or rows
      * @return found records list
      */
@@ -33,6 +33,7 @@ public interface BlockIndexDao {
             "ORDER BY block_id " +
             "LIMIT :limit")
     @RegisterBeanMapper(BlockIndex.class)
+    @RegisterRowMapper(BlockIndexRowMapper.class)
     List<BlockIndex> getByShardId(@Bind("shardId") long shardId, @Bind("limit") long limit);
 
     @Transactional(readOnly = true)
@@ -41,9 +42,19 @@ public interface BlockIndexDao {
     BlockIndex getByBlockId(@Bind("blockId") long blockId);
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT shard_id FROM block_index where block_id = :blockId")
+    @RegisterRowMapper(BlockIndexRowMapper.class)
+    Long getShardIdByBlockId(@Bind("blockId") long blockId);
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM block_index where block_height = :blockHeight")
     @RegisterRowMapper(BlockIndexRowMapper.class)
     BlockIndex getByBlockHeight(@Bind("blockHeight") int blockHeight);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT shard_id FROM block_index where block_height = :blockHeight")
+    @RegisterRowMapper(BlockIndexRowMapper.class)
+    Long getShardIdByBlockHeight(@Bind("blockHeight") int blockHeight);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM block_index")

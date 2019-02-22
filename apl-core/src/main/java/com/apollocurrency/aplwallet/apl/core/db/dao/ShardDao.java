@@ -12,7 +12,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
- * Shard retrieving interface
+ * Shard management + retrieving interface
  */
 public interface ShardDao {
 

@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
 /**
- * Shard db dto entity
+ * Shard db entity
  */
 public class Shard {
     private Long shardId;
