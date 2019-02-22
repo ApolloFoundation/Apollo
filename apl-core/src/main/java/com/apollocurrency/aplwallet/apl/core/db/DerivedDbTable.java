@@ -20,35 +20,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.enterprise.inject.spi.CDI;
 
 public abstract class DerivedDbTable {
 
-    protected static final TransactionalDb db = Db.getDb();
-
     protected final String table;
-    private static BlockchainProcessor blockchainProcessor;
+    private static DerivedDbTablesRegistry dbTables;
+    protected static DatabaseManager databaseManager;
 
+    // We should find better place for table init
     protected DerivedDbTable(String table) {
+        StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        blockchainProcessor.registerDerivedTable(this);
+        if (dbTables == null) dbTables = CDI.current().select(DerivedDbTablesRegistry.class).get();
+        dbTables.registerDerivedTable(this);
+        FullTextConfig.getInstance().registerTable(table);
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
     }
 
     public void rollback(int height) {
-        if (!db.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
             pstmtDelete.executeUpdate();
@@ -58,10 +63,11 @@ public abstract class DerivedDbTable {
     }
 
     public void truncate() {
-        if (!db.isInTransaction()) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        try (Connection con = db.getConnection();
+        try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.executeUpdate("TRUNCATE TABLE " + table);
         } catch (SQLException e) {
@@ -86,8 +92,4 @@ public abstract class DerivedDbTable {
         return table;
     }
 
-    protected void trimTables() {
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        blockchainProcessor.trimDerivedTables();
-    }
 }

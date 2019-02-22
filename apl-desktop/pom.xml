@@ -204,6 +204,36 @@
                         </configuration>
                     </execution>
                 </executions>
+                
+            </plugin>
+            <plugin>   
+                <!-- Build an executable JAR -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                  <archive>
+                    <manifest>
+                      <addClasspath>true</addClasspath>
+                      <classpathPrefix>./</classpathPrefix>
+                      <mainClass>com.apollocurrency.aplwallet.apldesktop.DesktopApplication</mainClass>
+                    </manifest>
+                  </archive>
+                </configuration>
+              </plugin> 
+<plugin>   
+     <groupId>org.apache.maven.plugins</groupId>            
+              <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>./</classpathPrefix>
+                            
+                        </manifest>
+                    </archive>
+                    <finalName>Apollo</finalName>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -20,7 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -60,17 +65,17 @@ public final class GetAccount extends AbstractAPIRequestHandler {
 
         JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance);
         JSONData.putAccount(response, "account", account.getId());
-        response.put("is2FA", Account.isEnabled2FA(account.getId()));
+        response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
         byte[] publicKey = Account.getPublicKey(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }
-        Account.AccountInfo accountInfo = account.getAccountInfo();
+        AccountInfo accountInfo = account.getAccountInfo();
         if (accountInfo != null) {
             response.put("name", Convert.nullToEmpty(accountInfo.getName()));
             response.put("description", Convert.nullToEmpty(accountInfo.getDescription()));
         }
-        Account.AccountLease accountLease = account.getAccountLease();
+        AccountLease accountLease = account.getAccountLease();
         if (accountLease != null) {
             JSONData.putAccount(response, "currentLessee", accountLease.getCurrentLesseeId());
             response.put("currentLeasingHeightFrom", accountLease.getCurrentLeasingHeightFrom());
@@ -108,11 +113,11 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeAssets) {
-            try (DbIterator<Account.AccountAsset> accountAssets = account.getAssets(0, -1)) {
+            try (DbIterator<AccountAsset> accountAssets = account.getAssets(0, -1)) {
                 JSONArray assetBalances = new JSONArray();
                 JSONArray unconfirmedAssetBalances = new JSONArray();
                 while (accountAssets.hasNext()) {
-                    Account.AccountAsset accountAsset = accountAssets.next();
+                    AccountAsset accountAsset = accountAssets.next();
                     JSONObject assetBalance = new JSONObject();
                     assetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
                     assetBalance.put("balanceATU", String.valueOf(accountAsset.getQuantityATU()));
@@ -132,7 +137,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeCurrencies) {
-            try (DbIterator<Account.AccountCurrency> accountCurrencies = account.getCurrencies(0, -1)) {
+            try (DbIterator<AccountCurrency> accountCurrencies = account.getCurrencies(0, -1)) {
                 JSONArray currencyJSON = new JSONArray();
                 while (accountCurrencies.hasNext()) {
                     currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));

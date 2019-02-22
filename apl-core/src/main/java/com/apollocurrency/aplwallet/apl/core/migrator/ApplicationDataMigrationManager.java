@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.PublicKeyMigrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.auth2fa.TwoFactorAuthMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.db.DbMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.keystore.VaultKeystoreMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,8 @@ public class ApplicationDataMigrationManager {
     private DbMigrationExecutor dbMigrationExecutor                      ;
     @Inject
     private TwoFactorAuthMigrationExecutor twoFactorAuthMigrationExecutor;
+    @Inject
+    private PublicKeyMigrator publicKeyMigrator;
 
     public void executeDataMigration() {
         try {
@@ -44,6 +47,7 @@ public class ApplicationDataMigrationManager {
             if (!twoFactorAuthMigrationExecutor.isAutoCleanup()) {
                 twoFactorAuthMigrationExecutor.performAfterMigrationCleanup();
             }
+            publicKeyMigrator.migrate();
         }
         catch (IOException e) {
             LOG.error("Fatal error. Cannot proceed data migration", e);
@@ -61,5 +65,9 @@ public class ApplicationDataMigrationManager {
 
     public void setTwoFactorAuthMigrationExecutor(TwoFactorAuthMigrationExecutor twoFactorAuthMigrationExecutor) {
         this.twoFactorAuthMigrationExecutor = twoFactorAuthMigrationExecutor;
+    }
+
+    public void setPublicKeyMigrator(PublicKeyMigrator publicKeyMigrator) {
+        this.publicKeyMigrator = publicKeyMigrator;
     }
 }

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -36,7 +36,7 @@ public class ImportKey extends AbstractAPIRequestHandler {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, false));
         byte[] secretBytes = ParameterParser.getBytes(request, "secretBytes", true);
 
-        Pair<VaultKeyStore.Status, String> statusPassphrasePair = Account.importSecretBytes(passphrase, secretBytes);
+        Pair<VaultKeyStore.Status, String> statusPassphrasePair = Helper2FA.importSecretBytes(passphrase, secretBytes);
         JSONObject response = new JSONObject();
         response.put("status", statusPassphrasePair.getLeft());
         response.put("passphrase", statusPassphrasePair.getRight());

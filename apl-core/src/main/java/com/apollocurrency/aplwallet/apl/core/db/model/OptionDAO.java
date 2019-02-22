@@ -6,32 +6,34 @@ package com.apollocurrency.aplwallet.apl.core.db.model;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.sql.DataSource;
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.slf4j.Logger;
 
 //TODO: Refactor to CDI
 
 public class OptionDAO {
     private static final Logger LOG = getLogger(OptionDAO.class);
-    private DataSource dataSource;
+    private DatabaseManager databaseManager;
 
     public OptionDAO() {
-        this.dataSource = Db.getDb();
+        databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
-    public OptionDAO(DataSource dataSource) {
-        Objects.requireNonNull(dataSource, "Data source cannot be null");
-        this.dataSource = dataSource;
+    public OptionDAO(DatabaseManager databaseManager) {
+        Objects.requireNonNull(databaseManager, "Database Manager cannot be null");
+        this.databaseManager = databaseManager;
     }
 
     public String get(String optionName) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
             stmt.setString(1, optionName);
@@ -48,6 +50,7 @@ public class OptionDAO {
     }
 
     public boolean set(String optionName, String optionValue) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (get(optionName) == null) {
             try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
@@ -74,7 +77,8 @@ public class OptionDAO {
 
     public boolean delete(String optionName) {
         if (get(optionName) != null) {
-            try (Connection con = Db.getDb().getConnection()) {
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");
                 stmt.setString(1, optionName);
                 int deletedRows = stmt.executeUpdate();

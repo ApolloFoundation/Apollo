@@ -20,9 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbBytesConverter;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 
 public class AplDbVersion extends DbVersion {
 
@@ -549,7 +547,6 @@ public class AplDbVersion extends DbVersion {
             case 198:
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_extend_height_id_idx ON tagged_data_extend(height, id)");
             case 199:
-                com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger.init();
                 apply(null);
             case 200:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_id_height_idx ON asset (id, height DESC)");
@@ -650,7 +647,6 @@ public class AplDbVersion extends DbVersion {
             case 237:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
             case 238:
-                FullTextTrigger.init();
                 apply(null);
             case 239:
                 apply("CREATE TABLE IF NOT EXISTS update_status ("
@@ -661,11 +657,15 @@ public class AplDbVersion extends DbVersion {
                         + ")"
                 );
             case 240:
-                DbBytesConverter.init();
                 apply(null);
             case 241:
-                PublicKeyMigration.init();
-                apply(null);
+                apply("CREATE TABLE IF NOT EXISTS genesis_public_key " +
+                        "(db_id IDENTITY," +
+                        "account_id BIGINT NOT NULL, " +
+                        "public_key BINARY(32), " +
+                        "height INT NOT NULL, " +
+                        "FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, " +
+                        "latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 242:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
                         + "account BIGINT PRIMARY KEY,"
@@ -687,6 +687,10 @@ public class AplDbVersion extends DbVersion {
             case 248:
                 apply("ALTER TABLE currency_supply ALTER COLUMN current_reserve_per_unit_nqt RENAME TO current_reserve_per_unit_atm");
             case 249:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS genesis_public_key_account_id_height_idx on genesis_public_key(account_id, height)");
+            case 250:
+                apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
+            case 251:
                 return;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

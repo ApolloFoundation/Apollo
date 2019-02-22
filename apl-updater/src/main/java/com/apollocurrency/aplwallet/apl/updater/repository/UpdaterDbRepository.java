@@ -13,10 +13,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.ConnectionProvider;
 import org.slf4j.Logger;
 
 public class UpdaterDbRepository implements UpdaterRepository {
@@ -26,12 +26,12 @@ public class UpdaterDbRepository implements UpdaterRepository {
             "(\'update_status\' table is inconsistent. (more than one update transaction " +
                     "present)");
     private UpdaterMediator updaterMediator;
-    private ConnectionProvider connectionProvider;
+    private TransactionalDataSource dataSource;
 
     @Inject
     public UpdaterDbRepository(UpdaterMediator updaterMediator) {
         this.updaterMediator = updaterMediator;
-        this.connectionProvider = updaterMediator.getConnectionProvider();
+        this.dataSource = updaterMediator.getDataSource();
     }
 
     private static void checkInconsistency(ResultSet rs) throws SQLException {
@@ -48,7 +48,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
 
     @Override
     public UpdateTransaction getLast() {
-        try (Connection connection = connectionProvider.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status LEFT JOIN transaction on update_status.transaction_id = transaction.id")) {
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
@@ -67,7 +67,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
 
     @Override
     public void save(UpdateTransaction transaction) {
-        try (Connection connection = connectionProvider.getConnection()) {
+        try (Connection connection = dataSource.getConnection()) {
             save(connection, transaction);
         }
         catch (SQLException e) {
@@ -94,7 +94,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
 
     @Override
     public void update(UpdateTransaction transaction) {
-        try (Connection connection = connectionProvider.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement pstm = connection.prepareStatement("UPDATE update_status SET updated = ? WHERE transaction_id = ?")) {
             pstm.setBoolean(1, transaction.isUpdated());
             pstm.setLong(2, transaction.getTransaction().getId());
@@ -119,28 +119,26 @@ public class UpdaterDbRepository implements UpdaterRepository {
 
     @Override
     public void clearAndSave(UpdateTransaction transaction) {
-        boolean isInTransaction = connectionProvider.isInTransaction(null);
-        Connection connection = null;
+        boolean isInTransaction = dataSource.isInTransaction();
+        Connection con = null;
         try {
-            if (!isInTransaction) connection = connectionProvider.beginTransaction();
-            else connection = connectionProvider.getConnection();
-            clear(connection);
-            save(connection, transaction);
-            connectionProvider.commitTransaction(connection);
+            con = dataSource.getConnection();
+            if (!isInTransaction) dataSource.begin();
+            else con = dataSource.getConnection();
+            clear(con);
+            save(con, transaction);
+            dataSource.commit();
         }
         catch (SQLException e) {
-            connectionProvider.rollbackTransaction(connection);
+            dataSource.rollback();
             LOG.error(e.toString(), e);
             throw new RuntimeException(e.toString(), e);
-        }
-        finally {
-            if (!isInTransaction) connectionProvider.endTransaction(connection);
         }
     }
 
     @Override
     public int clear() {
-        try (Connection connection = connectionProvider.getConnection()) {
+        try (Connection connection = dataSource.getConnection()) {
             return clear(connection);
         }
         catch (SQLException e) {

@@ -55,16 +55,20 @@ public class ApiSplitFilter implements Filter{
 //        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
         String rqType = request.getParameter("requestType");
-           logger.trace("========= RequestType IS EMPTY!==========");
+        logger.trace("========= RequestType IS EMPTY!==========");
 
         String forwardUri = NewApiRegistry.getRestPath(rqType);
+        //forward to new API, it should be ready always because it is on CDI and 
+        //does not require completion of old static init() methods
         if(forwardUri != null && !forwardUri.isEmpty()){
            logger.trace("Request "+rqType+" forwarded to: "+forwardUri);
-           if(isCoreReady){
             rq.getRequestDispatcher(forwardUri).forward(request, response);
-           }else{ // Core is not signaled that is its ready to serve requests
-               resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
-           }
+            return;
+        }
+        if(!isCoreReady){
+           // Core is not signaled that is is ready to serve requests, so old API
+           // implementation shoud wait
+           resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
            return;
         }
 

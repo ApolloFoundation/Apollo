@@ -20,24 +20,27 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.*;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
 //import com.apollocurrency.aplwallet.apl.core.app.Db;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+
+
 //import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 //import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -66,7 +69,6 @@ import javafx.stage.WindowEvent;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
@@ -76,18 +78,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.enterprise.inject.spi.CDI;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -98,15 +97,18 @@ public class DesktopApplication extends Application {
     private static final SplashScreen SPLASH_SCREEN = SplashScreen.getInstance();
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
     private static final boolean ENABLE_JAVASCRIPT_DEBUGGER = false;
-    private static volatile boolean isLaunched;
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
     //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
+    private static String OS = System.getProperty("os.name").toLowerCase();
+    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+
 //    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 //    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         
+
     public static void refreshMainApplication() {
         MainApplication.refresh();
     }
@@ -118,7 +120,7 @@ public class DesktopApplication extends Application {
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
 //TODO:  WTF?
-//        String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
+        //String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
          String defaultAccount = "";
         if (defaultAccount != null && !defaultAccount.isEmpty() && !defaultAccount.equals("")) {
             url += "?account=" + defaultAccount;
@@ -136,17 +138,39 @@ public class DesktopApplication extends Application {
     }
 
     //rewrite (start on existing stage)
-    public static void launch() {
-        if (!isLaunched) {
-            isLaunched = true;
-            Application.launch(DesktopApplication.class);
-            return;
-        }
+    public static void main() {
+     
+        Application.launch(DesktopApplication.class);
+            
+     
         if (mainStage != null) {
             Platform.runLater(() -> showStage(false));
         }
     }
-
+    
+    public static void launch()
+    {
+        main();
+    }
+    
+    public static void start() {
+        main();
+    }
+    private void runBackend(){
+        Process p;
+        try{
+            
+            if (OS.indexOf("win") >= 0 ) 
+            {
+                p = Runtime.getRuntime().exec("./bin/apl-run.bat");
+            }
+            else{
+                p = Runtime.getRuntime().exec("./bin/apl-run.sh");
+            }
+        }            
+        catch (IOException e)
+        {}
+    }
     //TODO: Recover DB in core
     /*public static void recoverDbUI() {
         DB_RECOVERING_UI.tryToRecoverDB();
@@ -560,7 +584,8 @@ public class DesktopApplication extends Application {
         }
 
         private void download(String requestType, Map<String, String> params) {
-            long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
+            //TODO: Rewrite download function
+            /*    long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
             TaggedData taggedData = TaggedData.getData(transactionId);
             boolean retrieve = "true".equals(params.get("retrieve"));
             if (requestType.equals("downloadTaggedData")) {
@@ -575,7 +600,7 @@ public class DesktopApplication extends Application {
                     catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
-                    }*/
+                    }*//*
                     taggedData = TaggedData.getData(transactionId);
                 }
                 if (taggedData == null) {
@@ -601,7 +626,7 @@ public class DesktopApplication extends Application {
                     catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
-                    }*/
+                    }*//*
                     prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 }
                 String secretPhrase = params.get("secretPhrase");
@@ -635,6 +660,7 @@ public class DesktopApplication extends Application {
                 }
                 downloadFile(data, "" + transactionId);
             }
+                    */
         }
 
         private void downloadFile(byte[] data, String filename) {
@@ -715,10 +741,18 @@ public class DesktopApplication extends Application {
                 System.exit(0);
             });
         }
+<<<<<<< HEAD
         */
         
         /*private Alert reindexDbUI() throws SQLException {
             FullTextTrigger.reindex(Db.getDb().getConnection());
+=======
+
+        private Alert reindexDbUI() throws SQLException {
+            FullTextSearchService searchService = CDI.current().select(FullTextSearchService.class).get();
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            searchService.reindexAll(dataSource.getConnection());
+>>>>>>> develop
             return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
         }*/
 
@@ -741,7 +775,7 @@ public class DesktopApplication extends Application {
 
             Alert alert;
             try {
-                Db.tryToDeleteDb();
+                DatabaseManager.tryToDeleteDb();
                 alert = prepareAlert(Alert.AlertType.INFORMATION, "Success", "DB was removed successfully! Please, restart the wallet.", 180);
             }
             catch (IOException e) {

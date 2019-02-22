@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -47,7 +48,7 @@ public final class ShufflingParticipant {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
 
     public enum State {
@@ -131,7 +132,7 @@ public final class ShufflingParticipant {
 
     private static final Listeners<ShufflingParticipant, Event> listeners = new Listeners<>();
 
-    private static final DbKey.LinkKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
+    private static final LinkKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory = new LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
 
         @Override
         public DbKey newKey(ShufflingParticipant participant) {
@@ -154,7 +155,7 @@ public final class ShufflingParticipant {
 
     };
 
-    private static final DbKey.LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new DbKey.LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
+    private static final LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
 
         @Override
         public DbKey newKey(ShufflingData shufflingData) {

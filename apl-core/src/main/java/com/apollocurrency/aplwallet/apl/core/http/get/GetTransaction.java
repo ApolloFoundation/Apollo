@@ -22,7 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -75,12 +76,12 @@ public final class GetTransaction extends AbstractAPIRequestHandler {
         }
         if (transaction == null) {
             transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || transaction.getType() == TransactionType.Payment.PRIVATE) {
+            if (transaction == null || transaction.getType() == Payment.PRIVATE) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.unconfirmedTransaction(transaction);
         } else {
-            if (transaction.getType() == TransactionType.Payment.PRIVATE) {
+            if (transaction.getType() == Payment.PRIVATE) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.transaction(transaction, includePhasingResult, false);

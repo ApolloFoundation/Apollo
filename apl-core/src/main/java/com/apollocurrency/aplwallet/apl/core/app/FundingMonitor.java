@@ -20,8 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -68,12 +78,12 @@ public final class FundingMonitor {
     /** Minimum funding interval */
     public static final int MIN_FUND_INTERVAL = 10;
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static PropertiesHolder propertiesLoader;
+    private static BlockchainConfig blockchainConfig;
+    private static Blockchain blockchain;
+    private static TransactionProcessor transactionProcessor;
     /** Maximum number of monitors */
-    private static final int MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
+    private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
     /** Monitor started */
     private static volatile boolean started = false;
@@ -253,6 +263,13 @@ public final class FundingMonitor {
      */
     public static boolean startMonitor(HoldingType holdingType, long holdingId, String property,
                                     long amount, long threshold, int interval, byte[] keySeed) {
+        propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+        blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        blockchain = CDI.current().select(BlockchainImpl.class).get();
+        transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        /** Maximum number of monitors */
+        MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
+
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
         // instead of during ARS initialization so we don't start the monitor thread if it
@@ -271,9 +288,9 @@ public final class FundingMonitor {
             // Locate monitored accounts based on the account property and the setter identifier
             //
             List<MonitoredAccount> accountList = new ArrayList<>();
-            try (DbIterator<Account.AccountProperty> it = Account.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
+            try (DbIterator<AccountProperty> it = AccountPropertyTable.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
                 while (it.hasNext()) {
-                    Account.AccountProperty accountProperty = it.next();
+                    AccountProperty accountProperty = it.next();
                     MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
                             monitor, accountProperty.getValue());
                     accountList.add(account);
@@ -672,14 +689,14 @@ public final class FundingMonitor {
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        Account.AccountAsset targetAsset = Account.getAccountAsset(targetAccount.getId(), monitor.holdingId);
-        Account.AccountAsset fundingAsset = Account.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
+        AccountAsset targetAsset = AccountAssetTable.getAccountAsset(targetAccount.getId(), monitor.holdingId);
+        AccountAsset fundingAsset = AccountAssetTable.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
-            Attachment attachment = new Attachment.ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
+            Attachment attachment = new ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
@@ -709,14 +726,14 @@ public final class FundingMonitor {
     private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        Account.AccountCurrency targetCurrency = Account.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
-        Account.AccountCurrency fundingCurrency = Account.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
+        AccountCurrency targetCurrency = AccountCurrencyTable.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
+        AccountCurrency fundingCurrency = AccountCurrencyTable.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",
                             monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
-            Attachment attachment = new Attachment.MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
+            Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment);
             builder.recipientId(monitoredAccount.accountId)
@@ -870,7 +887,7 @@ public final class FundingMonitor {
     /**
      * Asset event handler (ASSET_BALANCE event)
      */
-    private static final class AssetEventHandler implements Listener<Account.AccountAsset> {
+    private static final class AssetEventHandler implements Listener<AccountAsset> {
 
         /**
          * Asset event notification
@@ -878,7 +895,7 @@ public final class FundingMonitor {
          * @param   asset                   Account asset
          */
         @Override
-        public void notify(Account.AccountAsset asset) {
+        public void notify(AccountAsset asset) {
             if (stopped) {
                 return;
             }
@@ -906,7 +923,7 @@ public final class FundingMonitor {
     /**
      * Currency event handler (CURRENCY_BALANCE event)
      */
-    private static final class CurrencyEventHandler implements Listener<Account.AccountCurrency> {
+    private static final class CurrencyEventHandler implements Listener<AccountCurrency> {
 
         /**
          * Currency event notification
@@ -914,7 +931,7 @@ public final class FundingMonitor {
          * @param   currency                Account currency
          */
         @Override
-        public void notify(Account.AccountCurrency currency) {
+        public void notify(AccountCurrency currency) {
             if (stopped) {
                 return;
             }
@@ -942,7 +959,7 @@ public final class FundingMonitor {
     /**
      * Property event handler (SET_PROPERTY event)
      */
-    private static final class SetPropertyEventHandler implements Listener<Account.AccountProperty> {
+    private static final class SetPropertyEventHandler implements Listener<AccountProperty> {
 
         /**
          * Property event notification
@@ -950,7 +967,7 @@ public final class FundingMonitor {
          * @param   property                Account property
          */
         @Override
-        public void notify(Account.AccountProperty property) {
+        public void notify(AccountProperty property) {
             if (stopped) {
                 return;
             }
@@ -1014,7 +1031,7 @@ public final class FundingMonitor {
     /**
      * Property event handler (DELETE_PROPERTY event)
      */
-    private static final class DeletePropertyEventHandler implements Listener<Account.AccountProperty> {
+    private static final class DeletePropertyEventHandler implements Listener<AccountProperty> {
 
         /**
          * Property event notification
@@ -1022,7 +1039,7 @@ public final class FundingMonitor {
          * @param   property                Account property
          */
         @Override
-        public void notify(Account.AccountProperty property) {
+        public void notify(AccountProperty property) {
             if (stopped) {
                 return;
             }

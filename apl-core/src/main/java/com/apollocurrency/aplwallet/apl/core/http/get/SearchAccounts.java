@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -60,8 +61,8 @@ public final class SearchAccounts extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray accountsJSONArray = new JSONArray();
-        try (DbIterator<Account.AccountInfo> accounts = Account.searchAccounts(query, firstIndex, lastIndex)) {
-            for (Account.AccountInfo account : accounts) {
+        try (DbIterator<AccountInfo> accounts = AccountInfoTable.searchAccounts(query, firstIndex, lastIndex)) {
+            for (AccountInfo account : accounts) {
                 JSONObject accountJSON = new JSONObject();
                 JSONData.putAccount(accountJSON, "account", account.getAccountId());
                 if (account.getName() != null) {
