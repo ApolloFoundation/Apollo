@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+//TODO: Refactor that according to Feng shui
 public final class GetElGamalPublicKey extends AbstractAPIRequestHandler {
     
     private static class GetElGamalPublicKeyHolder {

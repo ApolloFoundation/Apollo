@@ -385,6 +385,7 @@ public static String bytesToHex(byte[] bytes) {
     
     public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
     {
+        if (cryptogramm.length() < 457) return cryptogramm;
         try
         {
             int sha256length = 64;
