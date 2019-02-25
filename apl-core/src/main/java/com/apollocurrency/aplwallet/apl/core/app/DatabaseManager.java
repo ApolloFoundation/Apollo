@@ -56,7 +56,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 public class DatabaseManager implements ShardManagement {
     private static final Logger log = getLogger(DatabaseManager.class);
 
-    private static DbProperties baseDbProperties; // main database properties
+    private DbProperties baseDbProperties; // main database properties
     private PropertiesHolder propertiesHolder;
     private static TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<String, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3); // secondary shards
@@ -79,7 +79,7 @@ public class DatabaseManager implements ShardManagement {
      * @param fullTextSearchService service which provide full
      */
     public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolder,  FullTextSearchService fullTextSearchService) {
-        this(dbProperties, propertiesHolder/*, fullTextSearchService, false*/);
+        this(dbProperties, propertiesHolder);
     }
 
     /**
@@ -91,8 +91,12 @@ public class DatabaseManager implements ShardManagement {
     public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
-        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-        currentTransactionalDataSource.init(new AplDbVersion());
+        // init internal data source stuff only one time till next shutdown() will be called
+        if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
+            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+            currentTransactionalDataSource.init(new AplDbVersion());
+        }
+/*
         List<String> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
         for (String shardName : shardList) {
@@ -102,6 +106,7 @@ public class DatabaseManager implements ShardManagement {
             connectedShardDataSourceMap.put(shardName, shardDb);
             log.debug("Prepared '{}' shard...", shardName);
         }
+*/
     }
 
     @Override
@@ -190,5 +195,16 @@ public class DatabaseManager implements ShardManagement {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("DatabaseManager{");
+        sb.append("baseDbProperties=").append(baseDbProperties);
+        sb.append(", propertiesHolder=[{}]").append(propertiesHolder != null ? propertiesHolder : -1);
+        sb.append(", currentTransactionalDataSource={}").append(currentTransactionalDataSource != null ? "initialized" : "NULL");
+        sb.append(", connectedShardDataSourceMap=[{}]").append(connectedShardDataSourceMap != null ? connectedShardDataSourceMap.size() : -1);
+        sb.append('}');
+        return sb.toString();
     }
 }

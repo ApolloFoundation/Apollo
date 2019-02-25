@@ -131,7 +131,7 @@ public class DbMigrationExecutorTest {
         DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
-        OptionDAO optionDAO = new OptionDAO();
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
         String dbMigrated = optionDAO.get("dbMigrationRequired-0");
         Assertions.assertNotNull(dbMigrated);
         Assertions.assertEquals("false", dbMigrated);

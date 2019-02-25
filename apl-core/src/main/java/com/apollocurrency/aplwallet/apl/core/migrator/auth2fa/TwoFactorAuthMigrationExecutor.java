@@ -25,7 +25,7 @@ public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
 
     @Inject
     public TwoFactorAuthMigrationExecutor(PropertiesHolder holder) {
-        super(holder,  "2fa", true);
+        super(holder,  null, "2fa", true);
     }
 
     @Override
