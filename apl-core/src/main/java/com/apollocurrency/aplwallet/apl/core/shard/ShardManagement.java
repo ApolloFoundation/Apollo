@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.shard;
 
 import java.util.List;
 
@@ -22,6 +22,8 @@ public interface ShardManagement {
      * @return opened data source
      */
     TransactionalDataSource createAndAddShard(Long shardId);
+
+    TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
 
     TransactionalDataSource getShardDataSourceById(Long shardId);
 

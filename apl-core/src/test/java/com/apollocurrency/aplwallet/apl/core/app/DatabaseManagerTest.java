@@ -123,7 +123,21 @@ class DatabaseManagerTest {
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L);
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
+        databaseManager.shutdown(newShardDb);
 //        newShardDb.shutdown(); // not needed
+    }
+
+    @Test
+    void createAndAddTemporaryDb() throws Exception {
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+        TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb("apl-temp-file-name");
+        assertNotNull(temporaryDb);
+        assertNotNull(temporaryDb.getConnection());
+        databaseManager.shutdown(temporaryDb);
+//        temporaryDb.shutdown(); // not needed
     }
 
 }

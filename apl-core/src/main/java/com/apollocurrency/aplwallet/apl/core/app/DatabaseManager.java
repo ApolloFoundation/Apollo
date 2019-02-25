@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -109,9 +110,8 @@ public class DatabaseManager implements ShardManagement {
             String shardName = ShardNameHelper.getShardNameByShardId(shardId); // shard's file name formatted from Id
             DbProperties shardDbProperties = null;
             try {
-                shardDbProperties = baseDbProperties.deepCopy(); // create copy instance
-                shardDbProperties.dbUrl(null); // nullify dbUrl intentionally!
-                shardDbProperties.dbFileName(shardName); // change file name
+                // create copy instance, change file name, nullify dbUrl intentionally!
+                shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName).dbUrl(null);
             } catch (CloneNotSupportedException e) {
                 log.error("Db props clone error", e);
             }
@@ -157,7 +157,7 @@ public class DatabaseManager implements ShardManagement {
         log.debug("Create new SHARD '{}'", shardName);
         DbProperties shardDbProperties = null;
         try {
-            shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName);
+            shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName).dbUrl(null); // nullify dbUrl intentionally!;
         } catch (CloneNotSupportedException e) {
             log.error("DbProperties cloning error", e);
         }
@@ -166,6 +166,22 @@ public class DatabaseManager implements ShardManagement {
         connectedShardDataSourceMap.put(shardId, shardDb);
         log.debug("new SHARD '{}' is CREATED", shardName);
         return shardDb;
+    }
+
+    @Override
+    public TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
+        Objects.requireNonNull(temporaryDatabaseName, "temporary Database Name is NULL");
+        log.debug("Create new SHARD '{}'", temporaryDatabaseName);
+        DbProperties shardDbProperties = null;
+        try {
+            shardDbProperties = baseDbProperties.deepCopy().dbFileName(temporaryDatabaseName).dbUrl(null); // nullify dbUrl intentionally!;
+        } catch (CloneNotSupportedException e) {
+            log.error("DbProperties cloning error", e);
+        }
+        TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
+        temporaryDataSource.init(new AplDbVersion());
+        log.debug("new temporaryDataSource '{}' is CREATED", temporaryDatabaseName);
+        return temporaryDataSource;
     }
 
     @Override
@@ -191,6 +207,15 @@ public class DatabaseManager implements ShardManagement {
             currentTransactionalDataSource = null;
             jdbi = null;
         }
+    }
+
+    /**
+     * Be CAREFUL using this method. It's better to use it for explicit DataSources (like temporary)
+     * @param dataSource not null data source to be closed
+     */
+    public void shutdown(TransactionalDataSource dataSource) {
+        Objects.requireNonNull(dataSource, "dataSource is NULL");
+        dataSource.shutdown();
     }
 
     public DatabaseManager() {} // never use it directly
