@@ -37,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 //import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 //import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -102,7 +101,6 @@ public class DesktopApplication extends Application {
     //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-    private static String OS = System.getProperty("os.name").toLowerCase();
     //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
 
 //    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -114,7 +112,9 @@ public class DesktopApplication extends Application {
     }
     
     private static String getUrl() {
-        String url = API.getWelcomePageUri().toString();
+        //TODO: use default URL from config
+        String url = "http://localhost:7876/";//API.getWelcomePageUri().toString();
+        
         if (url.startsWith("https")) {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
@@ -138,7 +138,7 @@ public class DesktopApplication extends Application {
     }
 
     //rewrite (start on existing stage)
-    public static void main() {
+    public static void launch() {
      
         Application.launch(DesktopApplication.class);
             
@@ -148,29 +148,6 @@ public class DesktopApplication extends Application {
         }
     }
     
-    public static void launch()
-    {
-        main();
-    }
-    
-    public static void start() {
-        main();
-    }
-    private void runBackend(){
-        Process p;
-        try{
-            
-            if (OS.indexOf("win") >= 0 ) 
-            {
-                p = Runtime.getRuntime().exec("./bin/apl-run.bat");
-            }
-            else{
-                p = Runtime.getRuntime().exec("./bin/apl-run.sh");
-            }
-        }            
-        catch (IOException e)
-        {}
-    }
     //TODO: Recover DB in core
     /*public static void recoverDbUI() {
         DB_RECOVERING_UI.tryToRecoverDB();
@@ -474,7 +451,9 @@ public class DesktopApplication extends Application {
             webEngine.load(getUrl());
 
             Scene scene = new Scene(browser);
-            String address = API.getServerRootUri().toString();
+            //TODO: 
+            //String address = API.getServerRootUri().toString();
+            String address = "http://localhost:7876/";
             mainStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
             mainStage.initStyle(StageStyle.DECORATED);
             mainStage.setScene(scene);
@@ -500,7 +479,7 @@ public class DesktopApplication extends Application {
             webEngine2.load(changelogUrl.toString());
 
             Scene scene = new Scene(browser);
-            String address = API.getServerRootUri().toString();
+            String address = "http://localhost:7876/";//TODO: Make it right API.getServerRootUri().toString();
             changelogStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
             changelogStage.initStyle(StageStyle.DECORATED);
             changelogStage.setScene(scene);

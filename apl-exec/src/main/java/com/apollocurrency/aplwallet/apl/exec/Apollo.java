@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,12 +193,8 @@ public class Apollo {
         ExecutorService execService = Executors.newFixedThreadPool(1);
         unzipRes = execService.submit(we);
 */
-//TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
-        if (RuntimeEnvironment.getInstance().isDesktopApplicationEnabled()) {
-            runtimeMode = new DesktopMode();
-        } else {
-            runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
-        }
+
+        runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init();
         //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")

@@ -58,7 +58,7 @@ public class DesktopSystemTray {
 
     public static final int DELAY = 1000;
     //private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    //private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     //private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
     //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
@@ -177,7 +177,8 @@ public class DesktopSystemTray {
     }
 
     private void displayStatus() {
-        Block lastBlock = blockchain.getLastBlock();
+        //TODO: getLastBlock using API
+        //Block lastBlock = blockchain.getLastBlock();
         Collection<Generator> allGenerators = Generator.getAllGenerators();
 
         StringBuilder generators = new StringBuilder();
@@ -212,7 +213,8 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).toAbsolutePath()));
 //        addDataRow(statusPanel, "Database URL", dataSource == null ? "unavailable" : dataSource.getUrl());
         addEmptyRow(statusPanel);
-
+/*
+        TODO: dosplay last Block in status
         if (lastBlock != null) {
             addLabelRow(statusPanel, "Last Block");
             addDataRow(statusPanel, "Height", String.valueOf(lastBlock.getHeight()));
@@ -225,7 +227,7 @@ public class DesktopSystemTray {
                 addDataRow(statusPanel, "Forging accounts", generators.toString());
             }
         }
-
+*/
         addEmptyRow(statusPanel);
         addLabelRow(statusPanel, "Environment");
         addDataRow(statusPanel, "Number of peers", String.valueOf(Peers.getAllPeers().size()));

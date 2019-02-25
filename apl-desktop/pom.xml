@@ -169,9 +169,13 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>3.11.0</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>
@@ -215,7 +219,7 @@
                     <manifest>
                       <addClasspath>true</addClasspath>
                       <classpathPrefix>./</classpathPrefix>
-                      <mainClass>com.apollocurrency.aplwallet.apldesktop.DesktopApplication</mainClass>
+                      <mainClass>com.apollocurrency.aplwallet.apldesktop.DesktopMode</mainClass>
                     </manifest>
                   </archive>
                 </configuration>
