@@ -671,7 +671,8 @@ public class BlockDaoImpl implements BlockDao {
                     pstmt.setLong(1, lastBlock.getId());
                     pstmt.executeUpdate();
                 }
-                dataSource.commit();
+                // do not end existing transaction
+                dataSource.commit(false);
                 return lastBlock;
             } catch (SQLException e) {
                 dataSource.rollback();
