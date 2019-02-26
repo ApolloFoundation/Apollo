@@ -20,16 +20,29 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
+import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Properties;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import javafx.application.Platform;
+import javax.enterprise.inject.spi.CDI;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -37,27 +50,72 @@ import okhttp3.Response;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopMode {
+    public static String logDir = ".";
     private static Logger LOG;
 
     private static DesktopSystemTray desktopSystemTray;
     private static DesktopApplication desktopApp;
     private static String OS = System.getProperty("os.name").toLowerCase();
-
+    private static PropertiesHolder properties;
+    private static DirProvider dirProvider;
+    private static AplContainer container;
+    private static String APIUrl;
     
     public static void main(String[] args) {
+        
+        //TODO: Adopt to config files
+        /*/load configuration files
+        EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
+        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
+
+        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
+                configDirProvider,
+                false,
+                envVars.configDir,
+                Constants.DESKTOP_APPLICATION_NAME + ".properties",
+                null
+        );
+        
+        // init config holders
+        container.builder().containerId("APL-DESKTOP-CDI")
+                .recursiveScanPackages(PropertiesHolder.class)
+                .annotatedDiscoveryMode().build();        
+
+        properties = CDI.current().select(PropertiesHolder.class).get();
+        LOG.debug("PROPERTIES2:" + properties.getClass().getName());
+        Properties props = propertiesLoader.load();
+        properties.init(props);
+        
+        // init application data dir provider
+        LOG.debug("PROPERTIES:" + props.toString());
+        
+        dirProvider = DirProviderFactory.getProvider(
+                false, 
+                UUID.fromString("d5c22b16-935e-495d-aa3f-bb26ef2115d3"), // stub for compatibility
+                Constants.APPLICATION_DIR_NAME, 
+                new PredefinedDirLocations(null, logDir, null, null, null));
+        RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
+        //init logging
+        logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
+        
         LOG = getLogger(DesktopMode.class);        
+        */
+        desktopApp = new DesktopApplication();            
+        Thread desktopAppThread = new Thread(() -> {
+                desktopApp.launch();
+        });
+        desktopAppThread.start();
         new Thread(() -> runBackend()).start();
         Runnable statusUpdater = () -> {
             while (!checkAPI()) {
                 try {
                     TimeUnit.MILLISECONDS.sleep(200);
-                    
                 }
                 catch (InterruptedException e) {
                     LOG.info("GUI thread was interrupted", e);
                 }
             }
-            desktopApp.startDesktopApplication();
+            desktopApp.startDesktopApplication(APIUrl);
            
         };
         
@@ -65,11 +123,7 @@ public class DesktopMode {
         updateSplashScreenThread.setDaemon(true);
         updateSplashScreenThread.start();
         LookAndFeel.init();
-        desktopApp = new DesktopApplication();            
-        Thread desktopAppThread = new Thread(() -> {
-                desktopApp.launch();
-        });
-        desktopAppThread.start();
+        
         desktopSystemTray = new DesktopSystemTray();
         SwingUtilities.invokeLater(desktopSystemTray::createAndShowGUI);
     }
@@ -77,7 +131,12 @@ public class DesktopMode {
     private static boolean checkAPI()
     {
         OkHttpClient client = new OkHttpClient();
-        String url = "http://localhost:7876/";
+        //String url = properties.getStringProperty("apl.APIURL");
+        //TODO: This code was written when I was very tired, resolvin CDI NPE...
+        
+        String[] APIPorts = {"6876", "7876"};
+        //String url = properties.getStringProperty("apl.APIURL");
+        String url = "http://localhost:" + APIPorts[new Random().nextInt(1)] + "/";
         Request request = new Request.Builder().url(url).build();
 
         Response response;
@@ -87,7 +146,12 @@ public class DesktopMode {
             //java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
-        return response.code() == 200;    
+        
+        if( response.code() == 200){
+            APIUrl = url;
+            return true;
+        }
+        return false;
     }
     
     public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {
@@ -96,7 +160,7 @@ public class DesktopMode {
 
     public void launchDesktopApplication() {
         LOG.info("Launching desktop wallet");
-            desktopApp.startDesktopApplication();
+            desktopApp.startDesktopApplication(APIUrl);
     }
 
     

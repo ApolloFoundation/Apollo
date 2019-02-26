@@ -101,6 +101,7 @@ public class DesktopApplication extends Application {
     //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
+    private static String APIUrl;
     //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
 
 //    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -112,7 +113,7 @@ public class DesktopApplication extends Application {
     }
     
     private static String getUrl() {
-        //TODO: use default URL from config
+        /*/TODO: use default URL from config
         String url = "http://localhost:7876/";//API.getWelcomePageUri().toString();
         
         if (url.startsWith("https")) {
@@ -124,8 +125,8 @@ public class DesktopApplication extends Application {
          String defaultAccount = "";
         if (defaultAccount != null && !defaultAccount.isEmpty() && !defaultAccount.equals("")) {
             url += "?account=" + defaultAccount;
-        }
-        return url;
+        }*/
+        return APIUrl;
     }
 
     public static void shutdownSplashScreen() {
@@ -139,7 +140,6 @@ public class DesktopApplication extends Application {
 
     //rewrite (start on existing stage)
     public static void launch() {
-     
         Application.launch(DesktopApplication.class);
             
      
@@ -153,10 +153,14 @@ public class DesktopApplication extends Application {
         DB_RECOVERING_UI.tryToRecoverDB();
     }*/
 
-    public static void startDesktopApplication() {
+    public static void startDesktopApplication(String APIlocation) {
+        APIUrl = APIlocation;
+
         if (isSplashScreenLaunched) {
             shutdownSplashScreen();
         }
+        shutdownSplashScreen();
+
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
 
 //TODO:: make with changelog
