@@ -35,6 +35,7 @@ class DatabaseManagerTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
     private static String DB_FILE_NAME = "test_db";
+    private static String TEMP_FILE_NAME = "apl-temp-db-name";
 
     private DbProperties baseDbProperties;
     private Path pathToDb;
@@ -128,16 +129,19 @@ class DatabaseManagerTest {
     }
 
     @Test
-    void createAndAddTemporaryDb() throws Exception {
+    void createTemporaryDb() throws IOException {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb("apl-temp-file-name");
-        assertNotNull(temporaryDb);
-        assertNotNull(temporaryDb.getConnection());
+        TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(TEMP_FILE_NAME);
         databaseManager.shutdown(temporaryDb);
-//        temporaryDb.shutdown(); // not needed
+
+        Path dbFile = pathToDbFolder.toAbsolutePath().resolve(TEMP_FILE_NAME + ".h2.db");
+        Path dbFile2 = pathToDbFolder.toAbsolutePath().resolve(TEMP_FILE_NAME + ".trace.db");
+
+        Files.deleteIfExists(dbFile);
+        Files.deleteIfExists(dbFile2);
     }
 
 }

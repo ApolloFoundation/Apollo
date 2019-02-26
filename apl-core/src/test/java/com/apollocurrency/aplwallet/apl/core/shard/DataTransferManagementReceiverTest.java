@@ -1,5 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.TEMP_DB_CREATED;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
@@ -31,7 +34,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 @EnableWeld
-class DataTransferManagementTest {
+class DataTransferManagementReceiverTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
     private static String TEMP_FILE_NAME = "apl-temp-db-name";
@@ -46,9 +49,9 @@ class DataTransferManagementTest {
 
     private static Path pathToDb;
     private static PropertiesHolder propertiesHolder;
-    private static DbProperties dbProperties;
+    private static DbProperties baseDbProperties;
     private static DatabaseManager databaseManager;
-    private static DataTransferManagementReceiver transferManagement;
+    private static DataTransferManagementReceiver transferManagementReceiver;
 
     @BeforeAll
     static void setUpAll() {
@@ -64,18 +67,21 @@ class DataTransferManagementTest {
         propertiesHolder = new PropertiesHolder();
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
-        dbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManager(dbProperties, propertiesHolder);
+        baseDbProperties = dbConfig.getDbConfig();
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
     }
 
     @Test
     void createTemporaryDb() throws IOException {
-        databaseManager = new DatabaseManager(dbProperties, propertiesHolder);
-        assertNotNull(databaseManager);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(TEMP_FILE_NAME);
-        databaseManager.shutdown(temporaryDb);
+        MigrateState state = transferManagementReceiver.getCurrentState();
+        assertNotNull(state);
+        assertEquals(MigrateState.INIT, state);
+
+        DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED);
+
+        state = transferManagementReceiver.createTempDb(databaseMetaInfo);
+        assertEquals(TEMP_DB_CREATED, state);
 
         Path dbFile = pathToDb.toAbsolutePath().resolve(TEMP_FILE_NAME + ".h2.db");
         Path dbFile2 = pathToDb.toAbsolutePath().resolve(TEMP_FILE_NAME + ".trace.db");
