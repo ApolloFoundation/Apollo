@@ -172,6 +172,12 @@ public class DatabaseManager implements ShardManagement {
     public TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
         Objects.requireNonNull(temporaryDatabaseName, "temporary Database Name is NULL");
         log.debug("Create new SHARD '{}'", temporaryDatabaseName);
+        if (temporaryDatabaseName.isEmpty() || temporaryDatabaseName.length() > 255) {
+            String error = String.format(
+                    "Parameter for temp database name is EMPTY or TOO LONG (>255 symbols) = '%s'", temporaryDatabaseName.length());
+            log.error(error);
+            throw new RuntimeException(error);
+        }
         DbProperties shardDbProperties = null;
         try {
             shardDbProperties = baseDbProperties.deepCopy().dbFileName(temporaryDatabaseName).dbUrl(null); // nullify dbUrl intentionally!;
@@ -192,6 +198,10 @@ public class DatabaseManager implements ShardManagement {
         } else {
             return createAndAddShard(shardId);
         }
+    }
+
+    public DbProperties getBaseDbProperties() {
+        return baseDbProperties;
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import javax.inject.Singleton;
 import java.sql.Statement;
 import java.util.List;
 
@@ -9,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 /**
  * {@inheritDoc}
  */
-@Singleton
 public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
 
     private TransactionalDataSource dataSource; // source or target
@@ -17,6 +15,16 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
     private List<Statement> statementList;
     private int commitBatchSize;
     private MigrateState migrateState;
+
+    public DatabaseMetaInfoImpl(TransactionalDataSource dataSource,
+                                String newFileName, List<Statement> statementList,
+                                int commitBatchSize, MigrateState migrateState) {
+        this.dataSource = dataSource;
+        this.newFileName = newFileName;
+        this.statementList = statementList;
+        this.commitBatchSize = commitBatchSize;
+        this.migrateState = migrateState;
+    }
 
     public TransactionalDataSource getDataSource() {
         return dataSource;
