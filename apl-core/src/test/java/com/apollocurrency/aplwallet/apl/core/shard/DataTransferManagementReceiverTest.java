@@ -69,6 +69,7 @@ class DataTransferManagementReceiverTest {
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager);
     }
 
     @Test
