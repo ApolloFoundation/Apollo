@@ -20,6 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
+import io.firstbridge.cryptolib.FBCryptoParams;
+import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
+import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+import io.firstbridge.cryptolib.exception.CryptoNotValidException;
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.bouncycastle.crypto.CipherParameters;
@@ -36,8 +45,19 @@ import org.slf4j.Logger;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.logging.Level;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.math.ec.ECFieldElement;
 
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
@@ -325,6 +345,101 @@ public final class Crypto {
 
     public static boolean isCanonicalSignature(byte[] signature) {
         return Curve25519.isCanonicalSignature(signature);
+    }
+    
+    public static FBElGamalKeyPair getElGamalKeyPair() {
+       
+            try {
+                FBCryptoParams params = FBCryptoParams.createDefault();
+                AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+                instanceOfAlice.setCurveParameters();
+                return instanceOfAlice.generateOwnKeys();
+            } catch (CryptoNotValidException ex) {
+                LOG.debug(ex.getLocalizedMessage());
+            }
+            
+            return null;
+        
+        
+    }
+
+public static byte[] hexToByteArray(String s) {
+     String[] strBytes = s.split("(?<=\\G.{2})");
+     byte[] bytes = new byte[strBytes.length];
+     for(int i = 0; i < strBytes.length; i++)
+         bytes[i] = (byte)Integer.parseInt(strBytes[i], 16);
+     return bytes;
+}
+
+
+private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+public static String bytesToHex(byte[] bytes) {
+    char[] hexChars = new char[bytes.length * 2];
+    for ( int j = 0; j < bytes.length; j++ ) {
+        int v = bytes[j] & 0xFF;
+        hexChars[j * 2] = hexArray[v >>> 4];
+        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+    }
+    return new String(hexChars);
+}
+    
+    public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
+    {
+        if (cryptogramm.length() < 457) return cryptogramm;
+        try
+        {
+            int sha256length = 64;
+            int elGamalCryptogrammLength = 393;
+            String sha256hash = cryptogramm.substring(cryptogramm.length() - sha256length);
+            int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
+            String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
+        
+            String aesCryptogramm = cryptogramm.substring(0, cryptogrammDivider);
+
+            FBCryptoParams params = FBCryptoParams.createDefault();
+            AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+            instanceOfAlice.setCurveParameters();
+        
+            FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
+            String M2 = aesKey.substring(262);
+            cryptogram1.setM2( new BigInteger(M2, 16)); 
+            String M1_X = aesKey.substring(0, 131);
+            String M1_Y = aesKey.substring(131, 262);
+
+            org.bouncycastle.math.ec.ECPoint.Fp _M1 = 
+            instanceOfAlice.extrapolateECPoint(
+                    new BigInteger(M1_X, 16),
+                    new BigInteger(M1_Y, 16));
+
+            // setting M1 to the instance of cryptogram
+            cryptogram1.setM1(_M1);
+            BigInteger pKey = keyPair.getPrivateKey();
+            BigInteger restored = BigInteger.ZERO;
+        
+        
+            restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
+            String keyStr = restored.toString(16);
+            String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
+            byte[] IVC = null;
+            byte[] key = null;
+    //        
+            IVC = hexToByteArray(IVCiphered);
+            key = hexToByteArray(keyStr);
+    //                System.out.println("keysize: " + key.length );
+
+            byte[] plain = aesGCMDecrypt(IVC, key);  
+            
+            return new String(plain);
+        }
+        catch (Exception e)
+        {
+            LOG.debug(e.getMessage());
+            
+            return cryptogramm;
+        }
+        
+        
+        
     }
 
 }

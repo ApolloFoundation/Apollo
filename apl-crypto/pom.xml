@@ -54,7 +54,24 @@
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>io.firstbridge.cryptolib</groupId>
+            <artifactId>cryptolib</artifactId>
+            <version>1.2.3</version>
+            <type>jar</type>
+            <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.firstbridge</groupId>
+            <artifactId>cryptolib</artifactId>
+            <version>1.2.3</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>

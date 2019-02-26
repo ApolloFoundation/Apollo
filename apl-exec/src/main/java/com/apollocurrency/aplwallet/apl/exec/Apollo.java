@@ -185,9 +185,11 @@ public class Apollo {
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 
         log = LoggerFactory.getLogger(Apollo.class);
+        
 //check webUI
         System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
 /* at the moment we do it in build time
+
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);
         ExecutorService execService = Executors.newFixedThreadPool(1);
