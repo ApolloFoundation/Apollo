@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -72,6 +74,13 @@ class DataTransferManagementReceiverTest {
         transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager);
     }
 
+/*
+    @AfterEach
+    void tearDown() {
+        FileUtils.deleteQuietly(pathToDb.toFile());
+    }
+*/
+
     @Test
     void createTemporaryDb() throws IOException {
         MigrateState state = transferManagementReceiver.getCurrentState();
@@ -89,5 +98,28 @@ class DataTransferManagementReceiverTest {
 
         Files.deleteIfExists(dbFile);
         Files.deleteIfExists(dbFile2);
+    }
+
+    @Test
+    void createTemporaryDbAndMoveDataFromMain() throws IOException {
+        MigrateState state = transferManagementReceiver.getCurrentState();
+        assertNotNull(state);
+        assertEquals(MigrateState.INIT, state);
+
+        List<String> tempDbSelectList = new ArrayList<>(100);
+        tempDbSelectList.add("ACCOUNT_LEDGER");
+        DatabaseMetaInfo tempDbMetaInfo = new DatabaseMetaInfoImpl(
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, 52, TEMP_DB_CREATED);
+
+        state = transferManagementReceiver.createTempDb(tempDbMetaInfo);
+        assertEquals(TEMP_DB_CREATED, state);
+
+        List<String> mainDbInsertList = new ArrayList<>(100);
+        mainDbInsertList.add("ACCOUNT_LEDGER");
+        DatabaseMetaInfo mainDbMetaInfo = new DatabaseMetaInfoImpl(
+                null, "apl-blockchain", mainDbInsertList, -1, MigrateState.DATA_MOVING);
+
+        state = transferManagementReceiver.moveData(mainDbMetaInfo, tempDbMetaInfo);
+        assertEquals(MigrateState.DATA_MOVING, state);
     }
 }

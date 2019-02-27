@@ -18,9 +18,9 @@ public interface DatabaseMetaInfo {
 
     void setNewFileName(String newFileName);
 
-    List<Statement> getStatementList();
+    List<String> getStatementList();
 
-    void setStatementList(List<Statement> statementList);
+    void setStatementList(List<String> statementList);
 
     int getCommitBatchSize();
 

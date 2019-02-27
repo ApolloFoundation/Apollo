@@ -12,12 +12,12 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
 
     private TransactionalDataSource dataSource; // source or target
     private String newFileName;
-    private List<Statement> statementList;
+    private List<String> statementList; // processed tables list
     private int commitBatchSize;
     private MigrateState migrateState;
 
     public DatabaseMetaInfoImpl(TransactionalDataSource dataSource,
-                                String newFileName, List<Statement> statementList,
+                                String newFileName, List<String> statementList,
                                 int commitBatchSize, MigrateState migrateState) {
         this.dataSource = dataSource;
         this.newFileName = newFileName;
@@ -42,11 +42,11 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
         this.newFileName = newFileName;
     }
 
-    public List<Statement> getStatementList() {
+    public List<String> getStatementList() {
         return statementList;
     }
 
-    public void setStatementList(List<Statement> statementList) {
+    public void setStatementList(List<String> statementList) {
         this.statementList = statementList;
     }
 

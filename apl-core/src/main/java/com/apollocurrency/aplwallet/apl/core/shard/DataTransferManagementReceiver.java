@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import java.util.Map;
+
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 /**
@@ -9,6 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 public interface DataTransferManagementReceiver {
 
     String TEMPORARY_MIGRATION_FILE_NAME = "apl-temp-migration";
+    String PREVIOUS_MIGRATION_KEY = "SHARD_MIGRATION_STATUS";
+    String LAST_MIGRATION_OBJECT_NAME = "LAST_MIGRATION_OBJECT_NAME";
+
+    Map<String, Long> getTableNameWithCountMap();
 
     DatabaseManager getDatabaseManager();
 
