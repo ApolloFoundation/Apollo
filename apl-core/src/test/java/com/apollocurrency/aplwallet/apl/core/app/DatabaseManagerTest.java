@@ -96,7 +96,7 @@ class DatabaseManagerTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
         FileUtils.deleteQuietly(pathToDb.toFile());
         FileUtils.deleteQuietly(pathToDbFolder.toFile());
     }
@@ -107,7 +107,7 @@ class DatabaseManagerTest {
     }
 
     @Test
-    void init() throws Exception {
+    void init() {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -129,19 +129,15 @@ class DatabaseManagerTest {
     }
 
     @Test
-    void createTemporaryDb() throws IOException {
+    void createTemporaryDb() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(TEMP_FILE_NAME);
+        assertNotNull(temporaryDb);
+        assertNotNull(temporaryDb.getConnection());
         databaseManager.shutdown(temporaryDb);
-
-        Path dbFile = pathToDbFolder.toAbsolutePath().resolve(TEMP_FILE_NAME + ".h2.db");
-        Path dbFile2 = pathToDbFolder.toAbsolutePath().resolve(TEMP_FILE_NAME + ".trace.db");
-
-        Files.deleteIfExists(dbFile);
-        Files.deleteIfExists(dbFile2);
     }
 
 }

@@ -186,6 +186,7 @@ public class DatabaseManager implements ShardManagement {
         }
         TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
         temporaryDataSource.init(new AplDbVersion());
+        connectedShardDataSourceMap.put(-1L, temporaryDataSource); // put temporary DS with special ID
         log.debug("new temporaryDataSource '{}' is CREATED", temporaryDatabaseName);
         return temporaryDataSource;
     }
