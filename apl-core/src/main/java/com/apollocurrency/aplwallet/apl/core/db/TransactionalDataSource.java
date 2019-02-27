@@ -120,7 +120,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
      * {@inheritDoc}
      */
     @Override
-    public void begin() {
+    public Connection begin() {
         if (localConnection.get() != null) {
             throw new IllegalStateException("Transaction already in progress");
         }
@@ -131,6 +131,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             ((DbConnectionWrapper)con).txStart = System.currentTimeMillis();
             localConnection.set((DbConnectionWrapper)con);
             transactionCaches.set(new HashMap<>());
+            return con;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

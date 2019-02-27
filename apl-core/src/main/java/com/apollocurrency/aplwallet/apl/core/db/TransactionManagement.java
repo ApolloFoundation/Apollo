@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import java.sql.Connection;
+
 public interface TransactionManagement {
 
     /**
@@ -12,7 +14,7 @@ public interface TransactionManagement {
      * Start transaction using existing underlying db connection
      * Create new connection (with autoCommit = FALSE) and put in into ThreadLocal for later usage.
      */
-    void begin();
+    Connection begin();
 
     /**
      * Commit/flash transaction data on currently opened db connection and close connection.
