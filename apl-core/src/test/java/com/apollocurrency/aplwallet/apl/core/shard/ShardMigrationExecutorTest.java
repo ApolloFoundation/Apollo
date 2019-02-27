@@ -33,9 +33,11 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -84,6 +86,11 @@ class ShardMigrationExecutorTest {
         transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager);
     }
 
+    @AfterEach
+    void tearDown() {
+        databaseManager.shutdown();
+        FileUtils.deleteQuietly(pathToDb.toFile());
+    }
 
     @Test
     void executeCreateTempDbOperation() throws IOException {
@@ -92,13 +99,6 @@ class ShardMigrationExecutorTest {
         MigrateState state = shardMigrationExecutor.executeOperation(tempDbCommand);
         assertNotNull(state);
         assertEquals(MigrateState.TEMP_DB_CREATED, state);
-
-        databaseManager.shutdown();
-        Path dbFile = pathToDb.toAbsolutePath().resolve(DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME + ".h2.db");
-        Path dbFile2 = pathToDb.toAbsolutePath().resolve(DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME + ".trace.db");
-
-        Files.deleteIfExists(dbFile);
-        Files.deleteIfExists(dbFile2);
     }
 
     @Test
@@ -118,14 +118,5 @@ class ShardMigrationExecutorTest {
                 transferManagementReceiver, null, Collections.emptyList(), -1);
         state = shardMigrationExecutor.executeOperation(dbFilesRenameCommand);
         assertEquals(MigrateState.COMPLETED, state);
-
-        databaseManager.shutdown();
-
-        Path dbFile = pathToDb.toAbsolutePath().resolve(DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME + ".h2.db");
-        Path dbFile2 = pathToDb.toAbsolutePath().resolve(DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME + ".trace.db");
-
-        Files.deleteIfExists(dbFile);
-        Files.deleteIfExists(dbFile2);
-
     }
 }

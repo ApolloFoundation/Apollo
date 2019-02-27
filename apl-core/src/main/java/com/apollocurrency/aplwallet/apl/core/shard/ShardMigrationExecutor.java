@@ -9,8 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation
 @Singleton
 public class ShardMigrationExecutor {
 
-    private final List<DataMigrateOperation> dataMigrateOperations
-            = new ArrayList<>();
+    private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
     public ShardMigrationExecutor() {
     }
