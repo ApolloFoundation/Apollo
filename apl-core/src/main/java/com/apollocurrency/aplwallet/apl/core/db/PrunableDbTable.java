@@ -22,17 +22,16 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.enterprise.inject.spi.CDI;
 
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
@@ -68,7 +67,6 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
-                dataSource.begin();
                 pstmt.setInt(1, timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
                 int deleted;
                 do {

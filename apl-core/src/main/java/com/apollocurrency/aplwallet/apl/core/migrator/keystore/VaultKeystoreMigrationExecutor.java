@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.keystore;
 
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.migrator.DefaultDirectoryMigrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
@@ -25,8 +26,8 @@ public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
     public static final String KEYSTORE_PROPERTY_PREFIX = "apl.keystore";
 
     @Inject
-    public VaultKeystoreMigrationExecutor(PropertiesHolder holder) {
-        super(holder, null,  "vaultkeystore", false);
+    public VaultKeystoreMigrationExecutor(DatabaseManager databaseManager, PropertiesHolder holder) {
+        super(holder, databaseManager,  "vaultkeystore", false);
     }
 
 
@@ -36,7 +37,7 @@ public class VaultKeystoreMigrationExecutor extends MigrationExecutor {
         List<Path> paths = new ArrayList<>();
         if (keystoreDir != null) {
             Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();
-            paths.add(legacyHomeDir.resolve(keystoreDir));
+            paths.add(legacyHomeDir.resolve(keystoreDir).normalize());
         }
         return paths;
     }

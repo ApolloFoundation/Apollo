@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -20,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * <p>Provides main algorithm of data migration. </p>
@@ -81,6 +80,10 @@ public abstract class MigrationExecutor {
         }
     }
 
+    public void setAutoCleanup(boolean autoCleanup) {
+        this.autoCleanup = autoCleanup;
+    }
+
     protected abstract List<Path> getSrcPaths();
 
     public void performMigration(Path toPath) throws IOException {
@@ -128,7 +131,7 @@ public abstract class MigrationExecutor {
         return parseBooleanProperty(migrationRequiredPropertyName, true);
     }
     private boolean isCleanupRequired() {
-        return parseBooleanProperty(deleteAfterMigrationPropertyName, true);
+        return holder.getBooleanProperty(deleteAfterMigrationPropertyName, true);
     }
 
     private boolean parseBooleanProperty(String property, boolean defaultValue) {
