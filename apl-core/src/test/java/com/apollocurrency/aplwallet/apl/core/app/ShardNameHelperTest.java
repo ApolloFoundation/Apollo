@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,5 +15,16 @@ class ShardNameHelperTest {
 
         result = ShardNameHelper.getShardNameByShardId(2001L);
         assertEquals("apl-shard-0002001", result);
+
+        result = ShardNameHelper.getShardNameByShardId(0L);
+        assertEquals("apl-shard-0000000", result);
+
+    }
+
+    @Test
+    void getShardNameIncorrectValue() {
+        assertThrows(RuntimeException.class, () ->
+                ShardNameHelper.getShardNameByShardId(-100L)
+        );
     }
 }
