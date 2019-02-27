@@ -50,7 +50,8 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
             config = merge(config, defaultConfig);
         }
         catch (IOException e) {
-            System.err.println("Can not find resource: " + fn);
+            System.err.println("Can not load resource: " + fn);
+            e.printStackTrace();
         }
     }
 

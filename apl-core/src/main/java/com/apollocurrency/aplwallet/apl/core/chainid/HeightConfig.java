@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.AdaptiveForgingSettings;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
-import com.apollocurrency.aplwallet.apl.util.env.config.Consensus;
+import com.apollocurrency.aplwallet.apl.util.env.config.ConsensusSettings;
 
 import java.math.BigInteger;
 
@@ -24,7 +24,7 @@ public class HeightConfig {
     private final int maxBlockTimeLimit;
     private final boolean isAdaptiveForgingEnabled;
     private final int adaptiveBlockTime;
-    private final Consensus.Type consensusType;
+    private final ConsensusSettings.Type consensusType;
     private final int numberOfTransactionsInAdaptiveBlock;
     
     public HeightConfig(BlockchainProperties bp) {
@@ -38,11 +38,11 @@ public class HeightConfig {
         this.minBaseTarget = initialBaseTarget * 9 / 10;
         this.minBlockTimeLimit = bp.getMinBlockTimeLimit();
         this.maxBlockTimeLimit = bp.getMaxBlockTimeLimit();
-        AdaptiveForgingSettings adaptiveForgingSettings = bp.getConsensus().getAdaptiveForgingSettings();
+        AdaptiveForgingSettings adaptiveForgingSettings = bp.getConsensusSettings().getAdaptiveForgingSettings();
         this.isAdaptiveForgingEnabled = adaptiveForgingSettings.isEnabled();
         this.adaptiveBlockTime = adaptiveForgingSettings.getAdaptiveBlockTime();
         this.numberOfTransactionsInAdaptiveBlock = adaptiveForgingSettings.getNumberOfTransactions();
-        this.consensusType = bp.getConsensus().getType();
+        this.consensusType = bp.getConsensusSettings().getType();
     }
 
     public int getMaxNumberOfTransactions() {
@@ -93,7 +93,7 @@ public class HeightConfig {
         return adaptiveBlockTime;
     }
 
-    public Consensus.Type getConsensusType() {
+    public ConsensusSettings.Type getConsensusType() {
         return consensusType;
     }
 

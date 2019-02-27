@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
@@ -14,6 +15,7 @@ public class AdaptiveForgingSettings {
     private int adaptiveBlockTime;
     private int numberOfTransactions;
 
+    @JsonCreator
     public AdaptiveForgingSettings() {
         this(false, 60, 0);
     }
