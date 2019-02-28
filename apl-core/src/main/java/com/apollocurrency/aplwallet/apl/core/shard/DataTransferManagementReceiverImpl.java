@@ -9,9 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,7 +30,6 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private DbProperties dbProperties;
     private DatabaseManager databaseManager;
     private OptionDAO optionDAO;
-    private Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     public DataTransferManagementReceiverImpl() {
@@ -42,14 +39,14 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     public DataTransferManagementReceiverImpl(DatabaseManager databaseManager) {
         this.dbProperties = databaseManager.getBaseDbProperties();
         this.databaseManager = databaseManager;
-        tableNameCountMap.put("ACCOUNT_LEDGER", -1L);
-        tableNameCountMap.put("ACCOUNT", -1L);
     }
 
+/*
     @Override
     public Map<String, Long> getTableNameWithCountMap() {
         return tableNameCountMap;
     }
+*/
 
     @Override
     public DatabaseManager getDatabaseManager() {
@@ -83,10 +80,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
      * {@inheritDoc}
      */
     @Override
-    public MigrateState moveData(DatabaseMetaInfo source, DatabaseMetaInfo target) {
-        log.debug("Starting shard data transfer...");
+    public MigrateState moveData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target) {
+        Objects.requireNonNull(tableNameCountMap, "tableNameCountMap is NULL");
         Objects.requireNonNull(source, "source meta-info is NULL");
         Objects.requireNonNull(target, "target meta-info is NULL");
+        log.debug("Starting shard data transfer from [{}] tables...", tableNameCountMap.size());
         TransactionalDataSource mainDs;
         TransactionalDataSource tempDs;
         String lastTableName = null;
@@ -107,23 +105,38 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             // continue previous run
             lastTableName = optionDAO.get(LAST_MIGRATION_OBJECT_NAME, targetDataSource);
         }
-        if (lastTableName == null || lastTableName.isEmpty()) {
+        if (lastTableName != null && !lastTableName.isEmpty()) {
+            // NOT FINISHED YET!!!
             // check/compare records count in source and target, clear target if needed, reinsert again in case...
         } else {
             // insert data as not processed previously
-            for (String tableName : tableNameCountMap.keySet()) {
-                try (
-                        Connection sourceConnect = source.getDataSource().getConnection();
-                        Connection targetConnect = targetDataSource.begin();
-                ) {
+            long startAllTables = System.currentTimeMillis();
+            Connection targetConnect = null;
+
+            String currentTable = null;
+            try (
+                    Connection sourceConnect = source.getDataSource().getConnection();
+            ) {
+                for (String tableName : tableNameCountMap.keySet()) {
+                    long start = System.currentTimeMillis();
+                    if (!targetDataSource.isInTransaction()) {
+                        targetConnect = targetDataSource.begin();
+                    }
+                    currentTable = tableName;
                     optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName, targetDataSource);
                     int totalCount = generateInsertStatements(sourceConnect, targetConnect, tableName, target.getCommitBatchSize());
+                    targetDataSource.commit(false);
+                    log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+                }
+            } catch (Exception e) {
+                log.error("Error processing table = '" + currentTable + "'", e);
+                targetDataSource.rollback();
+            } finally {
+                if (targetConnect != null) {
                     targetDataSource.commit();
-                    log.debug("Totally inserted = {} in table ='{}'", totalCount, tableName);
-                } catch (Exception e) {
-                    log.error("Error processing table = '{}'", e, tableName);
                 }
             }
+            log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
         }
         return MigrateState.DATA_MOVING;
     }
@@ -141,90 +154,78 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             throws Exception {
         log.debug("Generating Insert statements for: '{}'", tableName);
 
-        Statement stmt = sourceConnect.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName);
+        Statement selectStmt = sourceConnect.createStatement();
+        long lowerIndex = 0, upperIndex = batchCommitSize;
+
+        int insertedBeforeBatchCount = 0;
+        int totalInsertedCount = 0;
+        String unFormattedSql;
+        if (tableName.equalsIgnoreCase("block")) {
+            unFormattedSql = "SELECT * FROM %s where HEIGHT BETWEEN %d AND %d limit %d";
+        } else {
+//            unFormattedSql = "SELECT * FROM %s where HEIGHT BETWEEN %d AND %d limit %d";
+            unFormattedSql = "SELECT * FROM %s";
+        }
+        String sqlToExecute;
+
+        long startSelect = System.currentTimeMillis();
+        ResultSet rs = null;
+        if (tableName.equalsIgnoreCase("block")) {
+            sqlToExecute = String.format(unFormattedSql, tableName, lowerIndex, upperIndex, batchCommitSize);
+            rs = selectStmt.executeQuery(sqlToExecute);
+        } else {
+            rs = selectStmt.executeQuery("SELECT * FROM " + tableName);
+        }
+        log.debug("Select '{}' in {} secs", tableName, (System.currentTimeMillis() - startSelect)/1000);
         ResultSetMetaData rsmd = rs.getMetaData();
         int numColumns = rsmd.getColumnCount();
         int[] columnTypes = new int[numColumns];
-        String columnNames = "";
+
+        StringBuilder columnNames = new StringBuilder();
+        StringBuilder columnQuestionMarks = new StringBuilder();
         for (int i = 0; i < numColumns; i++) {
             columnTypes[i] = rsmd.getColumnType(i + 1);
             if (i != 0) {
-                columnNames += ",";
+                columnNames.append(",");
+                columnQuestionMarks.append("?,");
             }
-            columnNames += rsmd.getColumnName(i + 1);
+            columnNames.append(rsmd.getColumnName(i + 1));
         }
+        columnQuestionMarks.append("?");
 
-        String sqlInsertString = null;
-        java.util.Date d = null;
-        int insertedCount = 0;
-        int totalCount = 0;
-        while (rs.next()) {
-            String columnValues = "";
-            for (int i = 0; i < numColumns; i++) {
-                if (i != 0) {
-                    columnValues += ",";
+        // no need to synch by StringBuffer implementation
+        StringBuilder sqlInsertString = new StringBuilder(8000);
+        sqlInsertString.append("INSERT INTO ").append(tableName)
+                .append("(").append(columnNames).append(")").append(" values (").append(columnQuestionMarks).append(")");
+
+        if (log.isTraceEnabled()) {
+            log.trace(sqlInsertString.toString());
+        }
+        try (
+                // precompile sql
+                PreparedStatement preparedStatement = targetConnect.prepareStatement(sqlInsertString.toString())
+        ) {
+            long startInsert = System.currentTimeMillis();
+            while (rs.next()) {
+                for (int i = 0; i < numColumns; i++) {
+                    // bind values
+                    preparedStatement.setObject(i + 1, rs.getObject(i + 1));
                 }
-
-                switch (columnTypes[i]) {
-                    case Types.BIGINT:
-                    case Types.BIT:
-                    case Types.BOOLEAN:
-                    case Types.DECIMAL:
-                    case Types.DOUBLE:
-                    case Types.FLOAT:
-                    case Types.INTEGER:
-                    case Types.SMALLINT:
-                    case Types.TINYINT:
-                        String v = rs.getString(i + 1);
-                        columnValues += v;
-                        break;
-
-                    case Types.DATE:
-                        d = rs.getDate(i + 1);
-                    case Types.TIME:
-                        if (d == null) d = rs.getTime(i + 1);
-                    case Types.TIMESTAMP:
-                        if (d == null) d = rs.getTimestamp(i + 1);
-
-                        if (d == null) {
-                            columnValues += "null";
-                        } else {
-                            columnValues += "TO_DATE('"
-                                    + dateFormat.format(d)
-                                    + "', 'YYYY/MM/DD HH24:MI:SS')";
-                        }
-                        break;
-
-                    default:
-                        v = rs.getString(i + 1);
-                        if (v != null) {
-                            columnValues += "'" + v.replaceAll("'", "''") + "'";
-                        } else {
-                            columnValues += "null";
-                        }
-                        break;
-                }
-            }
-            sqlInsertString = String.format("INSERT INTO %s (%s) values (%s)",
-                    tableName,
-                    columnNames,
-                    columnValues);
-            log.trace(sqlInsertString);
-            try(
-                    PreparedStatement preparedStatement = targetConnect.prepareStatement(sqlInsertString);
-            ) {
-                insertedCount +=  preparedStatement.executeUpdate();
-                totalCount += insertedCount;
-                if (insertedCount >= batchCommitSize) {
+                insertedBeforeBatchCount += preparedStatement.executeUpdate();
+                if (insertedBeforeBatchCount >= batchCommitSize) {
                     targetConnect.commit();
-                    insertedCount = 0;
-                    log.debug("Totally inserted = {}", totalCount);
+                    totalInsertedCount += insertedBeforeBatchCount;
+                    insertedBeforeBatchCount = 0;
+                    log.debug("Partial commit = {}", totalInsertedCount);
                 }
-            } catch (Exception e) {
-                log.error("Insert error on SQL = " + sqlInsertString + "\n", e);
             }
+            targetConnect.commit(); // commit latest records if any
+            totalInsertedCount += insertedBeforeBatchCount;
+            log.debug("Finished '{}' inserted [{}] in = {} sec", tableName, totalInsertedCount, (System.currentTimeMillis() - startInsert)/1000);
+        } catch (Exception e) {
+            int errorTotalCount = totalInsertedCount + insertedBeforeBatchCount;
+            log.error("Insert error on record count=[" + errorTotalCount + "] by SQL =\n" + sqlInsertString.toString() + "\n", e);
         }
-        return totalCount;
+        return totalInsertedCount;
     }
 }

@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -106,20 +106,29 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        List<String> tempDbSelectList = new ArrayList<>(100);
-        tempDbSelectList.add("ACCOUNT_LEDGER");
+        Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
+//        tableNameCountMap.put("BLOCK", -1L);
+//        tableNameCountMap.put("GENESIS_PUBLIC_KEY", -1L);
+        tableNameCountMap.put("ACCOUNT", -1L);
+        tableNameCountMap.put("ACCOUNT_LEDGER", -1L);
+        tableNameCountMap.put("ACCOUNT_INFO", -1L);
+        tableNameCountMap.put("PURCHASE", -1L);
+        tableNameCountMap.put("CURRENCY", -1L);
+
+//        List<String> tableSelectedList = new ArrayList<>(100);
+//        tableSelectedList.add("ACCOUNT_LEDGER");
         DatabaseMetaInfo tempDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, 52, TEMP_DB_CREATED);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, 5000, TEMP_DB_CREATED);
 
         state = transferManagementReceiver.createTempDb(tempDbMetaInfo);
         assertEquals(TEMP_DB_CREATED, state);
 
-        List<String> mainDbInsertList = new ArrayList<>(100);
-        mainDbInsertList.add("ACCOUNT_LEDGER");
+//        List<String> mainDbInsertList = new ArrayList<>(100);
+//        mainDbInsertList.add("ACCOUNT_LEDGER");
         DatabaseMetaInfo mainDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, "apl-blockchain", mainDbInsertList, -1, MigrateState.DATA_MOVING);
+                null, "apl-blockchain", null, 1000, MigrateState.DATA_MOVING);
 
-        state = transferManagementReceiver.moveData(mainDbMetaInfo, tempDbMetaInfo);
+        state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, tempDbMetaInfo);
         assertEquals(MigrateState.DATA_MOVING, state);
     }
 }

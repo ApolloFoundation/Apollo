@@ -14,7 +14,7 @@ public interface DataTransferManagementReceiver {
     String PREVIOUS_MIGRATION_KEY = "SHARD_MIGRATION_STATUS";
     String LAST_MIGRATION_OBJECT_NAME = "LAST_MIGRATION_OBJECT_NAME";
 
-    Map<String, Long> getTableNameWithCountMap();
+//    Map<String, Long> getTableNameWithCountMap();
 
     DatabaseManager getDatabaseManager();
 
@@ -22,7 +22,7 @@ public interface DataTransferManagementReceiver {
 
     MigrateState createTempDb(DatabaseMetaInfo source);
 
-    MigrateState moveData(DatabaseMetaInfo source, DatabaseMetaInfo target);
+    MigrateState moveData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
 
     MigrateState renameDataFiles(DatabaseMetaInfo source, DatabaseMetaInfo target);
 

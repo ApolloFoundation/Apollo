@@ -6,6 +6,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Statement;
 import java.util.List;
+import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.DatabaseMetaInfo;
@@ -20,6 +21,7 @@ public class MoveDataCommand implements DataMigrateOperation {
 
     private DatabaseMetaInfo source;
     private DatabaseMetaInfo target;
+    private Map<String, Long> tableNameCountMap;
 
     private String newFileName;
     private List<Statement> statementList;
@@ -28,8 +30,10 @@ public class MoveDataCommand implements DataMigrateOperation {
     public MoveDataCommand(
             DataTransferManagementReceiver dataTransferManagement,
 //            DatabaseMetaInfo source, DatabaseMetaInfo target,
-             String newFileName, List<Statement> statementList, int commitBatchSize) {
+            Map<String, Long> tableNameCountMap,
+            String newFileName, List<Statement> statementList, int commitBatchSize) {
         this.dataTransferManagement = dataTransferManagement;
+        this.tableNameCountMap = tableNameCountMap;
 //        this.source = source;
 //        this.target = target;
         this.newFileName = newFileName;
@@ -42,10 +46,10 @@ public class MoveDataCommand implements DataMigrateOperation {
         log.debug("MoveDataCommand execute...");
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, MigrateState.DATA_MOVING);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, MigrateState.DATA_MOVING);
 
-        return dataTransferManagement.moveData(sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
+        return dataTransferManagement.moveData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }
 }
