@@ -99,6 +99,24 @@ class OptionDAOTest {
     }
 
     @Test
+    void setTwiceTheSameKey() {
+        boolean isInserted = optionDAO.set("key1", "value1");
+        assertTrue(isInserted);
+        String value = optionDAO.get("key1");
+        assertNotNull(value);
+        assertEquals("value1", value);
+
+        isInserted = optionDAO.set("key1", "value2");
+        assertTrue(isInserted);
+        value = optionDAO.get("key1");
+        assertEquals("value2", value);
+
+        optionDAO.delete("key1");
+        value = optionDAO.get("key1");
+        assertNull(value);
+    }
+
+    @Test
     void setWithDataSource() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean isInserted = optionDAO.set("unknown_key", "unknown_value", dataSource);

@@ -7,12 +7,13 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
@@ -109,8 +110,10 @@ class ShardMigrationExecutorTest {
         assertNotNull(state);
         assertEquals(MigrateState.TEMP_DB_CREATED, state);
 
+        Map<String, Long> tableNameCountMap = new LinkedHashMap<>(0);
+        tableNameCountMap.put("ACCOUNT", -1L);
         MoveDataCommand moveDataCommand = new MoveDataCommand(
-                transferManagementReceiver, null, Collections.emptyList(), -1);
+                transferManagementReceiver, tableNameCountMap, null, Collections.emptyList(), -1);
         state = shardMigrationExecutor.executeOperation(moveDataCommand);
         assertEquals(MigrateState.DATA_MOVING, state);
 
