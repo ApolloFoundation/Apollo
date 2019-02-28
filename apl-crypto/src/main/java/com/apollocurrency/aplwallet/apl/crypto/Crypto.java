@@ -385,17 +385,16 @@ public static String bytesToHex(byte[] bytes) {
     
     public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
     {
-        if (cryptogramm.length() < 457) return cryptogramm;
         try
         {
+            if (cryptogramm.length() < 450) return cryptogramm;
             int sha256length = 64;
             int elGamalCryptogrammLength = 393;
             String sha256hash = cryptogramm.substring(cryptogramm.length() - sha256length);
             int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
             String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
-        
-            String aesCryptogramm = cryptogramm.substring(0, cryptogrammDivider);
-
+            String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
+            
             FBCryptoParams params = FBCryptoParams.createDefault();
             AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
             instanceOfAlice.setCurveParameters();
@@ -403,9 +402,9 @@ public static String bytesToHex(byte[] bytes) {
             FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
             String M2 = aesKey.substring(262);
             cryptogram1.setM2( new BigInteger(M2, 16)); 
+            
             String M1_X = aesKey.substring(0, 131);
             String M1_Y = aesKey.substring(131, 262);
-
             org.bouncycastle.math.ec.ECPoint.Fp _M1 = 
             instanceOfAlice.extrapolateECPoint(
                     new BigInteger(M1_X, 16),
@@ -414,20 +413,21 @@ public static String bytesToHex(byte[] bytes) {
             // setting M1 to the instance of cryptogram
             cryptogram1.setM1(_M1);
             BigInteger pKey = keyPair.getPrivateKey();
+            
             BigInteger restored = BigInteger.ZERO;
-        
-        
+               
             restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
             String keyStr = restored.toString(16);
-            String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
+            
             byte[] IVC = null;
             byte[] key = null;
-    //        
             IVC = hexToByteArray(IVCiphered);
             key = hexToByteArray(keyStr);
-    //                System.out.println("keysize: " + key.length );
+            
 
-            byte[] plain = aesGCMDecrypt(IVC, key);  
+            byte[] plain = aesGCMDecrypt(IVC, key);
+            //TODO:
+            // Add passphrase encryption verification bolow
             
             return new String(plain);
         }
