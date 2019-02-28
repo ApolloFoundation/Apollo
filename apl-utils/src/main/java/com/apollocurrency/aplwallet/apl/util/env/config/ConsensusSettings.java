@@ -64,6 +64,9 @@ public class ConsensusSettings {
         return Objects.hash(type, adaptiveForgingSettings);
     }
 
+    public ConsensusSettings copy() {
+        return new ConsensusSettings(type, adaptiveForgingSettings.copy());
+    }
     @Override
     public String toString() {
         return "ConsensusSettings{" +

@@ -50,6 +50,10 @@ public class AdaptiveForgingSettings {
         this.enabled = enabled;
     }
 
+    public AdaptiveForgingSettings copy() {
+        return new AdaptiveForgingSettings(enabled, adaptiveBlockTime, numberOfTransactions);
+    }
+
     @Override
     public String toString() {
         return "AdaptiveForgingSettings{" +

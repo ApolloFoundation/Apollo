@@ -34,6 +34,9 @@ public class ShardingSettings {
         return frequency;
     }
 
+    public ShardingSettings copy() {
+        return new ShardingSettings(enabled, frequency);
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

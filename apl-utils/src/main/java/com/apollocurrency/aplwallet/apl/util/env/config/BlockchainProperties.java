@@ -136,4 +136,23 @@ public class BlockchainProperties {
     public ShardingSettings getShardingSettings() {
         return shardingSettings;
     }
+
+    public BlockchainProperties copy() {
+        return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
+                shardingSettings.copy(), consensusSettings.copy());
+    }
+
+    @Override
+    public String toString() {
+        return "BlockchainProperties{" +
+                "height=" + height +
+                ", maxNumberOfTransactions=" + maxNumberOfTransactions +
+                ", blockTime=" + blockTime +
+                ", maxBlockTimeLimit=" + maxBlockTimeLimit +
+                ", minBlockTimeLimit=" + minBlockTimeLimit +
+                ", maxBalance=" + maxBalance +
+                ", shardingSettings=" + shardingSettings +
+                ", consensusSettings=" + consensusSettings +
+                '}';
+    }
 }

@@ -186,6 +186,16 @@ public class Chain {
         return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties);
     }
 
+    public Chain copy() {
+        List<String> defaultPeersCopy = new ArrayList<>(defaultPeers);
+        List<String> wellKnownPeersCopy = new ArrayList<>(wellKnownPeers);
+        List<String> blacklistedPeersCopy = new ArrayList<>(blacklistedPeers);
+        List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
+        return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy, name, description, symbol, prefix, project,
+                genesisLocation, blockchainPropertiesCopy);
+    }
+
+
     @JsonGetter("blockchainProperties")
     public List<BlockchainProperties> getBlockchainPropertiesList() {
         return new ArrayList<>(blockchainProperties.values());
