@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,12 +34,10 @@ public class Chain {
     private String project;
     private String genesisLocation;
     private Map<Integer, BlockchainProperties> blockchainProperties;
+
     @JsonCreator
     public Chain(@JsonProperty("chainId") UUID chainId,
-                 @JsonProperty("active") boolean active,
-                 @JsonProperty("defaultPeers") List<String> defaultPeers,
                  @JsonProperty("wellKnownPeers") List<String> wellKnownPeers,
-                 @JsonProperty("blacklistedPeers") List<String> blacklistedPeers,
                  @JsonProperty("name") String name,
                  @JsonProperty("description") String description,
                  @JsonProperty("symbol") String symbol,
@@ -46,6 +45,22 @@ public class Chain {
                  @JsonProperty("project") String project,
                  @JsonProperty("genesisLocation") String genesisLocation,
                  @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties
+    ) {
+        this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(), name, description, symbol, prefix, project, genesisLocation,
+                blockchainProperties);
+    }
+    public Chain(UUID chainId,
+                 boolean active,
+                 List<String> defaultPeers,
+                 List<String> wellKnownPeers,
+                 List<String> blacklistedPeers,
+                 String name,
+                 String description,
+                 String symbol,
+                 String prefix,
+                 String project,
+                 String genesisLocation,
+                 List<BlockchainProperties> blockchainProperties
     ) {
         this.chainId = chainId;
         this.active = active;

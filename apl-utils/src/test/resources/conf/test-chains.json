@@ -76,5 +76,28 @@
         }
       }
     ]
+  },
+  {
+    "chainId": "ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1",
+    "wellKnownPeers": [
+      "51.15.0.1",
+      "51.15.1.0"
+    ],
+    "name": "Gotham",
+    "description": "Batman's chain",
+    "symbol": "BTM",
+    "prefix": "BTM",
+    "project": "I am batman!",
+    "genesisLocation": "data/batman-genesis.json",
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 2000,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 1E8
+      }
+    ]
   }
 ]
