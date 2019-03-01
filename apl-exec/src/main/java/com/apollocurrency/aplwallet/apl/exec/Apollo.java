@@ -173,9 +173,9 @@ public class Apollo {
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
                 configDirProvider,
-                args.isResourceIgnored(),
                 StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                "chains.json");
+                args.isResourceIgnored()
+                );
 // init application data dir provider
 
         Map<UUID, Chain> chains = chainsConfigLoader.load();

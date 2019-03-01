@@ -6,16 +6,16 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Singleton;
+
+@Singleton
 public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
