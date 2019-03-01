@@ -8,18 +8,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Singleton;
 
 /**
- * This is regitry for tables that is used in BlockchainProcessorImpl for 
- * quite mysterious purposes...
+ * This is registry for tables that is used in TrimService for deleting old data from derived tables
+ *
  * @author al
  */
-
+@Singleton
 public class DerivedDbTablesRegistry {
-     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
-     private static DerivedDbTablesRegistry instance = new DerivedDbTablesRegistry();
-     
-    public static DerivedDbTablesRegistry getInstance(){
-        return instance;
-    } 
+    private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
     public void registerDerivedTable(DerivedDbTable table) {
         derivedTables.add(table);
     } 

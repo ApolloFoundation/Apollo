@@ -34,18 +34,6 @@ import java.util.Set;
 
 public interface Blockchain {
 
-    void readLock();
-
-    void readUnlock();
-
-    void updateLock();
-
-    void updateUnlock();
-
-    void writeLock();
-
-    void writeUnlock();
-
     Block getLastBlock();
 
     void setLastBlock(Block block);

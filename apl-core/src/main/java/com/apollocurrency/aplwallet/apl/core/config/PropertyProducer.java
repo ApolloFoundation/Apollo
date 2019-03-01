@@ -51,8 +51,8 @@ public class PropertyProducer {
 
     private String getKey(final InjectionPoint ip) {
         return (ip.getAnnotated().isAnnotationPresent(Property.class)
-                && !ip.getAnnotated().getAnnotation(Property.class).name().isEmpty())
-                ? ip.getAnnotated().getAnnotation(Property.class).name()
+                && !ip.getAnnotated().getAnnotation(Property.class).value().isEmpty())
+                ? ip.getAnnotated().getAnnotation(Property.class).value()
                 : ip.getMember().getName();
     }
 }

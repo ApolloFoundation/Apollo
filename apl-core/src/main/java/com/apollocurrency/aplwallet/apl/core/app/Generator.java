@@ -60,6 +60,7 @@ public final class Generator implements Comparable<Generator> {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
@@ -87,7 +88,7 @@ public final class Generator implements Comparable<Generator> {
             }
             try {
                 try {
-                    blockchain.updateLock();
+                    synchronizationService.updateLock();
                     try {
                         Block lastBlock = blockchain.getLastBlock();
                         if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
@@ -139,7 +140,7 @@ public final class Generator implements Comparable<Generator> {
                             }
                         }
                     } finally {
-                        blockchain.updateUnlock();
+                        synchronizationService.updateUnlock();
                     }
                 } catch (Exception e) {
                     LOG.info("Error in block generation thread", e);
@@ -186,11 +187,11 @@ public final class Generator implements Comparable<Generator> {
     public static Generator stopForging(byte[] keySeed) {
         Generator generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null) {
-            blockchain.updateLock();
+            synchronizationService.updateLock();
             try {
                 sortedForgers = null;
             } finally {
-                blockchain.updateUnlock();
+                synchronizationService.updateUnlock();
             }
             LOG.debug(generator + " stopped");
             listeners.notify(generator, Event.STOP_FORGING);
@@ -207,11 +208,11 @@ public final class Generator implements Comparable<Generator> {
             LOG.debug(generator + " stopped");
             listeners.notify(generator, Event.STOP_FORGING);
         }
-        blockchain.updateLock();
+        synchronizationService.updateLock();
         try {
             sortedForgers = null;
         } finally {
-            blockchain.updateUnlock();
+            synchronizationService.updateUnlock();
         }
         return count;
     }
@@ -234,7 +235,7 @@ public final class Generator implements Comparable<Generator> {
     }
 
     public static long getNextHitTime(long lastBlockId, int curTime) {
-        blockchain.readLock();
+        synchronizationService.readLock();
         try {
             if (lastBlockId == Generator.lastBlockId && sortedForgers != null) {
                 for (Generator generator : sortedForgers) {
@@ -245,7 +246,7 @@ public final class Generator implements Comparable<Generator> {
             }
             return 0;
         } finally {
-            blockchain.readUnlock();
+            synchronizationService.readUnlock();
         }
     }
 
@@ -298,14 +299,14 @@ public final class Generator implements Comparable<Generator> {
         this.keySeed = keySeed;
         this.publicKey = Crypto.getPublicKey(keySeed);
         this.accountId = Account.getId(publicKey);
-        blockchain.updateLock();
+        synchronizationService.updateLock();
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 setLastBlock(blockchain.getLastBlock());
             }
             sortedForgers = null;
         } finally {
-            blockchain.updateUnlock();
+            synchronizationService.updateUnlock();
         }
     }
 
