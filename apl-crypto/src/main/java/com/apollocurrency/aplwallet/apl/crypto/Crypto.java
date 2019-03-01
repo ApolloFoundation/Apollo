@@ -363,26 +363,6 @@ public final class Crypto {
         
     }
 
-public static byte[] hexToByteArray(String s) {
-     String[] strBytes = s.split("(?<=\\G.{2})");
-     byte[] bytes = new byte[strBytes.length];
-     for(int i = 0; i < strBytes.length; i++)
-         bytes[i] = (byte)Integer.parseInt(strBytes[i], 16);
-     return bytes;
-}
-
-
-private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
-public static String bytesToHex(byte[] bytes) {
-    char[] hexChars = new char[bytes.length * 2];
-    for ( int j = 0; j < bytes.length; j++ ) {
-        int v = bytes[j] & 0xFF;
-        hexChars[j * 2] = hexArray[v >>> 4];
-        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-    }
-    return new String(hexChars);
-}
-    
     public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
     {
         try
@@ -421,8 +401,8 @@ public static String bytesToHex(byte[] bytes) {
             
             byte[] IVC = null;
             byte[] key = null;
-            IVC = hexToByteArray(IVCiphered);
-            key = hexToByteArray(keyStr);
+            IVC = Convert.parseHexString(IVCiphered);
+            key = Convert.parseHexString(keyStr);
             
 
             byte[] plain = aesGCMDecrypt(IVC, key);
