@@ -61,7 +61,7 @@ public class OptionDAO {
 
     public boolean set(String optionName, String optionValue, TransactionalDataSource dataSource) {
         Objects.requireNonNull(dataSource, "dataSource is NULL");
-        if (get(optionName) == null) {
+        if (get(optionName, dataSource) == null) {
             try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
                 stmt.setString(1, optionName);

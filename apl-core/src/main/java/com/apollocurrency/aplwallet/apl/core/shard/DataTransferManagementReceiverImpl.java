@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -29,6 +30,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private MigrateState state = MigrateState.INIT;
     private DbProperties dbProperties;
     private DatabaseManager databaseManager;
+    private Blockchain blockchain;
     private OptionDAO optionDAO;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
@@ -36,9 +38,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     }
 
     @Inject
-    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager) {
+    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, Blockchain blockchain) {
         this.dbProperties = databaseManager.getBaseDbProperties();
         this.databaseManager = databaseManager;
+        this.blockchain = blockchain;
+        this.optionDAO = new OptionDAO(this.databaseManager); // actually we want to use TEMP=TARGET data source in OptionDAO
     }
 
 /*
@@ -65,11 +69,40 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     public MigrateState createTempDb(DatabaseMetaInfo source) {
         log.debug("Creating TEMP db file...");
         Objects.requireNonNull(source, "source meta-info is NULL");
+        Objects.requireNonNull(source.getNewFileName(), "new DB file is NULL");
         try {
-            TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(source.getNewFileName());
             // add info about state
-//            databaseManager.shutdown(temporaryDb);
+            TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(source.getNewFileName());
+//            databaseManager.shutdown(temporaryDb); // temp db is in Database manager
+/*
+            if (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb) == null) {
+                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.TEMP_DB_CREATED.name(), temporaryDb);
+            }
+*/
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.TEMP_DB_CREATED.name(), temporaryDb);
             return MigrateState.TEMP_DB_CREATED;
+        } catch (Exception e) {
+            log.error("Error creation Temp Db", e);
+            return MigrateState.FAILED;
+        }
+    }
+
+    @Override
+    public MigrateState addSnapshotBlock(DatabaseMetaInfo targetDataSource) {
+        log.debug("Add Snapshot block into TEMP db...");
+        Objects.requireNonNull(targetDataSource, "target Data Source meta-info is NULL");
+        Objects.requireNonNull(targetDataSource.getSnapshotBlock(), "snapshot Block is NULL");
+        TransactionalDataSource temporaryDb = databaseManager.getShardDataSourceById(-1L); // temp db is cached
+        try (Connection connection = temporaryDb.getConnection()) {
+            blockchain.saveBlock(connection, targetDataSource.getSnapshotBlock());
+/*
+            if (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb) != null
+                    && optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb).equalsIgnoreCase( MigrateState.TEMP_DB_CREATED.name())) {
+                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.TEMP_DB_CREATED.name(), temporaryDb);
+            }
+*/
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SNAPSHOT_BLOCK_CREATED.name(), temporaryDb);
+            return MigrateState.SNAPSHOT_BLOCK_CREATED;
         } catch (Exception e) {
             log.error("Error creation Temp Db", e);
             return MigrateState.FAILED;
@@ -98,13 +131,15 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             target.setDataSource(tempDs);
             targetDataSource = tempDs;
         }
-        this.optionDAO = new OptionDAO(this.databaseManager); // actually we want to use TEMP=TARGET data source in OptionDAO
+        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
+/*
         if (optionDAO.get(PREVIOUS_MIGRATION_KEY, targetDataSource) == null) {
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING.name(), targetDataSource);
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
         } else {
             // continue previous run
             lastTableName = optionDAO.get(LAST_MIGRATION_OBJECT_NAME, targetDataSource);
         }
+*/
         if (lastTableName != null && !lastTableName.isEmpty()) {
             // NOT FINISHED YET!!!
             // check/compare records count in source and target, clear target if needed, reinsert again in case...
@@ -138,7 +173,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             }
             log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
         }
-        return MigrateState.DATA_MOVING;
+        return MigrateState.DATA_MOVING_STARTED;
     }
 
     /**

@@ -135,7 +135,11 @@ public class BlockchainConfig {
         return chain;
     }
 
-    void setCurrentConfig(HeightConfig currentConfig) {
+    /**
+     * For UNIT TEST only!
+     * @param currentConfig
+     */
+    public void setCurrentConfig(HeightConfig currentConfig) {
         this.currentConfig = currentConfig;
     }
 }

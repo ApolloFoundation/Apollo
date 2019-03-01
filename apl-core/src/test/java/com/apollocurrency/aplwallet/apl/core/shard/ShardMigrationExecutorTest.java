@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -38,8 +40,9 @@ import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @EnableWeld
@@ -60,7 +63,9 @@ class ShardMigrationExecutorTest {
     private static PropertiesHolder propertiesHolder;
     private static DbProperties dbProperties;
     private static DatabaseManager databaseManager;
-    private static DataTransferManagementReceiver transferManagementReceiver;
+    private DataTransferManagementReceiver transferManagementReceiver;
+    @Inject
+    private Blockchain blockchain;
     @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
 
@@ -84,11 +89,16 @@ class ShardMigrationExecutorTest {
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         dbProperties = dbConfig.getDbConfig();
         databaseManager = new DatabaseManager(dbProperties, propertiesHolder);
-        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager);
     }
 
-    @AfterEach
-    void tearDown() {
+    @BeforeEach
+    void setUp() {
+        blockchain = CDI.current().select(BlockchainImpl.class).get();
+        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, blockchain);
+    }
+
+    @AfterAll
+    static void tearDownAll() {
         databaseManager.shutdown();
         FileUtils.deleteQuietly(pathToDb.toFile());
     }
@@ -115,7 +125,7 @@ class ShardMigrationExecutorTest {
         MoveDataCommand moveDataCommand = new MoveDataCommand(
                 transferManagementReceiver, tableNameCountMap, null, Collections.emptyList(), -1);
         state = shardMigrationExecutor.executeOperation(moveDataCommand);
-        assertEquals(MigrateState.DATA_MOVING, state);
+        assertEquals(MigrateState.DATA_MOVING_STARTED, state);
 
         DbFilesRenameCommand dbFilesRenameCommand = new DbFilesRenameCommand(
                 transferManagementReceiver, null, Collections.emptyList(), -1);

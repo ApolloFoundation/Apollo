@@ -22,6 +22,8 @@ public interface DataTransferManagementReceiver {
 
     MigrateState createTempDb(DatabaseMetaInfo source);
 
+    MigrateState addSnapshotBlock(DatabaseMetaInfo targetDataSource);
+
     MigrateState moveData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
 
     MigrateState renameDataFiles(DatabaseMetaInfo source, DatabaseMetaInfo target);

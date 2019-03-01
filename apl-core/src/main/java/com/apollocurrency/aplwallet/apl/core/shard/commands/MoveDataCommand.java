@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.TEMP_DB_CREATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Statement;
@@ -46,9 +45,11 @@ public class MoveDataCommand implements DataMigrateOperation {
         log.debug("MoveDataCommand execute...");
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, MigrateState.DATA_MOVING);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null,
+                -1, MigrateState.DATA_MOVING_STARTED, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, MigrateState.DATA_MOVING);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null,
+                -1, MigrateState.DATA_MOVING_STARTED, null);
 
         return dataTransferManagement.moveData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

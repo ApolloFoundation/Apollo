@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import java.sql.Statement;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 /**
@@ -14,16 +14,19 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
     private String newFileName;
     private List<String> statementList; // processed tables list
     private int commitBatchSize;
+    private Block snapshotBlock;
     private MigrateState migrateState;
 
     public DatabaseMetaInfoImpl(TransactionalDataSource dataSource,
                                 String newFileName, List<String> statementList,
-                                int commitBatchSize, MigrateState migrateState) {
+                                int commitBatchSize, MigrateState migrateState,
+                                Block snapshotBlock) {
         this.dataSource = dataSource;
         this.newFileName = newFileName;
         this.statementList = statementList;
         this.commitBatchSize = commitBatchSize;
         this.migrateState = migrateState;
+        this.snapshotBlock = snapshotBlock;
     }
 
     public TransactionalDataSource getDataSource() {
@@ -64,5 +67,13 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
 
     public void setMigrateState(MigrateState migrateState) {
         this.migrateState = migrateState;
+    }
+
+    public Block getSnapshotBlock() {
+        return snapshotBlock;
+    }
+
+    public void setSnapshotBlock(Block snapshotBlock) {
+        this.snapshotBlock = snapshotBlock;
     }
 }

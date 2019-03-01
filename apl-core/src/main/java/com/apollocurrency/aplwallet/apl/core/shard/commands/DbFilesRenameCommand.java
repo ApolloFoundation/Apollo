@@ -13,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.DatabaseMetaInfoImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
+/**
+ * Command for renaming database files.
+ */
 public class DbFilesRenameCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(DbFilesRenameCommand.class);
 
@@ -42,9 +45,9 @@ public class DbFilesRenameCommand implements DataMigrateOperation {
         log.debug("DbFilesRenameCommand execute...");
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED);
+                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED, null);
 
         return dataTransferManagement.renameDataFiles(sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

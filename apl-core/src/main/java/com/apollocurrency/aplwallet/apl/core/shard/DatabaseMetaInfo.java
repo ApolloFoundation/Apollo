@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import java.sql.Statement;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 /**
@@ -30,4 +30,7 @@ public interface DatabaseMetaInfo {
 
     void setMigrateState(MigrateState migrateState);
 
+    Block getSnapshotBlock();
+
+    void setSnapshotBlock(Block snapshotBlock);
 }
