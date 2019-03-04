@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.auth2fa;
 
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.migrator.DefaultDirectoryMigrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
@@ -24,8 +25,8 @@ public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
     public static final String TWO_FACTOR_AUTH_DIR_PROPERTY_NAME = "apl.dir2FA";
 
     @Inject
-    public TwoFactorAuthMigrationExecutor(PropertiesHolder holder) {
-        super(holder,  null, "2fa", true);
+    public TwoFactorAuthMigrationExecutor(DatabaseManager databaseManager, PropertiesHolder holder) {
+        super(holder,  databaseManager, "2fa", true);
     }
 
     @Override
@@ -34,7 +35,7 @@ public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
         List<Path> paths = new ArrayList<>();
         if (twoFactorAuthDir != null) {
             Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();
-            paths.add(legacyHomeDir.resolve(twoFactorAuthDir));
+            paths.add(legacyHomeDir.resolve(twoFactorAuthDir).normalize());
         }
         return paths;
     }
