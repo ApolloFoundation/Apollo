@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.model;
 
 import com.apollocurrency.aplwallet.apl.core.account.BasicAccount;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -13,7 +13,7 @@ import org.json.simple.JSONObject;
 import java.util.Objects;
 
 
-public class GeneratedAccount extends BasicAccount {
+public class AplWalletKey extends BasicAccount {
     private byte[] publicKey;
     @JsonIgnore
     private byte[] privateKey;
@@ -24,8 +24,8 @@ public class GeneratedAccount extends BasicAccount {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof GeneratedAccount)) return false;
-        GeneratedAccount that = (GeneratedAccount) o;
+        if (!(o instanceof AplWalletKey)) return false;
+        AplWalletKey that = (AplWalletKey) o;
         return id == that.id;
     }
 
@@ -65,15 +65,12 @@ public class GeneratedAccount extends BasicAccount {
         this.passphrase = passphrase;
     }
 
-    public GeneratedAccount(long id, byte[] publicKey, byte[] privateKey, String passphrase, byte[] secretBytes) {
+    public AplWalletKey(long id, byte[] publicKey, byte[] privateKey, byte[] secretBytes) {
         this.id = id;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.passphrase = passphrase;
+//        this.passphrase = passphrase;
         this.secretBytes = secretBytes;
-    }
-
-    public GeneratedAccount() {
     }
 
     public void setSecretBytes(byte[] secretBytes) {

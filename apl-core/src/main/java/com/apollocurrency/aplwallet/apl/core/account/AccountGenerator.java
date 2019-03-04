@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
+
 public interface AccountGenerator {
-    GeneratedAccount generate(String passphrase);
+    AplWalletKey generateApl();
+    EthWalletKey generateEth();
+
 }

@@ -1,6 +1,25 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
+
 public interface VaultKeyStore {
+
+    /**
+     * Save encrypted by passphrase secretStore in the json format.
+     * @param passphrase - string, which consist of random words for encryption
+     * @param secretStore - secret array of bytes which will be stored into keystore
+     * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
+     */
+    Status saveSecretStore(String passphrase, SecretStore secretStore);
+
+    /**
+     * Return secret bytes if key exists for accountId and can be decrypted by passphrase
+     * @param passphrase - string, which consist of random words for keySeed decryption
+     * @param accountId - id of account, which keySeed should be decrypted
+     * @return decrypted SecretStore.
+     */
+    SecretStore getSecretStore(String passphrase, long accountId);
+
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
      * @param passphrase - string, which consist of random words for keySeed decryption

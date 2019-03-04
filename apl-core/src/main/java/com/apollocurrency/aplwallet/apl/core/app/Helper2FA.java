@@ -5,23 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
-import com.apollocurrency.aplwallet.apl.core.account.GeneratedAccount;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.LegacyAccountGenerator;
-import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
+import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -44,7 +36,7 @@ public class Helper2FA {
    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static final VaultKeyStore KEYSTORE = CDI.current().select(VaultKeyStore.class).get();
    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
-   private static final AccountGenerator accountGenerator = new LegacyAccountGenerator(passphraseGenerator); 
+   private static final AccountGenerator accountGenerator = new AccountGeneratorImpl(passphraseGenerator);
     
      public static void init(DatabaseManager databaseManagerParam) {
         DatabaseManager databaseManager = databaseManagerParam;
@@ -154,11 +146,25 @@ public class Helper2FA {
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
-    public static GeneratedAccount generateAccount(String passphrase) throws ParameterException {
-        GeneratedAccount account = accountGenerator.generate(passphrase);
-        VaultKeyStore.Status status = KEYSTORE.saveSecretBytes(account.getPassphrase(), account.getSecretBytes());
-        validateKeyStoreStatus(account.getId(), status, "generated");
-        return account;
+    public static AplWalletKey generateUserAccounts(String passphrase) throws ParameterException {
+        if (passphrase == null) {
+            if (passphraseGenerator == null) {
+                throw new RuntimeException("Either passphrase generator or passphrase required");
+            }
+            passphrase = passphraseGenerator.generate();
+        }
+
+
+        AplWalletKey aplAccount = accountGenerator.generateApl();
+        EthWalletKey ethAccount = accountGenerator.generateEth();
+
+        SecretStore secretStore = new SecretStore();
+        secretStore.addAplKeys(aplAccount);
+        secretStore.addEthKeys(ethAccount);
+
+        VaultKeyStore.Status status = KEYSTORE.saveSecretStore(aplAccount.getPassphrase(), secretStore);
+        validateKeyStoreStatus(aplAccount.getId(), status, "generated");
+        return aplAccount;
     }
 
     private static void validateKeyStoreStatus(long accountId, VaultKeyStore.Status status, String notPerformedAction) throws ParameterException {

@@ -6,6 +6,7 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 
+ import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -124,6 +125,7 @@
          }
      }
 
+
      @Override
      public Status saveSecretBytes(String passphrase, byte[] secretBytes) {
          if (!isAvailable()) {
@@ -142,7 +144,19 @@
          return saved ? Status.OK : Status.WRITE_ERROR;
      }
 
-     @Override
+    @Override
+    public Status saveSecretStore(String passphrase, SecretStore secretStore) {
+
+
+        return null;
+    }
+
+    @Override
+    public SecretStore getSecretStore(String passphrase, long accountId) {
+        return null;
+    }
+
+    @Override
      public Status deleteSecretBytes(String passphrase, long accountId) {
          if (!isAvailable()) {
              return Status.NOT_AVAILABLE;
