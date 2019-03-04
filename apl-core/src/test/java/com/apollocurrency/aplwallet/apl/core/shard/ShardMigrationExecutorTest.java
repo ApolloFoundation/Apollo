@@ -123,7 +123,7 @@ class ShardMigrationExecutorTest {
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(0);
         tableNameCountMap.put("ACCOUNT", -1L);
         MoveDataCommand moveDataCommand = new MoveDataCommand(
-                transferManagementReceiver, tableNameCountMap, null, Collections.emptyList(), -1);
+                transferManagementReceiver, tableNameCountMap, null, -1);
         state = shardMigrationExecutor.executeOperation(moveDataCommand);
         assertEquals(MigrateState.DATA_MOVING_STARTED, state);
 

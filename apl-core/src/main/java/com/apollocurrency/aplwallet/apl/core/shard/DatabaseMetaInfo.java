@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
@@ -18,9 +16,11 @@ public interface DatabaseMetaInfo {
 
     void setNewFileName(String newFileName);
 
+/*
     List<String> getStatementList();
 
     void setStatementList(List<String> statementList);
+*/
 
     int getCommitBatchSize();
 

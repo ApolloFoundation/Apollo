@@ -3,8 +3,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.sql.Statement;
-import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
@@ -13,8 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.DatabaseMetaInfoImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
-public class MoveDataCommand implements DataMigrateOperation {
-    private static final Logger log = getLogger(MoveDataCommand.class);
+public class MoveLinkedDataCommand implements DataMigrateOperation {
+    private static final Logger log = getLogger(MoveLinkedDataCommand.class);
 
     private DataTransferManagementReceiver dataTransferManagement;
 
@@ -26,9 +24,8 @@ public class MoveDataCommand implements DataMigrateOperation {
 //    private List<Statement> statementList;
     private int commitBatchSize;
 
-    public MoveDataCommand(
+    public MoveLinkedDataCommand(
             DataTransferManagementReceiver dataTransferManagement,
-//            DatabaseMetaInfo source, DatabaseMetaInfo target,
             Map<String, Long> tableNameCountMap,
             String newFileName, /*List<Statement> statementList, */int commitBatchSize) {
         this.dataTransferManagement = dataTransferManagement;
@@ -51,12 +48,12 @@ public class MoveDataCommand implements DataMigrateOperation {
         log.debug("MoveDataCommand execute...");
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME,
+                dataTransferManagement.getDatabaseManager().getDataSource(), this.newFileName,
                 -1, MigrateState.DATA_MOVING_STARTED, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME,
+                dataTransferManagement.getDatabaseManager().getShardDataSourceById(-1L), this.newFileName,
                 -1, MigrateState.DATA_MOVING_STARTED, null);
 
-        return dataTransferManagement.moveData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
+        return dataTransferManagement.moveDataBlockLinkedData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }
 }

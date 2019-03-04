@@ -12,18 +12,18 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
 
     private TransactionalDataSource dataSource; // source or target
     private String newFileName;
-    private List<String> statementList; // processed tables list
+//    private List<String> statementList; // processed tables list
     private int commitBatchSize;
     private Block snapshotBlock;
     private MigrateState migrateState;
 
     public DatabaseMetaInfoImpl(TransactionalDataSource dataSource,
-                                String newFileName, List<String> statementList,
+                                String newFileName, /*List<String> statementList,*/
                                 int commitBatchSize, MigrateState migrateState,
                                 Block snapshotBlock) {
         this.dataSource = dataSource;
         this.newFileName = newFileName;
-        this.statementList = statementList;
+//        this.statementList = statementList;
         this.commitBatchSize = commitBatchSize;
         this.migrateState = migrateState;
         this.snapshotBlock = snapshotBlock;
@@ -45,6 +45,7 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
         this.newFileName = newFileName;
     }
 
+/*
     public List<String> getStatementList() {
         return statementList;
     }
@@ -52,6 +53,7 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
     public void setStatementList(List<String> statementList) {
         this.statementList = statementList;
     }
+*/
 
     public int getCommitBatchSize() {
         return commitBatchSize;

@@ -32,8 +32,8 @@ public class AddSnapshotBlockCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Add snapshot block execute...");
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1,
-                MigrateState.SNAPSHOT_BLOCK_CREATED, this.snapshotBlock);
+                null, TEMPORARY_MIGRATION_FILE_NAME,
+                -1, MigrateState.SNAPSHOT_BLOCK_CREATED, this.snapshotBlock);
 
         return dataTransferManagement.addSnapshotBlock(databaseMetaInfo);
     }

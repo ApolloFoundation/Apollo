@@ -75,58 +75,61 @@ class OptionDAOTest {
 
     @Test
     void get() {
-        String value = optionDAO.get("unknown_key");
+        String value = optionDAO.get("unknown_key_1");
         assertNull(value);
     }
 
     @Test
     void getWithDataSource() {
-        String value = optionDAO.get("unknown_key", databaseManager.getDataSource());
+        String value = optionDAO.get("unknown_key_1", databaseManager.getDataSource());
         assertNull(value);
     }
 
     @Test
     void set() {
-        boolean isInserted = optionDAO.set("unknown_key", "unknown_value");
+        String unknown_key = "unknown_key_2";
+        boolean isInserted = optionDAO.set(unknown_key, "unknown_value");
         assertTrue(isInserted);
-        String value = optionDAO.get("unknown_key");
+        String value = optionDAO.get(unknown_key);
         assertNotNull(value);
         assertEquals("unknown_value", value);
 
-        optionDAO.delete("unknown_key");
-        value = optionDAO.get("unknown_key");
+        optionDAO.delete(unknown_key);
+        value = optionDAO.get(unknown_key);
         assertNull(value);
     }
 
     @Test
     void setTwiceTheSameKey() {
-        boolean isInserted = optionDAO.set("key1", "value1");
+        String key1 = "key1";
+        boolean isInserted = optionDAO.set(key1, "value1");
         assertTrue(isInserted);
-        String value = optionDAO.get("key1");
+        String value = optionDAO.get(key1);
         assertNotNull(value);
         assertEquals("value1", value);
 
-        isInserted = optionDAO.set("key1", "value2");
+        isInserted = optionDAO.set(key1, "value2");
         assertTrue(isInserted);
-        value = optionDAO.get("key1");
+        value = optionDAO.get(key1);
         assertEquals("value2", value);
 
-        optionDAO.delete("key1");
-        value = optionDAO.get("key1");
+        optionDAO.delete(key1);
+        value = optionDAO.get(key1);
         assertNull(value);
     }
 
     @Test
     void setWithDataSource() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        boolean isInserted = optionDAO.set("unknown_key", "unknown_value", dataSource);
+        String unknown_key = "unknown_key_3";
+        boolean isInserted = optionDAO.set(unknown_key, "unknown_value", dataSource);
         assertTrue(isInserted);
-        String value = optionDAO.get("unknown_key", dataSource);
+        String value = optionDAO.get(unknown_key, dataSource);
         assertNotNull(value);
         assertEquals("unknown_value", value);
 
-        optionDAO.delete("unknown_key", dataSource);
-        value = optionDAO.get("unknown_key", dataSource);
+        optionDAO.delete(unknown_key, dataSource);
+        value = optionDAO.get(unknown_key, dataSource);
         assertNull(value);
     }
 

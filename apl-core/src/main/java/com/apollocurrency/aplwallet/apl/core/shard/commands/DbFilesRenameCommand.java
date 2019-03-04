@@ -45,9 +45,11 @@ public class DbFilesRenameCommand implements DataMigrateOperation {
         log.debug("DbFilesRenameCommand execute...");
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED, null);
+                null, TEMPORARY_MIGRATION_FILE_NAME,
+                -1, TEMP_DB_CREATED, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED, null);
+                null, TEMPORARY_MIGRATION_FILE_NAME,
+                -1, TEMP_DB_CREATED, null);
 
         return dataTransferManagement.renameDataFiles(sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

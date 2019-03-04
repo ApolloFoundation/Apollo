@@ -24,6 +24,8 @@ public interface DataTransferManagementReceiver {
 
     MigrateState addSnapshotBlock(DatabaseMetaInfo targetDataSource);
 
+    MigrateState moveDataBlockLinkedData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
+
     MigrateState moveData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
 
     MigrateState renameDataFiles(DatabaseMetaInfo source, DatabaseMetaInfo target);

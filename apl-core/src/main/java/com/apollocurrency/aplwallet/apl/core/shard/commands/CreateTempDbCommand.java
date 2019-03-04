@@ -29,7 +29,8 @@ public class CreateTempDbCommand implements DataMigrateOperation {
 //            DbProperties dbProperties = dataTransferManagement.getDatabaseManager().getBaseDbProperties();
 //        }
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, null, -1, TEMP_DB_CREATED, null);
+                null, TEMPORARY_MIGRATION_FILE_NAME,
+                -1, TEMP_DB_CREATED, null);
 
         return dataTransferManagement.createTempDb(databaseMetaInfo);
     }

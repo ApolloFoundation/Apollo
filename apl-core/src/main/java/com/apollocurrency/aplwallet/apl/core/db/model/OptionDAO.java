@@ -126,7 +126,7 @@ public class OptionDAO {
         Objects.requireNonNull(dataSource, "dataSource is NULL");
             try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("DELETE FROM option");
-//                int deletedRows = stmt.executeUpdate();
+                int deletedRows = stmt.executeUpdate();
             }
             catch (SQLException e) {
                 LOG.error(e.getMessage());
