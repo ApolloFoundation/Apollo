@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
@@ -48,7 +49,6 @@ public class TrimService {
 
     private BlockchainProcessor blockchainProcessor;
 
-    //async
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {
         if (block.getHeight() % 5000 == 0) {
             log.info("processed block " + block.getHeight());
@@ -59,7 +59,7 @@ public class TrimService {
     }
 
     // async
-    public void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0 && !isTrimming) {
             isTrimming = true;
             trimDerivedTables(block.getHeight());

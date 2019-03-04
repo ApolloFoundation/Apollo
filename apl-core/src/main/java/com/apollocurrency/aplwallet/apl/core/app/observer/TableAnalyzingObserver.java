@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.config.BlockEventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
@@ -30,7 +30,7 @@ public class TableAnalyzingObserver {
     }
 
     //async
-    public void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         if (block.getHeight() % 5000 == 0) {
             log.info("received block " + block.getHeight());
             if (!lookupBlockchainProcessor().isDownloading() || block.getHeight() % 50000 == 0) {
@@ -39,7 +39,7 @@ public class TableAnalyzingObserver {
         }
     }
     //async
-    public void onRescanEnd(@Observes @BlockEvent(BlockEventType.RESCAN_END) Block block) {
+    public void onRescanEnd(@ObservesAsync @BlockEvent(BlockEventType.RESCAN_END) Block block) {
         databaseManager.getDataSource().analyzeTables();
     }
 

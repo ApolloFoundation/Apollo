@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Map;
-import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 
 public final class DownloadTimer implements AddOn {
         private static final Logger LOG = getLogger(DownloadTimer.class);
@@ -59,7 +59,7 @@ public final class DownloadTimer implements AddOn {
         }
 
     }
-    public void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int n = block.getTransactions().size();
         transactions += n;
         dtransactions += n;

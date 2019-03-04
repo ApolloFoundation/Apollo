@@ -26,27 +26,49 @@ public class PropertyProducer {
     @Property
     @Produces
     public String produceString(final InjectionPoint ip) {
-        return propertiesHolder.getStringProperty((getKey(ip)), getDefaultValue(ip));
+        String defaultValue = getDefaultValue(ip);
+        if (defaultValue != null) {
+            return propertiesHolder.getStringProperty((getKey(ip)), defaultValue);
+        } else {
+            return propertiesHolder.getStringProperty(getKey(ip));
+        }
     }
 
     private String getDefaultValue(InjectionPoint ip) {
-        return ip.getAnnotated().getAnnotation(Property.class).defaultValue();
+        String defaultValue = ip.getAnnotated().getAnnotation(Property.class).defaultValue();
+        return defaultValue.trim().isEmpty() ? null : defaultValue;
     }
 
     @Property
     @Produces
     public int produceInt(final InjectionPoint ip) {
-        return propertiesHolder.getIntProperty((getKey(ip)), Integer.parseInt(getDefaultValue(ip)));
+        String defaultValue = getDefaultValue(ip);
+        if (defaultValue != null) {
+            return propertiesHolder.getIntProperty((getKey(ip)),Integer.parseInt(defaultValue));
+        } else {
+            return propertiesHolder.getIntProperty((getKey(ip)));
+        }
     }
+
     @Property
     @Produces
     public boolean produceBoolean(final InjectionPoint ip) {
-        return propertiesHolder.getBooleanProperty((getKey(ip)), Boolean.parseBoolean(getDefaultValue(ip)));
+        String defaultValue = getDefaultValue(ip);
+        if (defaultValue != null) {
+            return propertiesHolder.getBooleanProperty((getKey(ip)), Boolean.parseBoolean(defaultValue));
+        } else {
+            return propertiesHolder.getBooleanProperty((getKey(ip)));
+        }
     }
     @Property
     @Produces
     public List<String> produceListOfStrings(final InjectionPoint ip) {
-        return propertiesHolder.getStringListProperty((getKey(ip)), Arrays.asList(getDefaultValue(ip).split(";")));
+        String defaultValue = getDefaultValue(ip);
+        if (defaultValue != null) {
+            return propertiesHolder.getStringListProperty((getKey(ip)), Arrays.asList(defaultValue.split(";")));
+        } else {
+            return propertiesHolder.getStringListProperty((getKey(ip)));
+        }
     }
 
     private String getKey(final InjectionPoint ip) {

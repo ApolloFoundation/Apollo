@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -83,7 +83,7 @@ public class ActiveGenerators {
         return generatorList;
 
     }
-    public synchronized void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public synchronized void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         long generatorId = block.getGeneratorId();
         synchronized(activeGenerators) {
             if (!activeGeneratorIds.contains(generatorId)) {
