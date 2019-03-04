@@ -24,8 +24,8 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.config.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.config.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;

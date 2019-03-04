@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.config;
+package com.apollocurrency.aplwallet.apl.core.app.observer.events;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
@@ -19,5 +19,9 @@ import javax.inject.Qualifier;
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 
 @Retention(RUNTIME)
-public @interface ScanValidate {
+
+public @interface BlockEvent {
+
+    BlockEventType value();
+
 }
