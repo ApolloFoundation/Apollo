@@ -4,8 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.config.BlockEventBinding;
+import com.apollocurrency.aplwallet.apl.core.config.BlockEventType;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import org.jboss.weld.junit.MockBean;
@@ -20,13 +22,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+
 @EnableWeld
 public class BlockchainConfigTest {
-    private BlockchainProcessor blockchainProcessor = Mockito.mock(BlockchainProcessor.class);
     private BlockDao blockDao = Mockito.mock(BlockDao.class);
     @WeldSetup
     private WeldInitiator weld =
-            WeldInitiator.from().addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class), MockBean.of(blockDao, BlockDao.class)).build();
+            WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
     private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L);
     private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L);
     private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L);
@@ -43,25 +48,27 @@ public class BlockchainConfigTest {
             "TEST",
             "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES);
 
+    @Inject
+    BlockchainConfig blockchainConfig;
+    @Inject
+    BlockchainConfigUpdater blockchainConfigUpdater;
+    @Inject
+    Event<Block> blockEvent;
+
     @Test
     public void testInitBlockchainConfig() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
         blockchainConfig.updateChain(chain);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateBlockchainConfig() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
-        BlockchainConfigUpdater blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig);
         blockchainConfigUpdater.updateChain(chain);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateToHeight() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
-        BlockchainConfigUpdater blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig);
         blockchainConfigUpdater.updateChain(chain);
         blockchainConfigUpdater.updateToHeight(99, true);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
@@ -79,8 +86,6 @@ public class BlockchainConfigTest {
 
     @Test
     void testRollback() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
-        BlockchainConfigUpdater blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig);
         blockchainConfigUpdater.updateChain(chain);
         blockchainConfigUpdater.updateToHeight(102, true);
         Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
@@ -88,5 +93,33 @@ public class BlockchainConfigTest {
         Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.rollback(99);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+    }
+
+    @Test
+    public void testChangeListenerOnBlockAccepted() {
+        blockchainConfigUpdater.updateChain(chain);
+        Block block = Mockito.mock(Block.class);
+        Mockito.doReturn(100).when(block).getHeight();
+        blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
+        Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+
+    }
+    @Test
+    public void testChangeListenerOnPopped() {
+        blockchainConfigUpdater.updateChain(chain);
+        Block block = Mockito.mock(Block.class);
+        Mockito.doReturn(200).when(block).getHeight();
+        blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
+        Assertions.assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+
+    }
+
+    private AnnotationLiteral literal(BlockEventType blockEvent) {
+        return new BlockEventBinding() {
+            @Override
+            public BlockEventType value() {
+                return blockEvent;
+            }
+        };
     }
 }

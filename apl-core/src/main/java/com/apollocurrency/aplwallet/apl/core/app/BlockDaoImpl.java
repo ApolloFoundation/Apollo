@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -58,21 +59,23 @@ public class BlockDaoImpl implements BlockDao {
     private final Map<Long, Block> blockCache;
     private final SortedMap<Integer, Block> heightMap;
     private final Map<Long, Transaction> transactionCache;
+    private final DerivedDbTablesRegistry tablesRegistry;
     private DatabaseManager databaseManager;
     private TransactionDao transactionDao;
 
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
-                        Map<Long, Transaction> transactionCache) {
+                        Map<Long, Transaction> transactionCache, DerivedDbTablesRegistry tablesRegistry) {
         this.blockCacheSize = blockCacheSize;
         this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
         this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
         this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
+        this.tablesRegistry = Objects.requireNonNull(tablesRegistry, "Derived table registry cannot be null");
     }
 
     @Inject
-    public BlockDaoImpl() {
-        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>());
+    public BlockDaoImpl(DerivedDbTablesRegistry derivedDbTablesRegistry) {
+        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), derivedDbTablesRegistry);
     }
 
     private TransactionalDataSource lookupDataSource() {
@@ -667,7 +670,7 @@ public class BlockDaoImpl implements BlockDao {
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-                DerivedDbTablesRegistry.getInstance().getDerivedTables().forEach(table -> {
+                tablesRegistry.getDerivedTables().forEach(table -> {
                     try {
                         stmt.executeUpdate("TRUNCATE TABLE " + table.toString());
                     } catch (SQLException ignore) {}

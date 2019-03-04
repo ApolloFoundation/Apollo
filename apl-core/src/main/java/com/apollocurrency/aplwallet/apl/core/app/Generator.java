@@ -20,10 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -38,10 +37,8 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -289,7 +286,7 @@ public final class Generator implements Comparable<Generator> {
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
-    private Generator(long accountId, byte[] keySeed, byte[] publicKey) {
+    public Generator(long accountId, byte[] keySeed, byte[] publicKey) {
         this.accountId = accountId;
         this.keySeed = keySeed;
         this.publicKey = publicKey;
@@ -444,119 +441,4 @@ public final class Generator implements Comparable<Generator> {
         LOG.debug("Forging was resumed");
     }
 
-    /** Active block generators */
-    private static final Set<Long> activeGeneratorIds = new HashSet<>();
-
-    /** Active block identifier */
-    private static long activeBlockId;
-
-    /** Sorted list of generators for the next block */
-    private static final List<ActiveGenerator> activeGenerators = new ArrayList<>();
-
-    /** Generator list has been initialized */
-    private static boolean generatorsInitialized = false;
-
-    /**
-     * Return a list of generators for the next block.  The caller must hold the blockchain
-     * read lock to ensure the integrity of the returned list.
-     *
-     * @return                      List of generator account identifiers
-     */
-    public static List<ActiveGenerator> getNextGenerators() {
-        List<ActiveGenerator> generatorList;
-        synchronized(activeGenerators) {
-            if (!generatorsInitialized) {
-                activeGeneratorIds.addAll(blockchain.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
-                activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
-                LOG.debug(activeGeneratorIds.size() + " block generators found");
-                blockchainProcessor.addListener(block -> {
-                    long generatorId = block.getGeneratorId();
-                    synchronized(activeGenerators) {
-                        if (!activeGeneratorIds.contains(generatorId)) {
-                            activeGeneratorIds.add(generatorId);
-                            activeGenerators.add(new ActiveGenerator(generatorId));
-                        }
-                    }
-                }, BlockchainProcessor.Event.BLOCK_PUSHED);
-                generatorsInitialized = true;
-            }
-            long blockId = blockchain.getLastBlock().getId();
-            if (blockId != activeBlockId) {
-                activeBlockId = blockId;
-                Block lastBlock = blockchain.getLastBlock();
-                for (ActiveGenerator generator : activeGenerators) {
-                    generator.setLastBlock(lastBlock);
-                }
-                Collections.sort(activeGenerators);
-            }
-            generatorList = new ArrayList<>(activeGenerators);
-        }
-        return generatorList;
-    }
-
-    /**
-     * Active generator
-     */
-    public static class ActiveGenerator implements Comparable<ActiveGenerator> {
-        private final long accountId;
-        private long hitTime;
-        private long effectiveBalanceAPL;
-        private byte[] publicKey;
-
-        public ActiveGenerator(long accountId) {
-            this.accountId = accountId;
-            this.hitTime = Long.MAX_VALUE;
-        }
-
-        public long getAccountId() {
-            return accountId;
-        }
-
-        public long getEffectiveBalance() {
-            return effectiveBalanceAPL;
-        }
-
-        public long getHitTime() {
-            return hitTime;
-        }
-
-        private void setLastBlock(Block lastBlock) {
-            if (publicKey == null) {
-                publicKey = Account.getPublicKey(accountId);
-                if (publicKey == null) {
-                    hitTime = Long.MAX_VALUE;
-                    return;
-                }
-            }
-            int height = lastBlock.getHeight();
-            Account account = Account.getAccount(accountId, height);
-            if (account == null) {
-                hitTime = Long.MAX_VALUE;
-                return;
-            }
-            effectiveBalanceAPL = Math.max(account.getEffectiveBalanceAPL(height), 0);
-            if (effectiveBalanceAPL == 0) {
-                hitTime = Long.MAX_VALUE;
-                return;
-            }
-            BigInteger effectiveBalance = BigInteger.valueOf(effectiveBalanceAPL);
-            BigInteger hit = Generator.getHit(publicKey, lastBlock);
-            hitTime = Generator.getHitTime(effectiveBalance, hit, lastBlock);
-        }
-
-        @Override
-        public int hashCode() {
-            return Long.hashCode(accountId);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator)obj).accountId);
-        }
-
-        @Override
-        public int compareTo(ActiveGenerator obj) {
-            return (hitTime < obj.hitTime ? -1 : (hitTime > obj.hitTime ? 1 : 0));
-        }
-    }
 }

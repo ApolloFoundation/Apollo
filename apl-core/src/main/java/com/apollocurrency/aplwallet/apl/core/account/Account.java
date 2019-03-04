@@ -20,6 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.SynchronizationService;
+import com.apollocurrency.aplwallet.apl.core.config.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.config.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -63,6 +67,9 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Observes;
+import javax.inject.Singleton;
+
 /**
  * Used as global access point to all interactions with account and public keys
  * TODO Required massive refactoring
@@ -84,6 +91,7 @@ public final class Account {
     static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static DatabaseManager databaseManager;
+    private static SynchronizationService sync;
 
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
            
@@ -107,19 +115,49 @@ public final class Account {
                             PropertiesHolder propertiesHolder,
                             BlockchainProcessor blockchainProcessorParam,
                             BlockchainConfig blockchainConfigParam,
-                            Blockchain blockchainParam
-                            )
-    {
+                            Blockchain blockchainParam,
+                            SynchronizationService synchronizationService
+    ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
         blockchainConfig = blockchainConfigParam;
         blockchain = blockchainParam;
-        
-        if(propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
-            publicKeyCache =  new ConcurrentHashMap<>();
+        sync = synchronizationService;
+
+        if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+            publicKeyCache = new ConcurrentHashMap<>();
         }
-//from static section
-        blockchainProcessor.addListener(block -> {
+        }
+
+
+    @Singleton
+    public static class AccountObserver {
+
+        public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            if (publicKeyCache != null) {
+                publicKeyCache.clear();
+            }
+        }
+
+        public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+            if (publicKeyCache != null) {
+                publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
+                block.getTransactions().forEach(transaction -> {
+                    publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
+                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
+                        publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
+                    }
+                    if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
+                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
+                        for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
+                            publicKeyCache.remove(AccountTable.newKey(Account.getId(publicKey)));
+                        }
+                    }
+                });
+            }
+        }
+
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
             try (DbIterator<AccountLease> leases = AccountLeaseTable.getLeaseChangingAccounts(height)) {
@@ -156,30 +194,7 @@ public final class Account {
                 }
                 lessor.save();
             }
-        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-
-        if (publicKeyCache != null) {
-
-            blockchainProcessor.addListener(block -> {
-                publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
-                block.getTransactions().forEach(transaction -> {
-                    publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                        publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
-                    }
-                    if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                        for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                            publicKeyCache.remove(AccountTable.newKey(Account.getId(publicKey)));
-                        }
-                    }
-                });
-            }, BlockchainProcessor.Event.BLOCK_POPPED);
-
-            blockchainProcessor.addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
-
         }
-
     }
 
 
@@ -512,7 +527,7 @@ public final class Account {
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        blockchain.readLock();
+        sync.readLock();
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
@@ -521,7 +536,7 @@ public final class Account {
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
         finally {
-            blockchain.readUnlock();
+            sync.readUnlock();
         }
     }
 
@@ -586,7 +601,7 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
-        blockchain.readLock();
+        sync.readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockchainProcessor.getMinRollbackHeight()
@@ -612,7 +627,7 @@ public final class Account {
             }
         }
         finally {
-            blockchain.readUnlock();
+            sync.readUnlock();
         }
     }
 

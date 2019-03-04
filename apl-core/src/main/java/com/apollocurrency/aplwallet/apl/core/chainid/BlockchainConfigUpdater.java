@@ -8,6 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.config.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.config.BlockEventType;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -37,8 +40,6 @@ public class BlockchainConfigUpdater {
     private BlockDao blockDao;
     private BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
-    // inner listener
-    private ConfigChangeListener configChangeListener;
     private Chain chain;
     
     @Inject
@@ -49,27 +50,23 @@ public class BlockchainConfigUpdater {
     public void updateChain(Chain chain) {
         this.chain = chain;
         blockchainConfig.updateChain(chain);
-        deregisterConfigChangeListener();
-        registerConfigChangeListener();
     }
 
-    public void registerConfigChangeListener() {
-        configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties().keySet(), this);
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_POPPED);
+    public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
+        tryUpdateConfig(block);
+    }
+    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        tryUpdateConfig(block);
     }
 
-    public void deregisterConfigChangeListener() {
-        if (configChangeListener != null) {
-
-            lookupBlockchainProcessor().removeListener(configChangeListener,
-                    BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
-            lookupBlockchainProcessor().removeListener(configChangeListener,
-                    BlockchainProcessor.Event.BLOCK_POPPED);
+    public void tryUpdateConfig(Block block) {
+        int height = block.getHeight();
+        BlockchainProperties bp = chain.getBlockchainProperties().get(height);
+        if (bp != null) {
+            updateToHeight(height, true);
         }
     }
+
 
     public void reset() {
         updateToHeight(0, true);
@@ -102,6 +99,7 @@ public class BlockchainConfigUpdater {
 
         HeightConfig latestConfig = getConfigAtHeight(height, inclusive);
         if (blockchainConfig.getCurrentConfig() != null) {
+            LOG.info("Update to {} at height {}", latestConfig, height);
             blockchainConfig.setCurrentConfig(latestConfig);
         } else {
             LOG.error("No configs at all! Proceed with old config {}", blockchainConfig.getCurrentConfig());
