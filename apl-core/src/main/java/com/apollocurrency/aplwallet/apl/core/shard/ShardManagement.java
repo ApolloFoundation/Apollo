@@ -25,6 +25,6 @@ public interface ShardManagement {
 
     TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
 
-    TransactionalDataSource getShardDataSourceById(Long shardId);
+    TransactionalDataSource getOrCreateShardDataSourceById(Long shardId);
 
 }

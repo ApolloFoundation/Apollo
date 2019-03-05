@@ -138,7 +138,7 @@ public class BlockDaoImpl implements BlockDao {
         Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
         if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getShardDataSourceById(shardId);
+            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = lookupDataSource();
@@ -152,7 +152,7 @@ public class BlockDaoImpl implements BlockDao {
         Long shardId = lookupBlockIndexDao().getShardIdByBlockHeight(blockHeight);
         if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getShardDataSourceById(shardId);
+            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = lookupDataSource();

@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.slf4j.Logger;
@@ -10,7 +11,7 @@ import org.slf4j.Logger;
 public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 
-    private final static String SHARD_NAME_PATTERN = "apl-shard-%07d";
+    private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%07d";
 
     public static String getShardNameByShardId(Long shardId) {
         if (shardId < 0) {

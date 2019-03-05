@@ -192,7 +192,7 @@ public class DatabaseManager implements ShardManagement {
     }
 
     @Override
-    public TransactionalDataSource getShardDataSourceById(Long shardId) {
+    public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId) {
         Objects.requireNonNull(shardId, "shardId is NULL");
         if (connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);

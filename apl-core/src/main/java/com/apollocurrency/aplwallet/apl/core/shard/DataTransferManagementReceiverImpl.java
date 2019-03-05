@@ -89,7 +89,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(targetDataSource, "target Data Source meta-info is NULL");
         Block snapshotBlock = targetDataSource.getSnapshotBlock();
         Objects.requireNonNull(snapshotBlock, "snapshot Block is NULL");
-        TransactionalDataSource temporaryDb = databaseManager.getShardDataSourceById(-1L); // temp db is cached
+        TransactionalDataSource temporaryDb = databaseManager.getOrCreateShardDataSourceById(-1L); // temp db is cached
         if (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb) != null
                 && (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb).equalsIgnoreCase( MigrateState.SNAPSHOT_BLOCK_CREATED.name())
                 || optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb).equalsIgnoreCase( MigrateState.DATA_MOVING_STARTED.name()) ) ) {
@@ -193,7 +193,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         }
         TransactionalDataSource targetDataSource = target.getDataSource();
         if (targetDataSource == null) {
-            target.setDataSource(databaseManager.getShardDataSourceById(-1L));
+            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(-1L));
             targetDataSource = target.getDataSource();
         }
         return targetDataSource;
