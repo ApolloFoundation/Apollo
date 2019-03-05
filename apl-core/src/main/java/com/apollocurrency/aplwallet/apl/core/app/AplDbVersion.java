@@ -696,9 +696,9 @@ public class AplDbVersion extends DbVersion {
             case 252:
                 apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 253:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_shard_1_idx ON block_index (block_id, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
             case 254:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_shard_2_idx ON block_index (block_height, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
             case 255:
                 apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block_index(block_id))");
             case 256:
