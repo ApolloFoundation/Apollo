@@ -10,9 +10,9 @@ class ShardNameHelperTest {
     @Test
     void getShardName() {
         String result = ShardNameHelper.getShardNameByShardId(001L);
-        assertEquals("apl-shard-0000001", result);
+        assertEquals("apl-blockchain-shard-0000001", result);
 
         result = ShardNameHelper.getShardNameByShardId(2001L);
-        assertEquals("apl-shard-0002001", result);
+        assertEquals("apl-blockchain-shard-0002001", result);
     }
 }
