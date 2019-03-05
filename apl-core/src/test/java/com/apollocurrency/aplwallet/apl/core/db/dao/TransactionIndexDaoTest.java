@@ -4,10 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
@@ -35,6 +31,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class TransactionIndexDaoTest {
@@ -78,7 +78,7 @@ class TransactionIndexDaoTest {
 
     @AfterAll
     static void cleanup() {
-        databaseManager.shutdown();
+//        databaseManager.shutdown();
     }
 
     @BeforeEach
