@@ -25,10 +25,12 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
 import java.util.Random;
@@ -37,9 +39,7 @@ import java.util.Random;
 public class TwoFactorAuthServiceIntegrationTest extends DbTest {
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            NtpTime.class
-    ).build();
+    public WeldInitiator weld = WeldInitiator.from().addBeans(MockBean.of(Mockito.mock(NtpTime.class), NtpTime.class)).build();
 
     private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(getDataSource());
     private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");

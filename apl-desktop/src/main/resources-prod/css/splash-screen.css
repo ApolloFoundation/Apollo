@@ -1,0 +1,29 @@
+/******************************************************************************
+ * Copyright © 2017-2018 Apollo Foundation                                    *
+ *                                                                            *
+ ******************************************************************************/
+#main-pane{
+    -fx-background-image: url('../img/apollo-splash-screen-logo.png');
+    -fx-background-repeat: stretch;
+    -fx-background-size: 500 217;
+    -fx-background-position: center center;
+    -fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0);
+
+}
+#status-text {
+    -fx-fill: white;
+    -fx-font-size: 15;
+}
+
+#version-text {
+    -fx-fill: white;
+    -fx-font-size: 15;
+}
+
+#progress-indicator {
+    -fx-max-height: 50;
+    -fx-max-width: 50;
+    -fx-min-height: 50;
+    -fx-min-width: 50;
+    -fx-progress-color: white;
+}
