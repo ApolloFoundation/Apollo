@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import org.slf4j.Logger;
@@ -77,7 +78,7 @@ public class BlockchainConfigUpdater {
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
-            blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
+            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         }
         return blockchainProcessor;
     }

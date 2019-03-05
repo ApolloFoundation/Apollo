@@ -4,17 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import javax.inject.Inject;
+
+import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
-import org.jboss.weld.junit.MockBean;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,11 +26,12 @@ import java.util.List;
 import java.util.UUID;
 @EnableWeld
 public class BlockchainConfigTest {
-    private BlockchainProcessor blockchainProcessor = Mockito.mock(BlockchainProcessor.class);
-    private BlockDao blockDao = Mockito.mock(BlockDao.class);
     @WeldSetup
-    private WeldInitiator weld =
-            WeldInitiator.from().addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class), MockBean.of(blockDao, BlockDao.class)).build();
+    private WeldInitiator weld = WeldInitiator.from(BlockchainProcessorImpl.class, BlockchainConfig.class,
+            DefaultBlockValidator.class, BlockDaoImpl.class, BlockchainConfigUpdater.class, PropertiesHolder.class,
+            EpochTime.class, NtpTime.class)
+            .build();
+
     private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L);
     private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L);
     private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L);
@@ -35,6 +40,11 @@ public class BlockchainConfigTest {
             bp2,
             bp3
     );
+
+    @Inject
+    private BlockchainConfig blockchainConfig;
+    @Inject
+    private BlockchainConfigUpdater blockchainConfigUpdater;
 
     private static final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(),
@@ -45,23 +55,18 @@ public class BlockchainConfigTest {
 
     @Test
     public void testInitBlockchainConfig() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
         blockchainConfig.updateChain(chain);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateBlockchainConfig() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
-        BlockchainConfigUpdater blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig);
         blockchainConfigUpdater.updateChain(chain);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateToHeight() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
-        BlockchainConfigUpdater blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig);
         blockchainConfigUpdater.updateChain(chain);
         blockchainConfigUpdater.updateToHeight(99, true);
         Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
@@ -79,8 +84,6 @@ public class BlockchainConfigTest {
 
     @Test
     void testRollback() {
-        BlockchainConfig blockchainConfig = new BlockchainConfig();
-        BlockchainConfigUpdater blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig);
         blockchainConfigUpdater.updateChain(chain);
         blockchainConfigUpdater.updateToHeight(102, true);
         Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());

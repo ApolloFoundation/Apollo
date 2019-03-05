@@ -114,7 +114,6 @@ class DatabaseManagerTest {
 //        databaseManager.shutdown();
     }
 
-    @Disabled
     @Test
     void createAndAddShard() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
